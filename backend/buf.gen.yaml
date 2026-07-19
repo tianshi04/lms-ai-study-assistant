@@ -1,0 +1,6 @@
+version: v2
+plugins:
+  - remote: buf.build/bufbuild/py
+    out: src/gen
+  - remote: buf.build/connectrpc/py
+    out: src/gen
