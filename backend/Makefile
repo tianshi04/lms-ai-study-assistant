@@ -8,7 +8,7 @@ help:
 	@echo "  make test   - Run test suite (pytest + ruff + ty)"
 
 gen:
-	buf generate
+	buf generate ../proto
 
 dev:
 	uv run uvicorn main:app --port 8000 --reload
