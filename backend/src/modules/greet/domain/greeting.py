@@ -1,5 +1,6 @@
 from src.shared.domain.base import Entity
 
+
 class Greeting(Entity):
     def __init__(self, name: str) -> None:
         super().__init__(id=name)
