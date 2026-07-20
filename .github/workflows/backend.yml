@@ -1,0 +1,44 @@
+name: Backend CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'proto/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'proto/**'
+      - '.github/workflows/backend.yml'
+
+jobs:
+  test:
+    name: Build & Test Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Buf CLI
+        uses: bufbuild/buf-setup-action@v1
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          python-version: "3.13"
+          enable-cache: true
+
+      - name: Generate Protobuf / ConnectRPC stubs
+        run: make gen
+        working-directory: backend
+
+      - name: Run test suite (pytest + ruff + ty)
+        run: make test
+        working-directory: backend
