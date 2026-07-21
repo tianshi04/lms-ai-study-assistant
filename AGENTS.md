@@ -7,7 +7,7 @@ This file provides rules, architectural conventions, and workspace instructions 
 ## 1. Project Architecture (DDD & Modular Monolith)
 - We follow the **Modular Monolith** pattern using **Domain-Driven Design (DDD)** principles.
 - The backend source code is located in `backend/src/`.
-- All modules/bounded contexts reside inside `backend/src/modules/` (e.g., `greet`).
+- All modules/bounded contexts reside inside `backend/src/modules/` (e.g., `catalog`, `learning`).
 - Every module must maintain strict DDD layer boundaries:
   - **`domain/`**: Pure Python containing entities, value objects, domain events, and repository interfaces. **No external framework or database dependencies.**
   - **`application/`**: Use Case coordinators executing domain actions.
@@ -52,7 +52,8 @@ This file provides rules, architectural conventions, and workspace instructions 
 ## 5. Frontend Architecture & Conventions
 - The frontend is located in `frontend/` and built with **Next.js (App Router)**, **TypeScript**, and **Tailwind CSS v4**.
 - Styling is implemented using Tailwind CSS v4 utility classes.
-- API Client calls are made by importing service schemas from the generated stubs (e.g. `import { GreetService } from "@/gen/greet/v1/greet_pb"`) and using the `@connectrpc/connect` client.
+- **UI Icons & Aesthetics**: Always use clean, professional inline SVG vector icons instead of text-emoji characters in all UI components and pages.
+- API Client calls are made by importing service schemas from the generated stubs (e.g. `import { CatalogService } from "@/gen/catalog/v1/catalog_pb"`) and using the `@connectrpc/connect` client.
 
 ---
 
