@@ -1,0 +1,78 @@
+version: '3.8'
+
+# ====================================================================
+# ARCHITECTURE: DOCKER COMPOSE PROFILES (MÔ HÌNH MỞ RỘNG DỄ TÍCH HỢP)
+# - Profile 'infra': Chỉ khởi chạy Hạ tầng (PostgreSQL pg17 + MinIO S3)
+# - Profile 'app': Dành cho về sau khi đóng gói Backend / Frontend / Worker
+# - Profile 'all': Khởi chạy toàn bộ hệ thống
+# ====================================================================
+
+services:
+  # ------------------------------------------------------------------
+  # 1. HẠ TẦNG CƠ SỞ DỮ LIỆU: PostgreSQL 16/17 + PGVector
+  # ------------------------------------------------------------------
+  postgres:
+    profiles: ["infra", "all"]
+    image: pgvector/pgvector:pg17
+    container_name: coursera_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-coursera_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coursera_password123}
+      POSTGRES_DB: ${POSTGRES_DB:-coursera_lms}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-coursera_admin} -d ${POSTGRES_DB:-coursera_lms}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ------------------------------------------------------------------
+  # 2. HẠ TẦNG LƯU TRỮ TỆP: MinIO (S3 Compatible Storage)
+  # ------------------------------------------------------------------
+  minio:
+    profiles: ["infra", "all"]
+    image: minio/minio:latest
+    container_name: coursera_minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio_password123}
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ------------------------------------------------------------------
+  # 3. DỊCH VỤ VỀ SAU (TEMPLATES DÀNH CHO KHI TÍCH HỢP BACKEND / FRONTEND)
+  # ------------------------------------------------------------------
+  # backend:
+  #   profiles: ["app", "all"]
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: coursera_backend_api
+  #   restart: always
+  #   environment:
+  #     - DATABASE_URL=postgresql://coursera_admin:coursera_password123@postgres:5432/coursera_lms
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
+
+volumes:
+  postgres_data:
+  minio_data:

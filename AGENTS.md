@@ -51,6 +51,7 @@ This file provides rules, architectural conventions, and workspace instructions 
 ## 5. Helper Commands Reference
 
 ### Backend (from `backend/` directory):
+- `make infra` - Start infrastructure containers (PostgreSQL pgvector & MinIO).
 - `make gen` - Regenerate Python stubs from root `proto/` directory.
 - `make dev` - Start local Python dev server with auto-reload (port 8000).
 - `make format` - Format code and fix auto-fixable lint issues with Ruff.
