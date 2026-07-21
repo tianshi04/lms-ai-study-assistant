@@ -85,6 +85,22 @@ class ModularRouterASGIApp:
     async def __call__(
         self, scope: dict[str, Any], receive: Callable, send: Callable
     ) -> None:
+        # Handle ASGI lifespan startup event for automatic database seeding in dev mode when DB is empty
+        if scope["type"] == "lifespan":
+            while True:
+                message = await receive()
+                if message["type"] == "lifespan.startup":
+                    try:
+                        from src.seed import seed_database
+                        await seed_database(auto_mode=True)
+                    except Exception as e:
+                        print(f"[STARTUP SEED] Warning during startup: {e}")
+                    await send({"type": "lifespan.startup.complete"})
+                elif message["type"] == "lifespan.shutdown":
+                    await send({"type": "lifespan.shutdown.complete"})
+                    break
+            return
+
         if scope["type"] == "http":
             path = scope.get("path", "")
             for prefix, sub_app in self.routes.items():

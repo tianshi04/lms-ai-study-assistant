@@ -15,6 +15,11 @@ This file provides rules, architectural conventions, and workspace instructions 
 - Common/shared utilities and base abstractions (like base `Entity` and `ValueObject`) reside in the Shared Kernel: `backend/src/shared/`.
 - **No direct internal coupling**: Modules must not import from another module's internal directories (`application`, `infrastructure`, `presentation`).
 - **Database & Alembic Migration Synchronization**: Whenever SQLAlchemy ORM models (located in module `infrastructure/` directories) are created or modified, an Alembic migration script **MUST** be generated (e.g. `uv run alembic revision --autogenerate -m "<description>"`) inside the `backend/` directory so that database schema migrations are strictly synchronized with ORM definitions.
+- **Database Seeding Isolation & Idempotency Rules**:
+  - Domain Repositories and Infrastructure Repositories MUST remain completely clean of hardcoded seed/fixture data.
+  - All database seeding logic MUST be isolated inside dedicated CLI scripts (`backend/src/seed.py`, `make seed`).
+  - `src/seed.py` supports two modes: **Upsert Mode** (`make seed`, safe `session.merge()`) and **Reset Mode** (`make seed-reset`, `TRUNCATE CASCADE`).
+  - Whenever adding or modifying initial seed data, always update `backend/src/seed.py`.
 
 ---
 
@@ -61,8 +66,12 @@ This file provides rules, architectural conventions, and workspace instructions 
 
 ### Backend (from `backend/` directory):
 - `make infra` - Start infrastructure containers (PostgreSQL pgvector & MinIO).
+- `make infra-down` - Stop infrastructure containers (preserves DB volume data).
+- `make infra-clean` - Stop containers & wipe database volumes completely (-v).
 - `make gen` - Regenerate Python stubs from root `proto/` directory.
 - `make dev` - Start local Python dev server with auto-reload (port 8000).
+- `make seed` - Seed database with initial sample courses (Idempotent Upsert mode).
+- `make seed-reset` - Truncate all tables and re-seed pristine initial catalog.
 - `make format` - Format code and fix auto-fixable lint issues with Ruff.
 - `make test` - Run pytest suite (which also executes Ruff linting and Ty type checking).
 

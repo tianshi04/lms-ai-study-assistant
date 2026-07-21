@@ -1,4 +1,4 @@
-.PHONY: help gen dev test format seed infra infra-down infra-clean infra-logs
+.PHONY: help gen dev test format seed seed-reset infra infra-down infra-clean infra-logs
 
 help:
 	@echo "Available commands:"
@@ -8,7 +8,8 @@ help:
 	@echo "  make infra-logs  - View infrastructure logs"
 	@echo "  make gen         - Generate protobuf and connect stubs"
 	@echo "  make dev         - Start local dev server"
-	@echo "  make seed        - Seed database with initial sample courses"
+	@echo "  make seed        - Seed database with initial sample courses (Upsert mode)"
+	@echo "  make seed-reset  - Truncate all tables and re-seed pristine initial catalog"
 	@echo "  make format      - Format code and fix auto-fixable lint issues"
 	@echo "  make test        - Run test suite (pytest + ruff + ty)"
 
@@ -32,6 +33,9 @@ dev:
 
 seed:
 	uv run python -m src.seed
+
+seed-reset:
+	uv run python -m src.seed --reset
 
 format:
 	uv run ruff format .

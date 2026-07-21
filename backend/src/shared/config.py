@@ -39,9 +39,11 @@ class Settings(BaseSettings):
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
         return url
 
-@lru_cache()
+
+@lru_cache
 def get_settings() -> Settings:
-    """Return cached singleton instance of application Settings."""
+    """Return cached Settings instance."""
     return Settings()
+
 
 settings = get_settings()
