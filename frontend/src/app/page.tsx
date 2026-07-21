@@ -164,7 +164,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="mt-auto border-t border-slate-200 dark:border-slate-900 py-6 text-center text-xs text-slate-500 dark:text-slate-600 relative z-10">
-        <p>© 2026 Coursera LMS Platform. Built with Next.js 15, ConnectRPC, and Tailwind CSS v4.</p>
+        <p>© 2026 Coursera LMS Platform. Built with Next.js 16, ConnectRPC, and Tailwind CSS v4.</p>
       </footer>
     </div>
   );
