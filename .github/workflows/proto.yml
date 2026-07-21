@@ -1,0 +1,39 @@
+name: Protobuf CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'proto/**'
+      - '.github/workflows/proto.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'proto/**'
+      - '.github/workflows/proto.yml'
+
+jobs:
+  buf-ci:
+    name: Lint & Breaking Change Check (Buf)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Buf CLI
+        uses: bufbuild/buf-setup-action@v1
+
+      - name: Lint Protobuf files
+        uses: bufbuild/buf-lint-action@v1
+        with:
+          input: 'proto'
+
+      - name: Check Breaking Changes against main branch
+        uses: bufbuild/buf-breaking-action@v1
+        if: github.event_name == 'pull_request'
+        with:
+          input: 'proto'
+          against: 'https://github.com/${{ github.repository }}.git#branch=main'
