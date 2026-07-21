@@ -7,14 +7,25 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.orm import DeclarativeBase
+
 from src.shared.config import settings
+
+
+class Base(DeclarativeBase):
+    """Base class for all SQLAlchemy ORM models."""
+
+    pass
+
 
 def get_database_url() -> str:
     """Retrieve database URL from configuration settings."""
     return settings.async_database_url
 
+
 _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker[AsyncSession] | None = None
+
 
 def get_engine() -> AsyncEngine:
     """Get or create singleton SQLAlchemy AsyncEngine instance."""
@@ -26,6 +37,7 @@ def get_engine() -> AsyncEngine:
             pool_pre_ping=True,
         )
     return _engine
+
 
 def get_session_factory() -> async_sessionmaker[AsyncSession]:
     """Get or create singleton async_sessionmaker factory."""
@@ -39,6 +51,7 @@ def get_session_factory() -> async_sessionmaker[AsyncSession]:
         )
     return _session_factory
 
+
 async def dispose_engine() -> None:
     """Dispose singleton engine and reset session factory (useful for tests and shutdown)."""
     global _engine, _session_factory
@@ -46,6 +59,7 @@ async def dispose_engine() -> None:
         await _engine.dispose()
         _engine = None
         _session_factory = None
+
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """Yield async database session for dependency injection or use case execution."""
@@ -55,6 +69,7 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
             yield session
         finally:
             await session.close()
+
 
 @asynccontextmanager
 async def async_session_scope() -> AsyncGenerator[AsyncSession, None]:
@@ -69,6 +84,7 @@ async def async_session_scope() -> AsyncGenerator[AsyncSession, None]:
             raise
         finally:
             await session.close()
+
 
 async def init_pgvector_extension() -> None:
     """Initialize pgvector extension in PostgreSQL if not already created."""
