@@ -1,4 +1,3 @@
-import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 from sqlalchemy import text
@@ -8,16 +7,11 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-
-DEFAULT_DB_URL = "postgresql+asyncpg://coursera_admin:coursera_password123@localhost:5432/coursera_lms"
+from src.shared.config import settings
 
 def get_database_url() -> str:
-    """Retrieve database URL from environment variable or return default local URL."""
-    url = os.getenv("DATABASE_URL", DEFAULT_DB_URL)
-    # Ensure standard postgresql:// schema uses asyncpg driver for SQLAlchemy async engine
-    if url.startswith("postgresql://"):
-        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
-    return url
+    """Retrieve database URL from configuration settings."""
+    return settings.async_database_url
 
 _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker[AsyncSession] | None = None
