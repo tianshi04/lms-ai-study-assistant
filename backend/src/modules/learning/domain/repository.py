@@ -34,3 +34,9 @@ class ILearningRepository(ABC):
         self, user_id: str, course_id: str
     ) -> list[PersonalNote]:
         pass
+
+    @abstractmethod
+    async def mark_item_complete(
+        self, user_id: str, course_id: str, item_id: str, total_course_items: int
+    ) -> tuple[bool, LearningProgress]:
+        pass

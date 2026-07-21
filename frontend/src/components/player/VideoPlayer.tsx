@@ -10,10 +10,12 @@ interface VideoPlayerProps {
   activeQuiz: InVideoQuiz | null;
   selectedOption: number | null;
   quizSubmitted: boolean;
+  completedItemIds?: string[];
   onTimeUpdate: () => void;
   onSelectOption: (index: number) => void;
   onSubmitQuiz: () => void;
   onContinueVideo: () => void;
+  onMarkComplete?: (itemId: string) => void;
 }
 
 export function VideoPlayer({
@@ -22,10 +24,12 @@ export function VideoPlayer({
   activeQuiz,
   selectedOption,
   quizSubmitted,
+  completedItemIds = [],
   onTimeUpdate,
   onSelectOption,
   onSubmitQuiz,
   onContinueVideo,
+  onMarkComplete,
 }: VideoPlayerProps) {
   if (!activeItem) {
     return (
@@ -35,16 +39,23 @@ export function VideoPlayer({
     );
   }
 
+  const isCompleted = completedItemIds.includes(activeItem.id);
+
   if (activeItem.type === 2) {
     return (
       <div className="w-full h-full overflow-y-auto p-8 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
         <div className="max-w-3xl mx-auto space-y-6">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
-            <svg className="w-7 h-7 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            {activeItem.title}
-          </h2>
+          {/* Reading Header */}
+          <div className="pb-4 border-b border-slate-200 dark:border-slate-800">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+              <svg className="w-7 h-7 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              {activeItem.title}
+            </h2>
+          </div>
+
+          {/* Reading Markdown Content */}
           <div className="max-w-none leading-relaxed text-sm space-y-4">
             <ReactMarkdown
               components={{
@@ -70,6 +81,24 @@ export function VideoPlayer({
               {activeItem.readingMarkdown || "*Không có nội dung bài đọc.*"}
             </ReactMarkdown>
           </div>
+
+          {/* Coursera-Style Bottom Mark as Complete Action Banner */}
+          <div className="pt-8 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+            <button
+              onClick={() => onMarkComplete?.(activeItem.id)}
+              disabled={isCompleted}
+              className={`px-6 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                isCompleted
+                  ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 cursor-default"
+                  : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20"
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              {isCompleted ? "Đã Hoàn Thành Bài Đọc" : "Đánh dấu Hoàn Thành Bài Đọc này"}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -83,8 +112,27 @@ export function VideoPlayer({
           src={activeItem.videoUrl}
           controls
           onTimeUpdate={onTimeUpdate}
+          onEnded={() => onMarkComplete?.(activeItem.id)}
           className="max-h-full max-w-full object-contain shadow-2xl rounded-lg border border-slate-300 dark:border-slate-800"
         />
+
+        {/* Floating Top Control Overlay for Video Mark as Complete */}
+        <div className="absolute top-4 right-4 z-20">
+          <button
+            onClick={() => onMarkComplete?.(activeItem.id)}
+            disabled={isCompleted}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg backdrop-blur ${
+              isCompleted
+                ? "bg-emerald-500/90 text-white cursor-default"
+                : "bg-slate-900/80 hover:bg-emerald-600 text-white border border-slate-700"
+            }`}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            {isCompleted ? "Đã Hoàn Thành" : "Đánh dấu Đã Xem"}
+          </button>
+        </div>
 
         {/* In-Video Quiz Overlay Interruption Modal */}
         {activeQuiz && (

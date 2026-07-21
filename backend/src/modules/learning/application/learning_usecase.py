@@ -51,3 +51,12 @@ class LearningUseCase:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             return await repo.list_personal_notes(user_id, course_id)
+
+    async def mark_item_complete(
+        self, user_id: str, course_id: str, item_id: str, total_course_items: int
+    ) -> tuple[bool, LearningProgress]:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.mark_item_complete(
+                user_id, course_id, item_id, total_course_items
+            )

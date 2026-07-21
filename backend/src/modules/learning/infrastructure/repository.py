@@ -78,8 +78,8 @@ class SQLAlchemyLearningRepository(ILearningRepository):
                 id=key,
                 user_id=user_id,
                 course_id=course_id,
-                overall_progress_percent=25.0,
-                completed_item_ids=["item-ml-intro-video"],
+                overall_progress_percent=0.0,
+                completed_item_ids=[],
             )
             d1 = WeeklyDeadlineModel(
                 week_number=1, due_date=past_date, status=DeadlineStatus.OVERDUE
@@ -153,3 +153,31 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         res = await self.session.execute(stmt)
         models = res.scalars().all()
         return [_model_to_domain_note(m) for m in models]
+
+    async def mark_item_complete(
+        self, user_id: str, course_id: str, item_id: str, total_course_items: int
+    ) -> tuple[bool, LearningProgress]:
+        key = self._get_key(user_id, course_id)
+        stmt = (
+            select(LearningProgressModel)
+            .where(LearningProgressModel.id == key)
+            .options(selectinload(LearningProgressModel.weekly_deadlines))
+        )
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+
+        if not model:
+            await self.get_progress(user_id, course_id)
+            res = await self.session.execute(stmt)
+            model = res.scalar_one()
+
+        completed = set(model.completed_item_ids or [])
+        completed.add(item_id)
+        model.completed_item_ids = list(completed)
+
+        total_items = max(1, total_course_items)
+        percent = round((len(completed) / total_items) * 100.0, 1)
+        model.overall_progress_percent = min(100.0, percent)
+
+        await self.session.commit()
+        return True, _model_to_domain_progress(model)

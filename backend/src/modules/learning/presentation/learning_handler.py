@@ -101,3 +101,18 @@ class LearningHandler(LearningService):
             user_id=request.user_id, course_id=request.course_id
         )
         return pb.ListPersonalNotesResponse(notes=[_to_pb_note(n) for n in notes])
+
+    async def mark_item_complete(
+        self,
+        request: pb.MarkItemCompleteRequest,
+        ctx: RequestContext[pb.MarkItemCompleteRequest, pb.MarkItemCompleteResponse],
+    ) -> pb.MarkItemCompleteResponse:
+        success, progress = await self.use_case.mark_item_complete(
+            user_id=request.user_id,
+            course_id=request.course_id,
+            item_id=request.item_id,
+            total_course_items=request.total_course_items,
+        )
+        return pb.MarkItemCompleteResponse(
+            success=success, updated_progress=_to_pb_progress(progress)
+        )

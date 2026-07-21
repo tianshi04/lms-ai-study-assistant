@@ -64,11 +64,44 @@ export default function CoursePlayerPage() {
     loadData();
   }, [courseId]);
 
-  // Video timeupdate handler for In-Video Quiz interruption
+  // Total course items count
+  const totalCourseItems = course?.weekModules.reduce(
+    (acc, wm) => acc + wm.lessons.reduce((lAcc, l) => lAcc + l.items.length, 0),
+    0
+  ) || 1;
+
+  // Mark Item as Complete
+  const handleMarkItemComplete = async (itemId: string) => {
+    try {
+      const learningClient = getRpcClient(LearningService);
+      const res = await learningClient.markItemComplete({
+        userId: DEMO_USER_ID,
+        courseId,
+        itemId,
+        totalCourseItems,
+      });
+      if (res.updatedProgress) {
+        setProgress(res.updatedProgress);
+      }
+    } catch (err) {
+      console.error("Failed to mark item complete:", err);
+    }
+  };
+
+  // Video timeupdate handler for In-Video Quiz interruption & Auto Progress Update at 80%
   const handleTimeUpdate = () => {
     if (!videoRef.current || !activeItem) return;
     const time = Math.floor(videoRef.current.currentTime);
     setCurrentTime(time);
+
+    // Auto mark as completed if watched >= 80% of video duration
+    if (
+      videoRef.current.duration > 0 &&
+      videoRef.current.currentTime >= videoRef.current.duration * 0.8 &&
+      !progress?.completedItemIds.includes(activeItem.id)
+    ) {
+      handleMarkItemComplete(activeItem.id);
+    }
 
     // Check for In-Video Quiz at current timestamp
     if (activeItem.inVideoQuizzes && activeItem.inVideoQuizzes.length > 0) {
@@ -182,7 +215,7 @@ export default function CoursePlayerPage() {
             <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
               <div className="w-24 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all"
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
                   style={{ width: `${progress.overallProgressPercent}%` }}
                 />
               </div>
@@ -225,6 +258,8 @@ export default function CoursePlayerPage() {
                     <div className="space-y-1 pl-2">
                       {lesson.items.map((item) => {
                         const isActive = activeItem?.id === item.id;
+                        const isDone = progress?.completedItemIds.includes(item.id);
+
                         return (
                           <button
                             key={item.id}
@@ -239,7 +274,11 @@ export default function CoursePlayerPage() {
                             }`}
                           >
                             <span className="truncate flex items-center gap-2">
-                              {item.type === 1 ? (
+                              {isDone ? (
+                                <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                </svg>
+                              ) : item.type === 1 ? (
                                 <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                                 </svg>
@@ -252,7 +291,7 @@ export default function CoursePlayerPage() {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                               )}
-                              {item.title}
+                              <span className={isDone ? "line-through opacity-80" : ""}>{item.title}</span>
                             </span>
                             <span className="text-[10px] opacity-60">{item.estimatedMinutes}m</span>
                           </button>
@@ -276,10 +315,12 @@ export default function CoursePlayerPage() {
               activeQuiz={activeQuiz}
               selectedOption={selectedOption}
               quizSubmitted={quizSubmitted}
+              completedItemIds={progress?.completedItemIds || []}
               onTimeUpdate={handleTimeUpdate}
               onSelectOption={setSelectedOption}
               onSubmitQuiz={handleQuizSubmit}
               onContinueVideo={handleContinueVideo}
+              onMarkComplete={handleMarkItemComplete}
             />
           </div>
 

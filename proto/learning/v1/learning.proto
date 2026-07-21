@@ -73,9 +73,22 @@ message ListPersonalNotesResponse {
   repeated PersonalNote notes = 1;
 }
 
+message MarkItemCompleteRequest {
+  string user_id = 1;
+  string course_id = 2;
+  string item_id = 3;
+  int32 total_course_items = 4;
+}
+
+message MarkItemCompleteResponse {
+  bool success = 1;
+  LearningProgress updated_progress = 2;
+}
+
 service LearningService {
   rpc GetProgress(GetProgressRequest) returns (GetProgressResponse);
   rpc ResetDeadlines(ResetDeadlinesRequest) returns (ResetDeadlinesResponse);
   rpc SavePersonalNote(SavePersonalNoteRequest) returns (SavePersonalNoteResponse);
   rpc ListPersonalNotes(ListPersonalNotesRequest) returns (ListPersonalNotesResponse);
+  rpc MarkItemComplete(MarkItemCompleteRequest) returns (MarkItemCompleteResponse);
 }
