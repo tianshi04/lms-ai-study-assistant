@@ -19,7 +19,7 @@ help:
 	@echo "  make test         - Run test suite (pytest + ruff + ty)"
 
 infra:
-	docker compose --profile infra up -d
+	docker compose --profile infra up -d --wait
 
 infra-down:
 	docker compose --profile infra down
