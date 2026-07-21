@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -113,7 +113,16 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         """Seed initial demonstration course catalog if table is empty."""
         stmt = select(CourseModel).limit(1)
         res = await self.session.execute(stmt)
+        sample_url = "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+
         if res.scalar_one_or_none() is not None:
+            # Update legacy sample video URL to high-reliability HTTPS MDN MP4 stream
+            await self.session.execute(
+                update(LearningItemModel)
+                .where(LearningItemModel.id == "item-ml-intro-video")
+                .values(video_url=sample_url)
+            )
+            await self.session.commit()
             return
 
         course1 = CourseModel(
@@ -147,7 +156,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             title="Lecture: Introduction to Linear Regression & Cost Function",
             type=ItemType.VIDEO,
             estimated_minutes=12,
-            video_url="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            video_url=sample_url,
             vtt_subtitle_url="",
         )
 
@@ -156,20 +165,20 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             text="Welcome to Supervised Machine Learning! In this lesson, we will cover linear regression.",
         )
         t2 = InteractiveTranscriptModel(
-            timestamp_seconds=15,
+            timestamp_seconds=5,
             text="Linear regression fits a straight line through dataset points to predict continuous numerical values.",
         )
         t3 = InteractiveTranscriptModel(
-            timestamp_seconds=35,
+            timestamp_seconds=10,
             text="Let's look at the cost function, often represented as Mean Squared Error (MSE).",
         )
         t4 = InteractiveTranscriptModel(
-            timestamp_seconds=60,
+            timestamp_seconds=15,
             text="Gradient descent updates model parameters iteratively until minimum cost is reached.",
         )
 
         q1 = InVideoQuizModel(
-            timestamp_seconds=35,
+            timestamp_seconds=10,
             question="What cost function is commonly used for Linear Regression?",
             options=[
                 "Cross-Entropy Loss",
@@ -190,7 +199,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             title="Reading: Math Foundations of Gradient Descent",
             type=ItemType.READING,
             estimated_minutes=15,
-            reading_markdown="# Math Foundations of Gradient Descent\n\nGradient descent is an optimization algorithm used to minimize cost functions in machine learning models.",
+            reading_markdown="# Math Foundations of Gradient Descent\n\nGradient descent is an optimization algorithm used to minimize cost functions in machine learning models.\n\n## Key Concepts\n- **Learning Rate (alpha)**: Controls the step size at each iteration.\n- **Loss Function**: Measures the prediction error.\n\n> *Tip: Choosing an appropriate learning rate is crucial for convergence.*",
         )
 
         lesson1.items.extend([item1, item2])
