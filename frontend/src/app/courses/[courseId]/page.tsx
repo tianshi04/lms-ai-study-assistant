@@ -64,7 +64,7 @@ export default function CourseDetailPage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       {/* Header / Navbar */}
-      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+      <header className="border-b border-slate-800 bg-slate-900/90 relative z-40">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/courses" className="flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
