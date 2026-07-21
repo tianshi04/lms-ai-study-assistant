@@ -44,9 +44,12 @@ export default function Home() {
           <div className="flex items-center space-x-6">
             <Link
               href="/courses"
-              className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 px-3.5 py-1.5 rounded-lg border border-blue-500/20"
+              className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 px-3.5 py-1.5 rounded-lg border border-blue-500/20 inline-flex items-center gap-2"
             >
-              📚 Browse Catalog
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              Browse Catalog
             </Link>
 
             <div className="flex items-center space-x-2">
@@ -66,7 +69,10 @@ export default function Home() {
       <main className="flex-1 relative z-20 max-w-7xl mx-auto px-6 pt-16 pb-12 text-center md:text-left grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         <div className="lg:col-span-7 space-y-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
-            ✨ Track A Live: Catalog, Video Player & Learning Progress
+            <svg className="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+            Track A Live: Catalog, Video Player & Learning Progress
           </div>
 
           <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
@@ -92,7 +98,11 @@ export default function Home() {
               href="/learn/course-python-ai"
               className="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 font-bold text-sm transition-all flex items-center gap-2"
             >
-              🎬 Demo Course Player
+              <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Demo Course Player
             </Link>
           </div>
         </div>
@@ -103,7 +113,12 @@ export default function Home() {
             href="/courses"
             className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-blue-500/50 transition-all text-left group"
           >
-            <div className="text-2xl mb-3">🎓</div>
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+              </svg>
+            </div>
             <h3 className="font-bold text-white text-base mb-1 group-hover:text-blue-400 transition-colors">Course Catalog</h3>
             <p className="text-xs text-slate-400">Xem danh sách khóa học Specialization theo chuẩn Coursera.</p>
           </Link>
@@ -112,19 +127,32 @@ export default function Home() {
             href="/learn/course-python-ai"
             className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-blue-500/50 transition-all text-left group"
           >
-            <div className="text-2xl mb-3">🎬</div>
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-105 transition-transform">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
             <h3 className="font-bold text-white text-base mb-1 group-hover:text-blue-400 transition-colors">Interactive Player</h3>
             <p className="text-xs text-slate-400">Phát Video + Interactive Transcript cuộn & In-Video Quiz.</p>
           </Link>
 
           <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 text-left">
-            <div className="text-2xl mb-3">⏰</div>
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-3">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
             <h3 className="font-bold text-white text-base mb-1">Reset Deadlines</h3>
             <p className="text-xs text-slate-400">Gia hạn lịch nộp bài linh hoạt không trừ điểm thi.</p>
           </div>
 
           <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 text-left">
-            <div className="text-2xl mb-3">📌</div>
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-3">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            </div>
             <h3 className="font-bold text-white text-base mb-1">Personal Notes</h3>
             <p className="text-xs text-slate-400">Bôi đen bài giảng & lưu ghi chú cá nhân tức thì.</p>
           </div>

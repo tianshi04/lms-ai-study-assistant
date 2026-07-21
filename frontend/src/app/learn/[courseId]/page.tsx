@@ -191,8 +191,11 @@ export default function CoursePlayerPage() {
             </div>
           )}
 
-          <div className="text-xs px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-medium">
-            AI Coach Active 🤖
+          <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-medium">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            AI Coach Active
           </div>
         </div>
       </header>
@@ -233,7 +236,19 @@ export default function CoursePlayerPage() {
                             }`}
                           >
                             <span className="truncate flex items-center gap-2">
-                              <span>{item.type === 1 ? "🎬" : item.type === 2 ? "📄" : "✏️"}</span>
+                              {item.type === 1 ? (
+                                <svg className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                </svg>
+                              ) : item.type === 2 ? (
+                                <svg className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                              ) : (
+                                <svg className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              )}
                               {item.title}
                             </span>
                             <span className="text-[10px] opacity-60">{item.estimatedMinutes}m</span>
@@ -272,33 +287,42 @@ export default function CoursePlayerPage() {
               <div className="flex items-center gap-6">
                 <button
                   onClick={() => setActiveTab("transcript")}
-                  className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 ${
+                  className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
                     activeTab === "transcript"
                       ? "text-blue-400 border-blue-500"
                       : "text-slate-400 border-transparent hover:text-slate-200"
                   }`}
                 >
-                  📝 Interactive Transcript ({activeItem?.interactiveTranscripts.length || 0})
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                  </svg>
+                  Interactive Transcript ({activeItem?.interactiveTranscripts.length || 0})
                 </button>
                 <button
                   onClick={() => setActiveTab("notes")}
-                  className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 ${
+                  className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
                     activeTab === "notes"
                       ? "text-blue-400 border-blue-500"
                       : "text-slate-400 border-transparent hover:text-slate-200"
                   }`}
                 >
-                  📌 Personal Notes ({notes.length})
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                  </svg>
+                  Personal Notes ({notes.length})
                 </button>
                 <button
                   onClick={() => setActiveTab("deadlines")}
-                  className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 ${
+                  className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
                     activeTab === "deadlines"
                       ? "text-blue-400 border-blue-500"
                       : "text-slate-400 border-transparent hover:text-slate-200"
                   }`}
                 >
-                  ⏰ Deadlines & Tiến độ
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Deadlines & Tiến độ
                 </button>
               </div>
             </div>

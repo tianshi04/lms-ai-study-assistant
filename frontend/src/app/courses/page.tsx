@@ -65,7 +65,11 @@ export default function CoursesPage() {
       <main className="max-w-7xl mx-auto px-6 py-12">
         <div className="mb-10 text-center md:text-left max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-4">
-            🎓 Coursera-Style Specializations & Courses
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+            </svg>
+            Coursera-Style Specializations & Courses
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white mb-4">
             Khám phá Khóa học & Lộ trình Học tập
@@ -159,11 +163,17 @@ export default function CoursesPage() {
                 <div>
                   {/* Instructors & Modules Count */}
                   <div className="pt-4 border-t border-slate-800/80 mb-6 flex items-center justify-between text-xs text-slate-400">
-                    <span>
-                      👨‍🏫 {course.instructorNames.join(", ") || "Giảng viên Coursera"}
+                    <span className="flex items-center gap-1.5 truncate max-w-[160px]">
+                      <svg className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      {course.instructorNames.join(", ") || "Giảng viên Coursera"}
                     </span>
-                    <span>
-                      📚 {course.weekModules.length} Tuần học
+                    <span className="flex items-center gap-1.5">
+                      <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                      {course.weekModules.length} Tuần học
                     </span>
                   </div>
 
