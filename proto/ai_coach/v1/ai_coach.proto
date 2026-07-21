@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package ai_coach.v1;
+
+message ChatWithCoachRequest {
+  string user_id = 1;
+  string course_id = 2;
+  string item_id = 3;
+  string user_message = 4;
+}
+
+message ChatWithCoachResponse {
+  string delta_text = 1;
+  bool is_refused_socratic_guard = 2;
+  bool is_final = 3;
+}
+
+message IngestCourseKnowledgeRequest {
+  string course_id = 1;
+  string item_id = 2;
+  string text_content = 3;
+}
+
+message IngestCourseKnowledgeResponse {
+  bool success = 1;
+  int32 chunks_vectorized = 2;
+}
+
+service AiCoachService {
+  rpc ChatWithCoach(ChatWithCoachRequest) returns (stream ChatWithCoachResponse);
+  rpc IngestCourseKnowledge(IngestCourseKnowledgeRequest) returns (IngestCourseKnowledgeResponse);
+}

@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package identity.v1;
+
+enum UserRole {
+  USER_ROLE_UNSPECIFIED = 0;
+  USER_ROLE_LEARNER = 1;
+  USER_ROLE_INSTRUCTOR = 2;
+  USER_ROLE_TA = 3;
+  USER_ROLE_SUPER_ADMIN = 4;
+  USER_ROLE_PARTNER_ADMIN = 5;
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string full_name = 3;
+  UserRole role = 4;
+  string avatar_url = 5;
+  string enterprise_seat_key = 6;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  string access_token = 1;
+  User user = 2;
+}
+
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+  string full_name = 3;
+  UserRole role = 4;
+}
+
+message RegisterResponse {
+  User user = 1;
+}
+
+message GetUserProfileRequest {
+  string user_id = 1;
+}
+
+message GetUserProfileResponse {
+  User user = 1;
+}
+
+message AssignEnterpriseSeatRequest {
+  string user_id = 1;
+  string enterprise_seat_key = 2;
+}
+
+message AssignEnterpriseSeatResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+service IdentityService {
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse);
+  rpc AssignEnterpriseSeat(AssignEnterpriseSeatRequest) returns (AssignEnterpriseSeatResponse);
+}

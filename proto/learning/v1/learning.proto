@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package learning.v1;
+
+enum DeadlineStatus {
+  DEADLINE_STATUS_UNSPECIFIED = 0;
+  DEADLINE_STATUS_ON_TRACK = 1;
+  DEADLINE_STATUS_OVERDUE = 2;
+  DEADLINE_STATUS_COMPLETED = 3;
+}
+
+message WeeklyDeadline {
+  int32 week_number = 1;
+  string due_date = 2;
+  DeadlineStatus status = 3;
+}
+
+message LearningProgress {
+  string user_id = 1;
+  string course_id = 2;
+  float overall_progress_percent = 3;
+  repeated string completed_item_ids = 4;
+  repeated WeeklyDeadline weekly_deadlines = 5;
+}
+
+message PersonalNote {
+  string id = 1;
+  string user_id = 2;
+  string course_id = 3;
+  string item_id = 4;
+  string highlighted_text = 5;
+  string note_comment = 6;
+  string created_at = 7;
+}
+
+message GetProgressRequest {
+  string user_id = 1;
+  string course_id = 2;
+}
+
+message GetProgressResponse {
+  LearningProgress progress = 1;
+}
+
+message ResetDeadlinesRequest {
+  string user_id = 1;
+  string course_id = 2;
+}
+
+message ResetDeadlinesResponse {
+  bool success = 1;
+  LearningProgress updated_progress = 2;
+}
+
+message SavePersonalNoteRequest {
+  string user_id = 1;
+  string course_id = 2;
+  string item_id = 3;
+  string highlighted_text = 4;
+  string note_comment = 5;
+}
+
+message SavePersonalNoteResponse {
+  PersonalNote note = 1;
+}
+
+message ListPersonalNotesRequest {
+  string user_id = 1;
+  string course_id = 2;
+}
+
+message ListPersonalNotesResponse {
+  repeated PersonalNote notes = 1;
+}
+
+service LearningService {
+  rpc GetProgress(GetProgressRequest) returns (GetProgressResponse);
+  rpc ResetDeadlines(ResetDeadlinesRequest) returns (ResetDeadlinesResponse);
+  rpc SavePersonalNote(SavePersonalNoteRequest) returns (SavePersonalNoteResponse);
+  rpc ListPersonalNotes(ListPersonalNotesRequest) returns (ListPersonalNotesResponse);
+}

@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package certificate.v1;
+
+message FinancialAidApplication {
+  string id = 1;
+  string user_id = 2;
+  string course_id = 3;
+  string essay_150_words = 4;
+  string status = 5; // PENDING, APPROVED, REJECTED
+  int32 review_deadline_days_left = 6;
+}
+
+message ApplyFinancialAidRequest {
+  string user_id = 1;
+  string course_id = 2;
+  string essay_150_words = 3;
+}
+
+message ApplyFinancialAidResponse {
+  FinancialAidApplication application = 1;
+}
+
+message GetFinancialAidStatusRequest {
+  string user_id = 1;
+  string course_id = 2;
+}
+
+message GetFinancialAidStatusResponse {
+  FinancialAidApplication application = 1;
+}
+
+message VerifiedCertificate {
+  string certificate_id = 1;
+  string user_id = 2;
+  string learner_name = 3;
+  string course_title = 4;
+  string partner_name = 5;
+  string partner_logo_url = 6;
+  string issue_date = 7;
+  string verification_url = 8;
+  string qr_code_url = 9;
+  string open_badges_json_ld = 10;
+}
+
+message GetVerifiedCertificateRequest {
+  string user_id = 1;
+  string course_id = 2;
+}
+
+message GetVerifiedCertificateResponse {
+  VerifiedCertificate certificate = 1;
+}
+
+message VerifyCertificatePublicRequest {
+  string certificate_id = 1;
+}
+
+message VerifyCertificatePublicResponse {
+  bool is_valid = 1;
+  VerifiedCertificate certificate = 2;
+}
+
+service CertificateService {
+  rpc ApplyFinancialAid(ApplyFinancialAidRequest) returns (ApplyFinancialAidResponse);
+  rpc GetFinancialAidStatus(GetFinancialAidStatusRequest) returns (GetFinancialAidStatusResponse);
+  rpc GetVerifiedCertificate(GetVerifiedCertificateRequest) returns (GetVerifiedCertificateResponse);
+  rpc VerifyCertificatePublic(VerifyCertificatePublicRequest) returns (VerifyCertificatePublicResponse);
+}

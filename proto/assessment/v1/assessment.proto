@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package assessment.v1;
+
+message SubmitHonorCodeRequest {
+  string user_id = 1;
+  string item_id = 2;
+  bool is_agreed = 3;
+}
+
+message SubmitHonorCodeResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message SubmitGradedQuizRequest {
+  string user_id = 1;
+  string item_id = 2;
+  repeated int32 selected_option_indexes = 3;
+}
+
+message QuizResult {
+  float score_percent = 1;
+  bool passed = 2;
+  int32 attempts_left = 3;
+  int32 cooldown_seconds_left = 4;
+  repeated string answer_explanations = 5;
+}
+
+message SubmitGradedQuizResponse {
+  QuizResult result = 1;
+}
+
+message SubmitAutoGradedLabRequest {
+  string user_id = 1;
+  string item_id = 2;
+  string source_code = 3;
+  string language = 4;
+}
+
+message AutoGradedLabResult {
+  float score_percent = 1;
+  bool passed = 2;
+  int32 total_test_cases = 3;
+  int32 passed_test_cases = 4;
+  string test_logs = 5;
+}
+
+message SubmitAutoGradedLabResponse {
+  AutoGradedLabResult result = 1;
+}
+
+message SubmitPeerAssignmentRequest {
+  string user_id = 1;
+  string item_id = 2;
+  string submission_url = 3;
+  string text_content = 4;
+}
+
+message SubmitPeerAssignmentResponse {
+  string submission_id = 1;
+  string status_message = 2;
+}
+
+message GetPeerReviewsToGradeRequest {
+  string user_id = 1;
+  string item_id = 2;
+}
+
+message RubricCriteria {
+  string criteria_id = 1;
+  string title = 2;
+  float max_score = 3;
+  float score_given = 4;
+  string feedback = 5;
+}
+
+message PeerReviewItemToGrade {
+  string review_id = 1;
+  string submission_url = 2;
+  string text_content = 3;
+  repeated RubricCriteria rubric_criteria = 4;
+}
+
+message GetPeerReviewsToGradeResponse {
+  repeated PeerReviewItemToGrade items_to_grade = 1;
+}
+
+message SubmitPeerReviewGradeRequest {
+  string review_id = 1;
+  string reviewer_user_id = 2;
+  repeated RubricCriteria graded_criteria = 3;
+}
+
+message SubmitPeerReviewGradeResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message SubmitGradeAppealRequest {
+  string user_id = 1;
+  string submission_id = 2;
+  string appeal_reason = 3;
+}
+
+message SubmitGradeAppealResponse {
+  bool success = 1;
+  string appeal_status = 2;
+}
+
+service AssessmentService {
+  rpc SubmitHonorCode(SubmitHonorCodeRequest) returns (SubmitHonorCodeResponse);
+  rpc SubmitGradedQuiz(SubmitGradedQuizRequest) returns (SubmitGradedQuizResponse);
+  rpc SubmitAutoGradedLab(SubmitAutoGradedLabRequest) returns (SubmitAutoGradedLabResponse);
+  rpc SubmitPeerAssignment(SubmitPeerAssignmentRequest) returns (SubmitPeerAssignmentResponse);
+  rpc GetPeerReviewsToGrade(GetPeerReviewsToGradeRequest) returns (GetPeerReviewsToGradeResponse);
+  rpc SubmitPeerReviewGrade(SubmitPeerReviewGradeRequest) returns (SubmitPeerReviewGradeResponse);
+  rpc SubmitGradeAppeal(SubmitGradeAppealRequest) returns (SubmitGradeAppealResponse);
+}

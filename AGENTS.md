@@ -26,6 +26,7 @@ This file provides rules, architectural conventions, and workspace instructions 
 - **Never modify code inside generated folders manually.** Always update the `.proto` files and run the generation scripts.
 - The `src/gen/` folders are ignored in Git.
 - We use **Connect-ES v2.0** on the frontend (utilizing `protoc-gen-es` only, where both messages and service schemas are generated directly in `_pb.ts` files without a separate `_connect.ts` stub).
+- **Development Stage & Backward Compatibility**: Since the project is currently in active initial development, API definitions and code structures can be refactored or modified freely without preserving backward compatibility.
 
 ---
 

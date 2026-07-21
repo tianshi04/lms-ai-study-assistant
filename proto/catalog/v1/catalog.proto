@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package catalog.v1;
+
+enum ItemType {
+  ITEM_TYPE_UNSPECIFIED = 0;
+  ITEM_TYPE_VIDEO = 1;
+  ITEM_TYPE_READING = 2;
+  ITEM_TYPE_PRACTICE_QUIZ = 3;
+  ITEM_TYPE_GRADED_QUIZ = 4;
+  ITEM_TYPE_AUTO_GRADED_LAB = 5;
+  ITEM_TYPE_PEER_REVIEW = 6;
+}
+
+message InteractiveTranscript {
+  int32 timestamp_seconds = 1;
+  string text = 2;
+}
+
+message InVideoQuiz {
+  int32 timestamp_seconds = 1;
+  string question = 2;
+  repeated string options = 3;
+  int32 correct_option_index = 4;
+  string explanation = 5;
+}
+
+message LearningItem {
+  string id = 1;
+  string title = 2;
+  ItemType type = 3;
+  int32 estimated_minutes = 4;
+  string video_url = 5;
+  string vtt_subtitle_url = 6;
+  repeated InteractiveTranscript interactive_transcripts = 7;
+  repeated InVideoQuiz in_video_quizzes = 8;
+  string reading_markdown = 9;
+}
+
+message Lesson {
+  string id = 1;
+  string title = 2;
+  int32 estimated_minutes = 3;
+  repeated LearningItem items = 4;
+}
+
+message WeekModule {
+  string id = 1;
+  int32 week_number = 2;
+  string title = 3;
+  string summary = 4;
+  repeated Lesson lessons = 5;
+}
+
+message Course {
+  string id = 1;
+  string title = 2;
+  string slug = 3;
+  string description = 4;
+  string partner_name = 5;
+  string partner_logo_url = 6;
+  repeated string instructor_names = 7;
+  repeated WeekModule week_modules = 8;
+}
+
+message Specialization {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string partner_name = 4;
+  string partner_logo_url = 5;
+  repeated string course_ids = 6;
+}
+
+message GetSpecializationRequest {
+  string specialization_id = 1;
+}
+
+message GetSpecializationResponse {
+  Specialization specialization = 1;
+  repeated Course courses = 2;
+}
+
+message ListCoursesRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+}
+
+message ListCoursesResponse {
+  repeated Course courses = 1;
+  string next_page_token = 2;
+}
+
+message GetCourseDetailRequest {
+  string course_id = 1;
+}
+
+message GetCourseDetailResponse {
+  Course course = 1;
+}
+
+message GetLessonDetailRequest {
+  string course_id = 1;
+  string lesson_id = 2;
+}
+
+message GetLessonDetailResponse {
+  Lesson lesson = 1;
+}
+
+service CatalogService {
+  rpc GetSpecialization(GetSpecializationRequest) returns (GetSpecializationResponse);
+  rpc ListCourses(ListCoursesRequest) returns (ListCoursesResponse);
+  rpc GetCourseDetail(GetCourseDetailRequest) returns (GetCourseDetailResponse);
+  rpc GetLessonDetail(GetLessonDetailRequest) returns (GetLessonDetailResponse);
+}

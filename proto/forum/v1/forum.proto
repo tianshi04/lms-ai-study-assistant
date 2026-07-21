@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package forum.v1;
+
+message ForumReply {
+  string id = 1;
+  string thread_id = 2;
+  string author_name = 3;
+  string author_role = 4;
+  string content = 5;
+  bool is_staff_answer = 6;
+  int32 upvote_count = 7;
+  string created_at = 8;
+}
+
+message ForumThread {
+  string id = 1;
+  string course_id = 2;
+  string item_id = 3;
+  string title = 4;
+  string author_name = 5;
+  string author_role = 6;
+  string created_at = 7;
+  int32 upvote_count = 8;
+  bool is_staff_pinned = 9;
+  repeated ForumReply replies = 10;
+}
+
+message ListThreadsRequest {
+  string course_id = 1;
+  string item_id = 2;
+}
+
+message ListThreadsResponse {
+  repeated ForumThread threads = 1;
+}
+
+message CreateThreadRequest {
+  string course_id = 1;
+  string item_id = 2;
+  string title = 3;
+  string content = 4;
+  string author_user_id = 5;
+}
+
+message CreateThreadResponse {
+  ForumThread thread = 1;
+}
+
+message PostReplyRequest {
+  string thread_id = 1;
+  string content = 2;
+  string author_user_id = 3;
+}
+
+message PostReplyResponse {
+  ForumReply reply = 1;
+}
+
+message VotePostRequest {
+  string post_id = 1;
+  bool is_upvote = 2;
+}
+
+message VotePostResponse {
+  int32 updated_upvote_count = 1;
+}
+
+message PinStaffAnswerRequest {
+  string reply_id = 1;
+  string ta_user_id = 2;
+}
+
+message PinStaffAnswerResponse {
+  bool success = 1;
+}
+
+service ForumService {
+  rpc ListThreads(ListThreadsRequest) returns (ListThreadsResponse);
+  rpc CreateThread(CreateThreadRequest) returns (CreateThreadResponse);
+  rpc PostReply(PostReplyRequest) returns (PostReplyResponse);
+  rpc VotePost(VotePostRequest) returns (VotePostResponse);
+  rpc PinStaffAnswer(PinStaffAnswerRequest) returns (PinStaffAnswerResponse);
+}
