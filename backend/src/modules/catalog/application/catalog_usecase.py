@@ -1,37 +1,56 @@
+from typing import Any, Callable
+
 from src.modules.catalog.domain.entities import Course, Lesson, Specialization
+from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.shared.infrastructure.database import async_session_scope
 
 
 class CatalogUseCase:
-    """Application Use Case coordinator for Catalog domain backed by SQLAlchemy Database Repositories."""
+    """Application Use Case coordinator for Catalog domain using Dependency Inversion (ICatalogRepository interface)."""
+
+    def __init__(
+        self,
+        repo_factory: Callable[[Any], ICatalogRepository] | None = None,
+    ) -> None:
+        self.repo_factory = repo_factory or (
+            lambda session: SQLAlchemyCatalogRepository(session)
+        )
 
     async def list_courses(
         self, page_size: int = 10, page_token: str = ""
     ) -> tuple[list[Course], str]:
         async with async_session_scope() as session:
-            repo = SQLAlchemyCatalogRepository(session)
-            await repo.seed_if_empty()
-            return await repo.list_courses()
+            repo = self.repo_factory(session)
+            seed_fn = getattr(repo, "seed_if_empty", None)
+            if callable(seed_fn):
+                await seed_fn()
+            return await repo.list_courses(page_size, page_token)
 
     async def get_course_detail(self, course_id: str) -> Course | None:
         async with async_session_scope() as session:
-            repo = SQLAlchemyCatalogRepository(session)
-            await repo.seed_if_empty()
+            repo = self.repo_factory(session)
+            seed_fn = getattr(repo, "seed_if_empty", None)
+            if callable(seed_fn):
+                await seed_fn()
             return await repo.get_course_detail(course_id)
 
     async def get_lesson_detail(
         self, course_id: str, lesson_id: str
     ) -> Lesson | None:
         async with async_session_scope() as session:
-            repo = SQLAlchemyCatalogRepository(session)
-            await repo.seed_if_empty()
+            repo = self.repo_factory(session)
+            seed_fn = getattr(repo, "seed_if_empty", None)
+            if callable(seed_fn):
+                await seed_fn()
             return await repo.get_lesson_detail(course_id, lesson_id)
 
     async def get_specialization(
         self, specialization_id: str
     ) -> tuple[Specialization | None, list[Course]]:
         async with async_session_scope() as session:
-            repo = SQLAlchemyCatalogRepository(session)
-            await repo.seed_if_empty()
+            repo = self.repo_factory(session)
+            seed_fn = getattr(repo, "seed_if_empty", None)
+            if callable(seed_fn):
+                await seed_fn()
             return await repo.get_specialization(specialization_id)

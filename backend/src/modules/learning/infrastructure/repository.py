@@ -11,6 +11,7 @@ from src.modules.learning.domain.entities import (
     PersonalNote,
     WeeklyDeadline,
 )
+from src.modules.learning.domain.repository import ILearningRepository
 from src.modules.learning.infrastructure.models import (
     LearningProgressModel,
     PersonalNoteModel,
@@ -48,8 +49,8 @@ def _model_to_domain_note(model: PersonalNoteModel) -> PersonalNote:
     )
 
 
-class SQLAlchemyLearningRepository:
-    """Async SQLAlchemy Database Repository for Learning Bounded Context."""
+class SQLAlchemyLearningRepository(ILearningRepository):
+    """Async SQLAlchemy Database Repository implementing ILearningRepository."""
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
@@ -70,7 +71,6 @@ class SQLAlchemyLearningRepository:
         model = res.scalar_one_or_none()
 
         if not model:
-            # Create default progress with an overdue deadline to demonstrate "Reset My Deadlines"
             past_date = (datetime.now(timezone.utc) - timedelta(days=3)).strftime("%Y-%m-%d")
             future_date = (datetime.now(timezone.utc) + timedelta(days=7)).strftime("%Y-%m-%d")
 

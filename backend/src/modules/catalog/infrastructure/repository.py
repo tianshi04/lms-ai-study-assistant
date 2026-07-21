@@ -12,6 +12,7 @@ from src.modules.catalog.domain.entities import (
     Specialization,
     WeekModule,
 )
+from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.models import (
     CourseModel,
     InVideoQuizModel,
@@ -102,8 +103,8 @@ def _model_to_domain_specialization(
     )
 
 
-class SQLAlchemyCatalogRepository:
-    """Async SQLAlchemy Database Repository for Catalog Bounded Context."""
+class SQLAlchemyCatalogRepository(ICatalogRepository):
+    """Async SQLAlchemy Database Repository implementing ICatalogRepository."""
 
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
@@ -115,7 +116,6 @@ class SQLAlchemyCatalogRepository:
         if res.scalar_one_or_none() is not None:
             return
 
-        # Create Course 1
         course1 = CourseModel(
             id="course-python-ai",
             title="Supervised Machine Learning: Regression and Classification",
@@ -218,7 +218,9 @@ class SQLAlchemyCatalogRepository:
         self.session.add_all([course1, course2, spec])
         await self.session.commit()
 
-    async def list_courses(self) -> tuple[list[Course], str]:
+    async def list_courses(
+        self, page_size: int = 10, page_token: str = ""
+    ) -> tuple[list[Course], str]:
         stmt = select(CourseModel).options(
             selectinload(CourseModel.week_modules)
             .selectinload(WeekModuleModel.lessons)
