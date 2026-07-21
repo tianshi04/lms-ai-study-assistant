@@ -6,6 +6,10 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course, type LearningItem, type InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { LearningService, type LearningProgress, type PersonalNote } from "@/gen/learning/v1/learning_pb";
+import { VideoPlayer } from "@/components/player/VideoPlayer";
+import { TranscriptPanel } from "@/components/player/TranscriptPanel";
+import { NotesPanel } from "@/components/player/NotesPanel";
+import { DeadlinesPanel } from "@/components/player/DeadlinesPanel";
 
 const DEMO_USER_ID = "user-learner-demo";
 
@@ -248,101 +252,20 @@ export default function CoursePlayerPage() {
         <main className="flex-1 flex flex-col bg-slate-950 overflow-hidden relative">
           {/* Top Video / Reading Media Viewer */}
           <div className="flex-1 bg-black flex items-center justify-center relative overflow-hidden">
-            {activeItem?.type === 1 && activeItem.videoUrl ? (
-              <div className="w-full h-full relative flex items-center justify-center">
-                <video
-                  ref={videoRef}
-                  src={activeItem.videoUrl}
-                  controls
-                  onTimeUpdate={handleTimeUpdate}
-                  className="max-h-full max-w-full object-contain"
-                />
-
-                {/* In-Video Quiz Overlay Interruption Modal */}
-                {activeQuiz && (
-                  <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-md z-30 flex items-center justify-center p-6">
-                    <div className="bg-slate-900 border border-slate-700 max-w-lg w-full p-6 rounded-2xl shadow-2xl space-y-5 animate-in fade-in zoom-in-95">
-                      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                        <span className="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded border border-amber-500/20">
-                          ⚡ In-Video Quiz Interruption
-                        </span>
-                        <span className="text-xs font-mono text-slate-400">Timestamp: {activeQuiz.timestampSeconds}s</span>
-                      </div>
-
-                      <h3 className="font-bold text-lg text-white">{activeQuiz.question}</h3>
-
-                      <div className="space-y-2">
-                        {activeQuiz.options.map((opt, idx) => (
-                          <button
-                            key={idx}
-                            disabled={quizSubmitted}
-                            onClick={() => setSelectedOption(idx)}
-                            className={`w-full text-left p-3 rounded-xl text-sm transition-all border ${
-                              selectedOption === idx
-                                ? "bg-blue-600/20 border-blue-500 text-white font-medium"
-                                : "bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-800"
-                            }`}
-                          >
-                            <span className="font-mono text-xs font-bold mr-2 text-slate-400">
-                              {String.fromCharCode(65 + idx)}.
-                            </span>
-                            {opt}
-                          </button>
-                        ))}
-                      </div>
-
-                      {!quizSubmitted ? (
-                        <button
-                          disabled={selectedOption === null}
-                          onClick={handleQuizSubmit}
-                          className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-sm transition-all"
-                        >
-                          Nộp Trả Lời
-                        </button>
-                      ) : (
-                        <div className="space-y-4 pt-2 border-t border-slate-800">
-                          <div
-                            className={`p-3.5 rounded-xl text-sm ${
-                              selectedOption === activeQuiz.correctOptionIndex
-                                ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300"
-                                : "bg-red-500/10 border border-red-500/30 text-red-300"
-                            }`}
-                          >
-                            <p className="font-bold mb-1">
-                              {selectedOption === activeQuiz.correctOptionIndex ? "✅ Chính xác!" : "❌ Chưa chính xác!"}
-                            </p>
-                            <p className="text-xs opacity-90">{activeQuiz.explanation}</p>
-                          </div>
-
-                          <button
-                            onClick={handleContinueVideo}
-                            className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-all"
-                          >
-                            Tiếp tục xem Video ▶
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : activeItem?.type === 2 ? (
-              <div className="w-full h-full overflow-y-auto p-8 bg-slate-900 text-slate-200">
-                <div className="max-w-3xl mx-auto prose prose-invert">
-                  <h2 className="text-2xl font-bold text-white mb-6">{activeItem.title}</h2>
-                  <div className="whitespace-pre-line text-slate-300 leading-relaxed text-sm">
-                    {activeItem.readingMarkdown}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center text-slate-500 p-8">
-                Chọn bài học từ cột danh sách bên trái để bắt đầu.
-              </div>
-            )}
+            <VideoPlayer
+              videoRef={videoRef}
+              activeItem={activeItem}
+              activeQuiz={activeQuiz}
+              selectedOption={selectedOption}
+              quizSubmitted={quizSubmitted}
+              onTimeUpdate={handleTimeUpdate}
+              onSelectOption={setSelectedOption}
+              onSubmitQuiz={handleQuizSubmit}
+              onContinueVideo={handleContinueVideo}
+            />
           </div>
 
-          {/* Bottom Tabs Section: Interactive Transcript / Personal Notes / Deadlines */}
+          {/* Bottom Tabs Section */}
           <div className="h-64 bg-slate-900 border-t border-slate-800 flex flex-col flex-shrink-0">
             {/* Tab Header Bar */}
             <div className="h-11 border-b border-slate-800 px-6 flex items-center justify-between bg-slate-900/90">
@@ -383,132 +306,30 @@ export default function CoursePlayerPage() {
             {/* Tab Body Content */}
             <div className="flex-1 overflow-y-auto p-4 bg-slate-950">
               {activeTab === "transcript" && (
-                <div className="space-y-2 max-w-4xl mx-auto">
-                  {!activeItem?.interactiveTranscripts || activeItem.interactiveTranscripts.length === 0 ? (
-                    <p className="text-xs text-slate-500 text-center py-6">Không có phụ đề tương tác cho bài học này.</p>
-                  ) : (
-                    activeItem.interactiveTranscripts.map((t, i) => {
-                      const isActive =
-                        currentTime >= t.timestampSeconds &&
-                        (i === activeItem.interactiveTranscripts.length - 1 ||
-                          currentTime < activeItem.interactiveTranscripts[i + 1].timestampSeconds);
-
-                      return (
-                        <div
-                          key={i}
-                          onClick={() => handleSeekVideo(t.timestampSeconds)}
-                          className={`p-2.5 rounded-lg text-xs cursor-pointer transition-all flex items-start gap-4 ${
-                            isActive
-                              ? "bg-blue-600/20 text-blue-200 font-medium border-l-4 border-blue-500 pl-3"
-                              : "hover:bg-slate-900 text-slate-400"
-                          }`}
-                        >
-                          <span className="font-mono text-blue-400 flex-shrink-0 font-bold">
-                            {Math.floor(t.timestampSeconds / 60)}:
-                            {(t.timestampSeconds % 60).toString().padStart(2, "0")}
-                          </span>
-                          <span className="leading-relaxed">{t.text}</span>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+                <TranscriptPanel
+                  activeItem={activeItem}
+                  currentTime={currentTime}
+                  onSeekVideo={handleSeekVideo}
+                />
               )}
 
               {activeTab === "notes" && (
-                <div className="max-w-4xl mx-auto space-y-6">
-                  {/* Create Note Form */}
-                  <form onSubmit={handleSaveNote} className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3">
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">Tạo ghi chú mới</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        placeholder="Đoạn văn bản bôi đen/cần ghi chú..."
-                        value={highlightText}
-                        onChange={(e) => setHighlightText(e.target.value)}
-                        className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Lời nhắn/nhận xét cá nhân..."
-                        value={noteComment}
-                        onChange={(e) => setNoteComment(e.target.value)}
-                        className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={savingNote || !highlightText.trim()}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all"
-                    >
-                      {savingNote ? "Đang lưu..." : "Lưu Ghi Chú"}
-                    </button>
-                  </form>
-
-                  {/* List Saved Notes */}
-                  <div className="space-y-3">
-                    {notes.map((note) => (
-                      <div key={note.id} className="bg-slate-900 border border-slate-800 p-3.5 rounded-xl text-xs space-y-1">
-                        <div className="flex items-center justify-between text-slate-500">
-                          <span className="font-mono text-[10px]">Note ID: {note.id}</span>
-                          <span>{new Date(note.createdAt).toLocaleDateString()}</span>
-                        </div>
-                        <p className="text-blue-300 font-semibold italic">&quot;{note.highlightedText}&quot;</p>
-                        {note.noteComment && <p className="text-slate-300">{note.noteComment}</p>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <NotesPanel
+                  notes={notes}
+                  highlightText={highlightText}
+                  noteComment={noteComment}
+                  savingNote={savingNote}
+                  onHighlightTextChange={setHighlightText}
+                  onNoteCommentChange={setNoteComment}
+                  onSaveNote={handleSaveNote}
+                />
               )}
 
               {activeTab === "deadlines" && (
-                <div className="max-w-3xl mx-auto space-y-6">
-                  {progress && (
-                    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-bold text-sm text-white">Lịch Nộp Bài Hàng Tuần (Suggested Deadlines)</h4>
-                          <p className="text-xs text-slate-400">Duy trì tiến độ học tập để đảm bảo hoàn thành khóa học đúng hạn.</p>
-                        </div>
-                        {progress.weeklyDeadlines.some((d) => d.status === 2) && (
-                          <button
-                            onClick={handleResetDeadlines}
-                            className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-bold rounded-xl shadow-lg transition-all border border-amber-400/30 flex items-center gap-2 animate-pulse"
-                          >
-                            <span>🔄</span> Reset My Deadlines
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
-                        {progress.weeklyDeadlines.map((d) => (
-                          <div
-                            key={d.weekNumber}
-                            className={`p-3 rounded-xl border text-xs flex items-center justify-between ${
-                              d.status === 2
-                                ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
-                                : "bg-slate-950 border-slate-800 text-slate-300"
-                            }`}
-                          >
-                            <div>
-                              <span className="font-bold block">Tuần {d.weekNumber}</span>
-                              <span className="text-[10px] opacity-80">Hạn nộp: {d.dueDate}</span>
-                            </div>
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                d.status === 2
-                                  ? "bg-amber-500 text-slate-950"
-                                  : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                              }`}
-                            >
-                              {d.status === 2 ? "OVERDUE (Quá hạn)" : "ON TRACK"}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <DeadlinesPanel
+                  progress={progress}
+                  onResetDeadlines={handleResetDeadlines}
+                />
               )}
             </div>
           </div>
