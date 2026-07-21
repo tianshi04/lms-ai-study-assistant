@@ -1,4 +1,4 @@
-.PHONY: help gen dev test format infra infra-down infra-logs
+.PHONY: help gen dev test format seed infra infra-down infra-logs
 
 help:
 	@echo "Available commands:"
@@ -7,6 +7,7 @@ help:
 	@echo "  make infra-logs - View infrastructure logs"
 	@echo "  make gen        - Generate protobuf and connect stubs"
 	@echo "  make dev        - Start local dev server"
+	@echo "  make seed       - Seed database with initial sample courses"
 	@echo "  make format     - Format code and fix auto-fixable lint issues"
 	@echo "  make test       - Run test suite (pytest + ruff + ty)"
 
@@ -24,6 +25,9 @@ gen:
 
 dev:
 	uv run uvicorn main:app --port 8000 --reload
+
+seed:
+	uv run python -m src.seed
 
 format:
 	uv run ruff format .
