@@ -35,6 +35,10 @@ jobs:
           python-version: "3.13"
           enable-cache: true
 
+      - name: Start Docker Compose Infrastructure
+        run: make infra
+        working-directory: backend
+
       - name: Generate Protobuf / ConnectRPC stubs
         run: make gen
         working-directory: backend
