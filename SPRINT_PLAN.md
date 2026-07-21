@@ -20,19 +20,19 @@
 
 ## II. MA TRẬN PHÂN HỆ CÔNG VIỆC (FEATURE TRACK MATRIX)
 
-| Phân hệ (Track) | Phân hệ Phụ trách (Bounded Context) | Mã nguồn Backend (`backend/src/modules/`) | Route Frontend (`frontend/src/app/`) |
-| :---: | :--- | :--- | :--- |
-| 🟢 **TRACK A** | **Catalog, Player & Learning Progress** | `modules/catalog/`<br>`modules/learning/` | `/courses`<br>`/learn/[courseId]` |
-| 🔵 **TRACK B** | **Assessments, Auto-Grader & Peer Review** | `modules/assessment/` | `/assessments`<br>`/peer-review` |
-| 🟣 **TRACK C** | **Coursera AI Coach (RAG) & Discussion Forum** | `modules/ai_coach/`<br>`modules/forum/` | `/forum`<br>Widget AI Coach góc phải bài học |
-| 🔴 **TRACK D** | **Identity, Financial Aid & Verified Certificate** | `modules/identity/`<br>`modules/certificate/` | `/auth`<br>`/financial-aid`<br>`/verify/[certId]` |
+| Phân hệ (Track) | Phân hệ Phụ trách (Bounded Context) | Mã nguồn Backend (`backend/src/modules/`) | Route Frontend (`frontend/src/app/`) | Trạng thái |
+| :---: | :--- | :--- | :--- | :---: |
+| 🟢 **TRACK A** | **Catalog, Player & Learning Progress** | `modules/catalog/`<br>`modules/learning/` | `/courses`<br>`/learn/[courseId]` | ✅ **100% HOÀN THÀNH** |
+| 🔵 **TRACK B** | **Assessments, Auto-Grader & Peer Review** | `modules/assessment/` | `/assessments`<br>`/peer-review` | ⏳ Tiếp theo |
+| 🟣 **TRACK C** | **Coursera AI Coach (RAG) & Discussion Forum** | `modules/ai_coach/`<br>`modules/forum/` | `/forum`<br>Widget AI Coach góc phải bài học | ⏳ Sắp thực hiện |
+| 🔴 **TRACK D** | **Identity, Financial Aid & Verified Certificate** | `modules/identity/`<br>`modules/certificate/` | `/auth`<br>`/financial-aid`<br>`/verify/[certId]` | ⏳ Sắp thực hiện |
 
 ---
 
-## III. LỊCH TRÌNH THỰC THI 5 NGÀY THỰC THI + 2 NGÀY BACKUP DỰ PHÒNG
+## III. LỊCH TRÌNH THỰC THI & TIẾN ĐỘ THỰC TẾ
 
 ```
-[NGÀY 1: SPRINT 0 COMPLETED] ➔ [NGÀY 2-3: CORE MVP] ➔ [NGÀY 4-5: ADVANCED & MERGE] ➔ [NGÀY 6-7: BUFFER BACKUP & UAT]
+[NGÀY 1: SPRINT 0 COMPLETED] ➔ [TRACK A COMPLETED 100%] ➔ [NGÀY 2-3: TRACK B & D] ➔ [NGÀY 4-5: TRACK C & MERGE]
 ```
 
 ### 📍 NGÀY 1 (Thứ 2) - SPRINT 0: INFRASTRUCTURE & API CONTRACTS (ĐÃ HOÀN THÀNH 100% 🚀)
@@ -41,28 +41,22 @@
 
 ---
 
-### 📍 NGÀY 2 & 3 (Thứ 3 & 4) - SPRINT 1: NÉN PHÂN HỆ CỐT LÕI (Phát triển song song)
-- 🟢 **TRACK A (Catalog & Player):** Trang danh sách/chi tiết khóa học + Video Player kèm Phụ đề cuộn (Interactive Transcript) & In-Video Quiz ngắt ngang video.
-- 🔵 **TRACK B (Assessments & Auto-Grader):** Graded Quiz Engine (điểm Pass 80%, Cooldown 8h), Sandbox Auto-Graded Lab chạy Test Cases bài tập lập trình & Cam kết Honor Code.
-- 🟣 **TRACK C (AI Coach & Vector RAG):** Vector RAG Pipeline (Vector hóa Video Transcript/Bài đọc vào PostgreSQL `pgvector`) & Khung chat Coursera AI Coach góc phải bài học.
-- 🔴 **TRACK D (Identity & Financial Aid):** Luồng Đăng nhập/Đăng ký 5 vai trò + Nộp đơn xin Hỗ trợ tài chính (Financial Aid 150 từ, đếm ngược 15 ngày auto-approve) & Mã Suất học Doanh nghiệp.
+### 📍 NGÀY 2 & 3 - TRACK A: CATALOG, PLAYER & LEARNING PROGRESS (ĐÃ HOÀN THÀNH 100% 🎉)
+- ✅ **Trang Catalog & Chi tiết:** Đã xây dựng `/courses` & `/courses/[courseId]` lấy 100% dữ liệu động từ PostgreSQL 17.
+- ✅ **Course Player & Multi-Theme:** Video Player kèm Phụ đề cuộn (Interactive Transcript) & In-Video Quiz ngắt ngang video; thích ứng Light/Dark Mode.
+- ✅ **Dynamic Progress Tracking:** Đã triển khai RPC `MarkItemComplete`, tính `%` hoàn thành bài học realtime, tích xanh ✔️ sidebar và tự động hoàn thành video khi xem $\ge 80\%$.
+- ✅ **Flexible Deadlines & Personal Notes:** RPC `ResetDeadlines` & lưu Ghi chú cá nhân (Highlight Notes).
+- ✅ **DDD Clean Architecture & Seeding:** Tách biệt Seeding thành script `backend/src/seed.py` (hỗ trợ Upsert & Clean Reset) và tích hợp tự động nạp dữ liệu khi DB rỗng.
 
 ---
 
-### 📍 NGÀY 4 & 5 (Thứ 5 & 6) - SPRINT 2: NÉN TÍNH NĂNG NÂNG CAO & MERGE CODE
-- 🟢 **TRACK A (Flexible Deadlines & Notes):** Hạn nộp linh hoạt (Flexible Schedule - **"Reset my deadlines"**) & Lưu Ghi chú cá nhân (Highlight Notes).
-- 🔵 **TRACK B (Peer Review Sub-system):** Peer-Graded Assignment (Tạo Rubric, Chấm chéo 3 bạn học, Outlier Detection >30% & Đơn khiếu nại điểm Grade Appeal).
-- 🟣 **TRACK C (Discussion Forum & Anti-Cheat):** Diễn đàn thảo luận bám sát bài học (Item-level Forum, Upvote/Downvote, Staff Answer Pinning) & Anti-Cheat Guardrails cho AI Coach.
-- 🔴 **TRACK D (Verified Certificate & Admin):** Trang xác thực chứng chỉ công khai (`/verify/CERT-xxx`), nhúng OpenBadges 2.0 chia sẻ LinkedIn & Admin Dashboard.
-- 🏁 **TỐI NGÀY 5 (CHÓT CODEBASE):** Tạo Pull Request, Merge các nhánh vào `main`, chạy `make test` ở Backend và `npm run build` ở Frontend.
+### 📍 BƯỚC TIẾP THEO: TRACK B, C & D
+- 🔵 **TRACK B (Assessments & Auto-Grader):** Graded Quiz Engine (điểm Pass 80%, Cooldown 8h), Sandbox Auto-Graded Lab bài tập lập trình & Peer Review.
+- 🟣 **TRACK C (AI Coach & Vector RAG):** Vector RAG Pipeline (Vector hóa Video Transcript/Bài đọc vào PostgreSQL `pgvector`) & Khung chat Coursera AI Coach.
+- 🔴 **TRACK D (Identity, Financial Aid & Certificate):** Nộp đơn xin Hỗ trợ tài chính (Financial Aid 150 từ), Xác thực chứng chỉ công khai (`/verify/[certId]`).
 
 ---
 
-### 🛡️ NGÀY 6 (Thứ 7) - BACKUP / BUFFER DAY 1 (DỰ PHÒNG RỦI RO & CHỈNH SỬA BUG)
-- Dành trọn 1 ngày để xử lý các lỗi phát sinh (Edge Cases), sửa các lỗi tích hợp API giữa các phân hệ, tối ưu hóa giao diện UI/UX và tốc độ truy vấn `pgvector`.
-
----
-
-### 🛡️ NGÀY 7 (Chủ Nhật) - BACKUP / BUFFER DAY 2 & FINALIZE HANDOVER
+### 🛡️ NGÀY 6 & 7 - BACKUP / BUFFER & FINALIZE HANDOVER
 - Chạy 5 kịch bản kiểm thử UAT thực tế theo tệp `docs/05_kich_ban_kiem_thu_uat.md`.
 - Tổng duyệt sản phẩm và hoàn tất bàn giao.
