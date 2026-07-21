@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { createClient } from "@connectrpc/connect";
 import { GreetService } from "@/gen/greet/v1/greet_pb";
 
 // Create transport and client
 const transport = createConnectTransport({
-  baseUrl: "http://localhost:8000",
+  baseUrl: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
 });
 
 const client = createClient(GreetService, transport);
@@ -54,7 +55,7 @@ export default function Home() {
       setGreeting(response.greeting);
       addLog("success", `Received GreetResponse { greeting: "${response.greeting}" } in ${duration}ms`);
       setIsBackendOnline(true);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(err);
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       addLog("error", `Request failed: ${errorMessage}`);
@@ -65,111 +66,169 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-cyan-500 selection:text-slate-900">
+    <div className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-blue-600 selection:text-white">
       {/* Background decoration */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(14,165,233,0.15),transparent_40%),radial-gradient(circle_at_70%_80%,rgba(168,85,247,0.15),transparent_40%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(14,165,233,0.15),transparent_40%),radial-gradient(circle_at_70%_80%,rgba(99,102,241,0.15),transparent_40%)] pointer-events-none" />
 
       {/* Navigation Header */}
-      <header className="relative border-b border-slate-800 bg-slate-900/55 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <header className="relative z-30 border-b border-slate-800 bg-slate-900/80 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="h-9 w-9 rounded-lg bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center font-bold text-white shadow-lg shadow-cyan-500/20">
-              AI
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">
+              C
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-white">LMS AI Study Assistant</h1>
-              <p className="text-xs text-slate-400">Frontend Integration Layer</p>
+              <h1 className="text-lg font-bold tracking-tight text-white">Coursera AI LMS</h1>
+              <p className="text-xs text-slate-400">Modular Monolith DDD Platform</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <span className="relative flex h-3 w-3">
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isBackendOnline ? 'bg-emerald-400' : isBackendOnline === false ? 'bg-rose-400' : 'bg-amber-400'}`}></span>
-              <span className={`relative inline-flex rounded-full h-3 w-3 ${isBackendOnline ? 'bg-emerald-500' : isBackendOnline === false ? 'bg-rose-500' : 'bg-amber-500'}`}></span>
-            </span>
-            <span className="text-xs font-medium text-slate-300">
-              {isBackendOnline ? "Backend: Online" : isBackendOnline === false ? "Backend: Offline" : "Checking Backend..."}
-            </span>
+
+          <div className="flex items-center space-x-6">
+            <Link
+              href="/courses"
+              className="text-sm font-semibold text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 px-3.5 py-1.5 rounded-lg border border-blue-500/20"
+            >
+              📚 Browse Catalog
+            </Link>
+
+            <div className="flex items-center space-x-2">
+              <span className="relative flex h-3 w-3">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isBackendOnline ? 'bg-emerald-400' : isBackendOnline === false ? 'bg-rose-400' : 'bg-amber-400'}`} />
+                <span className={`relative inline-flex rounded-full h-3 w-3 ${isBackendOnline ? 'bg-emerald-500' : isBackendOnline === false ? 'bg-rose-500' : 'bg-amber-500'}`} />
+              </span>
+              <span className="text-xs font-medium text-slate-300">
+                {isBackendOnline ? "Backend: Online" : isBackendOnline === false ? "Backend: Offline" : "Checking..."}
+              </span>
+            </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
-        
-        {/* Left Column - Form & Greet UI */}
-        <section className="lg:col-span-7 space-y-6">
-          <div className="p-8 rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-xl shadow-2xl relative overflow-hidden group">
-            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-cyan-500 to-transparent" />
-            
-            <h2 className="text-xl font-semibold mb-6 flex items-center space-x-2 text-white">
-              <span>ConnectRPC Demo</span>
-              <span className="text-xs bg-slate-855 text-slate-400 px-2 py-0.5 rounded font-mono">Unary RPC</span>
-            </h2>
+      {/* Hero Banner with CTA */}
+      <section className="relative z-20 max-w-7xl mx-auto px-6 pt-16 pb-12 text-center md:text-left grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div className="lg:col-span-7 space-y-6">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
+            ✨ Track A Live: Catalog, Video Player & Learning Progress
+          </div>
 
-            <form onSubmit={handleGreet} className="space-y-6">
-              <div className="space-y-2">
-                <label htmlFor="name-input" className="block text-sm font-medium text-slate-300">
-                  Enter your name
-                </label>
+          <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
+            Nền tảng Học tập Thông minh Tích hợp <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Coursera AI Coach</span>
+          </h2>
+
+          <p className="text-slate-400 text-lg leading-relaxed max-w-2xl">
+            Trải nghiệm các khóa học chuẩn quốc tế với Video tương tác, Phụ đề cuộn thông minh (Interactive Transcript), In-Video Quiz ngắt ngang, và quản lý lịch học linh hoạt (Flexible Deadlines).
+          </p>
+
+          <div className="flex flex-wrap items-center gap-4 pt-2">
+            <Link
+              href="/courses"
+              className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm transition-all shadow-lg shadow-blue-600/25 flex items-center gap-2 group"
+            >
+              Xem Danh Sách Khóa Học (Catalog)
+              <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </Link>
+
+            <Link
+              href="/learn/course-python-ai"
+              className="px-6 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-800 font-bold text-sm transition-all flex items-center gap-2"
+            >
+              🎬 Demo Course Player
+            </Link>
+          </div>
+        </div>
+
+        {/* Feature Cards Grid */}
+        <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Link
+            href="/courses"
+            className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-blue-500/50 transition-all text-left group"
+          >
+            <div className="text-2xl mb-3">🎓</div>
+            <h3 className="font-bold text-white text-base mb-1 group-hover:text-blue-400 transition-colors">Course Catalog</h3>
+            <p className="text-xs text-slate-400">Xem danh sách khóa học Specialization theo chuẩn Coursera.</p>
+          </Link>
+
+          <Link
+            href="/learn/course-python-ai"
+            className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-blue-500/50 transition-all text-left group"
+          >
+            <div className="text-2xl mb-3">🎬</div>
+            <h3 className="font-bold text-white text-base mb-1 group-hover:text-blue-400 transition-colors">Interactive Player</h3>
+            <p className="text-xs text-slate-400">Phát Video + Interactive Transcript cuộn & In-Video Quiz.</p>
+          </Link>
+
+          <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 text-left">
+            <div className="text-2xl mb-3">⏰</div>
+            <h3 className="font-bold text-white text-base mb-1">Reset Deadlines</h3>
+            <p className="text-xs text-slate-400">Gia hạn lịch nộp bài linh hoạt không trừ điểm thi.</p>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 text-left">
+            <div className="text-2xl mb-3">📌</div>
+            <h3 className="font-bold text-white text-base mb-1">Personal Notes</h3>
+            <p className="text-xs text-slate-400">Bôi đen bài giảng & lưu ghi chú cá nhân tức thì.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Bottom Section - ConnectRPC Status Console */}
+      <main className="relative z-10 max-w-7xl w-full mx-auto px-6 py-8 border-t border-slate-900 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Left Column - Greet Form */}
+        <section className="lg:col-span-6 space-y-4">
+          <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/40 backdrop-blur-xl">
+            <h3 className="text-sm font-semibold mb-4 flex items-center justify-between text-white">
+              <span>ConnectRPC Connection Test</span>
+              <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">GreetService</span>
+            </h3>
+
+            <form onSubmit={handleGreet} className="space-y-4">
+              <div>
                 <input
-                  id="name-input"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Antigravity"
+                  placeholder="Nhập tên kiểm tra kết nối RPC..."
                   required
-                  className="w-full px-4 py-3 rounded-lg border border-slate-700 bg-slate-950/60 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 transition-all font-sans"
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-800 bg-slate-950 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-sm font-sans"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="relative w-full h-12 flex items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 font-semibold text-white shadow-lg hover:from-cyan-400 hover:to-purple-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 active:scale-[0.98] transition-all disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-all disabled:opacity-50"
               >
-                {isLoading ? (
-                  <div className="flex items-center space-x-2">
-                    <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>Calling GreetService...</span>
-                  </div>
-                ) : (
-                  <span>Send GreetRequest</span>
-                )}
+                {isLoading ? "Đang gửi RPC..." : "Gửi GreetRequest"}
               </button>
             </form>
-          </div>
 
-          {/* Greet Result Card */}
-          {greeting && (
-            <div className="p-8 rounded-2xl border border-emerald-950/40 bg-emerald-950/10 backdrop-blur-xl shadow-xl border-t-2 border-t-emerald-500 transition-all duration-300">
-              <h3 className="text-xs uppercase font-semibold text-emerald-500 tracking-wider mb-2">Greeting Message</h3>
-              <p className="text-2xl font-bold text-emerald-300 font-sans tracking-tight">
+            {greeting && (
+              <div className="mt-4 p-3 rounded-lg bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
                 {greeting}
-              </p>
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </section>
 
         {/* Right Column - Logs Console */}
-        <section className="lg:col-span-5 space-y-4">
-          <div className="border border-slate-800 rounded-2xl bg-slate-900/60 backdrop-blur-xl flex flex-col h-[400px]">
-            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/30">
-              <h3 className="font-semibold text-sm text-slate-200">Terminal Log Console</h3>
+        <section className="lg:col-span-6 space-y-4">
+          <div className="border border-slate-800 rounded-2xl bg-slate-900/60 backdrop-blur-xl flex flex-col h-[220px]">
+            <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between bg-slate-900/40">
+              <h3 className="font-semibold text-xs text-slate-300">Terminal Log Console</h3>
               <button 
                 onClick={() => setLogs([])}
-                className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
               >
                 Clear
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-6 space-y-3 font-mono text-xs select-text">
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 font-mono text-[11px]">
               {logs.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-slate-600">
-                  Console is empty. Send a request to see output.
+                  Chưa có nhật ký kết nối.
                 </div>
               ) : (
                 logs.map((log, i) => (
@@ -189,12 +248,11 @@ export default function Home() {
             </div>
           </div>
         </section>
-
       </main>
 
       {/* Footer */}
       <footer className="mt-auto border-t border-slate-900 py-6 text-center text-xs text-slate-600 relative z-10">
-        <p>© 2026 LMS AI Study Assistant. Built with Next.js, ConnectRPC, and Tailwind CSS v4.</p>
+        <p>© 2026 Coursera LMS Platform. Built with Next.js 15, ConnectRPC, and Tailwind CSS v4.</p>
       </footer>
     </div>
   );
