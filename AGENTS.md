@@ -30,7 +30,13 @@ This file provides rules, architectural conventions, and workspace instructions 
 
 ---
 
-## 3. Code Quality, Type Checking & Testing
+## 3. Package Management & Dependencies Rule
+- **Backend (Python)**: Dependencies **MUST** be added via `uv` CLI command (`uv add <package>`) inside the `backend/` directory. **Never edit `pyproject.toml` or `uv.lock` manually.**
+- **Frontend (TypeScript)**: Dependencies **MUST** be added via `npm` CLI command (`npm install <package>`) inside the `frontend/` directory. **Never edit `package.json` manually.**
+
+---
+
+## 4. Code Quality, Type Checking & Testing
 - **Backend (Python)**:
   - **Linter & Formatter**: We use `ruff` for code styling, sorting imports, and linting.
   - **Type Checker**: We use `ty` (Astral's Rust-powered static type checker) for type checking.
@@ -42,14 +48,14 @@ This file provides rules, architectural conventions, and workspace instructions 
 
 ---
 
-## 4. Frontend Architecture & Conventions
+## 5. Frontend Architecture & Conventions
 - The frontend is located in `frontend/` and built with **Next.js (App Router)**, **TypeScript**, and **Tailwind CSS v4**.
 - Styling is implemented using Tailwind CSS v4 utility classes.
 - API Client calls are made by importing service schemas from the generated stubs (e.g. `import { GreetService } from "@/gen/greet/v1/greet_pb"`) and using the `@connectrpc/connect` client.
 
 ---
 
-## 5. Helper Commands Reference
+## 6. Helper Commands Reference
 
 ### Backend (from `backend/` directory):
 - `make infra` - Start infrastructure containers (PostgreSQL pgvector & MinIO).
