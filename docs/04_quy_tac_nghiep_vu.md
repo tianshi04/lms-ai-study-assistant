@@ -1,65 +1,77 @@
 # 04. DANH MỤC QUY TẮC NGHIỆP VỤ (BUSINESS RULES)
 
-Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắc logic nghiệp vụ (Business Rules - BR) và quy chế vận hành của hệ thống. Các luật này là điều kiện ràng buộc đối với lập trình viên khi viết code xử lý ở Backend.
+Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắc logic nghiệp vụ (Business Rules - BR) của **Hệ thống Quản lý Học tập Chuẩn Coursera (Coursera-style LMS)**. Các quy tắc này là ràng buộc bắt buộc khi lập trình logic ở Backend.
 
 ---
 
-## 1. Quy tắc Ghi danh & Sở hữu Khóa học (Enrollment & Commercialization)
+## 1. Quy tắc Quyền truy cập & Xét duyệt Hỗ trợ tài chính (BR_ACCESS & BR_FAID)
 
-*   **BR_ENROLL_001 (Thời hạn truy cập):** 
-    *   Đối với mô hình Học thuật (nội bộ trường học): Tài khoản học viên được truy cập khóa học trong vòng 1 học kỳ (mặc định là 5 tháng kể từ ngày bắt đầu học kỳ) hoặc cho đến khi khóa học bị đóng bởi giảng viên.
-    *   Đối với mô hình Thương mại: Học viên tự mua khóa học được quyền truy cập trọn đời (lifetime access), trừ trường hợp tài khoản của họ bị khóa hoặc khóa học bị ẩn do vi phạm bản quyền.
-*   **BR_ENROLL_002 (Quy chế Mã mời - Redeem Code):**
-    *   Mỗi mã mời chỉ được kích hoạt tối đa cho 1 tài khoản học viên (sử dụng 1 lần duy nhất).
-    *   Mã mời phải có thời hạn hiệu lực tối đa là 12 tháng kể từ ngày giảng viên tạo mã. Sau thời gian này, mã chưa sử dụng sẽ bị vô hiệu hóa.
-    *   Mỗi tài khoản học viên không bị giới hạn số lượng mã mời sử dụng cho các khóa học khác nhau, nhưng không thể sử dụng nhiều mã mời cho cùng một khóa học.
-*   **BR_ENROLL_003 (Chính sách hủy/hoàn tiền):**
-    *   Trong mô hình thương mại, học viên có quyền gửi yêu cầu hoàn tiền trong vòng 7 ngày kể từ lúc thanh toán.
-    *   *Điều kiện hoàn tiền:* Tiến độ học tập thực tế của học viên trong khóa học đó phải nhỏ hơn 10% và học viên chưa thực hiện bất kỳ bài thi trắc nghiệm nào trong khóa học.
-
----
-
-## 2. Quy tắc Cam kết SLA và Hỗ trợ 1-1 (SLA & 1-1 Support)
-
-*   **BR_SLA_001 (Thời gian đặt lịch tối thiểu):** Học viên khi gửi yêu cầu hỗ trợ 1-1 phải chọn các khung giờ rảnh nằm trong tương lai và cách thời điểm hiện tại tối thiểu 12 tiếng để giảng viên có đủ thời gian chuẩn bị và xác nhận.
-*   **BR_SLA_002 (Giới hạn hủy lịch):**
-    *   Cả học viên và giảng viên đều có quyền hủy lịch hẹn đã xác nhận trước giờ bắt đầu tối thiểu 2 tiếng.
-    *   Nếu học viên hủy lịch quá 3 lần trong một khóa học, hệ thống sẽ khóa quyền tạo yêu cầu hỗ trợ 1-1 của học viên đó đối với khóa học này trong vòng 14 ngày.
-*   **BR_SLA_003 (Xử lý vi phạm SLA hỗ trợ):**
-    *   Kể từ lúc học viên gửi yêu cầu hỗ trợ 1-1, giảng viên đứng lớp phải thực hiện xác nhận lịch hẹn trong vòng 48 tiếng. Quá thời gian này, hệ thống sẽ gửi thông báo cảnh cáo tự động đến giảng viên và lưu log vi phạm vào Dashboard giám sát của Admin.
-    *   Nếu giảng viên không tham gia phòng họp Google Meet (trên hệ thống ghi nhận không có hoạt động bấm nút "Tham gia Meet" từ giảng viên) khi quá giờ hẹn 15 phút, buổi hỗ trợ tự động tính là "Giảng viên vắng mặt", và hệ thống tự động hoàn lại lượt yêu cầu cho học viên.
+* **BR_ACCESS_001 (Phân quyền Audit Mode vs Paid Mode):**
+  * *Audit Mode (Miễn phí):* Học viên được mở xem toàn bộ Video bài giảng, bài đọc (Reading) và làm các bài Practice Quiz. Tuy nhiên, hệ thống khóa quyền nộp bài thi Graded Quiz, bài tập Auto-Graded Lab, bài tập Peer Review và không được cấp Chứng chỉ.
+  * *Paid Mode (Trả phí / Subscription):* Học viên có toàn bộ quyền làm các bài kiểm tra tính điểm, được bạn học chấm bài Peer Review và nhận Verified Certificate khi hoàn thành.
+* **BR_ACCESS_002 (Quy chế Enterprise License):**
+  * Học viên tham gia khóa học qua mã Enterprise Key (do doanh nghiệp/trường học tài trợ) sẽ tự động hưởng toàn bộ quyền lợi của Paid Mode mà không cần thanh toán cá nhân.
+  * Thời hạn truy cập của tài khoản Enterprise kéo dài theo thời hạn hợp đồng của tổ chức đó (mặc định 12 tháng).
+* **BR_FAID_001 (Quy trình nộp & xét duyệt Financial Aid):**
+  * Học viên nộp đơn phải điền bài luận tối thiểu 150 từ giải trình lý do hoàn cảnh và kế hoạch áp dụng kiến thức.
+  * *Hạn xét duyệt:* Giảng viên/Admin có tối đa 15 ngày kể từ ngày nộp đơn để duyệt hoặc từ chối.
+  * *Tự động phê duyệt (Auto-Approve):* Nếu quá 15 ngày mà Giảng viên/Admin không xử lý đơn, hệ thống sẽ tự động phê duyệt và chuyển trạng thái học viên sang Paid Mode.
 
 ---
 
-## 3. Quy tắc An toàn và Phạm vi hoạt động của Trợ lý AI (AI Chat & Guardrails)
+## 2. Quy tắc Đánh giá Năng lực & Chấm điểm (BR_HONOR, BR_QUIZ, BR_AUTOGRADE & BR_PEER)
 
-*   **BR_AI_001 (Danh mục cấm hỏi AI):** Trợ lý AI có bộ lọc từ chối trả lời lập tức nếu câu hỏi chứa các từ khóa nhạy cảm thuộc các chủ đề: Chính trị quốc gia, Tôn giáo, Bạo lực/Xúc phạm, Yêu cầu viết mã nguồn hoặc giải quyết các công việc cá nhân nằm ngoài nội dung tài liệu khóa học.
-*   **BR_AI_002 (Cơ chế cảnh cáo và phạt cấm chat):**
-    *   Mỗi lần học viên cố tình vi phạm gửi câu hỏi nằm trong danh mục cấm (bị Input Guard chặn), hệ thống sẽ tăng điểm cảnh cáo của học viên lên 1 điểm.
-    *   Nếu điểm cảnh cáo đạt 3 điểm trong vòng 10 phút, hệ thống sẽ tự động khóa quyền sử dụng Trợ lý AI của học viên đó trên toàn bộ khóa học trong vòng 24 giờ.
-    *   Lịch sử vi phạm sẽ được gửi trực tiếp đến hộp thư giám sát của Giảng viên khóa học.
-*   **BR_AI_003 (Nguyên tắc RAG Fallback):** Trợ lý AI tuyệt đối không được tự ý sinh phản hồi (Hallucination) khi không tìm thấy nội dung liên quan trong cơ sở dữ liệu tri thức của khóa học. AI bắt buộc phải phản hồi bằng câu thoại mặc định: *"Xin lỗi, tôi không tìm thấy thông tin này trong tài liệu học tập của khóa học. Bạn có thể gửi yêu cầu hỗ trợ 1-1 để trao đổi trực tiếp với Giảng viên."*
+* **BR_HONOR_001 (Xác nhận Honor Code):**
+  * Hệ thống bắt buộc học viên phải tích chọn xác nhận *"Academic Honor Code"* trước khi cho phép bấm nút mở làm bài Graded Quiz, nộp bài Auto-Graded Lab, hoặc nộp bài Peer Assignment.
+* **BR_QUIZ_001 (Quy tắc Thi lại & Cooldown bài Graded Quiz):**
+  * Mỗi bài Graded Quiz bắt buộc đạt tối thiểu điểm Pass (mặc định 80/100 điểm) mới tính là hoàn thành.
+  * Học viên được làm lại bài thi tối đa 3 lần liên tiếp. Nếu thi trượt cả 3 lần, hệ thống kích hoạt **thời gian chờ (Cooldown) 8 tiếng** trước khi cho phép làm tiếp lần thứ 4.
+  * Hệ thống sẽ lưu trữ điểm số cao nhất (Highest Score) trong các lần làm bài làm điểm chính thức.
+* **BR_AUTOGRADE_001 (Quy định Sandbox Auto-Grader):**
+  * Mỗi bài nộp lập trình gửi tới Auto-Grader chỉ được chạy tối đa trong môi trường Sandbox cách ly với Timeout = 30 giây và Memory Limit = 512MB.
+  * Điểm bài nộp = (Số lượng Test Cases Pass / Tổng số Test Cases) * 100%.
+* **BR_PEER_001 (Điều kiện Nộp & Chấm chéo Peer Review):**
+  * Học viên bắt buộc phải nộp bài dự án cá nhân trước deadline mới được phân bổ quyền chấm chéo bài của bạn học.
+  * Học viên bắt buộc phải **chấm đủ 3 bài làm của bạn học** theo đúng bộ tiêu chí Rubric thì hệ thống mới mở hiển thị điểm bài nộp của chính mình.
+* **BR_PEER_002 (Thuật toán Tính điểm Peer Review & Cảnh báo Outlier):**
+  * Điểm số bài nộp Peer Review = Trung bình cộng điểm số do 3 reviewer chấm.
+  * *Cảnh báo chấm điểm bất thường (Outlier Detection):* Nếu khoảng chênh lệch điểm số giữa các reviewer lớn hơn 30% (ví dụ: 1 bạn chấm 10 điểm, 1 bạn chấm 3 điểm), hệ thống tự động gắn cờ "Outlier Flag" và gửi cảnh báo về bảng tin của Trợ giảng (TA) để can thiệp rà soát.
+* **BR_PEER_003 (Khiếu nại điểm Grade Appeal):**
+  * Học viên có quyền nộp đơn Khiếu nại điểm trong vòng 7 ngày kể từ khi nhận kết quả Peer Review. Trợ giảng (TA) sẽ trực tiếp chấm lại bài làm và điểm số của TA sẽ là điểm số chính thức cuối cùng.
 
 ---
 
-## 4. Quy tắc Tính Tiến độ học tập & Điểm số (SCORM & Quizzes Progress)
+## 3. Quy tắc Lịch học Linh hoạt & Đặt lại Hạn nộp (BR_SCHEDULE & BR_DEADLINE)
 
-*   **BR_PROGRESS_001 (Điều kiện hoàn thành Bài học):**
-    *   *Video:* Học viên phải xem tích lũy đạt tối thiểu 90% tổng thời lượng của video.
-    *   *PDF/Tài liệu đọc:* Học viên phải mở tài liệu và có hành động cuộn trang (scroll) xuống trang cuối cùng, đồng thời giữ phiên mở tài liệu tối thiểu 120 giây.
-    *   *SCORM:* Tiến trình bài giảng SCORM chỉ được ghi nhận là "Hoàn thành" khi gói SCORM trả về biến trạng thái `cmi.core.lesson_status` (SCORM 1.2) hoặc `cmi.completion_status` (SCORM 2004) có giá trị là `"completed"` hoặc `"passed"`.
-*   **BR_PROGRESS_002 (Điểm số thi lại trắc nghiệm):**
-    *   Mỗi bài thi trắc nghiệm cuối chương/khóa học được làm tối đa 3 lần (do giảng viên cấu hình).
-    *   Hệ thống sẽ lấy **điểm số cao nhất** của các lần thi làm điểm chính thức để xét điều kiện cấp OpenBadges, đồng thời lưu trữ đầy đủ lịch sử điểm số của tất cả các lần thi để giảng viên giám sát.
+* **BR_SCHEDULE_001 (Flexible Weekly Schedule):**
+  * Mốc deadline của các tuần học (Week 1, Week 2...) được tính toán tự động dựa trên ngày học viên bấm nút Enroll khóa học.
+* **BR_DEADLINE_001 (Luật Reset My Deadlines):**
+  * Nếu học viên trễ hạn nộp bài (Overdue) ở bất kỳ tuần nào, hệ thống kích hoạt nút **"Reset my deadlines"**.
+  * Khi học viên bấm nút này, hệ thống sẽ dịch toàn bộ mốc deadline của các bài học còn lại sang lịch đợt học mới (New Session Schedule) tương ứng với thời điểm bấm nút, giữ nguyên toàn bộ tiến độ và điểm số các bài đã hoàn thành trước đó.
 
 ---
 
-## 5. Quy tắc Cấp phát và Thu hồi Huy hiệu số (OpenBadges Certification)
+## 4. Quy tắc An toàn và Phạm vi Hoạt động của AI Coach (BR_AI)
 
-*   **BR_BADGE_001 (Điều kiện cấp Huy hiệu tự động):**
-    Hệ thống chỉ kích hoạt tiến trình cấp Huy hiệu số cho học viên khi đạt đồng thời 2 điều kiện:
-    1.  `Tiến độ học tập khóa học = 100%` (Tất cả bài học cấu thành đều có trạng thái hoàn thành).
-    2.  `Điểm số bài thi trắc nghiệm cuối kỳ >= 8.0` (trên thang điểm 10).
-*   **BR_BADGE_002 (Quy tắc Thu hồi Huy hiệu):**
-    *   Super Admin có quyền thu hồi Huy hiệu số đã cấp cho học viên nếu phát hiện học viên gian lận học thuật hoặc tài khoản bị khóa do vi phạm điều khoản dịch vụ.
-    *   Khi lệnh thu hồi được kích hoạt, tệp tin ảnh huy hiệu đã bake metadata trước đó khi gửi truy vấn xác thực về endpoint hệ thống sẽ trả về kết quả `"Revoked"` (Không hợp lệ).
+* **BR_AI_001 (Phạm vi RAG bám sát khóa học):**
+  * AI Coach chỉ được truy xuất dữ liệu từ các tài liệu, bài đọc và Video Transcript thuộc khóa học hiện tại (`course_id`). AI từ chối trả lời các thắc mắc nằm ngoài chương trình đào tạo.
+* **BR_AI_002 (Nguyên tắc Socratic Method & Anti-Cheat):**
+  * AI Coach đóng vai người hướng dẫn gợi mở tư duy, tóm tắt video, giải thích thuật ngữ hoặc đặt câu hỏi phản xạ.
+  * *Luật chống gian lận (Anti-Cheat):* AI Coach tuyệt đối không được đưa ra đáp án trực tiếp cho bài thi Graded Quiz, bài nộp Auto-Graded Lab hoặc bài làm Peer Review. Nếu học viên gửi câu hỏi chứa đề bài thi, AI Coach bắt buộc phản hồi bằng câu thoại mẫu từ chối hỗ trợ đáp án.
+* **BR_AI_003 (Chế tài xử phạt vi phạm Input Guard):**
+  * Nếu học viên cố tình gửi các câu hỏi vi phạm từ ngữ (độc hại, kích động) hoặc cố tình tấn công Prompt Injection quá 3 lần trong vòng 10 phút, hệ thống tự động khóa quyền dùng AI Coach của học viên đó trong 24 giờ.
+
+---
+
+## 5. Quy tắc Cấp phát và Thu hồi Chứng chỉ Xác minh (BR_CERT & BR_BADGE)
+
+* **BR_CERT_001 (Điều kiện cấp Verified Certificate tự động):**
+  * Hệ thống tự động phát hành Verified Certificate khi học viên thỏa mãn đồng thời 2 điều kiện:
+    1. `Tiến độ hoàn thành bài học = 100%` (Tất cả video, bài đọc, quiz ngắt ngang video đều đã xem/hoàn thành).
+    2. `Điểm tất cả bài Graded Items (Graded Quiz, Auto-Graded Lab, Peer Review) >= Passing Threshold` (mặc định >= 80%).
+* **BR_CERT_002 (Xác thực công khai Verification URL & QR):**
+  * Mỗi Verified Certificate được gán một mã định danh duy nhất (ví dụ: `CERT-8F9A2B3C`).
+  * Bất kỳ ai truy cập đường dẫn `/verify/CERT-8F9A2B3C` hoặc quét mã QR trên certificate đều xem được trang xác thực công khai chứa: Tên học viên, Tên khóa học, Logo đối tác phát hành (Partner Logo), Ngày cấp và Trạng thái "Valid" (Hợp lệ).
+* **BR_BADGE_001 (OpenBadges & Thu hồi Chứng chỉ):**
+  * Tệp ảnh huy hiệu/certificate được tự động nhúng siêu dữ liệu JSON-LD chuẩn OpenBadges 2.0 để chia sẻ lên LinkedIn.
+  * Nếu phát hiện gian lận nghiêm trọng hoặc tài khoản bị khóa, Super Admin có quyền kích hoạt lệnh Thu hồi Chứng chỉ (Revoke Certificate). Khi đó, trang xác thực `/verify/CERT-xxx` sẽ chuyển sang trạng thái "Revoked" (Đã bị thu hồi).
