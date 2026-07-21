@@ -1,12 +1,9 @@
 from typing import Any, Callable
 
 from src.gen.catalog.v1.catalog_connect import CatalogServiceASGIApplication
-from src.gen.greet.v1.greet_connect import GreetServiceASGIApplication
 from src.gen.learning.v1.learning_connect import LearningServiceASGIApplication
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 from src.modules.catalog.presentation.catalog_handler import CatalogHandler
-from src.modules.greet.application.greet_usecase import GreetUseCase
-from src.modules.greet.presentation.greet_handler import GreetHandler
 from src.modules.learning.application.learning_usecase import LearningUseCase
 from src.modules.learning.presentation.learning_handler import LearningHandler
 
@@ -112,10 +109,6 @@ class ModularRouterASGIApp:
 
 
 # 1. Dependency Injection (Bootstrapping Use Cases & Handlers)
-greet_usecase = GreetUseCase()
-greet_handler = GreetHandler(use_case=greet_usecase)
-greet_app = GreetServiceASGIApplication(greet_handler)
-
 catalog_usecase = CatalogUseCase()
 catalog_handler = CatalogHandler(use_case=catalog_usecase)
 catalog_app = CatalogServiceASGIApplication(catalog_handler)
@@ -127,7 +120,6 @@ learning_app = LearningServiceASGIApplication(learning_handler)
 # 2. Register Routes by service path prefix
 router = ModularRouterASGIApp(
     {
-        "/greet.v1.GreetService": greet_app,
         "/catalog.v1.CatalogService": catalog_app,
         "/learning.v1.LearningService": learning_app,
     }

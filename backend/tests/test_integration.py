@@ -1,27 +1,26 @@
 import pytest
-from src.modules.greet.application.greet_usecase import GreetUseCase
-from src.gen.greet.v1.greet_connect import GreetServiceClient
-from src.gen.greet.v1.greet_pb import GreetRequest
+
+from src.gen.catalog.v1.catalog_connect import CatalogServiceClient
+from src.gen.catalog.v1.catalog_pb import ListCoursesRequest
+from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 
 
 @pytest.mark.asyncio
-async def test_greet_usecase():
-    """Unit test for the Use Case layer, verifying business logic directly."""
-    use_case = GreetUseCase()
-    result = await use_case.execute("Jane")
-    assert result == "Hello, Jane!"
+async def test_catalog_usecase():
+    """Unit test for Catalog Use Case layer."""
+    use_case = CatalogUseCase()
+    courses, _ = await use_case.list_courses()
+    assert len(courses) >= 2
+    assert courses[0].id == "course-python-ai"
 
 
 @pytest.mark.asyncio
-async def test_greet_api():
-    """Integration test that connects to the running server via ConnectRPC.
-
-    This test requires the server to be running on localhost:8000.
-    """
-    client = GreetServiceClient("http://localhost:8000")
+async def test_catalog_api_integration():
+    """Integration test connecting to running ConnectRPC server on localhost:8000."""
+    client = CatalogServiceClient("http://localhost:8000")
     try:
-        res = await client.greet(GreetRequest(name="Jane"))
-        assert res.greeting == "Hello, Jane!"
+        res = await client.list_courses(ListCoursesRequest())
+        assert len(res.courses) >= 1
     except Exception as e:
         pytest.skip(
             f"Skipping server integration test: Server is not running on port 8000 ({e})"
