@@ -1,6 +1,7 @@
 "use client";
 
 import { RefObject } from "react";
+import ReactMarkdown from "react-markdown";
 import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 
 interface VideoPlayerProps {
@@ -37,15 +38,37 @@ export function VideoPlayer({
   if (activeItem.type === 2) {
     return (
       <div className="w-full h-full overflow-y-auto p-8 bg-slate-900 text-slate-200">
-        <div className="max-w-3xl mx-auto prose prose-invert">
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+        <div className="max-w-3xl mx-auto space-y-6">
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3 pb-4 border-b border-slate-800">
             <svg className="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             {activeItem.title}
           </h2>
-          <div className="whitespace-pre-line text-slate-300 leading-relaxed text-sm">
-            {activeItem.readingMarkdown}
+          <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed text-sm space-y-4">
+            <ReactMarkdown
+              components={{
+                h1: ({ children }) => <h1 className="text-xl font-bold text-white mt-6 mb-3">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-lg font-bold text-blue-400 mt-5 mb-2">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-base font-bold text-slate-200 mt-4 mb-2">{children}</h3>,
+                p: ({ children }) => <p className="text-slate-300 leading-relaxed my-2">{children}</p>,
+                ul: ({ children }) => <ul className="list-disc pl-6 space-y-1 my-3 text-slate-300">{children}</ul>,
+                ol: ({ children }) => <ol className="list-decimal pl-6 space-y-1 my-3 text-slate-300">{children}</ol>,
+                li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                blockquote: ({ children }) => (
+                  <blockquote className="border-l-4 border-emerald-500 pl-4 py-1 italic bg-slate-950/60 my-4 text-emerald-300 rounded-r-lg">
+                    {children}
+                  </blockquote>
+                ),
+                code: ({ children }) => (
+                  <code className="bg-slate-950 text-amber-300 px-2 py-0.5 rounded font-mono text-xs border border-slate-800">
+                    {children}
+                  </code>
+                ),
+              }}
+            >
+              {activeItem.readingMarkdown || "*Không có nội dung bài đọc.*"}
+            </ReactMarkdown>
           </div>
         </div>
       </div>
