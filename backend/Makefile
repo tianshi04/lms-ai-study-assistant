@@ -1,17 +1,22 @@
-.PHONY: help gen dev test format seed seed-reset infra infra-down infra-clean infra-logs
+.PHONY: help gen dev test format seed seed-reset infra infra-down infra-clean infra-logs app app-down all docker-build app-logs
 
 help:
 	@echo "Available commands:"
-	@echo "  make infra       - Start infrastructure containers (PostgreSQL pgvector & MinIO)"
-	@echo "  make infra-down  - Stop infrastructure containers (preserves DB volume data)"
-	@echo "  make infra-clean - Stop containers & wipe database volumes completely (-v)"
-	@echo "  make infra-logs  - View infrastructure logs"
-	@echo "  make gen         - Generate protobuf and connect stubs"
-	@echo "  make dev         - Start local dev server"
-	@echo "  make seed        - Seed database with initial sample courses (Upsert mode)"
-	@echo "  make seed-reset  - Truncate all tables and re-seed pristine initial catalog"
-	@echo "  make format      - Format code and fix auto-fixable lint issues"
-	@echo "  make test        - Run test suite (pytest + ruff + ty)"
+	@echo "  make infra        - Start infrastructure containers (PostgreSQL pgvector & MinIO)"
+	@echo "  make infra-down   - Stop infrastructure containers (preserves DB volume data)"
+	@echo "  make infra-clean  - Stop containers & wipe database volumes completely (-v)"
+	@echo "  make infra-logs   - View infrastructure logs"
+	@echo "  make app          - Build & start backend API container in Docker"
+	@echo "  make app-down     - Stop backend API container"
+	@echo "  make app-logs     - View backend API container logs"
+	@echo "  make all          - Start full stack containers (Postgres, MinIO, Backend)"
+	@echo "  make docker-build - Build backend Docker image"
+	@echo "  make gen          - Generate protobuf and connect stubs"
+	@echo "  make dev          - Start local dev server"
+	@echo "  make seed         - Seed database with initial sample courses (Upsert mode)"
+	@echo "  make seed-reset   - Truncate all tables and re-seed pristine initial catalog"
+	@echo "  make format       - Format code and fix auto-fixable lint issues"
+	@echo "  make test         - Run test suite (pytest + ruff + ty)"
 
 infra:
 	docker compose --profile infra up -d
@@ -24,6 +29,22 @@ infra-clean:
 
 infra-logs:
 	docker compose --profile infra logs -f
+
+app:
+	docker compose --profile app up -d --build
+
+app-down:
+	docker compose --profile app down
+
+app-logs:
+	docker compose logs -f backend
+
+all:
+	docker compose --profile all up -d --build
+
+docker-build:
+	docker build -t coursera-backend:latest .
+
 
 gen:
 	buf generate ../proto

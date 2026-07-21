@@ -1,0 +1,24 @@
+# Virtual environment
+.venv/
+
+# Python byte-code / cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Testing and linters cache
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Git and IDE configuration
+.git/
+.gitignore
+.dockerignore
+.vscode/
+.idea/
+
+# Local environment & log files
+.env
+*.log

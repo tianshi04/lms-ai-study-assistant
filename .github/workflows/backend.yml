@@ -46,3 +46,8 @@ jobs:
       - name: Run test suite (pytest + ruff + ty)
         run: make test
         working-directory: backend
+
+      - name: Verify Docker Image Build
+        run: docker build -t coursera-backend:ci .
+        working-directory: backend
+

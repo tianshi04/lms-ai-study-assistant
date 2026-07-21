@@ -68,12 +68,18 @@ This file provides rules, architectural conventions, and workspace instructions 
 - `make infra` - Start infrastructure containers (PostgreSQL pgvector & MinIO).
 - `make infra-down` - Stop infrastructure containers (preserves DB volume data).
 - `make infra-clean` - Stop containers & wipe database volumes completely (-v).
+- `make infra-logs` - View infrastructure logs.
+- `make app` - Build & start backend API container in Docker.
+- `make app-down` - Stop backend API container.
+- `make app-logs` - View backend API container logs.
+- `make all` - Start full stack containers (Postgres, MinIO, Backend).
 - `make gen` - Regenerate Python stubs from root `proto/` directory.
 - `make dev` - Start local Python dev server with auto-reload (port 8000).
 - `make seed` - Seed database with initial sample courses (Idempotent Upsert mode).
 - `make seed-reset` - Truncate all tables and re-seed pristine initial catalog.
 - `make format` - Format code and fix auto-fixable lint issues with Ruff.
 - `make test` - Run pytest suite (which also executes Ruff linting and Ty type checking).
+
 
 ### Frontend (from `frontend/` directory):
 - `npm run gen` - Regenerate TypeScript stubs from root `proto/` directory.

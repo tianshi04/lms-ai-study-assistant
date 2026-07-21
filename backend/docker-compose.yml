@@ -54,24 +54,34 @@ services:
       retries: 5
 
   # ------------------------------------------------------------------
-  # 3. DỊCH VỤ VỀ SAU (TEMPLATES DÀNH CHO KHI TÍCH HỢP BACKEND / FRONTEND)
+  # 3. DỊCH VỤ BACKEND API
   # ------------------------------------------------------------------
-  # backend:
-  #   profiles: ["app", "all"]
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   container_name: coursera_backend_api
-  #   restart: always
-  #   environment:
-  #     - DATABASE_URL=postgresql://coursera_admin:coursera_password123@postgres:5432/coursera_lms
-  #   ports:
-  #     - "8000:8000"
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     minio:
-  #       condition: service_healthy
+  backend:
+    profiles: ["app", "all"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coursera_backend_api
+    restart: always
+    environment:
+      - ENV=development
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=8000
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-coursera_admin}:${POSTGRES_PASSWORD:-coursera_password123}@postgres:5432/${POSTGRES_DB:-coursera_lms}
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minio_admin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minio_password123}
+      - MINIO_BUCKET_NAME=coursera-assets
+      - MINIO_SECURE=false
+      - JWT_SECRET=${JWT_SECRET:-your_super_secret_jwt_key_coursera_2026_change_in_prod}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
 
 volumes:
   postgres_data:
