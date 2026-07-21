@@ -20,11 +20,11 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-4">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="font-bold text-sm text-white">Lịch Nộp Bài Hàng Tuần (Suggested Deadlines)</h4>
-            <p className="text-xs text-slate-400">Duy trì tiến độ học tập để đảm bảo hoàn thành khóa học đúng hạn.</p>
+            <h4 className="font-bold text-sm text-slate-900 dark:text-white">Lịch Nộp Bài Hàng Tuần (Suggested Deadlines)</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Duy trì tiến độ học tập để đảm bảo hoàn thành khóa học đúng hạn.</p>
           </div>
           {hasOverdue && (
             <button
@@ -45,8 +45,8 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
               key={d.weekNumber}
               className={`p-3 rounded-xl border text-xs flex items-center justify-between ${
                 d.status === 2
-                  ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
-                  : "bg-slate-950 border-slate-800 text-slate-300"
+                  ? "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300"
+                  : "bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
               }`}
             >
               <div>
@@ -57,7 +57,7 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
                 className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                   d.status === 2
                     ? "bg-amber-500 text-slate-950"
-                    : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                    : "bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30"
                 }`}
               >
                 {d.status === 2 ? "OVERDUE (Quá hạn)" : "ON TRACK"}

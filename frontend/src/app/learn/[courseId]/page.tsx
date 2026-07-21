@@ -10,6 +10,7 @@ import { VideoPlayer } from "@/components/player/VideoPlayer";
 import { TranscriptPanel } from "@/components/player/TranscriptPanel";
 import { NotesPanel } from "@/components/player/NotesPanel";
 import { DeadlinesPanel } from "@/components/player/DeadlinesPanel";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const DEMO_USER_ID = "user-learner-demo";
 
@@ -150,7 +151,7 @@ export default function CoursePlayerPage() {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-500 dark:text-slate-400">
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
           <span>Đang mở Trình phát bài học...</span>
@@ -160,38 +161,40 @@ export default function CoursePlayerPage() {
   }
 
   return (
-    <div className="h-screen bg-slate-950 text-slate-100 flex flex-col overflow-hidden">
+    <div className="h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col overflow-hidden transition-colors duration-200">
       {/* Top Player Navbar */}
-      <header className="h-14 bg-slate-900 border-b border-slate-800 px-6 flex items-center justify-between flex-shrink-0 z-30">
+      <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between flex-shrink-0 z-30">
         <div className="flex items-center gap-4">
           <Link
             href={`/courses/${course.id}`}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+            className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
             title="Quay lại khóa học"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </Link>
-          <span className="font-bold text-sm text-white truncate max-w-md">{course.title}</span>
+          <span className="font-bold text-sm text-slate-900 dark:text-white truncate max-w-md">{course.title}</span>
         </div>
 
         <div className="flex items-center gap-4">
           {progress && (
-            <div className="flex items-center gap-3 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
-              <div className="w-24 h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
+              <div className="w-24 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all"
                   style={{ width: `${progress.overallProgressPercent}%` }}
                 />
               </div>
-              <span className="text-xs font-mono font-bold text-blue-400">
+              <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">
                 {progress.overallProgressPercent}%
               </span>
             </div>
           )}
 
-          <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-medium">
+          <ThemeToggle />
+
+          <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-medium">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
@@ -203,22 +206,22 @@ export default function CoursePlayerPage() {
       {/* Main Workspace Layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar - Course Content Navigation Tree */}
-        <aside className="w-80 bg-slate-900/95 border-r border-slate-800 overflow-y-auto flex-shrink-0 flex flex-col">
-          <div className="p-4 border-b border-slate-800/80 bg-slate-900 sticky top-0 z-10">
-            <h2 className="font-bold text-xs uppercase tracking-wider text-slate-400">Chương trình bài học</h2>
+        <aside className="w-80 bg-white/95 dark:bg-slate-900/95 border-r border-slate-200 dark:border-slate-800 overflow-y-auto flex-shrink-0 flex flex-col">
+          <div className="p-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900 sticky top-0 z-10">
+            <h2 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Chương trình bài học</h2>
           </div>
 
           <div className="p-4 space-y-6">
             {course.weekModules.map((week) => (
               <div key={week.id} className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold uppercase text-blue-400">Tuần {week.weekNumber}</span>
-                  <span className="text-[10px] text-slate-500 font-mono">{week.title}</span>
+                  <span className="text-xs font-extrabold uppercase text-blue-600 dark:text-blue-400">Tuần {week.weekNumber}</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">{week.title}</span>
                 </div>
 
                 {week.lessons.map((lesson) => (
                   <div key={lesson.id} className="space-y-1">
-                    <div className="text-xs font-semibold text-slate-300 px-2 py-1">{lesson.title}</div>
+                    <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-2 py-1">{lesson.title}</div>
                     <div className="space-y-1 pl-2">
                       {lesson.items.map((item) => {
                         const isActive = activeItem?.id === item.id;
@@ -231,21 +234,21 @@ export default function CoursePlayerPage() {
                             }}
                             className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all ${
                               isActive
-                                ? "bg-blue-600/20 text-blue-300 font-semibold border border-blue-500/30"
-                                : "hover:bg-slate-800/60 text-slate-400"
+                                ? "bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-500/30"
+                                : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
                             }`}
                           >
                             <span className="truncate flex items-center gap-2">
                               {item.type === 1 ? (
-                                <svg className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                                 </svg>
                               ) : item.type === 2 ? (
-                                <svg className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                               ) : (
-                                <svg className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                               )}
@@ -264,9 +267,9 @@ export default function CoursePlayerPage() {
         </aside>
 
         {/* Center Workspace & Bottom Panels */}
-        <main className="flex-1 flex flex-col bg-slate-950 overflow-hidden relative">
+        <main className="flex-1 flex flex-col bg-slate-100 dark:bg-slate-950 overflow-hidden relative">
           {/* Top Video / Reading Media Viewer */}
-          <div className="flex-1 bg-black flex items-center justify-center relative overflow-hidden">
+          <div className="flex-1 bg-slate-100 dark:bg-black flex items-center justify-center relative overflow-hidden transition-colors duration-200">
             <VideoPlayer
               videoRef={videoRef}
               activeItem={activeItem}
@@ -281,16 +284,16 @@ export default function CoursePlayerPage() {
           </div>
 
           {/* Bottom Tabs Section */}
-          <div className="h-64 bg-slate-900 border-t border-slate-800 flex flex-col flex-shrink-0">
+          <div className="h-64 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0">
             {/* Tab Header Bar */}
-            <div className="h-11 border-b border-slate-800 px-6 flex items-center justify-between bg-slate-900/90">
+            <div className="h-11 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between bg-slate-50 dark:bg-slate-900/90">
               <div className="flex items-center gap-6">
                 <button
                   onClick={() => setActiveTab("transcript")}
                   className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
                     activeTab === "transcript"
-                      ? "text-blue-400 border-blue-500"
-                      : "text-slate-400 border-transparent hover:text-slate-200"
+                      ? "text-blue-600 dark:text-blue-400 border-blue-500"
+                      : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
                   }`}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -302,8 +305,8 @@ export default function CoursePlayerPage() {
                   onClick={() => setActiveTab("notes")}
                   className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
                     activeTab === "notes"
-                      ? "text-blue-400 border-blue-500"
-                      : "text-slate-400 border-transparent hover:text-slate-200"
+                      ? "text-blue-600 dark:text-blue-400 border-blue-500"
+                      : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
                   }`}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -315,8 +318,8 @@ export default function CoursePlayerPage() {
                   onClick={() => setActiveTab("deadlines")}
                   className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
                     activeTab === "deadlines"
-                      ? "text-blue-400 border-blue-500"
-                      : "text-slate-400 border-transparent hover:text-slate-200"
+                      ? "text-blue-600 dark:text-blue-400 border-blue-500"
+                      : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
                   }`}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -328,7 +331,7 @@ export default function CoursePlayerPage() {
             </div>
 
             {/* Tab Body Content */}
-            <div className="flex-1 overflow-y-auto p-4 bg-slate-950">
+            <div className="flex-1 overflow-y-auto p-4 bg-slate-50 dark:bg-slate-950">
               {activeTab === "transcript" && (
                 <TranscriptPanel
                   activeItem={activeItem}
