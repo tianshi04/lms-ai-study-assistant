@@ -255,7 +255,11 @@ class AssessmentUseCase:
         return result
 
     async def submit_peer_review_grade(
-        self, review_id: str, reviewer_user_id: str, item_id: str, graded_criteria: list[RubricCriteria]
+        self,
+        review_id: str,
+        reviewer_user_id: str,
+        graded_criteria: list[RubricCriteria],
+        item_id: Optional[str] = None,
     ) -> tuple[bool, str]:
         total_given = sum(c.score_given for c in graded_criteria)
         max_possible = sum(c.max_score for c in graded_criteria) or 1.0
@@ -265,6 +269,12 @@ class AssessmentUseCase:
 
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
+
+            resolved_item_id = item_id
+            if not resolved_item_id:
+                sub = await repo.get_peer_submission(submission_id)
+                resolved_item_id = sub.item_id if sub else "item-peer-1"
+
             existing_reviews = await repo.get_peer_reviews_for_submission(submission_id)
             is_outlier = False
             if existing_reviews:
@@ -279,7 +289,7 @@ class AssessmentUseCase:
                 id=review_id,
                 submission_id=submission_id,
                 reviewer_user_id=reviewer_user_id,
-                item_id=item_id,
+                item_id=resolved_item_id,
                 rubric_criteria=graded_criteria,
                 total_score=score_percent,
                 is_outlier=is_outlier,

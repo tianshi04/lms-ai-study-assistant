@@ -120,11 +120,9 @@ class AssessmentHandler(AssessmentService):
             )
             for c in request.graded_criteria
         ]
-        # In request, item_id can be passed or empty; use fallback item_id
         success, msg = await self.use_case.submit_peer_review_grade(
             review_id=request.review_id,
             reviewer_user_id=request.reviewer_user_id,
-            item_id="item-peer-1",
             graded_criteria=domain_rubrics,
         )
         return pb.SubmitPeerReviewGradeResponse(success=success, message=msg)

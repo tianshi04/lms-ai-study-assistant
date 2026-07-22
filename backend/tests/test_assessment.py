@@ -179,7 +179,7 @@ async def test_peer_review_and_outlier_detection():
         RubricCriteria("c2", "Docs", 10.0, 10.0),
         RubricCriteria("c3", "Tests", 10.0, 10.0),
     ]
-    ok1, msg1 = await usecase.submit_peer_review_grade(sub_id, "rev-1", "item-peer-1", c1)
+    ok1, msg1 = await usecase.submit_peer_review_grade(sub_id, "rev-1", c1)
     assert ok1 is True
     assert "Outlier" not in msg1
 
@@ -189,7 +189,7 @@ async def test_peer_review_and_outlier_detection():
         RubricCriteria("c2", "Docs", 10.0, 3.0),
         RubricCriteria("c3", "Tests", 10.0, 3.0),
     ]
-    ok2, msg2 = await usecase.submit_peer_review_grade(sub_id, "rev-2", "item-peer-1", c2)
+    ok2, msg2 = await usecase.submit_peer_review_grade(sub_id, "rev-2", c2)
     assert ok2 is True
     assert "Outlier Flagged" in msg2
 
