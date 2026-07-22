@@ -27,19 +27,18 @@ class AuthInterceptor(UnaryInterceptor):
         request: Any,
         ctx: Any,
     ) -> Any:
-        # Check if the procedure/method is public
-        method_path = ""
-        method_info = getattr(ctx, "method", None)
-        if method_info and hasattr(method_info, "service_name") and hasattr(method_info, "name"):
-            method_path = f"/{method_info.service_name}/{method_info.name}"
-        else:
-            method_path = getattr(ctx, "path", "") or getattr(getattr(ctx, "spec", None), "path", "")
+        # Check if procedure/method is public
+        method_path = getattr(getattr(ctx, "spec", None), "path", "") or getattr(ctx, "path", "")
+        if not method_path:
+            method_info = getattr(ctx, "method", None)
+            if method_info and hasattr(method_info, "service_name") and hasattr(method_info, "name"):
+                method_path = f"/{method_info.service_name}/{method_info.name}"
 
         if method_path in PUBLIC_ENDPOINTS:
             set_current_user(None)
             return await call_next(request, ctx)
 
-        # Extract metadata headers from RequestContext / ctx
+        # Extract authorization header from RequestContext
         metadata = (
             getattr(ctx, "request_headers", None)
             or getattr(ctx, "invocation_metadata", None)
@@ -47,10 +46,9 @@ class AuthInterceptor(UnaryInterceptor):
             or {}
         )
         auth_header = ""
-        if isinstance(metadata, dict):
+        if hasattr(metadata, "get"):
             auth_header = metadata.get("authorization", "") or metadata.get("Authorization", "")
-        elif hasattr(metadata, "get"):
-            auth_header = metadata.get("authorization", "") or metadata.get("Authorization", "")
+
 
         if not auth_header:
             raise ConnectError(Code.UNAUTHENTICATED, "Thiếu header Authorization")
