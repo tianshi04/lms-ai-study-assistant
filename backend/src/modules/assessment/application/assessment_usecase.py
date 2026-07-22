@@ -33,8 +33,12 @@ class AssessmentUseCase:
         self.sandbox_executor = sandbox_executor or PythonCodeSandboxExecutor()
 
     async def _get_repo(self, session: Any) -> AssessmentRepositoryInterface:
-        if self.repository:
+        # If an explicit in-memory or mock repository was passed for unit testing, return it
+        if self.repository is not None and not isinstance(
+            self.repository, SQLAlchemyAssessmentRepository
+        ):
             return self.repository
+        # For production database operations, always instantiate a fresh repository bound to active session
         return self.repo_factory(session)
 
     async def submit_honor_code(
