@@ -3,10 +3,14 @@
 import { RefObject } from "react";
 import ReactMarkdown from "react-markdown";
 import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
+import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
+import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
+import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentWorkspace";
 
 interface VideoPlayerProps {
   videoRef: RefObject<HTMLVideoElement | null>;
   activeItem: LearningItem | null;
+  userId?: string;
   activeQuiz: InVideoQuiz | null;
   selectedOption: number | null;
   quizSubmitted: boolean;
@@ -21,6 +25,7 @@ interface VideoPlayerProps {
 export function VideoPlayer({
   videoRef,
   activeItem,
+  userId,
   activeQuiz,
   selectedOption,
   quizSubmitted,
@@ -41,6 +46,7 @@ export function VideoPlayer({
 
   const isCompleted = completedItemIds.includes(activeItem.id);
 
+  // 1. Reading Item
   if (activeItem.type === 2) {
     return (
       <div className="w-full h-full overflow-y-auto p-8 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
@@ -104,6 +110,42 @@ export function VideoPlayer({
     );
   }
 
+  // 2. Graded / Practice Quiz Item
+  if (activeItem.type === 3 || activeItem.type === 4) {
+    return (
+      <div className="w-full h-full overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950">
+        <GradedQuizRunner
+          itemId={activeItem.id}
+          userId={userId}
+          onComplete={() => onMarkComplete?.(activeItem.id)}
+        />
+      </div>
+    );
+  }
+
+  // 3. Auto-Graded Lab Item
+  if (activeItem.type === 5) {
+    return (
+      <div className="w-full h-full overflow-y-auto p-6 bg-slate-950">
+        <AutoGradedLabRunner
+          itemId={activeItem.id}
+          userId={userId}
+          onComplete={() => onMarkComplete?.(activeItem.id)}
+        />
+      </div>
+    );
+  }
+
+  // 4. Peer Review Item
+  if (activeItem.type === 6) {
+    return (
+      <div className="w-full h-full overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950">
+        <PeerAssignmentWorkspace itemId={activeItem.id} userId={userId} />
+      </div>
+    );
+  }
+
+  // 5. Video Item Default Fallback
   if (activeItem.type === 1 && activeItem.videoUrl) {
     return (
       <div className="w-full h-full relative flex items-center justify-center bg-slate-100 dark:bg-black transition-colors duration-200">
@@ -121,100 +163,95 @@ export function VideoPlayer({
           <button
             onClick={() => onMarkComplete?.(activeItem.id)}
             disabled={isCompleted}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-lg backdrop-blur ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xl backdrop-blur-md flex items-center gap-2 ${
               isCompleted
                 ? "bg-emerald-500/90 text-white cursor-default"
-                : "bg-slate-900/80 hover:bg-emerald-600 text-white border border-slate-700"
+                : "bg-slate-900/80 hover:bg-slate-900 text-white border border-slate-700 hover:border-emerald-500"
             }`}
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
-            {isCompleted ? "Đã Hoàn Thành" : "Đánh dấu Đã Xem"}
+            {isCompleted ? "Đã Xem Video (>=80%)" : "Đánh dấu Xem Xong Video"}
           </button>
         </div>
 
-        {/* In-Video Quiz Overlay Interruption Modal */}
+        {/* In-Video Quiz Overlay */}
         {activeQuiz && (
-          <div className="absolute inset-0 bg-slate-900/40 dark:bg-slate-950/90 backdrop-blur-md z-30 flex items-center justify-center p-6">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 max-w-lg w-full p-6 rounded-2xl shadow-2xl space-y-5 text-slate-900 dark:text-white">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-30 flex items-center justify-center p-6 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2.5 py-1 rounded border border-amber-200 dark:border-amber-500/20 flex items-center gap-1.5">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  In-Video Quiz Interruption
+                <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                  In-Video Quiz ({activeQuiz.timestampSeconds}s)
                 </span>
-                <span className="text-xs font-mono text-slate-500 dark:text-slate-400">Timestamp: {activeQuiz.timestampSeconds}s</span>
+                <span className="text-[10px] text-slate-500 font-mono">Dừng video để kiểm tra</span>
               </div>
 
-              <h3 className="font-bold text-lg text-slate-900 dark:text-white">{activeQuiz.question}</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">{activeQuiz.question}</h3>
 
               <div className="space-y-2">
-                {activeQuiz.options.map((opt, idx) => (
-                  <button
-                    key={idx}
-                    disabled={quizSubmitted}
-                    onClick={() => onSelectOption(idx)}
-                    className={`w-full text-left p-3 rounded-xl text-sm transition-all border ${
-                      selectedOption === idx
-                        ? "bg-blue-50 dark:bg-blue-600/20 border-blue-500 text-blue-700 dark:text-white font-medium"
-                        : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/60 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-                    }`}
-                  >
-                    <span className="font-mono text-xs font-bold mr-2 text-slate-400">
-                      {String.fromCharCode(65 + idx)}.
-                    </span>
-                    {opt}
-                  </button>
-                ))}
+                {activeQuiz.options.map((option, idx) => {
+                  const isSelected = selectedOption === idx;
+                  const isCorrect = idx === activeQuiz.correctOptionIndex;
+                  let optionStyle =
+                    "border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 text-slate-700 dark:text-slate-300";
+
+                  if (quizSubmitted) {
+                    if (isCorrect) {
+                      optionStyle = "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 font-bold";
+                    } else if (isSelected && !isCorrect) {
+                      optionStyle = "border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-300 font-bold";
+                    }
+                  } else if (isSelected) {
+                    optionStyle = "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 font-bold";
+                  }
+
+                  return (
+                    <button
+                      key={idx}
+                      disabled={quizSubmitted}
+                      onClick={() => onSelectOption(idx)}
+                      className={`w-full text-left p-3 rounded-xl border text-xs transition-all flex items-center justify-between ${optionStyle}`}
+                    >
+                      <span>{option}</span>
+                      {quizSubmitted && isCorrect && (
+                        <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
-              {!quizSubmitted ? (
-                <button
-                  disabled={selectedOption === null}
-                  onClick={onSubmitQuiz}
-                  className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-sm transition-all shadow-md shadow-blue-600/20"
-                >
-                  Nộp Trả Lời
-                </button>
-              ) : (
-                <div className="space-y-4 pt-2 border-t border-slate-200 dark:border-slate-800">
-                  <div
-                    className={`p-3.5 rounded-xl text-sm flex items-start gap-3 ${
-                      selectedOption === activeQuiz.correctOptionIndex
-                        ? "bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 text-emerald-800 dark:text-emerald-300"
-                        : "bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-800 dark:text-red-300"
-                    }`}
-                  >
-                    {selectedOption === activeQuiz.correctOptionIndex ? (
-                      <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    ) : (
-                      <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    )}
-                    <div>
-                      <p className="font-bold mb-1">
-                        {selectedOption === activeQuiz.correctOptionIndex ? "Chính xác!" : "Chưa chính xác!"}
-                      </p>
-                      <p className="text-xs opacity-90">{activeQuiz.explanation}</p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={onContinueVideo}
-                    className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-all flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                    Tiếp tục xem Video
-                  </button>
+              {quizSubmitted && (
+                <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1">
+                  <span className="font-bold text-blue-600 dark:text-blue-400">Giải thích: </span>
+                  <span>{activeQuiz.explanation}</span>
                 </div>
               )}
+
+              <div className="pt-2 flex justify-end gap-3">
+                {!quizSubmitted ? (
+                  <button
+                    onClick={onSubmitQuiz}
+                    disabled={selectedOption === null}
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg transition-all"
+                  >
+                    Kiểm Tra Đáp Án
+                  </button>
+                ) : (
+                  <button
+                    onClick={onContinueVideo}
+                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition-all flex items-center gap-2"
+                  >
+                    Tiếp Tục Xem Video
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -223,7 +260,7 @@ export function VideoPlayer({
   }
 
   return (
-    <div className="text-center text-slate-500 dark:text-slate-400 p-8">
+    <div className="w-full h-full flex items-center justify-center text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900">
       Chọn bài học từ danh sách bên trái để bắt đầu.
     </div>
   );

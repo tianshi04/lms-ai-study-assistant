@@ -143,7 +143,31 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         reading_markdown="# Math Foundations of Gradient Descent\n\nGradient descent is an optimization algorithm used to minimize cost functions in machine learning models.\n\n## Key Concepts\n- **Learning Rate (alpha)**: Controls the step size at each iteration.\n- **Loss Function**: Measures the prediction error.\n\n> *Tip: Choosing an appropriate learning rate is crucial for convergence.*",
     )
 
-    lesson1.items.extend([item1, item2])
+    item3 = LearningItemModel(
+        id="item-ml-quiz-1",
+        lesson_id=lesson1.id,
+        title="Graded Quiz: Supervised Learning & Regression Basics",
+        type=ItemType.GRADED_QUIZ,
+        estimated_minutes=20,
+    )
+
+    item4 = LearningItemModel(
+        id="item-ml-lab-1",
+        lesson_id=lesson1.id,
+        title="Auto-Graded Lab: Implementing Array Sum Solution in Python",
+        type=ItemType.AUTO_GRADED_LAB,
+        estimated_minutes=30,
+    )
+
+    item5 = LearningItemModel(
+        id="item-ml-peer-1",
+        lesson_id=lesson1.id,
+        title="Peer-Graded Assignment: Supervised Machine Learning Model Design",
+        type=ItemType.PEER_REVIEW,
+        estimated_minutes=45,
+    )
+
+    lesson1.items.extend([item1, item2, item3, item4, item5])
     week1.lessons.append(lesson1)
     course1.week_modules.append(week1)
 
