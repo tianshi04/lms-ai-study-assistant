@@ -12,9 +12,8 @@ message FinancialAidApplication {
 }
 
 message ApplyFinancialAidRequest {
-  string user_id = 1;
-  string course_id = 2;
-  string essay_150_words = 3;
+  string course_id = 1;
+  string essay_150_words = 2;
 }
 
 message ApplyFinancialAidResponse {
@@ -22,8 +21,7 @@ message ApplyFinancialAidResponse {
 }
 
 message GetFinancialAidStatusRequest {
-  string user_id = 1;
-  string course_id = 2;
+  string course_id = 1;
 }
 
 message GetFinancialAidStatusResponse {
@@ -44,8 +42,7 @@ message VerifiedCertificate {
 }
 
 message GetVerifiedCertificateRequest {
-  string user_id = 1;
-  string course_id = 2;
+  string course_id = 1;
 }
 
 message GetVerifiedCertificateResponse {

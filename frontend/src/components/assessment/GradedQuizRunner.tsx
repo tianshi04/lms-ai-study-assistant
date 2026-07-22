@@ -99,7 +99,6 @@ export function GradedQuizRunner({
     try {
       const client = getRpcClient(AssessmentService);
       const res = await client.submitGradedQuiz({
-        userId: effectiveUserId,
         itemId,
         selectedOptionIndexes: selectedAnswers,
       });

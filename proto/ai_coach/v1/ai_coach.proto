@@ -3,10 +3,9 @@ syntax = "proto3";
 package ai_coach.v1;
 
 message ChatWithCoachRequest {
-  string user_id = 1;
-  string course_id = 2;
-  string item_id = 3;
-  string user_message = 4;
+  string course_id = 1;
+  string item_id = 2;
+  string user_message = 3;
 }
 
 message Citation {

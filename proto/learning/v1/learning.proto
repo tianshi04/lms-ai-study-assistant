@@ -34,8 +34,7 @@ message PersonalNote {
 }
 
 message GetProgressRequest {
-  string user_id = 1;
-  string course_id = 2;
+  string course_id = 1;
 }
 
 message GetProgressResponse {
@@ -43,8 +42,7 @@ message GetProgressResponse {
 }
 
 message ResetDeadlinesRequest {
-  string user_id = 1;
-  string course_id = 2;
+  string course_id = 1;
 }
 
 message ResetDeadlinesResponse {
@@ -53,11 +51,10 @@ message ResetDeadlinesResponse {
 }
 
 message SavePersonalNoteRequest {
-  string user_id = 1;
-  string course_id = 2;
-  string item_id = 3;
-  string highlighted_text = 4;
-  string note_comment = 5;
+  string course_id = 1;
+  string item_id = 2;
+  string highlighted_text = 3;
+  string note_comment = 4;
 }
 
 message SavePersonalNoteResponse {
@@ -65,8 +62,7 @@ message SavePersonalNoteResponse {
 }
 
 message ListPersonalNotesRequest {
-  string user_id = 1;
-  string course_id = 2;
+  string course_id = 1;
 }
 
 message ListPersonalNotesResponse {
@@ -74,10 +70,9 @@ message ListPersonalNotesResponse {
 }
 
 message MarkItemCompleteRequest {
-  string user_id = 1;
-  string course_id = 2;
-  string item_id = 3;
-  int32 total_course_items = 4;
+  string course_id = 1;
+  string item_id = 2;
+  int32 total_course_items = 3;
 }
 
 message MarkItemCompleteResponse {

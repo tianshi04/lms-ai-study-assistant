@@ -42,7 +42,6 @@ message CreateThreadRequest {
   string item_id = 2;
   string title = 3;
   string content = 4;
-  string author_user_id = 5;
 }
 
 message CreateThreadResponse {
@@ -52,7 +51,6 @@ message CreateThreadResponse {
 message PostReplyRequest {
   string thread_id = 1;
   string content = 2;
-  string author_user_id = 3;
 }
 
 message PostReplyResponse {
@@ -70,7 +68,6 @@ message VotePostResponse {
 
 message PinStaffAnswerRequest {
   string reply_id = 1;
-  string ta_user_id = 2;
 }
 
 message PinStaffAnswerResponse {

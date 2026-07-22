@@ -91,7 +91,6 @@ export function PeerAssignmentWorkspace({
     try {
       const client = getRpcClient(AssessmentService);
       const res = await client.submitPeerAssignment({
-        userId: effectiveUserId,
         itemId,
         submissionUrl,
         textContent,
@@ -139,7 +138,6 @@ export function PeerAssignmentWorkspace({
       const client = getRpcClient(AssessmentService);
       const res = await client.submitPeerReviewGrade({
         reviewId: item.reviewId,
-        reviewerUserId: effectiveUserId,
         gradedCriteria: item.rubricCriteria.map((c) => ({
           criteriaId: c.criteriaId,
           title: c.title,
@@ -159,7 +157,6 @@ export function PeerAssignmentWorkspace({
     try {
       const client = getRpcClient(AssessmentService);
       const res = await client.submitGradeAppeal({
-        userId: effectiveUserId,
         submissionId: "peer-sub-001",
         appealReason,
       });

@@ -3,9 +3,8 @@ syntax = "proto3";
 package assessment.v1;
 
 message SubmitHonorCodeRequest {
-  string user_id = 1;
-  string item_id = 2;
-  bool is_agreed = 3;
+  string item_id = 1;
+  bool is_agreed = 2;
 }
 
 message SubmitHonorCodeResponse {
@@ -14,9 +13,8 @@ message SubmitHonorCodeResponse {
 }
 
 message SubmitGradedQuizRequest {
-  string user_id = 1;
-  string item_id = 2;
-  repeated int32 selected_option_indexes = 3;
+  string item_id = 1;
+  repeated int32 selected_option_indexes = 2;
 }
 
 message QuizResult {
@@ -32,10 +30,9 @@ message SubmitGradedQuizResponse {
 }
 
 message SubmitAutoGradedLabRequest {
-  string user_id = 1;
-  string item_id = 2;
-  string source_code = 3;
-  string language = 4;
+  string item_id = 1;
+  string source_code = 2;
+  string language = 3;
 }
 
 message AutoGradedLabResult {
@@ -51,10 +48,9 @@ message SubmitAutoGradedLabResponse {
 }
 
 message SubmitPeerAssignmentRequest {
-  string user_id = 1;
-  string item_id = 2;
-  string submission_url = 3;
-  string text_content = 4;
+  string item_id = 1;
+  string submission_url = 2;
+  string text_content = 3;
 }
 
 message SubmitPeerAssignmentResponse {
@@ -63,8 +59,7 @@ message SubmitPeerAssignmentResponse {
 }
 
 message GetPeerReviewsToGradeRequest {
-  string user_id = 1;
-  string item_id = 2;
+  string item_id = 1;
 }
 
 message RubricCriteria {
@@ -88,8 +83,7 @@ message GetPeerReviewsToGradeResponse {
 
 message SubmitPeerReviewGradeRequest {
   string review_id = 1;
-  string reviewer_user_id = 2;
-  repeated RubricCriteria graded_criteria = 3;
+  repeated RubricCriteria graded_criteria = 2;
 }
 
 message SubmitPeerReviewGradeResponse {
@@ -98,9 +92,8 @@ message SubmitPeerReviewGradeResponse {
 }
 
 message SubmitGradeAppealRequest {
-  string user_id = 1;
-  string submission_id = 2;
-  string appeal_reason = 3;
+  string submission_id = 1;
+  string appeal_reason = 2;
 }
 
 message SubmitGradeAppealResponse {

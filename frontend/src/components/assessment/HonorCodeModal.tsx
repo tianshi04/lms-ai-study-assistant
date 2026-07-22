@@ -37,7 +37,6 @@ export function HonorCodeModal({
     try {
       const client = getRpcClient(AssessmentService);
       const res = await client.submitHonorCode({
-        userId,
         itemId,
         isAgreed: true,
       });

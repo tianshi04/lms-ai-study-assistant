@@ -67,12 +67,11 @@ export default function CoursePlayerPage() {
         const firstItem = courseRes.course?.weekModules[0]?.lessons[0]?.items[0];
         if (firstItem) setActiveItem(firstItem);
 
-        const currentUserId = getActiveUserId();
         const learningClient = getRpcClient(LearningService);
-        const progressRes = await learningClient.getProgress({ userId: currentUserId, courseId });
+        const progressRes = await learningClient.getProgress({ courseId });
         setProgress(progressRes.progress ?? null);
 
-        const notesRes = await learningClient.listPersonalNotes({ userId: currentUserId, courseId });
+        const notesRes = await learningClient.listPersonalNotes({ courseId });
         setNotes(notesRes.notes);
       } catch (err) {
         console.error("Error loading course player data:", err);
@@ -92,7 +91,6 @@ export default function CoursePlayerPage() {
     try {
       const learningClient = getRpcClient(LearningService);
       const res = await learningClient.markItemComplete({
-        userId: getActiveUserId(),
         courseId,
         itemId,
         totalCourseItems,
@@ -168,7 +166,6 @@ export default function CoursePlayerPage() {
     try {
       const learningClient = getRpcClient(LearningService);
       const res = await learningClient.savePersonalNote({
-        userId: getActiveUserId(),
         courseId,
         itemId: activeItem.id,
         highlightedText: highlightText,
@@ -190,7 +187,7 @@ export default function CoursePlayerPage() {
   const handleResetDeadlines = async () => {
     try {
       const learningClient = getRpcClient(LearningService);
-      const res = await learningClient.resetDeadlines({ userId: getActiveUserId(), courseId });
+      const res = await learningClient.resetDeadlines({ courseId });
       if (res.updatedProgress) {
         setProgress(res.updatedProgress);
       }

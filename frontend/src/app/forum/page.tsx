@@ -108,14 +108,12 @@ export default function ForumPage() {
     setSubmittingThread(true);
     try {
       const client = getRpcClient(ForumService);
-      const currentUserId = typeof window !== "undefined" ? localStorage.getItem("user_id") || "user_learner_demo" : "user_learner_demo";
       
       await client.createThread({
         courseId: newCourseId || selectedCourseId || (courses[0]?.id ?? "course-python-ai"),
         itemId: "",
         title: newTitle,
         content: newContent,
-        authorUserId: currentUserId,
       });
 
       setNewTitle("");
@@ -137,12 +135,10 @@ export default function ForumPage() {
     setSubmittingReply((prev) => ({ ...prev, [threadId]: true }));
     try {
       const client = getRpcClient(ForumService);
-      const currentUserId = typeof window !== "undefined" ? localStorage.getItem("user_id") || "user_learner_demo" : "user_learner_demo";
 
       await client.postReply({
         threadId,
         content,
-        authorUserId: currentUserId,
       });
 
       setReplyInputs((prev) => ({ ...prev, [threadId]: "" }));
@@ -213,8 +209,7 @@ export default function ForumPage() {
   const handlePinStaffAnswer = async (replyId: string) => {
     try {
       const client = getRpcClient(ForumService);
-      const currentUserId = typeof window !== "undefined" ? localStorage.getItem("user_id") || "user_ta_01" : "user_ta_01";
-      await client.pinStaffAnswer({ replyId, taUserId: currentUserId });
+      await client.pinStaffAnswer({ replyId });
       fetchThreads();
     } catch (err) {
       console.error("Failed to pin staff answer:", err);

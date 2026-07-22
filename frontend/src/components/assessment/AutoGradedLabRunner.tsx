@@ -45,7 +45,6 @@ export function AutoGradedLabRunner({
     try {
       const client = getRpcClient(AssessmentService);
       const res = await client.submitAutoGradedLab({
-        userId: effectiveUserId,
         itemId,
         sourceCode,
         language,

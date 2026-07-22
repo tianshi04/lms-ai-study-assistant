@@ -67,13 +67,11 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
     setSubmitting(true);
     try {
       const client = getRpcClient(ForumService);
-      const currentUserId = typeof window !== "undefined" ? localStorage.getItem("user_id") || "user_learner_demo" : "user_learner_demo";
       await client.createThread({
         courseId,
         itemId: itemId || "",
         title: newTitle,
         content: newContent,
-        authorUserId: currentUserId,
       });
       setNewTitle("");
       setNewContent("");
@@ -91,11 +89,9 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
 
     try {
       const client = getRpcClient(ForumService);
-      const currentUserId = typeof window !== "undefined" ? localStorage.getItem("user_id") || "user_learner_demo" : "user_learner_demo";
       await client.postReply({
         threadId,
         content,
-        authorUserId: currentUserId,
       });
       setReplyInputs((prev) => ({ ...prev, [threadId]: "" }));
       fetchThreads();

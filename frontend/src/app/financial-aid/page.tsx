@@ -21,11 +21,10 @@ function FinancialAidContent() {
   const isEnoughWords = wordCount >= 150;
 
   useEffect(() => {
-    const userId = localStorage.getItem("user_id") || "user_learner_demo";
     async function loadStatus() {
       try {
         const client = getRpcClient(CertificateService);
-        const res = await client.getFinancialAidStatus({ userId, courseId });
+        const res = await client.getFinancialAidStatus({ courseId });
         if (res.application) {
           setExistingApp(res.application);
         }
@@ -46,14 +45,12 @@ function FinancialAidContent() {
       return;
     }
 
-    const userId = localStorage.getItem("user_id") || "user_learner_demo";
     setSubmitting(true);
     setMessage(null);
 
     try {
       const client = getRpcClient(CertificateService);
       const res = await client.applyFinancialAid({
-        userId,
         courseId,
         essay150Words: essay,
       });
