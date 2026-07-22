@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course, type LearningItem, type InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
@@ -12,7 +12,12 @@ import { NotesPanel } from "@/components/player/NotesPanel";
 import { DeadlinesPanel } from "@/components/player/DeadlinesPanel";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-const DEMO_USER_ID = "user-learner-demo";
+function getActiveUserId(): string {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("user_id") || "user_learner_demo";
+  }
+  return "user_learner_demo";
+}
 
 export default function CoursePlayerPage() {
   const params = useParams();
@@ -37,9 +42,18 @@ export default function CoursePlayerPage() {
   const [noteComment, setNoteComment] = useState("");
   const [savingNote, setSavingNote] = useState(false);
 
+  const router = useRouter();
+
   // Load Course & Progress
   useEffect(() => {
     if (!courseId) return;
+
+    // Strict Auth Guard Check
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    if (!token) {
+      router.push(`/auth/login?redirect=/learn/${courseId}`);
+      return;
+    }
 
     async function loadData() {
       try {
@@ -51,11 +65,12 @@ export default function CoursePlayerPage() {
         const firstItem = courseRes.course?.weekModules[0]?.lessons[0]?.items[0];
         if (firstItem) setActiveItem(firstItem);
 
+        const currentUserId = getActiveUserId();
         const learningClient = getRpcClient(LearningService);
-        const progressRes = await learningClient.getProgress({ userId: DEMO_USER_ID, courseId });
+        const progressRes = await learningClient.getProgress({ userId: currentUserId, courseId });
         setProgress(progressRes.progress ?? null);
 
-        const notesRes = await learningClient.listPersonalNotes({ userId: DEMO_USER_ID, courseId });
+        const notesRes = await learningClient.listPersonalNotes({ userId: currentUserId, courseId });
         setNotes(notesRes.notes);
       } catch (err) {
         console.error("Error loading course player data:", err);
@@ -75,7 +90,7 @@ export default function CoursePlayerPage() {
     try {
       const learningClient = getRpcClient(LearningService);
       const res = await learningClient.markItemComplete({
-        userId: DEMO_USER_ID,
+        userId: getActiveUserId(),
         courseId,
         itemId,
         totalCourseItems,
@@ -151,7 +166,7 @@ export default function CoursePlayerPage() {
     try {
       const learningClient = getRpcClient(LearningService);
       const res = await learningClient.savePersonalNote({
-        userId: DEMO_USER_ID,
+        userId: getActiveUserId(),
         courseId,
         itemId: activeItem.id,
         highlightedText: highlightText,
@@ -173,7 +188,7 @@ export default function CoursePlayerPage() {
   const handleResetDeadlines = async () => {
     try {
       const learningClient = getRpcClient(LearningService);
-      const res = await learningClient.resetDeadlines({ userId: DEMO_USER_ID, courseId });
+      const res = await learningClient.resetDeadlines({ userId: getActiveUserId(), courseId });
       if (res.updatedProgress) {
         setProgress(res.updatedProgress);
       }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Navbar } from "@/components/Navbar";
 
 function CourseCard({ course }: { course: Course }) {
   const [imgError, setImgError] = useState(false);
@@ -110,29 +111,7 @@ export default function CoursesPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors duration-200">
-      {/* Top Banner / Navbar */}
-      <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/90 backdrop-blur relative z-40">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              C
-            </div>
-            <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white">
-              Coursera AI LMS
-            </span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/courses"
-              className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors"
-            >
-              Catalog
-            </Link>
-            <div className="h-4 w-px bg-slate-200 dark:bg-slate-800" />
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Hero Section */}
       <main className="max-w-7xl mx-auto px-6 py-12">
