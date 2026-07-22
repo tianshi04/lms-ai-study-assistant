@@ -9,6 +9,7 @@ from src.modules.learning.domain.entities import (
     PersonalNote,
     WeeklyDeadline,
 )
+from src.shared.auth import require_current_user
 
 
 def _to_pb_deadline_status(status: DeadlineStatus) -> pb.DeadlineStatus:
@@ -60,8 +61,9 @@ class LearningHandler(LearningService):
         request: pb.GetProgressRequest,
         ctx: RequestContext[pb.GetProgressRequest, pb.GetProgressResponse],
     ) -> pb.GetProgressResponse:
+        current_user = require_current_user()
         progress = await self.use_case.get_progress(
-            user_id=request.user_id, course_id=request.course_id
+            user_id=current_user.id, course_id=request.course_id
         )
         return pb.GetProgressResponse(progress=_to_pb_progress(progress))
 
@@ -70,8 +72,9 @@ class LearningHandler(LearningService):
         request: pb.ResetDeadlinesRequest,
         ctx: RequestContext[pb.ResetDeadlinesRequest, pb.ResetDeadlinesResponse],
     ) -> pb.ResetDeadlinesResponse:
+        current_user = require_current_user()
         success, progress = await self.use_case.reset_deadlines(
-            user_id=request.user_id, course_id=request.course_id
+            user_id=current_user.id, course_id=request.course_id
         )
         return pb.ResetDeadlinesResponse(
             success=success, updated_progress=_to_pb_progress(progress)
@@ -82,8 +85,9 @@ class LearningHandler(LearningService):
         request: pb.SavePersonalNoteRequest,
         ctx: RequestContext[pb.SavePersonalNoteRequest, pb.SavePersonalNoteResponse],
     ) -> pb.SavePersonalNoteResponse:
+        current_user = require_current_user()
         note = await self.use_case.save_personal_note(
-            user_id=request.user_id,
+            user_id=current_user.id,
             course_id=request.course_id,
             item_id=request.item_id,
             highlighted_text=request.highlighted_text,
@@ -96,8 +100,9 @@ class LearningHandler(LearningService):
         request: pb.ListPersonalNotesRequest,
         ctx: RequestContext[pb.ListPersonalNotesRequest, pb.ListPersonalNotesResponse],
     ) -> pb.ListPersonalNotesResponse:
+        current_user = require_current_user()
         notes = await self.use_case.list_personal_notes(
-            user_id=request.user_id, course_id=request.course_id
+            user_id=current_user.id, course_id=request.course_id
         )
         return pb.ListPersonalNotesResponse(notes=[_to_pb_note(n) for n in notes])
 
@@ -106,8 +111,9 @@ class LearningHandler(LearningService):
         request: pb.MarkItemCompleteRequest,
         ctx: RequestContext[pb.MarkItemCompleteRequest, pb.MarkItemCompleteResponse],
     ) -> pb.MarkItemCompleteResponse:
+        current_user = require_current_user()
         success, progress = await self.use_case.mark_item_complete(
-            user_id=request.user_id,
+            user_id=current_user.id,
             course_id=request.course_id,
             item_id=request.item_id,
             total_course_items=request.total_course_items,
@@ -115,3 +121,4 @@ class LearningHandler(LearningService):
         return pb.MarkItemCompleteResponse(
             success=success, updated_progress=_to_pb_progress(progress)
         )
+

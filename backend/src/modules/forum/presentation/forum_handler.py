@@ -1,6 +1,5 @@
-from typing import Any
-
 from connectrpc.code import Code
+
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
 
@@ -8,7 +7,7 @@ from src.gen.forum.v1 import forum_pb as pb
 from src.gen.forum.v1.forum_connect import ForumService
 from src.modules.forum.application.forum_usecase import ForumUseCase
 from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
-from src.shared.auth import decode_token
+from src.shared.auth import require_current_user
 
 
 def _to_pb_reply(reply: ForumReplyEntity) -> pb.ForumReply:
@@ -45,31 +44,14 @@ class ForumHandler(ForumService):
     def __init__(self, use_case: ForumUseCase) -> None:
         self.use_case = use_case
 
-    def _get_current_user_info(self, ctx: RequestContext[Any, Any]) -> tuple[str, str, str]:
-        metadata = getattr(ctx, "invocation_metadata", {}) or {}
-        auth_header = ""
-        if isinstance(metadata, dict):
-            auth_header = metadata.get("authorization", "") or metadata.get("Authorization", "")
-
-        if auth_header:
-            token = str(auth_header).replace("Bearer ", "").strip()
-            payload = decode_token(token)
-            if payload:
-                user_id = payload.get("sub", "")
-                email = payload.get("email", "")
-                role = payload.get("role", "Student")
-                return user_id, email, role
-
-        return "user_learner_demo", "learner@coursera.ai", "Student"
-
     async def list_threads(
         self,
         request: pb.ListThreadsRequest,
         ctx: RequestContext[pb.ListThreadsRequest, pb.ListThreadsResponse],
     ) -> pb.ListThreadsResponse:
-        user_id, _, _ = self._get_current_user_info(ctx)
+        current_user = require_current_user()
         threads = await self.use_case.list_threads(
-            course_id=request.course_id, item_id=request.item_id, current_user_id=user_id
+            course_id=request.course_id, item_id=request.item_id, current_user_id=current_user.id
         )
         return pb.ListThreadsResponse(threads=[_to_pb_thread(t) for t in threads])
 
@@ -81,17 +63,17 @@ class ForumHandler(ForumService):
         if not request.title.strip():
             raise ConnectError(Code.INVALID_ARGUMENT, "Tiêu đề thảo luận không được để trống")
 
-        user_id, email, role = self._get_current_user_info(ctx)
-        author_name = email.split("@")[0] if email else "Learner"
+        current_user = require_current_user()
+        author_name = current_user.email.split("@")[0] if current_user.email else "Learner"
 
         thread = await self.use_case.create_thread(
             course_id=request.course_id,
             item_id=request.item_id,
             title=request.title,
             content=request.content,
-            author_user_id=user_id,
+            author_user_id=current_user.id,
             author_name=author_name,
-            author_role=role,
+            author_role=current_user.role or "Student",
         )
         return pb.CreateThreadResponse(thread=_to_pb_thread(thread))
 
@@ -103,15 +85,15 @@ class ForumHandler(ForumService):
         if not request.content.strip():
             raise ConnectError(Code.INVALID_ARGUMENT, "Nội dung phản hồi không được để trống")
 
-        user_id, email, role = self._get_current_user_info(ctx)
-        author_name = email.split("@")[0] if email else "Learner"
+        current_user = require_current_user()
+        author_name = current_user.email.split("@")[0] if current_user.email else "Learner"
 
         reply = await self.use_case.post_reply(
             thread_id=request.thread_id,
             content=request.content,
-            author_user_id=user_id,
+            author_user_id=current_user.id,
             author_name=author_name,
-            author_role=role,
+            author_role=current_user.role or "Student",
         )
         return pb.PostReplyResponse(reply=_to_pb_reply(reply))
 
@@ -120,10 +102,10 @@ class ForumHandler(ForumService):
         request: pb.VotePostRequest,
         ctx: RequestContext[pb.VotePostRequest, pb.VotePostResponse],
     ) -> pb.VotePostResponse:
-        user_id, _, _ = self._get_current_user_info(ctx)
+        current_user = require_current_user()
 
         new_count = await self.use_case.vote_post(
-            post_id=request.post_id, user_id=user_id, is_upvote=request.is_upvote
+            post_id=request.post_id, user_id=current_user.id, is_upvote=request.is_upvote
         )
         return pb.VotePostResponse(updated_upvote_count=new_count)
 
@@ -132,7 +114,8 @@ class ForumHandler(ForumService):
         request: pb.PinStaffAnswerRequest,
         ctx: RequestContext[pb.PinStaffAnswerRequest, pb.PinStaffAnswerResponse],
     ) -> pb.PinStaffAnswerResponse:
-        user_id, _, role = self._get_current_user_info(ctx)
+        current_user = require_current_user()
+        role = current_user.role
         
         # Verify Instructor / TA permission
         normalized_role = str(role).lower()
@@ -148,6 +131,7 @@ class ForumHandler(ForumService):
             )
 
         success = await self.use_case.pin_staff_answer(
-            reply_id=request.reply_id, ta_user_id=user_id
+            reply_id=request.reply_id, ta_user_id=current_user.id
         )
         return pb.PinStaffAnswerResponse(success=success)
+

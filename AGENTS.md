@@ -33,6 +33,11 @@ This file provides rules, architectural conventions, and workspace instructions 
 - The `src/gen/` folders are ignored in Git.
 - We use **Connect-ES v2.0** on the frontend (utilizing `protoc-gen-es` only, where both messages and service schemas are generated directly in `_pb.ts` files without a separate `_connect.ts` stub).
 - **Development Stage & Backward Compatibility**: Since the project is currently in active initial development, API definitions and code structures can be refactored or modified freely without preserving backward compatibility.
+- **Authentication & User Identity Resolution Rule**:
+  - **Never trust or extract `user_id` directly from Protobuf request payloads** for authenticated RPC operations.
+  - All protected ConnectRPC service handlers **MUST** resolve the authenticated user strictly from context using `require_current_user()` (from `src.shared.auth`).
+  - Request-level JWT token verification and `CurrentUser` context injection is handled centrally by `AuthInterceptor` (`src.shared.infrastructure.interceptors.AuthInterceptor`).
+
 
 ---
 

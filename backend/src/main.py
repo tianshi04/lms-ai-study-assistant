@@ -20,6 +20,7 @@ from src.modules.identity.presentation.identity_handler import IdentityHandler
 from src.modules.learning.application.learning_usecase import LearningUseCase
 from src.modules.learning.presentation.learning_handler import LearningHandler
 from src.shared.config import settings
+from src.shared.infrastructure.interceptors import AuthInterceptor
 
 
 class CORSMiddleware:
@@ -166,29 +167,31 @@ class ModularRouterASGIApp:
 
 
 # 1. Dependency Injection (Bootstrapping Use Cases & Handlers)
+auth_interceptor = AuthInterceptor()
+
 catalog_usecase = CatalogUseCase()
 catalog_handler = CatalogHandler(use_case=catalog_usecase)
-catalog_app = CatalogServiceASGIApplication(catalog_handler)
+catalog_app = CatalogServiceASGIApplication(catalog_handler, interceptors=[auth_interceptor])
 
 learning_usecase = LearningUseCase()
 learning_handler = LearningHandler(use_case=learning_usecase)
-learning_app = LearningServiceASGIApplication(learning_handler)
+learning_app = LearningServiceASGIApplication(learning_handler, interceptors=[auth_interceptor])
 
 identity_usecase = IdentityUseCase()
 identity_handler = IdentityHandler(use_case=identity_usecase)
-identity_app = IdentityServiceASGIApplication(identity_handler)
+identity_app = IdentityServiceASGIApplication(identity_handler, interceptors=[auth_interceptor])
 
 certificate_usecase = CertificateUseCase()
 certificate_handler = CertificateHandler(use_case=certificate_usecase)
-certificate_app = CertificateServiceASGIApplication(certificate_handler)
+certificate_app = CertificateServiceASGIApplication(certificate_handler, interceptors=[auth_interceptor])
 
 assessment_usecase = AssessmentUseCase()
 assessment_handler = AssessmentHandler(use_case=assessment_usecase)
-assessment_app = AssessmentServiceASGIApplication(assessment_handler)
+assessment_app = AssessmentServiceASGIApplication(assessment_handler, interceptors=[auth_interceptor])
 
 forum_usecase = ForumUseCase()
 forum_handler = ForumHandler(use_case=forum_usecase)
-forum_app = ForumServiceASGIApplication(forum_handler)
+forum_app = ForumServiceASGIApplication(forum_handler, interceptors=[auth_interceptor])
 
 # 2. Register Routes by service path prefix
 router = ModularRouterASGIApp(

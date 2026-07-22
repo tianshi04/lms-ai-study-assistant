@@ -4,6 +4,7 @@ from src.gen.assessment.v1 import assessment_pb as pb
 from src.gen.assessment.v1.assessment_connect import AssessmentService
 from src.modules.assessment.application.assessment_usecase import AssessmentUseCase
 from src.modules.assessment.domain.entities import RubricCriteria
+from src.shared.auth import require_current_user
 
 
 class AssessmentHandler(AssessmentService):
@@ -16,8 +17,9 @@ class AssessmentHandler(AssessmentService):
         request: pb.SubmitHonorCodeRequest,
         ctx: RequestContext[pb.SubmitHonorCodeRequest, pb.SubmitHonorCodeResponse],
     ) -> pb.SubmitHonorCodeResponse:
+        current_user = require_current_user()
         success, msg = await self.use_case.submit_honor_code(
-            user_id=request.user_id,
+            user_id=current_user.id,
             item_id=request.item_id,
             is_agreed=request.is_agreed,
         )
@@ -28,8 +30,9 @@ class AssessmentHandler(AssessmentService):
         request: pb.SubmitGradedQuizRequest,
         ctx: RequestContext[pb.SubmitGradedQuizRequest, pb.SubmitGradedQuizResponse],
     ) -> pb.SubmitGradedQuizResponse:
+        current_user = require_current_user()
         res = await self.use_case.submit_graded_quiz(
-            user_id=request.user_id,
+            user_id=current_user.id,
             item_id=request.item_id,
             selected_option_indexes=list(request.selected_option_indexes),
         )
@@ -47,8 +50,9 @@ class AssessmentHandler(AssessmentService):
         request: pb.SubmitAutoGradedLabRequest,
         ctx: RequestContext[pb.SubmitAutoGradedLabRequest, pb.SubmitAutoGradedLabResponse],
     ) -> pb.SubmitAutoGradedLabResponse:
+        current_user = require_current_user()
         res = await self.use_case.submit_auto_graded_lab(
-            user_id=request.user_id,
+            user_id=current_user.id,
             item_id=request.item_id,
             source_code=request.source_code,
             language=request.language or "python",
@@ -67,8 +71,9 @@ class AssessmentHandler(AssessmentService):
         request: pb.SubmitPeerAssignmentRequest,
         ctx: RequestContext[pb.SubmitPeerAssignmentRequest, pb.SubmitPeerAssignmentResponse],
     ) -> pb.SubmitPeerAssignmentResponse:
+        current_user = require_current_user()
         sub_id, msg = await self.use_case.submit_peer_assignment(
-            user_id=request.user_id,
+            user_id=current_user.id,
             item_id=request.item_id,
             submission_url=request.submission_url,
             text_content=request.text_content,
@@ -80,8 +85,9 @@ class AssessmentHandler(AssessmentService):
         request: pb.GetPeerReviewsToGradeRequest,
         ctx: RequestContext[pb.GetPeerReviewsToGradeRequest, pb.GetPeerReviewsToGradeResponse],
     ) -> pb.GetPeerReviewsToGradeResponse:
+        current_user = require_current_user()
         items = await self.use_case.get_peer_reviews_to_grade(
-            user_id=request.user_id, item_id=request.item_id
+            user_id=current_user.id, item_id=request.item_id
         )
         pb_items: list[pb.PeerReviewItemToGrade] = []
         for item in items:
@@ -110,6 +116,7 @@ class AssessmentHandler(AssessmentService):
         request: pb.SubmitPeerReviewGradeRequest,
         ctx: RequestContext[pb.SubmitPeerReviewGradeRequest, pb.SubmitPeerReviewGradeResponse],
     ) -> pb.SubmitPeerReviewGradeResponse:
+        current_user = require_current_user()
         domain_rubrics = [
             RubricCriteria(
                 criteria_id=c.criteria_id,
@@ -122,7 +129,7 @@ class AssessmentHandler(AssessmentService):
         ]
         success, msg = await self.use_case.submit_peer_review_grade(
             review_id=request.review_id,
-            reviewer_user_id=request.reviewer_user_id,
+            reviewer_user_id=current_user.id,
             graded_criteria=domain_rubrics,
         )
         return pb.SubmitPeerReviewGradeResponse(success=success, message=msg)
@@ -132,9 +139,11 @@ class AssessmentHandler(AssessmentService):
         request: pb.SubmitGradeAppealRequest,
         ctx: RequestContext[pb.SubmitGradeAppealRequest, pb.SubmitGradeAppealResponse],
     ) -> pb.SubmitGradeAppealResponse:
+        current_user = require_current_user()
         success, status = await self.use_case.submit_grade_appeal(
-            user_id=request.user_id,
+            user_id=current_user.id,
             submission_id=request.submission_id,
             appeal_reason=request.appeal_reason,
         )
         return pb.SubmitGradeAppealResponse(success=success, appeal_status=status)
+
