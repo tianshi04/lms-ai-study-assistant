@@ -48,6 +48,9 @@ This file provides rules, architectural conventions, and workspace instructions 
 ---
 
 ## 4. Code Quality, Type Checking & Testing
+- **Standard Libraries & Wheel-Reinvention Rule**:
+  - **Prefer Ecosystem & Standard Libraries**: Always leverage battle-tested standard libraries (e.g. `hmac`/`passlib` for security/hash comparisons, `Starlette` for ASGI/CORS middleware, `Pydantic` for schema validation) instead of writing custom home-grown wrappers or byte-level helpers.
+  - **Audit Before Implementation**: Before writing custom helper utility classes, custom ASGI middlewares, or manual AST static filters, search the codebase and standard ecosystem first. Avoid implementing custom solutions for problems already solved by standard libraries.
 - **Backend (Python)**:
   - **Linter & Formatter**: We use `ruff` for code styling, sorting imports, and linting.
   - **Type Checker**: We use `ty` (Astral's Rust-powered static type checker) for type checking.
@@ -56,6 +59,7 @@ This file provides rules, architectural conventions, and workspace instructions 
 - **Frontend (TypeScript)**:
   - **Linter**: We use **ESLint** for code quality. The generated `src/gen/` folder is globally ignored from ESLint.
   - **Type Checker & Compiler**: Built-in Next.js typescript compiler check during `npm run build`.
+
 
 ---
 
