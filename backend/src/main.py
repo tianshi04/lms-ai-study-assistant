@@ -1,5 +1,10 @@
 import asyncio
-from typing import Any, Callable
+from contextlib import asynccontextmanager
+
+from starlette.applications import Starlette
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
+from starlette.routing import Mount
 
 from src.gen.assessment.v1.assessment_connect import AssessmentServiceASGIApplication
 from src.gen.catalog.v1.catalog_connect import CatalogServiceASGIApplication
@@ -21,74 +26,6 @@ from src.modules.learning.application.learning_usecase import LearningUseCase
 from src.modules.learning.presentation.learning_handler import LearningHandler
 from src.shared.config import settings
 from src.shared.infrastructure.interceptors import AuthInterceptor
-
-
-class CORSMiddleware:
-    """Simple ASGI middleware to handle CORS preflight and headers for ConnectRPC."""
-
-    def __init__(self, app: Any) -> None:
-        self.app = app
-
-    async def __call__(
-        self, scope: dict[str, Any], receive: Callable, send: Callable
-    ) -> None:
-        if scope["type"] != "http":
-            await self.app(scope, receive, send)
-            return
-
-        # Handle preflight (OPTIONS) requests
-        if scope.get("method") == "OPTIONS":
-            headers = [
-                (b"access-control-allow-origin", b"*"),
-                (b"access-control-allow-methods", b"POST, GET, OPTIONS"),
-                (
-                    b"access-control-allow-headers",
-                    b"connect-protocol-version, content-type, authorization",
-                ),
-                (b"access-control-max-age", b"86400"),
-                (b"content-length", b"0"),
-            ]
-            await send(
-                {
-                    "type": "http.response.start",
-                    "status": 204,
-                    "headers": headers,
-                }
-            )
-            await send(
-                {
-                    "type": "http.response.body",
-                    "body": b"",
-                }
-            )
-            return
-
-        # For normal requests, inject access-control-allow-origin header
-        async def cors_send(message: dict[str, Any]) -> None:
-            if message["type"] == "http.response.start":
-                # Convert headers to list of tuples and append CORS headers
-                headers = list(message.get("headers", []))
-                # Remove existing CORS headers if any to avoid duplication
-                headers = [
-                    h
-                    for h in headers
-                    if h[0].lower()
-                    not in (
-                        b"access-control-allow-origin",
-                        b"access-control-expose-headers",
-                    )
-                ]
-                headers.append((b"access-control-allow-origin", b"*"))
-                headers.append(
-                    (
-                        b"access-control-expose-headers",
-                        b"connect-error-info, connect-protocol-version",
-                    )
-                )
-                message["headers"] = headers
-            await send(message)
-
-        await self.app(scope, receive, cors_send)
 
 
 async def run_auto_migrations() -> None:
@@ -116,54 +53,17 @@ async def run_auto_migrations() -> None:
         print(f"[AUTO MIGRATION] Warning during auto-migration: {e}")
 
 
-class ModularRouterASGIApp:
-    """ASGI Application that routes ConnectRPC requests to appropriate module applications based on path prefix."""
+@asynccontextmanager
+async def lifespan(app: Starlette):
+    """Lifespan context manager for database migrations and initial seeding."""
+    try:
+        await run_auto_migrations()
+        from src.seed import seed_database
 
-    def __init__(self, routes: dict[str, Any]) -> None:
-        self.routes = routes
-
-    async def __call__(
-        self, scope: dict[str, Any], receive: Callable, send: Callable
-    ) -> None:
-        # Handle ASGI lifespan startup event for automatic database migration and seeding
-        if scope["type"] == "lifespan":
-            while True:
-                message = await receive()
-                if message["type"] == "lifespan.startup":
-                    try:
-                        await run_auto_migrations()
-                        from src.seed import seed_database
-
-                        await seed_database(auto_mode=True)
-                    except Exception as e:
-                        print(f"[STARTUP] Warning during startup: {e}")
-                    await send({"type": "lifespan.startup.complete"})
-                elif message["type"] == "lifespan.shutdown":
-                    await send({"type": "lifespan.shutdown.complete"})
-                    break
-            return
-
-        if scope["type"] == "http":
-            path = scope.get("path", "")
-            for prefix, sub_app in self.routes.items():
-                if path.startswith(prefix):
-                    await sub_app(scope, receive, send)
-                    return
-
-        # Fallback 404 response
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 404,
-                "headers": [(b"content-type", b"text/plain")],
-            }
-        )
-        await send(
-            {
-                "type": "http.response.body",
-                "body": b"Not Found",
-            }
-        )
+        await seed_database(auto_mode=True)
+    except Exception as e:
+        print(f"[STARTUP] Warning during startup: {e}")
+    yield
 
 
 # 1. Dependency Injection (Bootstrapping Use Cases & Handlers)
@@ -193,16 +93,26 @@ forum_usecase = ForumUseCase()
 forum_handler = ForumHandler(use_case=forum_usecase)
 forum_app = ForumServiceASGIApplication(forum_handler, interceptors=[auth_interceptor])
 
-# 2. Register Routes by service path prefix
-router = ModularRouterASGIApp(
-    {
-        "/catalog.v1.CatalogService": catalog_app,
-        "/learning.v1.LearningService": learning_app,
-        "/identity.v1.IdentityService": identity_app,
-        "/certificate.v1.CertificateService": certificate_app,
-        "/assessment.v1.AssessmentService": assessment_app,
-        "/forum.v1.ForumService": forum_app,
-    }
-)
+# 2. Register Routes & Middleware using Starlette
+routes = [
+    Mount("/catalog.v1.CatalogService", app=catalog_app),
+    Mount("/learning.v1.LearningService", app=learning_app),
+    Mount("/identity.v1.IdentityService", app=identity_app),
+    Mount("/certificate.v1.CertificateService", app=certificate_app),
+    Mount("/assessment.v1.AssessmentService", app=assessment_app),
+    Mount("/forum.v1.ForumService", app=forum_app),
+]
 
-app = CORSMiddleware(router)
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["connect-protocol-version", "content-type", "authorization"],
+        expose_headers=["connect-error-info", "connect-protocol-version"],
+        max_age=86400,
+    )
+]
+
+app = Starlette(routes=routes, middleware=middleware, lifespan=lifespan)
+
