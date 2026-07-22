@@ -1,19 +1,10 @@
 import pytest
-import pytest_asyncio
 from sqlalchemy import text
 from src.shared.infrastructure.database import (
     async_session_scope,
-    dispose_engine,
     get_session_factory,
     init_pgvector_extension,
 )
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def cleanup_engine():
-    """Ensure engine pool is properly disposed after each test."""
-    yield
-    await dispose_engine()
 
 
 @pytest.mark.asyncio(loop_scope="function")

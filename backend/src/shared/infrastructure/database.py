@@ -65,10 +65,7 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """Yield async database session for dependency injection or use case execution."""
     session_factory = get_session_factory()
     async with session_factory() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+        yield session
 
 
 @asynccontextmanager
@@ -80,10 +77,11 @@ async def async_session_scope() -> AsyncGenerator[AsyncSession, None]:
             yield session
             await session.commit()
         except Exception:
-            await session.rollback()
+            try:
+                await session.rollback()
+            except Exception:
+                pass
             raise
-        finally:
-            await session.close()
 
 
 async def init_pgvector_extension() -> None:
