@@ -29,7 +29,18 @@ class Settings(BaseSettings):
     MINIO_SECURE: bool = Field(default=False, description="Use HTTPS for MinIO connection")
 
     # 4. JWT Authentication
-    JWT_SECRET: str = Field(default="coursera_secret_key_2026", description="JWT secret key")
+    JWT_SECRET: str = Field(
+        default="coursera_super_secret_jwt_key_production_2026_x99_secure_hmac_sha256",
+        description="JWT secret key",
+    )
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
+        default=60,
+        description="Access token expiration in minutes",
+    )
+    REFRESH_TOKEN_EXPIRE_DAYS: int = Field(
+        default=7,
+        description="Refresh token expiration in days",
+    )
 
     @property
     def async_database_url(self) -> str:

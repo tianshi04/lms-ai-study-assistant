@@ -8,6 +8,7 @@ from sqlalchemy import select
 from src.modules.identity.domain.entities import User, UserRole
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
 from src.modules.identity.infrastructure.repository import IdentityRepository
+from src.shared.auth import create_access_token, create_refresh_token, decode_token
 from src.shared.infrastructure.database import async_session_scope
 
 
@@ -28,19 +29,40 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 class IdentityUseCase:
-    async def login(self, email: str, password: str) -> tuple[Optional[User], str, str]:
-        """Returns (user, access_token, error_message)."""
+    async def login(self, email: str, password: str) -> tuple[Optional[User], str, str, str]:
+        """Returns (user, access_token, refresh_token, error_message)."""
         async with async_session_scope() as session:
             repo = IdentityRepository(session)
             user = await repo.get_by_email(email)
             if not user:
-                return None, "", "Email hoặc mật khẩu không chính xác"
+                return None, "", "", "Email hoặc mật khẩu không chính xác"
 
             if not verify_password(password, user.password_hash):
-                return None, "", "Email hoặc mật khẩu không chính xác"
+                return None, "", "", "Email hoặc mật khẩu không chính xác"
 
-            token = f"bearer-token-{user.id}-{uuid.uuid4().hex[:8]}"
-            return user, token, ""
+            access_token = create_access_token(user.id, user.email, user.role.value)
+            refresh_token = create_refresh_token(user.id)
+            return user, access_token, refresh_token, ""
+
+    async def refresh_token(self, refresh_token_str: str) -> tuple[str, str, str]:
+        """Returns (new_access_token, new_refresh_token, error_message)."""
+        payload = decode_token(refresh_token_str)
+        if not payload or payload.get("type") != "refresh":
+            return "", "", "Refresh Token không hợp lệ hoặc đã hết hạn"
+
+        user_id = payload.get("sub")
+        if not user_id:
+            return "", "", "Refresh Token chứa thông tin không hợp lệ"
+
+        async with async_session_scope() as session:
+            repo = IdentityRepository(session)
+            user = await repo.get_by_id(user_id)
+            if not user:
+                return "", "", "Không tìm thấy người dùng sở hữu token"
+
+            new_access_token = create_access_token(user.id, user.email, user.role.value)
+            new_refresh_token = create_refresh_token(user.id)
+            return new_access_token, new_refresh_token, ""
 
     async def register(
         self, email: str, password: str, full_name: str, role_str: str
@@ -88,7 +110,6 @@ class IdentityUseCase:
             if not user:
                 return False, "Không tìm thấy người dùng"
 
-            # Strict Enterprise Seat Key Validation
             clean_key = enterprise_seat_key.strip()
             stmt = select(EnterpriseLicenseModel).where(EnterpriseLicenseModel.key == clean_key)
             res = await session.execute(stmt)
@@ -100,7 +121,6 @@ class IdentityUseCase:
             if license_model.used_seats >= license_model.total_seats:
                 return False, f"Mã Enterprise Key '{clean_key}' đã hết suất kích hoạt ({license_model.used_seats}/{license_model.total_seats} seats)."
 
-            # Update used seats count and assign key
             license_model.used_seats += 1
             user.enterprise_seat_key = clean_key
             await repo.save(user)

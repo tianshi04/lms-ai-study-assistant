@@ -1,5 +1,6 @@
 import pytest
 from src.modules.identity.application.identity_usecase import IdentityUseCase, hash_password, verify_password
+from src.shared.auth import decode_token
 
 
 def test_password_hashing():
@@ -13,9 +14,9 @@ def test_password_hashing():
 async def test_identity_register_and_login():
     try:
         usecase = IdentityUseCase()
-        email = "testuser@example.com"
+        email = "jwtuser@example.com"
         password = "MySecurePassword123"
-        full_name = "Nguyen Van A"
+        full_name = "Nguyen Van JWT"
 
         # Register
         user, err = await usecase.register(email, password, full_name, "USER_ROLE_LEARNER")
@@ -27,10 +28,23 @@ async def test_identity_register_and_login():
             assert user.email == email
 
         # Login
-        logged_user, token, login_err = await usecase.login(email, password)
+        logged_user, access_token, refresh_token, login_err = await usecase.login(email, password)
         assert login_err == ""
         assert logged_user is not None
-        assert token.startswith("bearer-token-")
+        assert access_token != ""
+        assert refresh_token != ""
+
+        # Decode Access Token
+        payload = decode_token(access_token)
+        assert payload is not None
+        assert payload.get("sub") == logged_user.id
+        assert payload.get("type") == "access"
+
+        # Refresh Token Flow
+        new_access, new_refresh, refresh_err = await usecase.refresh_token(refresh_token)
+        assert refresh_err == ""
+        assert new_access != ""
+        assert new_refresh != ""
     except Exception as e:
         pytest.skip(f"Skipping identity db test: DB not reachable ({e})")
 

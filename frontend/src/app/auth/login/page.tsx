@@ -32,6 +32,9 @@ function LoginFormContent() {
       const res = await client.login({ email, password });
       if (res.accessToken && res.user) {
         localStorage.setItem("access_token", res.accessToken);
+        if (res.refreshToken) {
+          localStorage.setItem("refresh_token", res.refreshToken);
+        }
         localStorage.setItem("user_id", res.user.id);
         localStorage.setItem("user_email", res.user.email);
         localStorage.setItem("user_name", res.user.fullName);

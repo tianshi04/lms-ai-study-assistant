@@ -40,10 +40,31 @@ class IdentityHandler(IdentityService):
         request: pb.LoginRequest,
         ctx: RequestContext[pb.LoginRequest, pb.LoginResponse],
     ) -> pb.LoginResponse:
-        user, token, err = await self._use_case.login(request.email, request.password)
+        user, access_token, refresh_token, err = await self._use_case.login(
+            request.email, request.password
+        )
         if err or not user:
             raise ConnectError(Code.UNAUTHENTICATED, err or "Đăng nhập thất bại")
-        return pb.LoginResponse(access_token=token, user=_to_pb_user(user))
+        return pb.LoginResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            user=_to_pb_user(user),
+        )
+
+    async def refresh_token(
+        self,
+        request: pb.RefreshTokenRequest,
+        ctx: RequestContext[pb.RefreshTokenRequest, pb.RefreshTokenResponse],
+    ) -> pb.RefreshTokenResponse:
+        new_access, new_refresh, err = await self._use_case.refresh_token(
+            request.refresh_token
+        )
+        if err or not new_access:
+            raise ConnectError(Code.UNAUTHENTICATED, err or "Refresh token không hợp lệ")
+        return pb.RefreshTokenResponse(
+            access_token=new_access,
+            refresh_token=new_refresh,
+        )
 
     async def register(
         self,

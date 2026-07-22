@@ -13,4 +13,4 @@ def test_settings_load_defaults():
 
 def test_singleton_settings_instance():
     """Verify settings singleton instance identity."""
-    assert settings.JWT_SECRET == "coursera_secret_key_2026"
+    assert settings.JWT_SECRET == "coursera_super_secret_jwt_key_production_2026_x99_secure_hmac_sha256"

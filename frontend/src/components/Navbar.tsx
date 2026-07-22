@@ -1,26 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
-export function Navbar() {
-  const [userName, setUserName] = useState<string | null>(null);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
+const emptySubscribe = () => () => {};
 
-  useEffect(() => {
-    setMounted(true);
-    const name = localStorage.getItem("user_name");
-    const email = localStorage.getItem("user_email");
-    if (name) setUserName(name);
-    if (email) setUserEmail(email);
-  }, []);
+export function Navbar() {
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+
+  const userName = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_name") : null;
+  const userEmail = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_email") : null;
 
   const handleLogout = () => {
     localStorage.clear();
-    setUserName(null);
-    setUserEmail(null);
     window.location.href = "/auth/login";
   };
 
@@ -57,7 +54,7 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           <ThemeToggle />
 
-          {mounted && userName ? (
+          {isMounted && userName ? (
             <div className="flex items-center gap-3">
               <Link
                 href="/auth/profile"

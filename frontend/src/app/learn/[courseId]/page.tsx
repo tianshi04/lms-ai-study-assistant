@@ -77,7 +77,7 @@ export default function CoursePlayerPage() {
       }
     }
     loadData();
-  }, [courseId]);
+  }, [courseId, router]);
 
   // Total course items count
   const totalCourseItems = course?.weekModules.reduce(

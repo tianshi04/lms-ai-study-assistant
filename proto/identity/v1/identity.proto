@@ -28,6 +28,7 @@ message LoginRequest {
 message LoginResponse {
   string access_token = 1;
   User user = 2;
+  string refresh_token = 3;
 }
 
 message RegisterRequest {
@@ -59,9 +60,19 @@ message AssignEnterpriseSeatResponse {
   string message = 2;
 }
 
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
 service IdentityService {
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse);
   rpc AssignEnterpriseSeat(AssignEnterpriseSeatRequest) returns (AssignEnterpriseSeatResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
 }
