@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getRpcClient } from "@/lib/connect_client";
 import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Navbar } from "@/components/Navbar";
 
 interface VerifyPageProps {
   params: Promise<{ certId: string }>;
@@ -13,7 +13,9 @@ interface VerifyPageProps {
 export default function VerifyPage({ params }: VerifyPageProps) {
   const resolvedParams = use(params);
   const certId = resolvedParams.certId;
+  const router = useRouter();
 
+  const [searchCertId, setSearchCertId] = useState(certId);
   const [cert, setCert] = useState<VerifiedCertificate | null>(null);
   const [isValid, setIsValid] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -21,23 +23,34 @@ export default function VerifyPage({ params }: VerifyPageProps) {
 
   useEffect(() => {
     async function verify() {
+      setLoading(true);
       try {
         const client = getRpcClient(CertificateService);
         const res = await client.verifyCertificatePublic({ certificateId: certId });
         setIsValid(res.isValid);
         if (res.certificate) {
           setCert(res.certificate);
+        } else {
+          setCert(null);
         }
       } catch (err) {
         console.error("Lỗi xác thực chứng chỉ:", err);
         setIsValid(false);
-      } fontFinally: {
+        setCert(null);
+      } finally {
         setLoading(false);
       }
     }
 
     verify();
   }, [certId]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchCertId.trim()) {
+      router.push(`/verify/${searchCertId.trim()}`);
+    }
+  };
 
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
@@ -58,43 +71,47 @@ export default function VerifyPage({ params }: VerifyPageProps) {
     URL.revokeObjectURL(url);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-          <svg className="animate-spin h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-          </svg>
-          <span className="text-sm font-medium">Đang truy vấn xác thực chứng chỉ...</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col justify-between transition-colors">
-      {/* Public Header */}
-      <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href="/courses" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              C
-            </div>
-            <div>
-              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                Coursera AI
-              </span>
-              <span className="text-xs block text-slate-500 dark:text-slate-400 font-medium">Public Verification Portal</span>
-            </div>
-          </Link>
-          <ThemeToggle />
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-12 w-full flex-1">
-        {isValid && cert ? (
+      <main className="max-w-4xl mx-auto px-4 py-10 w-full flex-1">
+        {/* Interactive Search Bar */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 mb-8 shadow-sm">
+          <h1 className="text-xl font-extrabold text-slate-900 dark:text-white mb-2">
+            Cổng Xác Minh Chứng Chỉ Công Khai (Public Certificate Verifier)
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
+            Nhập Mã chứng chỉ (Certificate ID) để tra cứu tính hợp lệ và truy xuất chuẩn OpenBadges 2.0 trực tiếp từ CSDL PostgreSQL.
+          </p>
+
+          <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              value={searchCertId}
+              onChange={(e) => setSearchCertId(e.target.value)}
+              placeholder="Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)"
+              className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            />
+            <button
+              type="submit"
+              className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-md shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span>Tra Cứu & Xác Minh</span>
+            </button>
+          </form>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-20 text-slate-500">
+            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-3" />
+            <span>Đang truy vấn CSDL xác thực chứng chỉ...</span>
+          </div>
+        ) : isValid && cert ? (
           <div className="space-y-8">
             {/* Status Verification Badge */}
             <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl p-4 flex items-center gap-3 text-emerald-700 dark:text-emerald-400">
@@ -109,7 +126,6 @@ export default function VerifyPage({ params }: VerifyPageProps) {
 
             {/* Certificate Presentation Document */}
             <div className="bg-white dark:bg-slate-900 border-8 border-slate-100 dark:border-slate-800 rounded-3xl p-8 sm:p-12 shadow-2xl relative overflow-hidden">
-              {/* Background Watermark Decorative Accent */}
               <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
 
               {/* Top Partner Branding */}
@@ -118,82 +134,84 @@ export default function VerifyPage({ params }: VerifyPageProps) {
                   <span className="text-xs font-bold font-mono text-blue-600 dark:text-blue-400 uppercase tracking-widest block mb-1">
                     COURSERA VERIFIED SPECIALIZATION CERTIFICATE
                   </span>
-                  <h2 className="text-lg font-bold text-slate-700 dark:text-slate-300">{cert.partnerName}</h2>
+                  <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{cert.partnerName}</h2>
                 </div>
-                {cert.partnerLogoUrl && (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={cert.partnerLogoUrl} alt={cert.partnerName} className="h-10 object-contain" />
-                )}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={cert.partnerLogoUrl} alt={cert.partnerName} className="h-12 object-contain" />
               </div>
 
-              {/* Certificate Body */}
-              <div className="text-center py-6 space-y-6">
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Chứng nhận này được trao cho</p>
-                <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight underline decoration-blue-500/30 underline-offset-8">
-                  {cert.learnerName}
-                </h1>
-                <p className="text-slate-600 dark:text-slate-400 text-sm max-w-xl mx-auto leading-relaxed">
-                  Đã hoàn thành xuất sắc chương trình học chuyên sâu và đạt điểm vượt qua ở tất cả các bài kiểm tra đánh giá tính điểm cho khóa học:
-                </p>
-                <h3 className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 max-w-2xl mx-auto">
-                  {cert.courseTitle}
-                </h3>
-              </div>
-
-              {/* Certificate Footer */}
-              <div className="pt-8 mt-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6">
+              {/* Recipient & Course Detail */}
+              <div className="space-y-6 text-center sm:text-left">
                 <div>
-                  <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Ngày cấp chứng chỉ</p>
-                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200">{cert.issueDate}</p>
+                  <span className="text-xs text-slate-400 uppercase font-semibold tracking-wider block mb-1">Chứng nhận cấp cho</span>
+                  <h3 className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tight">{cert.learnerName}</h3>
                 </div>
 
-                {/* QR Code */}
-                {cert.qrCodeUrl && (
-                  <div className="flex items-center gap-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={cert.qrCodeUrl} alt="QR Verification" className="w-16 h-16 rounded-lg" />
-                    <div className="text-left">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase">Quét mã QR</p>
-                      <p className="text-xs font-mono font-semibold text-slate-700 dark:text-slate-300">Xác thực công khai</p>
-                    </div>
+                <div>
+                  <span className="text-xs text-slate-400 uppercase font-semibold tracking-wider block mb-1">Đã hoàn thành xuất sắc khóa học</span>
+                  <h4 className="text-xl font-bold text-slate-900 dark:text-white leading-snug">{cert.courseTitle}</h4>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 text-xs">
+                  <div>
+                    <span className="text-slate-400 block font-medium">Ngày cấp chứng nhận:</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300 font-mono">{cert.issueDate}</span>
                   </div>
-                )}
+                  <div>
+                    <span className="text-slate-400 block font-medium">Mã tra cứu định danh:</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-300 font-mono">{cert.certificateId}</span>
+                  </div>
+                </div>
               </div>
-            </div>
 
-            {/* Sharing & Export Actions */}
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-              <button
-                onClick={handleCopyLink}
-                className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 cursor-pointer"
-              >
-                <span>{copied ? "✓ Đã sao chép liên kết" : "Sao chép liên kết xác thực"}</span>
-              </button>
+              {/* Bottom Verification Seal & QR Code */}
+              <div className="mt-10 pt-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={cert.qrCodeUrl} alt="Certificate Verification QR Code" className="w-20 h-20 rounded-xl border p-1 bg-white" />
+                  <div className="text-left text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                    <p className="font-semibold text-slate-900 dark:text-white">Xác minh nguồn gốc kỹ thuật số</p>
+                    <p className="text-[11px]">Quét mã QR để kiểm tra tính toàn vẹn của bằng cấp công khai.</p>
+                  </div>
+                </div>
 
-              <button
-                onClick={handleDownloadBadge}
-                className="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer"
-              >
-                <span>Tải dữ liệu OpenBadges 2.0 (.json)</span>
-              </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleCopyLink}
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    {copied ? "✓ Đã sao chép Link" : "Sao chép Link Xác minh"}
+                  </button>
+                  <button
+                    onClick={handleDownloadBadge}
+                    className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/20 transition-all cursor-pointer"
+                  >
+                    Tải OpenBadges 2.0 (JSON-LD)
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         ) : (
-          /* Invalid / Not Found State */
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center max-w-xl mx-auto shadow-xl">
-            <div className="w-16 h-16 rounded-2xl bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold text-2xl mx-auto mb-6">
+          <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-3xl p-8 text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-xl mx-auto">
               ✕
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Chứng chỉ Không hợp lệ</h1>
-            <p className="text-slate-600 dark:text-slate-400 text-sm mb-8">
-              Mã chứng chỉ <strong>#{certId}</strong> không tồn tại hoặc đã bị thu hồi khỏi hệ thống xác thực.
+            <h2 className="text-xl font-bold text-rose-700 dark:text-rose-400">
+              Không Tìm Thấy Mã Chứng Chỉ #{certId}
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-300 max-w-md mx-auto">
+              Mã chứng chỉ này không tồn tại trong hệ thống CSDL PostgreSQL hoặc đã bị thu hồi. Vui lòng kiểm tra lại chính xác mã chứng chỉ.
             </p>
-            <Link
-              href="/courses"
-              className="inline-flex px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-all"
+            <button
+              onClick={() => {
+                setSearchCertId("CERT-DEMO12345");
+                router.push("/verify/CERT-DEMO12345");
+              }}
+              className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold inline-block"
             >
-              Về trang danh sách khóa học
-            </Link>
+              Thử mã mẫu demo (CERT-DEMO12345)
+            </button>
           </div>
         )}
       </main>

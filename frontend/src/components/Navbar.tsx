@@ -58,7 +58,7 @@ export function Navbar() {
           <Link href="/financial-aid?courseId=course-python-ai" className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             Financial Aid
           </Link>
-          <Link href="/verify/CERT-DEMO12345" className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+          <Link href="/verify" className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             Verify Cert
           </Link>
         </nav>
