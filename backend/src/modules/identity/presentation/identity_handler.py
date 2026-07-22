@@ -1,3 +1,5 @@
+from typing import Any
+
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
@@ -18,6 +20,24 @@ def _to_pb_user_role(role: UserRole) -> pb.UserRole:
         UserRole.PARTNER_ADMIN: pb.UserRole.PARTNER_ADMIN,
     }
     return mapping.get(role, pb.UserRole.UNSPECIFIED)
+
+
+def _pb_role_to_domain_str(role_val: Any) -> str:
+    mapping = {
+        pb.UserRole.UNSPECIFIED: "USER_ROLE_UNSPECIFIED",
+        pb.UserRole.LEARNER: "USER_ROLE_LEARNER",
+        pb.UserRole.INSTRUCTOR: "USER_ROLE_INSTRUCTOR",
+        pb.UserRole.TA: "USER_ROLE_TA",
+        pb.UserRole.SUPER_ADMIN: "USER_ROLE_SUPER_ADMIN",
+        pb.UserRole.PARTNER_ADMIN: "USER_ROLE_PARTNER_ADMIN",
+        0: "USER_ROLE_UNSPECIFIED",
+        1: "USER_ROLE_LEARNER",
+        2: "USER_ROLE_INSTRUCTOR",
+        3: "USER_ROLE_TA",
+        4: "USER_ROLE_SUPER_ADMIN",
+        5: "USER_ROLE_PARTNER_ADMIN",
+    }
+    return mapping.get(role_val, "USER_ROLE_LEARNER")
 
 
 def _to_pb_user(user: User) -> pb.User:
@@ -71,12 +91,12 @@ class IdentityHandler(IdentityService):
         request: pb.RegisterRequest,
         ctx: RequestContext[pb.RegisterRequest, pb.RegisterResponse],
     ) -> pb.RegisterResponse:
-        role_enum = request.role if request.role is not None else pb.UserRole.LEARNER
+        role_str = _pb_role_to_domain_str(request.role)
         user, err = await self._use_case.register(
             email=request.email,
             password=request.password,
             full_name=request.full_name,
-            role_str=role_enum.name if hasattr(role_enum, "name") else "USER_ROLE_LEARNER",
+            role_str=role_str,
         )
         if err or not user:
             raise ConnectError(Code.ALREADY_EXISTS, err or "Đăng ký thất bại")
