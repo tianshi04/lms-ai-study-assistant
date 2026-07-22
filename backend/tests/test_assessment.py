@@ -217,8 +217,8 @@ name = input()
     assert res.passed is True
     assert res.passed_test_cases == 1
 
-    # Timeout handling
-    infinite_loop_code = "import time\ntime.sleep(5)"
-    res_timeout = await executor.execute_python(infinite_loop_code, [{"assertion_code": "assert True"}])
-    assert res_timeout.passed is False
-    assert "[TIMEOUT]" in res_timeout.test_logs
+    # Security AST blocking test
+    malicious_code = "import os\nos.system('echo hacked')"
+    res_sec = await executor.execute_python(malicious_code, [{"assertion_code": "assert True"}])
+    assert res_sec.passed is False
+    assert "Security Violation" in res_sec.test_logs

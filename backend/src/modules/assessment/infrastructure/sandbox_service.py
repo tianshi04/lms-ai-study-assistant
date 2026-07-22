@@ -1,9 +1,54 @@
 from dataclasses import dataclass
+import ast
 import asyncio
 import tempfile
 import os
 import sys
 from typing import Any
+
+FORBIDDEN_MODULES = {
+    "os",
+    "sys",
+    "subprocess",
+    "shutil",
+    "importlib",
+    "pathlib",
+    "socket",
+    "requests",
+    "urllib",
+    "pty",
+    "ctypes",
+    "pickle",
+    "multiprocessing",
+    "threading",
+}
+
+FORBIDDEN_BUILTINS = {"eval", "exec", "compile", "__import__", "open"}
+
+
+def validate_code_security(source_code: str) -> tuple[bool, str]:
+    """Perform AST static analysis to block dangerous modules and built-in functions."""
+    try:
+        tree = ast.parse(source_code)
+    except SyntaxError:
+        return True, ""  # Syntax errors will be reported during python execution
+
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                mod_base = alias.name.split(".")[0]
+                if mod_base in FORBIDDEN_MODULES:
+                    return False, f"Security Violation: Forbidden module import '{alias.name}'"
+        elif isinstance(node, ast.ImportFrom):
+            if node.module:
+                mod_base = node.module.split(".")[0]
+                if mod_base in FORBIDDEN_MODULES:
+                    return False, f"Security Violation: Forbidden module import '{node.module}'"
+        elif isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Name) and node.func.id in FORBIDDEN_BUILTINS:
+                return False, f"Security Violation: Forbidden function call '{node.func.id}()'"
+
+    return True, ""
 
 
 @dataclass
@@ -18,15 +63,28 @@ class SandboxResult:
 class PythonCodeSandboxExecutor:
     """Async Sandbox Executor for Auto-Graded Labs.
 
-    Executes Python source code in an isolated subprocess with timeout constraints.
+    Executes Python source code with AST static security checks, environment isolation,
+    and timeout constraints.
     """
 
-    def __init__(self, timeout_seconds: float = 5.0) -> None:
+    def __init__(self, timeout_seconds: float = 5.0, use_docker: bool = False) -> None:
         self.timeout_seconds = timeout_seconds
+        self.use_docker = use_docker
 
     async def execute_python(
         self, source_code: str, test_cases: list[dict[str, Any]]
     ) -> SandboxResult:
+        # 1. AST Security Validation
+        is_safe, sec_err = validate_code_security(source_code)
+        if not is_safe:
+            return SandboxResult(
+                score_percent=0.0,
+                passed=False,
+                total_test_cases=len(test_cases) or 1,
+                passed_test_cases=0,
+                test_logs=f"[FAIL] {sec_err}",
+            )
+
         if not test_cases:
             # Default single assertion test case if none provided
             test_cases = [{"input": "", "expected_output": "", "assertion_code": "assert True"}]
@@ -34,6 +92,13 @@ class PythonCodeSandboxExecutor:
         passed_count = 0
         total_count = len(test_cases)
         log_lines: list[str] = []
+
+        # 2. Clean environment stripping host secrets (.env, DB credentials)
+        clean_env = {
+            "PATH": os.environ.get("PATH", ""),
+            "SYSTEMROOT": os.environ.get("SYSTEMROOT", ""),
+            "PYTHONPATH": "",
+        }
 
         for idx, tc in enumerate(test_cases, start=1):
             assertion = tc.get("assertion_code", "")
@@ -71,6 +136,7 @@ except Exception as e:
                     stdin=asyncio.subprocess.PIPE if stdin_bytes else None,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
+                    env=clean_env,
                 )
                 try:
                     stdout, stderr = await asyncio.wait_for(
