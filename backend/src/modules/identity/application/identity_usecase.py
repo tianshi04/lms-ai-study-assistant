@@ -3,7 +3,10 @@ import os
 import uuid
 from typing import Optional
 
+from sqlalchemy import select
+
 from src.modules.identity.domain.entities import User, UserRole
+from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
 from src.modules.identity.infrastructure.repository import IdentityRepository
 from src.shared.infrastructure.database import async_session_scope
 
@@ -36,7 +39,6 @@ class IdentityUseCase:
             if not verify_password(password, user.password_hash):
                 return None, "", "Email hoặc mật khẩu không chính xác"
 
-            # Fake/Simulated JWT Token for ConnectRPC session
             token = f"bearer-token-{user.id}-{uuid.uuid4().hex[:8]}"
             return user, token, ""
 
@@ -86,6 +88,20 @@ class IdentityUseCase:
             if not user:
                 return False, "Không tìm thấy người dùng"
 
-            user.enterprise_seat_key = enterprise_seat_key
+            # Strict Enterprise Seat Key Validation
+            clean_key = enterprise_seat_key.strip()
+            stmt = select(EnterpriseLicenseModel).where(EnterpriseLicenseModel.key == clean_key)
+            res = await session.execute(stmt)
+            license_model = res.scalar_one_or_none()
+
+            if not license_model or not license_model.is_active:
+                return False, f"Mã Enterprise Key '{clean_key}' không tồn tại hoặc đã bị vô hiệu hóa."
+
+            if license_model.used_seats >= license_model.total_seats:
+                return False, f"Mã Enterprise Key '{clean_key}' đã hết suất kích hoạt ({license_model.used_seats}/{license_model.total_seats} seats)."
+
+            # Update used seats count and assign key
+            license_model.used_seats += 1
+            user.enterprise_seat_key = clean_key
             await repo.save(user)
-            return True, "Gán suất học doanh nghiệp thành công"
+            return True, f"Kích hoạt thành công suất học từ đối tác {license_model.partner_name}!"

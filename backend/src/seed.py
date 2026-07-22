@@ -37,7 +37,7 @@ from src.modules.catalog.infrastructure.models import (
 )
 from src.modules.certificate.infrastructure.models import CertificateModel, FinancialAidModel
 from src.modules.identity.domain.entities import UserRole
-from src.modules.identity.infrastructure.models import UserModel
+from src.modules.identity.infrastructure.models import EnterpriseLicenseModel, UserModel
 from src.modules.learning.infrastructure.models import (
     LearningProgressModel,
     PersonalNoteModel,
@@ -243,6 +243,32 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             await session.merge(course)
         for spec in specializations:
             await session.merge(spec)
+
+        # Seed Valid Enterprise Licenses
+        lic1 = EnterpriseLicenseModel(
+            key="ENT-DEMO-2026-X99",
+            partner_name="DeepLearning.AI Partner Program",
+            total_seats=500,
+            used_seats=1,
+            is_active=True,
+        )
+        lic2 = EnterpriseLicenseModel(
+            key="ENT-UNI-HCMUT-2026",
+            partner_name="Trường Đại học Bách Khoa TP.HCM",
+            total_seats=1000,
+            used_seats=0,
+            is_active=True,
+        )
+        lic3 = EnterpriseLicenseModel(
+            key="ENT-TECH-FPT-2026",
+            partner_name="FPT Software Enterprise Academy",
+            total_seats=250,
+            used_seats=0,
+            is_active=True,
+        )
+        await session.merge(lic1)
+        await session.merge(lic2)
+        await session.merge(lic3)
 
         # Seed Demo User
         demo_user = UserModel(
