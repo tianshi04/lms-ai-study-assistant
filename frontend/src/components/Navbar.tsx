@@ -15,6 +15,10 @@ export function Navbar() {
 
   const userName = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_name") : null;
   const userEmail = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_email") : null;
+  const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
+
+  // Check if role is INSTRUCTOR (2), SUPER_ADMIN (4), or PARTNER_ADMIN (5)
+  const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
 
   const handleLogout = () => {
     localStorage.clear();
@@ -42,6 +46,15 @@ export function Navbar() {
           <Link href="/courses" className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             Catalog
           </Link>
+
+          {/* Render Instructor Portal ONLY for authorized roles */}
+          {isInstructorOrAdmin && (
+            <Link href="/instructor/courses" className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
+              <span>Giảng Viên</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">Portal</span>
+            </Link>
+          )}
+
           <Link href="/financial-aid?courseId=course-python-ai" className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             Financial Aid
           </Link>

@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -172,3 +173,54 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             if c:
                 courses.append(c)
         return _model_to_domain_specialization(spec_model), courses
+
+    async def create_course(
+        self,
+        title: str,
+        slug: str,
+        description: str,
+        partner_name: str,
+        partner_logo_url: str,
+        instructor_names: list[str],
+    ) -> Course:
+        course_id = f"course-{slug}" if slug else f"course-{uuid.uuid4().hex[:8]}"
+        model = CourseModel(
+            id=course_id,
+            title=title,
+            slug=slug or course_id,
+            description=description,
+            partner_name=partner_name or "Coursera AI Partner",
+            partner_logo_url=partner_logo_url or "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
+            instructor_names=instructor_names or ["Giảng viên AI"],
+        )
+        self.session.add(model)
+        await self.session.commit()
+        c_detail = await self.get_course_detail(course_id)
+        return c_detail if c_detail else _model_to_domain_course(model)
+
+    async def update_course(
+        self,
+        course_id: str,
+        title: str,
+        description: str,
+        partner_name: str,
+        partner_logo_url: str,
+        instructor_names: list[str],
+    ) -> Course | None:
+        stmt = select(CourseModel).where(CourseModel.id == course_id)
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return None
+        if title:
+            model.title = title
+        if description:
+            model.description = description
+        if partner_name:
+            model.partner_name = partner_name
+        if partner_logo_url:
+            model.partner_logo_url = partner_logo_url
+        if instructor_names:
+            model.instructor_names = instructor_names
+        await self.session.commit()
+        return await self.get_course_detail(course_id)

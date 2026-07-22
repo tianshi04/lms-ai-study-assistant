@@ -108,9 +108,37 @@ message GetLessonDetailResponse {
   Lesson lesson = 1;
 }
 
+message CreateCourseRequest {
+  string title = 1;
+  string slug = 2;
+  string description = 3;
+  string partner_name = 4;
+  string partner_logo_url = 5;
+  repeated string instructor_names = 6;
+}
+
+message CreateCourseResponse {
+  Course course = 1;
+}
+
+message UpdateCourseRequest {
+  string course_id = 1;
+  string title = 2;
+  string description = 3;
+  string partner_name = 4;
+  string partner_logo_url = 5;
+  repeated string instructor_names = 6;
+}
+
+message UpdateCourseResponse {
+  Course course = 1;
+}
+
 service CatalogService {
   rpc GetSpecialization(GetSpecializationRequest) returns (GetSpecializationResponse);
   rpc ListCourses(ListCoursesRequest) returns (ListCoursesResponse);
   rpc GetCourseDetail(GetCourseDetailRequest) returns (GetCourseDetailResponse);
   rpc GetLessonDetail(GetLessonDetailRequest) returns (GetLessonDetailResponse);
+  rpc CreateCourse(CreateCourseRequest) returns (CreateCourseResponse);
+  rpc UpdateCourse(UpdateCourseRequest) returns (UpdateCourseResponse);
 }

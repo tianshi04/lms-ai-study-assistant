@@ -54,3 +54,43 @@ class CatalogUseCase:
             if callable(seed_fn):
                 await seed_fn()
             return await repo.get_specialization(specialization_id)
+
+    async def create_course(
+        self,
+        title: str,
+        slug: str,
+        description: str,
+        partner_name: str,
+        partner_logo_url: str,
+        instructor_names: list[str],
+    ) -> Course:
+        async with async_session_scope() as session:
+            repo = SQLAlchemyCatalogRepository(session)
+            return await repo.create_course(
+                title=title,
+                slug=slug,
+                description=description,
+                partner_name=partner_name,
+                partner_logo_url=partner_logo_url,
+                instructor_names=instructor_names,
+            )
+
+    async def update_course(
+        self,
+        course_id: str,
+        title: str,
+        description: str,
+        partner_name: str,
+        partner_logo_url: str,
+        instructor_names: list[str],
+    ) -> Course | None:
+        async with async_session_scope() as session:
+            repo = SQLAlchemyCatalogRepository(session)
+            return await repo.update_course(
+                course_id=course_id,
+                title=title,
+                description=description,
+                partner_name=partner_name,
+                partner_logo_url=partner_logo_url,
+                instructor_names=instructor_names,
+            )

@@ -1,3 +1,4 @@
+from typing import Any
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
@@ -5,6 +6,7 @@ from connectrpc.request import RequestContext
 from src.gen.catalog.v1 import catalog_pb as pb
 from src.gen.catalog.v1.catalog_connect import CatalogService
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
+from src.shared.auth import decode_token
 from src.modules.catalog.domain.entities import (
     Course,
     InVideoQuiz,
@@ -169,3 +171,66 @@ class CatalogHandler(CatalogService):
             specialization=_to_pb_specialization(spec),
             courses=[_to_pb_course(c) for c in courses],
         )
+
+    def _verify_instructor_permission(
+        self, ctx: RequestContext[Any, Any]
+    ) -> None:
+        metadata = getattr(ctx, "invocation_metadata", {}) or {}
+        auth_header = ""
+        if isinstance(metadata, dict):
+            auth_header = metadata.get("authorization", "") or metadata.get("Authorization", "")
+
+        if not auth_header:
+            raise ConnectError(
+                Code.UNAUTHENTICATED,
+                "Vui lòng đăng nhập với tài khoản Giảng viên (Instructor) để thực hiện thao tác này.",
+            )
+
+        token = str(auth_header).replace("Bearer ", "").strip()
+        payload = decode_token(token)
+        if not payload:
+            raise ConnectError(
+                Code.UNAUTHENTICATED,
+                "Token xác thực không hợp lệ hoặc đã hết hạn.",
+            )
+
+        role = payload.get("role", "")
+        if role not in ("USER_ROLE_INSTRUCTOR", "USER_ROLE_SUPER_ADMIN", "USER_ROLE_PARTNER_ADMIN"):
+            raise ConnectError(
+                Code.PERMISSION_DENIED,
+                "Chỉ tài khoản Giảng viên (Instructor) hoặc Quản trị viên mới có quyền tạo và chỉnh sửa khóa học.",
+            )
+
+    async def create_course(
+        self,
+        request: pb.CreateCourseRequest,
+        ctx: RequestContext[pb.CreateCourseRequest, pb.CreateCourseResponse],
+    ) -> pb.CreateCourseResponse:
+        self._verify_instructor_permission(ctx)
+        course = await self.use_case.create_course(
+            title=request.title,
+            slug=request.slug,
+            description=request.description,
+            partner_name=request.partner_name,
+            partner_logo_url=request.partner_logo_url,
+            instructor_names=list(request.instructor_names),
+        )
+        return pb.CreateCourseResponse(course=_to_pb_course(course))
+
+    async def update_course(
+        self,
+        request: pb.UpdateCourseRequest,
+        ctx: RequestContext[pb.UpdateCourseRequest, pb.UpdateCourseResponse],
+    ) -> pb.UpdateCourseResponse:
+        self._verify_instructor_permission(ctx)
+        course = await self.use_case.update_course(
+            course_id=request.course_id,
+            title=request.title,
+            description=request.description,
+            partner_name=request.partner_name,
+            partner_logo_url=request.partner_logo_url,
+            instructor_names=list(request.instructor_names),
+        )
+        if not course:
+            raise ConnectError(Code.NOT_FOUND, f"Khóa học {request.course_id} không tồn tại")
+        return pb.UpdateCourseResponse(course=_to_pb_course(course))
