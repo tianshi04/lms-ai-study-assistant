@@ -1,9 +1,15 @@
 from typing import Any, Callable
 
 from src.gen.catalog.v1.catalog_connect import CatalogServiceASGIApplication
+from src.gen.certificate.v1.certificate_connect import CertificateServiceASGIApplication
+from src.gen.identity.v1.identity_connect import IdentityServiceASGIApplication
 from src.gen.learning.v1.learning_connect import LearningServiceASGIApplication
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 from src.modules.catalog.presentation.catalog_handler import CatalogHandler
+from src.modules.certificate.application.certificate_usecase import CertificateUseCase
+from src.modules.certificate.presentation.certificate_handler import CertificateHandler
+from src.modules.identity.application.identity_usecase import IdentityUseCase
+from src.modules.identity.presentation.identity_handler import IdentityHandler
 from src.modules.learning.application.learning_usecase import LearningUseCase
 from src.modules.learning.presentation.learning_handler import LearningHandler
 
@@ -133,12 +139,23 @@ learning_usecase = LearningUseCase()
 learning_handler = LearningHandler(use_case=learning_usecase)
 learning_app = LearningServiceASGIApplication(learning_handler)
 
+identity_usecase = IdentityUseCase()
+identity_handler = IdentityHandler(use_case=identity_usecase)
+identity_app = IdentityServiceASGIApplication(identity_handler)
+
+certificate_usecase = CertificateUseCase()
+certificate_handler = CertificateHandler(use_case=certificate_usecase)
+certificate_app = CertificateServiceASGIApplication(certificate_handler)
+
 # 2. Register Routes by service path prefix
 router = ModularRouterASGIApp(
     {
         "/catalog.v1.CatalogService": catalog_app,
         "/learning.v1.LearningService": learning_app,
+        "/identity.v1.IdentityService": identity_app,
+        "/certificate.v1.CertificateService": certificate_app,
     }
 )
 
 app = CORSMiddleware(router)
+

@@ -35,10 +35,13 @@ from src.modules.catalog.infrastructure.models import (
     SpecializationModel,
     ItemType,
 )
+from src.modules.certificate.infrastructure.models import CertificateModel, FinancialAidModel
+from src.modules.identity.domain.entities import UserRole
+from src.modules.identity.infrastructure.models import UserModel
 from src.modules.learning.infrastructure.models import (
     LearningProgressModel,
-    WeeklyDeadlineModel,
     PersonalNoteModel,
+    WeeklyDeadlineModel,
 )
 
 # Configure logging
@@ -240,6 +243,34 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             await session.merge(course)
         for spec in specializations:
             await session.merge(spec)
+
+        # Seed Demo User
+        demo_user = UserModel(
+            id="user_learner_demo",
+            email="learner@coursera.ai",
+            full_name="Nguyễn Văn A",
+            role=UserRole.LEARNER,
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=learner@coursera.ai",
+            enterprise_seat_key="ENT-DEMO-2026-X99",
+            password_hash="73616c743132333435363738:39323537333333333333333333333333",
+        )
+        await session.merge(demo_user)
+
+        # Seed Demo Verified Certificate
+        demo_cert = CertificateModel(
+            certificate_id="CERT-DEMO12345",
+            user_id="user_learner_demo",
+            course_id="course-python-ai",
+            learner_name="Nguyễn Văn A",
+            course_title="Supervised Machine Learning: Regression and Classification",
+            partner_name="DeepLearning.AI",
+            partner_logo_url="https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
+            issue_date="22/07/2026",
+            verification_url="/verify/CERT-DEMO12345",
+            qr_code_url="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=CERT-DEMO12345",
+            open_badges_json_ld='{"@context":"https://w3id.org/openbadges/v2","type":"BadgeClass","name":"Supervised Machine Learning Verified Certificate"}',
+        )
+        await session.merge(demo_cert)
 
         await session.commit()
         logger.info("[SEED] Database seeding completed successfully!")
