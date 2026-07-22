@@ -116,7 +116,9 @@ export default function VerifyPage({ params }: VerifyPageProps) {
             {/* Status Verification Badge */}
             <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl p-4 flex items-center gap-3 text-emerald-700 dark:text-emerald-400">
               <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold flex-shrink-0">
-                ✓
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
               </div>
               <div>
                 <h3 className="font-bold text-sm">Chứng chỉ Hợp lệ & Đã được Xác minh Chính thức</h3>
@@ -178,9 +180,18 @@ export default function VerifyPage({ params }: VerifyPageProps) {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={handleCopyLink}
-                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-all cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
                   >
-                    {copied ? "✓ Đã sao chép Link" : "Sao chép Link Xác minh"}
+                    {copied ? (
+                      <>
+                        <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Đã sao chép Link</span>
+                      </>
+                    ) : (
+                      <span>Sao chép Link Xác minh</span>
+                    )}
                   </button>
                   <button
                     onClick={handleDownloadBadge}
@@ -195,7 +206,9 @@ export default function VerifyPage({ params }: VerifyPageProps) {
         ) : (
           <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-3xl p-8 text-center space-y-4">
             <div className="w-12 h-12 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-xl mx-auto">
-              ✕
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </div>
             <h2 className="text-xl font-bold text-rose-700 dark:text-rose-400">
               Không Tìm Thấy Mã Chứng Chỉ #{certId}

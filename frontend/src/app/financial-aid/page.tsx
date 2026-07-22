@@ -110,7 +110,7 @@ function FinancialAidContent() {
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Trạng thái hồ sơ</h2>
             </div>
             <span className="px-4 py-1.5 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30">
-              {existingApp.status === "PENDING" ? "⏳ Đang xét duyệt" : existingApp.status}
+              {existingApp.status === "PENDING" ? "Đang xét duyệt" : existingApp.status}
             </span>
           </div>
 

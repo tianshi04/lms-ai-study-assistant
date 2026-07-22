@@ -67,7 +67,7 @@ export default function InstructorCoursesPage() {
 
   const handleOpenCreateModal = () => {
     if (!isInstructorOrAdmin) {
-      setMessage("⚠️ Tài khoản Học viên (Learner) không có quyền tạo khóa học. Vui lòng đăng nhập tài khoản Giảng viên (Instructor).");
+      setMessage("Tài khoản Học viên (Learner) không có quyền tạo khóa học. Vui lòng đăng nhập tài khoản Giảng viên (Instructor).");
       return;
     }
     setEditingCourseId(null);
@@ -82,7 +82,7 @@ export default function InstructorCoursesPage() {
 
   const handleOpenEditModal = (course: Course) => {
     if (!isInstructorOrAdmin) {
-      setMessage("⚠️ Tài khoản Học viên (Learner) không có quyền chỉnh sửa khóa học.");
+      setMessage("Tài khoản Học viên (Learner) không có quyền chỉnh sửa khóa học.");
       return;
     }
     setEditingCourseId(course.id);
@@ -275,9 +275,11 @@ export default function InstructorCoursesPage() {
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
                 >
-                  ✕
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
 
