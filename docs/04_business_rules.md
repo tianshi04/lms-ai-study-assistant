@@ -87,3 +87,12 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_BADGE_001 (OpenBadges & Thu hồi Chứng chỉ):**
   * Tệp ảnh huy hiệu/certificate được tự động nhúng siêu dữ liệu JSON-LD chuẩn OpenBadges 2.0 để chia sẻ lên LinkedIn.
   * Nếu phát hiện gian lận nghiêm trọng hoặc tài khoản bị khóa, Super Admin có quyền kích hoạt lệnh Thu hồi Chứng chỉ (Revoke Certificate). Khi đó, trang xác thực `/verify/CERT-xxx` sẽ chuyển sang trạng thái "Revoked" (Đã bị thu hồi).
+
+---
+
+## 6. Quy tắc Diễn đàn Thảo luận (BR_FORUM)
+
+* **BR_FORUM_001 (Ràng buộc 1 Vote/User & Idempotent Toggle):**
+  * Mỗi người dùng (`user_id`) chỉ được phép vote tối đa 1 lượt duy nhất trên mỗi bài thảo luận hoặc câu trả lời (`post_id`). Danh tính `user_id` được tự động trích xuất bảo mật từ JWT Access Token của yêu cầu.
+  * Việc bấm nút Upvote khi chưa vote sẽ ghi nhận bản ghi lượt vote mới vào bảng `forum_votes` và tăng `upvote_count + 1`.
+  * Nếu người dùng bấm lại nút Upvote lần nữa, hệ thống tự động hủy lượt vote (Un-vote), xóa bản ghi khỏi `forum_votes` và giảm `upvote_count - 1`.

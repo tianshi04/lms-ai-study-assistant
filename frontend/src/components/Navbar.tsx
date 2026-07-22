@@ -46,6 +46,9 @@ export function Navbar() {
           <Link href="/courses" className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             Catalog
           </Link>
+          <Link href="/forum" className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            Diễn đàn
+          </Link>
 
           {/* Render Instructor Portal ONLY for authorized roles */}
           {isInstructorOrAdmin && (

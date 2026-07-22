@@ -39,6 +39,7 @@ from src.modules.certificate.infrastructure.models import (
     CertificateModel,
     FinancialAidModel,
 )
+from src.modules.forum.infrastructure.models import ForumReplyORM, ForumThreadORM
 from src.modules.identity.domain.entities import UserRole
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel, UserModel
 from src.modules.learning.infrastructure.models import (
@@ -334,6 +335,72 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             open_badges_json_ld='{"@context":"https://w3id.org/openbadges/v2","type":"BadgeClass","name":"Supervised Machine Learning Verified Certificate"}',
         )
         await session.merge(demo_cert)
+
+        # Seed Forum Sample Threads & Replies
+        thread1 = ForumThreadORM(
+            id="thread-ml-01",
+            course_id="course-python-ai",
+            item_id="item-ml-intro-video",
+            title="Làm thế nào để chọn Learning Rate (Alpha) tối ưu cho Gradient Descent?",
+            author_name="Lê Minh Trí",
+            author_role="Student",
+            author_user_id="user_learner_demo",
+            created_at="2026-07-22T10:15:00Z",
+            upvote_count=5,
+            is_staff_pinned=True,
+        )
+        reply1_1 = ForumReplyORM(
+            id="reply-ml-01-1",
+            thread_id="thread-ml-01",
+            author_name="ThS. Nguyễn Hoàng Nam",
+            author_role="Teaching Assistant",
+            author_user_id="user_ta_01",
+            content="Chào bạn Trí! Bạn nên thử các giá trị theo quy tắc lũy thừa của 10 như 0.001, 0.01, 0.1 và vẽ đồ thị Cost Function theo từng Iteration. Nếu Cost Function tăng dần nghĩa là Alpha quá lớn!",
+            is_staff_answer=True,
+            upvote_count=12,
+            created_at="2026-07-22T10:30:00Z",
+        )
+        reply1_2 = ForumReplyORM(
+            id="reply-ml-01-2",
+            thread_id="thread-ml-01",
+            author_name="Trần Thu Hà",
+            author_role="Student",
+            author_user_id="user_learner_02",
+            content="Cảm ơn thầy Nam, em cũng thử vẽ plot J(theta) theo lời khuyên của thầy và thấy học rất nhanh!",
+            is_staff_answer=False,
+            upvote_count=3,
+            created_at="2026-07-22T11:05:00Z",
+        )
+
+        thread2 = ForumThreadORM(
+            id="thread-web-01",
+            course_id="course-web-dev",
+            item_id="item-web-video-1",
+            title="Thắc mắc về ưu điểm của ConnectRPC so với REST API truyền thống",
+            author_name="Phạm Quốc Bảo",
+            author_role="Student",
+            author_user_id="user_learner_03",
+            created_at="2026-07-22T12:00:00Z",
+            upvote_count=8,
+            is_staff_pinned=False,
+        )
+        reply2_1 = ForumReplyORM(
+            id="reply-web-01-1",
+            thread_id="thread-web-01",
+            author_name="ThS. Nguyễn Hoàng Nam",
+            author_role="Teaching Assistant",
+            author_user_id="user_ta_01",
+            content="ConnectRPC sinh mã nguồn Type-Safe stubs tự động cho cả Frontend lẫn Backend từ tệp .proto, giúp hạn chế lỗi runtime gõ sai tên trường API và tối ưu tốc độ nhờ Protobuf binary serialization!",
+            is_staff_answer=True,
+            upvote_count=9,
+            created_at="2026-07-22T12:45:00Z",
+        )
+
+        await session.merge(thread1)
+        await session.merge(reply1_1)
+        await session.merge(reply1_2)
+        await session.merge(thread2)
+        await session.merge(reply2_1)
 
         await session.commit()
         logger.info("[SEED] Database seeding completed successfully!")

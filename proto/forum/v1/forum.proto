@@ -11,6 +11,7 @@ message ForumReply {
   bool is_staff_answer = 6;
   int32 upvote_count = 7;
   string created_at = 8;
+  bool is_upvoted_by_me = 9;
 }
 
 message ForumThread {
@@ -24,6 +25,7 @@ message ForumThread {
   int32 upvote_count = 8;
   bool is_staff_pinned = 9;
   repeated ForumReply replies = 10;
+  bool is_upvoted_by_me = 11;
 }
 
 message ListThreadsRequest {

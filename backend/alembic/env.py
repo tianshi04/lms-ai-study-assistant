@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 import src.modules.catalog.infrastructure.models  # noqa: F401
 import src.modules.certificate.infrastructure.models  # noqa: F401
+import src.modules.forum.infrastructure.models  # noqa: F401
 import src.modules.identity.infrastructure.models  # noqa: F401
 import src.modules.learning.infrastructure.models  # noqa: F401
 from src.shared.config import settings
