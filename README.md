@@ -348,6 +348,6 @@ Detailed specification documents are available in the [`docs/`](docs/) directory
 
 - [`docs/01_overview.md`](docs/01_overview.md) - Business overview, user personas (Admin, Instructor, Partner, Learner), and sequence diagrams.
 - [`docs/02_user_stories.md`](docs/02_user_stories.md) - Detailed User Stories and Acceptance Criteria across all 4 feature tracks.
-- [`docs/03_dac_ta_chuc_nang.md`](docs/03_dac_ta_chuc_nang.md) - Detailed functional specifications and API endpoints.
-- [`docs/04_quy_tac_nghiep_vu.md`](docs/04_quy_tac_nghiep_vu.md) - Business rules (Honor Code, Grading, Financial Aid, Vector RAG parameters).
-- [`docs/05_kich_ban_kiem_thu_uat.md`](docs/05_kich_ban_kiem_thu_uat.md) - User Acceptance Testing (UAT) scenarios and test scripts.
+- [`docs/03_functional_specifications.md`](docs/03_functional_specifications.md) - Detailed functional specifications and API endpoints.
+- [`docs/04_business_rules.md`](docs/04_business_rules.md) - Business rules (Honor Code, Grading, Financial Aid, Vector RAG parameters).
+- [`docs/05_uat_test_cases.md`](docs/05_uat_test_cases.md) - User Acceptance Testing (UAT) scenarios and test scripts.

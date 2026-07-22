@@ -58,5 +58,5 @@
 ---
 
 ### 🛡️ NGÀY 6 & 7 - BACKUP / BUFFER & FINALIZE HANDOVER
-- Chạy 5 kịch bản kiểm thử UAT thực tế theo tệp `docs/05_kich_ban_kiem_thu_uat.md`.
+- Chạy 5 kịch bản kiểm thử UAT thực tế theo tệp `docs/05_uat_test_cases.md`.
 - Tổng duyệt sản phẩm và hoàn tất bàn giao.
