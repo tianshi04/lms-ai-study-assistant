@@ -12,6 +12,7 @@ from src.modules.identity.application.identity_usecase import IdentityUseCase
 from src.modules.identity.presentation.identity_handler import IdentityHandler
 from src.modules.learning.application.learning_usecase import LearningUseCase
 from src.modules.learning.presentation.learning_handler import LearningHandler
+from src.shared.config import settings
 
 
 class CORSMiddleware:
@@ -82,6 +83,23 @@ class CORSMiddleware:
         await self.app(scope, receive, cors_send)
 
 
+def run_auto_migrations() -> None:
+    """Run Alembic upgrade head automatically on application startup (Dev mode only)."""
+    if settings.ENV.lower() not in ("development", "dev"):
+        print(f"[AUTO MIGRATION] Skipped auto-migration in '{settings.ENV}' environment mode.")
+        return
+
+    try:
+        from alembic import command
+        from alembic.config import Config
+
+        alembic_cfg = Config("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
+        print("[AUTO MIGRATION] Alembic migrations upgraded to head successfully (Dev mode).")
+    except Exception as e:
+        print(f"[AUTO MIGRATION] Warning during auto-migration: {e}")
+
+
 class ModularRouterASGIApp:
     """ASGI Application that routes ConnectRPC requests to appropriate module applications based on path prefix."""
 
@@ -91,16 +109,17 @@ class ModularRouterASGIApp:
     async def __call__(
         self, scope: dict[str, Any], receive: Callable, send: Callable
     ) -> None:
-        # Handle ASGI lifespan startup event for automatic database seeding in dev mode when DB is empty
+        # Handle ASGI lifespan startup event for automatic database migration and seeding
         if scope["type"] == "lifespan":
             while True:
                 message = await receive()
                 if message["type"] == "lifespan.startup":
                     try:
+                        run_auto_migrations()
                         from src.seed import seed_database
                         await seed_database(auto_mode=True)
                     except Exception as e:
-                        print(f"[STARTUP SEED] Warning during startup: {e}")
+                        print(f"[STARTUP] Warning during startup: {e}")
                     await send({"type": "lifespan.startup.complete"})
                 elif message["type"] == "lifespan.shutdown":
                     await send({"type": "lifespan.shutdown.complete"})
