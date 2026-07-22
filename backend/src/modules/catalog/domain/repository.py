@@ -17,9 +17,7 @@ class ICatalogRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_lesson_detail(
-        self, course_id: str, lesson_id: str
-    ) -> Lesson | None:
+    async def get_lesson_detail(self, course_id: str, lesson_id: str) -> Lesson | None:
         pass
 
     @abstractmethod

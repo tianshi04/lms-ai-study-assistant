@@ -10,7 +10,9 @@ class UserModel(Base):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
+    email: Mapped[str] = mapped_column(
+        String(255), nullable=False, unique=True, index=True
+    )
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(
         SQLEnum(UserRole, native_enum=False),
@@ -18,7 +20,9 @@ class UserModel(Base):
         default=UserRole.LEARNER,
     )
     avatar_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
-    enterprise_seat_key: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    enterprise_seat_key: Mapped[Optional[str]] = mapped_column(
+        String(128), nullable=True
+    )
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False, default="")
 
 

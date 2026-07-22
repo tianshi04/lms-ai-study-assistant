@@ -52,7 +52,6 @@ def _to_pb_note(note: PersonalNote) -> pb.PersonalNote:
 
 
 class LearningHandler(LearningService):
-
     def __init__(self, use_case: LearningUseCase) -> None:
         self.use_case = use_case
 

@@ -7,9 +7,7 @@ class ILearningRepository(ABC):
     """Abstract Repository Interface for Learning Domain (DIP)."""
 
     @abstractmethod
-    async def get_progress(
-        self, user_id: str, course_id: str
-    ) -> LearningProgress:
+    async def get_progress(self, user_id: str, course_id: str) -> LearningProgress:
         pass
 
     @abstractmethod

@@ -6,7 +6,10 @@ from typing import Optional
 from sqlalchemy import select
 
 from src.modules.catalog.infrastructure.models import CourseModel
-from src.modules.certificate.domain.entities import FinancialAidApplication, VerifiedCertificate
+from src.modules.certificate.domain.entities import (
+    FinancialAidApplication,
+    VerifiedCertificate,
+)
 from src.modules.certificate.infrastructure.repository import CertificateRepository
 from src.modules.identity.infrastructure.models import UserModel
 from src.shared.infrastructure.database import async_session_scope
@@ -73,8 +76,14 @@ class CertificateUseCase:
             course_res = await session.execute(course_stmt)
             course_model = course_res.scalar_one_or_none()
 
-            course_title = course_model.title if course_model else "Specialization Course"
-            partner_name = course_model.partner_name if course_model and course_model.partner_name else "DeepLearning.AI"
+            course_title = (
+                course_model.title if course_model else "Specialization Course"
+            )
+            partner_name = (
+                course_model.partner_name
+                if course_model and course_model.partner_name
+                else "DeepLearning.AI"
+            )
             partner_logo_url = (
                 course_model.partner_logo_url
                 if course_model and course_model.partner_logo_url

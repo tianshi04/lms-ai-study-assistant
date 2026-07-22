@@ -5,7 +5,10 @@ from connectrpc.request import RequestContext
 from src.gen.certificate.v1 import certificate_pb as pb
 from src.gen.certificate.v1.certificate_connect import CertificateService
 from src.modules.certificate.application.certificate_usecase import CertificateUseCase
-from src.modules.certificate.domain.entities import FinancialAidApplication, VerifiedCertificate
+from src.modules.certificate.domain.entities import (
+    FinancialAidApplication,
+    VerifiedCertificate,
+)
 
 
 def _to_pb_financial_aid(
@@ -59,7 +62,9 @@ class CertificateHandler(CertificateService):
     async def get_financial_aid_status(
         self,
         request: pb.GetFinancialAidStatusRequest,
-        ctx: RequestContext[pb.GetFinancialAidStatusRequest, pb.GetFinancialAidStatusResponse],
+        ctx: RequestContext[
+            pb.GetFinancialAidStatusRequest, pb.GetFinancialAidStatusResponse
+        ],
     ) -> pb.GetFinancialAidStatusResponse:
         app = await self._use_case.get_financial_aid_status(
             request.user_id, request.course_id
@@ -71,7 +76,9 @@ class CertificateHandler(CertificateService):
     async def get_verified_certificate(
         self,
         request: pb.GetVerifiedCertificateRequest,
-        ctx: RequestContext[pb.GetVerifiedCertificateRequest, pb.GetVerifiedCertificateResponse],
+        ctx: RequestContext[
+            pb.GetVerifiedCertificateRequest, pb.GetVerifiedCertificateResponse
+        ],
     ) -> pb.GetVerifiedCertificateResponse:
         cert = await self._use_case.get_verified_certificate(
             request.user_id, request.course_id
@@ -83,7 +90,9 @@ class CertificateHandler(CertificateService):
     async def verify_certificate_public(
         self,
         request: pb.VerifyCertificatePublicRequest,
-        ctx: RequestContext[pb.VerifyCertificatePublicRequest, pb.VerifyCertificatePublicResponse],
+        ctx: RequestContext[
+            pb.VerifyCertificatePublicRequest, pb.VerifyCertificatePublicResponse
+        ],
     ) -> pb.VerifyCertificatePublicResponse:
         is_valid, cert = await self._use_case.verify_certificate_public(
             request.certificate_id

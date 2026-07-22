@@ -58,9 +58,7 @@ class SQLAlchemyLearningRepository(ILearningRepository):
     def _get_key(self, user_id: str, course_id: str) -> str:
         return f"{user_id}:{course_id}"
 
-    async def get_progress(
-        self, user_id: str, course_id: str
-    ) -> LearningProgress:
+    async def get_progress(self, user_id: str, course_id: str) -> LearningProgress:
         key = self._get_key(user_id, course_id)
         stmt = (
             select(LearningProgressModel)
@@ -71,8 +69,12 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         model = res.scalar_one_or_none()
 
         if not model:
-            past_date = (datetime.now(timezone.utc) - timedelta(days=3)).strftime("%Y-%m-%d")
-            future_date = (datetime.now(timezone.utc) + timedelta(days=7)).strftime("%Y-%m-%d")
+            past_date = (datetime.now(timezone.utc) - timedelta(days=3)).strftime(
+                "%Y-%m-%d"
+            )
+            future_date = (datetime.now(timezone.utc) + timedelta(days=7)).strftime(
+                "%Y-%m-%d"
+            )
 
             model = LearningProgressModel(
                 id=key,

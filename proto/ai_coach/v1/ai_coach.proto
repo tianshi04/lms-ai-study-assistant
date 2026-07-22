@@ -9,10 +9,17 @@ message ChatWithCoachRequest {
   string user_message = 4;
 }
 
+message Citation {
+  string item_id = 1;
+  int32 timestamp_seconds = 2;
+  string snippet = 3;
+}
+
 message ChatWithCoachResponse {
   string delta_text = 1;
   bool is_refused_socratic_guard = 2;
   bool is_final = 3;
+  repeated Citation citations = 4;
 }
 
 message IngestCourseKnowledgeRequest {

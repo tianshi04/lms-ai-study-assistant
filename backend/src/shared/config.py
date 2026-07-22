@@ -2,9 +2,10 @@ from functools import lru_cache
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
     """Application settings loaded from environment variables or .env file."""
-    
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -22,11 +23,21 @@ class Settings(BaseSettings):
     )
 
     # 3. MinIO / S3 Object Storage credentials for SDK Client & Presigned URLs
-    MINIO_ENDPOINT: str = Field(default="http://localhost:9000", description="MinIO endpoint URL")
-    MINIO_ACCESS_KEY: str = Field(default="minio_admin", description="MinIO access key / root user")
-    MINIO_SECRET_KEY: str = Field(default="minio_password123", description="MinIO secret key / root password")
-    MINIO_BUCKET_NAME: str = Field(default="coursera-assets", description="Default bucket name")
-    MINIO_SECURE: bool = Field(default=False, description="Use HTTPS for MinIO connection")
+    MINIO_ENDPOINT: str = Field(
+        default="http://localhost:9000", description="MinIO endpoint URL"
+    )
+    MINIO_ACCESS_KEY: str = Field(
+        default="minio_admin", description="MinIO access key / root user"
+    )
+    MINIO_SECRET_KEY: str = Field(
+        default="minio_password123", description="MinIO secret key / root password"
+    )
+    MINIO_BUCKET_NAME: str = Field(
+        default="coursera-assets", description="Default bucket name"
+    )
+    MINIO_SECURE: bool = Field(
+        default=False, description="Use HTTPS for MinIO connection"
+    )
 
     # 4. JWT Authentication
     JWT_SECRET: str = Field(

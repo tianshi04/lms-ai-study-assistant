@@ -17,9 +17,7 @@ class LearningUseCase:
             lambda session: SQLAlchemyLearningRepository(session)
         )
 
-    async def get_progress(
-        self, user_id: str, course_id: str
-    ) -> LearningProgress:
+    async def get_progress(self, user_id: str, course_id: str) -> LearningProgress:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             return await repo.get_progress(user_id, course_id)

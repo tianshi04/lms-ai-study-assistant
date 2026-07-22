@@ -59,8 +59,9 @@ flowchart TD
 
 ### 2.3. Phân hệ Đánh giá & Chấm điểm (Assessments & Rubric Builder)
 1. **Graded Quiz Builder:**
-   * Ngân hàng câu hỏi trắc nghiệm (1 đáp án / Nhiều đáp án).
-   * Cấu hình điểm đạt (Passing Threshold, ví dụ: 80%), thời gian làm bài đếm ngược, và Cooldown (chờ 8 tiếng nếu thi xịt 3 lần).
+   * **Ngân hàng câu hỏi (Question Bank):** Quản lý tập trung các câu hỏi trắc nghiệm (1 đáp án / Nhiều đáp án) theo chủ đề và độ khó (Dễ, Trung bình, Khó). Cấu hình số câu hỏi rút ngẫu nhiên $N$ từ Pool $M$ câu ($N \le M$) và bật tính năng xáo trộn đáp án (`BR_QUIZ_002`).
+   * **Timed Quiz Server-side:** Cấu hình thời gian giới hạn làm bài (ví dụ: 45 phút), đếm ngược đồng bộ từ Server và tự động nộp bài (Auto-submit) khi hết giờ (`BR_QUIZ_003`).
+   * Cấu hình điểm đạt (Passing Threshold, ví dụ: 80%) và Cooldown (chờ 8 tiếng nếu thi trượt 3 lần).
 2. **Auto-Graded Lab Builder (Dành cho bài tập lập trình):**
    * Giảng viên tải lên bộ Test Cases và File mẫu (Starter Code).
    * Cấu hình môi trường chạy (Python, Node.js...) và giới hạn tài nguyên (Timeout, Memory Limit).
@@ -73,6 +74,10 @@ flowchart TD
 * **Xét duyệt Financial Aid:**
   * Giảng viên xem danh sách đơn xin học bổng của học viên (gồm bài luận 150 từ giải trình hoàn cảnh và lý do học).
   * Bấm **Duyệt (Approve)** để hệ thống tự động cấp quyền Paid access cho học viên.
+
+### 2.5. Bảng Phân tích Giảng dạy (Instructor Analytics Dashboard)
+* **Phân tích Tỷ lệ Bỏ học (Student Drop-off Funnel):** Thống kê số lượng học viên dừng học tại từng bài học video/bài đọc để giúp Giảng viên nhận biết đoạn nội dung khó tiếp thu.
+* **Heatmap & Phân tích Độ khó Câu hỏi Quiz:** Biểu đồ tỷ lệ làm đúng/sai từng câu hỏi trắc nghiệm (Item Difficulty Index) để hỗ trợ điều chỉnh đề thi hoặc giải thích bài giảng.
 
 ---
 
@@ -96,7 +101,8 @@ flowchart TD
 * **Cơ chế RAG theo Ngữ cảnh:**
   1. Học viên nhập câu hỏi (ví dụ: *"Giải thích đoạn code ở phút 02:30 của video"* hoặc *"Tóm tắt 3 ý chính của bài đọc này"*).
   2. AI Coach truy vấn Vector DB giới hạn trong phạm vi `course_id` và `lesson_id` hiện tại.
-  3. Gemini LLM sinh câu trả lời theo đúng ngữ cảnh bài giảng.
+  3. Gemini LLM sinh câu trả lời theo đúng ngữ cảnh bài giảng kèm danh sách trích dẫn (`citations`).
+* **Trích dẫn Mốc thời gian & Link Bài học (Citation Links):** Mỗi câu trả lời tóm tắt/giải thích của AI Coach bắt buộc đính kèm các thẻ trích dẫn (`citations`) chứa mốc timestamp (ví dụ: `[Phút 03:15 - Bài học A]`). Học viên bấm vào thẻ để tua ngay trình phát video tới giây tương ứng (`BR_AI_004`).
 * **Phương pháp Gợi mở (Socratic Method) & Anti-Cheat Guardrails:**
   * AI Coach hỗ trợ giải thích khái niệm, dịch phụ đề, tóm tắt video, sinh câu hỏi ôn tập phản xạ.
   * **Chống gian lận (Anti-Cheat):** Nếu học viên copy câu hỏi bài thi Graded Quiz hoặc bài Peer Review thả vào chat, Input Guardrail lập tức chặn và AI Coach từ chối trả lời: *"Tôi là AI Coach hỗ trợ học tập, tôi không thể cung cấp đáp án trực tiếp cho bài kiểm tra tính điểm. Bạn hãy xem lại nội dung bài đọc để tự hoàn thành bài làm nhé!"*
@@ -116,7 +122,7 @@ flowchart TD
                          │
                          ▼
                ┌───────────────────┐
-               │   Gemini LLM      │ (Sinh phản hồi giải thích theo phương pháp gợi mở)
+               │   Gemini LLM      │ (Sinh phản hồi giải thích theo phương pháp gợi mở + Citations)
                └───────────────────┘
                          │
                          ▼
@@ -125,7 +131,7 @@ flowchart TD
                └───────────────────┘
                          │
                          ▼ Vượt qua
-                [Stream câu trả lời]
+            [Stream câu trả lời + Citation Links]
 ```
 
 ### 3.4. Diễn đàn Thảo luận theo Bài học (Discussion Forum)
@@ -134,15 +140,17 @@ flowchart TD
 
 ### 3.5. Phân hệ Đánh giá Năng lực (Assessments Sub-system)
 * **Cam kết Liêm chính Học thuật (Academic Honor Code):** Trước khi bấm bắt đầu Graded Quiz hoặc nộp bài Peer Review, học viên phải tích vào checkbox: *"Tôi cam kết đây là bài làm độc lập của chính tôi"*.
-* **Graded Quiz:** Đồng hồ đếm ngược, tự động chấm điểm và hiển thị kết quả. Nếu trượt, học viên phải đợi hết thời gian Cooldown mới được làm lại.
+* **Graded Quiz:** Ngân hàng câu hỏi xáo trộn (`BR_QUIZ_002`), đồng hồ đếm ngược Server-side (`BR_QUIZ_003`), tự động chấm điểm và hiển thị kết quả. Nếu trượt 3 lần, học viên phải đợi hết thời gian Cooldown 8h mới được làm lại.
 * **Auto-Graded Lab:** Học viên tải file code lên -> Sandbox gửi tới Auto-Grader chạy Test Cases -> Trả về danh sách Pass/Fail test cases và điểm số tức thì.
 * **Peer-Graded Assignment Sub-system:**
   1. **Nộp bài:** Học viên nộp bài dự án (file/link/văn bản) trước deadline.
   2. **Chấm chéo:** Sau deadline nộp bài, hệ thống tự động phân bổ 3 bài làm của bạn học ngẫu nhiên cho học viên. Học viên đọc bài và cho điểm từng tiêu chí theo Rubric kèm lời nhận xét.
   3. **Tính điểm:** Điểm chính thức = Trung bình cộng điểm của các bạn học chấm.
-  4. **Khiếu nại điểm (Grade Appeal):** Nếu học viên nhận thấy điểm chấm chéo có bất thường, học viên gửi đơn khiếu nại để Trợ giảng (TA) chấm lại thủ công.
+  4. **Fallback khi thiếu bài chấm chéo:** Nếu sau 5 ngày nộp bài chưa nhận đủ 3 lượt chấm chéo, bài làm tự động chuyển vào Staff Regrade Queue cho TA chấm trực tiếp (`BR_PEER_004`).
+  5. **Khiếu nại điểm (Grade Appeal):** Nếu học viên nhận thấy điểm chấm chéo có bất thường, học viên gửi đơn khiếu nại để Trợ giảng (TA) chấm lại thủ công.
 
 ### 3.6. Chứng nhận & Xác thực Thành tích (Verified Certificate & OpenBadges)
+* **Quy trình Xác minh Danh tính (Identity Verification):** Trước khi phát hành chứng chỉ Verified Certificate lần đầu tiên, học viên thực hiện bước xác minh danh tính bằng cách tải ảnh CCCD/Hộ chiếu và chụp ảnh sinh trắc học khuôn mặt qua Webcam (`BR_CERT_003`).
 * **Cấp Chứng chỉ Xác minh (Verified Certificate):** Khi hoàn thành 100% bài học và đạt điểm Pass ở tất cả bài Graded items (>= 80%), hệ thống tự động phát hành Verified Certificate.
 * **Mã xác minh công khai (Verification URL):** Mỗi chứng chỉ có một URL độc nhất (`/verify/CERT-xxxxx`) và mã QR code để nhà tuyển dụng truy cập kiểm tra tính hợp lệ công khai.
 * **OpenBadges & LinkedIn Sharing:** Chứng chỉ được nhúng siêu dữ liệu OpenBadges 2.0. Học viên chỉ cần 1 cú nhấp chuột để chia sẻ trực tiếp thành tích lên hồ sơ LinkedIn.

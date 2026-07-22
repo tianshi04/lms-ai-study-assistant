@@ -19,7 +19,6 @@ async def test_catalog_usecase():
         )
 
 
-
 @pytest.mark.asyncio
 async def test_catalog_api_integration():
     """Integration test connecting to running ConnectRPC server on localhost:8000."""

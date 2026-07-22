@@ -1,5 +1,8 @@
 import pytest
-from src.modules.certificate.application.certificate_usecase import CertificateUseCase, count_words
+from src.modules.certificate.application.certificate_usecase import (
+    CertificateUseCase,
+    count_words,
+)
 
 
 def test_essay_word_count():
@@ -14,7 +17,9 @@ def test_essay_word_count():
 async def test_apply_financial_aid_validation():
     usecase = CertificateUseCase()
     short_essay = "Đây là bài luận quá ngắn."
-    app, err = await usecase.apply_financial_aid("user_123", "course_python", short_essay)
+    app, err = await usecase.apply_financial_aid(
+        "user_123", "course_python", short_essay
+    )
     assert app is None
     assert "chưa đủ độ dài tối thiểu" in err
 
@@ -28,7 +33,9 @@ async def test_get_verified_certificate():
         assert cert.certificate_id.startswith("CERT-")
         assert cert.open_badges_json_ld != ""
 
-        is_valid, verified_cert = await usecase.verify_certificate_public(cert.certificate_id)
+        is_valid, verified_cert = await usecase.verify_certificate_public(
+            cert.certificate_id
+        )
         assert is_valid
         assert verified_cert is not None
         assert verified_cert.certificate_id == cert.certificate_id

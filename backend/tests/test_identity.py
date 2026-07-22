@@ -1,6 +1,10 @@
 import pytest
 from src.gen.identity.v1 import identity_pb as pb
-from src.modules.identity.application.identity_usecase import IdentityUseCase, hash_password, verify_password
+from src.modules.identity.application.identity_usecase import (
+    IdentityUseCase,
+    hash_password,
+    verify_password,
+)
 from src.modules.identity.domain.entities import UserRole
 from src.modules.identity.presentation.identity_handler import _pb_role_to_domain_str
 from src.shared.auth import decode_token
@@ -28,7 +32,9 @@ async def test_identity_register_and_login():
         full_name = "Prof. Andrew Ng"
 
         # Register Instructor
-        user, err = await usecase.register(email, password, full_name, "USER_ROLE_INSTRUCTOR")
+        user, err = await usecase.register(
+            email, password, full_name, "USER_ROLE_INSTRUCTOR"
+        )
         if err == "Email đằng ký đã tồn tại trên hệ thống":
             pass
         else:
@@ -38,7 +44,9 @@ async def test_identity_register_and_login():
             assert user.role == UserRole.INSTRUCTOR
 
         # Login
-        logged_user, access_token, refresh_token, login_err = await usecase.login(email, password)
+        logged_user, access_token, refresh_token, login_err = await usecase.login(
+            email, password
+        )
         assert login_err == ""
         assert logged_user is not None
         assert logged_user.role == UserRole.INSTRUCTOR

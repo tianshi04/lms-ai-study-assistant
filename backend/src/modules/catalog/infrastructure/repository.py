@@ -145,9 +145,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             return None
         return _model_to_domain_course(model)
 
-    async def get_lesson_detail(
-        self, course_id: str, lesson_id: str
-    ) -> Lesson | None:
+    async def get_lesson_detail(self, course_id: str, lesson_id: str) -> Lesson | None:
         course = await self.get_course_detail(course_id)
         if not course:
             return None
@@ -190,7 +188,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             slug=slug or course_id,
             description=description,
             partner_name=partner_name or "Coursera AI Partner",
-            partner_logo_url=partner_logo_url or "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
+            partner_logo_url=partner_logo_url
+            or "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
             instructor_names=instructor_names or ["Giảng viên AI"],
         )
         self.session.add(model)

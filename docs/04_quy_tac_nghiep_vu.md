@@ -27,6 +27,12 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Mỗi bài Graded Quiz bắt buộc đạt tối thiểu điểm Pass (mặc định 80/100 điểm) mới tính là hoàn thành.
   * Học viên được làm lại bài thi tối đa 3 lần liên tiếp. Nếu thi trượt cả 3 lần, hệ thống kích hoạt **thời gian chờ (Cooldown) 8 tiếng** trước khi cho phép làm tiếp lần thứ 4.
   * Hệ thống sẽ lưu trữ điểm số cao nhất (Highest Score) trong các lần làm bài làm điểm chính thức.
+* **BR_QUIZ_002 (Quy tắc Ngân hàng Câu hỏi & Xáo trộn Đáp án):**
+  * Đề thi Graded Quiz được sinh tự động bằng cách rút ngẫu nhiên $N$ câu hỏi từ Pool $M$ câu ($N \le M$) theo tỷ lệ ma trận độ khó (Dễ, Trung bình, Khó).
+  * Mỗi lần hiển thị đề thi, hệ thống tự động xáo trộn ngẫu nhiên thứ tự các tùy chọn đáp án (Options Shuffling) để chống hành vi học thuộc vị trí khoanh đáp án.
+* **BR_QUIZ_003 (Quy tắc Quản lý Session Đếm ngược & Auto-submit):**
+  * Mọi bài thi Graded Quiz có giới hạn thời gian (Timed Quiz) được quản lý thời gian đếm ngược trực tiếp từ phía Server (Server-side Session Timer) tính từ mốc bấm nút "Start Quiz".
+  * Việc tải lại trang (F5) hoặc tạm đóng trình duyệt không làm dừng đồng hồ đếm ngược. Khi hết giờ đếm ngược, Server tự động đóng phiên và thực hiện chấm điểm (Auto-submit on timeout) với các câu trả lời hiện tại.
 * **BR_AUTOGRADE_001 (Quy định Sandbox Auto-Grader):**
   * Mỗi bài nộp lập trình gửi tới Auto-Grader chỉ được chạy tối đa trong môi trường Sandbox cách ly với Timeout = 30 giây và Memory Limit = 512MB.
   * Điểm bài nộp = (Số lượng Test Cases Pass / Tổng số Test Cases) * 100%.
@@ -38,6 +44,8 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * *Cảnh báo chấm điểm bất thường (Outlier Detection):* Nếu khoảng chênh lệch điểm số giữa các reviewer lớn hơn 30% (ví dụ: 1 bạn chấm 10 điểm, 1 bạn chấm 3 điểm), hệ thống tự động gắn cờ "Outlier Flag" và gửi cảnh báo về bảng tin của Trợ giảng (TA) để can thiệp rà soát.
 * **BR_PEER_003 (Khiếu nại điểm Grade Appeal):**
   * Học viên có quyền nộp đơn Khiếu nại điểm trong vòng 7 ngày kể từ khi nhận kết quả Peer Review. Trợ giảng (TA) sẽ trực tiếp chấm lại bài làm và điểm số của TA sẽ là điểm số chính thức cuối cùng.
+* **BR_PEER_004 (Xử lý Thiếu bài Chấm chéo - Staff Regrade Fallback Queue):**
+  * Nếu sau 5 ngày kể từ khi nộp bài mà bài dự án của học viên chưa nhận đủ 3 lượt chấm chéo (do ít người học cùng thời điểm), hệ thống sẽ tự động kích hoạt luồng Fallback: chuyển bài nộp vào Hàng chờ xét duyệt của Trợ giảng (Staff Regrade Queue) hoặc ưu tiên phân bổ bài làm cho các học viên ở đợt học tiếp theo để tránh bế tắc điểm số.
 
 ---
 
@@ -60,6 +68,8 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * *Luật chống gian lận (Anti-Cheat):* AI Coach tuyệt đối không được đưa ra đáp án trực tiếp cho bài thi Graded Quiz, bài nộp Auto-Graded Lab hoặc bài làm Peer Review. Nếu học viên gửi câu hỏi chứa đề bài thi, AI Coach bắt buộc phản hồi bằng câu thoại mẫu từ chối hỗ trợ đáp án.
 * **BR_AI_003 (Chế tài xử phạt vi phạm Input Guard):**
   * Nếu học viên cố tình gửi các câu hỏi vi phạm từ ngữ (độc hại, kích động) hoặc cố tình tấn công Prompt Injection quá 3 lần trong vòng 10 phút, hệ thống tự động khóa quyền dùng AI Coach của học viên đó trong 24 giờ.
+* **BR_AI_004 (Định dạng Phản hồi Trích dẫn Timestamp & Link Bài học):**
+  * Mọi câu giải thích hoặc tóm tắt của AI Coach bắt buộc kèm danh sách mốc trích dẫn (`citations`) chứa `item_id`, `timestamp_seconds` và đoạn trích dẫn ngắn. Giao diện khung chat hiển thị các thẻ liên kết để học viên có thể bấm vào và tự động tua video đến đúng thời điểm được trích dẫn.
 
 ---
 
@@ -72,6 +82,8 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_CERT_002 (Xác thực công khai Verification URL & QR):**
   * Mỗi Verified Certificate được gán một mã định danh duy nhất (ví dụ: `CERT-8F9A2B3C`).
   * Bất kỳ ai truy cập đường dẫn `/verify/CERT-8F9A2B3C` hoặc quét mã QR trên certificate đều xem được trang xác thực công khai chứa: Tên học viên, Tên khóa học, Logo đối tác phát hành (Partner Logo), Ngày cấp và Trạng thái "Valid" (Hợp lệ).
+* **BR_CERT_003 (Quy trình Xác minh Danh tính Sinh trắc học & CCCD):**
+  * Trước khi phát hành chứng chỉ Verified Certificate lần đầu tiên, học viên bắt buộc hoàn tất quy trình Xác minh Danh tính (ID Verification): tải ảnh Căn cước công dân / Hộ chiếu và chụp ảnh sinh trắc học khuôn mặt qua Webcam để đảm bảo tính chính chủ của người làm bài.
 * **BR_BADGE_001 (OpenBadges & Thu hồi Chứng chỉ):**
   * Tệp ảnh huy hiệu/certificate được tự động nhúng siêu dữ liệu JSON-LD chuẩn OpenBadges 2.0 để chia sẻ lên LinkedIn.
   * Nếu phát hiện gian lận nghiêm trọng hoặc tài khoản bị khóa, Super Admin có quyền kích hoạt lệnh Thu hồi Chứng chỉ (Revoke Certificate). Khi đó, trang xác thực `/verify/CERT-xxx` sẽ chuyển sang trạng thái "Revoked" (Đã bị thu hồi).

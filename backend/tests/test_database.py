@@ -30,14 +30,18 @@ async def test_postgres_connection_and_pgvector():
                 text("SELECT extname FROM pg_extension WHERE extname = 'vector';")
             )
             ext_name = result.scalar()
-            assert ext_name == "vector", "Vector extension was not initialized successfully"
+            assert ext_name == "vector", (
+                "Vector extension was not initialized successfully"
+            )
 
             # 3. Test basic vector math operation (+ operator for vectors)
             vec_result = await session.execute(
                 text("SELECT '[1,2,3]'::vector + '[4,5,6]'::vector;")
             )
             vec_val = vec_result.scalar()
-            assert str(vec_val) == "[5,7,9]", f"Vector addition operation failed: {vec_val}"
+            assert str(vec_val) == "[5,7,9]", (
+                f"Vector addition operation failed: {vec_val}"
+            )
     except Exception as exc:
         pytest.skip(f"PostgreSQL container offline for vector test: {exc}")
 

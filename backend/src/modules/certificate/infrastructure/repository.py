@@ -2,8 +2,14 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.certificate.domain.entities import FinancialAidApplication, VerifiedCertificate
-from src.modules.certificate.infrastructure.models import CertificateModel, FinancialAidModel
+from src.modules.certificate.domain.entities import (
+    FinancialAidApplication,
+    VerifiedCertificate,
+)
+from src.modules.certificate.infrastructure.models import (
+    CertificateModel,
+    FinancialAidModel,
+)
 
 
 class CertificateRepository:
@@ -75,9 +81,7 @@ class CertificateRepository:
         model = result.scalar_one_or_none()
         return self._to_certificate_entity(model) if model else None
 
-    async def save_certificate(
-        self, cert: VerifiedCertificate
-    ) -> VerifiedCertificate:
+    async def save_certificate(self, cert: VerifiedCertificate) -> VerifiedCertificate:
         stmt = select(CertificateModel).where(
             CertificateModel.certificate_id == cert.certificate_id
         )

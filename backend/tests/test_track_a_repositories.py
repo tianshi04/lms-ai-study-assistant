@@ -20,7 +20,9 @@ async def test_track_a_database_repositories():
 
         detail = await catalog_usecase.get_course_detail("course-python-ai")
         assert detail is not None
-        assert detail.title == "Supervised Machine Learning: Regression and Classification"
+        assert (
+            detail.title == "Supervised Machine Learning: Regression and Classification"
+        )
 
         learning_usecase = LearningUseCase()
         user_id = "test-user-db"

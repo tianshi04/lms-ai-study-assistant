@@ -24,12 +24,16 @@ def verify_password(password: str, password_hash: str) -> bool:
         return False
     salt_hex, hash_hex = password_hash.split(":", 1)
     salt = bytes.fromhex(salt_hex)
-    new_hash = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100_000).hex()
+    new_hash = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), salt, 100_000
+    ).hex()
     return new_hash == hash_hex
 
 
 class IdentityUseCase:
-    async def login(self, email: str, password: str) -> tuple[Optional[User], str, str, str]:
+    async def login(
+        self, email: str, password: str
+    ) -> tuple[Optional[User], str, str, str]:
         """Returns (user, access_token, refresh_token, error_message)."""
         async with async_session_scope() as session:
             repo = IdentityRepository(session)
@@ -111,17 +115,28 @@ class IdentityUseCase:
                 return False, "Không tìm thấy người dùng"
 
             clean_key = enterprise_seat_key.strip()
-            stmt = select(EnterpriseLicenseModel).where(EnterpriseLicenseModel.key == clean_key)
+            stmt = select(EnterpriseLicenseModel).where(
+                EnterpriseLicenseModel.key == clean_key
+            )
             res = await session.execute(stmt)
             license_model = res.scalar_one_or_none()
 
             if not license_model or not license_model.is_active:
-                return False, f"Mã Enterprise Key '{clean_key}' không tồn tại hoặc đã bị vô hiệu hóa."
+                return (
+                    False,
+                    f"Mã Enterprise Key '{clean_key}' không tồn tại hoặc đã bị vô hiệu hóa.",
+                )
 
             if license_model.used_seats >= license_model.total_seats:
-                return False, f"Mã Enterprise Key '{clean_key}' đã hết suất kích hoạt ({license_model.used_seats}/{license_model.total_seats} seats)."
+                return (
+                    False,
+                    f"Mã Enterprise Key '{clean_key}' đã hết suất kích hoạt ({license_model.used_seats}/{license_model.total_seats} seats).",
+                )
 
             license_model.used_seats += 1
             user.enterprise_seat_key = clean_key
             await repo.save(user)
-            return True, f"Kích hoạt thành công suất học từ đối tác {license_model.partner_name}!"
+            return (
+                True,
+                f"Kích hoạt thành công suất học từ đối tác {license_model.partner_name}!",
+            )

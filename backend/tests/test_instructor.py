@@ -18,7 +18,10 @@ async def test_instructor_create_and_update_course():
         )
 
         assert new_course is not None
-        assert new_course.id == "course-course-pytorch-2026" or new_course.slug == "course-pytorch-2026"
+        assert (
+            new_course.id == "course-course-pytorch-2026"
+            or new_course.slug == "course-pytorch-2026"
+        )
         assert new_course.title == "Deep Learning with PyTorch 2.0"
         assert new_course.partner_name == "Meta AI Partner"
 
@@ -33,7 +36,9 @@ async def test_instructor_create_and_update_course():
         )
 
         assert updated_course is not None
-        assert updated_course.title == "Deep Learning & LLM Fine-Tuning with PyTorch 2.0"
+        assert (
+            updated_course.title == "Deep Learning & LLM Fine-Tuning with PyTorch 2.0"
+        )
         assert updated_course.partner_name == "Meta AI & Coursera Partner"
     except Exception as e:
         pytest.skip(f"Skipping instructor course test: DB not reachable ({e})")

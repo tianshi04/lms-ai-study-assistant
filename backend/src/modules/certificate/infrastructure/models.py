@@ -12,7 +12,9 @@ class FinancialAidModel(Base):
     course_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     essay_150_words: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
-    review_deadline_days_left: Mapped[int] = mapped_column(Integer, nullable=False, default=14)
+    review_deadline_days_left: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=14
+    )
 
 
 class CertificateModel(Base):
@@ -24,7 +26,9 @@ class CertificateModel(Base):
     learner_name: Mapped[str] = mapped_column(String(255), nullable=False)
     course_title: Mapped[str] = mapped_column(String(255), nullable=False)
     partner_name: Mapped[str] = mapped_column(String(128), nullable=False)
-    partner_logo_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    partner_logo_url: Mapped[str] = mapped_column(
+        String(512), nullable=False, default=""
+    )
     issue_date: Mapped[str] = mapped_column(String(64), nullable=False)
     verification_url: Mapped[str] = mapped_column(String(512), nullable=False)
     qr_code_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")

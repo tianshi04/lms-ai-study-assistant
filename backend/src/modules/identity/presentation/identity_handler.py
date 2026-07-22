@@ -80,7 +80,9 @@ class IdentityHandler(IdentityService):
             request.refresh_token
         )
         if err or not new_access:
-            raise ConnectError(Code.UNAUTHENTICATED, err or "Refresh token không hợp lệ")
+            raise ConnectError(
+                Code.UNAUTHENTICATED, err or "Refresh token không hợp lệ"
+            )
         return pb.RefreshTokenResponse(
             access_token=new_access,
             refresh_token=new_refresh,
@@ -115,7 +117,9 @@ class IdentityHandler(IdentityService):
     async def assign_enterprise_seat(
         self,
         request: pb.AssignEnterpriseSeatRequest,
-        ctx: RequestContext[pb.AssignEnterpriseSeatRequest, pb.AssignEnterpriseSeatResponse],
+        ctx: RequestContext[
+            pb.AssignEnterpriseSeatRequest, pb.AssignEnterpriseSeatResponse
+        ],
     ) -> pb.AssignEnterpriseSeatResponse:
         success, msg = await self._use_case.assign_enterprise_seat(
             request.user_id, request.enterprise_seat_key

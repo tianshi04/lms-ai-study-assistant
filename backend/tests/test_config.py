@@ -1,5 +1,6 @@
 from src.shared.config import get_settings, settings
 
+
 def test_settings_load_defaults():
     """Verify essential default configuration settings are loaded properly."""
     config = get_settings()
@@ -11,6 +12,10 @@ def test_settings_load_defaults():
     assert config.MINIO_BUCKET_NAME == "coursera-assets"
     assert config.async_database_url.startswith("postgresql+asyncpg://")
 
+
 def test_singleton_settings_instance():
     """Verify settings singleton instance identity."""
-    assert settings.JWT_SECRET == "coursera_super_secret_jwt_key_production_2026_x99_secure_hmac_sha256"
+    assert (
+        settings.JWT_SECRET
+        == "coursera_super_secret_jwt_key_production_2026_x99_secure_hmac_sha256"
+    )

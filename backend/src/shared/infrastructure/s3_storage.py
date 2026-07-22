@@ -2,6 +2,7 @@ import aioboto3
 from botocore.config import Config
 from src.shared.config import settings
 
+
 class S3StorageService:
     """Asynchronous S3 Storage Service for MinIO and AWS S3 object operations."""
 
@@ -120,7 +121,9 @@ class S3StorageService:
                 Key=object_key,
             )
 
+
 _s3_storage_service: S3StorageService | None = None
+
 
 def get_s3_storage_service() -> S3StorageService:
     """Get or create singleton instance of S3StorageService."""

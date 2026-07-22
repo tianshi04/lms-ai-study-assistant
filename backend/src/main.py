@@ -87,7 +87,9 @@ class CORSMiddleware:
 async def run_auto_migrations() -> None:
     """Run Alembic upgrade head automatically on application startup (Dev mode only)."""
     if settings.ENV.lower() not in ("development", "dev"):
-        print(f"[AUTO MIGRATION] Skipped auto-migration in '{settings.ENV}' environment mode.")
+        print(
+            f"[AUTO MIGRATION] Skipped auto-migration in '{settings.ENV}' environment mode."
+        )
         return
 
     try:
@@ -100,7 +102,9 @@ async def run_auto_migrations() -> None:
             command.upgrade(alembic_cfg, "head")
 
         await asyncio.to_thread(_upgrade)
-        print("[AUTO MIGRATION] Alembic migrations upgraded to head successfully (Dev mode).")
+        print(
+            "[AUTO MIGRATION] Alembic migrations upgraded to head successfully (Dev mode)."
+        )
     except Exception as e:
         print(f"[AUTO MIGRATION] Warning during auto-migration: {e}")
 
@@ -122,6 +126,7 @@ class ModularRouterASGIApp:
                     try:
                         await run_auto_migrations()
                         from src.seed import seed_database
+
                         await seed_database(auto_mode=True)
                     except Exception as e:
                         print(f"[STARTUP] Warning during startup: {e}")

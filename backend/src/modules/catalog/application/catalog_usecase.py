@@ -35,9 +35,7 @@ class CatalogUseCase:
                 await seed_fn()
             return await repo.get_course_detail(course_id)
 
-    async def get_lesson_detail(
-        self, course_id: str, lesson_id: str
-    ) -> Lesson | None:
+    async def get_lesson_detail(self, course_id: str, lesson_id: str) -> Lesson | None:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             seed_fn = getattr(repo, "seed_if_empty", None)

@@ -35,7 +35,10 @@ from src.modules.catalog.infrastructure.models import (
     SpecializationModel,
     ItemType,
 )
-from src.modules.certificate.infrastructure.models import CertificateModel, FinancialAidModel
+from src.modules.certificate.infrastructure.models import (
+    CertificateModel,
+    FinancialAidModel,
+)
 from src.modules.identity.domain.entities import UserRole
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel, UserModel
 from src.modules.learning.infrastructure.models import (
@@ -45,14 +48,20 @@ from src.modules.learning.infrastructure.models import (
 )
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
 logger = logging.getLogger("seed")
 
 
 def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]]:
     """Construct domain seed data objects for the initial catalog."""
-    sample_url = "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
-    deeplearning_logo = "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg"
+    sample_url = (
+        "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+    )
+    deeplearning_logo = (
+        "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg"
+    )
     meta_logo = "https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg"
 
     # Course 1: Supervised Machine Learning
@@ -210,7 +219,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
 
 async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
     """Execute database seeding with best-practice options.
-    
+
     :param reset: If True, truncates all catalog & progress tables before re-seeding.
     :param auto_mode: If True (e.g. dev startup), skips seeding if database already contains courses.
     """
@@ -223,11 +232,15 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             stmt = select(CourseModel).limit(1)
             res = await session.execute(stmt)
             if res.scalar_one_or_none() is not None:
-                logger.info("[SEED] Database already contains courses. Auto-seeding skipped.")
+                logger.info(
+                    "[SEED] Database already contains courses. Auto-seeding skipped."
+                )
                 return
 
         if reset:
-            logger.info("[SEED] Truncating catalog and progress tables for full clean reset...")
+            logger.info(
+                "[SEED] Truncating catalog and progress tables for full clean reset..."
+            )
             await session.execute(
                 text(
                     "TRUNCATE courses, week_modules, lessons, learning_items, interactive_transcripts, in_video_quizzes, specializations, learning_progresses, weekly_deadlines, personal_notes RESTART IDENTITY CASCADE"
@@ -304,7 +317,9 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
 
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments for CLI execution."""
-    parser = argparse.ArgumentParser(description="Database Seeding Script for Coursera Clone")
+    parser = argparse.ArgumentParser(
+        description="Database Seeding Script for Coursera Clone"
+    )
     parser.add_argument(
         "--reset",
         action="store_true",

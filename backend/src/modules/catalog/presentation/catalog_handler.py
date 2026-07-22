@@ -35,9 +35,7 @@ def _to_pb_item_type(type_enum: ItemType) -> pb.ItemType:
 def _to_pb_transcript(
     t: InteractiveTranscript,
 ) -> pb.InteractiveTranscript:
-    return pb.InteractiveTranscript(
-        timestamp_seconds=t.timestamp_seconds, text=t.text
-    )
+    return pb.InteractiveTranscript(timestamp_seconds=t.timestamp_seconds, text=t.text)
 
 
 def _to_pb_quiz(q: InVideoQuiz) -> pb.InVideoQuiz:
@@ -110,7 +108,6 @@ def _to_pb_specialization(spec: Specialization) -> pb.Specialization:
 
 
 class CatalogHandler(CatalogService):
-
     def __init__(self, use_case: CatalogUseCase) -> None:
         self.use_case = use_case
 
@@ -130,9 +127,7 @@ class CatalogHandler(CatalogService):
     async def get_course_detail(
         self,
         request: pb.GetCourseDetailRequest,
-        ctx: RequestContext[
-            pb.GetCourseDetailRequest, pb.GetCourseDetailResponse
-        ],
+        ctx: RequestContext[pb.GetCourseDetailRequest, pb.GetCourseDetailResponse],
     ) -> pb.GetCourseDetailResponse:
         course = await self.use_case.get_course_detail(request.course_id)
         if not course:
@@ -142,9 +137,7 @@ class CatalogHandler(CatalogService):
     async def get_lesson_detail(
         self,
         request: pb.GetLessonDetailRequest,
-        ctx: RequestContext[
-            pb.GetLessonDetailRequest, pb.GetLessonDetailResponse
-        ],
+        ctx: RequestContext[pb.GetLessonDetailRequest, pb.GetLessonDetailResponse],
     ) -> pb.GetLessonDetailResponse:
         lesson = await self.use_case.get_lesson_detail(
             course_id=request.course_id, lesson_id=request.lesson_id
@@ -156,9 +149,7 @@ class CatalogHandler(CatalogService):
     async def get_specialization(
         self,
         request: pb.GetSpecializationRequest,
-        ctx: RequestContext[
-            pb.GetSpecializationRequest, pb.GetSpecializationResponse
-        ],
+        ctx: RequestContext[pb.GetSpecializationRequest, pb.GetSpecializationResponse],
     ) -> pb.GetSpecializationResponse:
         spec, courses = await self.use_case.get_specialization(
             request.specialization_id
@@ -172,13 +163,13 @@ class CatalogHandler(CatalogService):
             courses=[_to_pb_course(c) for c in courses],
         )
 
-    def _verify_instructor_permission(
-        self, ctx: RequestContext[Any, Any]
-    ) -> None:
+    def _verify_instructor_permission(self, ctx: RequestContext[Any, Any]) -> None:
         metadata = getattr(ctx, "invocation_metadata", {}) or {}
         auth_header = ""
         if isinstance(metadata, dict):
-            auth_header = metadata.get("authorization", "") or metadata.get("Authorization", "")
+            auth_header = metadata.get("authorization", "") or metadata.get(
+                "Authorization", ""
+            )
 
         if not auth_header:
             raise ConnectError(
@@ -195,7 +186,11 @@ class CatalogHandler(CatalogService):
             )
 
         role = payload.get("role", "")
-        if role not in ("USER_ROLE_INSTRUCTOR", "USER_ROLE_SUPER_ADMIN", "USER_ROLE_PARTNER_ADMIN"):
+        if role not in (
+            "USER_ROLE_INSTRUCTOR",
+            "USER_ROLE_SUPER_ADMIN",
+            "USER_ROLE_PARTNER_ADMIN",
+        ):
             raise ConnectError(
                 Code.PERMISSION_DENIED,
                 "Chỉ tài khoản Giảng viên (Instructor) hoặc Quản trị viên mới có quyền tạo và chỉnh sửa khóa học.",
@@ -232,5 +227,7 @@ class CatalogHandler(CatalogService):
             instructor_names=list(request.instructor_names),
         )
         if not course:
-            raise ConnectError(Code.NOT_FOUND, f"Khóa học {request.course_id} không tồn tại")
+            raise ConnectError(
+                Code.NOT_FOUND, f"Khóa học {request.course_id} không tồn tại"
+            )
         return pb.UpdateCourseResponse(course=_to_pb_course(course))
