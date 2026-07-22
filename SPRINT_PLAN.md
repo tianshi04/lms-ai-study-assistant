@@ -23,7 +23,7 @@
 | Phân hệ (Track) | Phân hệ Phụ trách (Bounded Context) | Mã nguồn Backend (`backend/src/modules/`) | Route Frontend (`frontend/src/app/`) | Trạng thái |
 | :---: | :--- | :--- | :--- | :---: |
 | 🟢 **TRACK A** | **Catalog, Player & Learning Progress** | `modules/catalog/`<br>`modules/learning/` | `/courses`<br>`/learn/[courseId]` | ✅ **100% HOÀN THÀNH** |
-| 🔵 **TRACK B** | **Assessments, Auto-Grader & Peer Review** | `modules/assessment/` | `/assessments`<br>`/peer-review` | ⏳ Tiếp theo |
+| 🔵 **TRACK B** | **Assessments, Auto-Grader & Peer Review** | `modules/assessment/` | `/assessments`<br>`/peer-review` | ✅ **100% HOÀN THÀNH** |
 | 🟣 **TRACK C** | **Coursera AI Coach (RAG) & Discussion Forum** | `modules/ai_coach/`<br>`modules/forum/` | `/forum`<br>Widget AI Coach góc phải bài học | ⏳ Sắp thực hiện |
 | 🔴 **TRACK D** | **Identity, Financial Aid & Verified Certificate** | `modules/identity/`<br>`modules/certificate/` | `/auth`<br>`/financial-aid`<br>`/verify/[certId]` | ✅ **100% HOÀN THÀNH** |
 

@@ -37,10 +37,11 @@ export default function CoursePlayerPage() {
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [answeredQuizTimestamps, setAnsweredQuizTimestamps] = useState<Set<number>>(new Set());
 
-  // Personal Note State
+  // Personal Note & Locking State
   const [highlightText, setHighlightText] = useState("");
   const [noteComment, setNoteComment] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [lockNotice, setLockNotice] = useState("");
 
   const router = useRouter();
 
@@ -260,73 +261,123 @@ export default function CoursePlayerPage() {
           </div>
 
           <div className="p-4 space-y-6">
-            {course.weekModules.map((week) => (
-              <div key={week.id} className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold uppercase text-blue-600 dark:text-blue-400">Tuần {week.weekNumber}</span>
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">{week.title}</span>
-                </div>
+            {(() => {
+              const allItemsInCourse: LearningItem[] = [];
+              course.weekModules.forEach((wm) => {
+                wm.lessons.forEach((l) => {
+                  allItemsInCourse.push(...l.items);
+                });
+              });
 
-                {week.lessons.map((lesson) => (
-                  <div key={lesson.id} className="space-y-1">
-                    <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-2 py-1">{lesson.title}</div>
-                    <div className="space-y-1 pl-2">
-                      {lesson.items.map((item) => {
-                        const isActive = activeItem?.id === item.id;
-                        const isDone = progress?.completedItemIds.includes(item.id);
-
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => {
-                              setActiveItem(item);
-                              setActiveQuiz(null);
-                            }}
-                            className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all ${
-                              isActive
-                                ? "bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-500/30"
-                                : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
-                            }`}
-                          >
-                            <span className="truncate flex items-center gap-2">
-                              {isDone ? (
-                                <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                </svg>
-                              ) : item.type === 1 ? (
-                                <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                </svg>
-                              ) : item.type === 2 ? (
-                                <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                              ) : (
-                                <svg className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                              )}
-                              <span className={isDone ? "line-through opacity-80" : ""}>{item.title}</span>
-                            </span>
-                            <span className="text-[10px] opacity-60">{item.estimatedMinutes}m</span>
-                          </button>
-                        );
-                      })}
-                    </div>
+              return course.weekModules.map((week) => (
+                <div key={week.id} className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold uppercase text-blue-600 dark:text-blue-400">Tuần {week.weekNumber}</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">{week.title}</span>
                   </div>
-                ))}
-              </div>
-            ))}
+
+                  {week.lessons.map((lesson) => (
+                    <div key={lesson.id} className="space-y-1">
+                      <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-2 py-1">{lesson.title}</div>
+                      <div className="space-y-1 pl-2">
+                        {lesson.items.map((item) => {
+                          const isActive = activeItem?.id === item.id;
+                          const isDone = progress?.completedItemIds.includes(item.id);
+
+                          const itemIndex = allItemsInCourse.findIndex((i) => i.id === item.id);
+                          const prevItem = itemIndex > 0 ? allItemsInCourse[itemIndex - 1] : null;
+                          const isUnlocked =
+                            itemIndex <= 0 ||
+                            (prevItem && progress?.completedItemIds.includes(prevItem.id));
+
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => {
+                                if (!isUnlocked) {
+                                  setLockNotice(
+                                    `🔒 Bài học "${item.title}" đang bị khóa. Bạn cần hoàn thành bài học "${prevItem?.title || "trước đó"}" trước.`
+                                  );
+                                  return;
+                                }
+                                setLockNotice("");
+                                setActiveItem(item);
+                                setActiveQuiz(null);
+                              }}
+                              className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all ${
+                                isActive
+                                  ? "bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-500/30"
+                                  : !isUnlocked
+                                  ? "opacity-50 hover:bg-transparent cursor-not-allowed text-slate-400 dark:text-slate-600"
+                                  : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
+                              }`}
+                            >
+                              <span className="truncate flex items-center gap-2">
+                                {isDone ? (
+                                  <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                ) : !isUnlocked ? (
+                                  <svg className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                  </svg>
+                                ) : item.type === 1 ? (
+                                  <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                  </svg>
+                                ) : item.type === 2 ? (
+                                  <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                ) : item.type === 5 ? (
+                                  <svg className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                  </svg>
+                                ) : item.type === 6 ? (
+                                  <svg className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                  </svg>
+                                ) : (
+                                  <svg className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  </svg>
+                                )}
+                                <span className={isDone ? "line-through opacity-80" : ""}>{item.title}</span>
+                              </span>
+                              <span className="text-[10px] opacity-60">{item.estimatedMinutes}m</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ));
+            })()}
           </div>
         </aside>
 
         {/* Center Workspace & Bottom Panels */}
         <main className="flex-1 flex flex-col bg-slate-100 dark:bg-slate-950 overflow-hidden relative">
+          {/* Lock Notice Banner */}
+          {lockNotice && (
+            <div className="p-3 bg-amber-50 dark:bg-amber-950/80 border-b border-amber-200 dark:border-amber-900/80 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-200">
+              <span>{lockNotice}</span>
+              <button
+                onClick={() => setLockNotice("")}
+                className="text-amber-800 dark:text-amber-300 hover:opacity-75 font-bold text-xs"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           {/* Top Video / Reading Media Viewer */}
           <div className="flex-1 bg-slate-100 dark:bg-black flex items-center justify-center relative overflow-hidden transition-colors duration-200">
             <VideoPlayer
               videoRef={videoRef}
               activeItem={activeItem}
+              userId={getActiveUserId()}
               activeQuiz={activeQuiz}
               selectedOption={selectedOption}
               quizSubmitted={quizSubmitted}
