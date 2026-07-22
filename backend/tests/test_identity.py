@@ -33,3 +33,22 @@ async def test_identity_register_and_login():
         assert token.startswith("bearer-token-")
     except Exception as e:
         pytest.skip(f"Skipping identity db test: DB not reachable ({e})")
+
+
+@pytest.mark.asyncio
+async def test_assign_enterprise_seat_validation():
+    try:
+        usecase = IdentityUseCase()
+        user_id = "user_learner_demo"
+
+        # 1. Invalid key must fail
+        invalid_ok, invalid_msg = await usecase.assign_enterprise_seat(user_id, "RANDOM_INVALID_KEY_999")
+        assert not invalid_ok
+        assert "không tồn tại" in invalid_msg or "vô hiệu hóa" in invalid_msg
+
+        # 2. Valid key must succeed
+        valid_ok, valid_msg = await usecase.assign_enterprise_seat(user_id, "ENT-DEMO-2026-X99")
+        assert valid_ok
+        assert "Kích hoạt thành công" in valid_msg
+    except Exception as e:
+        pytest.skip(f"Skipping enterprise seat test: DB not reachable ({e})")

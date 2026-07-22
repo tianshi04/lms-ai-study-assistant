@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Callable
 
 from src.gen.catalog.v1.catalog_connect import CatalogServiceASGIApplication
@@ -83,7 +84,7 @@ class CORSMiddleware:
         await self.app(scope, receive, cors_send)
 
 
-def run_auto_migrations() -> None:
+async def run_auto_migrations() -> None:
     """Run Alembic upgrade head automatically on application startup (Dev mode only)."""
     if settings.ENV.lower() not in ("development", "dev"):
         print(f"[AUTO MIGRATION] Skipped auto-migration in '{settings.ENV}' environment mode.")
@@ -94,7 +95,11 @@ def run_auto_migrations() -> None:
         from alembic.config import Config
 
         alembic_cfg = Config("alembic.ini")
-        command.upgrade(alembic_cfg, "head")
+
+        def _upgrade():
+            command.upgrade(alembic_cfg, "head")
+
+        await asyncio.to_thread(_upgrade)
         print("[AUTO MIGRATION] Alembic migrations upgraded to head successfully (Dev mode).")
     except Exception as e:
         print(f"[AUTO MIGRATION] Warning during auto-migration: {e}")
@@ -115,7 +120,7 @@ class ModularRouterASGIApp:
                 message = await receive()
                 if message["type"] == "lifespan.startup":
                     try:
-                        run_auto_migrations()
+                        await run_auto_migrations()
                         from src.seed import seed_database
                         await seed_database(auto_mode=True)
                     except Exception as e:
@@ -177,4 +182,3 @@ router = ModularRouterASGIApp(
 )
 
 app = CORSMiddleware(router)
-
