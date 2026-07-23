@@ -1,33 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
+import { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { CourseCard } from "@/components/course/CourseCard";
+import { useCoursesQuery } from "@/lib/query_hooks";
 
 export default function CoursesPage() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-
-  useEffect(() => {
-    async function fetchCourses() {
-      try {
-        const client = getRpcClient(CatalogService);
-        const res = await client.listCourses({});
-        setCourses(res.courses);
-      } catch (err: unknown) {
-        console.error("Failed to load catalog:", err);
-        const message = err instanceof Error ? err.message : "Không thể tải danh sách khóa học";
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchCourses();
-  }, []);
+  const { data: courses = [], isLoading: loading, error: queryError } = useCoursesQuery();
+  const error = queryError ? queryError.message : null;
 
   const filteredCourses = courses.filter((c) =>
     c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
