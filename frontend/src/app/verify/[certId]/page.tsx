@@ -2,6 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { getRpcClient } from "@/lib/connect_client";
 import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
 import { Navbar } from "@/components/Navbar";
@@ -138,8 +139,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
                   </span>
                   <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{cert.partnerName}</h2>
                 </div>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={cert.partnerLogoUrl} alt={cert.partnerName} className="h-12 object-contain" />
+                <Image src={cert.partnerLogoUrl} alt={cert.partnerName} width={140} height={48} unoptimized className="h-12 w-auto object-contain" />
               </div>
 
               {/* Recipient & Course Detail */}
@@ -169,8 +169,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
               {/* Bottom Verification Seal & QR Code */}
               <div className="mt-10 pt-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={cert.qrCodeUrl} alt="Certificate Verification QR Code" className="w-20 h-20 rounded-xl border p-1 bg-white" />
+                  <Image src={cert.qrCodeUrl} alt="Certificate Verification QR Code" width={80} height={80} unoptimized className="w-20 h-20 rounded-xl border p-1 bg-white" />
                   <div className="text-left text-xs text-slate-500 dark:text-slate-400 space-y-1">
                     <p className="font-semibold text-slate-900 dark:text-white">Xác minh nguồn gốc kỹ thuật số</p>
                     <p className="text-[11px]">Quét mã QR để kiểm tra tính toàn vẹn của bằng cấp công khai.</p>

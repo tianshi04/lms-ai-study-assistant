@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Navbar } from "@/components/Navbar";
@@ -15,12 +16,14 @@ function CourseCard({ course }: { course: Course }) {
         {/* Partner Header */}
         <div className="flex items-center gap-3 mb-4 h-7">
           {!imgError && course.partnerLogoUrl ? (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
+            <Image
               src={course.partnerLogoUrl}
               alt={course.partnerName}
+              width={140}
+              height={24}
+              unoptimized
               onError={() => setImgError(true)}
-              className="h-6 max-w-[140px] object-contain dark:brightness-200 dark:contrast-200 transition-all"
+              className="h-6 max-w-[140px] w-auto object-contain dark:brightness-200 dark:contrast-200 transition-all"
             />
           ) : (
             <span className="text-xs font-bold font-mono text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-200 dark:border-blue-500/20">

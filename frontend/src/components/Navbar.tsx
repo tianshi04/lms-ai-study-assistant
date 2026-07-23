@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const emptySubscribe = () => () => {};
@@ -84,10 +85,12 @@ export function Navbar() {
                 href="/auth/profile"
                 className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userEmail || "user"}`}
                   alt={userName}
+                  width={28}
+                  height={28}
+                  unoptimized
                   className="w-7 h-7 rounded-full bg-blue-500/20"
                 />
                 <span className="text-xs font-bold text-slate-900 dark:text-white max-w-[120px] truncate">

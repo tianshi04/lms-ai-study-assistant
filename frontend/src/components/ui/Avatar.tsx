@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 export interface AvatarProps {
   name: string;
@@ -21,12 +22,21 @@ export const Avatar: React.FC<AvatarProps> = ({ name, src, size = "md", classNam
     lg: "w-12 h-12 text-base",
   };
 
+  const pixelSizes = {
+    sm: 28,
+    md: 36,
+    lg: 48,
+  };
+
   if (src) {
+    const dim = pixelSizes[size];
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
+      <Image
         src={src}
         alt={name}
+        width={dim}
+        height={dim}
+        unoptimized
         className={`${sizes[size]} rounded-full object-cover border border-slate-700 ${className}`}
       />
     );

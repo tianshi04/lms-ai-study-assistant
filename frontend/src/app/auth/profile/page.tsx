@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, type User } from "@/gen/identity/v1/identity_pb";
@@ -119,10 +120,12 @@ export default function ProfilePage() {
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none">
           {/* User Banner */}
           <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-slate-200 dark:border-slate-800">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={user?.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=default"}
               alt={user?.fullName || "User Avatar"}
+              width={96}
+              height={96}
+              unoptimized
               className="w-24 h-24 rounded-full border-4 border-blue-500/20 shadow-inner bg-slate-100 dark:bg-slate-800"
             />
             <div className="text-center sm:text-left">
