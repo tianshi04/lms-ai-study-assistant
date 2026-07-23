@@ -86,12 +86,13 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         return None
 
     async def get_peer_submissions_for_item(
-        self, item_id: str, exclude_user_id: str
+        self, item_id: str, exclude_user_id: str = ""
     ) -> list[PeerAssignmentSubmission]:
         return [
             s
             for s in self.peer_submissions
-            if s.item_id == item_id and s.user_id != exclude_user_id
+            if s.item_id == item_id
+            and (not exclude_user_id or s.user_id != exclude_user_id)
         ]
 
     async def save_peer_review(self, review: PeerReview) -> None:
@@ -266,3 +267,58 @@ name = input()
     )
     assert res_sec.passed is False
     assert "Security Violation" in res_sec.test_logs
+
+
+@pytest.mark.asyncio
+async def test_quiz_session_timer_and_timeout():
+    from datetime import datetime, timedelta, timezone
+
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    user_id = "user-timer-test"
+    item_id = "item-quiz-timer"
+
+    sess = await usecase.start_graded_quiz_session(
+        user_id, item_id, duration_minutes=45
+    )
+    assert sess["session_id"].startswith("qsess-")
+    assert sess["duration_minutes"] == 45
+
+    await usecase.submit_honor_code(user_id, item_id, True)
+
+    # Expired start_time (60 minutes ago)
+    expired_start = (datetime.now(timezone.utc) - timedelta(minutes=60)).isoformat()
+    res_timeout = await usecase.submit_graded_quiz(
+        user_id,
+        item_id,
+        [0, 1, 2, 0, 1],
+        start_time_iso=expired_start,
+        duration_minutes=45,
+    )
+    assert "Auto-submit on timeout" in res_timeout["answer_explanations"][0]
+
+
+@pytest.mark.asyncio
+async def test_peer_regrade_fallback_queue():
+    from datetime import datetime, timedelta, timezone
+
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+
+    old_time = (datetime.now(timezone.utc) - timedelta(days=6)).isoformat()
+    sub_old = PeerAssignmentSubmission(
+        id="peer-old-1",
+        user_id="user-old",
+        item_id="item-peer-queue",
+        submission_url="http://example.com",
+        text_content="Old submission",
+        created_at=old_time,
+    )
+    await repo.save_peer_submission(sub_old)
+
+    regrade_queue = await usecase.list_peer_submissions_needing_staff_regrade(
+        "item-peer-queue"
+    )
+    assert len(regrade_queue) == 1
+    assert regrade_queue[0]["submission_id"] == "peer-old-1"
+    assert regrade_queue[0]["needs_staff_regrade"] is True

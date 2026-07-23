@@ -239,12 +239,13 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         )
 
     async def get_peer_submissions_for_item(
-        self, item_id: str, exclude_user_id: str
+        self, item_id: str, exclude_user_id: str = ""
     ) -> list[PeerAssignmentSubmission]:
         stmt = select(PeerAssignmentSubmissionModel).where(
-            PeerAssignmentSubmissionModel.item_id == item_id,
-            PeerAssignmentSubmissionModel.user_id != exclude_user_id,
+            PeerAssignmentSubmissionModel.item_id == item_id
         )
+        if exclude_user_id:
+            stmt = stmt.where(PeerAssignmentSubmissionModel.user_id != exclude_user_id)
         res = await self.session.execute(stmt)
         models = res.scalars().all()
         return [

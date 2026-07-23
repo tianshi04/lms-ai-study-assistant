@@ -70,7 +70,7 @@ class AssessmentRepositoryInterface(ABC):
 
     @abstractmethod
     async def get_peer_submissions_for_item(
-        self, item_id: str, exclude_user_id: str
+        self, item_id: str, exclude_user_id: str = ""
     ) -> list[PeerAssignmentSubmission]:
         pass
 

@@ -61,8 +61,25 @@ class AssessmentUseCase:
         )
         return is_agreed, msg
 
+    async def start_graded_quiz_session(
+        self, user_id: str, item_id: str, duration_minutes: int = 45
+    ) -> dict[str, Any]:
+        now = datetime.now(timezone.utc)
+        expires_at = now + timedelta(minutes=duration_minutes)
+        return {
+            "session_id": f"qsess-{uuid.uuid4().hex[:8]}",
+            "start_time_iso": now.isoformat(),
+            "expires_at_iso": expires_at.isoformat(),
+            "duration_minutes": duration_minutes,
+        }
+
     async def submit_graded_quiz(
-        self, user_id: str, item_id: str, selected_option_indexes: list[int]
+        self,
+        user_id: str,
+        item_id: str,
+        selected_option_indexes: list[int],
+        start_time_iso: Optional[str] = None,
+        duration_minutes: int = 45,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
@@ -117,6 +134,17 @@ class AssessmentUseCase:
                     explanations.append(
                         f"Q{idx + 1}: Incorrect. Selected option {user_ans}, expected option {corr}."
                     )
+
+            if start_time_iso:
+                try:
+                    start_dt = datetime.fromisoformat(start_time_iso)
+                    if (now - start_dt).total_seconds() > duration_minutes * 60:
+                        explanations.insert(
+                            0,
+                            f"Hết thời gian làm bài ({duration_minutes} phút). Máy chủ tự động nộp bài và chấm điểm (Auto-submit on timeout).",
+                        )
+                except ValueError:
+                    pass
 
             score_percent = round((correct_count / total_questions) * 100.0, 2)
             passed = score_percent >= 80.0
@@ -352,3 +380,36 @@ class AssessmentUseCase:
             await repo.save_grade_appeal(appeal)
 
         return True, "PENDING"
+
+    async def list_peer_submissions_needing_staff_regrade(
+        self, item_id: str
+    ) -> list[dict[str, Any]]:
+        """Returns list of peer assignment submissions older than 5 days with fewer than 3 reviews (BR_PEER_004)."""
+        now = datetime.now(timezone.utc)
+        five_days_ago = now - timedelta(days=5)
+
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            submissions = await repo.get_peer_submissions_for_item(item_id)
+            regrade_list = []
+            for s in submissions:
+                try:
+                    sub_dt = datetime.fromisoformat(s.created_at)
+                except (ValueError, TypeError):
+                    sub_dt = now
+
+                reviews = await repo.get_peer_reviews_for_submission(s.id)
+                if len(reviews) < 3 and sub_dt <= five_days_ago:
+                    regrade_list.append(
+                        {
+                            "submission_id": s.id,
+                            "user_id": s.user_id,
+                            "item_id": s.item_id,
+                            "submission_url": s.submission_url,
+                            "text_content": s.text_content,
+                            "review_count": len(reviews),
+                            "created_at": s.created_at,
+                            "needs_staff_regrade": True,
+                        }
+                    )
+            return regrade_list
