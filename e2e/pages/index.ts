@@ -5,3 +5,4 @@ export { RegisterPage } from './register.page';
 export { CourseDetailPage } from './course-detail.page';
 export { LearningPage } from './learning.page';
 export { AssessmentPage } from './assessment.page';
+export { ForumPage } from './forum.page';
