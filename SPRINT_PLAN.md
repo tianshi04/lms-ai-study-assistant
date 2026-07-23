@@ -24,7 +24,7 @@
 | :---: | :--- | :--- | :--- | :---: |
 | 🟢 **TRACK A** | **Catalog, Player & Learning Progress** | `modules/catalog/`<br>`modules/learning/` | `/courses`<br>`/learn/[courseId]` | ✅ **100% HOÀN THÀNH** |
 | 🔵 **TRACK B** | **Assessments, Auto-Grader & Peer Review** | `modules/assessment/` | `/assessments`<br>`/peer-review` | ✅ **100% HOÀN THÀNH** |
-| 🟣 **TRACK C** | **Coursera AI Coach (RAG) & Discussion Forum** | `modules/ai_coach/`<br>`modules/forum/` | `/forum`<br>Widget AI Coach góc phải bài học | ⏳ Sắp thực hiện |
+| 🟣 **TRACK C** | **Discussion Forum & Coursera AI Coach** | `modules/forum/`<br>`modules/ai_coach/` | `/forum` | ✅ **Forum 100%**<br>⏸️ **AI Coach: Tạm ngưng (Bỏ qua ưu tiên)** |
 | 🔴 **TRACK D** | **Identity, Financial Aid & Verified Certificate** | `modules/identity/`<br>`modules/certificate/` | `/auth`<br>`/financial-aid`<br>`/verify/[certId]` | ✅ **100% HOÀN THÀNH** |
 
 ---
@@ -32,7 +32,7 @@
 ## III. LỊCH TRÌNH THỰC THI & TIẾN ĐỘ THỰC TẾ
 
 ```
-[NGÀY 1: SPRINT 0 COMPLETED] ➔ [TRACK A COMPLETED 100%] ➔ [NGÀY 2-3: TRACK B & D] ➔ [NGÀY 4-5: TRACK C & MERGE]
+[NGÀY 1: SPRINT 0 COMPLETED] ➔ [TRACK A COMPLETED 100%] ➔ [NGÀY 2-3: TRACK B & D] ➔ [NGÀY 4-5: TRACK C FORUM & MERGE]
 ```
 
 ### 📍 NGÀY 1 (Thứ 2) - SPRINT 0: INFRASTRUCTURE & API CONTRACTS (ĐÃ HOÀN THÀNH 100% 🚀)
@@ -50,9 +50,9 @@
 
 ---
 
-### 📍 BƯỚC TIẾP THEO: TRACK B, C & D
+### 📍 PHÂN BỔ TRỌNG TÂM & ĐIỀU CHỈNH
 - 🔵 **TRACK B (Assessments & Auto-Grader):** Graded Quiz Engine (điểm Pass 80%, Cooldown 8h), Sandbox Auto-Graded Lab bài tập lập trình & Peer Review.
-- 🟣 **TRACK C (AI Coach & Vector RAG):** Vector RAG Pipeline (Vector hóa Video Transcript/Bài đọc vào PostgreSQL `pgvector`) & Khung chat Coursera AI Coach.
+- 🟣 **TRACK C (Discussion Forum & AI Coach):** Hoàn thiện Diễn đàn thảo luận (Forum). Phân hệ Coursera AI Coach tạm ngưng (bỏ qua khỏi phạm vi ưu tiên thực thi của Sprint hiện tại, hợp đồng API `.proto` được giữ nguyên).
 - 🔴 **TRACK D (Identity, Financial Aid & Certificate):** Nộp đơn xin Hỗ trợ tài chính (Financial Aid 150 từ), Xác thực chứng chỉ công khai (`/verify/[certId]`).
 
 ---
