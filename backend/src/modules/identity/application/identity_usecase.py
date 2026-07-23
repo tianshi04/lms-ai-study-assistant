@@ -1,5 +1,4 @@
 import hashlib
-import hmac
 import os
 import uuid
 from typing import Optional
@@ -23,17 +22,12 @@ def hash_password(password: str, salt: Optional[bytes] = None) -> str:
 def verify_password(password: str, password_hash: str) -> bool:
     if ":" not in password_hash:
         return False
-    try:
-        salt_hex, hash_hex = password_hash.split(":", 1)
-        salt = bytes.fromhex(salt_hex)
-    except ValueError:
-        return False
-
+    salt_hex, hash_hex = password_hash.split(":", 1)
+    salt = bytes.fromhex(salt_hex)
     new_hash = hashlib.pbkdf2_hmac(
         "sha256", password.encode("utf-8"), salt, 100_000
     ).hex()
-    return hmac.compare_digest(new_hash, hash_hex)
-
+    return new_hash == hash_hex
 
 
 class IdentityUseCase:
@@ -146,50 +140,3 @@ class IdentityUseCase:
                 True,
                 f"Kích hoạt thành công suất học từ đối tác {license_model.partner_name}!",
             )
-
-    async def list_enterprise_seats(
-        self, partner_name: str = ""
-    ) -> list[dict]:
-        async with async_session_scope() as session:
-            stmt = select(EnterpriseLicenseModel)
-            if partner_name:
-                stmt = stmt.where(EnterpriseLicenseModel.partner_name.ilike(f"%{partner_name}%"))
-            res = await session.execute(stmt)
-            licenses = res.scalars().all()
-            
-            result = []
-            for lic in licenses:
-                result.append({
-                    "id": lic.key,
-                    "partner_name": lic.partner_name,
-                    "seat_key": lic.key,
-                    "assigned_user_id": f"{lic.used_seats}/{lic.total_seats} seats",
-                    "assigned_user_email": "Hoạt động" if lic.is_active else "Vô hiệu",
-                    "status": "ACTIVE" if lic.is_active else "INACTIVE",
-                    "created_at": "2026",
-                })
-            return result
-
-    async def create_enterprise_seat(
-        self, partner_name: str, seat_key: str
-    ) -> dict:
-        async with async_session_scope() as session:
-            clean_key = seat_key.strip() or f"KEY-{uuid.uuid4().hex[:8].upper()}"
-            lic = EnterpriseLicenseModel(
-                key=clean_key,
-                partner_name=partner_name or "Doanh nghiệp Đối tác",
-                total_seats=500,
-                used_seats=0,
-                is_active=True,
-            )
-            session.add(lic)
-            await session.commit()
-            return {
-                "id": clean_key,
-                "partner_name": partner_name,
-                "seat_key": clean_key,
-                "assigned_user_id": "0/500 seats",
-                "assigned_user_email": "Hoạt động",
-                "status": "ACTIVE",
-                "created_at": "2026",
-            }
