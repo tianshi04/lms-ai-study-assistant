@@ -83,7 +83,6 @@ async def test_blackbox_identity_and_learning_flows(client: AsyncClient):
     # --- 5. CẬP NHẬT TIẾN ĐỘ HỌC TẬP (LEARNING) ---
     # Call GetCourseProgress 
     progress_req = {
-        "userId": user_id,
         "courseId": first_course_id
     }
     resp = await client.post(
@@ -105,7 +104,6 @@ async def test_blackbox_identity_and_learning_flows(client: AsyncClient):
     # Thử gọi API cập nhật tiến độ cho một item
     # Vì mình không biết ID của lesson/item, mình chỉ test việc gọi API với ID giả
     update_req = {
-        "userId": user_id,
         "courseId": first_course_id,
         "itemId": "item-ml-intro-video", # Giả định ID này
         "totalCourseItems": 10
