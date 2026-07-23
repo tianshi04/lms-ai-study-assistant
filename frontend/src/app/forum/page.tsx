@@ -5,7 +5,7 @@ import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import { ForumService, ForumThreadSchema, ForumReplySchema, type ForumThread } from "@/gen/forum/v1/forum_pb";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
-import { Navbar } from "@/components/Navbar";
+import { Navbar } from "@/components/layout/Navbar";
 
 export default function ForumPage() {
   const [courses, setCourses] = useState<Course[]>([]);

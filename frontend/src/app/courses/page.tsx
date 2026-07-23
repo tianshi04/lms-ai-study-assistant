@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
-import { Navbar } from "@/components/Navbar";
+import { Navbar } from "@/components/layout/Navbar";
 
 function CourseCard({ course }: { course: Course }) {
   const [imgError, setImgError] = useState(false);

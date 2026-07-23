@@ -4,7 +4,7 @@ import { useEffect, useState, useSyncExternalStore, use } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, ItemType, type Course } from "@/gen/catalog/v1/catalog_pb";
-import { Navbar } from "@/components/Navbar";
+import { Navbar } from "@/components/layout/Navbar";
 
 const emptySubscribe = () => () => {};
 

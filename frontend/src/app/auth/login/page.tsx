@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService } from "@/gen/identity/v1/identity_pb";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ThemeToggle } from "@/components/providers/ThemeToggle";
 
 function LoginFormContent() {
   const router = useRouter();

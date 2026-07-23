@@ -3,7 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
-import { Navbar } from "@/components/Navbar";
+import { Navbar } from "@/components/layout/Navbar";
 
 const emptySubscribe = () => () => {};
 

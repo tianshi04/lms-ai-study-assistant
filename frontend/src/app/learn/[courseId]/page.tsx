@@ -11,7 +11,7 @@ import { TranscriptPanel } from "@/components/player/TranscriptPanel";
 import { NotesPanel } from "@/components/player/NotesPanel";
 import { DeadlinesPanel } from "@/components/player/DeadlinesPanel";
 import { ForumTab } from "@/components/player/ForumTab";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ThemeToggle } from "@/components/providers/ThemeToggle";
 
 function getActiveUserId(): string {
   if (typeof window !== "undefined") {

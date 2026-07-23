@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, UserRole } from "@/gen/identity/v1/identity_pb";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ThemeToggle } from "@/components/providers/ThemeToggle";
 
 export default function RegisterPage() {
   const router = useRouter();

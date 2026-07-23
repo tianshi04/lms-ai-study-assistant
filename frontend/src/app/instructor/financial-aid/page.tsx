@@ -4,7 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CertificateService, type FinancialAidApplication } from "@/gen/certificate/v1/certificate_pb";
-import { Navbar } from "@/components/Navbar";
+import { Navbar } from "@/components/layout/Navbar";
 
 const emptySubscribe = () => () => {};
 

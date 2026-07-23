@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { getRpcClient } from "@/lib/connect_client";
 import { CertificateService, type FinancialAidApplication } from "@/gen/certificate/v1/certificate_pb";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ThemeToggle } from "@/components/providers/ThemeToggle";
 
 function FinancialAidContent() {
   const searchParams = useSearchParams();
