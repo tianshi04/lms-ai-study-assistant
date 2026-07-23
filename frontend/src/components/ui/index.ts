@@ -5,4 +5,6 @@ export * from "./Card";
 export * from "./Input";
 export * from "./Modal";
 export * from "./ProgressBar";
+export * from "./Skeleton";
 export * from "./Tabs";
+
