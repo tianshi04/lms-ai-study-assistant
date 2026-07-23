@@ -152,11 +152,13 @@ class CertificateHandler(CertificateService):
         ],
     ) -> pb.GetVerifiedCertificateResponse:
         current_user = require_current_user()
-        cert = await self._use_case.get_verified_certificate(
+        cert, err = await self._use_case.get_verified_certificate(
             current_user.id, request.course_id
         )
-        if not cert:
-            raise ConnectError(Code.NOT_FOUND, "Không tìm thấy chứng chỉ")
+        if err or not cert:
+            raise ConnectError(
+                Code.FAILED_PRECONDITION, err or "Không tìm thấy chứng chỉ"
+            )
         return pb.GetVerifiedCertificateResponse(certificate=_to_pb_certificate(cert))
 
     async def verify_certificate_public(

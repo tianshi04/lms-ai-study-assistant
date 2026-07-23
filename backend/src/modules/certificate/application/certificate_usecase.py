@@ -12,6 +12,7 @@ from src.modules.certificate.domain.entities import (
 )
 from src.modules.certificate.infrastructure.repository import CertificateRepository
 from src.modules.identity.infrastructure.models import UserModel
+from src.modules.learning.infrastructure.models import LearningProgressModel
 from src.shared.infrastructure.database import async_session_scope
 
 
@@ -56,19 +57,35 @@ class CertificateUseCase:
             saved = await repo.save_financial_aid(application)
             return saved, ""
 
+    async def _check_auto_approve(
+        self, app: Optional[FinancialAidApplication], repo: CertificateRepository
+    ) -> Optional[FinancialAidApplication]:
+        if app and app.status == "PENDING" and app.review_deadline_days_left <= 0:
+            app.status = "APPROVED"
+            app.review_deadline_days_left = 0
+            return await repo.save_financial_aid(app)
+        return app
+
     async def get_financial_aid_status(
         self, user_id: str, course_id: str
     ) -> Optional[FinancialAidApplication]:
         async with async_session_scope() as session:
             repo = CertificateRepository(session)
-            return await repo.get_financial_aid(user_id, course_id)
+            app = await repo.get_financial_aid(user_id, course_id)
+            return await self._check_auto_approve(app, repo)
 
     async def list_financial_aid_applications(
         self, course_id: Optional[str] = None, status: Optional[str] = None
     ) -> list[FinancialAidApplication]:
         async with async_session_scope() as session:
             repo = CertificateRepository(session)
-            return await repo.list_financial_aids(course_id=course_id, status=status)
+            apps = await repo.list_financial_aids(course_id=course_id, status=status)
+            checked_apps = []
+            for a in apps:
+                checked = await self._check_auto_approve(a, repo)
+                if checked:
+                    checked_apps.append(checked)
+            return checked_apps
 
     async def review_financial_aid_application(
         self, application_id: str, is_approved: bool
@@ -86,12 +103,27 @@ class CertificateUseCase:
 
     async def get_verified_certificate(
         self, user_id: str, course_id: str
-    ) -> Optional[VerifiedCertificate]:
+    ) -> tuple[Optional[VerifiedCertificate], str]:
         async with async_session_scope() as session:
             repo = CertificateRepository(session)
             cert = await repo.get_certificate(user_id, course_id)
             if cert:
-                return cert
+                return cert, ""
+
+            # BR_CERT_001: Check if user has reached 100% progress in course
+            progress_key = f"{user_id}:{course_id}"
+            prog_stmt = select(LearningProgressModel).where(
+                LearningProgressModel.id == progress_key
+            )
+            prog_res = await session.execute(prog_stmt)
+            prog_model = prog_res.scalar_one_or_none()
+
+            current_percent = prog_model.overall_progress_percent if prog_model else 0.0
+            if not prog_model or current_percent < 100.0:
+                return (
+                    None,
+                    f"Chưa đủ điều kiện nhận chứng chỉ: Tiến độ khóa học phải đạt 100% (Hiện tại {current_percent}%).",
+                )
 
             # Fetch real user details
             user_stmt = select(UserModel).where(UserModel.id == user_id)
@@ -152,7 +184,8 @@ class CertificateUseCase:
                 open_badges_json_ld=json.dumps(open_badges, ensure_ascii=False),
             )
 
-            return await repo.save_certificate(cert)
+            saved_cert = await repo.save_certificate(cert)
+            return saved_cert, ""
 
     async def verify_certificate_public(
         self, certificate_id: str
