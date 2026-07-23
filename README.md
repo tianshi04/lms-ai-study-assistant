@@ -283,6 +283,7 @@ Run these commands from the `backend/` directory:
 
 | Command | Description |
 | :--- | :--- |
+| `make setup` | Install and sync Python dependencies (`uv sync`) |
 | `make infra` | Start infrastructure containers (PostgreSQL 17 `pgvector` & MinIO) |
 | `make infra-down` | Stop infrastructure containers (preserves DB volume data) |
 | `make infra-clean` | Stop containers and wipe database volume completely (`down -v`) |
