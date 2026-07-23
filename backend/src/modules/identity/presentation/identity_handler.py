@@ -126,45 +126,4 @@ class IdentityHandler(IdentityService):
         )
         return pb.AssignEnterpriseSeatResponse(success=success, message=msg)
 
-    async def list_enterprise_seats(
-        self,
-        request: pb.ListEnterpriseSeatsRequest,
-        ctx: RequestContext[
-            pb.ListEnterpriseSeatsRequest, pb.ListEnterpriseSeatsResponse
-        ],
-    ) -> pb.ListEnterpriseSeatsResponse:
-        items = await self._use_case.list_enterprise_seats(request.partner_name)
-        pb_seats = [
-            pb.EnterpriseSeat(
-                id=item["id"],
-                partner_name=item["partner_name"],
-                seat_key=item["seat_key"],
-                assigned_user_id=item["assigned_user_id"],
-                assigned_user_email=item["assigned_user_email"],
-                status=item["status"],
-                created_at=item["created_at"],
-            )
-            for item in items
-        ]
-        return pb.ListEnterpriseSeatsResponse(seats=pb_seats)
 
-    async def create_enterprise_seat(
-        self,
-        request: pb.CreateEnterpriseSeatRequest,
-        ctx: RequestContext[
-            pb.CreateEnterpriseSeatRequest, pb.CreateEnterpriseSeatResponse
-        ],
-    ) -> pb.CreateEnterpriseSeatResponse:
-        item = await self._use_case.create_enterprise_seat(
-            request.partner_name, request.seat_key
-        )
-        pb_seat = pb.EnterpriseSeat(
-            id=item["id"],
-            partner_name=item["partner_name"],
-            seat_key=item["seat_key"],
-            assigned_user_id=item["assigned_user_id"],
-            assigned_user_email=item["assigned_user_email"],
-            status=item["status"],
-            created_at=item["created_at"],
-        )
-        return pb.CreateEnterpriseSeatResponse(seat=pb_seat)

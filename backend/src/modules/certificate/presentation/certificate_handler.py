@@ -76,74 +76,6 @@ class CertificateHandler(CertificateService):
             return pb.GetFinancialAidStatusResponse(application=None)
         return pb.GetFinancialAidStatusResponse(application=_to_pb_financial_aid(app))
 
-    async def list_financial_aid_applications(
-        self,
-        request: pb.ListFinancialAidApplicationsRequest,
-        ctx: RequestContext[
-            pb.ListFinancialAidApplicationsRequest,
-            pb.ListFinancialAidApplicationsResponse,
-        ],
-    ) -> pb.ListFinancialAidApplicationsResponse:
-        current_user = require_current_user()
-        role = str(current_user.role).lower()
-        is_staff = any(
-            r in role
-            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
-        ) or current_user.role in (
-            "USER_ROLE_INSTRUCTOR",
-            "USER_ROLE_SUPER_ADMIN",
-            "USER_ROLE_PARTNER_ADMIN",
-            "USER_ROLE_TA",
-        )
-
-        if not is_staff:
-            raise ConnectError(
-                Code.PERMISSION_DENIED,
-                "Chỉ Giảng viên hoặc Quản trị viên mới có quyền xem danh sách đơn Hỗ trợ tài chính.",
-            )
-
-        apps = await self._use_case.list_financial_aid_applications(
-            course_id=request.course_id or None, status=request.status or None
-        )
-        return pb.ListFinancialAidApplicationsResponse(
-            applications=[_to_pb_financial_aid(a) for a in apps]
-        )
-
-    async def review_financial_aid_application(
-        self,
-        request: pb.ReviewFinancialAidApplicationRequest,
-        ctx: RequestContext[
-            pb.ReviewFinancialAidApplicationRequest,
-            pb.ReviewFinancialAidApplicationResponse,
-        ],
-    ) -> pb.ReviewFinancialAidApplicationResponse:
-        current_user = require_current_user()
-        role = str(current_user.role).lower()
-        is_staff = any(
-            r in role
-            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
-        ) or current_user.role in (
-            "USER_ROLE_INSTRUCTOR",
-            "USER_ROLE_SUPER_ADMIN",
-            "USER_ROLE_PARTNER_ADMIN",
-            "USER_ROLE_TA",
-        )
-
-        if not is_staff:
-            raise ConnectError(
-                Code.PERMISSION_DENIED,
-                "Chỉ Giảng viên hoặc Quản trị viên mới có quyền xét duyệt đơn Hỗ trợ tài chính.",
-            )
-
-        app, err = await self._use_case.review_financial_aid_application(
-            application_id=request.application_id, is_approved=request.is_approved
-        )
-        if err or not app:
-            raise ConnectError(Code.INVALID_ARGUMENT, err or "Xét duyệt thất bại")
-        return pb.ReviewFinancialAidApplicationResponse(
-            application=_to_pb_financial_aid(app)
-        )
-
     async def get_verified_certificate(
         self,
         request: pb.GetVerifiedCertificateRequest,
@@ -174,4 +106,3 @@ class CertificateHandler(CertificateService):
         return pb.VerifyCertificatePublicResponse(
             is_valid=True, certificate=_to_pb_certificate(cert)
         )
-
