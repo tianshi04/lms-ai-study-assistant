@@ -114,3 +114,10 @@ This file provides rules, architectural conventions, and workspace instructions 
 - `npm run test:ui` - Open interactive Playwright UI Test Runner.
 - `npm run test:report` - Show HTML test execution report.
 
+---
+
+## 7. Documentation & Code Synchronization Rule
+- **Strict Code-Documentation Synchronization**: Whenever business logic, domain entities, RPC APIs, permission checks, workflow limits, or mathematical formulas are created, updated, or refactored in the codebase, the corresponding documentation in `docs/` **MUST** be updated in the same change to maintain 100% synchronization.
+- **Documentation Audit Requirement**: Agents and developers must verify that no new business rules or logic alterations are introduced into code without corresponding updates in `docs/`.
+
+

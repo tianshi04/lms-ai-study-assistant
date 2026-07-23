@@ -8,9 +8,10 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 
 ### 1.1. Quản lý tài khoản & Doanh nghiệp (User & Enterprise Seat Management)
 * **Thêm mới & Phân quyền:** Admin tạo tài khoản hoặc import danh sách hàng loạt (`.xlsx`, `.csv`). Phân quyền các vai trò: `Learner`, `Instructor`, `TA (Teaching Assistant)`, `Partner Admin`.
+* **Mã hóa Mật khẩu & Xác thực Token:** Mật khẩu được mã hóa băm PBKDF2-HMAC-SHA256 (100k iterations + salt ngẫu nhiên), tự động tạo avatar SVG ngẫu nhiên từ DiceBear API và hỗ trợ quy trình Refresh Token rotation (`BR_AUTH_002`).
 * **Quản lý Suất học Doanh nghiệp (Enterprise License):**
   * Tạo gói suất học cho đối tác (ví dụ: cấp 500 seats cho Trường Đại học X hoặc Công ty Y).
-  * Quản lý mã kích hoạt (Enterprise Key) và theo dõi số lượng seat đã được kích hoạt.
+  * Quản lý mã kích hoạt (Enterprise Key), kiểm tra trạng thái hoạt động (`is_active`) và theo dõi số lượng seat đã kích hoạt (`used_seats / total_seats`).
 * **Khóa/Kích hoạt tài khoản:** Tạm khóa tài khoản vi phạm điều khoản. Thu hồi tức thì phiên làm việc (Session) của tài khoản bị khóa.
 
 ### 1.2. Giám sát hệ thống & API LLM (System & LLM Monitoring Dashboard)
@@ -70,10 +71,10 @@ flowchart TD
    * **Bộ tiêu chí Rubric:** Giảng viên chia các tiêu chí chấm điểm chi tiết (ví dụ: Tiêu chí 1: Cấu trúc code - Max 5 điểm; Tiêu chí 2: Giao diện - Max 5 điểm) kèm hướng dẫn chi tiết cho học viên chấm chéo.
 
 ### 2.4. Quản lý Diễn đàn & Duyệt Hỗ trợ tài chính (Forum & Financial Aid Review)
-* **Điều phối Diễn đàn (Forum Moderation):** Trợ giảng/Giảng viên xem các bài thảo luận theo tuần, trả lời câu hỏi và bấm nút **"Staff Answer"** để ghim câu trả lời chính thức lên đầu trang.
-* **Xét duyệt Financial Aid:**
-  * Giảng viên xem danh sách đơn xin học bổng của học viên (gồm bài luận 150 từ giải trình hoàn cảnh và lý do học).
-  * Bấm **Duyệt (Approve)** để hệ thống tự động cấp quyền Paid access cho học viên.
+* **Điều phối Diễn đàn (Forum Moderation & Pinning):** Trợ giảng/Giảng viên/Quản trị viên có quyền ghim câu trả lời chính thức (`is_staff_answer`). Khi được ghim, hệ thống tự động đánh dấu `is_staff_pinned = True` trên bài thảo luận gốc (Thread) để ưu tiên hiển thị đầu danh sách.
+* **Xét duyệt & Nộp lại Financial Aid (Financial Aid Review & Re-application):**
+  * Giảng viên/Admin xem danh sách đơn xin học bổng của học viên (gồm bài luận >= 150 từ).
+  * Bấm **Duyệt (Approve)** hoặc **Từ chối (Reject)**. Nếu bị từ chối, học viên có quyền chỉnh sửa bài luận để nộp lại (hệ thống chuyển đơn về lại trạng thái `PENDING` và đếm lại hạn duyệt 14 ngày).
 
 ### 2.5. Bảng Phân tích Giảng dạy (Instructor Analytics Dashboard)
 * **Phân tích Tỷ lệ Bỏ học (Student Drop-off Funnel):** Thống kê số lượng học viên dừng học tại từng bài học video/bài đọc để giúp Giảng viên nhận biết đoạn nội dung khó tiếp thu.
@@ -139,18 +140,18 @@ flowchart TD
 * **Upvote & Staff Pinning:** Học viên có thể Upvote câu trả lời hữu ích. Các câu trả lời được Trợ giảng ghim (Staff Answer) sẽ được làm nổi bật với huy hiệu đặc biệt.
 
 ### 3.5. Phân hệ Đánh giá Năng lực (Assessments Sub-system)
-* **Cam kết Liêm chính Học thuật (Academic Honor Code):** Trước khi bấm bắt đầu Graded Quiz hoặc nộp bài Peer Review, học viên phải tích vào checkbox: *"Tôi cam kết đây là bài làm độc lập của chính tôi"*.
-* **Graded Quiz:** Ngân hàng câu hỏi xáo trộn (`BR_QUIZ_002`), đồng hồ đếm ngược Server-side (`BR_QUIZ_003`), tự động chấm điểm và hiển thị kết quả. Nếu trượt 3 lần, học viên phải đợi hết thời gian Cooldown 8h mới được làm lại.
-* **Auto-Graded Lab:** Học viên tải file code lên -> Sandbox gửi tới Auto-Grader chạy Test Cases -> Trả về danh sách Pass/Fail test cases và điểm số tức thì.
+* **Cam kết Liêm chính Học thuật (Academic Honor Code):** Bắt buộc tích chọn xác nhận trước khi làm bài. Nếu từ chối (`is_agreed = False`), hệ thống chặn nộp bài và trả về thông báo lỗi kèm điểm số 0.
+* **Graded Quiz:** Ngân hàng câu hỏi xáo trộn (`BR_QUIZ_002`), đồng hồ đếm ngược Server-side (`BR_QUIZ_003`), tự động chấm điểm và hiển thị giải thích. Nếu trượt 3 lần, học viên phải đợi hết 8h Cooldown; khi đạt điểm Pass (>= 80%), hệ thống tự động reset lượt thi về 3.
+* **Auto-Graded Lab:** Học viên tải file code lên -> Sandbox gửi tới Auto-Grader chạy Test Cases -> Trả về danh sách Pass/Fail test cases, log stdout/stderr và điểm số tức thì.
 * **Peer-Graded Assignment Sub-system:**
-  1. **Nộp bài:** Học viên nộp bài dự án (file/link/văn bản) trước deadline.
-  2. **Chấm chéo:** Sau deadline nộp bài, hệ thống tự động phân bổ 3 bài làm của bạn học ngẫu nhiên cho học viên. Học viên đọc bài và cho điểm từng tiêu chí theo Rubric kèm lời nhận xét.
-  3. **Tính điểm:** Điểm chính thức = Trung bình cộng điểm của các bạn học chấm.
+  1. **Nộp bài:** Học viên nộp bài dự án trước deadline.
+  2. **Chấm chéo:** Hệ thống phân bổ 3 bài làm của bạn học ngẫu nhiên (tự động loại trừ bài của chính mình `exclude_user_id`). Học viên chấm theo bộ 3 tiêu chí Rubric (Code Quality, Documentation, Test Coverage - mỗi tiêu chí max 10đ).
+  3. **Tính điểm & Outlier:** Điểm chính thức = Tổng điểm đạt / Tổng điểm tối đa * 100%. Nếu chênh lệch $Max(Scores) - Min(Scores) > 30.0\%$, hệ thống tự động gắn cờ Outlier (`is_outlier = True`) và gửi cảnh báo đến Trợ giảng (TA).
   4. **Fallback khi thiếu bài chấm chéo:** Nếu sau 5 ngày nộp bài chưa nhận đủ 3 lượt chấm chéo, bài làm tự động chuyển vào Staff Regrade Queue cho TA chấm trực tiếp (`BR_PEER_004`).
-  5. **Khiếu nại điểm (Grade Appeal):** Nếu học viên nhận thấy điểm chấm chéo có bất thường, học viên gửi đơn khiếu nại để Trợ giảng (TA) chấm lại thủ công.
+  5. **Khiếu nại điểm (Grade Appeal):** Học viên gửi đơn khiếu nại với lý do chi tiết (trạng thái `"PENDING"`) để Trợ giảng (TA) chấm lại thủ công.
 
 ### 3.6. Chứng nhận & Xác thực Thành tích (Verified Certificate & OpenBadges)
 * **Quy trình Xác minh Danh tính (Identity Verification):** Trước khi phát hành chứng chỉ Verified Certificate lần đầu tiên, học viên thực hiện bước xác minh danh tính bằng cách tải ảnh CCCD/Hộ chiếu và chụp ảnh sinh trắc học khuôn mặt qua Webcam (`BR_CERT_003`).
-* **Cấp Chứng chỉ Xác minh (Verified Certificate):** Khi hoàn thành 100% bài học và đạt điểm Pass ở tất cả bài Graded items (>= 80%), hệ thống tự động phát hành Verified Certificate.
-* **Mã xác minh công khai (Verification URL):** Mỗi chứng chỉ có một URL độc nhất (`/verify/CERT-xxxxx`) và mã QR code để nhà tuyển dụng truy cập kiểm tra tính hợp lệ công khai.
-* **OpenBadges & LinkedIn Sharing:** Chứng chỉ được nhúng siêu dữ liệu OpenBadges 2.0. Học viên chỉ cần 1 cú nhấp chuột để chia sẻ trực tiếp thành tích lên hồ sơ LinkedIn.
+* **Cấp Chứng chỉ Xác minh (Verified Certificate):** Khi hoàn thành 100% bài học và đạt điểm Pass ở tất cả bài Graded items (>= 80%), hệ thống tự động phát hành Verified Certificate với thông tin Tên học viên và Khóa học truy vấn trực tiếp từ DB.
+* **Mã xác minh công khai & QR Server API:** Mỗi chứng chỉ có đường dẫn công khai độc nhất (`/verify/CERT-XXXXXXXXXX`) và mã QR code được sinh tự động qua API `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={cert_id}` để nhà tuyển dụng kiểm tra tính hợp lệ.
+* **OpenBadges & LinkedIn Sharing:** Chứng chỉ được nhúng siêu dữ liệu JSON-LD chuẩn OpenBadges 2.0 đầy đủ thông tin `BadgeClass`, `issuer`, `criteria`. Học viên chỉ cần 1 cú nhấp chuột để chia sẻ trực tiếp thành tích lên hồ sơ LinkedIn.
