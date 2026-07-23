@@ -1,4 +1,5 @@
 import React from "react";
+import { cn } from "@/lib/utils";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   variant?: "verified" | "staff" | "success" | "warning" | "default";
@@ -22,8 +23,9 @@ export const Badge: React.FC<BadgeProps> = ({
   };
 
   return (
-    <span className={`${baseStyle} ${variants[variant]} ${className}`} {...props}>
+    <span className={cn(baseStyle, variants[variant], className)} {...props}>
       {children}
     </span>
   );
 };
+

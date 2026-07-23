@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 export interface AvatarProps {
   name: string;
@@ -37,16 +38,21 @@ export const Avatar: React.FC<AvatarProps> = ({ name, src, size = "md", classNam
         width={dim}
         height={dim}
         unoptimized
-        className={`${sizes[size]} rounded-full object-cover border border-slate-700 ${className}`}
+        className={cn(sizes[size], "rounded-full object-cover border border-slate-200 dark:border-slate-700", className)}
       />
     );
   }
 
   return (
     <div
-      className={`${sizes[size]} rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 font-bold text-white flex items-center justify-center shadow-sm shrink-0 ${className}`}
+      className={cn(
+        sizes[size],
+        "rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 font-bold text-white flex items-center justify-center shadow-sm shrink-0",
+        className
+      )}
     >
       {initials}
     </div>
   );
 };
+

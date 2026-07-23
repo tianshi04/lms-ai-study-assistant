@@ -1,5 +1,6 @@
 import React from "react";
 import { Tabs as BaseTabs } from "@base-ui/react/tabs";
+import { cn } from "@/lib/utils";
 
 export interface TabItem {
   id: string;
@@ -17,25 +18,29 @@ export interface TabsProps {
 export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className = "" }) => {
   return (
     <BaseTabs.Root value={activeTab} onValueChange={(val) => onChange(val as string)}>
-      <BaseTabs.List className={`flex border-b border-slate-800 gap-6 ${className}`}>
+      <BaseTabs.List className={cn("flex border-b border-slate-200 dark:border-slate-800 gap-6", className)}>
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab;
           return (
             <BaseTabs.Tab
               key={tab.id}
               value={tab.id}
-              className={`pb-3 text-sm font-semibold transition-colors border-b-2 -mb-px flex items-center gap-2 cursor-pointer ${
+              className={cn(
+                "pb-3 text-sm font-semibold transition-colors border-b-2 -mb-px flex items-center gap-2 cursor-pointer",
                 isActive
-                  ? "border-[#0056D2] text-blue-400"
-                  : "border-transparent text-slate-400 hover:text-slate-200"
-              }`}
+                  ? "border-[#0056D2] text-[#0056D2] dark:text-blue-400"
+                  : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
+              )}
             >
               {tab.label}
               {tab.count !== undefined && (
                 <span
-                  className={`text-xs px-2 py-0.5 rounded-full ${
-                    isActive ? "bg-blue-900/60 text-blue-200" : "bg-slate-800 text-slate-400"
-                  }`}
+                  className={cn(
+                    "text-xs px-2 py-0.5 rounded-full font-medium transition-colors",
+                    isActive
+                      ? "bg-blue-100 text-[#0056D2] dark:bg-blue-900/60 dark:text-blue-200"
+                      : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                  )}
                 >
                   {tab.count}
                 </span>
@@ -47,3 +52,4 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
     </BaseTabs.Root>
   );
 };
+

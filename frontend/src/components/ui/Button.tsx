@@ -1,4 +1,5 @@
 import React from "react";
+import { cn } from "@/lib/utils";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "outline" | "danger";
@@ -16,7 +17,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyle =
-    "inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
 
   const variants = {
     primary: "bg-[#0056D2] text-white hover:bg-[#00419E] focus:ring-[#0056D2]",
@@ -33,7 +34,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
-      className={`${baseStyle} ${variants[variant]} ${sizes[size]} ${className}`}
+      className={cn(baseStyle, variants[variant], sizes[size], className)}
       disabled={disabled || isLoading}
       {...props}
     >
@@ -51,3 +52,4 @@ export const Button: React.FC<ButtonProps> = ({
     </button>
   );
 };
+
