@@ -134,6 +134,42 @@ message UpdateCourseResponse {
   Course course = 1;
 }
 
+message CreateWeekModuleRequest {
+  string course_id = 1;
+  int32 week_number = 2;
+  string title = 3;
+  string summary = 4;
+}
+
+message CreateWeekModuleResponse {
+  WeekModule week_module = 1;
+}
+
+message CreateLessonRequest {
+  string course_id = 1;
+  string week_module_id = 2;
+  string title = 3;
+  int32 estimated_minutes = 4;
+}
+
+message CreateLessonResponse {
+  Lesson lesson = 1;
+}
+
+message CreateLearningItemRequest {
+  string course_id = 1;
+  string lesson_id = 2;
+  string title = 3;
+  ItemType type = 4;
+  int32 estimated_minutes = 5;
+  string video_url = 6;
+  string reading_markdown = 7;
+}
+
+message CreateLearningItemResponse {
+  LearningItem item = 1;
+}
+
 service CatalogService {
   rpc GetSpecialization(GetSpecializationRequest) returns (GetSpecializationResponse);
   rpc ListCourses(ListCoursesRequest) returns (ListCoursesResponse);
@@ -141,4 +177,7 @@ service CatalogService {
   rpc GetLessonDetail(GetLessonDetailRequest) returns (GetLessonDetailResponse);
   rpc CreateCourse(CreateCourseRequest) returns (CreateCourseResponse);
   rpc UpdateCourse(UpdateCourseRequest) returns (UpdateCourseResponse);
+  rpc CreateWeekModule(CreateWeekModuleRequest) returns (CreateWeekModuleResponse);
+  rpc CreateLesson(CreateLessonRequest) returns (CreateLessonResponse);
+  rpc CreateLearningItem(CreateLearningItemRequest) returns (CreateLearningItemResponse);
 }

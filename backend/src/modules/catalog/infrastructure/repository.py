@@ -223,3 +223,78 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             model.instructor_names = instructor_names
         await self.session.commit()
         return await self.get_course_detail(course_id)
+
+    async def create_week_module(
+        self, course_id: str, week_number: int, title: str, summary: str
+    ) -> WeekModule:
+        wm_id = f"week-{week_number}-{uuid.uuid4().hex[:6]}"
+        wm_model = WeekModuleModel(
+            id=wm_id,
+            course_id=course_id,
+            week_number=week_number,
+            title=title,
+            summary=summary,
+        )
+        self.session.add(wm_model)
+        await self.session.commit()
+        return WeekModule(
+            id=wm_id,
+            week_number=week_number,
+            title=title,
+            summary=summary,
+            lessons=[],
+        )
+
+    async def create_lesson(
+        self, course_id: str, week_module_id: str, title: str, estimated_minutes: int
+    ) -> Lesson:
+        l_id = f"lesson-{uuid.uuid4().hex[:8]}"
+        l_model = LessonModel(
+            id=l_id,
+            week_module_id=week_module_id,
+            title=title,
+            estimated_minutes=estimated_minutes or 15,
+        )
+        self.session.add(l_model)
+        await self.session.commit()
+        return Lesson(
+            id=l_id,
+            title=title,
+            estimated_minutes=estimated_minutes or 15,
+            items=[],
+        )
+
+    async def create_learning_item(
+        self,
+        course_id: str,
+        lesson_id: str,
+        title: str,
+        item_type: int,
+        estimated_minutes: int,
+        video_url: str,
+        reading_markdown: str,
+    ) -> LearningItem:
+        item_id = f"item-{uuid.uuid4().hex[:8]}"
+        item_model = LearningItemModel(
+            id=item_id,
+            lesson_id=lesson_id,
+            title=title,
+            type=item_type,
+            estimated_minutes=estimated_minutes or 10,
+            video_url=video_url or "",
+            vtt_subtitle_url="",
+            reading_markdown=reading_markdown or "",
+        )
+        self.session.add(item_model)
+        await self.session.commit()
+        return LearningItem(
+            id=item_id,
+            title=title,
+            type=item_type,
+            estimated_minutes=estimated_minutes or 10,
+            video_url=video_url or "",
+            vtt_subtitle_url="",
+            interactive_transcripts=[],
+            in_video_quizzes=[],
+            reading_markdown=reading_markdown or "",
+        )

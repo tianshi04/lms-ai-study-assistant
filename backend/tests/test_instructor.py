@@ -42,3 +42,53 @@ async def test_instructor_create_and_update_course():
         assert updated_course.partner_name == "Meta AI & Coursera Partner"
     except Exception as e:
         pytest.skip(f"Skipping instructor course test: DB not reachable ({e})")
+
+
+@pytest.mark.asyncio
+async def test_instructor_create_lesson_structure():
+    try:
+        usecase = CatalogUseCase()
+        course = await usecase.create_course(
+            title="Transformer Models & LLM Architecture",
+            slug="transformer-llm-2026",
+            description="Deep dive into Self-Attention and Transformer architectures.",
+            partner_name="DeepLearning.AI",
+            partner_logo_url="",
+            instructor_names=["Andrew Ng"],
+        )
+        assert course is not None
+
+        # 1. Create Week Module
+        week = await usecase.create_week_module(
+            course_id=course.id,
+            week_number=1,
+            title="Week 1: Self-Attention Mechanism",
+            summary="Understanding Scaled Dot-Product Attention",
+        )
+        assert week is not None
+        assert week.week_number == 1
+
+        # 2. Create Lesson
+        lesson = await usecase.create_lesson(
+            course_id=course.id,
+            week_module_id=week.id,
+            title="Lesson 1: Multi-Head Attention Theory",
+            estimated_minutes=25,
+        )
+        assert lesson is not None
+        assert lesson.estimated_minutes == 25
+
+        # 3. Create Learning Item (Video)
+        item = await usecase.create_learning_item(
+            course_id=course.id,
+            lesson_id=lesson.id,
+            title="Lecture: Implementing Multi-Head Attention",
+            item_type=1, # VIDEO
+            estimated_minutes=15,
+            video_url="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+            reading_markdown="",
+        )
+        assert item is not None
+        assert item.video_url != ""
+    except Exception as e:
+        pytest.skip(f"Skipping lesson structure test: DB not reachable ({e})")

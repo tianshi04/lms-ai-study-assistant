@@ -213,3 +213,50 @@ class CatalogHandler(CatalogService):
             )
         return pb.UpdateCourseResponse(course=_to_pb_course(course))
 
+    async def create_week_module(
+        self,
+        request: pb.CreateWeekModuleRequest,
+        ctx: RequestContext[pb.CreateWeekModuleRequest, pb.CreateWeekModuleResponse],
+    ) -> pb.CreateWeekModuleResponse:
+        self._verify_instructor_permission()
+        wm = await self.use_case.create_week_module(
+            course_id=request.course_id,
+            week_number=request.week_number,
+            title=request.title,
+            summary=request.summary,
+        )
+        return pb.CreateWeekModuleResponse(week_module=_to_pb_week_module(wm))
+
+    async def create_lesson(
+        self,
+        request: pb.CreateLessonRequest,
+        ctx: RequestContext[pb.CreateLessonRequest, pb.CreateLessonResponse],
+    ) -> pb.CreateLessonResponse:
+        self._verify_instructor_permission()
+        lesson = await self.use_case.create_lesson(
+            course_id=request.course_id,
+            week_module_id=request.week_module_id,
+            title=request.title,
+            estimated_minutes=request.estimated_minutes,
+        )
+        return pb.CreateLessonResponse(lesson=_to_pb_lesson(lesson))
+
+    async def create_learning_item(
+        self,
+        request: pb.CreateLearningItemRequest,
+        ctx: RequestContext[
+            pb.CreateLearningItemRequest, pb.CreateLearningItemResponse
+        ],
+    ) -> pb.CreateLearningItemResponse:
+        self._verify_instructor_permission()
+        item = await self.use_case.create_learning_item(
+            course_id=request.course_id,
+            lesson_id=request.lesson_id,
+            title=request.title,
+            item_type=int(request.type),
+            estimated_minutes=request.estimated_minutes,
+            video_url=request.video_url,
+            reading_markdown=request.reading_markdown,
+        )
+        return pb.CreateLearningItemResponse(item=_to_pb_learning_item(item))
+

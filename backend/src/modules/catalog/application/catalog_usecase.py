@@ -92,3 +92,49 @@ class CatalogUseCase:
                 partner_logo_url=partner_logo_url,
                 instructor_names=instructor_names,
             )
+
+    async def create_week_module(
+        self, course_id: str, week_number: int, title: str, summary: str
+    ):
+        async with async_session_scope() as session:
+            repo = SQLAlchemyCatalogRepository(session)
+            return await repo.create_week_module(
+                course_id=course_id,
+                week_number=week_number,
+                title=title,
+                summary=summary,
+            )
+
+    async def create_lesson(
+        self, course_id: str, week_module_id: str, title: str, estimated_minutes: int
+    ):
+        async with async_session_scope() as session:
+            repo = SQLAlchemyCatalogRepository(session)
+            return await repo.create_lesson(
+                course_id=course_id,
+                week_module_id=week_module_id,
+                title=title,
+                estimated_minutes=estimated_minutes,
+            )
+
+    async def create_learning_item(
+        self,
+        course_id: str,
+        lesson_id: str,
+        title: str,
+        item_type: int,
+        estimated_minutes: int,
+        video_url: str,
+        reading_markdown: str,
+    ):
+        async with async_session_scope() as session:
+            repo = SQLAlchemyCatalogRepository(session)
+            return await repo.create_learning_item(
+                course_id=course_id,
+                lesson_id=lesson_id,
+                title=title,
+                item_type=item_type,
+                estimated_minutes=estimated_minutes,
+                video_url=video_url,
+                reading_markdown=reading_markdown,
+            )
