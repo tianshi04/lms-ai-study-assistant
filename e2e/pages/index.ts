@@ -10,3 +10,4 @@ export { InstructorCoursesPage } from './instructor-courses.page';
 export { CourseBuilderPage } from './course-builder.page';
 export { FinancialAidPage } from './financial-aid.page';
 export { VerifyPortalPage } from './verify-portal.page';
+export { AdminDashboardPage } from './admin-dashboard.page';
