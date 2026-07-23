@@ -42,6 +42,7 @@ from src.modules.certificate.infrastructure.models import (
 from src.modules.forum.infrastructure.models import ForumReplyORM, ForumThreadORM
 from src.modules.identity.domain.entities import UserRole
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel, UserModel
+from src.modules.identity.application.identity_usecase import hash_password
 from src.modules.learning.infrastructure.models import (
     LearningProgressModel,
     PersonalNoteModel,
@@ -308,17 +309,64 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         await session.merge(lic2)
         await session.merge(lic3)
 
-        # Seed Demo User
-        demo_user = UserModel(
+        # Seed Demo Users for ALL 5 Roles (Password for all accounts: 123456)
+        default_pw_hash = hash_password("123456")
+
+        learner_user = UserModel(
             id="user_learner_demo",
             email="learner@coursera.ai",
-            full_name="Nguyễn Văn A",
+            full_name="Nguyễn Văn A (Learner)",
             role=UserRole.LEARNER,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=learner@coursera.ai",
             enterprise_seat_key="ENT-DEMO-2026-X99",
-            password_hash="73616c743132333435363738:39323537333333333333333333333333",
+            password_hash=default_pw_hash,
         )
-        await session.merge(demo_user)
+
+        instructor_user = UserModel(
+            id="user_instructor_01",
+            email="instructor@coursera.ai",
+            full_name="Prof. Andrew Ng (Instructor)",
+            role=UserRole.INSTRUCTOR,
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=instructor@coursera.ai",
+            enterprise_seat_key="",
+            password_hash=default_pw_hash,
+        )
+
+        ta_user = UserModel(
+            id="user_ta_01",
+            email="ta@coursera.ai",
+            full_name="ThS. Nguyễn Hoàng Nam (TA)",
+            role=UserRole.TA,
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=ta@coursera.ai",
+            enterprise_seat_key="",
+            password_hash=default_pw_hash,
+        )
+
+        admin_user = UserModel(
+            id="user_admin_01",
+            email="admin@coursera.ai",
+            full_name="Platform Admin (Super Admin)",
+            role=UserRole.SUPER_ADMIN,
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=admin@coursera.ai",
+            enterprise_seat_key="",
+            password_hash=default_pw_hash,
+        )
+
+        partner_user = UserModel(
+            id="user_partner_01",
+            email="partner@coursera.ai",
+            full_name="Stanford Partner Admin",
+            role=UserRole.PARTNER_ADMIN,
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=partner@coursera.ai",
+            enterprise_seat_key="",
+            password_hash=default_pw_hash,
+        )
+
+        await session.merge(learner_user)
+        await session.merge(instructor_user)
+        await session.merge(ta_user)
+        await session.merge(admin_user)
+        await session.merge(partner_user)
 
         # Seed Demo Verified Certificate
         demo_cert = CertificateModel(
@@ -396,11 +444,35 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             created_at="2026-07-22T12:45:00Z",
         )
 
+        faid1 = FinancialAidModel(
+            id="faid_seed_01",
+            user_id="user_learner_01",
+            course_id="course-python-ai",
+            essay_150_words=(
+                "Kính gửi Ban Giảng viên và Quản trị viên khóa học, Em hiện là sinh viên chuyên ngành Công nghệ thông tin đang rất khao khát tiếp cận tri thức chuyên sâu về Lập trình Python và AI Agent. Tuy nhiên do hoàn cảnh gia đình thuộc diện khó khăn và chưa có thu nhập độc lập, em chưa có khả năng chi trả học phí đầy đủ cho chứng chỉ khóa học. Em cam kết sẽ học tập nghiêm túc 100% thời lượng, hoàn thành đầy đủ các bài tập thực hành, bài thi Graded Quiz và bài nộp chấm chéo Peer Review đúng hạn. Kiến thức từ khóa học này sẽ là nền tảng quan trọng giúp em chuẩn bị cho đồ án tốt nghiệp và ứng tuyển vị trí thực tập sinh AI Engineer trong tương lai. Em rất mong nhận được sự hỗ trợ tài chính từ nhà trường để tiếp tục con đường học vấn của mình. Em chân thành cảm ơn!"
+            ),
+            status="PENDING",
+            review_deadline_days_left=14,
+        )
+
+        faid2 = FinancialAidModel(
+            id="faid_seed_02",
+            user_id="user_learner_02",
+            course_id="course-web-dev",
+            essay_150_words=(
+                "Kính gửi Ban Xét duyệt Hỗ trợ Tài chính, Tôi hiện là học viên tự học mong muốn chuyển hướng nghề nghiệp sang lĩnh vực Lập trình Web Fullstack với Next.js và ConnectRPC. Hiện tại mức thu nhập thu nhập nhập môn còn hạn chế nên việc nâng cấp tài khoản có chứng chỉ xác minh là một thử thách tài chính lớn đối với tôi. Tôi mong muốn đăng ký gói Hỗ trợ tài chính để tiếp cận trọn vẹn toàn bộ bài giảng thực hành và nhận Chứng chỉ xác minh công khai để bổ sung vào hồ sơ xin việc. Tôi xin hứa sẽ dành tối thiểu 15 giờ mỗi tuần để nghiên cứu bài học, tích cực tham gia thảo luận trên Diễn đàn và hỗ trợ các bạn học khác cùng tiến bộ. Xin chân thành cảm ơn sự hỗ trợ quý báu của Ban quản trị!"
+            ),
+            status="PENDING",
+            review_deadline_days_left=12,
+        )
+
         await session.merge(thread1)
         await session.merge(reply1_1)
         await session.merge(reply1_2)
         await session.merge(thread2)
         await session.merge(reply2_1)
+        await session.merge(faid1)
+        await session.merge(faid2)
 
         await session.commit()
         logger.info("[SEED] Database seeding completed successfully!")

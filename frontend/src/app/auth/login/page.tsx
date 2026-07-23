@@ -118,7 +118,53 @@ function LoginFormContent() {
           </button>
         </form>
 
-        <div className="mt-8 text-center pt-6 border-t border-slate-200 dark:border-slate-800">
+        {/* Quick Test Accounts Selector for Dev Mode (Hidden in Production) */}
+        {process.env.NEXT_PUBLIC_ENV !== "production" && (
+          <div className="mt-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Tài khoản Test sẵn (Dev Mode)
+              </span>
+              <span className="text-[10px] font-mono text-slate-400">Mật khẩu: 123456</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {[
+                { label: "Learner (Học viên)", email: "learner@coursera.ai", roleTag: "Role 1", color: "blue" },
+                { label: "Instructor (Giảng viên)", email: "instructor@coursera.ai", roleTag: "Role 2", color: "emerald" },
+                { label: "TA (Trợ giảng)", email: "ta@coursera.ai", roleTag: "Role 3", color: "amber" },
+                { label: "Super Admin", email: "admin@coursera.ai", roleTag: "Role 4", color: "purple" },
+                { label: "Partner Admin", email: "partner@coursera.ai", roleTag: "Role 5", color: "indigo" },
+              ].map((acc) => (
+                <button
+                  key={acc.email}
+                  type="button"
+                  onClick={() => {
+                    setEmail(acc.email);
+                    setPassword("123456");
+                    setError("");
+                  }}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all text-xs font-medium flex items-center justify-between group cursor-pointer"
+                >
+                  <div className="truncate pr-1">
+                    <div className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">
+                      {acc.label}
+                    </div>
+                    <div className="text-[10px] font-mono text-slate-500 truncate">{acc.email}</div>
+                  </div>
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex-shrink-0">
+                    {acc.roleTag}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-6 text-center pt-4 border-t border-slate-200 dark:border-slate-800">
           <p className="text-sm text-slate-600 dark:text-slate-400">
             Chưa có tài khoản?{" "}
             <Link href="/auth/register" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
