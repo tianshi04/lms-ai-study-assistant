@@ -7,7 +7,11 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
-const AUTH_FILE = path.resolve(__dirname, '.auth/user.json');
+
+const AUTH_DIR = path.resolve(__dirname, '.auth');
+const LEARNER_AUTH = path.join(AUTH_DIR, 'learner.json');
+const INSTRUCTOR_AUTH = path.join(AUTH_DIR, 'instructor.json');
+const ADMIN_AUTH = path.join(AUTH_DIR, 'admin.json');
 
 export default defineConfig({
   testDir: './tests',
@@ -34,23 +38,55 @@ export default defineConfig({
   },
 
   projects: [
+    // ─── Auth Setup (must run first) ─────────────────────────────────────────
     {
       name: 'setup',
       testMatch: /.*\.setup\.ts/,
     },
+
+    // ─── Public / Unauthenticated (no storage state) ─────────────────────────
     {
       name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['setup'],
+    },
+
+    // ─── Learner role ─────────────────────────────────────────────────────────
+    {
+      name: 'chromium-learner',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: AUTH_FILE,
+        storageState: LEARNER_AUTH,
       },
       dependencies: ['setup'],
     },
+
+    // ─── Instructor role ──────────────────────────────────────────────────────
+    {
+      name: 'chromium-instructor',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: INSTRUCTOR_AUTH,
+      },
+      dependencies: ['setup'],
+    },
+
+    // ─── Admin role ───────────────────────────────────────────────────────────
+    {
+      name: 'chromium-admin',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: ADMIN_AUTH,
+      },
+      dependencies: ['setup'],
+    },
+
+    // ─── Cross-browser (full suite, learner auth) ─────────────────────────────
     {
       name: 'firefox',
       use: {
         ...devices['Desktop Firefox'],
-        storageState: AUTH_FILE,
+        storageState: LEARNER_AUTH,
       },
       dependencies: ['setup'],
     },
@@ -58,7 +94,7 @@ export default defineConfig({
       name: 'webkit',
       use: {
         ...devices['Desktop Safari'],
-        storageState: AUTH_FILE,
+        storageState: LEARNER_AUTH,
       },
       dependencies: ['setup'],
     },
@@ -66,7 +102,7 @@ export default defineConfig({
       name: 'Mobile Chrome',
       use: {
         ...devices['Pixel 5'],
-        storageState: AUTH_FILE,
+        storageState: LEARNER_AUTH,
       },
       dependencies: ['setup'],
     },
