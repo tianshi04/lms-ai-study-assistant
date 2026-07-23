@@ -36,6 +36,47 @@ class CertificateRepository:
             review_deadline_days_left=model.review_deadline_days_left,
         )
 
+    async def list_financial_aids(
+        self, course_id: Optional[str] = None, status: Optional[str] = None
+    ) -> list[FinancialAidApplication]:
+        stmt = select(FinancialAidModel)
+        if course_id:
+            stmt = stmt.where(FinancialAidModel.course_id == course_id)
+        if status:
+            stmt = stmt.where(FinancialAidModel.status == status)
+        stmt = stmt.order_by(FinancialAidModel.id.desc())
+
+        result = await self._session.execute(stmt)
+        models = result.scalars().all()
+        return [
+            FinancialAidApplication(
+                id=m.id,
+                user_id=m.user_id,
+                course_id=m.course_id,
+                essay_150_words=m.essay_150_words,
+                status=m.status,
+                review_deadline_days_left=m.review_deadline_days_left,
+            )
+            for m in models
+        ]
+
+    async def get_financial_aid_by_id(
+        self, application_id: str
+    ) -> Optional[FinancialAidApplication]:
+        stmt = select(FinancialAidModel).where(FinancialAidModel.id == application_id)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        if not model:
+            return None
+        return FinancialAidApplication(
+            id=model.id,
+            user_id=model.user_id,
+            course_id=model.course_id,
+            essay_150_words=model.essay_150_words,
+            status=model.status,
+            review_deadline_days_left=model.review_deadline_days_left,
+        )
+
     async def save_financial_aid(
         self, app: FinancialAidApplication
     ) -> FinancialAidApplication:

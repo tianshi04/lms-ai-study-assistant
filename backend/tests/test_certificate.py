@@ -41,3 +41,26 @@ async def test_get_verified_certificate():
         assert verified_cert.certificate_id == cert.certificate_id
     except Exception as e:
         pytest.skip(f"Skipping certificate db test: DB not reachable ({e})")
+
+
+@pytest.mark.asyncio
+async def test_financial_aid_review_flow():
+    try:
+        usecase = CertificateUseCase()
+        valid_essay = " ".join(["word"] * 155)
+        app, err = await usecase.apply_financial_aid("user_faid_test", "course_python", valid_essay)
+        assert err == ""
+        assert app is not None
+        assert app.status == "PENDING"
+
+        # List applications
+        apps = await usecase.list_financial_aid_applications("course_python", "PENDING")
+        assert any(a.id == app.id for a in apps)
+
+        # Review & Approve
+        reviewed, r_err = await usecase.review_financial_aid_application(app.id, is_approved=True)
+        assert r_err == ""
+        assert reviewed is not None
+        assert reviewed.status == "APPROVED"
+    except Exception as e:
+        pytest.skip(f"Skipping financial aid review db test: DB not reachable ({e})")

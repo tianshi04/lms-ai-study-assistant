@@ -34,7 +34,14 @@ class CertificateUseCase:
             repo = CertificateRepository(session)
             existing = await repo.get_financial_aid(user_id, course_id)
             if existing:
-                return existing, ""
+                if existing.status in ("PENDING", "APPROVED"):
+                    return existing, ""
+                # If existing status is REJECTED, allow re-applying by updating essay & resetting to PENDING
+                existing.essay_150_words = essay_150_words
+                existing.status = "PENDING"
+                existing.review_deadline_days_left = 14
+                saved = await repo.save_financial_aid(existing)
+                return saved, ""
 
             app_id = f"faid_{uuid.uuid4().hex[:12]}"
             application = FinancialAidApplication(
@@ -55,6 +62,27 @@ class CertificateUseCase:
         async with async_session_scope() as session:
             repo = CertificateRepository(session)
             return await repo.get_financial_aid(user_id, course_id)
+
+    async def list_financial_aid_applications(
+        self, course_id: Optional[str] = None, status: Optional[str] = None
+    ) -> list[FinancialAidApplication]:
+        async with async_session_scope() as session:
+            repo = CertificateRepository(session)
+            return await repo.list_financial_aids(course_id=course_id, status=status)
+
+    async def review_financial_aid_application(
+        self, application_id: str, is_approved: bool
+    ) -> tuple[Optional[FinancialAidApplication], str]:
+        async with async_session_scope() as session:
+            repo = CertificateRepository(session)
+            app = await repo.get_financial_aid_by_id(application_id)
+            if not app:
+                return None, "Không tìm thấy đơn nộp Hỗ trợ tài chính"
+
+            app.status = "APPROVED" if is_approved else "REJECTED"
+            app.review_deadline_days_left = 0
+            updated_app = await repo.save_financial_aid(app)
+            return updated_app, ""
 
     async def get_verified_certificate(
         self, user_id: str, course_id: str

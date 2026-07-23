@@ -28,6 +28,25 @@ message GetFinancialAidStatusResponse {
   FinancialAidApplication application = 1;
 }
 
+message ListFinancialAidApplicationsRequest {
+  string course_id = 1;
+  string status = 2; // PENDING, APPROVED, REJECTED
+}
+
+message ListFinancialAidApplicationsResponse {
+  repeated FinancialAidApplication applications = 1;
+}
+
+message ReviewFinancialAidApplicationRequest {
+  string application_id = 1;
+  bool is_approved = 2;
+  string admin_feedback = 3;
+}
+
+message ReviewFinancialAidApplicationResponse {
+  FinancialAidApplication application = 1;
+}
+
 message VerifiedCertificate {
   string certificate_id = 1;
   string user_id = 2;
@@ -61,6 +80,8 @@ message VerifyCertificatePublicResponse {
 service CertificateService {
   rpc ApplyFinancialAid(ApplyFinancialAidRequest) returns (ApplyFinancialAidResponse);
   rpc GetFinancialAidStatus(GetFinancialAidStatusRequest) returns (GetFinancialAidStatusResponse);
+  rpc ListFinancialAidApplications(ListFinancialAidApplicationsRequest) returns (ListFinancialAidApplicationsResponse);
+  rpc ReviewFinancialAidApplication(ReviewFinancialAidApplicationRequest) returns (ReviewFinancialAidApplicationResponse);
   rpc GetVerifiedCertificate(GetVerifiedCertificateRequest) returns (GetVerifiedCertificateResponse);
   rpc VerifyCertificatePublic(VerifyCertificatePublicRequest) returns (VerifyCertificatePublicResponse);
 }
