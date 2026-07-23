@@ -1,0 +1,115 @@
+name: End-to-End (E2E) Testing CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'proto/**'
+      - 'e2e/**'
+      - '.github/workflows/e2e.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'proto/**'
+      - 'e2e/**'
+      - '.github/workflows/e2e.yml'
+  workflow_dispatch:
+
+jobs:
+  e2e-test:
+    name: Run Blackbox Playwright E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Buf CLI
+        uses: bufbuild/buf-setup-action@v1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+
+      - name: Set up uv for Python Backend
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          python-version: "3.13"
+          enable-cache: true
+
+      # 1. Prepare Infrastructure & Database
+      - name: Start PostgreSQL & MinIO Infrastructure
+        run: make infra
+        working-directory: backend
+
+      - name: Generate Backend ConnectRPC Stubs
+        run: make gen
+        working-directory: backend
+
+      - name: Seed Database Initial Catalog & Users
+        run: make seed
+        working-directory: backend
+
+      - name: Start Backend API Server in Background
+        run: |
+          uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+          # Wait for backend health check
+          for i in {1..30}; do
+            curl -s http://localhost:8000/health && break || sleep 1
+          done
+        working-directory: backend
+
+      # 2. Prepare Frontend App
+      - name: Install Frontend Dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Generate Frontend ConnectRPC Stubs
+        run: npm run gen
+        working-directory: frontend
+
+      - name: Start Frontend Development Server in Background
+        run: |
+          npm run dev &
+          # Wait for frontend server
+          for i in {1..30}; do
+            curl -s http://localhost:3000 && break || sleep 1
+          done
+        working-directory: frontend
+
+      # 3. Execute Playwright E2E Blackbox Tests
+      - name: Install E2E Dependencies
+        run: npm ci
+        working-directory: e2e
+
+      - name: Install Playwright Browsers with System Dependencies
+        run: npx playwright install --with-deps chromium
+        working-directory: e2e
+
+      - name: Run Playwright E2E Tests
+        run: npx playwright test --project=chromium
+        working-directory: e2e
+        env:
+          BASE_URL: http://localhost:3000
+          CI: true
+
+      # 4. Save Test Artifacts & Reports
+      - name: Upload Playwright Test Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-e2e-report
+          path: e2e/playwright-report/
+          retention-days: 7

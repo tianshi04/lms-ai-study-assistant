@@ -1,0 +1,20 @@
+{
+  "name": "tttn-e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Full-system blackbox E2E tests for TTTN using Playwright TS",
+  "scripts": {
+    "test": "playwright test --project=chromium",
+    "test:all": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.1",
+    "@types/node": "^22.13.4",
+    "dotenv": "^16.4.7",
+    "typescript": "^5.7.3"
+  }
+}

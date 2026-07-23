@@ -1,0 +1,15 @@
+# Playwright & Node dependencies
+/node_modules/
+
+# Test execution outputs, auth state & reports
+/test-results/
+/playwright-report/
+/blob-report/
+/.serve/
+/.auth/
+
+
+# Local Environment Variables
+.env
+.env.local
+.env.*.local

@@ -59,6 +59,12 @@ This file provides rules, architectural conventions, and workspace instructions 
 - **Frontend (TypeScript)**:
   - **Linter**: We use **ESLint** for code quality. The generated `src/gen/` folder is globally ignored from ESLint.
   - **Type Checker & Compiler**: Built-in Next.js typescript compiler check during `npm run build`.
+- **End-to-End Testing (Playwright TS)**:
+  - Full-system blackbox E2E tests reside in the root `/e2e` workspace following the Page Object Model (POM) architecture.
+  - **Navigation Strategy Rule**:
+    - **UI Click Navigation**: Use for Critical User Journeys (verifying Navbar links, registration, and router navigation flow).
+    - **Direct URL Navigation (`page.goto('/path')`)**: Use for Isolated Page & Feature Deep-Testing (leveraging pre-authenticated `storageState` from `auth.setup.ts` to skip redundant clicks and maximize execution speed).
+
 
 
 ---
@@ -95,3 +101,11 @@ This file provides rules, architectural conventions, and workspace instructions 
 - `npm run dev` - Start Next.js development server (port 3000).
 - `npm run lint` - Run ESLint checks.
 - `npm run build` - Compile and build Next.js application for production.
+
+
+### E2E Testing (from `e2e/` directory):
+- `npm test` - Fast local E2E test run on Chromium browser.
+- `npm run test:all` - Run full cross-browser test suite (Chromium, Firefox, WebKit, Mobile Chrome).
+- `npm run test:ui` - Open interactive Playwright UI Test Runner.
+- `npm run test:report` - Show HTML test execution report.
+

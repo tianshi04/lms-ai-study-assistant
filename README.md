@@ -309,8 +309,22 @@ Run these commands from the `frontend/` directory:
 | :--- | :--- |
 | `npm run gen` | Compile Protocol Buffers in `proto/` into `frontend/src/gen/` |
 | `npm run dev` | Start Next.js development server (port 3000) |
-| `npm run lint` | Run ESLint check across the frontend codebase |
-| `npm run build` | Compile and build Next.js application for production |
+| `npm run lint` | Run ESLint static code analysis |
+| `npm run build` | Compile Next.js production build |
+
+---
+
+### End-to-End (E2E) Testing (`e2e/package.json`)
+
+Run these commands from the `e2e/` directory:
+
+| Command | Description |
+| :--- | :--- |
+| `npm install` | Install Playwright testing framework dependencies |
+| `npx playwright install` | Download Playwright browser binaries (Chromium, Firefox, WebKit) |
+| `npm test` | Run full blackbox E2E test suite in headless mode |
+| `npm run test:ui` | Run Playwright test runner with interactive UI |
+| `npm run test:report` | Show HTML test execution report |
 
 ---
 
