@@ -25,24 +25,33 @@ if str(backend_dir) not in sys.path:
 
 from sqlalchemy import select, text
 from src.shared.infrastructure.database import Base, async_session_scope, get_engine
+from src.modules.assessment.infrastructure.models import (
+    GradeAppealModel,
+    HonorCodeModel,
+    LabSubmissionModel,
+    PeerAssignmentSubmissionModel,
+    PeerReviewModel,
+    QuizCooldownModel,
+    QuizSubmissionModel,
+)
 from src.modules.catalog.infrastructure.models import (
     CourseModel,
-    WeekModuleModel,
-    LessonModel,
-    LearningItemModel,
-    InteractiveTranscriptModel,
     InVideoQuizModel,
-    SpecializationModel,
+    InteractiveTranscriptModel,
     ItemType,
+    LearningItemModel,
+    LessonModel,
+    SpecializationModel,
+    WeekModuleModel,
 )
 from src.modules.certificate.infrastructure.models import (
     CertificateModel,
     FinancialAidModel,
 )
-from src.modules.forum.infrastructure.models import ForumReplyORM, ForumThreadORM
+from src.modules.forum.infrastructure.models import ForumReplyORM, ForumThreadORM, ForumVoteORM
+from src.modules.identity.application.identity_usecase import hash_password
 from src.modules.identity.domain.entities import UserRole
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel, UserModel
-from src.modules.identity.application.identity_usecase import hash_password
 from src.modules.learning.infrastructure.models import (
     LearningProgressModel,
     PersonalNoteModel,
@@ -265,14 +274,14 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
 
         if reset:
             logger.info(
-                "[SEED] Truncating catalog and progress tables for full clean reset..."
+                "[SEED] Truncating ALL database tables for full clean reset..."
             )
-            await session.execute(
-                text(
-                    "TRUNCATE courses, week_modules, lessons, learning_items, interactive_transcripts, in_video_quizzes, specializations, learning_progresses, weekly_deadlines, personal_notes RESTART IDENTITY CASCADE"
+            tables = [f'"{table.name}"' for table in Base.metadata.sorted_tables]
+            if tables:
+                await session.execute(
+                    text(f"TRUNCATE TABLE {', '.join(tables)} RESTART IDENTITY CASCADE")
                 )
-            )
-            await session.commit()
+                await session.commit()
 
         logger.info("[SEED] Seeding demonstration catalog into PostgreSQL...")
         courses, specializations = build_sample_catalog()
