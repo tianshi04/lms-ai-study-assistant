@@ -140,8 +140,7 @@ Each backend module enforces strict DDD layer separation:
 │   ├── forum/                # Discussion forum RPC schemas
 │   ├── identity/             # Identity & Financial Aid RPC schemas
 │   └── learning/             # Learning progress RPC schemas
-├── docs/                     # Architectural & Business specifications
-└── SPRINT_PLAN.md            # Sprint execution roadmap
+└── docs/                     # Architectural & Business specifications
 ```
 
 ---
