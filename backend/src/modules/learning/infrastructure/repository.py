@@ -2,6 +2,8 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -69,29 +71,44 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         model = res.scalar_one_or_none()
 
         if not model:
-            past_date = (datetime.now(timezone.utc) - timedelta(days=3)).strftime(
-                "%Y-%m-%d"
+            # Atomic PostgreSQL UPSERT to prevent race conditions without exception overhead
+            insert_stmt = (
+                pg_insert(LearningProgressModel)
+                .values(
+                    id=key,
+                    user_id=user_id,
+                    course_id=course_id,
+                    overall_progress_percent=0.0,
+                    completed_item_ids=[],
+                )
+                .on_conflict_do_nothing(index_elements=["id"])
             )
-            future_date = (datetime.now(timezone.utc) + timedelta(days=7)).strftime(
-                "%Y-%m-%d"
-            )
-
-            model = LearningProgressModel(
-                id=key,
-                user_id=user_id,
-                course_id=course_id,
-                overall_progress_percent=0.0,
-                completed_item_ids=[],
-            )
-            d1 = WeeklyDeadlineModel(
-                week_number=1, due_date=past_date, status=DeadlineStatus.OVERDUE
-            )
-            d2 = WeeklyDeadlineModel(
-                week_number=2, due_date=future_date, status=DeadlineStatus.ON_TRACK
-            )
-            model.weekly_deadlines.extend([d1, d2])
-            self.session.add(model)
+            await self.session.execute(insert_stmt)
             await self.session.commit()
+
+            res = await self.session.execute(stmt)
+            model = res.scalar_one()
+
+            if not model.weekly_deadlines:
+                past_date = (datetime.now(timezone.utc) - timedelta(days=3)).strftime(
+                    "%Y-%m-%d"
+                )
+                future_date = (datetime.now(timezone.utc) + timedelta(days=7)).strftime(
+                    "%Y-%m-%d"
+                )
+                d1 = WeeklyDeadlineModel(
+                    week_number=1, due_date=past_date, status=DeadlineStatus.OVERDUE
+                )
+                d2 = WeeklyDeadlineModel(
+                    week_number=2, due_date=future_date, status=DeadlineStatus.ON_TRACK
+                )
+                model.weekly_deadlines.extend([d1, d2])
+                try:
+                    await self.session.commit()
+                except IntegrityError:
+                    await self.session.rollback()
+                    res = await self.session.execute(stmt)
+                    model = res.scalar_one()
 
         return _model_to_domain_progress(model)
 
