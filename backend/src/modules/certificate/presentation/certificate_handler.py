@@ -9,6 +9,7 @@ from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
     VerifiedCertificate,
 )
+from src.shared.auth import require_current_user
 
 
 def _to_pb_financial_aid(
@@ -50,8 +51,9 @@ class CertificateHandler(CertificateService):
         request: pb.ApplyFinancialAidRequest,
         ctx: RequestContext[pb.ApplyFinancialAidRequest, pb.ApplyFinancialAidResponse],
     ) -> pb.ApplyFinancialAidResponse:
+        current_user = require_current_user()
         app, err = await self._use_case.apply_financial_aid(
-            user_id=request.user_id,
+            user_id=current_user.id,
             course_id=request.course_id,
             essay_150_words=request.essay_150_words,
         )
@@ -66,8 +68,9 @@ class CertificateHandler(CertificateService):
             pb.GetFinancialAidStatusRequest, pb.GetFinancialAidStatusResponse
         ],
     ) -> pb.GetFinancialAidStatusResponse:
+        current_user = require_current_user()
         app = await self._use_case.get_financial_aid_status(
-            request.user_id, request.course_id
+            current_user.id, request.course_id
         )
         if not app:
             return pb.GetFinancialAidStatusResponse(application=None)
@@ -80,8 +83,9 @@ class CertificateHandler(CertificateService):
             pb.GetVerifiedCertificateRequest, pb.GetVerifiedCertificateResponse
         ],
     ) -> pb.GetVerifiedCertificateResponse:
+        current_user = require_current_user()
         cert = await self._use_case.get_verified_certificate(
-            request.user_id, request.course_id
+            current_user.id, request.course_id
         )
         if not cert:
             raise ConnectError(Code.NOT_FOUND, "Không tìm thấy chứng chỉ")

@@ -1,4 +1,3 @@
-import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 
@@ -11,6 +10,7 @@ async def client():
     Tạo test client cho FastAPI app với ASGI transport.
     """
     await seed_database(reset=True)
-    transport = ASGITransport(app=app)
+    transport = ASGITransport(app=app) # type: ignore
+
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
         yield ac

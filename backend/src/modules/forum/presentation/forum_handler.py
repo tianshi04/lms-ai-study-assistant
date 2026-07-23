@@ -20,7 +20,6 @@ def _to_pb_reply(reply: ForumReplyEntity) -> pb.ForumReply:
         is_staff_answer=reply.is_staff_answer,
         upvote_count=reply.upvote_count,
         created_at=reply.created_at,
-        is_upvoted_by_me=reply.is_upvoted_by_me,
     )
 
 
@@ -36,7 +35,6 @@ def _to_pb_thread(thread: ForumThreadEntity) -> pb.ForumThread:
         upvote_count=thread.upvote_count,
         is_staff_pinned=thread.is_staff_pinned,
         replies=[_to_pb_reply(r) for r in thread.replies],
-        is_upvoted_by_me=thread.is_upvoted_by_me,
     )
 
 
