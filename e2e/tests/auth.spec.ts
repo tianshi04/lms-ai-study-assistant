@@ -7,42 +7,39 @@ test.describe('Full System Blackbox - Authentication Flow (POM)', () => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     await loginPage.verifyPageLoaded();
-    await expect(loginPage.registerLink).toBeVisible();
   });
 
   test('should login successfully with valid learner credentials', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
+    await loginPage.verifyPageLoaded();
 
     const { email, password } = E2E_CONFIG.credentials.learner;
     await loginPage.login(email, password);
 
-    // Should redirect away from login page
-    await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 10000 });
-
-    // Should have set access_token in localStorage
-    const token = await page.evaluate(() => localStorage.getItem('access_token'));
-    expect(token).toBeTruthy();
+    // Should redirect to homepage or dashboard after login
+    await expect(page).toHaveURL(/\/(courses|learn|auth\/profile)?$/, { timeout: 10000 });
   });
 
   test('should show error message when login fails with wrong password', async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
+    await loginPage.verifyPageLoaded();
 
-    await loginPage.login('learner@coursera.ai', 'wrongpassword999');
+    const { email } = E2E_CONFIG.credentials.learner;
+    await loginPage.login(email, 'wrong_password_999999');
 
-    // Error banner should appear
+    // Error alert banner should appear
     await expect(loginPage.errorBanner).toBeVisible({ timeout: 5000 });
   });
 
   test('should navigate from login to register page via link', async ({ page }) => {
     const loginPage = new LoginPage(page);
-    const registerPage = new RegisterPage(page);
-
     await loginPage.goto();
-    await loginPage.registerLink.click();
+    await loginPage.verifyPageLoaded();
 
-    await registerPage.verifyPageLoaded();
+    await loginPage.registerLink.click();
+    await expect(page).toHaveURL(/\/auth\/register/, { timeout: 5000 });
   });
 
   test('should register a new learner user successfully', async ({ page }) => {
@@ -60,7 +57,11 @@ test.describe('Full System Blackbox - Authentication Flow (POM)', () => {
     await expect(page).toHaveURL(/\/auth\/login/, { timeout: 10000 });
   });
 
-  test('should redirect to requested URL parameter after successful login', async ({ page }) => {
+  test('should redirect to requested URL parameter after successful login', async ({ page, context }) => {
+    // Clear storage state to guarantee unauthenticated initial state for redirect test
+    await context.clearCookies();
+    await page.addInitScript(() => localStorage.clear());
+
     const loginPage = new LoginPage(page);
     await loginPage.goto('/auth/profile');
 

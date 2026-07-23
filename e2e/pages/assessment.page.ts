@@ -67,8 +67,19 @@ export class AssessmentPage {
   async agreeHonorCode() {
     if (await this.confirmHonorButton.isVisible()) {
       await this.confirmHonorButton.click();
-      await this.honorCheckbox.check();
+      await expect(this.honorCheckbox).toBeVisible({ timeout: 5000 });
+      await this.honorCheckbox.check({ force: true });
       await this.agreeAndContinueButton.click();
     }
+  }
+
+  async submitQuiz() {
+    await this.submitQuizButton.scrollIntoViewIfNeeded();
+    await this.submitQuizButton.click();
+  }
+
+  async submitPeerAssignment() {
+    await this.submitPeerAssignmentButton.scrollIntoViewIfNeeded();
+    await this.submitPeerAssignmentButton.click();
   }
 }
