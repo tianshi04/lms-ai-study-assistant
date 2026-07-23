@@ -6,3 +6,5 @@ export { CourseDetailPage } from './course-detail.page';
 export { LearningPage } from './learning.page';
 export { AssessmentPage } from './assessment.page';
 export { ForumPage } from './forum.page';
+export { InstructorCoursesPage } from './instructor-courses.page';
+export { CourseBuilderPage } from './course-builder.page';
