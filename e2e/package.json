@@ -4,7 +4,7 @@
   "private": true,
   "description": "Full-system blackbox E2E tests for TTTN using Playwright TS",
   "scripts": {
-    "test": "playwright test --project=chromium",
+    "test": "playwright test --project=chromium-learner --project=chromium-instructor --project=chromium-admin",
     "test:all": "playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",

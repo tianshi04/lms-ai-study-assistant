@@ -44,16 +44,10 @@ export default defineConfig({
       testMatch: /.*\.setup\.ts/,
     },
 
-    // ─── Public / Unauthenticated (no storage state) ─────────────────────────
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-      dependencies: ['setup'],
-    },
-
     // ─── Learner role ─────────────────────────────────────────────────────────
     {
       name: 'chromium-learner',
+      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: LEARNER_AUTH,
@@ -64,6 +58,7 @@ export default defineConfig({
     // ─── Instructor role ──────────────────────────────────────────────────────
     {
       name: 'chromium-instructor',
+      testMatch: ['**/instructor.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: INSTRUCTOR_AUTH,
@@ -74,6 +69,7 @@ export default defineConfig({
     // ─── Admin role ───────────────────────────────────────────────────────────
     {
       name: 'chromium-admin',
+      testMatch: ['**/admin.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: ADMIN_AUTH,
@@ -81,9 +77,10 @@ export default defineConfig({
       dependencies: ['setup'],
     },
 
-    // ─── Cross-browser (full suite, learner auth) ─────────────────────────────
+    // ─── Cross-browser (learner & public flows) ────────────────────────────────
     {
       name: 'firefox',
+      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts'],
       use: {
         ...devices['Desktop Firefox'],
         storageState: LEARNER_AUTH,
@@ -92,6 +89,7 @@ export default defineConfig({
     },
     {
       name: 'webkit',
+      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts'],
       use: {
         ...devices['Desktop Safari'],
         storageState: LEARNER_AUTH,
@@ -100,6 +98,7 @@ export default defineConfig({
     },
     {
       name: 'Mobile Chrome',
+      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts'],
       use: {
         ...devices['Pixel 5'],
         storageState: LEARNER_AUTH,
@@ -107,12 +106,4 @@ export default defineConfig({
       dependencies: ['setup'],
     },
   ],
-
-  /* Disabled auto webServer since FE and BE are started manually */
-  // webServer: {
-  //   command: 'npm --prefix ../frontend run dev',
-  //   url: BASE_URL,
-  //   reuseExistingServer: !process.env.CI,
-  //   timeout: 120000,
-  // },
 });

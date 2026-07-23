@@ -18,8 +18,8 @@ test.describe('Full System Blackbox - Admin Management Dashboard (POM)', () => {
 
     await adminPage.createNewSeatKey(partnerName, seatKey);
 
-    // Verify created enterprise seat license appears in list
-    await expect(page.locator(`text=${partnerName}`)).toBeVisible({ timeout: 5000 });
+    // Verify created enterprise seat license appears in list or toast (target .first() to avoid strict mode collision)
+    await expect(page.locator(`text=${partnerName}`).first()).toBeVisible({ timeout: 5000 });
   });
 
   test('should allow opening assign enterprise seat modal', async ({ page }) => {
