@@ -80,10 +80,10 @@ export default function VerifyPage({ params }: VerifyPageProps) {
         {/* Interactive Search Bar */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 mb-8 shadow-sm">
           <h1 className="text-xl font-extrabold text-slate-900 dark:text-white mb-2">
-            Cổng Xác Minh Chứng Chỉ Công Khai (Public Certificate Verifier)
+            Cổng Tra Cứu & Xác Minh Chứng Chỉ
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-            Nhập Mã chứng chỉ (Certificate ID) để tra cứu tính hợp lệ và truy xuất chuẩn OpenBadges 2.0 trực tiếp từ CSDL PostgreSQL.
+            Nhập Mã chứng chỉ (Certificate ID) để tra cứu tính hợp lệ và truy xuất thông tin chứng nhận chính thức.
           </p>
 
           <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3">
@@ -109,7 +109,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
         {loading ? (
           <div className="flex items-center justify-center py-20 text-slate-500">
             <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-3" />
-            <span>Đang truy vấn CSDL xác thực chứng chỉ...</span>
+            <span>Đang kiểm tra và xác thực chứng chỉ...</span>
           </div>
         ) : isValid && cert ? (
           <div className="space-y-8">
@@ -197,7 +197,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
                     onClick={handleDownloadBadge}
                     className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/20 transition-all cursor-pointer"
                   >
-                    Tải OpenBadges 2.0 (JSON-LD)
+                    Tải Hồ Sơ Chứng Chỉ (JSON)
                   </button>
                 </div>
               </div>
@@ -214,7 +214,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
               Không Tìm Thấy Mã Chứng Chỉ #{certId}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-300 max-w-md mx-auto">
-              Mã chứng chỉ này không tồn tại trong hệ thống CSDL PostgreSQL hoặc đã bị thu hồi. Vui lòng kiểm tra lại chính xác mã chứng chỉ.
+              Mã chứng chỉ này không tồn tại trong hệ thống hoặc đã bị thu hồi. Vui lòng kiểm tra lại chính xác mã chứng chỉ.
             </p>
             <button
               onClick={() => {

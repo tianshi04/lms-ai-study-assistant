@@ -172,7 +172,7 @@ export default function CoursesPage() {
         ) : error ? (
           <div className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 p-6 rounded-2xl text-center">
             <p className="font-semibold">{error}</p>
-            <p className="text-xs opacity-80 mt-2">Vui lòng đảm bảo backend server (port 8000) đang chạy.</p>
+            <p className="text-xs opacity-80 mt-2">Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.</p>
           </div>
         ) : filteredCourses.length === 0 ? (
           <div className="text-center py-16 text-slate-500">

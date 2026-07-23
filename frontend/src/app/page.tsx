@@ -28,7 +28,7 @@ export default function Home() {
           </h1>
 
           <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
-            Trải nghiệm trình phát bài học chuẩn Coursera với phụ đề tương tác, bài tập ngắt ngang video, trợ lý Coursera AI Coach dựa trên RAG vector và chứng chỉ xác thực công khai.
+            Trải nghiệm trình phát bài học chuẩn Coursera với phụ đề tương tác, bài tập ngắt ngang video, trợ lý Coursera AI Coach thông minh hỗ trợ 24/7 và chứng chỉ xác thực công khai.
           </p>
 
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2">
@@ -63,7 +63,7 @@ export default function Home() {
               </svg>
             </div>
             <h3 className="font-bold text-slate-900 dark:text-white mb-1">Catalog Khóa học</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Xem danh sách khóa học thực tế từ PostgreSQL 17</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Khám phá danh sách khóa học phong phú &amp; chất lượng</p>
           </Link>
 
           <Link
@@ -104,7 +104,7 @@ export default function Home() {
               </svg>
             </div>
             <h3 className="font-bold text-slate-900 dark:text-white mb-1">Xác minh Chứng chỉ</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Cổng tra cứu chứng chỉ công khai & OpenBadges</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Cổng tra cứu &amp; xác thực chứng chỉ công khai</p>
           </Link>
         </div>
       </main>
@@ -112,7 +112,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-xs text-slate-500 dark:text-slate-400">
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p>© 2026 Coursera AI LMS Platform. Powered by Modular Monolith & Domain-Driven Design.</p>
+          <p>© 2026 Coursera AI LMS Platform. Nền tảng học tập trực tuyến hàng đầu.</p>
           <div className="flex space-x-4">
             <Link href="/courses" className="hover:underline">Catalog</Link>
             <Link href="/auth/profile" className="hover:underline">Hồ sơ</Link>

@@ -33,7 +33,7 @@ export default function VerifyPortalPage() {
               Cổng Tra Cứu & Xác Minh Chứng Chỉ
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto">
-              Nhập mã chứng chỉ (Certificate ID) của học viên để tra cứu dữ liệu gốc và tải chứng chỉ chuẩn OpenBadges 2.0.
+              Nhập mã chứng chỉ (Certificate ID) của học viên để tra cứu dữ liệu gốc và tải thông tin chứng chỉ chính thức.
             </p>
           </div>
 
