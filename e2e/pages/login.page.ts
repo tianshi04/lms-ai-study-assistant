@@ -5,21 +5,28 @@ export class LoginPage {
   readonly emailInput: Locator;
   readonly passwordInput: Locator;
   readonly submitButton: Locator;
+  readonly errorBanner: Locator;
+  readonly registerLink: Locator;
 
   constructor(page: Page) {
     this.page = page;
-    // Prefer user-facing roles and labels, fallback to placeholders/test-ids
-    this.emailInput = page.getByLabel(/email/i).or(page.getByPlaceholder(/email/i)).or(page.locator('input[type="email"]'));
-    this.passwordInput = page.getByLabel(/password|mật khẩu/i).or(page.getByPlaceholder(/password|mật khẩu/i)).or(page.locator('input[type="password"]'));
-    this.submitButton = page.getByRole('button', { name: /login|sign in|đăng nhập/i });
+    this.emailInput = page.locator('input[type="email"]');
+    this.passwordInput = page.locator('input[type="password"]');
+    this.submitButton = page.getByRole('button', { name: /đăng nhập ngay/i });
+    this.errorBanner = page.locator('div.bg-rose-50, div.bg-rose-500\\/10');
+    this.registerLink = page.getByRole('link', { name: /đăng ký miễn phí/i });
   }
 
-  async goto() {
-    await this.page.goto('/auth/login');
+  async goto(redirectUrl?: string) {
+    const target = redirectUrl ? `/auth/login?redirect=${encodeURIComponent(redirectUrl)}` : '/auth/login';
+    await this.page.goto(target);
   }
 
   async verifyPageLoaded() {
-    await expect(this.page.locator('body')).toBeVisible();
+    await expect(this.page).toHaveURL(/\/auth\/login/);
+    await expect(this.emailInput).toBeVisible();
+    await expect(this.passwordInput).toBeVisible();
+    await expect(this.submitButton).toBeVisible();
   }
 
   async login(email: string, pass: string) {

@@ -18,7 +18,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1,
-  workers: process.env.CI ? 1 : '50%',
+  workers: process.env.CI ? 1 : 2,
   timeout: 30000,
   expect: {
     timeout: 5000,
@@ -30,7 +30,7 @@ export default defineConfig({
   use: {
     baseURL: BASE_URL,
     actionTimeout: 10000,
-    navigationTimeout: 15000,
+    navigationTimeout: 30000,
     testIdAttribute: 'data-testid',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
