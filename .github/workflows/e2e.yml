@@ -49,55 +49,67 @@ jobs:
           python-version: "3.13"
           enable-cache: true
 
-      # 1. Prepare Infrastructure & Database
+      # ── Phase 1: Infrastructure (must be sequential — DB must be up before seed) ────────
       - name: Start PostgreSQL & MinIO Infrastructure
         run: make infra
         working-directory: backend
 
-      - name: Generate Backend ConnectRPC Stubs
-        run: make gen
-        working-directory: backend
+      # ── Phase 2: Parallel install & stub generation ──────────────────────────────────────
+      # Run all independent setup tasks concurrently to minimize CI wall time:
+      #   - Backend stub generation (buf → backend/src/gen/)
+      #   - Frontend dep install + stub generation (npm ci + buf → frontend/src/gen/)
+      #   - E2E dep install + Playwright browser download
+      - name: Install dependencies & generate stubs (parallel)
+        run: |
+          # Backend stubs
+          (cd backend && make gen) &
+          PID_BE_GEN=$!
 
+          # Frontend deps + stubs
+          (cd frontend && npm ci && npm run gen) &
+          PID_FE=$!
+
+          # E2E deps + Playwright browsers
+          (cd e2e && npm ci && npx playwright install --with-deps chromium) &
+          PID_E2E=$!
+
+          # Wait for all parallel tasks and capture exit codes
+          wait $PID_BE_GEN || { echo "❌ Backend stub generation failed"; exit 1; }
+          wait $PID_FE      || { echo "❌ Frontend install/gen failed"; exit 1; }
+          wait $PID_E2E     || { echo "❌ E2E install/playwright failed"; exit 1; }
+
+          echo "✅ All parallel setup tasks completed"
+
+      # ── Phase 3: Seed database (needs infra + backend stubs ready) ───────────────────────
       - name: Seed Database Initial Catalog & Users
         run: make seed
         working-directory: backend
 
-      - name: Start Backend API Server in Background
+      # ── Phase 4: Start Backend server, then Frontend server ──────────────────────────────
+      # FE depends on BE API being up, so BE must start first
+      - name: Start Backend & Frontend servers
         run: |
-          uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 &
-          # Wait for backend health check
+          # Start backend in background
+          (cd backend && uv run uvicorn src.main:app --host 0.0.0.0 --port 8000) &
+
+          # Wait for backend to be ready
+          echo "⏳ Waiting for backend (port 8000)..."
           for i in {1..30}; do
-            curl -s http://localhost:8000/health && break || sleep 1
+            curl -sf http://localhost:8000/health && break || sleep 1
           done
-        working-directory: backend
 
-      # 2. Prepare Frontend App
-      - name: Install Frontend Dependencies
-        run: npm ci
-        working-directory: frontend
+          # Start frontend in background (after BE is confirmed up)
+          (cd frontend && npm run dev) &
 
-      - name: Generate Frontend ConnectRPC Stubs
-        run: npm run gen
-        working-directory: frontend
-
-      - name: Start Frontend Development Server in Background
-        run: |
-          npm run dev &
-          # Wait for frontend server
+          # Wait for frontend to be ready
+          echo "⏳ Waiting for frontend (port 3000)..."
           for i in {1..30}; do
-            curl -s http://localhost:3000 && break || sleep 1
+            curl -sf http://localhost:3000 && break || sleep 1
           done
-        working-directory: frontend
 
-      # 3. Execute Playwright E2E Blackbox Tests
-      - name: Install E2E Dependencies
-        run: npm ci
-        working-directory: e2e
+          echo "✅ Backend and Frontend servers are ready"
 
-      - name: Install Playwright Browsers with System Dependencies
-        run: npx playwright install --with-deps chromium
-        working-directory: e2e
-
+      # ── Phase 5: Run Playwright E2E Tests ────────────────────────────────────────────────
       - name: Run Playwright E2E Tests
         run: npx playwright test --project=chromium
         working-directory: e2e
@@ -105,7 +117,7 @@ jobs:
           BASE_URL: http://localhost:3000
           CI: true
 
-      # 4. Save Test Artifacts & Reports
+      # ── Phase 6: Upload test report artifact (always, even on failure) ───────────────────
       - name: Upload Playwright Test Report Artifact
         if: always()
         uses: actions/upload-artifact@v4
