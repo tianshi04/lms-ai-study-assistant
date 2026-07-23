@@ -72,6 +72,7 @@ This file provides rules, architectural conventions, and workspace instructions 
 ## 5. Frontend Architecture & Conventions
 - The frontend is located in `frontend/` and built with **Next.js (App Router)**, **TypeScript**, and **Tailwind CSS v4**.
 - Styling is implemented using Tailwind CSS v4 utility classes.
+- **Headless UI Primitives & Accessibility (WAI-ARIA)**: We use **Base UI (`@base-ui/react`)** for complex unstyled interactive UI components (such as `Modal/Dialog`, `Tabs`, `DropdownMenu`, `Select`). Always leverage Base UI primitives wrapped with Tailwind CSS v4 styling to ensure standard keyboard navigation and WAI-ARIA accessibility without reinventing unstyled component logic.
 - **UI Icons & Aesthetics**: Always use clean, professional inline SVG vector icons instead of text-emoji characters in all UI components and pages.
 - API Client calls are made by importing service schemas from the generated stubs (e.g. `import { CatalogService } from "@/gen/catalog/v1/catalog_pb"`) and using the `@connectrpc/connect` client.
 
