@@ -74,6 +74,10 @@ This file provides rules, architectural conventions, and workspace instructions 
 - Styling is implemented using Tailwind CSS v4 utility classes.
 - **Headless UI Primitives & Accessibility (WAI-ARIA)**: We use **Base UI (`@base-ui/react`)** for complex unstyled interactive UI components (such as `Modal/Dialog`, `Tabs`, `DropdownMenu`, `Select`). Always leverage Base UI primitives wrapped with Tailwind CSS v4 styling to ensure standard keyboard navigation and WAI-ARIA accessibility without reinventing unstyled component logic.
 - **UI Icons & Aesthetics**: Always use clean, professional inline SVG vector icons instead of text-emoji characters in all UI components and pages.
+- **Headless Logic Ecosystem (TanStack Ecosystem)**: We leverage the **TanStack Ecosystem** for all headless logic across the application:
+  - **TanStack Query (`@tanstack/react-query`)**: For headless server state management, automatic caching, background revalidation, and deduplication of ConnectRPC API calls. Place reusable query/mutation hooks inside `frontend/src/lib/query_hooks.ts`.
+  - **TanStack Table (`@tanstack/react-table`)**: For headless table state, sorting, filtering, and pagination in complex dashboards and data views.
+  - **TanStack Form (`@tanstack/react-form`)**: For headless form validation and state management in multi-step or complex form interfaces.
 - API Client calls are made by importing service schemas from the generated stubs (e.g. `import { CatalogService } from "@/gen/catalog/v1/catalog_pb"`) and using the `@connectrpc/connect` client.
 
 ---
