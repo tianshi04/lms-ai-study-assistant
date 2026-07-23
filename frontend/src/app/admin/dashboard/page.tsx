@@ -1,11 +1,15 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, useMemo } from "react";
+import { useReactTable, getCoreRowModel, getSortedRowModel, flexRender, createColumnHelper } from "@tanstack/react-table";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
 import { Navbar } from "@/components/layout/Navbar";
+import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
 
 const emptySubscribe = () => () => {};
+
+const columnHelper = createColumnHelper<EnterpriseSeat>();
 
 export default function AdminEnterpriseDashboardPage() {
   const isMounted = useSyncExternalStore(
@@ -14,8 +18,7 @@ export default function AdminEnterpriseDashboardPage() {
     () => false
   );
 
-  const [seats, setSeats] = useState<EnterpriseSeat[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: seats = [], isLoading: loading, refetch: fetchEnterpriseSeats } = useEnterpriseSeatsQuery();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -34,48 +37,6 @@ export default function AdminEnterpriseDashboardPage() {
   const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
   const isAdmin = userRole === "4" || userRole === "5";
 
-  const fetchEnterpriseSeats = async () => {
-    try {
-      const client = getRpcClient(IdentityService);
-      const res = await client.listEnterpriseSeats({});
-      setSeats(res.seats);
-      if (res.seats.length > 0 && !selectedSeatKey) {
-        setSelectedSeatKey(res.seats[0].seatKey);
-      }
-    } catch (err: unknown) {
-      console.error("Lỗi lấy danh sách Enterprise Seats:", err);
-      const errMsg = err instanceof Error ? err.message : "Không thể tải danh sách suất học Enterprise.";
-      setMessage({ type: "error", text: errMsg });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    let ignore = false;
-    async function load() {
-      try {
-        const client = getRpcClient(IdentityService);
-        const res = await client.listEnterpriseSeats({});
-        if (!ignore) {
-          setSeats(res.seats);
-        }
-      } catch (err: unknown) {
-        if (!ignore) {
-          console.error("Lỗi lấy danh sách Enterprise Seats:", err);
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    }
-    load();
-    return () => {
-      ignore = true;
-    };
-  }, []);
-
   // Dynamic stat calculations
   const totalUsedSeats = seats.reduce((sum, s) => {
     const match = s.assignedUserId?.match(/^(\d+)\/(\d+)/);
@@ -88,6 +49,35 @@ export default function AdminEnterpriseDashboardPage() {
   }, 0);
 
   const activationRate = totalCapacitySeats > 0 ? ((totalUsedSeats / totalCapacitySeats) * 100).toFixed(1) : "0.0";
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor("partnerName", {
+        header: "Đối Tác Doanh Nghiệp",
+        cell: (info) => info.getValue() || "N/A",
+      }),
+      columnHelper.accessor("seatKey", {
+        header: "Mã Suất Học (License Key)",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor("assignedUserId", {
+        header: "Học Viên / Tỷ Lệ Kích Hoạt",
+        cell: (info) => info.getValue() || "Chưa gán",
+      }),
+      columnHelper.accessor("status", {
+        header: "Trạng Thái Giấy Phép",
+        cell: (info) => info.getValue() || "Sẵn sàng",
+      }),
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data: seats,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
   // Handlers
   const handleAssignSeat = async (e: React.FormEvent) => {
@@ -313,13 +303,18 @@ export default function AdminEnterpriseDashboardPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase tracking-wider font-bold">
-                    <th className="py-3 px-4">Tên Tổ chức / Đối tác</th>
-                    <th className="py-3 px-4">Mã Enterprise Key</th>
-                    <th className="py-3 px-4">Số suất (Seats)</th>
-                    <th className="py-3 px-4">Trạng thái</th>
-                    <th className="py-3 px-4 text-right">Thao tác</th>
-                  </tr>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr key={headerGroup.id} className="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase tracking-wider font-bold">
+                      {headerGroup.headers.map((header) => (
+                        <th key={header.id} className="py-3 px-4">
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(header.column.columnDef.header, header.getContext())}
+                        </th>
+                      ))}
+                      <th className="py-3 px-4 text-right">Thao tác</th>
+                    </tr>
+                  ))}
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300">
                   {seats.map((seat) => (

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
-import { IdentityService, type User } from "@/gen/identity/v1/identity_pb";
+import { IdentityService, type User, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
 
 /**
  * Custom TanStack Query hook for fetching the course catalog.
@@ -51,3 +51,15 @@ export function useSaveEnterpriseKeyMutation(
     ...options,
   });
 }
+export function useEnterpriseSeatsQuery(options?: Partial<UseQueryOptions<EnterpriseSeat[], Error>>) {
+  return useQuery<EnterpriseSeat[], Error>({
+    queryKey: ["enterpriseSeats"],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.listEnterpriseSeats({});
+      return res.seats;
+    },
+    ...options,
+  });
+}
+
