@@ -60,6 +60,33 @@ message AssignEnterpriseSeatResponse {
   string message = 2;
 }
 
+message EnterpriseSeat {
+  string id = 1;
+  string partner_name = 2;
+  string seat_key = 3;
+  string assigned_user_id = 4;
+  string assigned_user_email = 5;
+  string status = 6;
+  string created_at = 7;
+}
+
+message ListEnterpriseSeatsRequest {
+  string partner_name = 1;
+}
+
+message ListEnterpriseSeatsResponse {
+  repeated EnterpriseSeat seats = 1;
+}
+
+message CreateEnterpriseSeatRequest {
+  string partner_name = 1;
+  string seat_key = 2;
+}
+
+message CreateEnterpriseSeatResponse {
+  EnterpriseSeat seat = 1;
+}
+
 message RefreshTokenRequest {
   string refresh_token = 1;
 }
@@ -74,5 +101,7 @@ service IdentityService {
   rpc Register(RegisterRequest) returns (RegisterResponse);
   rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse);
   rpc AssignEnterpriseSeat(AssignEnterpriseSeatRequest) returns (AssignEnterpriseSeatResponse);
+  rpc ListEnterpriseSeats(ListEnterpriseSeatsRequest) returns (ListEnterpriseSeatsResponse);
+  rpc CreateEnterpriseSeat(CreateEnterpriseSeatRequest) returns (CreateEnterpriseSeatResponse);
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
 }

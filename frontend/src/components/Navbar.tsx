@@ -50,11 +50,19 @@ export function Navbar() {
             Diễn đàn
           </Link>
 
-          {/* Render Instructor Portal ONLY for authorized roles */}
+          {/* Render Instructor Portal for authorized roles */}
           {isInstructorOrAdmin && (
             <Link href="/instructor/courses" className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-1">
               <span>Giảng Viên</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">Portal</span>
+            </Link>
+          )}
+
+          {/* Render Admin Enterprise Dashboard Link */}
+          {(userRole === "4" || userRole === "5" || isInstructorOrAdmin) && (
+            <Link href="/admin/dashboard" className="text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors flex items-center gap-1">
+              <span>Admin</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">Enterprise</span>
             </Link>
           )}
 

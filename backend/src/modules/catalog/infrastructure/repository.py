@@ -7,6 +7,7 @@ from src.modules.catalog.domain.entities import (
     Course,
     InVideoQuiz,
     InteractiveTranscript,
+    ItemType,
     LearningItem,
     Lesson,
     Specialization,
@@ -290,7 +291,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         return LearningItem(
             id=item_id,
             title=title,
-            type=item_type,
+            type=ItemType(item_type),
             estimated_minutes=estimated_minutes or 10,
             video_url=video_url or "",
             vtt_subtitle_url="",
