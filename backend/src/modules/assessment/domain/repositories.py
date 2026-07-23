@@ -12,13 +12,14 @@ from src.modules.assessment.domain.entities import (
 
 
 class AssessmentRepositoryInterface(ABC):
-
     @abstractmethod
     async def save_honor_code(self, agreement: HonorCodeAgreement) -> None:
         pass
 
     @abstractmethod
-    async def get_honor_code(self, user_id: str, item_id: str) -> Optional[HonorCodeAgreement]:
+    async def get_honor_code(
+        self, user_id: str, item_id: str
+    ) -> Optional[HonorCodeAgreement]:
         pass
 
     @abstractmethod
@@ -26,11 +27,15 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_quiz_submissions(self, user_id: str, item_id: str) -> list[QuizSubmission]:
+    async def get_quiz_submissions(
+        self, user_id: str, item_id: str
+    ) -> list[QuizSubmission]:
         pass
 
     @abstractmethod
-    async def get_quiz_cooldown(self, user_id: str, item_id: str) -> Optional[QuizCooldown]:
+    async def get_quiz_cooldown(
+        self, user_id: str, item_id: str
+    ) -> Optional[QuizCooldown]:
         pass
 
     @abstractmethod
@@ -42,7 +47,9 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_lab_submissions(self, user_id: str, item_id: str) -> list[LabSubmission]:
+    async def get_lab_submissions(
+        self, user_id: str, item_id: str
+    ) -> list[LabSubmission]:
         pass
 
     @abstractmethod
@@ -50,15 +57,21 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_peer_submission(self, submission_id: str) -> Optional[PeerAssignmentSubmission]:
+    async def get_peer_submission(
+        self, submission_id: str
+    ) -> Optional[PeerAssignmentSubmission]:
         pass
 
     @abstractmethod
-    async def get_user_peer_submission(self, user_id: str, item_id: str) -> Optional[PeerAssignmentSubmission]:
+    async def get_user_peer_submission(
+        self, user_id: str, item_id: str
+    ) -> Optional[PeerAssignmentSubmission]:
         pass
 
     @abstractmethod
-    async def get_peer_submissions_for_item(self, item_id: str, exclude_user_id: str) -> list[PeerAssignmentSubmission]:
+    async def get_peer_submissions_for_item(
+        self, item_id: str, exclude_user_id: str
+    ) -> list[PeerAssignmentSubmission]:
         pass
 
     @abstractmethod
@@ -66,11 +79,15 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_peer_reviews_by_reviewer(self, reviewer_user_id: str, item_id: str) -> list[PeerReview]:
+    async def get_peer_reviews_by_reviewer(
+        self, reviewer_user_id: str, item_id: str
+    ) -> list[PeerReview]:
         pass
 
     @abstractmethod
-    async def get_peer_reviews_for_submission(self, submission_id: str) -> list[PeerReview]:
+    async def get_peer_reviews_for_submission(
+        self, submission_id: str
+    ) -> list[PeerReview]:
         pass
 
     @abstractmethod

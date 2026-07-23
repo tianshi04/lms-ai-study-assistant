@@ -83,7 +83,7 @@ async def test_instructor_create_lesson_structure():
             course_id=course.id,
             lesson_id=lesson.id,
             title="Lecture: Implementing Multi-Head Attention",
-            item_type=1, # VIDEO
+            item_type=1,  # VIDEO
             estimated_minutes=15,
             video_url="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
             reading_markdown="",

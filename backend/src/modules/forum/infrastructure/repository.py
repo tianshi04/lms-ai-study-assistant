@@ -5,7 +5,11 @@ from sqlalchemy.orm import selectinload
 
 from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
 from src.modules.forum.domain.repository import IForumRepository
-from src.modules.forum.infrastructure.models import ForumReplyORM, ForumThreadORM, ForumVoteORM
+from src.modules.forum.infrastructure.models import (
+    ForumReplyORM,
+    ForumThreadORM,
+    ForumVoteORM,
+)
 
 
 class ForumRepository(IForumRepository):
@@ -63,7 +67,7 @@ class ForumRepository(IForumRepository):
             query = query.where(ForumThreadORM.course_id == course_id)
         if item_id:
             query = query.where(ForumThreadORM.item_id == item_id)
-        
+
         query = query.order_by(
             ForumThreadORM.is_staff_pinned.desc(),
             ForumThreadORM.created_at.desc(),
@@ -120,7 +124,9 @@ class ForumRepository(IForumRepository):
 
         return self._to_reply_entity(orm)
 
-    async def vote_post(self, post_id: str, user_id: str = "", is_upvote: bool = True) -> int:
+    async def vote_post(
+        self, post_id: str, user_id: str = "", is_upvote: bool = True
+    ) -> int:
         delta = 1
         if user_id:
             # Check if user has already voted on this post
@@ -171,9 +177,11 @@ class ForumRepository(IForumRepository):
             return False
 
         reply_orm.is_staff_answer = True
-        
+
         # Mark thread as staff pinned
-        thread_stmt = select(ForumThreadORM).where(ForumThreadORM.id == reply_orm.thread_id)
+        thread_stmt = select(ForumThreadORM).where(
+            ForumThreadORM.id == reply_orm.thread_id
+        )
         t_res = await self.session.execute(thread_stmt)
         thread_orm = t_res.scalar_one_or_none()
         if thread_orm:

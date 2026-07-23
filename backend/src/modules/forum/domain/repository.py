@@ -27,7 +27,9 @@ class IForumRepository(ABC):
         pass
 
     @abstractmethod
-    async def vote_post(self, post_id: str, user_id: str = "", is_upvote: bool = True) -> int:
+    async def vote_post(
+        self, post_id: str, user_id: str = "", is_upvote: bool = True
+    ) -> int:
         """Vote on a thread or reply by post_id. Toggles vote per user and returns updated upvote count."""
         pass
 

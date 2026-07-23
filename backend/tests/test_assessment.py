@@ -11,11 +11,12 @@ from src.modules.assessment.domain.entities import (
     RubricCriteria,
 )
 from src.modules.assessment.domain.repositories import AssessmentRepositoryInterface
-from src.modules.assessment.infrastructure.sandbox_service import PythonCodeSandboxExecutor
+from src.modules.assessment.infrastructure.sandbox_service import (
+    PythonCodeSandboxExecutor,
+)
 
 
 class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
-
     def __init__(self) -> None:
         self.honor_codes: dict[str, HonorCodeAgreement] = {}
         self.quiz_submissions: list[QuizSubmission] = []
@@ -28,16 +29,26 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
     async def save_honor_code(self, agreement: HonorCodeAgreement) -> None:
         self.honor_codes[agreement.id] = agreement
 
-    async def get_honor_code(self, user_id: str, item_id: str) -> HonorCodeAgreement | None:
+    async def get_honor_code(
+        self, user_id: str, item_id: str
+    ) -> HonorCodeAgreement | None:
         return self.honor_codes.get(f"{user_id}:{item_id}")
 
     async def save_quiz_submission(self, submission: QuizSubmission) -> None:
         self.quiz_submissions.append(submission)
 
-    async def get_quiz_submissions(self, user_id: str, item_id: str) -> list[QuizSubmission]:
-        return [s for s in self.quiz_submissions if s.user_id == user_id and s.item_id == item_id]
+    async def get_quiz_submissions(
+        self, user_id: str, item_id: str
+    ) -> list[QuizSubmission]:
+        return [
+            s
+            for s in self.quiz_submissions
+            if s.user_id == user_id and s.item_id == item_id
+        ]
 
-    async def get_quiz_cooldown(self, user_id: str, item_id: str) -> QuizCooldown | None:
+    async def get_quiz_cooldown(
+        self, user_id: str, item_id: str
+    ) -> QuizCooldown | None:
         return self.cooldowns.get(f"{user_id}:{item_id}")
 
     async def save_quiz_cooldown(self, cooldown: QuizCooldown) -> None:
@@ -46,34 +57,58 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
     async def save_lab_submission(self, submission: LabSubmission) -> None:
         self.lab_submissions.append(submission)
 
-    async def get_lab_submissions(self, user_id: str, item_id: str) -> list[LabSubmission]:
-        return [s for s in self.lab_submissions if s.user_id == user_id and s.item_id == item_id]
+    async def get_lab_submissions(
+        self, user_id: str, item_id: str
+    ) -> list[LabSubmission]:
+        return [
+            s
+            for s in self.lab_submissions
+            if s.user_id == user_id and s.item_id == item_id
+        ]
 
     async def save_peer_submission(self, submission: PeerAssignmentSubmission) -> None:
         self.peer_submissions.append(submission)
 
-    async def get_peer_submission(self, submission_id: str) -> PeerAssignmentSubmission | None:
+    async def get_peer_submission(
+        self, submission_id: str
+    ) -> PeerAssignmentSubmission | None:
         for s in self.peer_submissions:
             if s.id == submission_id:
                 return s
         return None
 
-    async def get_user_peer_submission(self, user_id: str, item_id: str) -> PeerAssignmentSubmission | None:
+    async def get_user_peer_submission(
+        self, user_id: str, item_id: str
+    ) -> PeerAssignmentSubmission | None:
         for s in self.peer_submissions:
             if s.user_id == user_id and s.item_id == item_id:
                 return s
         return None
 
-    async def get_peer_submissions_for_item(self, item_id: str, exclude_user_id: str) -> list[PeerAssignmentSubmission]:
-        return [s for s in self.peer_submissions if s.item_id == item_id and s.user_id != exclude_user_id]
+    async def get_peer_submissions_for_item(
+        self, item_id: str, exclude_user_id: str
+    ) -> list[PeerAssignmentSubmission]:
+        return [
+            s
+            for s in self.peer_submissions
+            if s.item_id == item_id and s.user_id != exclude_user_id
+        ]
 
     async def save_peer_review(self, review: PeerReview) -> None:
         self.peer_reviews.append(review)
 
-    async def get_peer_reviews_by_reviewer(self, reviewer_user_id: str, item_id: str) -> list[PeerReview]:
-        return [r for r in self.peer_reviews if r.reviewer_user_id == reviewer_user_id and r.item_id == item_id]
+    async def get_peer_reviews_by_reviewer(
+        self, reviewer_user_id: str, item_id: str
+    ) -> list[PeerReview]:
+        return [
+            r
+            for r in self.peer_reviews
+            if r.reviewer_user_id == reviewer_user_id and r.item_id == item_id
+        ]
 
-    async def get_peer_reviews_for_submission(self, submission_id: str) -> list[PeerReview]:
+    async def get_peer_reviews_for_submission(
+        self, submission_id: str
+    ) -> list[PeerReview]:
         return [r for r in self.peer_reviews if r.submission_id == submission_id]
 
     async def save_grade_appeal(self, appeal: GradeAppeal) -> None:
@@ -155,7 +190,9 @@ async def test_sandbox_auto_graded_lab():
 def solution(arr):
     return sum(arr)
 """
-    res = await usecase.submit_auto_graded_lab("user-1", "item-lab-1", valid_code, "python")
+    res = await usecase.submit_auto_graded_lab(
+        "user-1", "item-lab-1", valid_code, "python"
+    )
     assert res["score_percent"] == 100.0
     assert res["passed"] is True
     assert res["passed_test_cases"] == 3
@@ -169,7 +206,10 @@ async def test_peer_review_and_outlier_detection():
 
     # 1. Submit Peer Assignment
     sub_id, msg = await usecase.submit_peer_assignment(
-        "author-1", "item-peer-1", "https://github.com/test/repo", "My ML project submission text"
+        "author-1",
+        "item-peer-1",
+        "https://github.com/test/repo",
+        "My ML project submission text",
     )
     assert sub_id.startswith("peer-")
 
@@ -194,7 +234,9 @@ async def test_peer_review_and_outlier_detection():
     assert "Outlier Flagged" in msg2
 
     # 4. Grade Appeal
-    ok_appeal, status = await usecase.submit_grade_appeal("author-1", sub_id, "Scores are inconsistent")
+    ok_appeal, status = await usecase.submit_grade_appeal(
+        "author-1", sub_id, "Scores are inconsistent"
+    )
     assert ok_appeal is True
     assert status == "PENDING"
 
@@ -219,6 +261,8 @@ name = input()
 
     # Security AST blocking test
     malicious_code = "import os\nos.system('echo hacked')"
-    res_sec = await executor.execute_python(malicious_code, [{"assertion_code": "assert True"}])
+    res_sec = await executor.execute_python(
+        malicious_code, [{"assertion_code": "assert True"}]
+    )
     assert res_sec.passed is False
     assert "Security Violation" in res_sec.test_logs

@@ -35,7 +35,6 @@ def verify_password(password: str, password_hash: str) -> bool:
     return hmac.compare_digest(new_hash, hash_hex)
 
 
-
 class IdentityUseCase:
     async def login(
         self, email: str, password: str
@@ -147,32 +146,34 @@ class IdentityUseCase:
                 f"Kích hoạt thành công suất học từ đối tác {license_model.partner_name}!",
             )
 
-    async def list_enterprise_seats(
-        self, partner_name: str = ""
-    ) -> list[dict]:
+    async def list_enterprise_seats(self, partner_name: str = "") -> list[dict]:
         async with async_session_scope() as session:
             stmt = select(EnterpriseLicenseModel)
             if partner_name:
-                stmt = stmt.where(EnterpriseLicenseModel.partner_name.ilike(f"%{partner_name}%"))
+                stmt = stmt.where(
+                    EnterpriseLicenseModel.partner_name.ilike(f"%{partner_name}%")
+                )
             res = await session.execute(stmt)
             licenses = res.scalars().all()
-            
+
             result = []
             for lic in licenses:
-                result.append({
-                    "id": lic.key,
-                    "partner_name": lic.partner_name,
-                    "seat_key": lic.key,
-                    "assigned_user_id": f"{lic.used_seats}/{lic.total_seats} seats",
-                    "assigned_user_email": "Hoạt động" if lic.is_active else "Vô hiệu",
-                    "status": "ACTIVE" if lic.is_active else "INACTIVE",
-                    "created_at": "2026",
-                })
+                result.append(
+                    {
+                        "id": lic.key,
+                        "partner_name": lic.partner_name,
+                        "seat_key": lic.key,
+                        "assigned_user_id": f"{lic.used_seats}/{lic.total_seats} seats",
+                        "assigned_user_email": "Hoạt động"
+                        if lic.is_active
+                        else "Vô hiệu",
+                        "status": "ACTIVE" if lic.is_active else "INACTIVE",
+                        "created_at": "2026",
+                    }
+                )
             return result
 
-    async def create_enterprise_seat(
-        self, partner_name: str, seat_key: str
-    ) -> dict:
+    async def create_enterprise_seat(self, partner_name: str, seat_key: str) -> dict:
         async with async_session_scope() as session:
             clean_key = seat_key.strip() or f"KEY-{uuid.uuid4().hex[:8].upper()}"
             lic = EnterpriseLicenseModel(

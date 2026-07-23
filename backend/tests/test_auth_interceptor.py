@@ -43,7 +43,9 @@ async def test_auth_interceptor_public_endpoint() -> None:
 async def test_auth_interceptor_missing_header_raises_unauthenticated() -> None:
     clear_current_user()
     interceptor = AuthInterceptor()
-    ctx = MockCtx(path="/learning.v1.LearningService/GetProgress", invocation_metadata={})
+    ctx = MockCtx(
+        path="/learning.v1.LearningService/GetProgress", invocation_metadata={}
+    )
 
     async def call_next(req: Any, c: Any) -> str:
         return "should_not_reach"
@@ -58,7 +60,9 @@ async def test_auth_interceptor_missing_header_raises_unauthenticated() -> None:
 @pytest.mark.asyncio
 async def test_auth_interceptor_valid_token_sets_context() -> None:
     clear_current_user()
-    token = create_access_token(user_id="user_123", email="user123@example.com", role="USER_ROLE_LEARNER")
+    token = create_access_token(
+        user_id="user_123", email="user123@example.com", role="USER_ROLE_LEARNER"
+    )
     interceptor = AuthInterceptor()
     ctx = MockCtx(
         path="/learning.v1.LearningService/GetProgress",

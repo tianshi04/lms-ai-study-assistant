@@ -25,7 +25,6 @@ from src.modules.assessment.infrastructure.models import (
 
 
 class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
-
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -46,7 +45,9 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             self.session.add(model)
         await self.session.commit()
 
-    async def get_honor_code(self, user_id: str, item_id: str) -> Optional[HonorCodeAgreement]:
+    async def get_honor_code(
+        self, user_id: str, item_id: str
+    ) -> Optional[HonorCodeAgreement]:
         stmt = select(HonorCodeModel).where(
             HonorCodeModel.user_id == user_id, HonorCodeModel.item_id == item_id
         )
@@ -75,10 +76,17 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         self.session.add(model)
         await self.session.commit()
 
-    async def get_quiz_submissions(self, user_id: str, item_id: str) -> list[QuizSubmission]:
-        stmt = select(QuizSubmissionModel).where(
-            QuizSubmissionModel.user_id == user_id, QuizSubmissionModel.item_id == item_id
-        ).order_by(QuizSubmissionModel.created_at.asc())
+    async def get_quiz_submissions(
+        self, user_id: str, item_id: str
+    ) -> list[QuizSubmission]:
+        stmt = (
+            select(QuizSubmissionModel)
+            .where(
+                QuizSubmissionModel.user_id == user_id,
+                QuizSubmissionModel.item_id == item_id,
+            )
+            .order_by(QuizSubmissionModel.created_at.asc())
+        )
         res = await self.session.execute(stmt)
         models = res.scalars().all()
         return [
@@ -95,7 +103,9 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             for m in models
         ]
 
-    async def get_quiz_cooldown(self, user_id: str, item_id: str) -> Optional[QuizCooldown]:
+    async def get_quiz_cooldown(
+        self, user_id: str, item_id: str
+    ) -> Optional[QuizCooldown]:
         stmt = select(QuizCooldownModel).where(
             QuizCooldownModel.user_id == user_id, QuizCooldownModel.item_id == item_id
         )
@@ -146,10 +156,17 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         self.session.add(model)
         await self.session.commit()
 
-    async def get_lab_submissions(self, user_id: str, item_id: str) -> list[LabSubmission]:
-        stmt = select(LabSubmissionModel).where(
-            LabSubmissionModel.user_id == user_id, LabSubmissionModel.item_id == item_id
-        ).order_by(LabSubmissionModel.created_at.asc())
+    async def get_lab_submissions(
+        self, user_id: str, item_id: str
+    ) -> list[LabSubmission]:
+        stmt = (
+            select(LabSubmissionModel)
+            .where(
+                LabSubmissionModel.user_id == user_id,
+                LabSubmissionModel.item_id == item_id,
+            )
+            .order_by(LabSubmissionModel.created_at.asc())
+        )
         res = await self.session.execute(stmt)
         models = res.scalars().all()
         return [
@@ -186,7 +203,9 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             self.session.add(model)
         await self.session.commit()
 
-    async def get_peer_submission(self, submission_id: str) -> Optional[PeerAssignmentSubmission]:
+    async def get_peer_submission(
+        self, submission_id: str
+    ) -> Optional[PeerAssignmentSubmission]:
         model = await self.session.get(PeerAssignmentSubmissionModel, submission_id)
         if not model:
             return None
@@ -199,7 +218,9 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             created_at=model.created_at,
         )
 
-    async def get_user_peer_submission(self, user_id: str, item_id: str) -> Optional[PeerAssignmentSubmission]:
+    async def get_user_peer_submission(
+        self, user_id: str, item_id: str
+    ) -> Optional[PeerAssignmentSubmission]:
         stmt = select(PeerAssignmentSubmissionModel).where(
             PeerAssignmentSubmissionModel.user_id == user_id,
             PeerAssignmentSubmissionModel.item_id == item_id,
@@ -217,7 +238,9 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             created_at=model.created_at,
         )
 
-    async def get_peer_submissions_for_item(self, item_id: str, exclude_user_id: str) -> list[PeerAssignmentSubmission]:
+    async def get_peer_submissions_for_item(
+        self, item_id: str, exclude_user_id: str
+    ) -> list[PeerAssignmentSubmission]:
         stmt = select(PeerAssignmentSubmissionModel).where(
             PeerAssignmentSubmissionModel.item_id == item_id,
             PeerAssignmentSubmissionModel.user_id != exclude_user_id,
@@ -266,7 +289,9 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             self.session.add(model)
         await self.session.commit()
 
-    async def get_peer_reviews_by_reviewer(self, reviewer_user_id: str, item_id: str) -> list[PeerReview]:
+    async def get_peer_reviews_by_reviewer(
+        self, reviewer_user_id: str, item_id: str
+    ) -> list[PeerReview]:
         stmt = select(PeerReviewModel).where(
             PeerReviewModel.reviewer_user_id == reviewer_user_id,
             PeerReviewModel.item_id == item_id,
@@ -275,7 +300,11 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         models = res.scalars().all()
         reviews: list[PeerReview] = []
         for m in models:
-            items = m.rubric_criteria_json.get("items", []) if isinstance(m.rubric_criteria_json, dict) else []
+            items = (
+                m.rubric_criteria_json.get("items", [])
+                if isinstance(m.rubric_criteria_json, dict)
+                else []
+            )
             criteria = [
                 RubricCriteria(
                     criteria_id=c.get("criteria_id", ""),
@@ -300,13 +329,21 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             )
         return reviews
 
-    async def get_peer_reviews_for_submission(self, submission_id: str) -> list[PeerReview]:
-        stmt = select(PeerReviewModel).where(PeerReviewModel.submission_id == submission_id)
+    async def get_peer_reviews_for_submission(
+        self, submission_id: str
+    ) -> list[PeerReview]:
+        stmt = select(PeerReviewModel).where(
+            PeerReviewModel.submission_id == submission_id
+        )
         res = await self.session.execute(stmt)
         models = res.scalars().all()
         reviews: list[PeerReview] = []
         for m in models:
-            items = m.rubric_criteria_json.get("items", []) if isinstance(m.rubric_criteria_json, dict) else []
+            items = (
+                m.rubric_criteria_json.get("items", [])
+                if isinstance(m.rubric_criteria_json, dict)
+                else []
+            )
             criteria = [
                 RubricCriteria(
                     criteria_id=c.get("criteria_id", ""),
@@ -349,7 +386,9 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         await self.session.commit()
 
     async def get_grade_appeal(self, submission_id: str) -> Optional[GradeAppeal]:
-        stmt = select(GradeAppealModel).where(GradeAppealModel.submission_id == submission_id)
+        stmt = select(GradeAppealModel).where(
+            GradeAppealModel.submission_id == submission_id
+        )
         res = await self.session.execute(stmt)
         model = res.scalar_one_or_none()
         if not model:

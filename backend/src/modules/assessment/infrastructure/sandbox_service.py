@@ -38,15 +38,24 @@ def validate_code_security(source_code: str) -> tuple[bool, str]:
             for alias in node.names:
                 mod_base = alias.name.split(".")[0]
                 if mod_base in FORBIDDEN_MODULES:
-                    return False, f"Security Violation: Forbidden module import '{alias.name}'"
+                    return (
+                        False,
+                        f"Security Violation: Forbidden module import '{alias.name}'",
+                    )
         elif isinstance(node, ast.ImportFrom):
             if node.module:
                 mod_base = node.module.split(".")[0]
                 if mod_base in FORBIDDEN_MODULES:
-                    return False, f"Security Violation: Forbidden module import '{node.module}'"
+                    return (
+                        False,
+                        f"Security Violation: Forbidden module import '{node.module}'",
+                    )
         elif isinstance(node, ast.Call):
             if isinstance(node.func, ast.Name) and node.func.id in FORBIDDEN_BUILTINS:
-                return False, f"Security Violation: Forbidden function call '{node.func.id}()'"
+                return (
+                    False,
+                    f"Security Violation: Forbidden function call '{node.func.id}()'",
+                )
 
     return True, ""
 
@@ -87,7 +96,9 @@ class PythonCodeSandboxExecutor:
 
         if not test_cases:
             # Default single assertion test case if none provided
-            test_cases = [{"input": "", "expected_output": "", "assertion_code": "assert True"}]
+            test_cases = [
+                {"input": "", "expected_output": "", "assertion_code": "assert True"}
+            ]
 
         passed_count = 0
         total_count = len(test_cases)
@@ -123,7 +134,9 @@ except AssertionError as e:
 except Exception as e:
     print(f"EXECUTION_ERROR: {{e}}")
 """
-            with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as tmp_file:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".py", delete=False
+            ) as tmp_file:
                 tmp_file.write(runner_script)
                 tmp_path = tmp_file.name
 
@@ -140,32 +153,43 @@ except Exception as e:
                 )
                 try:
                     stdout, stderr = await asyncio.wait_for(
-                        proc.communicate(input=stdin_bytes), timeout=self.timeout_seconds
+                        proc.communicate(input=stdin_bytes),
+                        timeout=self.timeout_seconds,
                     )
                     out_text = stdout.decode("utf-8", errors="replace").strip()
                     err_text = stderr.decode("utf-8", errors="replace").strip()
 
                     if "TEST_PASSED" in out_text:
                         passed_count += 1
-                        log_lines.append(f"[PASS] Test Case #{idx}: Passed ({assertion or 'Input test'})")
+                        log_lines.append(
+                            f"[PASS] Test Case #{idx}: Passed ({assertion or 'Input test'})"
+                        )
                     elif "ASSERTION_FAILED" in out_text:
                         exp_msg = f" (Expected: {expected})" if expected else ""
                         log_lines.append(
                             f"[FAIL] Test Case #{idx}: Failed ({assertion}) - Assertion Error{exp_msg}"
                         )
                     elif "EXECUTION_ERROR" in out_text:
-                        log_lines.append(f"[FAIL] Test Case #{idx}: Runtime Error: {out_text}")
+                        log_lines.append(
+                            f"[FAIL] Test Case #{idx}: Runtime Error: {out_text}"
+                        )
                     elif err_text:
-                        log_lines.append(f"[FAIL] Test Case #{idx}: Syntax/Runtime Error: {err_text}")
+                        log_lines.append(
+                            f"[FAIL] Test Case #{idx}: Syntax/Runtime Error: {err_text}"
+                        )
                     else:
-                        log_lines.append(f"[FAIL] Test Case #{idx}: Failed ({assertion}) - {out_text}")
+                        log_lines.append(
+                            f"[FAIL] Test Case #{idx}: Failed ({assertion}) - {out_text}"
+                        )
                 except asyncio.TimeoutError:
                     proc.kill()
                     try:
                         await proc.wait()
                     except Exception:
                         pass
-                    log_lines.append(f"[TIMEOUT] Test Case #{idx}: Timed out (> {self.timeout_seconds}s)")
+                    log_lines.append(
+                        f"[TIMEOUT] Test Case #{idx}: Timed out (> {self.timeout_seconds}s)"
+                    )
             except Exception as exc:
                 log_lines.append(f"[FAIL] Test Case #{idx}: System error: {exc}")
             finally:
@@ -175,7 +199,9 @@ except Exception as e:
                     except OSError:
                         pass
 
-        score_percent = round((passed_count / total_count) * 100.0, 2) if total_count > 0 else 0.0
+        score_percent = (
+            round((passed_count / total_count) * 100.0, 2) if total_count > 0 else 0.0
+        )
         is_passed = score_percent >= 80.0
         logs = "\n".join(log_lines)
 

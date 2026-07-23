@@ -91,7 +91,12 @@ class ForumUseCase:
         created_at = utc_now_str()
 
         # Determine if author is Staff/TA
-        is_staff = author_role.lower() in ("ta", "teaching assistant", "instructor", "staff")
+        is_staff = author_role.lower() in (
+            "ta",
+            "teaching assistant",
+            "instructor",
+            "staff",
+        )
 
         reply_entity = ForumReplyEntity(
             id=reply_id,
@@ -108,7 +113,9 @@ class ForumUseCase:
             repo = self._get_repo(session)
             return await repo.create_reply(reply_entity)
 
-    async def vote_post(self, post_id: str, user_id: str = "", is_upvote: bool = True) -> int:
+    async def vote_post(
+        self, post_id: str, user_id: str = "", is_upvote: bool = True
+    ) -> int:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             return await repo.vote_post(post_id, user_id=user_id, is_upvote=is_upvote)

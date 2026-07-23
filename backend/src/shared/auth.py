@@ -20,7 +20,9 @@ class CurrentUser:
     role: str = ""
 
 
-_current_user_ctx: ContextVar[Optional[CurrentUser]] = ContextVar("current_user", default=None)
+_current_user_ctx: ContextVar[Optional[CurrentUser]] = ContextVar(
+    "current_user", default=None
+)
 
 
 def set_current_user(user: Optional[CurrentUser]) -> None:
@@ -38,7 +40,9 @@ def clear_current_user() -> None:
 def require_current_user() -> CurrentUser:
     user = _current_user_ctx.get()
     if not user or not user.id:
-        raise ConnectError(Code.UNAUTHENTICATED, "Vui lòng đăng nhập để thực hiện thao tác này")
+        raise ConnectError(
+            Code.UNAUTHENTICATED, "Vui lòng đăng nhập để thực hiện thao tác này"
+        )
     return user
 
 
@@ -71,4 +75,3 @@ def decode_token(token: str) -> Optional[dict[str, Any]]:
         return jwt.decode(token, settings.JWT_SECRET, algorithms=[JWT_ALGORITHM])
     except (jwt.PyJWTError, Exception):
         return None
-

@@ -121,4 +121,3 @@ class LearningHandler(LearningService):
         return pb.MarkItemCompleteResponse(
             success=success, updated_progress=_to_pb_progress(progress)
         )
-

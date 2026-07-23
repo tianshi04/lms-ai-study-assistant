@@ -71,23 +71,33 @@ auth_interceptor = AuthInterceptor()
 
 catalog_usecase = CatalogUseCase()
 catalog_handler = CatalogHandler(use_case=catalog_usecase)
-catalog_app = CatalogServiceASGIApplication(catalog_handler, interceptors=[auth_interceptor])
+catalog_app = CatalogServiceASGIApplication(
+    catalog_handler, interceptors=[auth_interceptor]
+)
 
 learning_usecase = LearningUseCase()
 learning_handler = LearningHandler(use_case=learning_usecase)
-learning_app = LearningServiceASGIApplication(learning_handler, interceptors=[auth_interceptor])
+learning_app = LearningServiceASGIApplication(
+    learning_handler, interceptors=[auth_interceptor]
+)
 
 identity_usecase = IdentityUseCase()
 identity_handler = IdentityHandler(use_case=identity_usecase)
-identity_app = IdentityServiceASGIApplication(identity_handler, interceptors=[auth_interceptor])
+identity_app = IdentityServiceASGIApplication(
+    identity_handler, interceptors=[auth_interceptor]
+)
 
 certificate_usecase = CertificateUseCase()
 certificate_handler = CertificateHandler(use_case=certificate_usecase)
-certificate_app = CertificateServiceASGIApplication(certificate_handler, interceptors=[auth_interceptor])
+certificate_app = CertificateServiceASGIApplication(
+    certificate_handler, interceptors=[auth_interceptor]
+)
 
 assessment_usecase = AssessmentUseCase()
 assessment_handler = AssessmentHandler(use_case=assessment_usecase)
-assessment_app = AssessmentServiceASGIApplication(assessment_handler, interceptors=[auth_interceptor])
+assessment_app = AssessmentServiceASGIApplication(
+    assessment_handler, interceptors=[auth_interceptor]
+)
 
 forum_usecase = ForumUseCase()
 forum_handler = ForumHandler(use_case=forum_usecase)
@@ -115,4 +125,3 @@ middleware = [
 ]
 
 app = Starlette(routes=routes, middleware=middleware, lifespan=lifespan)
-

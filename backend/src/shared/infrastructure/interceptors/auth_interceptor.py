@@ -28,10 +28,16 @@ class AuthInterceptor(UnaryInterceptor):
         ctx: Any,
     ) -> Any:
         # Check if procedure/method is public
-        method_path = getattr(getattr(ctx, "spec", None), "path", "") or getattr(ctx, "path", "")
+        method_path = getattr(getattr(ctx, "spec", None), "path", "") or getattr(
+            ctx, "path", ""
+        )
         if not method_path:
             method_info = getattr(ctx, "method", None)
-            if method_info and hasattr(method_info, "service_name") and hasattr(method_info, "name"):
+            if (
+                method_info
+                and hasattr(method_info, "service_name")
+                and hasattr(method_info, "name")
+            ):
                 method_path = f"/{method_info.service_name}/{method_info.name}"
 
         if method_path in PUBLIC_ENDPOINTS:
@@ -47,18 +53,25 @@ class AuthInterceptor(UnaryInterceptor):
         )
         auth_header = ""
         if hasattr(metadata, "get"):
-            auth_header = metadata.get("authorization", "") or metadata.get("Authorization", "")
-
+            auth_header = metadata.get("authorization", "") or metadata.get(
+                "Authorization", ""
+            )
 
         if not auth_header:
             raise ConnectError(Code.UNAUTHENTICATED, "Thiếu header Authorization")
 
         raw_header = str(auth_header).strip()
-        token = raw_header[7:].strip() if raw_header.lower().startswith("bearer ") else raw_header
+        token = (
+            raw_header[7:].strip()
+            if raw_header.lower().startswith("bearer ")
+            else raw_header
+        )
 
         payload = decode_token(token)
         if not payload or payload.get("type") != "access":
-            raise ConnectError(Code.UNAUTHENTICATED, "Token xác thực không hợp lệ hoặc đã hết hạn")
+            raise ConnectError(
+                Code.UNAUTHENTICATED, "Token xác thực không hợp lệ hoặc đã hết hạn"
+            )
 
         user_id = payload.get("sub", "")
         if not user_id:

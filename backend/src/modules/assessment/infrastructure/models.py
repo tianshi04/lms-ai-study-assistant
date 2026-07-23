@@ -21,7 +21,9 @@ class QuizSubmissionModel(Base):
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    selected_option_indexes: Mapped[list[int]] = mapped_column(ARRAY(Integer), nullable=False)
+    selected_option_indexes: Mapped[list[int]] = mapped_column(
+        ARRAY(Integer), nullable=False
+    )
     score_percent: Mapped[float] = mapped_column(Float, nullable=False)
     passed: Mapped[bool] = mapped_column(Boolean, nullable=False)
     attempt_number: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
@@ -34,7 +36,9 @@ class QuizCooldownModel(Base):
     id: Mapped[str] = mapped_column(String(128), primary_key=True)  # user_id:item_id
     user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    failed_attempts_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    failed_attempts_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0
+    )
     last_attempt_at: Mapped[str | None] = mapped_column(String(64), nullable=True)
     cooldown_until: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
@@ -71,7 +75,9 @@ class PeerReviewModel(Base):
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     submission_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    reviewer_user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    reviewer_user_id: Mapped[str] = mapped_column(
+        String(64), nullable=False, index=True
+    )
     item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     rubric_criteria_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
     total_score: Mapped[float] = mapped_column(Float, nullable=False)

@@ -13,13 +13,16 @@ from src.modules.assessment.domain.entities import (
     RubricCriteria,
 )
 from src.modules.assessment.domain.repositories import AssessmentRepositoryInterface
-from src.modules.assessment.infrastructure.repository import SQLAlchemyAssessmentRepository
-from src.modules.assessment.infrastructure.sandbox_service import PythonCodeSandboxExecutor
+from src.modules.assessment.infrastructure.repository import (
+    SQLAlchemyAssessmentRepository,
+)
+from src.modules.assessment.infrastructure.sandbox_service import (
+    PythonCodeSandboxExecutor,
+)
 from src.shared.infrastructure.database import async_session_scope
 
 
 class AssessmentUseCase:
-
     def __init__(
         self,
         repository: Optional[AssessmentRepositoryInterface] = None,
@@ -51,7 +54,11 @@ class AssessmentUseCase:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             await repo.save_honor_code(agreement)
-        msg = "Academic Honor Code agreed successfully." if is_agreed else "Academic Honor Code rejected."
+        msg = (
+            "Academic Honor Code agreed successfully."
+            if is_agreed
+            else "Academic Honor Code rejected."
+        )
         return is_agreed, msg
 
     async def submit_graded_quiz(
@@ -68,7 +75,9 @@ class AssessmentUseCase:
                     "passed": False,
                     "attempts_left": 0,
                     "cooldown_seconds_left": 0,
-                    "answer_explanations": ["Academic Honor Code must be agreed before taking quiz."],
+                    "answer_explanations": [
+                        "Academic Honor Code must be agreed before taking quiz."
+                    ],
                 }
 
             # 2. Check Cooldown timer
@@ -83,7 +92,9 @@ class AssessmentUseCase:
                         "passed": False,
                         "attempts_left": 0,
                         "cooldown_seconds_left": seconds_left,
-                        "answer_explanations": [f"Quiz is in 8-hour cooldown period. Please wait {seconds_left}s."],
+                        "answer_explanations": [
+                            f"Quiz is in 8-hour cooldown period. Please wait {seconds_left}s."
+                        ],
                     }
 
             # 3. Grade Quiz (Sample correct answer pattern: Option index 0 for all or matches)
@@ -94,12 +105,18 @@ class AssessmentUseCase:
             explanations: list[str] = []
 
             for idx, corr in enumerate(correct_answers):
-                user_ans = selected_option_indexes[idx] if idx < len(selected_option_indexes) else -1
+                user_ans = (
+                    selected_option_indexes[idx]
+                    if idx < len(selected_option_indexes)
+                    else -1
+                )
                 if user_ans == corr:
                     correct_count += 1
                     explanations.append(f"Q{idx + 1}: Correct!")
                 else:
-                    explanations.append(f"Q{idx + 1}: Incorrect. Selected option {user_ans}, expected option {corr}.")
+                    explanations.append(
+                        f"Q{idx + 1}: Incorrect. Selected option {user_ans}, expected option {corr}."
+                    )
 
             score_percent = round((correct_count / total_questions) * 100.0, 2)
             passed = score_percent >= 80.0
@@ -227,21 +244,30 @@ class AssessmentUseCase:
             repo = await self._get_repo(session)
             await repo.save_peer_submission(submission)
 
-        return sub_id, "Assignment submitted successfully. Please complete 3 peer reviews to view your score."
+        return (
+            sub_id,
+            "Assignment submitted successfully. Please complete 3 peer reviews to view your score.",
+        )
 
     async def get_peer_reviews_to_grade(
         self, user_id: str, item_id: str
     ) -> list[dict[str, Any]]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
-            submissions = await repo.get_peer_submissions_for_item(item_id, exclude_user_id=user_id)
+            submissions = await repo.get_peer_submissions_for_item(
+                item_id, exclude_user_id=user_id
+            )
 
         selected = submissions[:3]
         result: list[dict[str, Any]] = []
 
         default_rubric = [
-            RubricCriteria(criteria_id="c1", title="Code Quality & Structure", max_score=10.0),
-            RubricCriteria(criteria_id="c2", title="Documentation & Comments", max_score=10.0),
+            RubricCriteria(
+                criteria_id="c1", title="Code Quality & Structure", max_score=10.0
+            ),
+            RubricCriteria(
+                criteria_id="c2", title="Documentation & Comments", max_score=10.0
+            ),
             RubricCriteria(criteria_id="c3", title="Test Coverage", max_score=10.0),
         ]
 
@@ -269,7 +295,9 @@ class AssessmentUseCase:
         max_possible = sum(c.max_score for c in graded_criteria) or 1.0
         score_percent = round((total_given / max_possible) * 100.0, 2)
 
-        submission_id = review_id.replace("rev-", "") if review_id.startswith("rev-") else review_id
+        submission_id = (
+            review_id.replace("rev-", "") if review_id.startswith("rev-") else review_id
+        )
 
         async with async_session_scope() as session:
             repo = await self._get_repo(session)

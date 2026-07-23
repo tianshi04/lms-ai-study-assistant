@@ -174,4 +174,3 @@ class CertificateHandler(CertificateService):
         return pb.VerifyCertificatePublicResponse(
             is_valid=True, certificate=_to_pb_certificate(cert)
         )
-

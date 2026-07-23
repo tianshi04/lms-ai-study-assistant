@@ -51,7 +51,9 @@ class ForumHandler(ForumService):
     ) -> pb.ListThreadsResponse:
         current_user = require_current_user()
         threads = await self.use_case.list_threads(
-            course_id=request.course_id, item_id=request.item_id, current_user_id=current_user.id
+            course_id=request.course_id,
+            item_id=request.item_id,
+            current_user_id=current_user.id,
         )
         return pb.ListThreadsResponse(threads=[_to_pb_thread(t) for t in threads])
 
@@ -61,10 +63,14 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.CreateThreadRequest, pb.CreateThreadResponse],
     ) -> pb.CreateThreadResponse:
         if not request.title.strip():
-            raise ConnectError(Code.INVALID_ARGUMENT, "Tiêu đề thảo luận không được để trống")
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Tiêu đề thảo luận không được để trống"
+            )
 
         current_user = require_current_user()
-        author_name = current_user.email.split("@")[0] if current_user.email else "Learner"
+        author_name = (
+            current_user.email.split("@")[0] if current_user.email else "Learner"
+        )
 
         thread = await self.use_case.create_thread(
             course_id=request.course_id,
@@ -83,10 +89,14 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.PostReplyRequest, pb.PostReplyResponse],
     ) -> pb.PostReplyResponse:
         if not request.content.strip():
-            raise ConnectError(Code.INVALID_ARGUMENT, "Nội dung phản hồi không được để trống")
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Nội dung phản hồi không được để trống"
+            )
 
         current_user = require_current_user()
-        author_name = current_user.email.split("@")[0] if current_user.email else "Learner"
+        author_name = (
+            current_user.email.split("@")[0] if current_user.email else "Learner"
+        )
 
         reply = await self.use_case.post_reply(
             thread_id=request.thread_id,
@@ -105,7 +115,9 @@ class ForumHandler(ForumService):
         current_user = require_current_user()
 
         new_count = await self.use_case.vote_post(
-            post_id=request.post_id, user_id=current_user.id, is_upvote=request.is_upvote
+            post_id=request.post_id,
+            user_id=current_user.id,
+            is_upvote=request.is_upvote,
         )
         return pb.VotePostResponse(updated_upvote_count=new_count)
 
@@ -116,13 +128,17 @@ class ForumHandler(ForumService):
     ) -> pb.PinStaffAnswerResponse:
         current_user = require_current_user()
         role = current_user.role
-        
+
         # Verify Instructor / TA permission
         normalized_role = str(role).lower()
         is_staff = any(
             r in normalized_role
             for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
-        ) or role in ("USER_ROLE_INSTRUCTOR", "USER_ROLE_SUPER_ADMIN", "USER_ROLE_PARTNER_ADMIN")
+        ) or role in (
+            "USER_ROLE_INSTRUCTOR",
+            "USER_ROLE_SUPER_ADMIN",
+            "USER_ROLE_PARTNER_ADMIN",
+        )
 
         if not is_staff:
             raise ConnectError(
@@ -134,4 +150,3 @@ class ForumHandler(ForumService):
             reply_id=request.reply_id, ta_user_id=current_user.id
         )
         return pb.PinStaffAnswerResponse(success=success)
-

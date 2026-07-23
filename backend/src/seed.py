@@ -48,7 +48,11 @@ from src.modules.certificate.infrastructure.models import (
     CertificateModel,
     FinancialAidModel,
 )
-from src.modules.forum.infrastructure.models import ForumReplyORM, ForumThreadORM, ForumVoteORM
+from src.modules.forum.infrastructure.models import (
+    ForumReplyORM,
+    ForumThreadORM,
+    ForumVoteORM,
+)
 from src.modules.identity.application.identity_usecase import hash_password
 from src.modules.identity.domain.entities import UserRole
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel, UserModel
@@ -74,9 +78,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
     deeplearning_logo = (
         "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg"
     )
-    meta_logo = (
-        "https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg"
-    )
+    meta_logo = "https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg"
 
     # Course 1: Supervised Machine Learning
     course1 = CourseModel(
@@ -385,9 +387,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
                 return
 
         if reset:
-            logger.info(
-                "[SEED] Truncating ALL database tables for full clean reset..."
-            )
+            logger.info("[SEED] Truncating ALL database tables for full clean reset...")
             tables = [f'"{table.name}"' for table in Base.metadata.sorted_tables]
             if tables:
                 await session.execute(
@@ -616,7 +616,11 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             submission_id="peer_sub_demo_01",
             reviewer_user_id="user_learner_02",
             item_id="item-ml-peer-1",
-            rubric_criteria_json={"problem_formulation": 5, "feature_selection": 5, "model_evaluation": 4},
+            rubric_criteria_json={
+                "problem_formulation": 5,
+                "feature_selection": 5,
+                "model_evaluation": 4,
+            },
             total_score=93.3,
             is_outlier=False,
             created_at="2026-07-22T11:00:00Z",
@@ -626,7 +630,11 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             submission_id="peer_sub_demo_01",
             reviewer_user_id="user_ta_01",
             item_id="item-ml-peer-1",
-            rubric_criteria_json={"problem_formulation": 5, "feature_selection": 5, "model_evaluation": 5},
+            rubric_criteria_json={
+                "problem_formulation": 5,
+                "feature_selection": 5,
+                "model_evaluation": 5,
+            },
             total_score=100.0,
             is_outlier=False,
             created_at="2026-07-22T11:20:00Z",

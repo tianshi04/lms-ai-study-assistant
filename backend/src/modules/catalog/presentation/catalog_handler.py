@@ -259,4 +259,3 @@ class CatalogHandler(CatalogService):
             reading_markdown=request.reading_markdown,
         )
         return pb.CreateLearningItemResponse(item=_to_pb_learning_item(item))
-

@@ -5,13 +5,14 @@ Revises: 972357a021b8
 Create Date: 2026-07-22 13:50:29.539258
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = '4d186f683851'
-down_revision: Union[str, Sequence[str], None] = '972357a021b8'
+revision: str = "4d186f683851"
+down_revision: Union[str, Sequence[str], None] = "972357a021b8"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -32,8 +33,12 @@ def upgrade() -> None:
         is_staff_pinned BOOLEAN NOT NULL DEFAULT false
     );
     """)
-    op.execute("CREATE INDEX IF NOT EXISTS ix_forum_threads_course_id ON forum_threads (course_id);")
-    op.execute("CREATE INDEX IF NOT EXISTS ix_forum_threads_item_id ON forum_threads (item_id);")
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS ix_forum_threads_course_id ON forum_threads (course_id);"
+    )
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS ix_forum_threads_item_id ON forum_threads (item_id);"
+    )
 
     # Create forum_replies table safely
     op.execute("""
@@ -49,9 +54,11 @@ def upgrade() -> None:
         created_at VARCHAR(100) NOT NULL
     );
     """)
-    op.execute("CREATE INDEX IF NOT EXISTS ix_forum_replies_thread_id ON forum_replies (thread_id);")
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS ix_forum_replies_thread_id ON forum_replies (thread_id);"
+    )
 
 
 def downgrade() -> None:
-    op.drop_table('forum_replies')
-    op.drop_table('forum_threads')
+    op.drop_table("forum_replies")
+    op.drop_table("forum_threads")

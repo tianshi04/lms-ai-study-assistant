@@ -11,8 +11,6 @@ class ValueObject:
         return hash(tuple(sorted(self.__dict__.items())))
 
 
-
-
 class Entity:
     """Base class for Entities in DDD."""
 

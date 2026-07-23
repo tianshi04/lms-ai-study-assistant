@@ -48,7 +48,9 @@ async def test_financial_aid_review_flow():
     try:
         usecase = CertificateUseCase()
         valid_essay = " ".join(["word"] * 155)
-        app, err = await usecase.apply_financial_aid("user_faid_test", "course_python", valid_essay)
+        app, err = await usecase.apply_financial_aid(
+            "user_faid_test", "course_python", valid_essay
+        )
         assert err == ""
         assert app is not None
         assert app.status == "PENDING"
@@ -58,7 +60,9 @@ async def test_financial_aid_review_flow():
         assert any(a.id == app.id for a in apps)
 
         # Review & Approve
-        reviewed, r_err = await usecase.review_financial_aid_application(app.id, is_approved=True)
+        reviewed, r_err = await usecase.review_financial_aid_application(
+            app.id, is_approved=True
+        )
         assert r_err == ""
         assert reviewed is not None
         assert reviewed.status == "APPROVED"
