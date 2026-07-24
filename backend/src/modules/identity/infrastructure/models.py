@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy import Boolean, Enum as SQLEnum, Integer, String
+from sqlalchemy import Boolean, Enum as SQLEnum, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.modules.identity.domain.entities import UserRole
@@ -23,6 +23,7 @@ class UserModel(Base):
     enterprise_seat_key: Mapped[Optional[str]] = mapped_column(
         String(128), nullable=True
     )
+    seat_assigned_at: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     is_identity_verified: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False

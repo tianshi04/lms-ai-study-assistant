@@ -1,6 +1,50 @@
-import React from "react";
+import * as React from "react";
 import { Tabs as BaseTabs } from "@base-ui/react/tabs";
 import { cn } from "@/lib/utils";
+
+export const TabsRoot = BaseTabs.Root;
+
+export const TabsList = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<typeof BaseTabs.List>
+>(({ className, ...props }, ref) => (
+  <BaseTabs.List
+    ref={ref}
+    className={cn(
+      "flex border-b border-slate-200 dark:border-slate-800 gap-6",
+      className
+    )}
+    {...props}
+  />
+));
+TabsList.displayName = "TabsList";
+
+export const TabsTrigger = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentPropsWithoutRef<typeof BaseTabs.Tab>
+>(({ className, ...props }, ref) => (
+  <BaseTabs.Tab
+    ref={ref}
+    className={cn(
+      "pb-3 text-sm font-semibold transition-colors border-b-2 -mb-px flex items-center gap-2 cursor-pointer border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 data-[selected]:border-[#0056D2] data-[selected]:text-[#0056D2] dark:data-[selected]:text-blue-400 focus:outline-none",
+      className
+    )}
+    {...props}
+  />
+));
+TabsTrigger.displayName = "TabsTrigger";
+
+export const TabsContent = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<typeof BaseTabs.Panel>
+>(({ className, ...props }, ref) => (
+  <BaseTabs.Panel
+    ref={ref}
+    className={cn("pt-4 focus:outline-none", className)}
+    {...props}
+  />
+));
+TabsContent.displayName = "TabsContent";
 
 export interface TabItem {
   id: string;
@@ -17,21 +61,12 @@ export interface TabsProps {
 
 export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className = "" }) => {
   return (
-    <BaseTabs.Root value={activeTab} onValueChange={(val) => onChange(val as string)}>
-      <BaseTabs.List className={cn("flex border-b border-slate-200 dark:border-slate-800 gap-6", className)}>
+    <TabsRoot value={activeTab} onValueChange={(val) => onChange(val as string)}>
+      <TabsList className={className}>
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab;
           return (
-            <BaseTabs.Tab
-              key={tab.id}
-              value={tab.id}
-              className={cn(
-                "pb-3 text-sm font-semibold transition-colors border-b-2 -mb-px flex items-center gap-2 cursor-pointer",
-                isActive
-                  ? "border-[#0056D2] text-[#0056D2] dark:text-blue-400"
-                  : "border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200"
-              )}
-            >
+            <TabsTrigger key={tab.id} value={tab.id}>
               {tab.label}
               {tab.count !== undefined && (
                 <span
@@ -45,11 +80,10 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
                   {tab.count}
                 </span>
               )}
-            </BaseTabs.Tab>
+            </TabsTrigger>
           );
         })}
-      </BaseTabs.List>
-    </BaseTabs.Root>
+      </TabsList>
+    </TabsRoot>
   );
 };
-

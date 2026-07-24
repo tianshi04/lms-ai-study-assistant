@@ -130,8 +130,13 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             model = res.scalar_one()
 
         now = datetime.now(timezone.utc)
+        total_weeks = len(model.weekly_deadlines)
+        # BR_DEADLINE_001: Course_End_Date = last week's natural deadline from now.
+        # Cap so no deadline exceeds the course's final week boundary.
+        course_end_date = now + timedelta(days=7 * total_weeks)
         for i, d in enumerate(model.weekly_deadlines, start=1):
-            d.due_date = (now + timedelta(days=7 * i)).strftime("%Y-%m-%d")
+            natural_due = now + timedelta(days=7 * i)
+            d.due_date = min(natural_due, course_end_date).strftime("%Y-%m-%d")
             d.status = DeadlineStatus.ON_TRACK
 
         await self.session.commit()

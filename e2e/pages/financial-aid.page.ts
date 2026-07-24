@@ -19,6 +19,10 @@ export class FinancialAidPage {
     await this.page.goto(`/financial-aid?courseId=${courseId}`);
   }
 
+  async gotoInstructorReview() {
+    await this.page.goto('/instructor/financial-aid');
+  }
+
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/financial-aid/);
     await expect(this.page.locator('body')).toBeVisible();
@@ -29,4 +33,27 @@ export class FinancialAidPage {
     await this.essayTextarea.fill(essayText);
     await this.submitButton.click();
   }
+
+  async switchStatusTab(status: 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED') {
+    const tabLabels = {
+      ALL: 'Tất cả đơn',
+      PENDING: 'Chờ xét duyệt (Pending)',
+      APPROVED: 'Đã phê duyệt (Approved)',
+      REJECTED: 'Đã từ chối (Rejected)',
+    };
+    await this.page.getByRole('button', { name: tabLabels[status] }).click();
+  }
+
+  async approveFirstApplication() {
+    const approveBtn = this.page.getByRole('button', { name: /Phê duyệt đơn/i }).first();
+    await expect(approveBtn).toBeVisible({ timeout: 5000 });
+    await approveBtn.click();
+  }
+
+  async rejectFirstApplication() {
+    const rejectBtn = this.page.getByRole('button', { name: /Từ chối đơn/i }).first();
+    await expect(rejectBtn).toBeVisible({ timeout: 5000 });
+    await rejectBtn.click();
+  }
 }
+

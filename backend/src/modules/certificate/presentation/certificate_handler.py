@@ -1,3 +1,5 @@
+import json
+
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
@@ -38,7 +40,7 @@ def _to_pb_certificate(
         issue_date=cert.issue_date,
         verification_url=cert.verification_url,
         qr_code_url=cert.qr_code_url,
-        open_badges_json_ld=cert.open_badges_json_ld,
+        open_badges_json_ld=json.dumps(cert.open_badges_json_ld, ensure_ascii=False),
     )
 
 
@@ -168,11 +170,51 @@ class CertificateHandler(CertificateService):
             pb.VerifyCertificatePublicRequest, pb.VerifyCertificatePublicResponse
         ],
     ) -> pb.VerifyCertificatePublicResponse:
-        is_valid, cert = await self._use_case.verify_certificate_public(
+        is_valid, cert, msg = await self._use_case.verify_certificate_public(
             request.certificate_id
         )
         if not is_valid or not cert:
-            return pb.VerifyCertificatePublicResponse(is_valid=False, certificate=None)
+            return pb.VerifyCertificatePublicResponse(
+                is_valid=False,
+                certificate=_to_pb_certificate(cert) if cert else None,
+                status_message=msg,
+            )
         return pb.VerifyCertificatePublicResponse(
-            is_valid=True, certificate=_to_pb_certificate(cert)
+            is_valid=True, certificate=_to_pb_certificate(cert), status_message=msg
+        )
+
+    async def revoke_certificate(
+        self,
+        request: pb.RevokeCertificateRequest,
+        ctx: RequestContext[pb.RevokeCertificateRequest, pb.RevokeCertificateResponse],
+    ) -> pb.RevokeCertificateResponse:
+        current_user = require_current_user()
+        from src.modules.identity.domain.entities import UserRole
+
+        if current_user.role not in (UserRole.SUPER_ADMIN,):
+            raise ConnectError(
+                Code.PERMISSION_DENIED,
+                "Chỉ Super Admin mới có quyền thu hồi chứng chỉ.",
+            )
+        success, msg = await self._use_case.revoke_certificate(
+            request.certificate_id, request.reason
+        )
+        return pb.RevokeCertificateResponse(success=success, message=msg)
+
+    async def issue_specialization_certificate(
+        self,
+        request: pb.IssueSpecializationCertificateRequest,
+        ctx: RequestContext[
+            pb.IssueSpecializationCertificateRequest,
+            pb.IssueSpecializationCertificateResponse,
+        ],
+    ) -> pb.IssueSpecializationCertificateResponse:
+        current_user = require_current_user()
+        cert, msg = await self._use_case.issue_specialization_certificate(
+            current_user.id, request.specialization_id
+        )
+        if not cert:
+            raise ConnectError(Code.FAILED_PRECONDITION, msg)
+        return pb.IssueSpecializationCertificateResponse(
+            certificate=_to_pb_certificate(cert), message=msg
         )

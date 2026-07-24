@@ -19,6 +19,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
   const [searchCertId, setSearchCertId] = useState(certId);
   const [cert, setCert] = useState<VerifiedCertificate | null>(null);
   const [isValid, setIsValid] = useState<boolean | null>(null);
+  const [statusMsg, setStatusMsg] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -29,6 +30,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
         const client = getRpcClient(CertificateService);
         const res = await client.verifyCertificatePublic({ certificateId: certId });
         setIsValid(res.isValid);
+        setStatusMsg(res.statusMessage || "");
         if (res.certificate) {
           setCert(res.certificate);
         } else {
@@ -37,6 +39,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
       } catch (err) {
         console.error("Lỗi xác thực chứng chỉ:", err);
         setIsValid(false);
+        setStatusMsg("Không thể xác minh chứng chỉ.");
         setCert(null);
       } finally {
         setLoading(false);
@@ -210,10 +213,12 @@ export default function VerifyPage({ params }: VerifyPageProps) {
               </svg>
             </div>
             <h2 className="text-xl font-bold text-rose-700 dark:text-rose-400">
-              Không Tìm Thấy Mã Chứng Chỉ #{certId}
+              {statusMsg.includes("thu hồi") || statusMsg.includes("Revoked")
+                ? `CẢNH BÁO: Chứng chỉ #${certId} Đã Bị Thu Hồi`
+                : `Không Tìm Thấy Mã Chứng Chỉ #${certId}`}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-300 max-w-md mx-auto">
-              Mã chứng chỉ này không tồn tại trong hệ thống hoặc đã bị thu hồi. Vui lòng kiểm tra lại chính xác mã chứng chỉ.
+              {statusMsg || "Mã chứng chỉ này không tồn tại trong hệ thống hoặc đã bị thu hồi do vi phạm quy chế liêm chính học thuật."}
             </p>
             <button
               onClick={() => {

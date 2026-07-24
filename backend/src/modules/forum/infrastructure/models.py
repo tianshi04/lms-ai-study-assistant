@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.shared.infrastructure.database import Base
@@ -14,7 +14,7 @@ class ForumThreadORM(Base):
     __tablename__ = "forum_threads"
 
     id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+        String(64), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     course_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     item_id: Mapped[str] = mapped_column(
@@ -46,10 +46,10 @@ class ForumReplyORM(Base):
     __tablename__ = "forum_replies"
 
     id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+        String(64), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     thread_id: Mapped[str] = mapped_column(
-        String(36),
+        String(64),
         ForeignKey("forum_threads.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -75,12 +75,15 @@ class ForumReplyORM(Base):
 
 class ForumVoteORM(Base):
     __tablename__ = "forum_votes"
+    __table_args__ = (
+        UniqueConstraint("user_id", "post_id", name="uq_forum_user_post_vote"),
+    )
 
     id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+        String(64), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     user_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    post_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    post_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     created_at: Mapped[str] = mapped_column(
         String(100), nullable=False, default=utc_now_str
     )

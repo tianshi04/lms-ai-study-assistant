@@ -1,4 +1,6 @@
-from sqlalchemy import Integer, String, Text
+from typing import Any, Optional
+
+from sqlalchemy import Boolean, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.shared.infrastructure.database import Base
@@ -13,7 +15,7 @@ class FinancialAidModel(Base):
     essay_150_words: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
     review_deadline_days_left: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=14
+        Integer, nullable=False, default=15
     )
 
 
@@ -32,4 +34,9 @@ class CertificateModel(Base):
     issue_date: Mapped[str] = mapped_column(String(64), nullable=False)
     verification_url: Mapped[str] = mapped_column(String(512), nullable=False)
     qr_code_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
-    open_badges_json_ld: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    open_badges_json_ld: Mapped[dict[str, Any]] = mapped_column(
+        JSON, nullable=False, default=dict
+    )
+    is_revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    revoked_reason: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    specialization_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)

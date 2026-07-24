@@ -1,4 +1,3 @@
-import json
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
@@ -6,7 +5,7 @@ from typing import Optional
 from sqlalchemy import select
 
 from src.modules.assessment.infrastructure.models import QuizSubmissionModel
-from src.modules.catalog.infrastructure.models import CourseModel
+from src.modules.catalog.infrastructure.models import CourseModel, SpecializationModel
 from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
     VerifiedCertificate,
@@ -36,12 +35,12 @@ class CertificateUseCase:
             repo = CertificateRepository(session)
             existing = await repo.get_financial_aid(user_id, course_id)
             if existing:
-                if existing.status in ("PENDING", "APPROVED"):
+                if existing.status in ("PENDING", "APPROVED", "AUTO_APPROVED"):
                     return existing, ""
                 # If existing status is REJECTED, allow re-applying by updating essay & resetting to PENDING
                 existing.essay_150_words = essay_150_words
                 existing.status = "PENDING"
-                existing.review_deadline_days_left = 14
+                existing.review_deadline_days_left = 15
                 saved = await repo.save_financial_aid(existing)
                 return saved, ""
 
@@ -52,7 +51,7 @@ class CertificateUseCase:
                 course_id=course_id,
                 essay_150_words=essay_150_words,
                 status="PENDING",
-                review_deadline_days_left=14,
+                review_deadline_days_left=15,
             )
 
             saved = await repo.save_financial_aid(application)
@@ -62,7 +61,7 @@ class CertificateUseCase:
         self, app: Optional[FinancialAidApplication], repo: CertificateRepository
     ) -> Optional[FinancialAidApplication]:
         if app and app.status == "PENDING" and app.review_deadline_days_left <= 0:
-            app.status = "APPROVED"
+            app.status = "AUTO_APPROVED"
             app.review_deadline_days_left = 0
             return await repo.save_financial_aid(app)
         return app
@@ -210,18 +209,129 @@ class CertificateUseCase:
                 issue_date=issue_date,
                 verification_url=verification_url,
                 qr_code_url=qr_code_url,
-                open_badges_json_ld=json.dumps(open_badges, ensure_ascii=False),
+                open_badges_json_ld=open_badges,
             )
 
             saved_cert = await repo.save_certificate(cert)
             return saved_cert, ""
 
-    async def verify_certificate_public(
-        self, certificate_id: str
-    ) -> tuple[bool, Optional[VerifiedCertificate]]:
+    async def revoke_certificate(
+        self, certificate_id: str, reason: str = ""
+    ) -> tuple[bool, str]:
+        """Revokes a certificate by setting is_revoked=True (BR_CERT_004).
+        Only Super Admin should call this endpoint.
+        """
         async with async_session_scope() as session:
             repo = CertificateRepository(session)
             cert = await repo.get_certificate_by_id(certificate_id)
             if not cert:
-                return False, None
-            return True, cert
+                return False, f"Không tìm thấy chứng chỉ '{certificate_id}'."
+            if cert.is_revoked:
+                return False, "Chứng chỉ này đã bị thu hồi trước đó."
+            cert.is_revoked = True
+            cert.revoked_reason = reason or "Vi phạm quy chế liêm chính học thuật"
+            await repo.save_certificate(cert)
+            return True, f"Đã thu hồi chứng chỉ '{certificate_id}' thành công."
+
+    async def verify_certificate_public(
+        self, certificate_id: str
+    ) -> tuple[bool, Optional[VerifiedCertificate], str]:
+        """Public certificate verification endpoint (BR_CERT_002, BR_CERT_004).
+        Returns (is_valid, certificate, status_message).
+        """
+        async with async_session_scope() as session:
+            repo = CertificateRepository(session)
+            cert = await repo.get_certificate_by_id(certificate_id)
+            if not cert:
+                return False, None, "Không tìm thấy chứng chỉ hợp lệ trên hệ thống."
+            if cert.is_revoked:
+                return (
+                    False,
+                    cert,
+                    "Chứng chỉ này đã bị thu hồi do vi phạm quy chế liêm chính học thuật của nền tảng (Certificate Revoked).",
+                )
+            return True, cert, "Chứng chỉ hợp lệ và đã được xác minh thành công."
+
+    async def issue_specialization_certificate(
+        self, user_id: str, specialization_id: str
+    ) -> tuple[Optional[VerifiedCertificate], str]:
+        """Auto-issue a Specialization Verified Certificate when learner completes
+        100% of all component courses in the specialization (BR_CERT_005).
+
+        Returns (certificate, error_message). certificate is None on failure.
+        """
+        async with async_session_scope() as session:
+            repo = CertificateRepository(session)
+
+            # 1. Load specialization to get component course_ids
+            spec_stmt = select(SpecializationModel).where(
+                SpecializationModel.id == specialization_id
+            )
+            spec_res = await session.execute(spec_stmt)
+            spec_model = spec_res.scalar_one_or_none()
+            if not spec_model:
+                return None, f"Không tìm thấy Specialization '{specialization_id}'."
+
+            course_ids: list[str] = spec_model.course_ids or []
+            if not course_ids:
+                return None, "Specialization chưa có khóa học thành phần."
+
+            # 2. Check that learner already has a valid individual cert for every course
+            existing_certs = await repo.get_certificates_by_user(user_id)
+            completed_course_ids = {c.course_id for c in existing_certs if c.course_id}
+            missing = [cid for cid in course_ids if cid not in completed_course_ids]
+            if missing:
+                return (
+                    None,
+                    f"Học viên chưa hoàn thành {len(missing)}/{len(course_ids)} khóa học thành phần.",
+                )
+
+            # 3. Idempotency: return existing specialization cert if already issued
+            existing_spec_cert = await repo.get_certificate(
+                user_id, f"spec:{specialization_id}"
+            )
+            if existing_spec_cert:
+                return existing_spec_cert, ""
+
+            # 4. Load user info for cert metadata
+            user_stmt = select(UserModel).where(UserModel.id == user_id)
+            user_res = await session.execute(user_stmt)
+            user_model = user_res.scalar_one_or_none()
+            learner_name = user_model.full_name if user_model else "Học viên"
+
+            # 5. Build and save specialization certificate
+            cert_id = f"CERT-SPEC-{uuid.uuid4().hex[:8].upper()}"
+            issue_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            verification_url = f"/verify/{cert_id}"
+            qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={cert_id}"
+
+            open_badges = {
+                "@context": "https://w3id.org/openbadges/v2",
+                "type": "BadgeClass",
+                "id": cert_id,
+                "name": f"Specialization Certificate: {spec_model.title}",
+                "description": f"Hoàn thành toàn bộ {len(course_ids)} khóa học trong chuỗi chuyên ngành.",
+                "image": qr_code_url,
+                "criteria": {"narrative": f"/specializations/{specialization_id}"},
+                "issuer": {
+                    "name": spec_model.partner_name,
+                    "url": spec_model.partner_logo_url,
+                },
+            }
+
+            spec_cert = VerifiedCertificate(
+                certificate_id=cert_id,
+                user_id=user_id,
+                course_id=f"spec:{specialization_id}",
+                learner_name=learner_name,
+                course_title=spec_model.title,
+                partner_name=spec_model.partner_name,
+                partner_logo_url=spec_model.partner_logo_url,
+                issue_date=issue_date,
+                verification_url=verification_url,
+                qr_code_url=qr_code_url,
+                open_badges_json_ld=open_badges,
+                specialization_id=specialization_id,
+            )
+            saved = await repo.save_certificate(spec_cert)
+            return saved, ""

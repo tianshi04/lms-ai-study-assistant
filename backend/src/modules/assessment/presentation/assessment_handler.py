@@ -153,3 +153,32 @@ class AssessmentHandler(AssessmentService):
             appeal_reason=request.appeal_reason,
         )
         return pb.SubmitGradeAppealResponse(success=success, appeal_status=status)
+
+    async def report_peer_review(
+        self,
+        request: pb.ReportPeerReviewRequest,
+        ctx: RequestContext[pb.ReportPeerReviewRequest, pb.ReportPeerReviewResponse],
+    ) -> pb.ReportPeerReviewResponse:
+        current_user = require_current_user()
+        success, msg = await self.use_case.report_peer_review(
+            user_id=current_user.id,
+            review_id=request.review_id,
+            report_reason=request.report_reason,
+        )
+        return pb.ReportPeerReviewResponse(success=success, message=msg)
+
+    async def regrade_peer_submission_by_staff(
+        self,
+        request: pb.RegradePeerSubmissionByStaffRequest,
+        ctx: RequestContext[
+            pb.RegradePeerSubmissionByStaffRequest,
+            pb.RegradePeerSubmissionByStaffResponse,
+        ],
+    ) -> pb.RegradePeerSubmissionByStaffResponse:
+        current_user = require_current_user()
+        success, msg = await self.use_case.regrade_peer_submission_by_staff(
+            submission_id=request.submission_id,
+            staff_user_id=current_user.id,
+            ta_score=request.ta_score,
+        )
+        return pb.RegradePeerSubmissionByStaffResponse(success=success, message=msg)

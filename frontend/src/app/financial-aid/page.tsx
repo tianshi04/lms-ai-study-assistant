@@ -6,7 +6,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { getRpcClient } from "@/lib/connect_client";
 import { CertificateService, type FinancialAidApplication } from "@/gen/certificate/v1/certificate_pb";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
-import { useForm } from "@tanstack/react-form";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 
 function FinancialAidContent() {

@@ -68,6 +68,10 @@ class PeerAssignmentSubmissionModel(Base):
     submission_url: Mapped[str] = mapped_column(Text, nullable=False, default="")
     text_content: Mapped[str] = mapped_column(Text, nullable=False, default="")
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+    final_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    graded_by_staff: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
 
 
 class PeerReviewModel(Base):

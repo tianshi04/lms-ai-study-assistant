@@ -44,4 +44,12 @@ export class ForumPage {
     await this.replyInput.fill(replyContent);
     await this.submitReplyButton.click();
   }
+
+  async upvoteReply() {
+    const upvoteBtn = this.page.locator('button:has-text("▲"), button:has-text("Upvote")').first();
+    if (await upvoteBtn.isVisible()) {
+      await upvoteBtn.click();
+    }
+  }
 }
+

@@ -22,10 +22,8 @@ def solution(arr):
 
 export function AutoGradedLabRunner({
   itemId,
-  userId,
   onComplete,
 }: AutoGradedLabRunnerProps) {
-  const effectiveUserId = userId || (typeof window !== "undefined" ? localStorage.getItem("user_id") || "user-demo-1" : "user-demo-1");
   const [sourceCode, setSourceCode] = useState(DEFAULT_PYTHON_STARTER);
   const [language, setLanguage] = useState("python");
   const [isRunning, setIsRunning] = useState(false);
