@@ -7,8 +7,17 @@ from sqlalchemy import select
 from src.modules.assessment.infrastructure.models import (
     GradeAppealModel,
     QuizSubmissionModel,
+    LabSubmissionModel,
+    PeerAssignmentSubmissionModel,
 )
-from src.modules.catalog.infrastructure.models import CourseModel, SpecializationModel
+from src.modules.catalog.domain.entities import ItemType
+from src.modules.catalog.infrastructure.models import (
+    CourseModel,
+    SpecializationModel,
+    LearningItemModel,
+    LessonModel,
+    WeekModuleModel,
+)
 from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
     VerifiedCertificate,
@@ -136,24 +145,66 @@ class CertificateUseCase:
                     f"Chưa đủ điều kiện nhận chứng chỉ: Tiến độ khóa học phải đạt 100% (Hiện tại {current_percent}%).",
                 )
 
-            # BR_CERT_001 (Vế 2): Check if all attempted Graded Quizzes have max score >= 80%
+            # BR_CERT_001 (Vế 2): Check if all REQUIRED Graded Items have max score >= 80%
+            graded_types = [
+                ItemType.GRADED_QUIZ,
+                ItemType.AUTO_GRADED_LAB,
+                ItemType.PEER_REVIEW,
+            ]
+            req_stmt = (
+                select(LearningItemModel)
+                .join(LessonModel, LearningItemModel.lesson_id == LessonModel.id)
+                .join(WeekModuleModel, LessonModel.week_module_id == WeekModuleModel.id)
+                .where(WeekModuleModel.course_id == course_id)
+                .where(LearningItemModel.type.in_(graded_types))
+            )
+            req_res = await session.execute(req_stmt)
+            required_items = req_res.scalars().all()
+
+            # Fetch all user submissions
             quiz_stmt = select(QuizSubmissionModel).where(
                 QuizSubmissionModel.user_id == user_id
             )
             quiz_res = await session.execute(quiz_stmt)
-            submissions = quiz_res.scalars().all()
+
+            lab_stmt = select(LabSubmissionModel).where(
+                LabSubmissionModel.user_id == user_id
+            )
+            lab_res = await session.execute(lab_stmt)
+
+            peer_stmt = select(PeerAssignmentSubmissionModel).where(
+                PeerAssignmentSubmissionModel.user_id == user_id
+            )
+            peer_res = await session.execute(peer_stmt)
 
             item_max_scores: dict[str, float] = {}
-            for s in submissions:
+            for s in quiz_res.scalars().all():
                 item_max_scores[s.item_id] = max(
-                    item_max_scores.get(s.item_id, 0.0), s.score_percent
+                    item_max_scores.get(s.item_id, 0.0),
+                    getattr(s, "score_percent", 0.0),
+                )
+            for s in lab_res.scalars().all():
+                item_max_scores[s.item_id] = max(
+                    item_max_scores.get(s.item_id, 0.0),
+                    getattr(s, "score_percent", 0.0),
+                )
+            for s in peer_res.scalars().all():
+                item_max_scores[s.item_id] = max(
+                    item_max_scores.get(s.item_id, 0.0),
+                    getattr(s, "final_score", 0.0) or 0.0,
                 )
 
-            for item_id, max_score in item_max_scores.items():
+            for req_item in required_items:
+                max_score = item_max_scores.get(req_item.id)
+                if max_score is None:
+                    return (
+                        None,
+                        f"Chưa đủ điều kiện nhận chứng chỉ: Bạn chưa hoàn thành bài tập bắt buộc '{req_item.title}'.",
+                    )
                 if max_score < 80.0:
                     return (
                         None,
-                        f"Chưa đủ điều kiện nhận chứng chỉ: Bài thi '{item_id}' chưa đạt điểm tối thiểu >= 80% (Hiện tại {max_score}%).",
+                        f"Chưa đủ điều kiện nhận chứng chỉ: Bài tập '{req_item.title}' chưa đạt điểm tối thiểu >= 80% (Hiện tại {max_score}%).",
                     )
 
             # BR_PEER_005 Report Lock Rule: Check if user has any pending grade appeals or reported peer reviews
