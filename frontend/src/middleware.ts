@@ -23,7 +23,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Protect general authenticated routes
-  const authRoutes = ["/auth/profile", "/financial-aid", "/verify-portal", "/assessments"];
+  const authRoutes = ["/auth/profile", "/financial-aid", "/verify-portal", "/assessments", "/learn"];
   if (authRoutes.some(r => path.startsWith(r))) {
     if (!token) {
       return NextResponse.redirect(new URL("/auth/login?redirect=" + encodeURIComponent(path), request.url));
@@ -48,6 +48,7 @@ export const config = {
     "/financial-aid",
     "/verify-portal",
     "/assessments",
+    "/learn/:path*",
     "/auth/login",
     "/auth/register"
   ],

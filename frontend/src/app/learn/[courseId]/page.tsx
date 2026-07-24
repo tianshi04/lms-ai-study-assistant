@@ -50,12 +50,7 @@ export default function CoursePlayerPage() {
   useEffect(() => {
     if (!courseId) return;
 
-    // Strict Auth Guard Check
-    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-    if (!token) {
-      router.push(`/auth/login?redirect=/learn/${courseId}`);
-      return;
-    }
+    // Auth is handled by Next.js Middleware. If this page loads, the user is authenticated.
 
     async function loadData() {
       try {
