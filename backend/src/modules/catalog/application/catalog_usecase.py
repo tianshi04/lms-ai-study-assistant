@@ -213,7 +213,14 @@ class CatalogUseCase:
         self, course_id: str, page_size: int = 10, page_token: str = ""
     ):
         async with async_session_scope() as session:
+            course_stmt = select(CourseModel).where(
+                (CourseModel.id == course_id) | (CourseModel.slug == course_id)
+            )
+            course_res = await session.execute(course_stmt)
+            course_model = course_res.scalar_one_or_none()
+            real_course_id = course_model.id if course_model else course_id
+
             repo = self.repo_factory(session)
             return await repo.list_course_reviews(
-                course_id=course_id, page_size=page_size, page_token=page_token
+                course_id=real_course_id, page_size=page_size, page_token=page_token
             )

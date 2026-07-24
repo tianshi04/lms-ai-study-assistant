@@ -108,13 +108,21 @@ class CertificateUseCase:
         self, user_id: str, course_id: str
     ) -> tuple[Optional[VerifiedCertificate], str]:
         async with async_session_scope() as session:
+            # Resolve real_course_id from id or slug
+            course_stmt = select(CourseModel).where(
+                (CourseModel.id == course_id) | (CourseModel.slug == course_id)
+            )
+            course_res = await session.execute(course_stmt)
+            course_model = course_res.scalar_one_or_none()
+            real_course_id = course_model.id if course_model else course_id
+
             repo = CertificateRepository(session)
-            cert = await repo.get_certificate(user_id, course_id)
+            cert = await repo.get_certificate(user_id, real_course_id)
             if cert:
                 return cert, ""
 
             # BR_CERT_001: Check if user has reached 100% progress in course
-            progress_key = f"{user_id}:{course_id}"
+            progress_key = f"{user_id}:{real_course_id}"
             prog_stmt = select(LearningProgressModel).where(
                 LearningProgressModel.id == progress_key
             )
@@ -175,9 +183,12 @@ class CertificateUseCase:
             learner_name = user_model.full_name if user_model else "Học viên Coursera"
 
             # Fetch real course details
-            course_stmt = select(CourseModel).where(CourseModel.id == course_id)
+            course_stmt = select(CourseModel).where(
+                (CourseModel.id == course_id) | (CourseModel.slug == course_id)
+            )
             course_res = await session.execute(course_stmt)
             course_model = course_res.scalar_one_or_none()
+            real_course_id = course_model.id if course_model else course_id
 
             course_title = (
                 course_model.title if course_model else "Specialization Course"
@@ -232,7 +243,7 @@ class CertificateUseCase:
             cert = VerifiedCertificate(
                 certificate_id=cert_id,
                 user_id=user_id,
-                course_id=course_id,
+                course_id=real_course_id,
                 learner_name=learner_name,
                 course_title=course_title,
                 partner_name=partner_name,
