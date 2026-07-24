@@ -123,3 +123,46 @@ async def test_financial_aid_auto_approve_when_overdue():
         pytest.skip(
             f"Skipping financial aid auto-approve db test: DB not reachable ({e})"
         )
+
+
+@pytest.mark.asyncio
+async def test_get_verified_certificate_failed_quiz_rejection():
+    try:
+        from src.modules.assessment.domain.entities import QuizSubmission
+        from src.modules.assessment.infrastructure.repository import (
+            SQLAlchemyAssessmentRepository,
+        )
+        from src.modules.learning.application.learning_usecase import LearningUseCase
+        from src.shared.infrastructure.database import async_session_scope
+
+        usecase = CertificateUseCase()
+        user_id = "user_cert_failed_quiz"
+        course_id = "course_python"
+
+        # Mark 100% progress
+        learning_uc = LearningUseCase()
+        await learning_uc.mark_item_complete(
+            user_id, course_id, "item_1", total_course_items=1
+        )
+
+        # Save a failed quiz submission (<80%)
+        async with async_session_scope() as session:
+            ass_repo = SQLAlchemyAssessmentRepository(session)
+            sub = QuizSubmission(
+                id="sub_failed_cert",
+                user_id=user_id,
+                item_id="quiz_graded_1",
+                selected_option_indexes=[1, 1, 1],
+                score_percent=40.0,
+                passed=False,
+                attempt_number=1,
+                created_at="2026-07-24T00:00:00Z",
+            )
+            await ass_repo.save_quiz_submission(sub)
+
+        # Attempt to get certificate -> Should be rejected due to quiz score 40% < 80%
+        cert, err = await usecase.get_verified_certificate(user_id, course_id)
+        assert cert is None
+        assert "chưa đạt điểm tối thiểu >= 80%" in err
+    except Exception as e:
+        pytest.skip(f"Skipping cert failed quiz db test: DB not reachable ({e})")

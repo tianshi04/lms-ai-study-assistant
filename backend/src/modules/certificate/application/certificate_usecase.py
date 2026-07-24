@@ -5,6 +5,7 @@ from typing import Optional
 
 from sqlalchemy import select
 
+from src.modules.assessment.infrastructure.models import QuizSubmissionModel
 from src.modules.catalog.infrastructure.models import CourseModel
 from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
@@ -124,6 +125,26 @@ class CertificateUseCase:
                     None,
                     f"Chưa đủ điều kiện nhận chứng chỉ: Tiến độ khóa học phải đạt 100% (Hiện tại {current_percent}%).",
                 )
+
+            # BR_CERT_001 (Vế 2): Check if all attempted Graded Quizzes have max score >= 80%
+            quiz_stmt = select(QuizSubmissionModel).where(
+                QuizSubmissionModel.user_id == user_id
+            )
+            quiz_res = await session.execute(quiz_stmt)
+            submissions = quiz_res.scalars().all()
+
+            item_max_scores: dict[str, float] = {}
+            for s in submissions:
+                item_max_scores[s.item_id] = max(
+                    item_max_scores.get(s.item_id, 0.0), s.score_percent
+                )
+
+            for item_id, max_score in item_max_scores.items():
+                if max_score < 80.0:
+                    return (
+                        None,
+                        f"Chưa đủ điều kiện nhận chứng chỉ: Bài thi '{item_id}' chưa đạt điểm tối thiểu >= 80% (Hiện tại {max_score}%).",
+                    )
 
             # Fetch real user details
             user_stmt = select(UserModel).where(UserModel.id == user_id)
