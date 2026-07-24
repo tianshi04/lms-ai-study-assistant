@@ -297,6 +297,7 @@ class CatalogHandler(CatalogService):
                 course_id=request.course_id,
                 rating_stars=request.rating_stars,
                 comment_text=request.comment_text,
+                user_role=current_user.role,
             )
             return pb.SubmitCourseReviewResponse(review=_to_pb_review(review))
         except ValueError as e:

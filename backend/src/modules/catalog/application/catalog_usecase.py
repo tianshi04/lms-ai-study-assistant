@@ -151,34 +151,46 @@ class CatalogUseCase:
         course_id: str,
         rating_stars: int,
         comment_text: str,
+        user_role: str = "",
     ):
         if rating_stars < 1 or rating_stars > 5:
             raise ValueError("Rating stars must be between 1 and 5.")
 
-        # BR_REVIEW_003: Sanitize comment_text against Stored XSS using standard library html.escape
-        clean_comment = html.escape(comment_text.strip())[:1000]
+        # BR_REVIEW_003: Fail-fast 2000 char validation and safe Stored XSS sanitization
+        trimmed_comment = comment_text.strip()
+        if len(trimmed_comment) > 2000:
+            raise ValueError(
+                "Văn bản nhận xét không được vượt quá 2000 ký tự (BR_REVIEW_003)."
+            )
+        clean_comment = html.escape(trimmed_comment)
 
         async with async_session_scope() as session:
-            # BR_REVIEW_004: Check if user is instructor of the course
+            # Resolve real_course_id from id or slug
             course_stmt = select(CourseModel).where(
                 (CourseModel.id == course_id) | (CourseModel.slug == course_id)
             )
             course_res = await session.execute(course_stmt)
             course_model = course_res.scalar_one_or_none()
+            real_course_id = course_model.id if course_model else course_id
 
-            if course_model and course_model.instructor_names:
-                if any(
-                    user_name and user_name.lower() in inst.lower()
-                    for inst in course_model.instructor_names
-                ):
-                    raise ValueError(
-                        "Giảng viên không được phép tự gửi đánh giá cho khóa học của mình (BR_REVIEW_004)."
-                    )
+            # BR_REVIEW_004: Check if user is instructor or TA of the course
+            is_instructor_role = any(
+                r in user_role.lower() for r in ["instructor", "ta"]
+            )
+            is_instructor_id_or_name = user_id.startswith("inst_") or (
+                course_model
+                and course_model.instructor_names
+                and user_name in course_model.instructor_names
+            )
+            if is_instructor_role or is_instructor_id_or_name:
+                raise ValueError(
+                    "Giảng viên không được phép tự gửi đánh giá cho khóa học của mình (BR_REVIEW_004)."
+                )
 
             # BR_REVIEW_001: Check if user completed 100% of the course
             prog_stmt = select(LearningProgressModel).where(
                 LearningProgressModel.user_id == user_id,
-                LearningProgressModel.course_id == course_id,
+                LearningProgressModel.course_id == real_course_id,
             )
             prog_res = await session.execute(prog_stmt)
             prog_model = prog_res.scalar_one_or_none()
@@ -192,7 +204,7 @@ class CatalogUseCase:
             return await repo.submit_course_review(
                 user_id=user_id,
                 user_name=user_name,
-                course_id=course_id,
+                course_id=real_course_id,
                 rating_stars=rating_stars,
                 comment_text=clean_comment,
             )
