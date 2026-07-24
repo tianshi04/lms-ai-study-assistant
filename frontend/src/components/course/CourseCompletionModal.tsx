@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
+import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 
 export interface CourseCompletionModalProps {
   isOpen: boolean;
@@ -19,7 +20,6 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
   onClose,
   courseId,
   courseTitle,
-  certificateId = "CERT-DEMO-2026",
 }) => {
   const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -30,6 +30,11 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Certificate Fetching States
+  const [realCertId, setRealCertId] = useState<string | null>(null);
+  const [certError, setCertError] = useState<string | null>(null);
+  const [loadingCert, setLoadingCert] = useState<boolean>(true);
 
   // Confetti / Fireworks Canvas Effect
   useEffect(() => {
@@ -99,6 +104,58 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
     };
   }, [isOpen]);
 
+  // Fetch verified certificate dynamically
+  useEffect(() => {
+    if (!isOpen || !courseId) return;
+
+    async function fetchCert() {
+      setLoadingCert(true);
+      setCertError(null);
+      try {
+        const client = getRpcClient(CertificateService);
+        const res = await client.getVerifiedCertificate({ courseId });
+        if (res.certificate?.certificateId) {
+          setRealCertId(res.certificate.certificateId);
+        } else {
+          setCertError("Không thể phát hành chứng chỉ.");
+        }
+      } catch (err: unknown) {
+        console.error("Failed to load certificate in modal:", err);
+        const msg = err instanceof Error ? err.message : "Chưa đủ điều kiện nhận chứng chỉ.";
+        setCertError(msg);
+      } finally {
+        setLoadingCert(false);
+      }
+    }
+    fetchCert();
+  }, [isOpen, courseId]);
+
+  // Fetch existing review if any
+  useEffect(() => {
+    if (!isOpen || !courseId) return;
+
+    const activeUserId = typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
+    if (!activeUserId) return;
+
+    async function checkExistingReview() {
+      try {
+        const client = getRpcClient(CatalogService);
+        const res = await client.listCourseReviews({ courseId });
+        const myReview = res.reviews.find((r) => r.userId === activeUserId);
+        if (myReview) {
+          setRating(myReview.ratingStars);
+          setComment(myReview.commentText);
+          setSubmitted(true);
+        } else {
+          setSubmitted(false);
+        }
+      } catch (err) {
+        console.error("Failed to check existing review:", err);
+      }
+    }
+    checkExistingReview();
+  }, [isOpen, courseId]);
+
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!courseId) return;
@@ -125,7 +182,9 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
 
   const handleClaimCertificate = () => {
     onClose();
-    router.push(`/verify/${certificateId}`);
+    if (realCertId) {
+      router.push(`/verify/${realCertId}`);
+    }
   };
 
   return (
@@ -150,19 +209,31 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
           {courseTitle}
         </p>
 
-        <button
-          onClick={handleClaimCertificate}
-          className="relative z-20 mt-5 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm shadow-lg hover:shadow-amber-400/25 transition-all transform active:scale-95 cursor-pointer"
-        >
-          <svg className="w-5 h-5 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <span>Nhận chứng chỉ xác minh</span>
-        </button>
+        {loadingCert ? (
+          <div className="relative z-20 mt-5 mx-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/15 text-slate-100 text-xs font-semibold backdrop-blur-sm border border-white/10">
+            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <span>Đang tải chứng chỉ...</span>
+          </div>
+        ) : certError ? (
+          <div className="relative z-20 mt-5 mx-auto max-w-sm p-3.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-100 text-xs text-left backdrop-blur-sm">
+            <span className="font-bold block mb-1">⚠️ Chưa đủ điều kiện nhận chứng chỉ</span>
+            <span className="opacity-90 leading-relaxed block">{certError}</span>
+          </div>
+        ) : (
+          <button
+            onClick={handleClaimCertificate}
+            className="relative z-20 mt-5 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm shadow-lg hover:shadow-amber-400/25 transition-all transform active:scale-95 cursor-pointer"
+          >
+            <svg className="w-5 h-5 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span>Nhận chứng chỉ xác minh</span>
+          </button>
+        )}
       </div>
 
       {/* Course Review & Rating Section */}
@@ -185,6 +256,18 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
             <p className="text-xs text-emerald-600 dark:text-emerald-400">
               Đánh giá {rating}★ của bạn đã được cập nhật thành công vào hệ thống.
             </p>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setSubmitted(false)}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                </svg>
+                <span>Chỉnh sửa đánh giá của bạn</span>
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmitReview} className="space-y-4">
@@ -206,9 +289,8 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                       className="p-1 cursor-pointer transition-transform hover:scale-110 focus:outline-none"
                     >
                       <svg
-                        className={`w-8 h-8 transition-colors ${
-                          active ? "text-amber-400 fill-amber-400" : "text-slate-300 dark:text-slate-700"
-                        }`}
+                        className={`w-8 h-8 transition-colors ${active ? "text-amber-400 fill-amber-400" : "text-slate-300 dark:text-slate-700"
+                          }`}
                         viewBox="0 0 24 24"
                         stroke="currentColor"
                         strokeWidth={1.5}

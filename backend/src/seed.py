@@ -442,6 +442,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=learner@coursera.ai",
             enterprise_seat_key="ENT-DEMO-2026-X99",
             password_hash=default_pw_hash,
+            is_identity_verified=True,
         )
 
         learner_user2 = UserModel(
@@ -452,6 +453,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=learner2@coursera.ai",
             enterprise_seat_key="ENT-UNI-HCMUT-2026",
             password_hash=default_pw_hash,
+            is_identity_verified=True,
         )
 
         learner_user3 = UserModel(
@@ -462,6 +464,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=learner3@coursera.ai",
             enterprise_seat_key="",
             password_hash=default_pw_hash,
+            is_identity_verified=True,
         )
 
         instructor_user = UserModel(

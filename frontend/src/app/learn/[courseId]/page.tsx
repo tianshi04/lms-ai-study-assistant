@@ -75,6 +75,18 @@ export default function CoursePlayerPage() {
         const progressRes = await learningClient.getProgress({ courseId });
         setProgress(progressRes.progress ?? null);
 
+        if (progressRes.progress && progressRes.progress.overallProgressPercent >= 100) {
+          try {
+            const certClient = getRpcClient(CertificateService);
+            const certRes = await certClient.getVerifiedCertificate({ courseId });
+            if (certRes.certificate?.certificateId) {
+              setCertificateId(certRes.certificate.certificateId);
+            }
+          } catch (err) {
+            console.error("Failed to load certificate on load:", err);
+          }
+        }
+
         const notesRes = await learningClient.listPersonalNotes({ courseId });
         setNotes(notesRes.notes);
       } catch (err) {
@@ -111,10 +123,11 @@ export default function CoursePlayerPage() {
             if (certRes.certificate?.certificateId) {
               setCertificateId(certRes.certificate.certificateId);
             } else {
-              setCertificateId(`CERT-${courseId.replace("course-", "").toUpperCase()}`);
+              setCertificateId("");
             }
-          } catch {
-            setCertificateId(`CERT-${courseId.replace("course-", "").toUpperCase()}`);
+          } catch (err) {
+            console.error("Failed to load certificate on completion:", err);
+            setCertificateId("");
           }
           setShowCompletionModal(true);
         }
@@ -258,6 +271,18 @@ export default function CoursePlayerPage() {
                 {progress.overallProgressPercent}%
               </span>
             </div>
+          )}
+
+          {progress && (progress.overallProgressPercent >= 100 || progress.completedItemIds.length >= totalCourseItems) && (
+            <button
+              onClick={() => setShowCompletionModal(true)}
+              className="px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-sm hover:shadow transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <svg className="w-4 h-4 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.25}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Xem Chứng Chỉ & Đánh Giá</span>
+            </button>
           )}
 
           <ThemeToggle />
