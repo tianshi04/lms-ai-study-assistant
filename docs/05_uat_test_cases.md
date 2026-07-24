@@ -120,3 +120,24 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
   * *Tại bước 4:* Bộ Rubric được lưu cấu trúc đầy đủ chuẩn xác (tiêu chí, thang điểm và hướng dẫn chấm bài cho học viên).
   * *Tại bước 5:* Ngân hàng câu hỏi lưu 10 câu, cấu hình đề thi tính điểm hiển thị chính xác các tham số ngẫu nhiên & cooldown.
   * *Tại bước 6:* Khóa học chuyển trạng thái từ `Draft` sang `Published`, hiển thị công khai trên danh mục khóa học (Catalog) cho Học viên đăng ký học.
+
+---
+
+## KỊCH BẢN UAT-08: KIỂM THỬ HOÀN THÀNH KHÓA HỌC & ĐÁNH GIÁ CSAT (COURSE COMPLETION MODAL & REVIEW FLOW)
+
+* **Mục tiêu:** Xác minh khi học viên hoàn thành 100% tiến độ bài học và đạt điểm Pass ở tất cả các bài thi bắt buộc, hệ thống lập tức hiển thị Course Completion Modal mừng hoàn thành kèm hiệu ứng pháo hoa, Form chọn 1-5 sao và nhập bình luận đánh giá.
+* **Tác nhân thực hiện:** Học viên (Learner).
+* **Điều kiện bắt đầu:** Học viên đã hoàn thành 99% bài học của khóa học *"Lập trình Web Nâng cao"*.
+* **Các bước thực hiện:**
+  1. Học viên nộp bài làm của bài học cuối cùng đạt điểm Pass (100% tiến độ).
+  2. Màn hình tự động hiển thị **Course Completion Modal** chúc mừng kèm hiệu ứng pháo hoa.
+  3. Học viên chọn số sao đánh giá (5 sao) và nhập bình luận: *"Khóa học rất chất lượng, kiến thức thực tế và bài tập bổ ích!"*.
+  4. Học viên bấm nút **"Gửi đánh giá" (Submit Review)**.
+  5. Học viên bấm nút **"Nhận chứng chỉ" (Claim Certificate)** trên Modal.
+  6. Học viên truy cập lại trang chi tiết khóa học (`/courses/[courseId]`).
+* **Kết quả mong đợi (Expected Results):**
+  * *Tại bước 2:* Modal nổi bật với hiệu ứng pháo hoa rực rỡ, hiển thị thông điệp chúc mừng hoàn thành xuất sắc và form đánh giá sao.
+  * *Tại bước 4:* Đánh giá được lưu thành công vào cơ sở dữ liệu, điểm số CSAT trung bình của khóa học được cập nhật ngay lập tức.
+  * *Tại bước 5:* Hệ thống điều hướng trực tiếp sang trang xác thực chứng chỉ (`/verify/CERT-xxx`).
+  * *Tại bước 6:* Đánh giá của học viên vừa gửi hiển thị công khai tại mục "Reviews & Ratings" trên trang thông tin khóa học.
+

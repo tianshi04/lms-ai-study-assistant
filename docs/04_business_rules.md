@@ -147,3 +147,17 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Chỉ tài khoản có vai trò `INSTRUCTOR`, `TA`, `SUPER_ADMIN` hoặc `PARTNER_ADMIN` mới có quyền gọi lệnh ghim câu trả lời chính thức (`pin_staff_answer`).
   * Khi một câu trả lời được ghim làm `is_staff_answer = True`, bài thảo luận gốc (Thread) cũng tự động được đánh dấu `is_staff_pinned = True` để ưu tiên hiển thị trên đầu danh sách diễn đàn.
 
+---
+
+## 7. Quy tắc Đánh giá Khóa học (BR_REVIEW)
+
+* **BR_REVIEW_001 (Ràng buộc Quyền Đánh giá & Hoàn thành Khóa học):**
+  * Chỉ học viên đã đăng ký (Enrolled) và hoàn thành 100% tiến độ khóa học (`Progress = 100%` và đã pass các bài thi bắt buộc) mới được phép gửi đánh giá khóa học qua RPC `SubmitCourseReview`. Backend bắt buộc kiểm tra điều kiện này ở tầng Use Case.
+* **BR_REVIEW_002 (Ràng buộc 1 Review/User & Cơ chế Upsert Anti-Spam):**
+  * Mỗi `user_id` chỉ sở hữu tối đa **1 bản ghi đánh giá** cho mỗi `course_id`. Khi học viên nộp đánh giá lại, hệ thống tự động ghi đè/cập nhật (Upsert) số sao và bình luận cũ thay vì khởi tạo bản ghi mới để ngăn chặn hành vi spam/Review Bombing.
+* **BR_REVIEW_003 (Ràng buộc Dữ liệu Đầu vào & Chống Stored XSS):**
+  * Thang điểm đánh giá `rating_stars` là số nguyên bắt buộc nằm trong khoảng $[1, 5]$.
+  * Văn bản bình luận `comment_text` tối đa 1,000 ký tự và bắt buộc được làm sạch (Sanitize HTML/Script tags) tại Backend để chống tấn công Stored XSS khi hiển thị công khai.
+* **BR_REVIEW_004 (Xung đột Quyền lợi & Chống Tự đánh giá):**
+  * Giảng viên, Trợ giảng hoặc Admin phụ trách tạo/quản lý khóa học bị cấm tự gửi đánh giá cho khóa học của chính mình.
+

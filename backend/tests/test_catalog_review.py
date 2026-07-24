@@ -1,11 +1,13 @@
 import pytest
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
+from src.modules.learning.application.learning_usecase import LearningUseCase
 
 
 @pytest.mark.asyncio
 async def test_submit_and_list_course_review():
     try:
         usecase = CatalogUseCase()
+        learning_uc = LearningUseCase()
 
         # 1. Create test course
         course = await usecase.create_course(
@@ -17,6 +19,37 @@ async def test_submit_and_list_course_review():
             instructor_names=["Andrew Ng"],
         )
         assert course is not None
+
+        # 1b. Check BR_REVIEW_001: Submit without 100% progress fails
+        with pytest.raises(ValueError, match="Chỉ học viên hoàn thành 100%"):
+            await usecase.submit_course_review(
+                user_id="user_test_01",
+                user_name="Tester One",
+                course_id=course.id,
+                rating_stars=5,
+                comment_text="Khóa học xuất sắc!",
+            )
+
+        # 1c. Check BR_REVIEW_004: Instructor self-review fails
+        await learning_uc.mark_item_complete(
+            "inst_01", course.id, "item_1", total_course_items=1
+        )
+        with pytest.raises(ValueError, match="Giảng viên không được phép"):
+            await usecase.submit_course_review(
+                user_id="inst_01",
+                user_name="Andrew Ng",
+                course_id=course.id,
+                rating_stars=5,
+                comment_text="Khóa học tôi dạy rất hay!",
+            )
+
+        # Mark 100% progress for testers
+        await learning_uc.mark_item_complete(
+            "user_test_01", course.id, "item_1", total_course_items=1
+        )
+        await learning_uc.mark_item_complete(
+            "user_test_02", course.id, "item_1", total_course_items=1
+        )
 
         # 2. Submit Review 1 (5 stars)
         review1 = await usecase.submit_course_review(

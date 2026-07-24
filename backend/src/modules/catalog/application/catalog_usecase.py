@@ -1,8 +1,13 @@
+import html
 from typing import Any, Callable
+
+from sqlalchemy import select
 
 from src.modules.catalog.domain.entities import Course, Lesson, Specialization
 from src.modules.catalog.domain.repository import ICatalogRepository
+from src.modules.catalog.infrastructure.models import CourseModel
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
+from src.modules.learning.infrastructure.models import LearningProgressModel
 from src.shared.infrastructure.database import async_session_scope
 
 
@@ -150,14 +155,46 @@ class CatalogUseCase:
         if rating_stars < 1 or rating_stars > 5:
             raise ValueError("Rating stars must be between 1 and 5.")
 
+        # BR_REVIEW_003: Sanitize comment_text against Stored XSS using standard library html.escape
+        clean_comment = html.escape(comment_text.strip())[:1000]
+
         async with async_session_scope() as session:
+            # BR_REVIEW_004: Check if user is instructor of the course
+            course_stmt = select(CourseModel).where(
+                (CourseModel.id == course_id) | (CourseModel.slug == course_id)
+            )
+            course_res = await session.execute(course_stmt)
+            course_model = course_res.scalar_one_or_none()
+
+            if course_model and course_model.instructor_names:
+                if any(
+                    user_name and user_name.lower() in inst.lower()
+                    for inst in course_model.instructor_names
+                ):
+                    raise ValueError(
+                        "Giảng viên không được phép tự gửi đánh giá cho khóa học của mình (BR_REVIEW_004)."
+                    )
+
+            # BR_REVIEW_001: Check if user completed 100% of the course
+            prog_stmt = select(LearningProgressModel).where(
+                LearningProgressModel.user_id == user_id,
+                LearningProgressModel.course_id == course_id,
+            )
+            prog_res = await session.execute(prog_stmt)
+            prog_model = prog_res.scalar_one_or_none()
+
+            if not prog_model or prog_model.overall_progress_percent < 100.0:
+                raise ValueError(
+                    "Chỉ học viên hoàn thành 100% tiến độ khóa học mới có quyền gửi đánh giá (BR_REVIEW_001)."
+                )
+
             repo = self.repo_factory(session)
             return await repo.submit_course_review(
                 user_id=user_id,
                 user_name=user_name,
                 course_id=course_id,
                 rating_stars=rating_stars,
-                comment_text=comment_text,
+                comment_text=clean_comment,
             )
 
     async def list_course_reviews(

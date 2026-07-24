@@ -24,6 +24,7 @@ Tài liệu này tổng hợp các User Stories (câu chuyện người dùng) c
 | **US_10** | Học viên | Bài kiểm tra năng lực và Chấm điểm chéo | Sẵn sàng |
 | **US_11** | Học viên | Chứng chỉ xác minh và Huy hiệu năng lực | Sẵn sàng |
 | **US_12** | Partner Admin | Thương hiệu đối tác và Suất học tổ chức | Sẵn sàng |
+| **US_13** | Học viên | Đánh giá và Phản hồi chất lượng khóa học | Sẵn sàng |
 
 ---
 
@@ -137,6 +138,15 @@ Tài liệu này tổng hợp các User Stories (câu chuyện người dùng) c
 * **Tiêu chí nghiệm thu:**
   * *AC 1:* Hệ thống tự động phát hành Verified Certificate chứa logo đối tác phát hành và link xác nhận (`/verify/CERT-xxx`) khi đạt tiêu chuẩn hoàn thành.
   * *AC 2:* Học viên có thể bấm nút chia sẻ trực tiếp chứng chỉ và huy hiệu lên trang cá nhân LinkedIn.
+
+#### US_13: Đánh giá và Phản hồi chất lượng khóa học
+* **Mô tả Story (Problem Space):**
+  * **Là một** Học viên,
+  * **Tôi muốn** đánh giá số sao (1-5 sao) và gửi nhận xét cảm nhận về khóa học sau khi học xong,
+  * **Để** tôi chia sẻ trải nghiệm thực tế với cộng đồng người học và góp ý phản hồi cho Giảng viên nâng cao chất lượng nội dung.
+* **Tiêu chí nghiệm thu:**
+  * *AC 1:* Học viên hoàn thành 100% khóa học và đạt điểm Pass sẽ được hiển thị Course Completion Modal mừng hoàn thành kèm form chọn 1-5 sao và nhập văn bản nhận xét.
+  * *AC 2:* Đánh giá của học viên được cập nhật công khai vào điểm CSAT trung bình của khóa học và hiển thị trên trang chi tiết khóa học.
 
 ---
 
