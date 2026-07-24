@@ -33,7 +33,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_FAID_001 (Quy trình nộp & xét duyệt Financial Aid):**
   * Học viên nộp đơn phải điền bài luận tối thiểu 150 từ giải trình lý do hoàn cảnh và kế hoạch áp dụng kiến thức.
   * *Hạn xét duyệt:* Giảng viên/Admin có tối đa 14 ngày kể từ ngày nộp đơn (`review_deadline_days_left = 14`) để duyệt hoặc từ chối.
-  * *Tự động phê duyệt (Auto-Approve):* Nếu quá hạn mà không xử lý đơn, hệ thống tự động chuyển trạng thái học viên sang Paid Mode.
+* **Tự động phê duyệt (Auto-Approve):** Áp dụng mô hình Hybrid Best Practice (Lazy Evaluation trên Read Path kết hợp Periodic Worker). Nếu quá 14 ngày (`review_deadline_days_left <= 0`) chưa được xử lý, hệ thống tự động chuyển trạng thái đơn sang `AUTO_APPROVED` và cấp quyền Paid Mode ngay khi học viên truy cập hoặc qua lịch quét định kỳ.
 * **BR_FAID_002 (Quy trình Nộp lại đơn khi bị Từ chối - Re-application):**
   * Nếu đơn xin Financial Aid bị từ chối (`REJECTED`), học viên được phép nộp lại bằng cách bổ sung/chỉnh sửa bài luận (>= 150 từ).
   * Khi học viên cập nhật bài luận, hệ thống tự động reset trạng thái đơn về `PENDING` và khôi phục hạn xét duyệt 14 ngày (`review_deadline_days_left = 14`).

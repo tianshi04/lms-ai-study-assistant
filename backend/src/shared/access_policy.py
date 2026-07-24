@@ -52,17 +52,23 @@ class AccessPolicyService:
         if user_model.enterprise_seat_key and user_model.enterprise_seat_key.strip():
             return True, ""
 
-        # 3. Approved Financial Aid context (BR_FAID_001)
+        # 3. Approved / Auto-Approved Financial Aid context (BR_FAID_001)
         fa_stmt = select(FinancialAidModel).where(
             FinancialAidModel.user_id == user_id,
-            FinancialAidModel.status == "APPROVED",
         )
         if course_id:
             fa_stmt = fa_stmt.where(FinancialAidModel.course_id == course_id)
 
         fa_res = await session.execute(fa_stmt)
-        if fa_res.scalar_one_or_none():
-            return True, ""
+        fa_models = fa_res.scalars().all()
+        for fa in fa_models:
+            if fa.status in ("APPROVED", "AUTO_APPROVED"):
+                return True, ""
+            if fa.status == "PENDING" and fa.review_deadline_days_left <= 0:
+                fa.status = "AUTO_APPROVED"
+                fa.review_deadline_days_left = 0
+                await session.commit()
+                return True, ""
 
         return (
             False,

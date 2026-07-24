@@ -36,7 +36,7 @@ class CertificateUseCase:
             repo = CertificateRepository(session)
             existing = await repo.get_financial_aid(user_id, course_id)
             if existing:
-                if existing.status in ("PENDING", "APPROVED"):
+                if existing.status in ("PENDING", "APPROVED", "AUTO_APPROVED"):
                     return existing, ""
                 # If existing status is REJECTED, allow re-applying by updating essay & resetting to PENDING
                 existing.essay_150_words = essay_150_words
@@ -62,7 +62,7 @@ class CertificateUseCase:
         self, app: Optional[FinancialAidApplication], repo: CertificateRepository
     ) -> Optional[FinancialAidApplication]:
         if app and app.status == "PENDING" and app.review_deadline_days_left <= 0:
-            app.status = "APPROVED"
+            app.status = "AUTO_APPROVED"
             app.review_deadline_days_left = 0
             return await repo.save_financial_aid(app)
         return app
