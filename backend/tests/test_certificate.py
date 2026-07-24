@@ -27,6 +27,7 @@ async def test_apply_financial_aid_validation():
 @pytest.mark.asyncio
 async def test_get_verified_certificate():
     try:
+        from src.modules.identity.application.identity_usecase import IdentityUseCase
         from src.modules.learning.application.learning_usecase import LearningUseCase
 
         usecase = CertificateUseCase()
@@ -44,7 +45,18 @@ async def test_get_verified_certificate():
             "user_cert_test", "course_python", "item_1", total_course_items=1
         )
 
-        # 3. With 100% progress, cert is issued successfully
+        # 2b. Without KYC identity verification, cert issuance is rejected (BR_CERT_003)
+        id_uc = IdentityUseCase()
+        cert_kyc_fail, err_kyc = await usecase.get_verified_certificate(
+            "user_cert_test", "course_python"
+        )
+        assert cert_kyc_fail is None
+        assert "Xác minh Danh tính" in err_kyc
+
+        # Complete KYC Verification
+        await id_uc.verify_identity("user_cert_test")
+
+        # 3. With 100% progress and verified KYC, cert is issued successfully
         cert, err = await usecase.get_verified_certificate(
             "user_cert_test", "course_python"
         )
@@ -132,12 +144,16 @@ async def test_get_verified_certificate_failed_quiz_rejection():
         from src.modules.assessment.infrastructure.repository import (
             SQLAlchemyAssessmentRepository,
         )
+        from src.modules.identity.application.identity_usecase import IdentityUseCase
         from src.modules.learning.application.learning_usecase import LearningUseCase
         from src.shared.infrastructure.database import async_session_scope
 
         usecase = CertificateUseCase()
         user_id = "user_cert_failed_quiz"
         course_id = "course_python"
+
+        # Verify identity KYC
+        await IdentityUseCase().verify_identity(user_id)
 
         # Mark 100% progress
         learning_uc = LearningUseCase()

@@ -24,6 +24,9 @@ class UserModel(Base):
         String(128), nullable=True
     )
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    is_identity_verified: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
 
 
 class EnterpriseLicenseModel(Base):

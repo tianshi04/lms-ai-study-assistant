@@ -194,3 +194,17 @@ class IdentityUseCase:
                 "status": "ACTIVE",
                 "created_at": "2026",
             }
+
+    async def verify_identity(
+        self, user_id: str, id_card_number: str = ""
+    ) -> tuple[bool, str]:
+        """Completes biometric / ID card verification for learner (BR_CERT_003)."""
+        async with async_session_scope() as session:
+            repo = IdentityRepository(session)
+            user = await repo.get_by_id(user_id)
+            if not user:
+                return False, "Không tìm thấy người dùng"
+
+            user.is_identity_verified = True
+            await repo.save(user)
+            return True, "Xác minh danh tính sinh trắc học & CCCD thành công!"

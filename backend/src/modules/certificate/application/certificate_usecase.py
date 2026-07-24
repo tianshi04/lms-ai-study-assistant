@@ -150,6 +150,14 @@ class CertificateUseCase:
             user_stmt = select(UserModel).where(UserModel.id == user_id)
             user_res = await session.execute(user_stmt)
             user_model = user_res.scalar_one_or_none()
+
+            # BR_CERT_003: Check if user has completed KYC identity verification
+            if user_model and not getattr(user_model, "is_identity_verified", False):
+                return (
+                    None,
+                    "Chưa đủ điều kiện nhận chứng chỉ: Bạn cần hoàn tất quy trình Xác minh Danh tính (KYC sinh trắc học/CCCD) trước khi phát hành chứng chỉ lần đầu (BR_CERT_003).",
+                )
+
             learner_name = user_model.full_name if user_model else "Học viên Coursera"
 
             # Fetch real course details
