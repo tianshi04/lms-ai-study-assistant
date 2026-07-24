@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 import uuid
 from typing import Any, Callable, Optional
 
+
 from src.modules.assessment.domain.entities import (
     GradeAppeal,
     HonorCodeAgreement,
@@ -19,6 +20,7 @@ from src.modules.assessment.infrastructure.repository import (
 from src.modules.assessment.infrastructure.sandbox_service import (
     PythonCodeSandboxExecutor,
 )
+from src.shared.access_policy import require_paid_access
 from src.shared.infrastructure.database import async_session_scope
 
 
@@ -73,6 +75,7 @@ class AssessmentUseCase:
             "duration_minutes": duration_minutes,
         }
 
+    @require_paid_access()
     async def submit_graded_quiz(
         self,
         user_id: str,
@@ -204,6 +207,7 @@ class AssessmentUseCase:
                 "answer_explanations": explanations,
             }
 
+    @require_paid_access()
     async def submit_auto_graded_lab(
         self, user_id: str, item_id: str, source_code: str, language: str
     ) -> dict[str, Any]:
@@ -255,6 +259,7 @@ class AssessmentUseCase:
             "test_logs": result.test_logs,
         }
 
+    @require_paid_access()
     async def submit_peer_assignment(
         self, user_id: str, item_id: str, submission_url: str, text_content: str
     ) -> tuple[str, str]:

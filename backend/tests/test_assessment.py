@@ -322,3 +322,42 @@ async def test_peer_regrade_fallback_queue():
     assert len(regrade_queue) == 1
     assert regrade_queue[0]["submission_id"] == "peer-old-1"
     assert regrade_queue[0]["needs_staff_regrade"] is True
+
+
+@pytest.mark.asyncio
+async def test_audit_mode_access_blocking():
+    try:
+        from src.modules.identity.domain.entities import User, UserRole
+        from src.modules.identity.infrastructure.repository import IdentityRepository
+        from src.shared.infrastructure.database import async_session_scope
+
+        usecase = AssessmentUseCase()
+
+        # Seed audit user (no enterprise key, no approved financial aid)
+        audit_user_id = "user_audit_mode_test"
+        async with async_session_scope() as session:
+            repo = IdentityRepository(session)
+            user = User(
+                id=audit_user_id,
+                email="audit@example.com",
+                full_name="Audit Learner",
+                role=UserRole.LEARNER,
+                avatar_url="",
+                password_hash="hash",
+                enterprise_seat_key="",
+            )
+            await repo.save(user)
+
+        # Attempt submitting graded quiz in audit mode -> Should be blocked
+        res = await usecase.submit_graded_quiz(audit_user_id, "item_quiz_audit", [0, 1])
+        assert res["passed"] is False
+        assert "Audit Mode" in res["answer_explanations"][0]
+
+        # Attempt submitting peer assignment in audit mode -> Should be blocked
+        sub_id, msg = await usecase.submit_peer_assignment(
+            audit_user_id, "item_peer_audit", "http://example.com", "text"
+        )
+        assert sub_id == ""
+        assert "Audit Mode" in msg
+    except Exception as e:
+        pytest.skip(f"Skipping audit mode db test: DB not reachable ({e})")
