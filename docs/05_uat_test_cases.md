@@ -7,14 +7,14 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
 ## KỊCH BẢN UAT-01: KIỂM THỬ LUỒNG ĐĂNG KÝ HỌC & XÉT DUYỆT FINANCIAL AID
 
 * **Mục tiêu:** Xác minh phân quyền rõ ràng giữa Audit Mode và Paid Mode, cùng quy trình nộp & xét duyệt đơn xin Hỗ trợ tài chính (Financial Aid).
-* **Tác nhân thực hiện:** Học viên (Learner) & Giảng viên (Instructor).
+* **Tác nhân thực hiện:** Học viên (Learner) & Super Admin (Platform Admin).
 * **Điều kiện bắt đầu:** Khóa học "Lập trình Python Nâng cao" đã xuất bản ở chế độ Paid có hỗ trợ Financial Aid.
 * **Các bước thực hiện:**
   1. **Học viên A** truy cập trang khóa học và chọn đăng ký chế độ **Audit Mode (Miễn phí)**.
   2. **Học viên A** vào xem video bài giảng và bài đọc. Sau đó bấm mở bài thi Graded Quiz.
   3. **Học viên B** truy cập trang khóa học và bấm chọn link **"Financial Aid available"**.
   4. **Học viên B** điền bài luận 150 từ giải trình lý do tài chính và bấm nút "Nộp đơn".
-  5. **Giảng viên** đăng nhập vào trang quản trị khóa học, mở danh sách Financial Aid và chọn đơn của Học viên B để bấm **Approve (Phê duyệt)**.
+  5. **Super Admin** đăng nhập vào trang quản trị hệ thống, mở danh sách Financial Aid và chọn đơn của Học viên B để bấm **Approve (Phê duyệt)**.
   6. **Học viên B** đăng nhập lại vào hệ thống để kiểm tra trạng thái khóa học.
 * **Kết quả mong đợi (Expected Results):**
   * *Tại bước 2:* Hệ thống mở xem video/bài đọc bình thường, nhưng khi mở Graded Quiz thì hiển thị thông báo khóa: *"Chế độ Audit không hỗ trợ nộp bài thi. Vui lòng nâng cấp lên Paid Mode để làm bài và nhận chứng chỉ."*
@@ -99,3 +99,45 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
   * *Tại bước 1 & 2:* Hệ thống hiển thị pháo hoa chúc mừng hoàn thành khóa học. Giao diện chứng chỉ hiển thị đẹp mắt với Tên học viên, Tên khóa học, Logo đối tác phát hành (Partner Logo), Chữ ký xác nhận và Mã chứng chỉ độc nhất (`CERT-8F9A2B3C`).
   * *Tại bước 3:* Hệ thống mở cửa sổ kết nối LinkedIn cho phép tự động điền các trường metadata OpenBadges (Name, Issuer, Certificate ID, Issue Date) vào hồ sơ cá nhân của học viên.
   * *Tại bước 4:* Trang xác thực công khai hiển thị trạng thái xanh **"Valid Verified Certificate"** kèm đầy đủ thông tin xác nhận chính chủ từ hệ thống, chứng minh chứng chỉ là thật và không bị giả mạo.
+
+---
+
+## KỊCH BẢN UAT-06: KIỂM THỬ QUY TRÌNH SOẠN THẢO, CẤU HÌNH RUBRIC & XUẤT BẢN KHÓA HỌC (INSTRUCTOR FLOW)
+
+* **Mục tiêu:** Xác minh Giảng viên có thể thiết lập chuyên ngành/khóa học, tạo cấu trúc tuần học, tải học liệu video + phụ đề VTT, chèn In-Video Quiz, cấu hình bộ tiêu chí Rubric bài tập chấm chéo và xuất bản (Publish) khóa học.
+* **Tác nhân thực hiện:** Giảng viên (Instructor) & Trợ giảng (TA).
+* **Điều kiện bắt đầu:** Giảng viên đã đăng nhập thành công vào trang Quản trị Giảng viên (Instructor Dashboard).
+* **Các bước thực hiện:**
+  1. Giảng viên bấm **"Tạo khóa học mới"**, nhập tên khóa học *"Lập trình Web Nâng cao"*, chọn Partner Branding và tạo cấu trúc Tuần 1 (Week 1).
+  2. Giảng viên thêm bài học Video, tải lên tệp `video.mp4` kèm file phụ đề `subtitles.vtt`.
+  3. Giảng viên thiết lập **In-Video Quiz** tại phút 03:15 với câu hỏi trắc nghiệm và đáp án chi tiết.
+  4. Giảng viên tạo bài tập **Peer-Graded Assignment**, thiết lập bộ tiêu chí **Rubric** (gồm 2 tiêu chí, mỗi tiêu chí tối đa 5 điểm kèm mô tả hướng dẫn chi tiết cho học viên chấm chéo).
+  5. Giảng viên tạo ngân hàng câu hỏi (Question Bank) cho bài thi Graded Quiz, cấu hình rút ngẫu nhiên 5 câu từ 10 câu, đặt Passing Threshold = 80% và bật Cooldown 8 tiếng.
+  6. Giảng viên kiểm tra lại toàn bộ nội dung và bấm nút **"Publish Course"** (Xuất bản khóa học).
+* **Kết quả mong đợi (Expected Results):**
+  * *Tại bước 2:* Hệ thống xử lý tải video thành công, tự động trích xuất chuỗi phụ đề thành **Interactive Transcript** và tạo dữ liệu tri thức (Vector Embeddings) cho AI Coach.
+  * *Tại bước 3:* Mốc thời gian 03:15 trên video được đánh dấu vị trí chèn quiz thành công.
+  * *Tại bước 4:* Bộ Rubric được lưu cấu trúc đầy đủ chuẩn xác (tiêu chí, thang điểm và hướng dẫn chấm bài cho học viên).
+  * *Tại bước 5:* Ngân hàng câu hỏi lưu 10 câu, cấu hình đề thi tính điểm hiển thị chính xác các tham số ngẫu nhiên & cooldown.
+  * *Tại bước 6:* Khóa học chuyển trạng thái từ `Draft` sang `Published`, hiển thị công khai trên danh mục khóa học (Catalog) cho Học viên đăng ký học.
+
+---
+
+## KỊCH BẢN UAT-08: KIỂM THỬ HOÀN THÀNH KHÓA HỌC & ĐÁNH GIÁ CSAT (COURSE COMPLETION MODAL & REVIEW FLOW)
+
+* **Mục tiêu:** Xác minh khi học viên hoàn thành 100% tiến độ bài học và đạt điểm Pass ở tất cả các bài thi bắt buộc, hệ thống lập tức hiển thị Course Completion Modal mừng hoàn thành kèm hiệu ứng pháo hoa, Form chọn 1-5 sao và nhập bình luận đánh giá.
+* **Tác nhân thực hiện:** Học viên (Learner).
+* **Điều kiện bắt đầu:** Học viên đã hoàn thành 99% bài học của khóa học *"Lập trình Web Nâng cao"*.
+* **Các bước thực hiện:**
+  1. Học viên nộp bài làm của bài học cuối cùng đạt điểm Pass (100% tiến độ).
+  2. Màn hình tự động hiển thị **Course Completion Modal** chúc mừng kèm hiệu ứng pháo hoa.
+  3. Học viên chọn số sao đánh giá (5 sao) và nhập bình luận: *"Khóa học rất chất lượng, kiến thức thực tế và bài tập bổ ích!"*.
+  4. Học viên bấm nút **"Gửi đánh giá" (Submit Review)**.
+  5. Học viên bấm nút **"Nhận chứng chỉ" (Claim Certificate)** trên Modal.
+  6. Học viên truy cập lại trang chi tiết khóa học (`/courses/[courseId]`).
+* **Kết quả mong đợi (Expected Results):**
+  * *Tại bước 2:* Modal nổi bật với hiệu ứng pháo hoa rực rỡ, hiển thị thông điệp chúc mừng hoàn thành xuất sắc và form đánh giá sao.
+  * *Tại bước 4:* Đánh giá được lưu thành công vào cơ sở dữ liệu, điểm số CSAT trung bình của khóa học được cập nhật ngay lập tức.
+  * *Tại bước 5:* Hệ thống điều hướng trực tiếp sang trang xác thực chứng chỉ (`/verify/CERT-xxx`).
+  * *Tại bước 6:* Đánh giá của học viên vừa gửi hiển thị công khai tại mục "Reviews & Ratings" trên trang thông tin khóa học.
+

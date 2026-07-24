@@ -5,6 +5,7 @@ from typing import Optional
 from sqlalchemy import select
 
 from src.modules.assessment.infrastructure.models import (
+    GradeAppealModel,
     QuizSubmissionModel,
     LabSubmissionModel,
     PeerAssignmentSubmissionModel,
@@ -116,13 +117,21 @@ class CertificateUseCase:
         self, user_id: str, course_id: str
     ) -> tuple[Optional[VerifiedCertificate], str]:
         async with async_session_scope() as session:
+            # Resolve real_course_id from id or slug
+            course_stmt = select(CourseModel).where(
+                (CourseModel.id == course_id) | (CourseModel.slug == course_id)
+            )
+            course_res = await session.execute(course_stmt)
+            course_model = course_res.scalar_one_or_none()
+            real_course_id = course_model.id if course_model else course_id
+
             repo = CertificateRepository(session)
-            cert = await repo.get_certificate(user_id, course_id)
+            cert = await repo.get_certificate(user_id, real_course_id)
             if cert:
                 return cert, ""
 
             # BR_CERT_001: Check if user has reached 100% progress in course
-            progress_key = f"{user_id}:{course_id}"
+            progress_key = f"{user_id}:{real_course_id}"
             prog_stmt = select(LearningProgressModel).where(
                 LearningProgressModel.id == progress_key
             )
@@ -198,6 +207,18 @@ class CertificateUseCase:
                         f"Chưa đủ điều kiện nhận chứng chỉ: Bài tập '{req_item.title}' chưa đạt điểm tối thiểu >= 80% (Hiện tại {max_score}%).",
                     )
 
+            # BR_PEER_005 Report Lock Rule: Check if user has any pending grade appeals or reported peer reviews
+            appeal_stmt = select(GradeAppealModel).where(
+                GradeAppealModel.user_id == user_id,
+                GradeAppealModel.status == "PENDING",
+            )
+            appeal_res = await session.execute(appeal_stmt)
+            if appeal_res.scalar_one_or_none():
+                return (
+                    None,
+                    "Chưa đủ điều kiện nhận chứng chỉ: Bạn đang có đơn khiếu nại/báo cáo bài chấm chéo chờ Trợ giảng thẩm định (Report Lock Rule).",
+                )
+
             # Fetch real user details
             user_stmt = select(UserModel).where(UserModel.id == user_id)
             user_res = await session.execute(user_stmt)
@@ -213,9 +234,12 @@ class CertificateUseCase:
             learner_name = user_model.full_name if user_model else "Học viên Coursera"
 
             # Fetch real course details
-            course_stmt = select(CourseModel).where(CourseModel.id == course_id)
+            course_stmt = select(CourseModel).where(
+                (CourseModel.id == course_id) | (CourseModel.slug == course_id)
+            )
             course_res = await session.execute(course_stmt)
             course_model = course_res.scalar_one_or_none()
+            real_course_id = course_model.id if course_model else course_id
 
             course_title = (
                 course_model.title if course_model else "Specialization Course"
@@ -239,22 +263,38 @@ class CertificateUseCase:
 
             open_badges = {
                 "@context": "https://w3id.org/openbadges/v2",
-                "type": "BadgeClass",
-                "id": cert_id,
-                "name": f"Verified Certificate: {course_title}",
-                "description": f"Chứng chỉ xác thực hoàn thành khóa học {course_title}",
-                "image": qr_code_url,
-                "criteria": f"/courses/{course_id}",
-                "issuer": {
-                    "name": f"{partner_name} & Coursera Partner",
-                    "url": "https://coursera.org",
+                "type": "Assertion",
+                "id": f"https://coursera.org/verify/{cert_id}",
+                "recipient": {
+                    "type": "email",
+                    "hashed": False,
+                    "identity": user_model.email
+                    if user_model and user_model.email
+                    else "learner@coursera.ai",
                 },
+                "issuedOn": datetime.now(timezone.utc).isoformat(),
+                "badge": {
+                    "type": "BadgeClass",
+                    "id": f"https://coursera.org/courses/{course_id}",
+                    "name": f"Verified Certificate: {course_title}",
+                    "description": f"Chứng nhận xác thực hoàn thành khóa học {course_title}",
+                    "image": qr_code_url,
+                    "criteria": f"https://coursera.org/courses/{course_id}",
+                    "issuer": {
+                        "type": "Issuer",
+                        "id": "https://coursera.org",
+                        "name": f"{partner_name} & Coursera Partner",
+                        "url": "https://coursera.org",
+                        "email": "verify@coursera.org",
+                    },
+                },
+                "verification": {"type": "hosted"},
             }
 
             cert = VerifiedCertificate(
                 certificate_id=cert_id,
                 user_id=user_id,
-                course_id=course_id,
+                course_id=real_course_id,
                 learner_name=learner_name,
                 course_title=course_title,
                 partner_name=partner_name,

@@ -487,9 +487,9 @@ class AssessmentUseCase:
     async def list_peer_submissions_needing_staff_regrade(
         self, item_id: str
     ) -> list[dict[str, Any]]:
-        """Returns list of peer assignment submissions older than 5 days with fewer than 3 reviews and not yet graded by staff (BR_PEER_004)."""
+        """Returns list of peer assignment submissions older than 48 hours (2 days) with fewer than 3 reviews and not yet graded by staff (BR_PEER_004 & BR_PEER_006)."""
         now = datetime.now(timezone.utc)
-        five_days_ago = now - timedelta(days=5)
+        cold_start_threshold = now - timedelta(hours=48)
 
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
@@ -504,7 +504,7 @@ class AssessmentUseCase:
                     sub_dt = now
 
                 reviews = await repo.get_peer_reviews_for_submission(s.id)
-                if len(reviews) < 3 and sub_dt <= five_days_ago:
+                if len(reviews) < 3 and sub_dt <= cold_start_threshold:
                     regrade_list.append(
                         {
                             "submission_id": s.id,

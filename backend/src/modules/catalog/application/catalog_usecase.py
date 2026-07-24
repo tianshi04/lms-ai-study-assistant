@@ -1,8 +1,13 @@
+import html
 from typing import Any, Callable
+
+from sqlalchemy import select
 
 from src.modules.catalog.domain.entities import Course, Lesson, Specialization
 from src.modules.catalog.domain.repository import ICatalogRepository
+from src.modules.catalog.infrastructure.models import CourseModel
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
+from src.modules.learning.infrastructure.models import LearningProgressModel
 from src.shared.infrastructure.database import async_session_scope
 
 
@@ -137,4 +142,85 @@ class CatalogUseCase:
                 estimated_minutes=estimated_minutes,
                 video_url=video_url,
                 reading_markdown=reading_markdown,
+            )
+
+    async def submit_course_review(
+        self,
+        user_id: str,
+        user_name: str,
+        course_id: str,
+        rating_stars: int,
+        comment_text: str,
+        user_role: str = "",
+    ):
+        if rating_stars < 1 or rating_stars > 5:
+            raise ValueError("Rating stars must be between 1 and 5.")
+
+        # BR_REVIEW_003: Fail-fast 2000 char validation and safe Stored XSS sanitization
+        trimmed_comment = comment_text.strip()
+        if len(trimmed_comment) > 2000:
+            raise ValueError(
+                "Văn bản nhận xét không được vượt quá 2000 ký tự (BR_REVIEW_003)."
+            )
+        clean_comment = html.escape(trimmed_comment)
+
+        async with async_session_scope() as session:
+            # Resolve real_course_id from id or slug
+            course_stmt = select(CourseModel).where(
+                (CourseModel.id == course_id) | (CourseModel.slug == course_id)
+            )
+            course_res = await session.execute(course_stmt)
+            course_model = course_res.scalar_one_or_none()
+            real_course_id = course_model.id if course_model else course_id
+
+            # BR_REVIEW_004: Check if user is instructor or TA of the course
+            is_instructor_role = any(
+                r in user_role.lower() for r in ["instructor", "ta"]
+            )
+            is_instructor_id_or_name = user_id.startswith("inst_") or (
+                course_model
+                and course_model.instructor_names
+                and user_name in course_model.instructor_names
+            )
+            if is_instructor_role or is_instructor_id_or_name:
+                raise ValueError(
+                    "Giảng viên không được phép tự gửi đánh giá cho khóa học của mình (BR_REVIEW_004)."
+                )
+
+            # BR_REVIEW_001: Check if user completed 100% of the course
+            prog_stmt = select(LearningProgressModel).where(
+                LearningProgressModel.user_id == user_id,
+                LearningProgressModel.course_id == real_course_id,
+            )
+            prog_res = await session.execute(prog_stmt)
+            prog_model = prog_res.scalar_one_or_none()
+
+            if not prog_model or prog_model.overall_progress_percent < 100.0:
+                raise ValueError(
+                    "Chỉ học viên hoàn thành 100% tiến độ khóa học mới có quyền gửi đánh giá (BR_REVIEW_001)."
+                )
+
+            repo = self.repo_factory(session)
+            return await repo.submit_course_review(
+                user_id=user_id,
+                user_name=user_name,
+                course_id=real_course_id,
+                rating_stars=rating_stars,
+                comment_text=clean_comment,
+            )
+
+    async def list_course_reviews(
+        self, course_id: str, page_size: int = 10, page_token: str = ""
+    ):
+        async with async_session_scope() as session:
+            course_stmt = select(CourseModel).where(
+                (CourseModel.id == course_id) | (CourseModel.slug == course_id)
+            )
+            course_res = await session.execute(course_stmt)
+            course_model = course_res.scalar_one_or_none()
+            real_course_id = course_model.id if course_model else course_id
+
+            repo = self.repo_factory(session)
+            return await repo.list_course_reviews(
+                course_id=real_course_id, page_size=page_size, page_token=page_token
             )

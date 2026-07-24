@@ -4,16 +4,65 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
+import { CatalogService, type Course, type CourseReview } from "@/gen/catalog/v1/catalog_pb";
+import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { Navbar } from "@/components/layout/Navbar";
+import { Modal } from "@/components/ui/Modal";
 
 export default function CourseDetailPage() {
   const params = useParams();
   const courseId = params?.courseId as string;
 
   const [course, setCourse] = useState<Course | null>(null);
+  const [reviews, setReviews] = useState<CourseReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasCert, setHasCert] = useState(false);
+  const [certId, setCertId] = useState("");
+
+  // Review Modal States
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [rating, setRating] = useState<number>(5);
+  const [hoverRating, setHoverRating] = useState<number>(0);
+  const [comment, setComment] = useState<string>("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!course) return;
+    setSubmittingReview(true);
+    setReviewError(null);
+    setReviewSuccess(false);
+
+    try {
+      const client = getRpcClient(CatalogService);
+      await client.submitCourseReview({
+        courseId: course.id,
+        ratingStars: rating,
+        commentText: comment,
+      });
+      setReviewSuccess(true);
+
+      // Re-fetch course detail and reviews in real-time
+      const res = await client.getCourseDetail({ idOrSlug: course.id });
+      setCourse(res.course ?? null);
+      const revRes = await client.listCourseReviews({ courseId: course.id });
+      setReviews(revRes.reviews || []);
+
+      setTimeout(() => {
+        setIsReviewModalOpen(false);
+        setReviewSuccess(false);
+      }, 1500);
+    } catch (err: unknown) {
+      console.error("Failed to submit review:", err);
+      const msg = err instanceof Error ? err.message : "Không thể gửi đánh giá";
+      setReviewError(msg);
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   useEffect(() => {
     if (!courseId) return;
@@ -21,8 +70,25 @@ export default function CourseDetailPage() {
     async function fetchDetail() {
       try {
         const client = getRpcClient(CatalogService);
-        const res = await client.getCourseDetail({ courseId });
+        const res = await client.getCourseDetail({ idOrSlug: courseId });
         setCourse(res.course ?? null);
+
+        const revRes = await client.listCourseReviews({ courseId });
+        setReviews(revRes.reviews || []);
+
+        const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+        if (token) {
+          try {
+            const certClient = getRpcClient(CertificateService);
+            const certRes = await certClient.getVerifiedCertificate({ courseId: res.course?.id || courseId });
+            if (certRes.certificate?.certificateId) {
+              setHasCert(true);
+              setCertId(certRes.certificate.certificateId);
+            }
+          } catch {
+            // Safe to ignore
+          }
+        }
       } catch (err: unknown) {
         console.error("Failed to load course detail:", err);
         const message = err instanceof Error ? err.message : "Không thể tải thông tin khóa học";
@@ -70,8 +136,26 @@ export default function CourseDetailPage() {
       <div className="bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900/80 dark:to-slate-950 border-b border-slate-200 dark:border-slate-800/80 py-12">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           <div className="lg:col-span-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider mb-4">
-              Specialization Course
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider">
+                Specialization Course
+              </div>
+              {hasCert && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+                  <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>✓ Đã Nhận Chứng Chỉ</span>
+                </div>
+              )}
+              {course.averageRating > 0 && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold">
+                  <svg className="w-4 h-4 text-amber-400 fill-amber-400" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                  </svg>
+                  <span>{course.averageRating.toFixed(1)} ★ ({course.reviewCount} đánh giá)</span>
+                </div>
+              )}
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4 leading-tight">
               {course.title}
@@ -102,15 +186,35 @@ export default function CourseDetailPage() {
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Đã bao gồm bài giảng Video tương tác & Phụ đề cuộn</p>
             </div>
 
-            <Link
-              href={`/learn/${course.id}`}
-              className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm transition-all shadow-lg shadow-blue-600/20"
-            >
-              Vào Học Ngay
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </Link>
+            {hasCert ? (
+              <div className="space-y-3">
+                <Link
+                  href={`/verify/${certId}`}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-sm transition-all shadow-lg shadow-amber-500/25 cursor-pointer"
+                >
+                  <svg className="w-4 h-4 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Xem Chứng Chỉ</span>
+                </Link>
+                <Link
+                  href={`/learn/${course.id}`}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition-all cursor-pointer"
+                >
+                  <span>Vào Học Lại</span>
+                </Link>
+              </div>
+            ) : (
+              <Link
+                href={`/learn/${course.id}`}
+                className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm transition-all shadow-lg shadow-blue-600/20 cursor-pointer"
+              >
+                Vào Học Ngay
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </Link>
+            )}
 
             <ul className="space-y-3 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800/80 pt-4">
               <li className="flex items-center gap-2">
@@ -198,7 +302,210 @@ export default function CourseDetailPage() {
             ))}
           </div>
         )}
+
+        {/* Course Rating & Reviews Section */}
+        <div className="mt-16 border-t border-slate-200 dark:border-slate-800 pt-12">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Đánh giá & Nhận xét từ Học viên</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Các nhận xét thực tế từ học viên đã tham gia khóa học này
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {course.averageRating > 0 && (
+                <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 px-4 py-2.5 rounded-xl text-amber-800 dark:text-amber-300">
+                  <span className="text-3xl font-black text-amber-500">{course.averageRating.toFixed(1)}</span>
+                  <div>
+                    <div className="flex items-center gap-0.5 text-amber-400">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <svg
+                          key={star}
+                          className={`w-4 h-4 ${
+                            star <= Math.round(course.averageRating)
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-slate-300 dark:text-slate-700"
+                          }`}
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={1.5}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                          />
+                        </svg>
+                      ))}
+                    </div>
+                    <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                      Tổng số {course.reviewCount} nhận xét
+                    </span>
+                  </div>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+                  if (!token) {
+                    window.location.href = `/auth/login?redirect=/courses/${courseId}`;
+                    return;
+                  }
+                  setIsReviewModalOpen(true);
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                </svg>
+                <span>Viết / Sửa đánh giá</span>
+              </button>
+            </div>
+          </div>
+
+          {reviews.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl text-center text-slate-500 dark:text-slate-400">
+              Chưa có đánh giá nào cho khóa học này. Hãy là học viên đầu tiên hoàn thành và để lại nhận xét!
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {reviews.map((rev) => (
+                <div
+                  key={rev.id}
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase shadow-sm">
+                        {rev.userName ? rev.userName.slice(0, 2) : "HV"}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                          {rev.userName || "Học viên LMS"}
+                        </h4>
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                          {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString("vi-VN") : "Gần đây"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-0.5 text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 px-2.5 py-1 rounded-full text-xs font-semibold">
+                      <span>{rev.ratingStars}</span>
+                      <svg className="w-3.5 h-3.5 fill-amber-400" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                      </svg>
+                    </div>
+                  </div>
+                  {rev.commentText && (
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed pt-1">
+                      &ldquo;{rev.commentText}&rdquo;
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </main>
+
+      {/* Review & Rating Modal */}
+      <Modal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        title="Đánh giá khóa học"
+        className="max-w-md"
+      >
+        {reviewSuccess ? (
+          <div className="p-4 text-center bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl space-y-2">
+            <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/60 rounded-full flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+            </div>
+            <h4 className="text-sm font-bold text-emerald-900 dark:text-emerald-200">Đã gửi đánh giá thành công!</h4>
+            <p className="text-xs text-emerald-700 dark:text-emerald-300">Cảm ơn bạn đã phản hồi ý kiến cho khóa học.</p>
+          </div>
+        ) : (
+          <form onSubmit={handleReviewSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                Chọn số sao đánh giá:
+              </label>
+              <div className="flex items-center gap-1.5 justify-center py-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="p-1 transition-transform hover:scale-125 focus:outline-none cursor-pointer"
+                  >
+                    <svg
+                      className={`w-7 h-7 ${
+                        star <= (hoverRating || rating)
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-slate-300 dark:text-slate-700 fill-none"
+                      }`}
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                      />
+                    </svg>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Nội dung nhận xét:
+                </label>
+                <span className={`text-[10px] ${comment.length > 2000 ? "text-red-500 font-bold" : "text-slate-400"}`}>
+                  {comment.length}/2000
+                </span>
+              </div>
+              <textarea
+                rows={4}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                maxLength={2000}
+                placeholder="Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng..."
+                className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+              />
+            </div>
+
+            {reviewError && (
+              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-medium">
+                {reviewError}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsReviewModalOpen(false)}
+                className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={submittingReview}
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+              >
+                {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 }

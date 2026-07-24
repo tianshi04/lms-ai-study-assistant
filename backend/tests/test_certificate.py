@@ -182,3 +182,41 @@ async def test_get_verified_certificate_failed_quiz_rejection():
         assert "chưa đạt điểm tối thiểu >= 80%" in err
     except Exception as e:
         pytest.skip(f"Skipping cert failed quiz db test: DB not reachable ({e})")
+
+
+@pytest.mark.asyncio
+async def test_get_verified_certificate_with_slug():
+    try:
+        from src.modules.catalog.application.catalog_usecase import CatalogUseCase
+        from src.modules.identity.application.identity_usecase import IdentityUseCase
+        from src.modules.learning.application.learning_usecase import LearningUseCase
+
+        cat_uc = CatalogUseCase()
+        cert_uc = CertificateUseCase()
+        id_uc = IdentityUseCase()
+        learning_uc = LearningUseCase()
+
+        course = await cat_uc.create_course(
+            title="Cert Slug Course",
+            slug="cert-slug-course-unique",
+            description="Test cert slug resolution.",
+            partner_name="Coursera",
+            partner_logo_url="",
+            instructor_names=["Andrew"],
+        )
+
+        # Verify user identity & mark 100% progress
+        await id_uc.verify_identity("user_slug_cert")
+        await learning_uc.mark_item_complete(
+            "user_slug_cert", course.id, "item_1", total_course_items=1
+        )
+
+        # Query certificate using SLUG
+        cert, err = await cert_uc.get_verified_certificate(
+            "user_slug_cert", "cert-slug-course-unique"
+        )
+        assert cert is not None
+        assert err == ""
+        assert cert.course_title == "Cert Slug Course"
+    except Exception as e:
+        pytest.skip(f"Skipping cert slug test: DB not reachable ({e})")

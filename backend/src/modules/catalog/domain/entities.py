@@ -82,6 +82,26 @@ class WeekModule(Entity):
         self.lessons = lessons or []
 
 
+class CourseReview(Entity):
+    def __init__(
+        self,
+        id: str,
+        user_id: str,
+        user_name: str,
+        course_id: str,
+        rating_stars: int,
+        comment_text: str = "",
+        created_at: str = "",
+    ) -> None:
+        super().__init__(id=id)
+        self.user_id = user_id
+        self.user_name = user_name
+        self.course_id = course_id
+        self.rating_stars = rating_stars
+        self.comment_text = comment_text
+        self.created_at = created_at
+
+
 class Course(Entity):
     def __init__(
         self,
@@ -93,6 +113,8 @@ class Course(Entity):
         partner_logo_url: str = "",
         instructor_names: list[str] | None = None,
         week_modules: list[WeekModule] | None = None,
+        average_rating: float = 0.0,
+        review_count: int = 0,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -102,6 +124,8 @@ class Course(Entity):
         self.partner_logo_url = partner_logo_url
         self.instructor_names = instructor_names or []
         self.week_modules = week_modules or []
+        self.average_rating = average_rating
+        self.review_count = review_count
 
 
 class Specialization(Entity):
