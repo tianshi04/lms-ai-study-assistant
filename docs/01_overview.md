@@ -20,7 +20,6 @@ Hệ thống được vận hành và tương tác bởi 4 vai trò cốt lõi:
    * Đăng tải học liệu đa dạng: Video bài giảng kèm Phụ đề (.vtt), Interactive Transcript, Bài đọc (Reading), Quiz ôn luyện (Practice Quiz), và In-Video Quiz (câu hỏi ngắt ngang video).
    * Cấu hình bài thi tính điểm (Graded Quiz), bài tập lập trình tự động chấm (Auto-Graded Lab), và bài tập nộp dự án (Peer-Graded Assignment) kèm Bộ tiêu chí chấm điểm (Rubric).
    * Cung cấp học liệu đầu vào tự động xây dựng Cơ sở tri thức (Knowledge Base RAG) cho Trợ lý AI Coach.
-   * Xét duyệt đơn Hỗ trợ tài chính (Financial Aid) của học viên cho khóa học mình quản lý.
    * Đóng vai trò điều phối Diễn đàn thảo luận (Discussion Forum): Trả lời thắc mắc, ghim câu trả lời chuẩn (Staff Answer Pinning).
    * Theo dõi báo cáo tiến độ, bảng điểm, và nhật ký vi phạm Guardrails của học viên.
 

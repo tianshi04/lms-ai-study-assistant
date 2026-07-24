@@ -32,11 +32,11 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * *Ràng buộc Seat:* Mã Enterprise Key phải ở trạng thái kích hoạt (`is_active = True`) và số lượng suất đã dùng chưa vượt quá hạn mức (`used_seats < total_seats`, mặc định 500 seats/key). Khi kích hoạt thành công, hệ thống tự động tăng `used_seats += 1` và gán `user.enterprise_seat_key`.
 * **BR_FAID_001 (Quy trình nộp & xét duyệt Financial Aid):**
   * Học viên nộp đơn phải điền bài luận tối thiểu 150 từ giải trình lý do hoàn cảnh và kế hoạch áp dụng kiến thức.
-  * *Hạn xét duyệt:* Giảng viên/Admin có tối đa 14 ngày kể từ ngày nộp đơn (`review_deadline_days_left = 14`) để duyệt hoặc từ chối.
-* **Tự động phê duyệt (Auto-Approve):** Áp dụng mô hình Hybrid Best Practice (Lazy Evaluation trên Read Path kết hợp Periodic Worker). Nếu quá 14 ngày (`review_deadline_days_left <= 0`) chưa được xử lý, hệ thống tự động chuyển trạng thái đơn sang `AUTO_APPROVED` và cấp quyền Paid Mode ngay khi học viên truy cập hoặc qua lịch quét định kỳ.
+  * *Hạn xét duyệt:* Super Admin có tối đa 15 ngày kể từ ngày nộp đơn (`review_deadline_days_left = 15`) để xem xét duyệt hoặc từ chối đơn tài chính của nền tảng.
+  * *Tự động phê duyệt (Auto-Approve):* Áp dụng mô hình Hybrid Best Practice (Lazy Evaluation trên Read Path kết hợp Periodic Worker). Nếu quá 15 ngày (`review_deadline_days_left <= 0`) chưa được xử lý, hệ thống tự động chuyển trạng thái đơn sang `AUTO_APPROVED` và cấp quyền Paid Mode ngay khi học viên truy cập hoặc qua lịch quét định kỳ.
 * **BR_FAID_002 (Quy trình Nộp lại đơn khi bị Từ chối - Re-application):**
   * Nếu đơn xin Financial Aid bị từ chối (`REJECTED`), học viên được phép nộp lại bằng cách bổ sung/chỉnh sửa bài luận (>= 150 từ).
-  * Khi học viên cập nhật bài luận, hệ thống tự động reset trạng thái đơn về `PENDING` và khôi phục hạn xét duyệt 14 ngày (`review_deadline_days_left = 14`).
+  * Khi học viên cập nhật bài luận, hệ thống tự động reset trạng thái đơn về `PENDING` và khôi phục hạn xét duyệt 15 ngày (`review_deadline_days_left = 15`).
 
 ---
 

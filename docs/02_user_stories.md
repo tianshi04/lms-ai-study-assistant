@@ -17,12 +17,13 @@ Tài liệu này tổng hợp các User Stories (câu chuyện người dùng) c
 | **US_03** | Super Admin | Chỉ số chất lượng đào tạo và Báo cáo vi phạm | Sẵn sàng |
 | **US_04** | Giảng viên | Cấu trúc chuyên ngành và Học liệu đa dạng | Sẵn sàng |
 | **US_05** | Giảng viên | Bộ tiêu chí chấm điểm và Cơ sở tri thức AI | Sẵn sàng |
-| **US_06** | Giảng viên / TA | Diễn đàn thảo luận và Xét duyệt học bổng | Sẵn sàng |
+| **US_06** | Giảng viên / TA | Diễn đàn thảo luận và Ghim câu trả lời chuẩn | Sẵn sàng |
 | **US_07** | Học viên | Bài học đa phương tiện và Đăng ký linh hoạt | Sẵn sàng |
 | **US_08** | Học viên | Trợ giúp kiến thức từ AI Coach Socratic | Sẵn sàng |
 | **US_09** | Học viên | Diễn đàn trao đổi học thuật theo bài học | Sẵn sàng |
 | **US_10** | Học viên | Bài kiểm tra năng lực và Chấm điểm chéo | Sẵn sàng |
 | **US_11** | Học viên | Chứng chỉ xác minh và Huy hiệu năng lực | Sẵn sàng |
+| **US_12** | Partner Admin | Thương hiệu đối tác và Suất học tổ chức | Sẵn sàng |
 
 ---
 
@@ -79,14 +80,14 @@ Tài liệu này tổng hợp các User Stories (câu chuyện người dùng) c
   * *AC 1:* Giảng viên thiết lập được bộ tiêu chí Rubric chia theo mức điểm và tiêu chí đánh giá rõ ràng cho bài tập chấm chéo.
   * *AC 2:* Tài liệu bài giảng được tự động chuyển hóa thành dữ liệu tri thức chuẩn xác cho Trợ lý AI Coach.
 
-#### US_06: Diễn đàn thảo luận và Xét duyệt học bổng
+#### US_06: Diễn đàn thảo luận và Ghim câu trả lời chuẩn
 * **Mô tả Story (Problem Space):**
   * **Là một** Giảng viên / Trợ giảng,
-  * **Tôi muốn** tham gia giải đáp thắc mắc trên diễn đàn, ghim các câu trả lời chuẩn và xét duyệt các đơn xin hỗ trợ tài chính (Financial Aid),
-  * **Để** hỗ trợ cộng đồng học viên học tập hiệu quả và tạo cơ hội cho học viên khó khăn tiếp cận khóa học.
+  * **Tôi muốn** tham gia giải đáp thắc mắc chuyên môn trên diễn đàn và ghim các câu trả lời chuẩn (Staff Answer Pinning),
+  * **Để** hỗ trợ cộng đồng học viên nắm bắt kiến thức chính xác và ưu tiên các nội dung giải đáp quan trọng.
 * **Tiêu chí nghiệm thu:**
-  * *AC 1:* Trợ giảng có thể ghim câu trả lời chính thức (Staff Answer) trên diễn đàn học tập.
-  * *AC 2:* Giảng viên xem được đơn xin hỗ trợ tài chính kèm giải trình của học viên và duyệt mở khóa bài học.
+  * *AC 1:* Trợ giảng / Giảng viên có thể ghim câu trả lời chính thức (Staff Answer) trên diễn đàn học tập.
+  * *AC 2:* Câu trả lời được ghim tự động đẩy bài thảo luận gốc (Thread) lên ưu tiên hiển thị ở vị trí nổi bật.
 
 ---
 
@@ -136,3 +137,16 @@ Tài liệu này tổng hợp các User Stories (câu chuyện người dùng) c
 * **Tiêu chí nghiệm thu:**
   * *AC 1:* Hệ thống tự động phát hành Verified Certificate chứa logo đối tác phát hành và link xác nhận (`/verify/CERT-xxx`) khi đạt tiêu chuẩn hoàn thành.
   * *AC 2:* Học viên có thể bấm nút chia sẻ trực tiếp chứng chỉ và huy hiệu lên trang cá nhân LinkedIn.
+
+---
+
+### 2.4. VAI TRÒ: ĐỐI TÁC PHÁT HÀNH (PARTNER / ORGANIZATION ADMIN)
+
+#### US_12: Thương hiệu đối tác và Suất học tổ chức
+* **Mô tả Story (Problem Space):**
+  * **Là một** Partner Admin (Đại diện Trường Đại học / Doanh nghiệp đối tác),
+  * **Tôi muốn** quản lý thương hiệu tổ chức (Partner Logo), cấp phát và theo dõi suất học doanh nghiệp (Enterprise License Seats),
+  * **Để** hỗ trợ sinh viên/nhân viên thuộc tổ chức tiếp cận khóa học chất lượng cao và quảng bá thương hiệu đối tác trên chứng chỉ.
+* **Tiêu chí nghiệm thu:**
+  * *AC 1:* Partner Admin có thể cập nhật Logo đối tác hiển thị trên các khóa học phát hành và Verified Certificate.
+  * *AC 2:* Partner Admin theo dõi được số suất học đã kích hoạt (`used_seats / total_seats`) và tỷ lệ nhận chứng chỉ của học viên thuộc tổ chức.

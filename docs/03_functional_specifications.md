@@ -6,12 +6,13 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 
 ## 1. VAI TRÒ: SUPER ADMIN (QUẢN TRỊ NỀN TẢNG)
 
-### 1.1. Quản lý tài khoản & Doanh nghiệp (User & Enterprise Seat Management)
+### 1.1. Quản lý tài khoản, Suất học Doanh nghiệp & Duyệt Hỗ trợ Tài chính
 * **Thêm mới & Phân quyền:** Admin tạo tài khoản hoặc import danh sách hàng loạt (`.xlsx`, `.csv`). Phân quyền các vai trò: `Learner`, `Instructor`, `TA (Teaching Assistant)`, `Partner Admin`.
 * **Mã hóa Mật khẩu & Xác thực Token:** Mật khẩu được mã hóa băm PBKDF2-HMAC-SHA256 (100k iterations + salt ngẫu nhiên), tự động tạo avatar SVG ngẫu nhiên từ DiceBear API và hỗ trợ quy trình Refresh Token rotation (`BR_AUTH_002`).
 * **Quản lý Suất học Doanh nghiệp (Enterprise License):**
   * Tạo gói suất học cho đối tác (ví dụ: cấp 500 seats cho Trường Đại học X hoặc Công ty Y).
   * Quản lý mã kích hoạt (Enterprise Key), kiểm tra trạng thái hoạt động (`is_active`) và theo dõi số lượng seat đã kích hoạt (`used_seats / total_seats`).
+* **Xét duyệt Hỗ trợ Tài chính (Financial Aid Review):** Super Admin duyệt hoặc từ chối các đơn xin học bổng (bài luận >= 150 từ). Nếu quá 15 ngày chưa có thao tác thủ công, hệ thống tự động chuyển trạng thái đơn sang `AUTO_APPROVED` (`BR_FAID_001`).
 * **Khóa/Kích hoạt tài khoản:** Tạm khóa tài khoản vi phạm điều khoản. Thu hồi tức thì phiên làm việc (Session) của tài khoản bị khóa.
 
 ### 1.2. Giám sát hệ thống & API LLM (System & LLM Monitoring Dashboard)
@@ -70,11 +71,9 @@ flowchart TD
    * Giảng viên soạn đề bài nộp dự án (yêu cầu đính kèm file, văn bản hoặc link).
    * **Bộ tiêu chí Rubric:** Giảng viên chia các tiêu chí chấm điểm chi tiết (ví dụ: Tiêu chí 1: Cấu trúc code - Max 5 điểm; Tiêu chí 2: Giao diện - Max 5 điểm) kèm hướng dẫn chi tiết cho học viên chấm chéo.
 
-### 2.4. Quản lý Diễn đàn & Duyệt Hỗ trợ tài chính (Forum & Financial Aid Review)
+### 2.4. Quản lý Diễn đàn Thảo luận (Forum Moderation & Staff Pinning)
 * **Điều phối Diễn đàn (Forum Moderation & Pinning):** Trợ giảng/Giảng viên/Quản trị viên có quyền ghim câu trả lời chính thức (`is_staff_answer`). Khi được ghim, hệ thống tự động đánh dấu `is_staff_pinned = True` trên bài thảo luận gốc (Thread) để ưu tiên hiển thị đầu danh sách.
-* **Xét duyệt & Nộp lại Financial Aid (Financial Aid Review & Re-application):**
-  * Giảng viên/Admin xem danh sách đơn xin học bổng của học viên (gồm bài luận >= 150 từ).
-  * Bấm **Duyệt (Approve)** hoặc **Từ chối (Reject)**. Nếu bị từ chối, học viên có quyền chỉnh sửa bài luận để nộp lại (hệ thống chuyển đơn về lại trạng thái `PENDING` và đếm lại hạn duyệt 14 ngày).
+* **Hỗ trợ Giải đáp:** Giảng viên/Trợ giảng trực tiếp theo dõi các bài đăng gắn với bài học (Item-level Discussion) để giải thích kiến thức nâng cao cho học viên.
 
 ### 2.5. Bảng Phân tích Giảng dạy (Instructor Analytics Dashboard)
 * **Phân tích Tỷ lệ Bỏ học (Student Drop-off Funnel):** Thống kê số lượng học viên dừng học tại từng bài học video/bài đọc để giúp Giảng viên nhận biết đoạn nội dung khó tiếp thu.
@@ -155,3 +154,15 @@ flowchart TD
 * **Cấp Chứng chỉ Xác minh (Verified Certificate):** Khi hoàn thành 100% bài học và đạt điểm Pass ở tất cả bài Graded items (>= 80%), hệ thống tự động phát hành Verified Certificate với thông tin Tên học viên và Khóa học truy vấn trực tiếp từ DB.
 * **Mã xác minh công khai & QR Server API:** Mỗi chứng chỉ có đường dẫn công khai độc nhất (`/verify/CERT-XXXXXXXXXX`) và mã QR code được sinh tự động qua API `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={cert_id}` để nhà tuyển dụng kiểm tra tính hợp lệ.
 * **OpenBadges & LinkedIn Sharing:** Chứng chỉ được nhúng siêu dữ liệu JSON-LD chuẩn OpenBadges 2.0 đầy đủ thông tin `BadgeClass`, `issuer`, `criteria`. Học viên chỉ cần 1 cú nhấp chuột để chia sẻ trực tiếp thành tích lên hồ sơ LinkedIn.
+
+---
+
+## 4. VAI TRÒ: ĐỐI TÁC PHÁT HÀNH (PARTNER / ORGANIZATION ADMIN)
+
+### 4.1. Quản lý Thương hiệu & Logo Tổ chức (Partner Branding & Identity)
+* **Cấu hình Hồ sơ Đối tác:** Cập nhật Tên đối tác (ví dụ: Stanford University, DeepLearning.AI), biểu tượng Logo chính thức (Partner Logo URL) và chữ ký xác thực đại diện.
+* **Đồng thương hiệu:** Hiển thị thương hiệu đối tác trên toàn bộ giao diện khóa học phát hành và nhúng thông tin đối tác vào Chứng chỉ xác minh (Verified Certificate).
+
+### 4.2. Quản lý Gói Suất học & Báo cáo Tổ chức (Enterprise Seats & Organization Dashboard)
+* **Kích hoạt Suất học:** Quản lý danh sách mã Suất học Doanh nghiệp (Enterprise Keys), theo dõi hạn mức (`used_seats / total_seats`).
+* **Báo cáo Hoàn thành:** Xem thống kê tỷ lệ hoàn thành chương trình học và danh sách học viên thuộc tổ chức nhận Verified Certificate.

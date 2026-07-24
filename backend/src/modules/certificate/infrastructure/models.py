@@ -13,7 +13,7 @@ class FinancialAidModel(Base):
     essay_150_words: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
     review_deadline_days_left: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=14
+        Integer, nullable=False, default=15
     )
 
 

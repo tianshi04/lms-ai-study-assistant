@@ -9,7 +9,7 @@ class FinancialAidApplication:
     course_id: str
     essay_150_words: str
     status: str  # PENDING, APPROVED, REJECTED
-    review_deadline_days_left: int = 14
+    review_deadline_days_left: int = 15
 
 
 @dataclass

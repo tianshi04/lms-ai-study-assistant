@@ -41,7 +41,7 @@ class CertificateUseCase:
                 # If existing status is REJECTED, allow re-applying by updating essay & resetting to PENDING
                 existing.essay_150_words = essay_150_words
                 existing.status = "PENDING"
-                existing.review_deadline_days_left = 14
+                existing.review_deadline_days_left = 15
                 saved = await repo.save_financial_aid(existing)
                 return saved, ""
 
@@ -52,7 +52,7 @@ class CertificateUseCase:
                 course_id=course_id,
                 essay_150_words=essay_150_words,
                 status="PENDING",
-                review_deadline_days_left=14,
+                review_deadline_days_left=15,
             )
 
             saved = await repo.save_financial_aid(application)
