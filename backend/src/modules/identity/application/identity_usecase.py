@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import os
 import uuid
 from typing import Optional
@@ -27,7 +28,7 @@ def verify_password(password: str, password_hash: str) -> bool:
     new_hash = hashlib.pbkdf2_hmac(
         "sha256", password.encode("utf-8"), salt, 100_000
     ).hex()
-    return new_hash == hash_hex
+    return hmac.compare_digest(new_hash, hash_hex)
 
 
 class IdentityUseCase:

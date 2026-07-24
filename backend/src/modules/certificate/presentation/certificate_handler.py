@@ -76,6 +76,42 @@ class CertificateHandler(CertificateService):
             return pb.GetFinancialAidStatusResponse(application=None)
         return pb.GetFinancialAidStatusResponse(application=_to_pb_financial_aid(app))
 
+    async def list_financial_aid_applications(
+        self,
+        request: pb.ListFinancialAidApplicationsRequest,
+        ctx: RequestContext[
+            pb.ListFinancialAidApplicationsRequest,
+            pb.ListFinancialAidApplicationsResponse,
+        ],
+    ) -> pb.ListFinancialAidApplicationsResponse:
+        require_current_user()
+        apps = await self._use_case.list_financial_aid_applications(
+            course_id=request.course_id or None,
+            status=request.status or None,
+        )
+        return pb.ListFinancialAidApplicationsResponse(
+            applications=[_to_pb_financial_aid(a) for a in apps]
+        )
+
+    async def review_financial_aid_application(
+        self,
+        request: pb.ReviewFinancialAidApplicationRequest,
+        ctx: RequestContext[
+            pb.ReviewFinancialAidApplicationRequest,
+            pb.ReviewFinancialAidApplicationResponse,
+        ],
+    ) -> pb.ReviewFinancialAidApplicationResponse:
+        require_current_user()
+        app, err = await self._use_case.review_financial_aid_application(
+            application_id=request.application_id,
+            is_approved=request.is_approved,
+        )
+        if err or not app:
+            raise ConnectError(Code.NOT_FOUND, err or "Duyệt đơn thất bại")
+        return pb.ReviewFinancialAidApplicationResponse(
+            application=_to_pb_financial_aid(app)
+        )
+
     async def get_verified_certificate(
         self,
         request: pb.GetVerifiedCertificateRequest,
