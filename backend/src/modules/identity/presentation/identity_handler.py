@@ -176,5 +176,7 @@ class IdentityHandler(IdentityService):
             pb.RevokeEnterpriseSeatRequest, pb.RevokeEnterpriseSeatResponse
         ],
     ) -> pb.RevokeEnterpriseSeatResponse:
-        success, msg = await self._use_case.revoke_enterprise_seat(request.user_id)
+        success, msg = await self._use_case.revoke_enterprise_seat(
+            request.user_id, request.course_id
+        )
         return pb.RevokeEnterpriseSeatResponse(success=success, message=msg)

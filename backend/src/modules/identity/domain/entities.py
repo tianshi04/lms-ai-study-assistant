@@ -20,5 +20,6 @@ class User:
     role: UserRole
     avatar_url: str = ""
     enterprise_seat_key: Optional[str] = None
+    seat_assigned_at: Optional[str] = None
     password_hash: str = ""
     is_identity_verified: bool = False

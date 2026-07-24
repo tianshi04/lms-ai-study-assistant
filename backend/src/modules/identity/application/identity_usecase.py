@@ -2,6 +2,7 @@ import hashlib
 import hmac
 import os
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from sqlalchemy import select
@@ -9,6 +10,7 @@ from sqlalchemy import select
 from src.modules.identity.domain.entities import User, UserRole
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
 from src.modules.identity.infrastructure.repository import IdentityRepository
+from src.modules.learning.infrastructure.models import LearningProgressModel
 from src.shared.auth import create_access_token, create_refresh_token, decode_token
 from src.shared.infrastructure.database import async_session_scope
 
@@ -140,6 +142,7 @@ class IdentityUseCase:
 
             license_model.used_seats += 1
             user.enterprise_seat_key = clean_key
+            user.seat_assigned_at = datetime.now(timezone.utc).isoformat()
             await repo.save(user)
             return (
                 True,
@@ -209,22 +212,55 @@ class IdentityUseCase:
             await repo.save(user)
             return True, "Xác minh danh tính sinh trắc học & CCCD thành công!"
 
-    async def revoke_enterprise_seat(self, user_id: str) -> tuple[bool, str]:
-        """Revokes enterprise seat from user if conditions met and recycles seat (BR_ACCESS_003)."""
+    async def revoke_enterprise_seat(
+        self, user_id: str, course_id: str = ""
+    ) -> tuple[bool, str]:
+        """Revokes enterprise seat from user if BR_ACCESS_003 conditions are met.
+
+        Conditions (BR_ACCESS_003):
+          - User must have been assigned a seat.
+          - If seat was assigned <= 30 days ago, progress must be < 20%.
+          - If seat was assigned > 30 days ago, revocation is allowed unconditionally.
+        """
         async with async_session_scope() as session:
             repo = IdentityRepository(session)
             user = await repo.get_by_id(user_id)
             if not user or not user.enterprise_seat_key:
                 return False, "Người dùng chưa được gán mã Enterprise Seat"
 
+            # BR_ACCESS_003: enforce 30-day + <20% progress guard
+            now = datetime.now(timezone.utc)
+            if user.seat_assigned_at:
+                try:
+                    assigned_dt = datetime.fromisoformat(user.seat_assigned_at)
+                    within_30_days = (now - assigned_dt) <= timedelta(days=30)
+                except (ValueError, TypeError):
+                    within_30_days = False
+            else:
+                within_30_days = False
+
+            if within_30_days and course_id:
+                progress_key = f"{user_id}:{course_id}"
+                prog_stmt = select(LearningProgressModel).where(
+                    LearningProgressModel.id == progress_key
+                )
+                prog_res = await session.execute(prog_stmt)
+                prog_model = prog_res.scalar_one_or_none()
+                if prog_model and prog_model.overall_progress_percent >= 20.0:
+                    return (
+                        False,
+                        f"Không thể thu hồi: Học viên đã đạt {prog_model.overall_progress_percent}% tiến độ (>= 20% trong 30 ngày đầu).",
+                    )
+
             seat_key = user.enterprise_seat_key
             user.enterprise_seat_key = None
+            user.seat_assigned_at = None
             await repo.save(user)
 
-            stmt = select(EnterpriseLicenseModel).where(
+            lic_stmt = select(EnterpriseLicenseModel).where(
                 EnterpriseLicenseModel.key == seat_key
             )
-            res = await session.execute(stmt)
+            res = await session.execute(lic_stmt)
             license_model = res.scalar_one_or_none()
             if license_model and license_model.used_seats > 0:
                 license_model.used_seats -= 1

@@ -98,6 +98,7 @@ message RefreshTokenResponse {
 
 message RevokeEnterpriseSeatRequest {
   string user_id = 1;
+  string course_id = 2;
 }
 
 message RevokeEnterpriseSeatResponse {
