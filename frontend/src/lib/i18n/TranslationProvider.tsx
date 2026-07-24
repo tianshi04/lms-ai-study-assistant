@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { Dictionary, Locale, getDictionary } from "./getDictionary";
 import { useRouter } from "next/navigation";
 
@@ -54,6 +54,7 @@ export function useTranslation() {
   // Simple nested key accessor, e.g. t('navbar.catalog')
   const t = (path: string): string => {
     const keys = path.split(".");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let current: any = dictionary;
     for (const key of keys) {
       if (current === undefined) return path;
