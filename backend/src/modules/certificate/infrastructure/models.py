@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, String, Text
+from sqlalchemy import Boolean, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.shared.infrastructure.database import Base
@@ -33,3 +33,5 @@ class CertificateModel(Base):
     verification_url: Mapped[str] = mapped_column(String(512), nullable=False)
     qr_code_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
     open_badges_json_ld: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    is_revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    revoked_reason: Mapped[str] = mapped_column(Text, nullable=False, default="")

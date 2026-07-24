@@ -142,8 +142,13 @@ class CertificateRepository:
                 verification_url=cert.verification_url,
                 qr_code_url=cert.qr_code_url,
                 open_badges_json_ld=cert.open_badges_json_ld,
+                is_revoked=cert.is_revoked,
+                revoked_reason=cert.revoked_reason,
             )
             self._session.add(model)
+        else:
+            model.is_revoked = cert.is_revoked
+            model.revoked_reason = cert.revoked_reason
 
         await self._session.flush()
         return cert
@@ -161,4 +166,6 @@ class CertificateRepository:
             verification_url=model.verification_url,
             qr_code_url=model.qr_code_url,
             open_badges_json_ld=model.open_badges_json_ld,
+            is_revoked=model.is_revoked,
+            revoked_reason=model.revoked_reason,
         )

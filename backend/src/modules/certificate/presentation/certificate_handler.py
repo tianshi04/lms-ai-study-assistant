@@ -180,3 +180,21 @@ class CertificateHandler(CertificateService):
         return pb.VerifyCertificatePublicResponse(
             is_valid=True, certificate=_to_pb_certificate(cert), status_message=msg
         )
+
+    async def revoke_certificate(
+        self,
+        request: pb.RevokeCertificateRequest,
+        ctx: RequestContext[pb.RevokeCertificateRequest, pb.RevokeCertificateResponse],
+    ) -> pb.RevokeCertificateResponse:
+        current_user = require_current_user()
+        from src.modules.identity.domain.entities import UserRole
+
+        if current_user.role not in (UserRole.SUPER_ADMIN,):
+            raise ConnectError(
+                Code.PERMISSION_DENIED,
+                "Chỉ Super Admin mới có quyền thu hồi chứng chỉ.",
+            )
+        success, msg = await self._use_case.revoke_certificate(
+            request.certificate_id, request.reason
+        )
+        return pb.RevokeCertificateResponse(success=success, message=msg)

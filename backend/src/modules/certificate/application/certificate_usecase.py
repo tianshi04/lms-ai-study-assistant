@@ -216,6 +216,24 @@ class CertificateUseCase:
             saved_cert = await repo.save_certificate(cert)
             return saved_cert, ""
 
+    async def revoke_certificate(
+        self, certificate_id: str, reason: str = ""
+    ) -> tuple[bool, str]:
+        """Revokes a certificate by setting is_revoked=True (BR_CERT_004).
+        Only Super Admin should call this endpoint.
+        """
+        async with async_session_scope() as session:
+            repo = CertificateRepository(session)
+            cert = await repo.get_certificate_by_id(certificate_id)
+            if not cert:
+                return False, f"Không tìm thấy chứng chỉ '{certificate_id}'."
+            if cert.is_revoked:
+                return False, "Chứng chỉ này đã bị thu hồi trước đó."
+            cert.is_revoked = True
+            cert.revoked_reason = reason or "Vi phạm quy chế liêm chính học thuật"
+            await repo.save_certificate(cert)
+            return True, f"Đã thu hồi chứng chỉ '{certificate_id}' thành công."
+
     async def verify_certificate_public(
         self, certificate_id: str
     ) -> tuple[bool, Optional[VerifiedCertificate], str]:
@@ -227,7 +245,7 @@ class CertificateUseCase:
             cert = await repo.get_certificate_by_id(certificate_id)
             if not cert:
                 return False, None, "Không tìm thấy chứng chỉ hợp lệ trên hệ thống."
-            if "REVOKED" in getattr(cert, "open_badges_json_ld", ""):
+            if cert.is_revoked:
                 return (
                     False,
                     cert,

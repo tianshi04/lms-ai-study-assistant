@@ -25,3 +25,5 @@ class VerifiedCertificate:
     qr_code_url: str
     open_badges_json_ld: str
     course_id: Optional[str] = None
+    is_revoked: bool = False
+    revoked_reason: str = ""
