@@ -114,7 +114,7 @@ export default function InstructorCoursesPage() {
       if (editingCourseId) {
         // Edit Mode
         const res = await client.updateCourse({
-          courseId: editingCourseId,
+          id: editingCourseId,
           title,
           description,
           partnerName,

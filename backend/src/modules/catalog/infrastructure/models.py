@@ -144,3 +144,20 @@ class InVideoQuizModel(Base):
     item: Mapped["LearningItemModel"] = relationship(
         "LearningItemModel", back_populates="in_video_quizzes"
     )
+
+
+class CourseReviewModel(Base):
+    __tablename__ = "course_reviews"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    user_name: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    course_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("courses.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    rating_stars: Mapped[int] = mapped_column(Integer, nullable=False)
+    comment_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False)
