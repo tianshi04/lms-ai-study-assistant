@@ -4,7 +4,10 @@ from typing import Optional
 
 from sqlalchemy import select
 
-from src.modules.assessment.infrastructure.models import QuizSubmissionModel
+from src.modules.assessment.infrastructure.models import (
+    GradeAppealModel,
+    QuizSubmissionModel,
+)
 from src.modules.catalog.infrastructure.models import CourseModel, SpecializationModel
 from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
@@ -144,6 +147,18 @@ class CertificateUseCase:
                         None,
                         f"Chưa đủ điều kiện nhận chứng chỉ: Bài thi '{item_id}' chưa đạt điểm tối thiểu >= 80% (Hiện tại {max_score}%).",
                     )
+
+            # BR_PEER_005 Report Lock Rule: Check if user has any pending grade appeals or reported peer reviews
+            appeal_stmt = select(GradeAppealModel).where(
+                GradeAppealModel.user_id == user_id,
+                GradeAppealModel.status == "PENDING",
+            )
+            appeal_res = await session.execute(appeal_stmt)
+            if appeal_res.scalar_one_or_none():
+                return (
+                    None,
+                    "Chưa đủ điều kiện nhận chứng chỉ: Bạn đang có đơn khiếu nại/báo cáo bài chấm chéo chờ Trợ giảng thẩm định (Report Lock Rule).",
+                )
 
             # Fetch real user details
             user_stmt = select(UserModel).where(UserModel.id == user_id)

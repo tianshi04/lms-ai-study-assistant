@@ -88,20 +88,15 @@ class CertificateHandler(CertificateService):
     ) -> pb.ListFinancialAidApplicationsResponse:
         current_user = require_current_user()
         role = str(current_user.role).lower()
-        is_staff = any(
-            r in role
-            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
-        ) or current_user.role in (
-            "USER_ROLE_INSTRUCTOR",
+        is_super_admin = ("admin" in role or "super" in role) or current_user.role in (
             "USER_ROLE_SUPER_ADMIN",
             "USER_ROLE_PARTNER_ADMIN",
-            "USER_ROLE_TA",
         )
 
-        if not is_staff:
+        if not is_super_admin:
             raise ConnectError(
                 Code.PERMISSION_DENIED,
-                "Chỉ Giảng viên hoặc Quản trị viên mới có quyền xem danh sách đơn Hỗ trợ tài chính.",
+                "Chỉ Quản trị viên hệ thống (Super Admin) mới có quyền xem danh sách đơn Hỗ trợ tài chính.",
             )
 
         apps = await self._use_case.list_financial_aid_applications(
@@ -121,20 +116,15 @@ class CertificateHandler(CertificateService):
     ) -> pb.ReviewFinancialAidApplicationResponse:
         current_user = require_current_user()
         role = str(current_user.role).lower()
-        is_staff = any(
-            r in role
-            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
-        ) or current_user.role in (
-            "USER_ROLE_INSTRUCTOR",
+        is_super_admin = ("admin" in role or "super" in role) or current_user.role in (
             "USER_ROLE_SUPER_ADMIN",
             "USER_ROLE_PARTNER_ADMIN",
-            "USER_ROLE_TA",
         )
 
-        if not is_staff:
+        if not is_super_admin:
             raise ConnectError(
                 Code.PERMISSION_DENIED,
-                "Chỉ Giảng viên hoặc Quản trị viên mới có quyền xét duyệt đơn Hỗ trợ tài chính.",
+                "Chỉ Quản trị viên hệ thống (Super Admin) mới có quyền xét duyệt đơn Hỗ trợ tài chính.",
             )
 
         app, err = await self._use_case.review_financial_aid_application(
