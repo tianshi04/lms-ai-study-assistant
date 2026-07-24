@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/Modal";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
@@ -21,7 +20,6 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
   courseId,
   courseTitle,
 }) => {
-  const router = useRouter();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [rating, setRating] = useState<number>(5);
@@ -181,9 +179,8 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
   };
 
   const handleClaimCertificate = () => {
-    onClose();
     if (realCertId) {
-      router.push(`/verify/${realCertId}`);
+      window.open(`/verify/${realCertId}`, "_blank");
     }
   };
 
