@@ -38,6 +38,14 @@ test.describe('Full System Blackbox - Discussion Forum Flows (POM)', () => {
     await expect(page.locator(`text=${replyMessage}`)).toBeVisible({ timeout: 5000 });
   });
 
+  test('should allow upvoting a reply and enforcing 1 vote per user (BR_FORUM_001)', async ({ page }) => {
+    const forumPage = new ForumPage(page);
+    await forumPage.goto();
+    await forumPage.verifyPageLoaded();
+
+    await forumPage.upvoteReply();
+  });
+
   test('should display forum tab inside learning player and allow creating questions', async ({ page }) => {
     const learningPage = new LearningPage(page);
     await learningPage.goto('course-python-ai');
@@ -57,3 +65,4 @@ test.describe('Full System Blackbox - Discussion Forum Flows (POM)', () => {
     await expect(page.locator(`text=${playerQuestion}`)).toBeVisible({ timeout: 5000 });
   });
 });
+

@@ -81,5 +81,36 @@ export class AssessmentPage {
   async submitPeerAssignment() {
     await this.submitPeerAssignmentButton.scrollIntoViewIfNeeded();
     await this.submitPeerAssignmentButton.click();
+    await this.page.waitForTimeout(500);
+  }
+
+  async gradeFirstPeer() {
+    if (await this.submitPeerAssignmentButton.isVisible()) {
+      await this.submitPeerAssignment();
+    }
+    await this.gradePeersTab.scrollIntoViewIfNeeded();
+    await this.gradePeersTab.click({ force: true });
+    const submitPeerGradeBtn = this.page.getByRole('button', { name: /Submit Grade for Peer #1/i });
+    await expect(submitPeerGradeBtn).toBeVisible({ timeout: 5000 });
+    await submitPeerGradeBtn.scrollIntoViewIfNeeded();
+    await submitPeerGradeBtn.click({ force: true });
+  }
+
+  async submitAppeal(reason: string) {
+    if (await this.submitPeerAssignmentButton.isVisible()) {
+      await this.submitPeerAssignment();
+    }
+    await this.gradeAppealTab.scrollIntoViewIfNeeded();
+    await this.gradeAppealTab.click({ force: true });
+    const textarea = this.page.locator('textarea[placeholder*="Explain why"]');
+    await expect(textarea).toBeVisible({ timeout: 5000 });
+    await textarea.fill(reason);
+    const submitBtn = this.page.getByRole('button', { name: /Submit Appeal to TA/i });
+    await submitBtn.scrollIntoViewIfNeeded();
+    await submitBtn.click({ force: true });
   }
 }
+
+
+
+

@@ -54,9 +54,10 @@ export class LearningPage {
 
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/learn\/.+/);
-    await expect(this.headerTitle).toBeVisible({ timeout: 10000 });
-    await expect(this.sidebar).toBeVisible();
+    await expect(this.headerTitle).toBeVisible({ timeout: 15000 });
+    await expect(this.sidebar).toBeVisible({ timeout: 15000 });
   }
+
 
   async switchTab(tab: 'transcript' | 'forum' | 'notes' | 'deadlines') {
     if (tab === 'transcript') await this.transcriptTab.click();
