@@ -54,7 +54,11 @@ export default function CoursePlayerPage() {
   useEffect(() => {
     if (!courseId) return;
 
-    // Auth is handled by Next.js Middleware. If this page loads, the user is authenticated.
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    if (!token) {
+      router.push(`/auth/login?redirect=/learn/${courseId}`);
+      return;
+    }
 
     async function loadData() {
       try {

@@ -54,7 +54,7 @@ async def test_auth_interceptor_missing_header_raises_unauthenticated() -> None:
         await interceptor.intercept_unary(call_next, "dummy_req", ctx)
 
     assert exc_info.value.code == Code.UNAUTHENTICATED
-    assert "Thiếu token xác thực" in exc_info.value.message
+    assert "Thiếu header Authorization" in exc_info.value.message
 
 
 @pytest.mark.asyncio
