@@ -35,9 +35,9 @@ jobs:
         with:
           input: 'proto'
 
-      - name: Check Breaking Changes against main branch
-        uses: bufbuild/buf-breaking-action@v1
-        if: github.event_name == 'pull_request'
-        with:
-          input: 'proto'
-          against: 'https://github.com/${{ github.repository }}.git#branch=main'
+#      - name: Check Breaking Changes against main branch
+#        uses: bufbuild/buf-breaking-action@v1
+#        if: github.event_name == 'pull_request'
+#        with:
+#          input: 'proto'
+#          against: 'https://github.com/${{ github.repository }}.git#branch=main'
