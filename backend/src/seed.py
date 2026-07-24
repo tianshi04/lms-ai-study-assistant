@@ -36,6 +36,7 @@ from src.modules.assessment.infrastructure.models import (
 )
 from src.modules.catalog.infrastructure.models import (
     CourseModel,
+    CourseReviewModel,
     InVideoQuizModel,
     InteractiveTranscriptModel,
     ItemType,
@@ -441,6 +442,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=learner@coursera.ai",
             enterprise_seat_key="ENT-DEMO-2026-X99",
             password_hash=default_pw_hash,
+            is_identity_verified=True,
         )
 
         learner_user2 = UserModel(
@@ -451,6 +453,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=learner2@coursera.ai",
             enterprise_seat_key="ENT-UNI-HCMUT-2026",
             password_hash=default_pw_hash,
+            is_identity_verified=True,
         )
 
         learner_user3 = UserModel(
@@ -461,6 +464,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=learner3@coursera.ai",
             enterprise_seat_key="",
             password_hash=default_pw_hash,
+            is_identity_verified=True,
         )
 
         instructor_user = UserModel(
@@ -818,6 +822,37 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         await session.merge(vote1)
         await session.merge(vote2)
         await session.merge(vote3)
+
+        rev1 = CourseReviewModel(
+            id="rev-demo-01",
+            user_id="user_learner_demo",
+            user_name="Nguyễn Văn A",
+            course_id="course-python-ai",
+            rating_stars=5,
+            comment_text="Khóa học cực kỳ chất lượng! Thầy Andrew Ng giảng rất dễ hiểu và chi tiết.",
+            created_at="2026-07-22T14:30:00Z",
+        )
+        rev2 = CourseReviewModel(
+            id="rev-demo-02",
+            user_id="user_learner_02",
+            user_name="Trần Thị B",
+            course_id="course-python-ai",
+            rating_stars=5,
+            comment_text="Bài tập lập trình trên Jupyter notebook chuẩn thực tế, giao diện dễ dùng.",
+            created_at="2026-07-23T09:15:00Z",
+        )
+        rev3 = CourseReviewModel(
+            id="rev-demo-03",
+            user_id="user_learner_03",
+            user_name="Lê Hoàng C",
+            course_id="course-deep-learning",
+            rating_stars=4,
+            comment_text="Nội dung chuyên sâu về Deep Learning và PyTorch. Rất đáng học!",
+            created_at="2026-07-23T11:45:00Z",
+        )
+        await session.merge(rev1)
+        await session.merge(rev2)
+        await session.merge(rev3)
 
         await session.commit()
         logger.info("[SEED] Database seeding completed successfully!")

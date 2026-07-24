@@ -53,7 +53,7 @@ export default function InstructorCourseBuilderPage({
   const fetchCourseDetail = async () => {
     try {
       const client = getRpcClient(CatalogService);
-      const res = await client.getCourseDetail({ courseId });
+      const res = await client.getCourseDetail({ idOrSlug: courseId });
       if (res.course) {
         setCourse(res.course);
         // Default week number to next week
@@ -74,7 +74,7 @@ export default function InstructorCourseBuilderPage({
     async function load() {
       try {
         const client = getRpcClient(CatalogService);
-        const res = await client.getCourseDetail({ courseId });
+        const res = await client.getCourseDetail({ idOrSlug: courseId });
         if (!ignore && res.course) {
           setCourse(res.course);
           const nextWeekNum = (res.course.weekModules?.length || 0) + 1;

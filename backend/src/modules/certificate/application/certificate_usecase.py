@@ -201,16 +201,32 @@ class CertificateUseCase:
 
             open_badges = {
                 "@context": "https://w3id.org/openbadges/v2",
-                "type": "BadgeClass",
-                "id": cert_id,
-                "name": f"Verified Certificate: {course_title}",
-                "description": f"Chứng chỉ xác thực hoàn thành khóa học {course_title}",
-                "image": qr_code_url,
-                "criteria": f"/courses/{course_id}",
-                "issuer": {
-                    "name": f"{partner_name} & Coursera Partner",
-                    "url": "https://coursera.org",
+                "type": "Assertion",
+                "id": f"https://coursera.org/verify/{cert_id}",
+                "recipient": {
+                    "type": "email",
+                    "hashed": False,
+                    "identity": user_model.email
+                    if user_model and user_model.email
+                    else "learner@coursera.ai",
                 },
+                "issuedOn": datetime.now(timezone.utc).isoformat(),
+                "badge": {
+                    "type": "BadgeClass",
+                    "id": f"https://coursera.org/courses/{course_id}",
+                    "name": f"Verified Certificate: {course_title}",
+                    "description": f"Chứng nhận xác thực hoàn thành khóa học {course_title}",
+                    "image": qr_code_url,
+                    "criteria": f"https://coursera.org/courses/{course_id}",
+                    "issuer": {
+                        "type": "Issuer",
+                        "id": "https://coursera.org",
+                        "name": f"{partner_name} & Coursera Partner",
+                        "url": "https://coursera.org",
+                        "email": "verify@coursera.org",
+                    },
+                },
+                "verification": {"type": "hosted"},
             }
 
             cert = VerifiedCertificate(

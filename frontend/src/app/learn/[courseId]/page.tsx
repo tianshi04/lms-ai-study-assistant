@@ -6,12 +6,14 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course, type LearningItem, type InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { LearningService, type LearningProgress, type PersonalNote } from "@/gen/learning/v1/learning_pb";
+import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { VideoPlayer } from "@/components/player/VideoPlayer";
 import { TranscriptPanel } from "@/components/player/TranscriptPanel";
 import { NotesPanel } from "@/components/player/NotesPanel";
 import { DeadlinesPanel } from "@/components/player/DeadlinesPanel";
 import { ForumTab } from "@/components/player/ForumTab";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
+import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
 
 function getActiveUserId(): string {
   if (typeof window !== "undefined") {
@@ -29,6 +31,8 @@ export default function CoursePlayerPage() {
   const [progress, setProgress] = useState<LearningProgress | null>(null);
   const [notes, setNotes] = useState<PersonalNote[]>([]);
   const [activeTab, setActiveTab] = useState<"transcript" | "forum" | "notes" | "deadlines">("transcript");
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [certificateId, setCertificateId] = useState<string>("");
 
   // Video & In-Video Quiz State
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -60,7 +64,7 @@ export default function CoursePlayerPage() {
     async function loadData() {
       try {
         const catalogClient = getRpcClient(CatalogService);
-        const courseRes = await catalogClient.getCourseDetail({ courseId });
+        const courseRes = await catalogClient.getCourseDetail({ idOrSlug: courseId });
         setCourse(courseRes.course ?? null);
 
         // Set initial item
@@ -70,6 +74,18 @@ export default function CoursePlayerPage() {
         const learningClient = getRpcClient(LearningService);
         const progressRes = await learningClient.getProgress({ courseId });
         setProgress(progressRes.progress ?? null);
+
+        if (progressRes.progress && progressRes.progress.overallProgressPercent >= 100) {
+          try {
+            const certClient = getRpcClient(CertificateService);
+            const certRes = await certClient.getVerifiedCertificate({ courseId });
+            if (certRes.certificate?.certificateId) {
+              setCertificateId(certRes.certificate.certificateId);
+            }
+          } catch (err) {
+            console.error("Failed to load certificate on load:", err);
+          }
+        }
 
         const notesRes = await learningClient.listPersonalNotes({ courseId });
         setNotes(notesRes.notes);
@@ -97,6 +113,24 @@ export default function CoursePlayerPage() {
       });
       if (res.updatedProgress) {
         setProgress(res.updatedProgress);
+        if (
+          res.updatedProgress.overallProgressPercent >= 100 ||
+          res.updatedProgress.completedItemIds.length >= totalCourseItems
+        ) {
+          try {
+            const certClient = getRpcClient(CertificateService);
+            const certRes = await certClient.getVerifiedCertificate({ courseId });
+            if (certRes.certificate?.certificateId) {
+              setCertificateId(certRes.certificate.certificateId);
+            } else {
+              setCertificateId("");
+            }
+          } catch (err) {
+            console.error("Failed to load certificate on completion:", err);
+            setCertificateId("");
+          }
+          setShowCompletionModal(true);
+        }
       }
     } catch (err) {
       console.error("Failed to mark item complete:", err);
@@ -237,6 +271,18 @@ export default function CoursePlayerPage() {
                 {progress.overallProgressPercent}%
               </span>
             </div>
+          )}
+
+          {progress && (progress.overallProgressPercent >= 100 || progress.completedItemIds.length >= totalCourseItems) && (
+            <button
+              onClick={() => setShowCompletionModal(true)}
+              className="px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-sm hover:shadow transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <svg className="w-4 h-4 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.25}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Xem Chứng Chỉ & Đánh Giá</span>
+            </button>
           )}
 
           <ThemeToggle />
@@ -487,6 +533,14 @@ export default function CoursePlayerPage() {
           </div>
         </main>
       </div>
+
+      <CourseCompletionModal
+        isOpen={showCompletionModal}
+        onClose={() => setShowCompletionModal(false)}
+        courseId={courseId}
+        courseTitle={course?.title || "Khóa học LMS"}
+        certificateId={certificateId || `CERT-${courseId.replace("course-", "").toUpperCase()}`}
+      />
     </div>
   );
 }

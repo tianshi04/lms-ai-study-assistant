@@ -9,6 +9,7 @@ from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 from src.shared.auth import require_current_user
 from src.modules.catalog.domain.entities import (
     Course,
+    CourseReview,
     InVideoQuiz,
     InteractiveTranscript,
     ItemType,
@@ -93,17 +94,33 @@ def _to_pb_course(course: Course) -> pb.Course:
         partner_logo_url=course.partner_logo_url,
         instructor_names=course.instructor_names,
         week_modules=[_to_pb_week_module(wm) for wm in course.week_modules],
+        average_rating=course.average_rating,
+        review_count=course.review_count,
     )
 
 
-def _to_pb_specialization(spec: Specialization) -> pb.Specialization:
+def _to_pb_review(review: CourseReview) -> pb.CourseReview:
+    return pb.CourseReview(
+        id=review.id,
+        user_id=review.user_id,
+        user_name=review.user_name,
+        course_id=review.course_id,
+        rating_stars=review.rating_stars,
+        comment_text=review.comment_text,
+        created_at=review.created_at,
+    )
+
+
+def _to_pb_specialization(
+    spec: Specialization, courses: list[Course] | None = None
+) -> pb.Specialization:
     return pb.Specialization(
         id=spec.id,
         title=spec.title,
         description=spec.description,
         partner_name=spec.partner_name,
         partner_logo_url=spec.partner_logo_url,
-        course_ids=spec.course_ids,
+        courses=[_to_pb_course(c) for c in (courses or [])],
     )
 
 
@@ -129,9 +146,9 @@ class CatalogHandler(CatalogService):
         request: pb.GetCourseDetailRequest,
         ctx: RequestContext[pb.GetCourseDetailRequest, pb.GetCourseDetailResponse],
     ) -> pb.GetCourseDetailResponse:
-        course = await self.use_case.get_course_detail(request.course_id)
+        course = await self.use_case.get_course_detail(request.id_or_slug)
         if not course:
-            raise ConnectError(Code.NOT_FOUND, f"Course {request.course_id} not found")
+            raise ConnectError(Code.NOT_FOUND, f"Course {request.id_or_slug} not found")
         return pb.GetCourseDetailResponse(course=_to_pb_course(course))
 
     async def get_lesson_detail(
@@ -140,7 +157,7 @@ class CatalogHandler(CatalogService):
         ctx: RequestContext[pb.GetLessonDetailRequest, pb.GetLessonDetailResponse],
     ) -> pb.GetLessonDetailResponse:
         lesson = await self.use_case.get_lesson_detail(
-            course_id=request.course_id, lesson_id=request.lesson_id
+            course_id="", lesson_id=request.lesson_id
         )
         if not lesson:
             raise ConnectError(Code.NOT_FOUND, f"Lesson {request.lesson_id} not found")
@@ -151,16 +168,13 @@ class CatalogHandler(CatalogService):
         request: pb.GetSpecializationRequest,
         ctx: RequestContext[pb.GetSpecializationRequest, pb.GetSpecializationResponse],
     ) -> pb.GetSpecializationResponse:
-        spec, courses = await self.use_case.get_specialization(
-            request.specialization_id
-        )
+        spec, courses = await self.use_case.get_specialization(request.id_or_slug)
         if not spec:
             raise ConnectError(
-                Code.NOT_FOUND, f"Specialization {request.specialization_id} not found"
+                Code.NOT_FOUND, f"Specialization {request.id_or_slug} not found"
             )
         return pb.GetSpecializationResponse(
-            specialization=_to_pb_specialization(spec),
-            courses=[_to_pb_course(c) for c in courses],
+            specialization=_to_pb_specialization(spec, courses),
         )
 
     def _verify_instructor_permission(self) -> None:
@@ -200,7 +214,7 @@ class CatalogHandler(CatalogService):
     ) -> pb.UpdateCourseResponse:
         self._verify_instructor_permission()
         course = await self.use_case.update_course(
-            course_id=request.course_id,
+            course_id=request.id,
             title=request.title,
             description=request.description,
             partner_name=request.partner_name,
@@ -208,9 +222,7 @@ class CatalogHandler(CatalogService):
             instructor_names=list(request.instructor_names),
         )
         if not course:
-            raise ConnectError(
-                Code.NOT_FOUND, f"Khóa học {request.course_id} không tồn tại"
-            )
+            raise ConnectError(Code.NOT_FOUND, f"Khóa học {request.id} không tồn tại")
         return pb.UpdateCourseResponse(course=_to_pb_course(course))
 
     async def create_week_module(
@@ -259,3 +271,60 @@ class CatalogHandler(CatalogService):
             reading_markdown=request.reading_markdown,
         )
         return pb.CreateLearningItemResponse(item=_to_pb_learning_item(item))
+
+    async def submit_course_review(
+        self,
+        request: pb.SubmitCourseReviewRequest,
+        ctx: RequestContext[
+            pb.SubmitCourseReviewRequest, pb.SubmitCourseReviewResponse
+        ],
+    ) -> pb.SubmitCourseReviewResponse:
+        current_user = require_current_user()
+        if not request.course_id:
+            raise ConnectError(Code.INVALID_ARGUMENT, "Mã khóa học không được để trống")
+        if request.rating_stars < 1 or request.rating_stars > 5:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Điểm đánh giá phải từ 1 đến 5 sao"
+            )
+
+        try:
+            user_display_name = (
+                current_user.email.split("@")[0] if current_user.email else "Học viên"
+            )
+            review = await self.use_case.submit_course_review(
+                user_id=current_user.id,
+                user_name=user_display_name,
+                course_id=request.course_id,
+                rating_stars=request.rating_stars,
+                comment_text=request.comment_text,
+            )
+            return pb.SubmitCourseReviewResponse(review=_to_pb_review(review))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+        except Exception as e:
+            raise ConnectError(Code.INTERNAL, f"Không thể lưu đánh giá: {str(e)}")
+
+    async def list_course_reviews(
+        self,
+        request: pb.ListCourseReviewsRequest,
+        ctx: RequestContext[pb.ListCourseReviewsRequest, pb.ListCourseReviewsResponse],
+    ) -> pb.ListCourseReviewsResponse:
+        if not request.course_id:
+            raise ConnectError(Code.INVALID_ARGUMENT, "Mã khóa học không được để trống")
+
+        (
+            reviews,
+            avg_rating,
+            total_count,
+            next_token,
+        ) = await self.use_case.list_course_reviews(
+            course_id=request.course_id,
+            page_size=request.page_size,
+            page_token=request.page_token,
+        )
+        return pb.ListCourseReviewsResponse(
+            reviews=[_to_pb_review(r) for r in reviews],
+            average_rating=avg_rating,
+            total_reviews=total_count,
+            next_page_token=next_token,
+        )
