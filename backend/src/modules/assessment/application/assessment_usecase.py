@@ -423,10 +423,47 @@ class AssessmentUseCase:
             )
             await repo.save_peer_review(review)
 
+            # Update final_score on PeerAssignmentSubmission if not graded by staff
+            sub = await repo.get_peer_submission(submission_id)
+            if sub and not sub.graded_by_staff:
+                all_revs = await repo.get_peer_reviews_for_submission(submission_id)
+                if len(all_revs) >= 3:
+                    avg_score = round(
+                        sum(r.total_score for r in all_revs) / len(all_revs), 2
+                    )
+                    sub.final_score = avg_score
+                    await repo.save_peer_submission(sub)
+
         msg = "Peer review graded successfully."
         if is_outlier:
             msg += " (Outlier Flagged: Score variation exceeds 30%, TA notified)."
         return True, msg
+
+    async def regrade_peer_submission_by_staff(
+        self, submission_id: str, staff_user_id: str, ta_score: float
+    ) -> tuple[bool, str]:
+        """TA / Staff Regrade Override (BR_PEER_002, BR_PEER_003).
+        Overriding final_score 100% with TA score and resolving Grade Appeal if present.
+        """
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            sub = await repo.get_peer_submission(submission_id)
+            if not sub:
+                return False, "Không tìm thấy bài nộp dự án"
+
+            sub.final_score = round(ta_score, 2)
+            sub.graded_by_staff = True
+            await repo.save_peer_submission(sub)
+
+            appeal = await repo.get_grade_appeal(submission_id)
+            if appeal:
+                appeal.status = "RESOLVED"
+                await repo.save_grade_appeal(appeal)
+
+            return (
+                True,
+                f"Trợ giảng/Giảng viên đã chấm lại bài nộp thành công với điểm số {sub.final_score}% (TA Override).",
+            )
 
     async def submit_grade_appeal(
         self, user_id: str, submission_id: str, appeal_reason: str

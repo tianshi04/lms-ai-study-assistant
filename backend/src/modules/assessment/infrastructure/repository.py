@@ -191,6 +191,8 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         if model:
             model.submission_url = submission.submission_url
             model.text_content = submission.text_content
+            model.final_score = submission.final_score
+            model.graded_by_staff = submission.graded_by_staff
         else:
             model = PeerAssignmentSubmissionModel(
                 id=submission.id,
@@ -199,6 +201,8 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 submission_url=submission.submission_url,
                 text_content=submission.text_content,
                 created_at=submission.created_at,
+                final_score=submission.final_score,
+                graded_by_staff=submission.graded_by_staff,
             )
             self.session.add(model)
         await self.session.commit()
@@ -216,6 +220,8 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             submission_url=model.submission_url,
             text_content=model.text_content,
             created_at=model.created_at,
+            final_score=model.final_score,
+            graded_by_staff=model.graded_by_staff,
         )
 
     async def get_user_peer_submission(
@@ -236,6 +242,8 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             submission_url=model.submission_url,
             text_content=model.text_content,
             created_at=model.created_at,
+            final_score=model.final_score,
+            graded_by_staff=model.graded_by_staff,
         )
 
     async def get_peer_submissions_for_item(
@@ -256,6 +264,8 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 submission_url=m.submission_url,
                 text_content=m.text_content,
                 created_at=m.created_at,
+                final_score=m.final_score,
+                graded_by_staff=m.graded_by_staff,
             )
             for m in models
         ]

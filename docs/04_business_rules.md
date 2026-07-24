@@ -61,12 +61,13 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_PEER_001 (Điều kiện Nộp & Chấm chéo Peer Review):**
   * Học viên bắt buộc phải nộp bài dự án cá nhân trước mới được phân bổ quyền chấm chéo bài của bạn học (hệ thống tự động loại trừ bài nộp của chính mình `exclude_user_id`).
   * Học viên bắt buộc phải **chấm đủ 3 bài làm của bạn học** theo đúng bộ tiêu chí Rubric thì hệ thống mới mở hiển thị điểm bài nộp của chính mình.
-* **BR_PEER_002 (Bộ Tiêu chí Rubric & Thuật toán Tính điểm Outlier):**
+* **BR_PEER_002 (Bộ Tiêu chí Rubric & Nguyên tắc TA Regrade Override):**
   * Bộ Rubric mặc định gồm 3 tiêu chí: (1) Code Quality & Structure (max 10đ), (2) Documentation & Comments (max 10đ), (3) Test Coverage (max 10đ).
-  * Điểm số bài nộp Peer Review = $\frac{\sum \text{Score Given}}{\sum \text{Max Score}} \times 100\%$.
+  * Điểm số bài nộp mặc định = $\frac{\sum \text{Score Given}}{\sum \text{Max Score}} \times 100\%$.
   * *Cảnh báo chấm điểm bất thường (Outlier Detection):* Khi có bài chấm chéo mới, hệ thống tự động tính khoảng chênh lệch tuyệt đối giữa điểm cao nhất và thấp nhất của tất cả reviewers: $Max(Scores) - Min(Scores) > 30.0\%$. Nếu thỏa mãn, hệ thống gắn cờ `is_outlier = True` trên bản ghi `PeerReview` và gửi cảnh báo về bảng tin Trợ giảng (TA).
-* **BR_PEER_003 (Khiếu nại điểm Grade Appeal):**
-  * Học viên có quyền nộp đơn Khiếu nại điểm (Grade Appeal) với lý do chi tiết. Hệ thống khởi tạo đơn ở trạng thái `"PENDING"`. Trợ giảng (TA) sẽ trực tiếp rà soát và điểm số của TA là điểm cuối cùng.
+* **BR_PEER_003 (Khiếu nại điểm & Thẩm quyền TA Regrade Override):**
+  * Học viên có quyền nộp đơn Khiếu nại điểm (Grade Appeal) với lý do chi tiết. Hệ thống khởi tạo đơn ở trạng thái `"PENDING"`.
+  * Trợ giảng (TA) trực tiếp rà soát và chấm lại bài làm. Khi TA chấm bài (`graded_by_staff = True`), điểm số của TA trở thành điểm chính thức (`final_score = TA_Score`), ghi đè 100% kết quả chấm chéo của bạn học (các bản ghi `PeerReview` cũ vẫn được lưu trong nhật ký phục vụ audit).
 * **BR_PEER_004 (Xử lý Thiếu bài Chấm chéo - Staff Regrade Fallback Queue):**
   * Nếu sau 5 ngày kể từ khi nộp bài mà bài dự án chưa nhận đủ 3 lượt chấm chéo, hệ thống tự động chuyển bài nộp vào Hàng chờ xét duyệt của Trợ giảng (Staff Regrade Queue).
 
