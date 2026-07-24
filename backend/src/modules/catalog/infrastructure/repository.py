@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -359,7 +360,23 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             created_at=now_str,
         )
         self.session.add(model)
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except IntegrityError:
+            await self.session.rollback()
+            stmt_retry = select(CourseReviewModel).where(
+                CourseReviewModel.user_id == user_id,
+                CourseReviewModel.course_id == course_id,
+            )
+            res_retry = await self.session.execute(stmt_retry)
+            existing_retry = res_retry.scalar_one()
+            existing_retry.rating_stars = rating_stars
+            existing_retry.comment_text = comment_text
+            existing_retry.user_name = user_name or existing_retry.user_name
+            existing_retry.created_at = now_str
+            await self.session.commit()
+            return _model_to_domain_review(existing_retry)
+
         return _model_to_domain_review(model)
 
     async def list_course_reviews(
