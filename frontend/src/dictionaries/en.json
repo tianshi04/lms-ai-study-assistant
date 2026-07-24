@@ -1,0 +1,52 @@
+{
+  "navbar": {
+    "catalog": "Catalog",
+    "forum": "Forum",
+    "financialAid": "Financial Aid",
+    "verifyCert": "Verify Cert",
+    "instructorPortal": "Instructor",
+    "login": "Sign In",
+    "register": "Sign Up",
+    "logout": "Sign Out"
+  },
+  "home": {
+    "heroTag": "Next-Gen Coursera AI LMS",
+    "heroTitle1": "Smart & World-Class",
+    "heroTitle2": "Learning Platform",
+    "heroDesc": "Experience a Coursera-standard player with interactive transcripts, in-video quizzes, 24/7 smart Coursera AI Coach assistance, and verifiable certificates.",
+    "exploreCatalog": "Explore Course Catalog",
+    "registerFree": "Start Learning for Free",
+    "featureCatalog": "Course Catalog",
+    "featureCatalogDesc": "Explore a rich and high-quality list of courses",
+    "featurePlayer": "Lesson Player",
+    "featurePlayerDesc": "Scrolling subtitle video player & In-Video Quizzes",
+    "featureAid": "Financial Aid",
+    "featureAidDesc": "150-word scholarship application with realtime word count",
+    "featureVerify": "Certificate Verification",
+    "featureVerifyDesc": "Public certificate lookup & verification portal",
+    "footer": "© 2026 Coursera AI LMS Platform. The leading online learning platform.",
+    "footerProfile": "Profile"
+  },
+  "catalog": {
+    "title": "Explore Courses & Learning Paths",
+    "subtitle": "Learn with interactive video lectures, smart scrolling transcripts, advanced labs, and 24/7 AI Coach assistance.",
+    "searchPlaceholder": "Search courses by name or keyword...",
+    "viewDetails": "View Course Details",
+    "weekDuration": "Weeks",
+    "errorLoad": "Unable to load course list",
+    "errorNetwork": "Please check your network connection or try again later.",
+    "noResults": "No courses found matching the keyword"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "themeLight": "Light",
+    "themeLightDesc": "Light Mode. Click to switch to Dark.",
+    "themeDark": "Dark",
+    "themeDarkDesc": "Dark Mode. Click to switch to System.",
+    "themeSystem": "System",
+    "themeSystemDesc": "System Auto. Click to switch to Light.",
+    "instructorFallback": "Coursera Instructor",
+    "badge": "Coursera-Style Specializations & Courses"
+  }
+}

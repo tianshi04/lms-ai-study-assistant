@@ -4,11 +4,13 @@ import { useState } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { CourseCard } from "@/components/course/CourseCard";
 import { useCoursesQuery } from "@/lib/query_hooks";
+import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 export default function CoursesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: courses = [], isLoading: loading, error: queryError } = useCoursesQuery();
   const error = queryError ? queryError.message : null;
+  const { t } = useTranslation();
 
   const filteredCourses = courses.filter((c) =>
     c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -27,13 +29,13 @@ export default function CoursesPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
             </svg>
-            Coursera-Style Specializations & Courses
+            {t("common.badge")}
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">
-            Khám phá Khóa học & Lộ trình Học tập
+            {t("catalog.title")}
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
-            Học tập với bài giảng video tương tác, phụ đề cuộn thông minh, bài tập thực hành nâng cao và trợ lý AI Coach giải đáp 24/7.
+            {t("catalog.subtitle")}
           </p>
 
           {/* Search Bar */}
@@ -42,7 +44,7 @@ export default function CoursesPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm kiếm khóa học theo tên hoặc từ khóa..."
+              placeholder={t("catalog.searchPlaceholder")}
               className="w-full bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3.5 pl-11 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
             />
             <svg
@@ -79,11 +81,11 @@ export default function CoursesPage() {
         ) : error ? (
           <div className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 p-6 rounded-2xl text-center">
             <p className="font-semibold">{error}</p>
-            <p className="text-xs opacity-80 mt-2">Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.</p>
+            <p className="text-xs opacity-80 mt-2">{t("catalog.errorNetwork")}</p>
           </div>
         ) : filteredCourses.length === 0 ? (
           <div className="text-center py-16 text-slate-500">
-            Không tìm thấy khóa học nào phù hợp với từ khóa &quot;{searchQuery}&quot;.
+            {t("catalog.noResults")} &quot;{searchQuery}&quot;.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

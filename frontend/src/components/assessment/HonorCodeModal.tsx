@@ -14,7 +14,6 @@ interface HonorCodeModalProps {
 
 export function HonorCodeModal({
   itemId,
-  userId = "user-demo-1",
   isOpen,
   onAgreed,
   onClose,

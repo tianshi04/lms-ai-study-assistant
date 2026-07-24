@@ -1,0 +1,52 @@
+{
+  "navbar": {
+    "catalog": "Khóa học",
+    "forum": "Diễn đàn",
+    "financialAid": "Hỗ trợ tài chính",
+    "verifyCert": "Xác minh chứng chỉ",
+    "instructorPortal": "Giảng Viên",
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "logout": "Thoát"
+  },
+  "home": {
+    "heroTag": "Next-Gen Coursera AI LMS",
+    "heroTitle1": "Nền tảng Học tập",
+    "heroTitle2": "Thông minh & Chuẩn Quốc tế",
+    "heroDesc": "Trải nghiệm trình phát bài học chuẩn Coursera với phụ đề tương tác, bài tập ngắt ngang video, trợ lý Coursera AI Coach thông minh hỗ trợ 24/7 và chứng chỉ xác thực công khai.",
+    "exploreCatalog": "Khám phá Danh mục Khóa học",
+    "registerFree": "Đăng ký Học thử Miễn phí",
+    "featureCatalog": "Catalog Khóa học",
+    "featureCatalogDesc": "Khám phá danh sách khóa học phong phú & chất lượng",
+    "featurePlayer": "Trình phát Bài học",
+    "featurePlayerDesc": "Player video phụ đề cuộn & In-Video Quiz",
+    "featureAid": "Hỗ trợ Tài chính",
+    "featureAidDesc": "Đơn xin học bổng 150 từ với đếm từ realtime",
+    "featureVerify": "Xác minh Chứng chỉ",
+    "featureVerifyDesc": "Cổng tra cứu & xác thực chứng chỉ công khai",
+    "footer": "© 2026 Coursera AI LMS Platform. Nền tảng học tập trực tuyến hàng đầu.",
+    "footerProfile": "Hồ sơ"
+  },
+  "catalog": {
+    "title": "Khám phá Khóa học & Lộ trình Học tập",
+    "subtitle": "Học tập với bài giảng video tương tác, phụ đề cuộn thông minh, bài tập thực hành nâng cao và trợ lý AI Coach giải đáp 24/7.",
+    "searchPlaceholder": "Tìm kiếm khóa học theo tên hoặc từ khóa...",
+    "viewDetails": "Xem Chi Tiết Khóa Học",
+    "weekDuration": "Tuần học",
+    "errorLoad": "Không thể tải danh sách khóa học",
+    "errorNetwork": "Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.",
+    "noResults": "Không tìm thấy khóa học nào phù hợp với từ khóa"
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Có lỗi xảy ra",
+    "themeLight": "Sáng",
+    "themeLightDesc": "Giao diện: Sáng (Light Mode). Click để chuyển sang Tối.",
+    "themeDark": "Tối",
+    "themeDarkDesc": "Giao diện: Tối (Dark Mode). Click để chuyển sang Theo Hệ thống.",
+    "themeSystem": "Hệ thống",
+    "themeSystemDesc": "Giao diện: Theo Cài đặt Hệ thống (System Auto). Click để chuyển sang Sáng.",
+    "instructorFallback": "Giảng viên Coursera",
+    "badge": "Coursera-Style Specializations & Courses"
+  }
+}
