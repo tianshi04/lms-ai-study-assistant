@@ -487,7 +487,7 @@ class AssessmentUseCase:
     async def list_peer_submissions_needing_staff_regrade(
         self, item_id: str
     ) -> list[dict[str, Any]]:
-        """Returns list of peer assignment submissions older than 5 days with fewer than 3 reviews (BR_PEER_004)."""
+        """Returns list of peer assignment submissions older than 5 days with fewer than 3 reviews and not yet graded by staff (BR_PEER_004)."""
         now = datetime.now(timezone.utc)
         five_days_ago = now - timedelta(days=5)
 
@@ -496,6 +496,8 @@ class AssessmentUseCase:
             submissions = await repo.get_peer_submissions_for_item(item_id)
             regrade_list = []
             for s in submissions:
+                if s.graded_by_staff:
+                    continue
                 try:
                     sub_dt = datetime.fromisoformat(s.created_at)
                 except (ValueError, TypeError):
