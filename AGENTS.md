@@ -18,6 +18,12 @@ This file provides rules, architectural conventions, and workspace instructions 
   - Whenever SQLAlchemy ORM models (located in module `infrastructure/` directories) are created or modified, an Alembic migration script **MUST** be generated (e.g. `uv run alembic revision --autogenerate -m "<description>"`) inside the `backend/` directory so that database schema migrations are strictly synchronized with ORM definitions.
   - **Alembic env.py Import Mandate**: All module infrastructure model files (`src/modules/<module_name>/infrastructure/models.py`) MUST be explicitly imported in `backend/alembic/env.py` so that Alembic's `Base.metadata` engine includes all domain models during autogenerate comparison.
   - **Migration Verification Rule**: Passing SQLite-based `pytest` unit tests does NOT guarantee database migrations exist (since `pytest` uses `Base.metadata.create_all`). Agents MUST explicitly run or verify `uv run alembic revision --autogenerate` against PostgreSQL to confirm schema completeness before declaring a database task complete.
+  - **STRICT ORDERING RULE — MUST FOLLOW IN SEQUENCE**:
+    1. Modify the SQLAlchemy ORM model (`infrastructure/models.py`).
+    2. **Immediately** run `uv run alembic revision --autogenerate -m "<description>"` — do NOT skip to testing or handler code first.
+    3. Inspect the generated migration file. For new `NOT NULL` columns, manually add `server_default` before upgrading, since autogenerate does not add it automatically.
+    4. Run `uv run alembic upgrade head` to apply changes to the PostgreSQL database.
+    5. Only then proceed to writing use case / handler logic and running `pytest`.
 - **Database Seeding Isolation & Idempotency Rules**:
   - Domain Repositories and Infrastructure Repositories MUST remain completely clean of hardcoded seed/fixture data.
   - All database seeding logic MUST be isolated inside dedicated CLI scripts (`backend/src/seed.py`, `make seed`).
