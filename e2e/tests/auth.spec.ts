@@ -2,8 +2,6 @@ import { test, expect } from '@playwright/test';
 import { LoginPage, RegisterPage } from '../pages';
 import { E2E_CONFIG } from '../config/credentials';
 
-test.use({ storageState: { cookies: [], origins: [] } });
-
 test.describe('Full System Blackbox - Authentication Flow (POM)', () => {
   test('should display login page form elements', async ({ page }) => {
     const loginPage = new LoginPage(page);

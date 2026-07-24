@@ -39,7 +39,6 @@ function LoginFormContent() {
         localStorage.setItem("user_email", res.user.email);
         localStorage.setItem("user_name", res.user.fullName);
         localStorage.setItem("user_role", String(res.user.role));
-
         router.push(redirectTarget);
       }
     } catch (err: unknown) {
