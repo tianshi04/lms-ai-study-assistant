@@ -14,7 +14,10 @@ This file provides rules, architectural conventions, and workspace instructions 
   - **`presentation/`**: Network-specific code (e.g., ConnectRPC stubs handlers).
 - Common/shared utilities and base abstractions (like base `Entity` and `ValueObject`) reside in the Shared Kernel: `backend/src/shared/`.
 - **No direct internal coupling**: Modules must not import from another module's internal directories (`application`, `infrastructure`, `presentation`).
-- **Database & Alembic Migration Synchronization**: Whenever SQLAlchemy ORM models (located in module `infrastructure/` directories) are created or modified, an Alembic migration script **MUST** be generated (e.g. `uv run alembic revision --autogenerate -m "<description>"`) inside the `backend/` directory so that database schema migrations are strictly synchronized with ORM definitions.
+- **Database & Alembic Migration Synchronization**:
+  - Whenever SQLAlchemy ORM models (located in module `infrastructure/` directories) are created or modified, an Alembic migration script **MUST** be generated (e.g. `uv run alembic revision --autogenerate -m "<description>"`) inside the `backend/` directory so that database schema migrations are strictly synchronized with ORM definitions.
+  - **Alembic env.py Import Mandate**: All module infrastructure model files (`src/modules/<module_name>/infrastructure/models.py`) MUST be explicitly imported in `backend/alembic/env.py` so that Alembic's `Base.metadata` engine includes all domain models during autogenerate comparison.
+  - **Migration Verification Rule**: Passing SQLite-based `pytest` unit tests does NOT guarantee database migrations exist (since `pytest` uses `Base.metadata.create_all`). Agents MUST explicitly run or verify `uv run alembic revision --autogenerate` against PostgreSQL to confirm schema completeness before declaring a database task complete.
 - **Database Seeding Isolation & Idempotency Rules**:
   - Domain Repositories and Infrastructure Repositories MUST remain completely clean of hardcoded seed/fixture data.
   - All database seeding logic MUST be isolated inside dedicated CLI scripts (`backend/src/seed.py`, `make seed`).
