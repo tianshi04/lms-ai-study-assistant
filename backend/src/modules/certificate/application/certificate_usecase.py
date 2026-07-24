@@ -1,4 +1,3 @@
-import json
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
@@ -210,7 +209,7 @@ class CertificateUseCase:
                 issue_date=issue_date,
                 verification_url=verification_url,
                 qr_code_url=qr_code_url,
-                open_badges_json_ld=json.dumps(open_badges, ensure_ascii=False),
+                open_badges_json_ld=open_badges,
             )
 
             saved_cert = await repo.save_certificate(cert)
@@ -331,7 +330,7 @@ class CertificateUseCase:
                 issue_date=issue_date,
                 verification_url=verification_url,
                 qr_code_url=qr_code_url,
-                open_badges_json_ld=json.dumps(open_badges, ensure_ascii=False),
+                open_badges_json_ld=open_badges,
                 specialization_id=specialization_id,
             )
             saved = await repo.save_certificate(spec_cert)

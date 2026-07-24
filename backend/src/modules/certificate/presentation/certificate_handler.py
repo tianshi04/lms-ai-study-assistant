@@ -1,3 +1,5 @@
+import json
+
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
@@ -38,7 +40,7 @@ def _to_pb_certificate(
         issue_date=cert.issue_date,
         verification_url=cert.verification_url,
         qr_code_url=cert.qr_code_url,
-        open_badges_json_ld=cert.open_badges_json_ld,
+        open_badges_json_ld=json.dumps(cert.open_badges_json_ld, ensure_ascii=False),
     )
 
 

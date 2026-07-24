@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -23,7 +23,7 @@ class VerifiedCertificate:
     issue_date: str
     verification_url: str
     qr_code_url: str
-    open_badges_json_ld: str
+    open_badges_json_ld: dict[str, Any]
     course_id: Optional[str] = None
     is_revoked: bool = False
     revoked_reason: str = ""
