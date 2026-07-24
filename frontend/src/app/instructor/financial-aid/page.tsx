@@ -3,6 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
+import { ConnectError, Code } from "@connectrpc/connect";
 import { CertificateService, type FinancialAidApplication } from "@/gen/certificate/v1/certificate_pb";
 import { Navbar } from "@/components/layout/Navbar";
 
@@ -23,12 +24,30 @@ export default function InstructorFinancialAidPage() {
 
   // Authorization Check
   const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
-  const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
+  const isInstructorOrAdmin =
+    userRole === "2" ||
+    userRole === "3" ||
+    userRole === "4" ||
+    userRole === "5" ||
+    userRole === "USER_ROLE_INSTRUCTOR" ||
+    userRole === "USER_ROLE_TA" ||
+    userRole === "USER_ROLE_SUPER_ADMIN" ||
+    userRole === "USER_ROLE_PARTNER_ADMIN" ||
+    userRole === "INSTRUCTOR" ||
+    userRole === "TA" ||
+    userRole === "ADMIN";
 
   useEffect(() => {
     let ignore = false;
 
+    if (!isMounted) return;
+
     async function fetchApplications() {
+      if (!isInstructorOrAdmin) {
+        if (!ignore) setLoading(false);
+        return;
+      }
+
       try {
         const client = getRpcClient(CertificateService);
         const res = await client.listFinancialAidApplications({
@@ -36,11 +55,22 @@ export default function InstructorFinancialAidPage() {
         });
         if (!ignore) {
           setApplications(res.applications);
-          setLoading(false);
         }
       } catch (err: unknown) {
-        console.error("Failed to load financial aid applications:", err);
-        if (!ignore) setLoading(false);
+        if (!ignore) {
+          if (err instanceof ConnectError && err.code === Code.PermissionDenied) {
+            setToastMessage({
+              type: "error",
+              text: err.rawMessage || "Chỉ Giảng viên hoặc Quản trị viên mới có quyền xem danh sách đơn Hỗ trợ tài chính.",
+            });
+          } else {
+            console.error("Failed to load financial aid applications:", err);
+          }
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     }
 
@@ -49,7 +79,7 @@ export default function InstructorFinancialAidPage() {
     return () => {
       ignore = true;
     };
-  }, [activeTab]);
+  }, [activeTab, isMounted, isInstructorOrAdmin]);
 
   const handleReview = async (appId: string, isApproved: boolean) => {
     setProcessingId(appId);
