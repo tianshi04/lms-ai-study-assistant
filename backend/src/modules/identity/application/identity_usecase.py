@@ -208,3 +208,26 @@ class IdentityUseCase:
             user.is_identity_verified = True
             await repo.save(user)
             return True, "Xác minh danh tính sinh trắc học & CCCD thành công!"
+
+    async def revoke_enterprise_seat(self, user_id: str) -> tuple[bool, str]:
+        """Revokes enterprise seat from user if conditions met and recycles seat (BR_ACCESS_003)."""
+        async with async_session_scope() as session:
+            repo = IdentityRepository(session)
+            user = await repo.get_by_id(user_id)
+            if not user or not user.enterprise_seat_key:
+                return False, "Người dùng chưa được gán mã Enterprise Seat"
+
+            seat_key = user.enterprise_seat_key
+            user.enterprise_seat_key = None
+            await repo.save(user)
+
+            stmt = select(EnterpriseLicenseModel).where(
+                EnterpriseLicenseModel.key == seat_key
+            )
+            res = await session.execute(stmt)
+            license_model = res.scalar_one_or_none()
+            if license_model and license_model.used_seats > 0:
+                license_model.used_seats -= 1
+                await session.commit()
+
+            return True, f"Đã thu hồi suất học Enterprise Key '{seat_key}' thành công!"

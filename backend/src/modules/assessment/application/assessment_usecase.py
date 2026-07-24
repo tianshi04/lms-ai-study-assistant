@@ -518,3 +518,30 @@ class AssessmentUseCase:
                         }
                     )
             return regrade_list
+
+    async def report_peer_review(
+        self, user_id: str, review_id: str, report_reason: str
+    ) -> tuple[bool, str]:
+        """Reports a malicious or spam peer review (BR_PEER_005)."""
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            submission_id = (
+                review_id.replace("rev-", "")
+                if review_id.startswith("rev-")
+                else review_id
+            )
+            appeal_id = f"report-{uuid.uuid4().hex[:8]}"
+            now_iso = datetime.now(timezone.utc).isoformat()
+            appeal = GradeAppeal(
+                id=appeal_id,
+                user_id=user_id,
+                submission_id=submission_id,
+                appeal_reason=f"[REPORT_REVIEW:{review_id}] {report_reason}",
+                status="PENDING",
+                created_at=now_iso,
+            )
+            await repo.save_grade_appeal(appeal)
+            return (
+                True,
+                "Đã gửi báo cáo lượt chấm chéo bất thường đến Trợ giảng (TA Queue).",
+            )

@@ -218,10 +218,19 @@ class CertificateUseCase:
 
     async def verify_certificate_public(
         self, certificate_id: str
-    ) -> tuple[bool, Optional[VerifiedCertificate]]:
+    ) -> tuple[bool, Optional[VerifiedCertificate], str]:
+        """Public certificate verification endpoint (BR_CERT_002, BR_CERT_004).
+        Returns (is_valid, certificate, status_message).
+        """
         async with async_session_scope() as session:
             repo = CertificateRepository(session)
             cert = await repo.get_certificate_by_id(certificate_id)
             if not cert:
-                return False, None
-            return True, cert
+                return False, None, "Không tìm thấy chứng chỉ hợp lệ trên hệ thống."
+            if "REVOKED" in getattr(cert, "open_badges_json_ld", ""):
+                return (
+                    False,
+                    cert,
+                    "Chứng chỉ này đã bị thu hồi do vi phạm quy chế liêm chính học thuật của nền tảng (Certificate Revoked).",
+                )
+            return True, cert, "Chứng chỉ hợp lệ và đã được xác minh thành công."

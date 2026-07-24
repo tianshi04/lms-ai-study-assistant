@@ -30,6 +30,9 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_ACCESS_002 (Quy chế Enterprise License & Quản lý Seat):**
   * Học viên tham gia khóa học qua mã Enterprise Key (do doanh nghiệp/trường học tài trợ) sẽ tự động hưởng toàn bộ quyền lợi của Paid Mode mà không cần thanh toán cá nhân.
   * *Ràng buộc Seat:* Mã Enterprise Key phải ở trạng thái kích hoạt (`is_active = True`) và số lượng suất đã dùng chưa vượt quá hạn mức (`used_seats < total_seats`, mặc định 500 seats/key). Khi kích hoạt thành công, hệ thống tự động tăng `used_seats += 1` và gán `user.enterprise_seat_key`.
+* **BR_ACCESS_003 (Thu hồi & Tái cấp Suất học Enterprise Seat Recycling):**
+  * Partner Admin / Super Admin có quyền thu hồi suất học của nhân viên/sinh viên nếu tài khoản đó chưa đạt quá 20% tiến độ khóa học trong vòng 30 ngày kể từ ngày gán mã.
+  * Khi thu hồi thành công, hệ thống tự động hủy mã gán trên người dùng cũ và giảm bộ đếm `used_seats -= 1` để tái sử dụng cấp cho người dùng khác.
 * **BR_FAID_001 (Quy trình nộp & xét duyệt Financial Aid):**
   * Học viên nộp đơn phải điền bài luận tối thiểu 150 từ giải trình lý do hoàn cảnh và kế hoạch áp dụng kiến thức.
   * *Hạn xét duyệt:* Super Admin có tối đa 15 ngày kể từ ngày nộp đơn (`review_deadline_days_left = 15`) để xem xét duyệt hoặc từ chối đơn tài chính của nền tảng.
@@ -71,6 +74,9 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_PEER_004 (Xử lý Hàng chờ Staff Regrade Queue & Chấm chéo muộn):**
   * Nếu sau 5 ngày kể từ khi nộp bài mà bài dự án chưa nhận đủ 3 lượt chấm chéo, hệ thống tự động chuyển bài nộp vào Hàng chờ xét duyệt của Trợ giảng (Staff Regrade Queue).
   * Hệ thống không khóa quyền chấm chéo muộn của học viên khác. Khi bài nộp nhận đủ 3 lượt chấm chéo và Trợ giảng chưa chấm (`graded_by_staff = False`), hệ thống tự động tính điểm trung bình và giải phóng bài nộp khỏi hàng chờ của TA. Ngược lại nếu TA đã chấm trước (`graded_by_staff = True`), kết quả của TA giữ nguyên làm điểm chính thức.
+* **BR_PEER_005 (Báo cáo Bài chấm chéo bất thường & Spam):**
+  * Học viên có quyền bấm nút **"Report Review"** đối với các lượt chấm chéo có dấu hiệu spam, vụ lợi hoặc cố tình cho 0 điểm không khách quan.
+  * Bài chấm chéo bị báo cáo sẽ lập tức được gắn cờ và chuyển về Hàng chờ kiểm tra của Trợ giảng (TA Review Queue).
 
 ---
 
@@ -79,14 +85,16 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_SCHEDULE_001 (Flexible Weekly Schedule & Khởi tạo Mặc định):**
   * Mốc deadline các tuần học được tính toán dựa trên thời điểm đăng ký.
   * *Mô phỏng ban đầu:* Để người học trải nghiệm tính năng quá hạn, hệ thống mặc định khởi tạo Tuần 1 quá hạn 3 ngày (`now - 3 days`, `OVERDUE`) và Tuần 2 (`now + 7 days`, `ON_TRACK`).
-* **BR_DEADLINE_001 (Công thức Reset My Deadlines):**
-  * Khi học viên bấm nút **"Reset my deadlines"**, hệ thống cập nhật lại hạn nộp cho toàn bộ các tuần học $N$ theo công thức:
-    $$\text{Due Date}_{\text{Week } N} = \text{Thời điểm bấm nút} + (7 \times N) \text{ ngày}$$
+* **BR_DEADLINE_001 (Công thức Reset My Deadlines có Hạn kết thúc Khóa học):**
+  * Khi học viên bấm nút **"Reset my deadlines"**, hệ thống cập nhật lại hạn nộp cho toàn bộ các tuần học $N$ theo công thức bị chặn trên bởi Ngày kết thúc khóa học (`Course_End_Date`):
+    $$\text{Due Date}_{\text{Week } N} = \min\left(\text{Thời điểm bấm nút} + (7 \times N) \text{ ngày}, \text{Course\_End\_Date}\right)$$
   * Tất cả các trạng thái hạn nộp tự động chuyển về `ON_TRACK` mà không trừ điểm thi hay làm mất tiến độ học tập cũ.
 * **BR_LEARNING_001 (Tính toán Tiến độ & Khử trùng lặp Completed Items):**
   * Mỗi khi hoàn thành 1 bài học (Video, Reading, Quiz), hệ thống tự động thêm `item_id` vào danh sách `completed_item_ids` (sử dụng tập hợp `set` để khử trùng lặp).
   * Phần trăm tiến độ được tính toán và làm tròn 1 chữ số thập phân:
     $$\text{Overall Progress \%} = \min\left(100.0, \text{round}\left(\frac{|\text{Completed Items}|}{\max(1, \text{Total Course Items})} \times 100, 1\right)\right)$$
+* **BR_LEARNING_002 (Bảo lưu Tiến độ & Ghi chú khi Nâng cấp Chế độ):**
+  * Khi học viên nâng cấp từ Audit Mode sang Paid Mode (hoặc qua Financial Aid / Enterprise Key), hệ thống **bảo lưu 100% danh sách bài học đã hoàn thành (`completed_item_ids`) và các Ghi chú cá nhân (`Personal Notes`)**.
 
 ---
 
@@ -113,6 +121,10 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Mã QR xác thực được sinh tự động thông qua công cụ API công khai: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={cert_id}`.
 * **BR_CERT_003 (Quy trình Xác minh Danh tính Sinh trắc học):**
   * Bắt buộc hoàn tất xác minh CCCD/Hộ chiếu và sinh trắc học webcam trước khi cấp chứng chỉ lần đầu.
+* **BR_CERT_004 (Trạng thái Giao diện Chứng chỉ bị Thu hồi):**
+  * Khi chứng chỉ bị thu hồi do vi phạm quy chế liêm chính học thuật, trang xác thực công khai hiển thị thông báo trạng thái rõ ràng: *"Chứng chỉ này đã bị thu hồi do vi phạm điều khoản liêm chính học thuật của nền tảng (Certificate Revoked)"* (không trả về 404).
+* **BR_CERT_005 (Chứng chỉ Chuỗi Chuyên ngành Specialization Certificate):**
+  * Tự động phát hành Verified Specialization Certificate khi học viên hoàn thành 100% tất cả các khóa học thành phần thuộc Chuỗi chuyên ngành đó.
 * **BR_BADGE_001 (Cấu trúc Chuẩn OpenBadges 2.0 JSON-LD):**
   * Tệp chứng chỉ nhúng siêu dữ liệu JSON-LD theo đúng chuẩn OpenBadges 2.0 chứa các trường: `@context: "https://w3id.org/openbadges/v2"`, `type: "BadgeClass"`, `id`, `name`, `description`, `image` (QR URL), `criteria` (`/courses/{course_id}`), và `issuer` (`name`, `url`).
 

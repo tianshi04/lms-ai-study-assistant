@@ -168,7 +168,7 @@ class CertificateHandler(CertificateService):
             pb.VerifyCertificatePublicRequest, pb.VerifyCertificatePublicResponse
         ],
     ) -> pb.VerifyCertificatePublicResponse:
-        is_valid, cert = await self._use_case.verify_certificate_public(
+        is_valid, cert, _msg = await self._use_case.verify_certificate_public(
             request.certificate_id
         )
         if not is_valid or not cert:

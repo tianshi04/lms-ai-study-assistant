@@ -65,7 +65,7 @@ async def test_get_verified_certificate():
         assert cert.certificate_id.startswith("CERT-")
         assert cert.open_badges_json_ld != ""
 
-        is_valid, verified_cert = await usecase.verify_certificate_public(
+        is_valid, verified_cert, status_msg = await usecase.verify_certificate_public(
             cert.certificate_id
         )
         assert is_valid
