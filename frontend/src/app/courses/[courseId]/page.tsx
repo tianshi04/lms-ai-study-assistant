@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
+import { CatalogService, type Course, type CourseReview } from "@/gen/catalog/v1/catalog_pb";
 import { Navbar } from "@/components/layout/Navbar";
 
 export default function CourseDetailPage() {
@@ -12,6 +12,7 @@ export default function CourseDetailPage() {
   const courseId = params?.courseId as string;
 
   const [course, setCourse] = useState<Course | null>(null);
+  const [reviews, setReviews] = useState<CourseReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,8 +22,11 @@ export default function CourseDetailPage() {
     async function fetchDetail() {
       try {
         const client = getRpcClient(CatalogService);
-        const res = await client.getCourseDetail({ courseId });
+        const res = await client.getCourseDetail({ idOrSlug: courseId });
         setCourse(res.course ?? null);
+
+        const revRes = await client.listCourseReviews({ courseId });
+        setReviews(revRes.reviews || []);
       } catch (err: unknown) {
         console.error("Failed to load course detail:", err);
         const message = err instanceof Error ? err.message : "Không thể tải thông tin khóa học";
@@ -70,8 +74,18 @@ export default function CourseDetailPage() {
       <div className="bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900/80 dark:to-slate-950 border-b border-slate-200 dark:border-slate-800/80 py-12">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           <div className="lg:col-span-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider mb-4">
-              Specialization Course
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider">
+                Specialization Course
+              </div>
+              {course.averageRating > 0 && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold">
+                  <svg className="w-4 h-4 text-amber-400 fill-amber-400" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                  </svg>
+                  <span>{course.averageRating.toFixed(1)} ★ ({course.reviewCount} đánh giá)</span>
+                </div>
+              )}
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4 leading-tight">
               {course.title}
@@ -198,6 +212,91 @@ export default function CourseDetailPage() {
             ))}
           </div>
         )}
+
+        {/* Course Rating & Reviews Section */}
+        <div className="mt-16 border-t border-slate-200 dark:border-slate-800 pt-12">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Đánh giá & Nhận xét từ Học viên</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                Các nhận xét thực tế từ học viên đã tham gia khóa học này
+              </p>
+            </div>
+            {course.averageRating > 0 && (
+              <div className="flex items-center gap-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 px-4 py-2.5 rounded-xl text-amber-800 dark:text-amber-300">
+                <span className="text-3xl font-black text-amber-500">{course.averageRating.toFixed(1)}</span>
+                <div>
+                  <div className="flex items-center gap-0.5 text-amber-400">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg
+                        key={star}
+                        className={`w-4 h-4 ${
+                          star <= Math.round(course.averageRating)
+                            ? "fill-amber-400 text-amber-400"
+                            : "text-slate-300 dark:text-slate-700"
+                        }`}
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={1.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                        />
+                      </svg>
+                    ))}
+                  </div>
+                  <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                    Tổng số {course.reviewCount} nhận xét
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {reviews.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl text-center text-slate-500 dark:text-slate-400">
+              Chưa có đánh giá nào cho khóa học này. Hãy là học viên đầu tiên hoàn thành và để lại nhận xét!
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {reviews.map((rev) => (
+                <div
+                  key={rev.id}
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xs font-bold uppercase shadow-sm">
+                        {rev.userName ? rev.userName.slice(0, 2) : "HV"}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                          {rev.userName || "Học viên LMS"}
+                        </h4>
+                        <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                          {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString("vi-VN") : "Gần đây"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-0.5 text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 px-2.5 py-1 rounded-full text-xs font-semibold">
+                      <span>{rev.ratingStars}</span>
+                      <svg className="w-3.5 h-3.5 fill-amber-400" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                      </svg>
+                    </div>
+                  </div>
+                  {rev.commentText && (
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed pt-1">
+                      &ldquo;{rev.commentText}&rdquo;
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );

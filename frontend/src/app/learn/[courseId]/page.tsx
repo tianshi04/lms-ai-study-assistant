@@ -6,12 +6,14 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course, type LearningItem, type InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { LearningService, type LearningProgress, type PersonalNote } from "@/gen/learning/v1/learning_pb";
+import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { VideoPlayer } from "@/components/player/VideoPlayer";
 import { TranscriptPanel } from "@/components/player/TranscriptPanel";
 import { NotesPanel } from "@/components/player/NotesPanel";
 import { DeadlinesPanel } from "@/components/player/DeadlinesPanel";
 import { ForumTab } from "@/components/player/ForumTab";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
+import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
 
 function getActiveUserId(): string {
   if (typeof window !== "undefined") {
@@ -29,6 +31,8 @@ export default function CoursePlayerPage() {
   const [progress, setProgress] = useState<LearningProgress | null>(null);
   const [notes, setNotes] = useState<PersonalNote[]>([]);
   const [activeTab, setActiveTab] = useState<"transcript" | "forum" | "notes" | "deadlines">("transcript");
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [certificateId, setCertificateId] = useState<string>("");
 
   // Video & In-Video Quiz State
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -60,7 +64,7 @@ export default function CoursePlayerPage() {
     async function loadData() {
       try {
         const catalogClient = getRpcClient(CatalogService);
-        const courseRes = await catalogClient.getCourseDetail({ courseId });
+        const courseRes = await catalogClient.getCourseDetail({ idOrSlug: courseId });
         setCourse(courseRes.course ?? null);
 
         // Set initial item
@@ -97,6 +101,23 @@ export default function CoursePlayerPage() {
       });
       if (res.updatedProgress) {
         setProgress(res.updatedProgress);
+        if (
+          res.updatedProgress.overallProgressPercent >= 100 ||
+          res.updatedProgress.completedItemIds.length >= totalCourseItems
+        ) {
+          try {
+            const certClient = getRpcClient(CertificateService);
+            const certRes = await certClient.getVerifiedCertificate({ courseId });
+            if (certRes.certificate?.certificateId) {
+              setCertificateId(certRes.certificate.certificateId);
+            } else {
+              setCertificateId(`CERT-${courseId.replace("course-", "").toUpperCase()}`);
+            }
+          } catch {
+            setCertificateId(`CERT-${courseId.replace("course-", "").toUpperCase()}`);
+          }
+          setShowCompletionModal(true);
+        }
       }
     } catch (err) {
       console.error("Failed to mark item complete:", err);
@@ -487,6 +508,14 @@ export default function CoursePlayerPage() {
           </div>
         </main>
       </div>
+
+      <CourseCompletionModal
+        isOpen={showCompletionModal}
+        onClose={() => setShowCompletionModal(false)}
+        courseId={courseId}
+        courseTitle={course?.title || "Khóa học LMS"}
+        certificateId={certificateId || `CERT-${courseId.replace("course-", "").toUpperCase()}`}
+      />
     </div>
   );
 }

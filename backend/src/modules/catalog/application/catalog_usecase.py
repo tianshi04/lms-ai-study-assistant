@@ -138,3 +138,33 @@ class CatalogUseCase:
                 video_url=video_url,
                 reading_markdown=reading_markdown,
             )
+
+    async def submit_course_review(
+        self,
+        user_id: str,
+        user_name: str,
+        course_id: str,
+        rating_stars: int,
+        comment_text: str,
+    ):
+        if rating_stars < 1 or rating_stars > 5:
+            raise ValueError("Rating stars must be between 1 and 5.")
+
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.submit_course_review(
+                user_id=user_id,
+                user_name=user_name,
+                course_id=course_id,
+                rating_stars=rating_stars,
+                comment_text=comment_text,
+            )
+
+    async def list_course_reviews(
+        self, course_id: str, page_size: int = 10, page_token: str = ""
+    ):
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.list_course_reviews(
+                course_id=course_id, page_size=page_size, page_token=page_token
+            )

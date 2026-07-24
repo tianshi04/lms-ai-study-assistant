@@ -155,3 +155,12 @@ flowchart TD
 * **Cấp Chứng chỉ Xác minh (Verified Certificate):** Khi hoàn thành 100% bài học và đạt điểm Pass ở tất cả bài Graded items (>= 80%), hệ thống tự động phát hành Verified Certificate với thông tin Tên học viên và Khóa học truy vấn trực tiếp từ DB.
 * **Mã xác minh công khai & QR Server API:** Mỗi chứng chỉ có đường dẫn công khai độc nhất (`/verify/CERT-XXXXXXXXXX`) và mã QR code được sinh tự động qua API `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={cert_id}` để nhà tuyển dụng kiểm tra tính hợp lệ.
 * **OpenBadges & LinkedIn Sharing:** Chứng chỉ được nhúng siêu dữ liệu JSON-LD chuẩn OpenBadges 2.0 đầy đủ thông tin `BadgeClass`, `issuer`, `criteria`. Học viên chỉ cần 1 cú nhấp chuột để chia sẻ trực tiếp thành tích lên hồ sơ LinkedIn.
+
+### 3.7. Đánh giá Khóa học & Trải nghiệm Hoàn thành (Course Rating, Review & Completion Modal)
+* **Popup Chúc mừng Hoàn thành Khóa học (Course Completion Modal):** Khi tiến độ bài học đạt 100% và đạt đủ điều kiện Pass các bài kiểm tra, trình phát bài học `/learn/[courseId]` lập tức kích hoạt hiệu ứng pháo hoa và hiển thị Modal chúc mừng.
+* **Nhận chứng chỉ trực tiếp (Direct Certificate Claim):** Nút *"Nhận chứng chỉ xác minh (Claim Certificate)"* trên Modal điều hướng trực tiếp học viên tới cổng xác thực công khai `/verify/[certId]`.
+* **Đánh giá & Nhận xét Khóa học (Course Rating & Review):**
+  * Học viên chọn điểm đánh giá từ 1 đến 5 sao (⭐) và nhập lời bình luận chi tiết.
+  * RPC `SubmitCourseReview` gửi thông tin đánh giá về Backend lưu trữ.
+  * Trang thông tin khóa học `/courses/[courseId]` tự động tổng hợp và hiển thị điểm sao trung bình (ví dụ: `4.8 ★ (1,250 lượt đánh giá)`) cùng danh sách các nhận xét của học viên khác.
+

@@ -61,24 +61,26 @@ message Course {
   string partner_logo_url = 6;
   repeated string instructor_names = 7;
   repeated WeekModule week_modules = 8;
+  double average_rating = 9;
+  int32 review_count = 10;
 }
 
 message Specialization {
   string id = 1;
   string title = 2;
-  string description = 3;
-  string partner_name = 4;
-  string partner_logo_url = 5;
-  repeated string course_ids = 6;
+  string slug = 3;
+  string description = 4;
+  string partner_name = 5;
+  string partner_logo_url = 6;
+  repeated Course courses = 7;
 }
 
 message GetSpecializationRequest {
-  string specialization_id = 1;
+  string id_or_slug = 1;
 }
 
 message GetSpecializationResponse {
   Specialization specialization = 1;
-  repeated Course courses = 2;
 }
 
 message ListCoursesRequest {
@@ -92,7 +94,7 @@ message ListCoursesResponse {
 }
 
 message GetCourseDetailRequest {
-  string course_id = 1;
+  string id_or_slug = 1;
 }
 
 message GetCourseDetailResponse {
@@ -100,8 +102,7 @@ message GetCourseDetailResponse {
 }
 
 message GetLessonDetailRequest {
-  string course_id = 1;
-  string lesson_id = 2;
+  string lesson_id = 1;
 }
 
 message GetLessonDetailResponse {
@@ -122,12 +123,13 @@ message CreateCourseResponse {
 }
 
 message UpdateCourseRequest {
-  string course_id = 1;
+  string id = 1;
   string title = 2;
-  string description = 3;
-  string partner_name = 4;
-  string partner_logo_url = 5;
-  repeated string instructor_names = 6;
+  string slug = 3;
+  string description = 4;
+  string partner_name = 5;
+  string partner_logo_url = 6;
+  repeated string instructor_names = 7;
 }
 
 message UpdateCourseResponse {
@@ -170,6 +172,39 @@ message CreateLearningItemResponse {
   LearningItem item = 1;
 }
 
+message CourseReview {
+  string id = 1;
+  string user_id = 2;
+  string user_name = 3;
+  string course_id = 4;
+  int32 rating_stars = 5;
+  string comment_text = 6;
+  string created_at = 7;
+}
+
+message SubmitCourseReviewRequest {
+  string course_id = 1;
+  int32 rating_stars = 2;
+  string comment_text = 3;
+}
+
+message SubmitCourseReviewResponse {
+  CourseReview review = 1;
+}
+
+message ListCourseReviewsRequest {
+  string course_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message ListCourseReviewsResponse {
+  repeated CourseReview reviews = 1;
+  double average_rating = 2;
+  int32 total_reviews = 3;
+  string next_page_token = 4;
+}
+
 service CatalogService {
   rpc GetSpecialization(GetSpecializationRequest) returns (GetSpecializationResponse);
   rpc ListCourses(ListCoursesRequest) returns (ListCoursesResponse);
@@ -180,4 +215,6 @@ service CatalogService {
   rpc CreateWeekModule(CreateWeekModuleRequest) returns (CreateWeekModuleResponse);
   rpc CreateLesson(CreateLessonRequest) returns (CreateLessonResponse);
   rpc CreateLearningItem(CreateLearningItemRequest) returns (CreateLearningItemResponse);
+  rpc SubmitCourseReview(SubmitCourseReviewRequest) returns (SubmitCourseReviewResponse);
+  rpc ListCourseReviews(ListCourseReviewsRequest) returns (ListCourseReviewsResponse);
 }

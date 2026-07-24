@@ -1,10 +1,12 @@
 import uuid
-from sqlalchemy import select
+from datetime import datetime, timezone
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.modules.catalog.domain.entities import (
     Course,
+    CourseReview,
     InVideoQuiz,
     InteractiveTranscript,
     ItemType,
@@ -16,6 +18,7 @@ from src.modules.catalog.domain.entities import (
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.models import (
     CourseModel,
+    CourseReviewModel,
     LearningItemModel,
     LessonModel,
     SpecializationModel,
@@ -23,7 +26,9 @@ from src.modules.catalog.infrastructure.models import (
 )
 
 
-def _model_to_domain_course(model: CourseModel) -> Course:
+def _model_to_domain_course(
+    model: CourseModel, avg_rating: float = 0.0, review_count: int = 0
+) -> Course:
     week_modules: list[WeekModule] = []
     for wm in model.week_modules or []:
         lessons: list[Lesson] = []
@@ -86,6 +91,8 @@ def _model_to_domain_course(model: CourseModel) -> Course:
         partner_logo_url=model.partner_logo_url,
         instructor_names=model.instructor_names,
         week_modules=week_modules,
+        average_rating=avg_rating,
+        review_count=review_count,
     )
 
 
@@ -99,6 +106,18 @@ def _model_to_domain_specialization(
         partner_name=model.partner_name,
         partner_logo_url=model.partner_logo_url,
         course_ids=model.course_ids,
+    )
+
+
+def _model_to_domain_review(model: CourseReviewModel) -> CourseReview:
+    return CourseReview(
+        id=model.id,
+        user_id=model.user_id,
+        user_name=model.user_name,
+        course_id=model.course_id,
+        rating_stars=model.rating_stars,
+        comment_text=model.comment_text,
+        created_at=model.created_at,
     )
 
 
@@ -123,12 +142,16 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         )
         res = await self.session.execute(stmt)
         models = res.scalars().all()
-        return [_model_to_domain_course(m) for m in models], ""
+        courses: list[Course] = []
+        for m in models:
+            avg_rating, review_count = await self.get_course_rating_stats(m.id)
+            courses.append(_model_to_domain_course(m, avg_rating, review_count))
+        return courses, ""
 
     async def get_course_detail(self, course_id: str) -> Course | None:
         stmt = (
             select(CourseModel)
-            .where(CourseModel.id == course_id)
+            .where((CourseModel.id == course_id) | (CourseModel.slug == course_id))
             .options(
                 selectinload(CourseModel.week_modules)
                 .selectinload(WeekModuleModel.lessons)
@@ -144,7 +167,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         model = res.scalar_one_or_none()
         if not model:
             return None
-        return _model_to_domain_course(model)
+        avg_rating, review_count = await self.get_course_rating_stats(model.id)
+        return _model_to_domain_course(model, avg_rating, review_count)
 
     async def get_lesson_detail(self, course_id: str, lesson_id: str) -> Lesson | None:
         course = await self.get_course_detail(course_id)
@@ -299,3 +323,68 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             in_video_quizzes=[],
             reading_markdown=reading_markdown or "",
         )
+
+    async def submit_course_review(
+        self,
+        user_id: str,
+        user_name: str,
+        course_id: str,
+        rating_stars: int,
+        comment_text: str,
+    ) -> CourseReview:
+        stmt = select(CourseReviewModel).where(
+            (CourseReviewModel.user_id == user_id)
+            & (CourseReviewModel.course_id == course_id)
+        )
+        res = await self.session.execute(stmt)
+        existing = res.scalar_one_or_none()
+
+        now_str = datetime.now(timezone.utc).isoformat()
+        if existing:
+            existing.rating_stars = rating_stars
+            existing.comment_text = comment_text
+            existing.user_name = user_name or existing.user_name
+            existing.created_at = now_str
+            await self.session.commit()
+            return _model_to_domain_review(existing)
+
+        review_id = f"rev-{uuid.uuid4().hex[:10]}"
+        model = CourseReviewModel(
+            id=review_id,
+            user_id=user_id,
+            user_name=user_name or "Học viên LMS",
+            course_id=course_id,
+            rating_stars=rating_stars,
+            comment_text=comment_text,
+            created_at=now_str,
+        )
+        self.session.add(model)
+        await self.session.commit()
+        return _model_to_domain_review(model)
+
+    async def list_course_reviews(
+        self, course_id: str, page_size: int = 10, page_token: str = ""
+    ) -> tuple[list[CourseReview], float, int, str]:
+        stmt = (
+            select(CourseReviewModel)
+            .where(CourseReviewModel.course_id == course_id)
+            .order_by(CourseReviewModel.created_at.desc())
+            .limit(page_size or 10)
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        reviews = [_model_to_domain_review(m) for m in models]
+        avg_rating, total_count = await self.get_course_rating_stats(course_id)
+        return reviews, avg_rating, total_count, ""
+
+    async def get_course_rating_stats(self, course_id: str) -> tuple[float, int]:
+        stmt = select(
+            func.coalesce(func.avg(CourseReviewModel.rating_stars), 0.0),
+            func.count(CourseReviewModel.id),
+        ).where(CourseReviewModel.course_id == course_id)
+        res = await self.session.execute(stmt)
+        row = res.one_or_none()
+        if not row or row[1] == 0:
+            return 0.0, 0
+        avg_rating, count = row
+        return round(float(avg_rating), 1), int(count)
