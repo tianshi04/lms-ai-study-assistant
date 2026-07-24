@@ -137,7 +137,11 @@ class CertificateUseCase:
                 )
 
             # BR_CERT_001 (Vế 2): Check if all REQUIRED Graded Items have max score >= 80%
-            graded_types = [ItemType.GRADED_QUIZ, ItemType.AUTO_GRADED_LAB, ItemType.PEER_REVIEW]
+            graded_types = [
+                ItemType.GRADED_QUIZ,
+                ItemType.AUTO_GRADED_LAB,
+                ItemType.PEER_REVIEW,
+            ]
             req_stmt = (
                 select(LearningItemModel)
                 .join(LessonModel, LearningItemModel.lesson_id == LessonModel.id)
@@ -149,22 +153,37 @@ class CertificateUseCase:
             required_items = req_res.scalars().all()
 
             # Fetch all user submissions
-            quiz_stmt = select(QuizSubmissionModel).where(QuizSubmissionModel.user_id == user_id)
+            quiz_stmt = select(QuizSubmissionModel).where(
+                QuizSubmissionModel.user_id == user_id
+            )
             quiz_res = await session.execute(quiz_stmt)
-            
-            lab_stmt = select(LabSubmissionModel).where(LabSubmissionModel.user_id == user_id)
+
+            lab_stmt = select(LabSubmissionModel).where(
+                LabSubmissionModel.user_id == user_id
+            )
             lab_res = await session.execute(lab_stmt)
-            
-            peer_stmt = select(PeerAssignmentSubmissionModel).where(PeerAssignmentSubmissionModel.user_id == user_id)
+
+            peer_stmt = select(PeerAssignmentSubmissionModel).where(
+                PeerAssignmentSubmissionModel.user_id == user_id
+            )
             peer_res = await session.execute(peer_stmt)
-            
+
             item_max_scores: dict[str, float] = {}
             for s in quiz_res.scalars().all():
-                item_max_scores[s.item_id] = max(item_max_scores.get(s.item_id, 0.0), getattr(s, "score_percent", 0.0))
+                item_max_scores[s.item_id] = max(
+                    item_max_scores.get(s.item_id, 0.0),
+                    getattr(s, "score_percent", 0.0),
+                )
             for s in lab_res.scalars().all():
-                item_max_scores[s.item_id] = max(item_max_scores.get(s.item_id, 0.0), getattr(s, "score_percent", 0.0))
+                item_max_scores[s.item_id] = max(
+                    item_max_scores.get(s.item_id, 0.0),
+                    getattr(s, "score_percent", 0.0),
+                )
             for s in peer_res.scalars().all():
-                item_max_scores[s.item_id] = max(item_max_scores.get(s.item_id, 0.0), getattr(s, "final_score", 0.0) or 0.0)
+                item_max_scores[s.item_id] = max(
+                    item_max_scores.get(s.item_id, 0.0),
+                    getattr(s, "final_score", 0.0) or 0.0,
+                )
 
             for req_item in required_items:
                 max_score = item_max_scores.get(req_item.id)
@@ -178,7 +197,6 @@ class CertificateUseCase:
                         None,
                         f"Chưa đủ điều kiện nhận chứng chỉ: Bài tập '{req_item.title}' chưa đạt điểm tối thiểu >= 80% (Hiện tại {max_score}%).",
                     )
-
 
             # Fetch real user details
             user_stmt = select(UserModel).where(UserModel.id == user_id)
