@@ -14,7 +14,7 @@ class ForumThreadORM(Base):
     __tablename__ = "forum_threads"
 
     id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+        String(64), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     course_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     item_id: Mapped[str] = mapped_column(
@@ -46,10 +46,10 @@ class ForumReplyORM(Base):
     __tablename__ = "forum_replies"
 
     id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+        String(64), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     thread_id: Mapped[str] = mapped_column(
-        String(36),
+        String(64),
         ForeignKey("forum_threads.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -80,10 +80,10 @@ class ForumVoteORM(Base):
     )
 
     id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+        String(64), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     user_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    post_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    post_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     created_at: Mapped[str] = mapped_column(
         String(100), nullable=False, default=utc_now_str
     )
