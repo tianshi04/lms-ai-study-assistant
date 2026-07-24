@@ -157,7 +157,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Mỗi `user_id` chỉ sở hữu tối đa **1 bản ghi đánh giá** cho mỗi `course_id`. Khi học viên nộp đánh giá lại, hệ thống tự động ghi đè/cập nhật (Upsert) số sao và bình luận cũ thay vì khởi tạo bản ghi mới để ngăn chặn hành vi spam/Review Bombing.
 * **BR_REVIEW_003 (Ràng buộc Dữ liệu Đầu vào & Chống Stored XSS):**
   * Thang điểm đánh giá `rating_stars` là số nguyên bắt buộc nằm trong khoảng $[1, 5]$.
-  * Văn bản bình luận `comment_text` tối đa 1,000 ký tự và bắt buộc được làm sạch (Sanitize HTML/Script tags) tại Backend để chống tấn công Stored XSS khi hiển thị công khai.
+  * Văn bản bình luận `comment_text` tối đa 2,000 ký tự và bắt buộc được làm sạch (Sanitize HTML/Script tags) tại Backend để chống tấn công Stored XSS khi hiển thị công khai. Bàn nộp quá 2,000 ký tự sẽ bị từ chối với lỗi Fail-fast validation (`ValueError`).
 * **BR_REVIEW_004 (Xung đột Quyền lợi & Chống Tự đánh giá):**
   * Giảng viên, Trợ giảng hoặc Admin phụ trách tạo/quản lý khóa học bị cấm tự gửi đánh giá cho khóa học của chính mình.
 

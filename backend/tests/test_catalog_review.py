@@ -103,3 +103,18 @@ async def test_submit_course_review_invalid_stars():
             rating_stars=6,
             comment_text="Invalid rating",
         )
+
+
+@pytest.mark.asyncio
+async def test_submit_course_review_comment_too_long():
+    usecase = CatalogUseCase()
+    with pytest.raises(
+        ValueError, match="Văn bản nhận xét không được vượt quá 2000 ký tự"
+    ):
+        await usecase.submit_course_review(
+            user_id="user_test_01",
+            user_name="Tester One",
+            course_id="course-test",
+            rating_stars=5,
+            comment_text="a" * 2001,
+        )
