@@ -198,3 +198,21 @@ class CertificateHandler(CertificateService):
             request.certificate_id, request.reason
         )
         return pb.RevokeCertificateResponse(success=success, message=msg)
+
+    async def issue_specialization_certificate(
+        self,
+        request: pb.IssueSpecializationCertificateRequest,
+        ctx: RequestContext[
+            pb.IssueSpecializationCertificateRequest,
+            pb.IssueSpecializationCertificateResponse,
+        ],
+    ) -> pb.IssueSpecializationCertificateResponse:
+        current_user = require_current_user()
+        cert, msg = await self._use_case.issue_specialization_certificate(
+            current_user.id, request.specialization_id
+        )
+        if not cert:
+            raise ConnectError(Code.FAILED_PRECONDITION, msg)
+        return pb.IssueSpecializationCertificateResponse(
+            certificate=_to_pb_certificate(cert), message=msg
+        )

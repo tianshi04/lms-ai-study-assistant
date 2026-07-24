@@ -27,3 +27,4 @@ class VerifiedCertificate:
     course_id: Optional[str] = None
     is_revoked: bool = False
     revoked_reason: str = ""
+    specialization_id: Optional[str] = None

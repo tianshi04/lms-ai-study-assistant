@@ -6,7 +6,7 @@ from typing import Optional
 from sqlalchemy import select
 
 from src.modules.assessment.infrastructure.models import QuizSubmissionModel
-from src.modules.catalog.infrastructure.models import CourseModel
+from src.modules.catalog.infrastructure.models import CourseModel, SpecializationModel
 from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
     VerifiedCertificate,
@@ -252,3 +252,87 @@ class CertificateUseCase:
                     "Chứng chỉ này đã bị thu hồi do vi phạm quy chế liêm chính học thuật của nền tảng (Certificate Revoked).",
                 )
             return True, cert, "Chứng chỉ hợp lệ và đã được xác minh thành công."
+
+    async def issue_specialization_certificate(
+        self, user_id: str, specialization_id: str
+    ) -> tuple[Optional[VerifiedCertificate], str]:
+        """Auto-issue a Specialization Verified Certificate when learner completes
+        100% of all component courses in the specialization (BR_CERT_005).
+
+        Returns (certificate, error_message). certificate is None on failure.
+        """
+        async with async_session_scope() as session:
+            repo = CertificateRepository(session)
+
+            # 1. Load specialization to get component course_ids
+            spec_stmt = select(SpecializationModel).where(
+                SpecializationModel.id == specialization_id
+            )
+            spec_res = await session.execute(spec_stmt)
+            spec_model = spec_res.scalar_one_or_none()
+            if not spec_model:
+                return None, f"Không tìm thấy Specialization '{specialization_id}'."
+
+            course_ids: list[str] = spec_model.course_ids or []
+            if not course_ids:
+                return None, "Specialization chưa có khóa học thành phần."
+
+            # 2. Check that learner already has a valid individual cert for every course
+            existing_certs = await repo.get_certificates_by_user(user_id)
+            completed_course_ids = {c.course_id for c in existing_certs if c.course_id}
+            missing = [cid for cid in course_ids if cid not in completed_course_ids]
+            if missing:
+                return (
+                    None,
+                    f"Học viên chưa hoàn thành {len(missing)}/{len(course_ids)} khóa học thành phần.",
+                )
+
+            # 3. Idempotency: return existing specialization cert if already issued
+            existing_spec_cert = await repo.get_certificate(
+                user_id, f"spec:{specialization_id}"
+            )
+            if existing_spec_cert:
+                return existing_spec_cert, ""
+
+            # 4. Load user info for cert metadata
+            user_stmt = select(UserModel).where(UserModel.id == user_id)
+            user_res = await session.execute(user_stmt)
+            user_model = user_res.scalar_one_or_none()
+            learner_name = user_model.full_name if user_model else "Học viên"
+
+            # 5. Build and save specialization certificate
+            cert_id = f"CERT-SPEC-{uuid.uuid4().hex[:8].upper()}"
+            issue_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            verification_url = f"/verify/{cert_id}"
+            qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={cert_id}"
+
+            open_badges = {
+                "@context": "https://w3id.org/openbadges/v2",
+                "type": "BadgeClass",
+                "id": cert_id,
+                "name": f"Specialization Certificate: {spec_model.title}",
+                "description": f"Hoàn thành toàn bộ {len(course_ids)} khóa học trong chuỗi chuyên ngành.",
+                "image": qr_code_url,
+                "criteria": {"narrative": f"/specializations/{specialization_id}"},
+                "issuer": {
+                    "name": spec_model.partner_name,
+                    "url": spec_model.partner_logo_url,
+                },
+            }
+
+            spec_cert = VerifiedCertificate(
+                certificate_id=cert_id,
+                user_id=user_id,
+                course_id=f"spec:{specialization_id}",
+                learner_name=learner_name,
+                course_title=spec_model.title,
+                partner_name=spec_model.partner_name,
+                partner_logo_url=spec_model.partner_logo_url,
+                issue_date=issue_date,
+                verification_url=verification_url,
+                qr_code_url=qr_code_url,
+                open_badges_json_ld=json.dumps(open_badges, ensure_ascii=False),
+                specialization_id=specialization_id,
+            )
+            saved = await repo.save_certificate(spec_cert)
+            return saved, ""

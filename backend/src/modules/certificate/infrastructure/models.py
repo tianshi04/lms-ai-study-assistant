@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy import Boolean, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -35,3 +37,4 @@ class CertificateModel(Base):
     open_badges_json_ld: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     is_revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     revoked_reason: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    specialization_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)

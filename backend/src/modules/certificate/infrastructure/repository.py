@@ -144,6 +144,7 @@ class CertificateRepository:
                 open_badges_json_ld=cert.open_badges_json_ld,
                 is_revoked=cert.is_revoked,
                 revoked_reason=cert.revoked_reason,
+                specialization_id=cert.specialization_id,
             )
             self._session.add(model)
         else:
@@ -168,4 +169,18 @@ class CertificateRepository:
             open_badges_json_ld=model.open_badges_json_ld,
             is_revoked=model.is_revoked,
             revoked_reason=model.revoked_reason,
+            specialization_id=model.specialization_id,
         )
+
+    async def get_certificates_by_user(self, user_id: str) -> list[VerifiedCertificate]:
+        """Returns all certificates for a user (for specialization completion check)."""
+        from sqlalchemy import select
+
+        stmt = select(CertificateModel).where(
+            CertificateModel.user_id == user_id,
+            CertificateModel.specialization_id.is_(None),
+            CertificateModel.is_revoked.is_(False),
+        )
+        result = await self._session.execute(stmt)
+        models = result.scalars().all()
+        return [self._to_certificate_entity(m) for m in models]

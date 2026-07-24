@@ -88,6 +88,15 @@ message RevokeCertificateResponse {
   string message = 2;
 }
 
+message IssueSpecializationCertificateRequest {
+  string specialization_id = 1;
+}
+
+message IssueSpecializationCertificateResponse {
+  VerifiedCertificate certificate = 1;
+  string message = 2;
+}
+
 service CertificateService {
   rpc ApplyFinancialAid(ApplyFinancialAidRequest) returns (ApplyFinancialAidResponse);
   rpc GetFinancialAidStatus(GetFinancialAidStatusRequest) returns (GetFinancialAidStatusResponse);
@@ -96,4 +105,5 @@ service CertificateService {
   rpc GetVerifiedCertificate(GetVerifiedCertificateRequest) returns (GetVerifiedCertificateResponse);
   rpc VerifyCertificatePublic(VerifyCertificatePublicRequest) returns (VerifyCertificatePublicResponse);
   rpc RevokeCertificate(RevokeCertificateRequest) returns (RevokeCertificateResponse);
+  rpc IssueSpecializationCertificate(IssueSpecializationCertificateRequest) returns (IssueSpecializationCertificateResponse);
 }
