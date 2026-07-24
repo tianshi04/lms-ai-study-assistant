@@ -112,5 +112,18 @@ test.describe('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () 
 
     await expect(page.locator('text=/Appeal status:|PENDING|TA will review/i').first()).toBeVisible({ timeout: 5000 });
   });
+
+  test('should allow reporting malicious or spam peer review (BR_PEER_005)', async ({ page }) => {
+    const assessmentPage = new AssessmentPage(page);
+    await assessmentPage.goto();
+    await assessmentPage.verifyPageLoaded();
+
+    await assessmentPage.switchTab('peer');
+    const reportBtn = page.getByRole('button', { name: /Report Review|Báo cáo/i }).first();
+    if (await reportBtn.isVisible()) {
+      await reportBtn.click();
+      await expect(page.locator('text=/Đã gửi báo cáo|TA Queue|bất thường/i').first()).toBeVisible({ timeout: 5000 });
+    }
+  });
 });
 

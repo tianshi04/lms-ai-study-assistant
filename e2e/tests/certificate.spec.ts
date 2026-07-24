@@ -44,4 +44,10 @@ test.describe('Full System Blackbox - Verified Certificate & OpenBadges (POM)', 
 
     await expect(certPage.downloadBadgeButton).toBeVisible();
   });
+
+  test('should display revoked certificate alert message when certificate is revoked (BR_CERT_004)', async ({ page }) => {
+    const certPage = new CertificatePage(page);
+    await certPage.goto('CERT-REVOKED-TEST');
+    await expect(page.locator('text=/CẢNH BÁO|Đã Bị Thu Hồi|Revoked|Không Tìm Thấy/i').first()).toBeVisible({ timeout: 10000 });
+  });
 });

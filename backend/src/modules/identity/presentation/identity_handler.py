@@ -168,3 +168,13 @@ class IdentityHandler(IdentityService):
             created_at=item["created_at"],
         )
         return pb.CreateEnterpriseSeatResponse(seat=pb_seat)
+
+    async def revoke_enterprise_seat(
+        self,
+        request: pb.RevokeEnterpriseSeatRequest,
+        ctx: RequestContext[
+            pb.RevokeEnterpriseSeatRequest, pb.RevokeEnterpriseSeatResponse
+        ],
+    ) -> pb.RevokeEnterpriseSeatResponse:
+        success, msg = await self._use_case.revoke_enterprise_seat(request.user_id)
+        return pb.RevokeEnterpriseSeatResponse(success=success, message=msg)

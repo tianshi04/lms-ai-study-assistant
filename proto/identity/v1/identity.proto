@@ -96,6 +96,15 @@ message RefreshTokenResponse {
   string refresh_token = 2;
 }
 
+message RevokeEnterpriseSeatRequest {
+  string user_id = 1;
+}
+
+message RevokeEnterpriseSeatResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 service IdentityService {
   rpc Login(LoginRequest) returns (LoginResponse);
   rpc Register(RegisterRequest) returns (RegisterResponse);
@@ -104,4 +113,5 @@ service IdentityService {
   rpc ListEnterpriseSeats(ListEnterpriseSeatsRequest) returns (ListEnterpriseSeatsResponse);
   rpc CreateEnterpriseSeat(CreateEnterpriseSeatRequest) returns (CreateEnterpriseSeatResponse);
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc RevokeEnterpriseSeat(RevokeEnterpriseSeatRequest) returns (RevokeEnterpriseSeatResponse);
 }

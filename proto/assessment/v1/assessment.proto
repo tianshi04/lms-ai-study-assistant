@@ -101,6 +101,26 @@ message SubmitGradeAppealResponse {
   string appeal_status = 2;
 }
 
+message ReportPeerReviewRequest {
+  string review_id = 1;
+  string report_reason = 2;
+}
+
+message ReportPeerReviewResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message RegradePeerSubmissionByStaffRequest {
+  string submission_id = 1;
+  float ta_score = 2;
+}
+
+message RegradePeerSubmissionByStaffResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 service AssessmentService {
   rpc SubmitHonorCode(SubmitHonorCodeRequest) returns (SubmitHonorCodeResponse);
   rpc SubmitGradedQuiz(SubmitGradedQuizRequest) returns (SubmitGradedQuizResponse);
@@ -109,4 +129,6 @@ service AssessmentService {
   rpc GetPeerReviewsToGrade(GetPeerReviewsToGradeRequest) returns (GetPeerReviewsToGradeResponse);
   rpc SubmitPeerReviewGrade(SubmitPeerReviewGradeRequest) returns (SubmitPeerReviewGradeResponse);
   rpc SubmitGradeAppeal(SubmitGradeAppealRequest) returns (SubmitGradeAppealResponse);
+  rpc ReportPeerReview(ReportPeerReviewRequest) returns (ReportPeerReviewResponse);
+  rpc RegradePeerSubmissionByStaff(RegradePeerSubmissionByStaffRequest) returns (RegradePeerSubmissionByStaffResponse);
 }

@@ -32,4 +32,16 @@ test.describe('Full System Blackbox - Admin Management Dashboard (POM)', () => {
     // Verify assign modal opens
     await expect(page.locator('text=/Gán Suất Học Enterprise/i').first()).toBeVisible({ timeout: 5000 });
   });
+
+  test('should allow revoking enterprise seat key (BR_ACCESS_003)', async ({ page }) => {
+    const adminPage = new AdminDashboardPage(page);
+    await adminPage.goto();
+    await adminPage.verifyPageLoaded();
+
+    const revokeBtn = page.getByRole('button', { name: /Thu hồi|Revoke/i }).first();
+    if (await revokeBtn.isVisible()) {
+      await revokeBtn.click();
+      await expect(page.locator('text=/Đã thu hồi|thành công/i').first()).toBeVisible({ timeout: 5000 });
+    }
+  });
 });

@@ -63,3 +63,19 @@ export function useEnterpriseSeatsQuery(options?: Partial<UseQueryOptions<Enterp
   });
 }
 
+/**
+ * Custom TanStack Mutation hook for revoking enterprise seat.
+ */
+export function useRevokeEnterpriseSeatMutation(
+  options?: Partial<UseMutationOptions<{ success: boolean; message: string }, Error, { userId: string }>>
+) {
+  return useMutation<{ success: boolean; message: string }, Error, { userId: string }>({
+    mutationFn: async ({ userId }) => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.revokeEnterpriseSeat({ userId });
+      return { success: res.success, message: res.message };
+    },
+    ...options,
+  });
+}
+
