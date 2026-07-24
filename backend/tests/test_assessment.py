@@ -361,3 +361,30 @@ async def test_audit_mode_access_blocking():
         assert "Audit Mode" in msg
     except Exception as e:
         pytest.skip(f"Skipping audit mode db test: DB not reachable ({e})")
+
+
+@pytest.mark.asyncio
+async def test_quiz_question_pool_and_option_shuffling():
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    user_id = "user-shuffled-quiz"
+    item_id = "item-shuffled-1"
+
+    # Start session and get N-sampled questions with shuffled options (BR_QUIZ_002)
+    session_info = await usecase.start_graded_quiz_session(user_id, item_id)
+    assert "questions" in session_info
+    questions = session_info["questions"]
+    assert len(questions) == 5  # Sampled 5 questions from pool
+
+    session_seed = session_info["session_seed"]
+    shuffled_answers = [q["shuffled_correct_index"] for q in questions]
+
+    # Agree Honor Code
+    await usecase.submit_honor_code(user_id, item_id, True)
+
+    # Submit answers matching shuffled indices -> Should pass 100%
+    res = await usecase.submit_graded_quiz(
+        user_id, item_id, shuffled_answers, session_seed=session_seed
+    )
+    assert res["score_percent"] == 100.0
+    assert res["passed"] is True

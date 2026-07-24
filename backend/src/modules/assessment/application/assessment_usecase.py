@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import random
 import uuid
 from typing import Any, Callable, Optional
 
@@ -63,16 +64,69 @@ class AssessmentUseCase:
         )
         return is_agreed, msg
 
+    def generate_quiz_session_questions(
+        self, item_id: str, seed: int = 42, pool_size: int = 10, sample_n: int = 5
+    ) -> list[dict[str, Any]]:
+        """Enforces BR_QUIZ_002: Samples N questions from a Pool of M and shuffles options reproducibly."""
+        rng = random.Random(seed)
+
+        # Question pool of M items
+        question_pool: list[dict[str, Any]] = [
+            {
+                "question_id": f"q_{i + 1}",
+                "text": f"Câu hỏi {i + 1} của bài thi {item_id}: Chọn đáp án đúng.",
+                "options": [
+                    "Tùy chọn Đúng (Gốc 0)",
+                    "Tùy chọn Sai 1",
+                    "Tùy chọn Sai 2",
+                    "Tùy chọn Sai 3",
+                ],
+                "correct_option_index": 0,
+            }
+            for i in range(pool_size)
+        ]
+
+        sampled = rng.sample(question_pool, min(sample_n, len(question_pool)))
+        result: list[dict[str, Any]] = []
+
+        for q in sampled:
+            raw_options = q.get("options", [])
+            opts: list[str] = (
+                [str(x) for x in raw_options] if isinstance(raw_options, list) else []
+            )
+            correct_idx = int(q.get("correct_option_index", 0))
+            correct_text = opts[correct_idx]
+            rng.shuffle(opts)
+            new_correct_idx = opts.index(correct_text)
+
+            result.append(
+                {
+                    "question_id": q["question_id"],
+                    "text": q["text"],
+                    "options": opts,
+                    "shuffled_correct_index": new_correct_idx,
+                }
+            )
+
+        return result
+
     async def start_graded_quiz_session(
         self, user_id: str, item_id: str, duration_minutes: int = 45
     ) -> dict[str, Any]:
         now = datetime.now(timezone.utc)
         expires_at = now + timedelta(minutes=duration_minutes)
+
+        # BR_QUIZ_002: Generate N-sampled and option-shuffled questions using unique user/attempt seed
+        seed_val = abs(hash(f"{user_id}:{item_id}:{now.isoformat()[:16]}")) % (2**31)
+        questions = self.generate_quiz_session_questions(item_id, seed=seed_val)
+
         return {
             "session_id": f"qsess-{uuid.uuid4().hex[:8]}",
             "start_time_iso": now.isoformat(),
             "expires_at_iso": expires_at.isoformat(),
             "duration_minutes": duration_minutes,
+            "session_seed": seed_val,
+            "questions": questions,
         }
 
     @require_paid_access()
@@ -83,6 +137,7 @@ class AssessmentUseCase:
         selected_option_indexes: list[int],
         start_time_iso: Optional[str] = None,
         duration_minutes: int = 45,
+        session_seed: Optional[int] = None,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
@@ -117,9 +172,15 @@ class AssessmentUseCase:
                         ],
                     }
 
-            # 3. Grade Quiz (Sample correct answer pattern: Option index 0 for all or matches)
-            # Default correct options pattern: [0, 1, 2, 0, 1]
-            correct_answers = [0, 1, 2, 0, 1]
+            # 3. Grade Quiz (BR_QUIZ_002: Dynamic shuffled options grading)
+            if session_seed is not None:
+                generated_qs = self.generate_quiz_session_questions(
+                    item_id, seed=session_seed
+                )
+                correct_answers = [q["shuffled_correct_index"] for q in generated_qs]
+            else:
+                correct_answers = [0, 1, 2, 0, 1]
+
             total_questions = len(correct_answers)
             correct_count = 0
             explanations: list[str] = []
