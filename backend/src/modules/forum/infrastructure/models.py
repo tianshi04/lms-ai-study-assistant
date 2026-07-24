@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.shared.infrastructure.database import Base
@@ -75,6 +75,9 @@ class ForumReplyORM(Base):
 
 class ForumVoteORM(Base):
     __tablename__ = "forum_votes"
+    __table_args__ = (
+        UniqueConstraint("user_id", "post_id", name="uq_forum_user_post_vote"),
+    )
 
     id: Mapped[str] = mapped_column(
         String(36), primary_key=True, default=lambda: str(uuid.uuid4())
