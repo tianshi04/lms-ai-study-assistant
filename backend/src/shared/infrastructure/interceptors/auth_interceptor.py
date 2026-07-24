@@ -52,20 +52,22 @@ class AuthInterceptor(UnaryInterceptor):
             or {}
         )
         auth_header = ""
+        cookie_header = ""
         if hasattr(metadata, "get"):
-            auth_header = metadata.get("authorization", "") or metadata.get(
-                "Authorization", ""
-            )
+            auth_header = metadata.get("authorization", "") or metadata.get("Authorization", "")
+            cookie_header = metadata.get("cookie", "") or metadata.get("Cookie", "")
 
-        if not auth_header:
-            raise ConnectError(Code.UNAUTHENTICATED, "Thiếu header Authorization")
+        token = ""
+        if auth_header:
+            raw_header = str(auth_header).strip()
+            token = raw_header[7:].strip() if raw_header.lower().startswith("bearer ") else raw_header
+        elif cookie_header:
+            # Parse access_token=... from cookie string
+            cookies = dict(item.split("=") for item in str(cookie_header).split("; ") if "=" in item)
+            token = cookies.get("access_token", "")
 
-        raw_header = str(auth_header).strip()
-        token = (
-            raw_header[7:].strip()
-            if raw_header.lower().startswith("bearer ")
-            else raw_header
-        )
+        if not token:
+            raise ConnectError(Code.UNAUTHENTICATED, "Thiếu token xác thực (Không tìm thấy Header hoặc Cookie)")
 
         payload = decode_token(token)
         if not payload or payload.get("type") != "access":
