@@ -27,10 +27,7 @@ export function InVideoQuizEditor({
 
   const [timestampSeconds, setTimestampSeconds] = useState<number>(0);
   const [question, setQuestion] = useState<string>("");
-  const [optA, setOptA] = useState<string>("");
-  const [optB, setOptB] = useState<string>("");
-  const [optC, setOptC] = useState<string>("");
-  const [optD, setOptD] = useState<string>("");
+  const [optionsList, setOptionsList] = useState<string[]>(["", ""]);
   const [correctOptionIndex, setCorrectOptionIndex] = useState<number>(0);
   const [explanation, setExplanation] = useState<string>("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -43,6 +40,32 @@ export function InVideoQuizEditor({
     }
   };
 
+  const handleAddOption = () => {
+    if (optionsList.length >= 6) {
+      toast.error("Tối đa 6 phương án cho mỗi câu hỏi dừng video.");
+      return;
+    }
+    setOptionsList((prev) => [...prev, ""]);
+  };
+
+  const handleRemoveOption = (idx: number) => {
+    if (optionsList.length <= 2) {
+      toast.error("Cần tối thiểu 2 phương án trả lời.");
+      return;
+    }
+    const updated = optionsList.filter((_, i) => i !== idx);
+    setOptionsList(updated);
+    if (correctOptionIndex >= updated.length) {
+      setCorrectOptionIndex(0);
+    }
+  };
+
+  const handleOptionChange = (idx: number, val: string) => {
+    const updated = [...optionsList];
+    updated[idx] = val;
+    setOptionsList(updated);
+  };
+
   const handleAddOrUpdateQuiz = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -51,20 +74,19 @@ export function InVideoQuizEditor({
       return;
     }
 
-    if (!optA.trim() || !optB.trim()) {
-      toast.error("Vui lòng nhập tối thiểu 2 đáp án (A và B).");
+    const trimmedOptions = optionsList.map((o) => o.trim()).filter((o) => o.length > 0);
+    if (trimmedOptions.length < 2) {
+      toast.error("Vui lòng nhập tối thiểu 2 đáp án hợp lệ.");
       return;
     }
 
-    const options = [optA.trim(), optB.trim()];
-    if (optC.trim()) options.push(optC.trim());
-    if (optD.trim()) options.push(optD.trim());
+    const finalCorrectIndex = correctOptionIndex < trimmedOptions.length ? correctOptionIndex : 0;
 
     const newQuiz: InVideoQuizItem = {
       timestampSeconds: Math.max(0, timestampSeconds),
       question: question.trim(),
-      options,
-      correctOptionIndex,
+      options: trimmedOptions,
+      correctOptionIndex: finalCorrectIndex,
       explanation: explanation.trim(),
     };
 
@@ -87,10 +109,7 @@ export function InVideoQuizEditor({
 
   const resetForm = () => {
     setQuestion("");
-    setOptA("");
-    setOptB("");
-    setOptC("");
-    setOptD("");
+    setOptionsList(["", ""]);
     setCorrectOptionIndex(0);
     setExplanation("");
     setEditingIndex(null);
@@ -102,10 +121,7 @@ export function InVideoQuizEditor({
 
     setTimestampSeconds(q.timestampSeconds);
     setQuestion(q.question);
-    setOptA(q.options[0] || "");
-    setOptB(q.options[1] || "");
-    setOptC(q.options[2] || "");
-    setOptD(q.options[3] || "");
+    setOptionsList(q.options.length >= 2 ? [...q.options] : ["", ""]);
     setCorrectOptionIndex(q.correctOptionIndex);
     setExplanation(q.explanation);
     setEditingIndex(index);
@@ -246,83 +262,62 @@ export function InVideoQuizEditor({
           </div>
         </div>
 
-        {/* 4 Options A/B/C/D */}
+        {/* Dynamic Options List */}
         <div className="space-y-2 pt-1">
-          <label className="block text-[11px] font-bold text-slate-500">
-            Các phương án trả lời (Tích chọn nút tròn cho Đáp án Đúng):
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
-              <input
-                type="radio"
-                name="correctOption"
-                checked={correctOptionIndex === 0}
-                onChange={() => setCorrectOptionIndex(0)}
-                className="w-4 h-4 text-blue-600 cursor-pointer"
-              />
-              <span className="text-xs font-bold text-slate-500">A.</span>
-              <input
-                type="text"
-                value={optA}
-                onChange={(e) => setOptA(e.target.value)}
-                placeholder="Đáp án A"
-                className="w-full bg-transparent text-xs outline-none"
-              />
-            </div>
+          <div className="flex items-center justify-between">
+            <label className="block text-[11px] font-bold text-slate-500">
+              Phương án trả lời (Tích chọn nút tròn để chỉ định Đáp án Đúng):
+            </label>
+            <button
+              type="button"
+              onClick={handleAddOption}
+              className="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span>+ Thêm phương án</span>
+            </button>
+          </div>
 
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
-              <input
-                type="radio"
-                name="correctOption"
-                checked={correctOptionIndex === 1}
-                onChange={() => setCorrectOptionIndex(1)}
-                className="w-4 h-4 text-blue-600 cursor-pointer"
-              />
-              <span className="text-xs font-bold text-slate-500">B.</span>
-              <input
-                type="text"
-                value={optB}
-                onChange={(e) => setOptB(e.target.value)}
-                placeholder="Đáp án B"
-                className="w-full bg-transparent text-xs outline-none"
-              />
-            </div>
-
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
-              <input
-                type="radio"
-                name="correctOption"
-                checked={correctOptionIndex === 2}
-                onChange={() => setCorrectOptionIndex(2)}
-                className="w-4 h-4 text-blue-600 cursor-pointer"
-              />
-              <span className="text-xs font-bold text-slate-500">C.</span>
-              <input
-                type="text"
-                value={optC}
-                onChange={(e) => setOptC(e.target.value)}
-                placeholder="Đáp án C (Tùy chọn)"
-                className="w-full bg-transparent text-xs outline-none"
-              />
-            </div>
-
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
-              <input
-                type="radio"
-                name="correctOption"
-                checked={correctOptionIndex === 3}
-                onChange={() => setCorrectOptionIndex(3)}
-                className="w-4 h-4 text-blue-600 cursor-pointer"
-              />
-              <span className="text-xs font-bold text-slate-500">D.</span>
-              <input
-                type="text"
-                value={optD}
-                onChange={(e) => setOptD(e.target.value)}
-                placeholder="Đáp án D (Tùy chọn)"
-                className="w-full bg-transparent text-xs outline-none"
-              />
-            </div>
+          <div className="space-y-2">
+            {optionsList.map((optText, idx) => {
+              const letter = String.fromCharCode(65 + idx);
+              return (
+                <div
+                  key={idx}
+                  className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-700"
+                >
+                  <input
+                    type="radio"
+                    name="correctOption"
+                    checked={correctOptionIndex === idx}
+                    onChange={() => setCorrectOptionIndex(idx)}
+                    className="w-4 h-4 text-blue-600 cursor-pointer"
+                  />
+                  <span className="text-xs font-bold text-slate-500 font-mono">{letter}.</span>
+                  <input
+                    type="text"
+                    value={optText}
+                    onChange={(e) => handleOptionChange(idx, e.target.value)}
+                    placeholder={`Nhập phương án ${letter}...`}
+                    className="w-full bg-transparent text-xs outline-none"
+                  />
+                  {optionsList.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveOption(idx)}
+                      className="p-1 rounded text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
+                      title="Xóa phương án này"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
