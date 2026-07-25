@@ -1,3 +1,5 @@
+from connectrpc.code import Code
+from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
 
 from src.gen.assessment.v1 import assessment_pb as pb
@@ -176,6 +178,22 @@ class AssessmentHandler(AssessmentService):
         ],
     ) -> pb.RegradePeerSubmissionByStaffResponse:
         current_user = require_current_user()
+        role = (current_user.role or "").lower()
+        is_staff = any(
+            r in role
+            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
+        ) or current_user.role in (
+            "USER_ROLE_INSTRUCTOR",
+            "USER_ROLE_TA",
+            "USER_ROLE_SUPER_ADMIN",
+            "USER_ROLE_PARTNER_ADMIN",
+        )
+        if not is_staff:
+            raise ConnectError(
+                Code.PERMISSION_DENIED,
+                "Chỉ Trợ giảng (TA) hoặc Giảng viên mới có quyền chấm điểm trực tiếp bài nộp của học viên.",
+            )
+
         success, msg = await self.use_case.regrade_peer_submission_by_staff(
             submission_id=request.submission_id,
             staff_user_id=current_user.id,
