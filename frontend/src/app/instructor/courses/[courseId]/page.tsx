@@ -1190,26 +1190,7 @@ export default function InstructorCourseBuilderPage({
                 folder="videos"
                 label="Học liệu Video Bài giảng (Upload Tệp hoặc Đường dẫn)"
               />
-              <VideoUploadWidget
-                value={vttSubtitleUrl}
-                onChange={setVttSubtitleUrl}
-                folder="subtitles"
-                accept=".vtt,text/vtt"
-                label="Tệp Phụ đề WebVTT (.vtt) (Tùy chọn - Upload Tệp hoặc URL)"
-                placeholder="https://.../subtitles.vtt"
-              />
-              <div className="flex items-center gap-2.5 p-3 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/50">
-                <input
-                  type="checkbox"
-                  id="autoTranscribeCheck"
-                  checked={autoTranscribe}
-                  onChange={(e) => setAutoTranscribe(e.target.checked)}
-                  className="w-4 h-4 text-indigo-600 rounded cursor-pointer"
-                />
-                <label htmlFor="autoTranscribeCheck" className="text-xs font-bold text-indigo-950 dark:text-indigo-200 cursor-pointer">
-                  🤖 Tự động tạo phụ đề bằng AI (Speech-to-Text Auto-Transcribe) khi chưa có tệp phụ đề
-                </label>
-              </div>
+
               <div className="flex items-center gap-2.5 p-3 rounded-xl bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-850/50">
                 <input
                   type="checkbox"
@@ -1540,28 +1521,7 @@ export default function InstructorCourseBuilderPage({
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
                     required
                   />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Đường dẫn Phụ đề WebVTT (.vtt) (Tùy chọn)</label>
-                  <input
-                    type="url"
-                    value={editingItem.vttSubtitleUrl}
-                    onChange={(e) => setEditingItem({ ...editingItem, vttSubtitleUrl: e.target.value })}
-                    placeholder="https://.../subtitles.vtt"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
-                  />
-                </div>
-                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/50">
-                  <input
-                    type="checkbox"
-                    id="editAutoTranscribeCheck"
-                    checked={editingItem.autoTranscribe}
-                    onChange={(e) => setEditingItem({ ...editingItem, autoTranscribe: e.target.checked })}
-                    className="w-4 h-4 text-indigo-600 rounded cursor-pointer"
-                  />
-                  <label htmlFor="editAutoTranscribeCheck" className="text-xs font-bold text-indigo-950 dark:text-indigo-200 cursor-pointer">
-                    🤖 Tự động tạo phụ đề bằng AI (Speech-to-Text Auto-Transcribe) khi chưa có tệp phụ đề
-                  </label>
+
                 </div>
                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-850/50">
                   <input

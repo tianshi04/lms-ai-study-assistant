@@ -17,6 +17,7 @@ interface VideoPlayerProps {
   quizSubmitted: boolean;
   completedItemIds?: string[];
   onTimeUpdate: () => void;
+  onSeeking?: () => void;
   onSelectOption: (index: number) => void;
   onSubmitQuiz: () => void;
   onContinueVideo: () => void;
@@ -32,6 +33,7 @@ export function VideoPlayer({
   quizSubmitted,
   completedItemIds = [],
   onTimeUpdate,
+  onSeeking,
   onSelectOption,
   onSubmitQuiz,
   onContinueVideo,
@@ -186,28 +188,10 @@ function getYouTubeEmbedUrl(url: string, autoTranscribe: boolean = false): strin
             src={activeItem.videoUrl}
             controls
             onTimeUpdate={onTimeUpdate}
+            onSeeking={onSeeking}
             onEnded={() => onMarkComplete?.(activeItem.id)}
             className="max-h-full max-w-full object-contain shadow-2xl rounded-lg border border-slate-300 dark:border-slate-800"
-          >
-            {activeItem.vttSubtitleUrl && (
-              <track
-                kind="subtitles"
-                src={activeItem.vttSubtitleUrl}
-                srcLang="vi"
-                label="Tiếng Việt (VTT)"
-                default
-              />
-            )}
-          </video>
-        )}
-
-        {/* AI Auto-CC Active Indicator Badge */}
-        {!activeItem.vttSubtitleUrl && activeItem.autoTranscribe && (
-          <div className="absolute top-4 left-4 z-20 pointer-events-none">
-            <span className="px-3 py-1.5 rounded-xl bg-indigo-600/90 text-white font-bold text-[11px] shadow-lg backdrop-blur-md flex items-center gap-1.5 border border-indigo-400/30 animate-pulse">
-              🤖 Phụ đề AI Auto-CC đã bật
-            </span>
-          </div>
+          />
         )}
 
         {/* Floating Top Control Overlay for Video Mark as Complete */}

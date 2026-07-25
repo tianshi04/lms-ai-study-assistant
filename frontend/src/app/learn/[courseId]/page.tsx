@@ -201,9 +201,23 @@ export default function CoursePlayerPage() {
     }
   };
 
+  // Video seeking handler to prevent forward seeking immediately at browser event level
+  const handleSeeking = () => {
+    if (!videoRef.current || !activeItem) return;
+    const video = videoRef.current;
+    if (activeItem.prohibitSeeking && video.currentTime > maxTimeRef.current + 1.0) {
+      video.currentTime = maxTimeRef.current;
+      toast.error("Bài học này đã được giảng viên thiết lập Cấm tua nhanh!");
+    }
+  };
+
   // Jump to video timestamp from transcript
   const handleSeekVideo = (timestampSeconds: number) => {
     if (videoRef.current) {
+      if (activeItem?.prohibitSeeking && timestampSeconds > maxTimeRef.current + 1.0) {
+        toast.error("Bài học này đã được giảng viên thiết lập Cấm tua nhanh!");
+        return;
+      }
       videoRef.current.currentTime = timestampSeconds;
       videoRef.current.play();
     }
@@ -452,6 +466,7 @@ export default function CoursePlayerPage() {
               quizSubmitted={quizSubmitted}
               completedItemIds={progress?.completedItemIds || []}
               onTimeUpdate={handleTimeUpdate}
+              onSeeking={handleSeeking}
               onSelectOption={setSelectedOption}
               onSubmitQuiz={handleQuizSubmit}
               onContinueVideo={handleContinueVideo}
