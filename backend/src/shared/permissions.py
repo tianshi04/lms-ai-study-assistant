@@ -16,13 +16,7 @@ def enforce_course_ownership(
             Code.UNAUTHENTICATED, "Vui lòng đăng nhập để thực hiện thao tác này"
         )
 
-    user_role = (user.role or "").upper()
-    if user_role in (
-        "USER_ROLE_SUPER_ADMIN",
-        "USER_ROLE_PARTNER_ADMIN",
-        "SUPER_ADMIN",
-        "ADMIN",
-    ):
+    if user.is_admin():
         return
 
     is_owner = bool(owner_id and user.id == owner_id)

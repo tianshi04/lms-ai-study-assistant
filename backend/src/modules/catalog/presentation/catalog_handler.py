@@ -180,13 +180,7 @@ class CatalogHandler(CatalogService):
 
     def _verify_instructor_permission(self) -> CurrentUser:
         user = require_current_user()
-        if user.role not in (
-            "USER_ROLE_INSTRUCTOR",
-            "USER_ROLE_SUPER_ADMIN",
-            "USER_ROLE_PARTNER_ADMIN",
-            "INSTRUCTOR",
-            "ADMIN",
-        ):
+        if not user.is_staff():
             raise ConnectError(
                 Code.PERMISSION_DENIED,
                 "Chỉ tài khoản Giảng viên (Instructor) hoặc Quản trị viên mới có quyền tạo và chỉnh sửa khóa học.",

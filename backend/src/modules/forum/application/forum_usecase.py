@@ -5,7 +5,7 @@ from typing import Sequence
 from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
 from src.modules.forum.domain.repository import IForumRepository
 from src.modules.forum.infrastructure.repository import ForumRepository
-from src.shared.auth import CurrentUser
+from src.shared.auth import CurrentUser, is_staff_role
 from src.shared.infrastructure.database import async_session_scope
 
 
@@ -35,14 +35,13 @@ class ForumUseCase:
         item_id: str,
         title: str,
         content: str,
-        author_user_id: str,
+        author_user_id: str = "",
         author_name: str = "Learner",
         author_role: str = "Student",
     ) -> ForumThreadEntity:
         thread_id = str(uuid.uuid4())
         created_at = utc_now_str()
 
-        # If initial content is provided, create a first reply or set up thread
         thread_entity = ForumThreadEntity(
             id=thread_id,
             course_id=course_id,
@@ -94,17 +93,7 @@ class ForumUseCase:
         created_at = utc_now_str()
 
         # Determine if author is Staff/TA
-        is_staff = author_role.lower() in (
-            "ta",
-            "teaching assistant",
-            "instructor",
-            "staff",
-            "super admin",
-            "partner admin",
-            "user_role_ta",
-            "user_role_instructor",
-            "user_role_super_admin",
-        )
+        is_staff = is_staff_role(author_role)
 
         reply_entity = ForumReplyEntity(
             id=reply_id,

@@ -10,19 +10,6 @@ from connectrpc.errors import ConnectError
 from src.gen.auth.v1 import options_pb
 from src.shared.auth import CurrentUser
 
-STAFF_ROLES = {
-    "SUPER_ADMIN",
-    "PARTNER_ADMIN",
-    "ADMIN",
-    "INSTRUCTOR",
-    "TA",
-    "USER_ROLE_SUPER_ADMIN",
-    "USER_ROLE_PARTNER_ADMIN",
-    "USER_ROLE_ADMIN",
-    "USER_ROLE_INSTRUCTOR",
-    "USER_ROLE_TA",
-}
-
 
 class AuthPolicyRegistry:
     """Discovers and caches AuthPolicy for all ConnectRPC method paths dynamically from Protobuf stubs."""
@@ -107,8 +94,7 @@ class AuthPolicyRegistry:
             )
 
         if policy == options_pb.AuthPolicy.ADMIN:
-            user_role = (user.role or "").upper()
-            if not any(r in user_role for r in STAFF_ROLES):
+            if not user.is_staff():
                 raise ConnectError(
                     Code.PERMISSION_DENIED,
                     "Bạn không có quyền thực hiện thao tác quản trị này",

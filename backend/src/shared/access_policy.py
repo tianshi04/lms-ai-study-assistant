@@ -5,19 +5,8 @@ from typing import Any
 
 from src.modules.certificate.infrastructure.repository import CertificateRepository
 from src.modules.identity.infrastructure.repository import IdentityRepository
+from src.shared.auth import is_staff_role
 from src.shared.infrastructure.database import async_session_scope
-
-STAFF_ROLES = {
-    "INSTRUCTOR",
-    "SUPER_ADMIN",
-    "PARTNER_ADMIN",
-    "TA",
-    "ADMIN",
-    "USER_ROLE_INSTRUCTOR",
-    "USER_ROLE_SUPER_ADMIN",
-    "USER_ROLE_PARTNER_ADMIN",
-    "USER_ROLE_TA",
-}
 
 
 class AccessPolicyService:
@@ -47,8 +36,7 @@ class AccessPolicyService:
             if hasattr(user_entity.role, "value")
             else str(user_entity.role)
         )
-        role_str = str(role_val).upper()
-        if any(r in role_str for r in STAFF_ROLES):
+        if is_staff_role(role_val):
             return True, ""
 
         # 2. Enterprise Seat Key attribute (BR_ACCESS_002)
