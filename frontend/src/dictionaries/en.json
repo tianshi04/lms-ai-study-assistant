@@ -190,7 +190,19 @@
     "submitPost": "Post Thread",
     "repliesCount": "replies",
     "authorFallback": "LMS Member",
-    "noPostsYet": "No discussion threads yet. Be the first to start a conversation!"
+    "noPostsYet": "No discussion threads yet. Be the first to start a conversation!",
+    "edited": "(Edited)",
+    "edit": "Edit",
+    "delete": "Delete",
+    "editThreadModalTitle": "Edit Thread",
+    "editReplyModalTitle": "Edit Reply",
+    "confirmDeleteThread": "Are you sure you want to delete this thread?",
+    "confirmDeleteReply": "Are you sure you want to delete this reply?",
+    "threadUpdated": "Thread updated successfully!",
+    "threadDeleted": "Thread deleted successfully!",
+    "replyUpdated": "Reply updated successfully!",
+    "replyDeleted": "Reply deleted successfully!",
+    "saveChanges": "Save Changes"
   },
   "toast": {
     "success": "Success",

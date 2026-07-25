@@ -190,7 +190,19 @@
     "submitPost": "Đăng bài",
     "repliesCount": "phản hồi",
     "authorFallback": "Thành viên LMS",
-    "noPostsYet": "Chưa có chủ đề thảo luận nào. Hãy là người đầu tiên đặt câu hỏi!"
+    "noPostsYet": "Chưa có chủ đề thảo luận nào. Hãy là người đầu tiên đặt câu hỏi!",
+    "edited": "(Đã chỉnh sửa)",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "editThreadModalTitle": "Chỉnh sửa bài viết",
+    "editReplyModalTitle": "Chỉnh sửa phản hồi",
+    "confirmDeleteThread": "Bạn có chắc chắn muốn xóa bài viết này không?",
+    "confirmDeleteReply": "Bạn có chắc chắn muốn xóa phản hồi này không?",
+    "threadUpdated": "Bài viết đã được cập nhật!",
+    "threadDeleted": "Bài viết đã được xóa!",
+    "replyUpdated": "Phản hồi đã được cập nhật!",
+    "replyDeleted": "Phản hồi đã được xóa!",
+    "saveChanges": "Lưu thay đổi"
   },
   "toast": {
     "success": "Thành công",

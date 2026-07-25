@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
-import { ForumService, ForumThreadSchema, ForumReplySchema, type ForumThread } from "@/gen/forum/v1/forum_pb";
+import { ForumService, ForumThreadSchema, ForumReplySchema, type ForumThread, type ForumReply } from "@/gen/forum/v1/forum_pb";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Navbar } from "@/components/layout/Navbar";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
+const emptySubscribe = () => () => {};
 
 function formatRoleName(role: string): string {
   if (!role) return "Learner";
@@ -30,6 +31,17 @@ export default function ForumPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+  const currentUserId = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
+  const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") || "" : "";
+  const isStaffOrAdmin = ["2", "3", "4", "5", "INSTRUCTOR", "TA", "ADMIN", "SUPER_ADMIN"].some((r) =>
+    userRole.toUpperCase().includes(r)
+  );
+
   // New Thread Form State
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -37,9 +49,20 @@ export default function ForumPage() {
   const [newCourseId, setNewCourseId] = useState("");
   const [submittingThread, setSubmittingThread] = useState(false);
 
+  // Thread Edit State
+  const [editingThread, setEditingThread] = useState<ForumThread | null>(null);
+  const [editThreadTitle, setEditThreadTitle] = useState("");
+  const [editThreadContent, setEditThreadContent] = useState("");
+  const [submittingEditThread, setSubmittingEditThread] = useState(false);
+
   // Reply Form State: threadId -> content
   const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
   const [submittingReply, setSubmittingReply] = useState<Record<string, boolean>>({});
+
+  // Reply Edit State
+  const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
+  const [editReplyContent, setEditReplyContent] = useState("");
+  const [submittingEditReply, setSubmittingEditReply] = useState(false);
 
   // Active Expanded Thread IDs
   const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
@@ -144,6 +167,47 @@ export default function ForumPage() {
     }
   };
 
+  // Handle Edit Thread
+  const openEditThreadModal = (thread: ForumThread) => {
+    setEditingThread(thread);
+    setEditThreadTitle(thread.title);
+    setEditThreadContent("");
+  };
+
+  const handleUpdateThread = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingThread || !editThreadTitle.trim()) return;
+
+    setSubmittingEditThread(true);
+    try {
+      const client = getRpcClient(ForumService);
+      await client.updateThread({
+        threadId: editingThread.id,
+        title: editThreadTitle,
+        content: editThreadContent,
+      });
+      setEditingThread(null);
+      toast.success(t("forum.threadUpdated"));
+      fetchThreads();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("common.error"));
+    } finally {
+      setSubmittingEditThread(false);
+    }
+  };
+
+  const handleDeleteThread = async (threadId: string) => {
+    if (!window.confirm(t("forum.confirmDeleteThread"))) return;
+    try {
+      const client = getRpcClient(ForumService);
+      await client.deleteThread({ threadId });
+      toast.success(t("forum.threadDeleted"));
+      fetchThreads();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("common.error"));
+    }
+  };
+
   // Handle Post Reply
   const handlePostReply = async (threadId: string) => {
     const content = replyInputs[threadId] || "";
@@ -165,6 +229,43 @@ export default function ForumPage() {
       toast.error(err instanceof Error ? err.message : t("common.error"));
     } finally {
       setSubmittingReply((prev) => ({ ...prev, [threadId]: false }));
+    }
+  };
+
+  // Handle Edit Reply
+  const startEditReply = (reply: ForumReply) => {
+    setEditingReplyId(reply.id);
+    setEditReplyContent(reply.content);
+  };
+
+  const handleUpdateReply = async (replyId: string) => {
+    if (!editReplyContent.trim()) return;
+    setSubmittingEditReply(true);
+    try {
+      const client = getRpcClient(ForumService);
+      await client.updateReply({
+        replyId,
+        content: editReplyContent,
+      });
+      setEditingReplyId(null);
+      toast.success(t("forum.replyUpdated"));
+      fetchThreads();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("common.error"));
+    } finally {
+      setSubmittingEditReply(false);
+    }
+  };
+
+  const handleDeleteReply = async (replyId: string) => {
+    if (!window.confirm(t("forum.confirmDeleteReply"))) return;
+    try {
+      const client = getRpcClient(ForumService);
+      await client.deleteReply({ replyId });
+      toast.success(t("forum.replyDeleted"));
+      fetchThreads();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("common.error"));
     }
   };
 
@@ -321,6 +422,8 @@ export default function ForumPage() {
           <div className="space-y-6">
             {threads.map((thread) => {
               const isExpanded = expandedThreads[thread.id] ?? true;
+              const isThreadAuthor = Boolean(currentUserId && thread.authorUserId === currentUserId);
+              const canDeleteThread = isThreadAuthor || isStaffOrAdmin;
 
               return (
                 <div
@@ -346,6 +449,32 @@ export default function ForumPage() {
                         <span className="text-xs text-slate-400">
                           {new Date(thread.createdAt).toLocaleString(locale === "vi" ? "vi-VN" : "en-US")}
                         </span>
+                        {thread.isEdited && (
+                          <span className="text-xs text-amber-600 dark:text-amber-400 font-medium italic">
+                            {t("forum.edited")}
+                          </span>
+                        )}
+                        
+                        {(isThreadAuthor || canDeleteThread) && (
+                          <div className="ml-auto flex items-center gap-2">
+                            {isThreadAuthor && (
+                              <button
+                                onClick={() => openEditThreadModal(thread)}
+                                className="text-xs font-semibold text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+                              >
+                                {t("forum.edit")}
+                              </button>
+                            )}
+                            {canDeleteThread && (
+                              <button
+                                onClick={() => handleDeleteThread(thread.id)}
+                                className="text-xs font-semibold text-slate-500 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
+                              >
+                                {t("forum.delete")}
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-snug">
@@ -398,67 +527,121 @@ export default function ForumPage() {
                   {/* Replies List */}
                   {isExpanded && (
                     <div className="mt-4 space-y-4 border-l-2 border-slate-200 dark:border-slate-800 pl-4 md:pl-6 pt-2">
-                      {thread.replies.map((reply) => (
-                        <div
-                          key={reply.id}
-                          className={`p-4 rounded-xl text-sm transition-all ${
-                            reply.isStaffAnswer
-                              ? "bg-amber-500/5 border border-amber-500/20"
-                              : "bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-2 mb-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-semibold text-slate-800 dark:text-slate-200">
-                                {reply.authorName || t("forum.authorFallback")}
-                              </span>
-                              {reply.isStaffAnswer && (
-                                <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 px-3 py-1 rounded-full border border-amber-300/60 dark:border-amber-500/40 shadow-xs">
-                                  Official Staff Answer
+                      {thread.replies.map((reply) => {
+                        const isReplyAuthor = Boolean(currentUserId && reply.authorUserId === currentUserId);
+                        const canDeleteReply = isReplyAuthor || isStaffOrAdmin;
+                        const isEditingThisReply = editingReplyId === reply.id;
+
+                        return (
+                          <div
+                            key={reply.id}
+                            className={`p-4 rounded-xl text-sm transition-all ${
+                              reply.isStaffAnswer
+                                ? "bg-amber-500/5 border border-amber-500/20"
+                                : "bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2 mb-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                  {reply.authorName || t("forum.authorFallback")}
                                 </span>
-                              )}
-                              <span className="text-xs text-slate-400">({formatRoleName(reply.authorRole)})</span>
-                            </div>
+                                {reply.isStaffAnswer && (
+                                  <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 px-3 py-1 rounded-full border border-amber-300/60 dark:border-amber-500/40 shadow-xs">
+                                    Official Staff Answer
+                                  </span>
+                                )}
+                                <span className="text-xs text-slate-400">({formatRoleName(reply.authorRole)})</span>
+                                {reply.isEdited && (
+                                  <span className="text-xs text-amber-600 dark:text-amber-400 font-medium italic">
+                                    {t("forum.edited")}
+                                  </span>
+                                )}
+                              </div>
 
-                            <div className="flex items-center gap-2">
-                              {!reply.isStaffAnswer && (
+                              <div className="flex items-center gap-2">
+                                {isReplyAuthor && (
+                                  <button
+                                    onClick={() => startEditReply(reply)}
+                                    className="text-xs font-semibold text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+                                  >
+                                    {t("forum.edit")}
+                                  </button>
+                                )}
+                                {canDeleteReply && (
+                                  <button
+                                    onClick={() => handleDeleteReply(reply.id)}
+                                    className="text-xs font-semibold text-slate-500 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
+                                  >
+                                    {t("forum.delete")}
+                                  </button>
+                                )}
+
+                                {isStaffOrAdmin && !reply.isStaffAnswer && (
+                                  <button
+                                    onClick={() => handlePinStaffAnswer(reply.id)}
+                                    className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/10 dark:hover:bg-amber-500/20 border border-amber-300 dark:border-amber-500/30 px-3 py-1 rounded-full transition-all cursor-pointer"
+                                  >
+                                    Pin Answer
+                                  </button>
+                                )}
+
                                 <button
-                                  onClick={() => handlePinStaffAnswer(reply.id)}
-                                  className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/10 dark:hover:bg-amber-500/20 border border-amber-300 dark:border-amber-500/30 px-3 py-1 rounded-full transition-all cursor-pointer"
-                                >
-                                  Pin Answer
-                                </button>
-                              )}
-
-                              <button
-                                onClick={() => handleVote(reply.id, true)}
-                                className={`group inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all duration-200 select-none cursor-pointer ${
-                                  reply.isUpvotedByMe
-                                    ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25"
-                                    : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
-                                }`}
-                              >
-                                <svg
-                                  className={`w-3.5 h-3.5 transition-transform duration-200 group-hover:-translate-y-0.5 ${
-                                    reply.isUpvotedByMe ? "text-white" : "text-blue-500 dark:text-blue-400"
+                                  onClick={() => handleVote(reply.id, true)}
+                                  className={`group inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all duration-200 select-none cursor-pointer ${
+                                    reply.isUpvotedByMe
+                                      ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25"
+                                      : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
                                   }`}
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth={2.5}
-                                  viewBox="0 0 24 24"
                                 >
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
-                                </svg>
-                                <span className="font-bold">{reply.upvoteCount}</span>
-                              </button>
+                                  <svg
+                                    className={`w-3.5 h-3.5 transition-transform duration-200 group-hover:-translate-y-0.5 ${
+                                      reply.isUpvotedByMe ? "text-white" : "text-blue-500 dark:text-blue-400"
+                                    }`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth={2.5}
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                                  </svg>
+                                  <span className="font-bold">{reply.upvoteCount}</span>
+                                </button>
+                              </div>
                             </div>
-                          </div>
 
-                          <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
-                            {reply.content}
-                          </p>
-                        </div>
-                      ))}
+                            {isEditingThisReply ? (
+                              <div className="mt-2 space-y-2">
+                                <textarea
+                                  value={editReplyContent}
+                                  onChange={(e) => setEditReplyContent(e.target.value)}
+                                  rows={3}
+                                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                />
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => setEditingReplyId(null)}
+                                    className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium cursor-pointer"
+                                  >
+                                    {t("courseDetail.cancel")}
+                                  </button>
+                                  <button
+                                    onClick={() => handleUpdateReply(reply.id)}
+                                    disabled={submittingEditReply || !editReplyContent.trim()}
+                                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-500 disabled:opacity-50 cursor-pointer"
+                                  >
+                                    {submittingEditReply ? "..." : t("forum.saveChanges")}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                                {reply.content}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
 
                       {/* Reply Input Form */}
                       <div className="pt-2">
@@ -556,6 +739,58 @@ export default function ForumPage() {
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-blue-600/20 cursor-pointer"
             >
               {submittingThread ? "..." : t("forum.submitPost")}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal Edit Thread */}
+      <Modal
+        isOpen={Boolean(editingThread)}
+        onClose={() => setEditingThread(null)}
+        title={t("forum.editThreadModalTitle")}
+        size="lg"
+      >
+        <form onSubmit={handleUpdateThread} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+              Title *
+            </label>
+            <input
+              type="text"
+              required
+              value={editThreadTitle}
+              onChange={(e) => setEditThreadTitle(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+              Content
+            </label>
+            <textarea
+              rows={4}
+              value={editThreadContent}
+              onChange={(e) => setEditThreadContent(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => setEditingThread(null)}
+              className="px-4 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+            >
+              {t("courseDetail.cancel")}
+            </button>
+            <button
+              type="submit"
+              disabled={submittingEditThread || !editThreadTitle.trim()}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-blue-600/20 cursor-pointer"
+            >
+              {submittingEditThread ? "..." : t("forum.saveChanges")}
             </button>
           </div>
         </form>
