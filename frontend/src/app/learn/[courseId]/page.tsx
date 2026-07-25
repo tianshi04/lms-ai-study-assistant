@@ -101,6 +101,7 @@ export default function CoursePlayerPage() {
 
   // Reset in-video quiz state when switching learning items
   useEffect(() => {
+    setCurrentTime(0);
     setActiveQuiz(null);
     setSelectedOption(null);
     setQuizSubmitted(false);

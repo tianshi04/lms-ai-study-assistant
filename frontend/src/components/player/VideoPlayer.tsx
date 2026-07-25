@@ -172,6 +172,7 @@ function getYouTubeEmbedUrl(url: string): string | null {
       <div className="w-full h-full relative flex items-center justify-center bg-slate-100 dark:bg-black transition-colors duration-200">
         {youtubeEmbedUrl ? (
           <iframe
+            key={activeItem.id}
             src={youtubeEmbedUrl}
             className="w-full h-full border-0 rounded-lg shadow-2xl"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -179,6 +180,7 @@ function getYouTubeEmbedUrl(url: string): string | null {
           />
         ) : (
           <video
+            key={activeItem.id}
             ref={videoRef}
             src={activeItem.videoUrl}
             controls
