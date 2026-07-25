@@ -157,16 +157,17 @@ export function VideoPlayer({
     );
   }
 
-function getYouTubeEmbedUrl(url: string): string | null {
+function getYouTubeEmbedUrl(url: string, autoTranscribe: boolean = false): string | null {
   if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
-  return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?enablejsapi=1` : null;
+  const ccParam = autoTranscribe ? "&cc_load_policy=1" : "";
+  return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?enablejsapi=1${ccParam}` : null;
 }
 
   // 5. Video Item Default Fallback
   if (activeItem.type === 1 && activeItem.videoUrl) {
-    const youtubeEmbedUrl = getYouTubeEmbedUrl(activeItem.videoUrl);
+    const youtubeEmbedUrl = getYouTubeEmbedUrl(activeItem.videoUrl, activeItem.autoTranscribe);
 
     return (
       <div className="w-full h-full relative flex items-center justify-center bg-slate-100 dark:bg-black transition-colors duration-200">
@@ -198,6 +199,15 @@ function getYouTubeEmbedUrl(url: string): string | null {
               />
             )}
           </video>
+        )}
+
+        {/* AI Auto-CC Active Indicator Badge */}
+        {!activeItem.vttSubtitleUrl && activeItem.autoTranscribe && (
+          <div className="absolute top-4 left-4 z-20 pointer-events-none">
+            <span className="px-3 py-1.5 rounded-xl bg-indigo-600/90 text-white font-bold text-[11px] shadow-lg backdrop-blur-md flex items-center gap-1.5 border border-indigo-400/30 animate-pulse">
+              🤖 Phụ đề AI Auto-CC đã bật
+            </span>
+          </div>
         )}
 
         {/* Floating Top Control Overlay for Video Mark as Complete */}

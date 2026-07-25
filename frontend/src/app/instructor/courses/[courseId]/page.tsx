@@ -50,6 +50,7 @@ export default function InstructorCourseBuilderPage({
   const [itemMinutes, setItemMinutes] = useState(10);
   const [videoUrl, setVideoUrl] = useState("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4");
   const [vttSubtitleUrl, setVttSubtitleUrl] = useState("");
+  const [autoTranscribe, setAutoTranscribe] = useState(false);
   const [inVideoQuizzes, setInVideoQuizzes] = useState<InVideoQuizItem[]>([]);
   const [readingMarkdown, setReadingMarkdown] = useState("");
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
@@ -84,6 +85,7 @@ export default function InstructorCourseBuilderPage({
     estimatedMinutes: number;
     videoUrl: string;
     vttSubtitleUrl: string;
+    autoTranscribe: boolean;
     content: string;
   } | null>(null);
 
@@ -212,6 +214,7 @@ export default function InstructorCourseBuilderPage({
         estimatedMinutes: itemMinutes,
         videoUrl: itemType === ItemType.VIDEO ? videoUrl : "",
         vttSubtitleUrl: itemType === ItemType.VIDEO ? vttSubtitleUrl : "",
+        autoTranscribe: itemType === ItemType.VIDEO ? autoTranscribe : false,
         inVideoQuizzes: itemType === ItemType.VIDEO ? inVideoQuizzes.map(q => ({
           timestampSeconds: q.timestampSeconds,
           question: q.question,
@@ -231,6 +234,7 @@ export default function InstructorCourseBuilderPage({
       setItemTitle("");
       setVideoUrl("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4");
       setVttSubtitleUrl("");
+      setAutoTranscribe(false);
       setReadingMarkdown("");
       setInVideoQuizzes([]);
       toast.success(`Đã thêm Học liệu "${itemTitle}" vào bài học thành công!`);
@@ -310,6 +314,7 @@ export default function InstructorCourseBuilderPage({
         estimatedMinutes: editingItem.estimatedMinutes,
         videoUrl: editingItem.type === ItemType.VIDEO ? editingItem.videoUrl : undefined,
         vttSubtitleUrl: editingItem.type === ItemType.VIDEO ? editingItem.vttSubtitleUrl : undefined,
+        autoTranscribe: editingItem.type === ItemType.VIDEO ? editingItem.autoTranscribe : undefined,
         readingMarkdown: editingItem.type === ItemType.READING ? editingItem.content : undefined,
       });
 
@@ -975,6 +980,7 @@ export default function InstructorCourseBuilderPage({
                                             estimatedMinutes: item.estimatedMinutes,
                                             videoUrl: item.videoUrl || "",
                                             vttSubtitleUrl: item.vttSubtitleUrl || "",
+                                            autoTranscribe: item.autoTranscribe || false,
                                             content: item.readingMarkdown || "",
                                           })}
                                           className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded transition-colors cursor-pointer"
@@ -1189,6 +1195,18 @@ export default function InstructorCourseBuilderPage({
                 label="Tệp Phụ đề WebVTT (.vtt) (Tùy chọn - Upload Tệp hoặc URL)"
                 placeholder="https://.../subtitles.vtt"
               />
+              <div className="flex items-center gap-2.5 p-3 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/50">
+                <input
+                  type="checkbox"
+                  id="autoTranscribeCheck"
+                  checked={autoTranscribe}
+                  onChange={(e) => setAutoTranscribe(e.target.checked)}
+                  className="w-4 h-4 text-indigo-600 rounded cursor-pointer"
+                />
+                <label htmlFor="autoTranscribeCheck" className="text-xs font-bold text-indigo-950 dark:text-indigo-200 cursor-pointer">
+                  🤖 Tự động tạo phụ đề bằng AI (Speech-to-Text Auto-Transcribe) khi chưa có tệp phụ đề
+                </label>
+              </div>
               <InVideoQuizEditor
                 videoUrl={videoUrl}
                 quizzes={inVideoQuizzes}
@@ -1517,6 +1535,18 @@ export default function InstructorCourseBuilderPage({
                     placeholder="https://.../subtitles.vtt"
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
                   />
+                </div>
+                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/50">
+                  <input
+                    type="checkbox"
+                    id="editAutoTranscribeCheck"
+                    checked={editingItem.autoTranscribe}
+                    onChange={(e) => setEditingItem({ ...editingItem, autoTranscribe: e.target.checked })}
+                    className="w-4 h-4 text-indigo-600 rounded cursor-pointer"
+                  />
+                  <label htmlFor="editAutoTranscribeCheck" className="text-xs font-bold text-indigo-950 dark:text-indigo-200 cursor-pointer">
+                    🤖 Tự động tạo phụ đề bằng AI (Speech-to-Text Auto-Transcribe) khi chưa có tệp phụ đề
+                  </label>
                 </div>
               </div>
             ) : (
