@@ -1,0 +1,298 @@
+"use client";
+
+import React, { useMemo } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useTheme } from "next-themes";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { getAvatarDataUri } from "@/lib/avatar";
+import { useTranslation } from "@/lib/i18n/TranslationProvider";
+import { useToast } from "@/components/ui/Toast";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/DropdownMenu";
+
+export function UserDropdown() {
+  const { userName, userEmail, userRole, logout: handleLogout } = useAuth();
+  const { t, locale, setLocale } = useTranslation();
+  const { theme, setTheme } = useTheme();
+  const toast = useToast();
+
+  const avatarSrc = useMemo(() => getAvatarDataUri(userEmail || "user"), [userEmail]);
+
+  const displayUserName = useMemo(() => {
+    if (!userName) return "";
+    return userName.replace(/\s*\([^)]*\)/g, "").trim();
+  }, [userName]);
+
+  const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
+  const isAdmin = userRole === "4" || userRole === "5";
+  const roleLabel = useMemo(() => {
+    switch (userRole) {
+      case "2": return "Instructor";
+      case "3": return "Teaching Assistant";
+      case "4": return "Super Admin";
+      case "5": return "Partner Admin";
+      default: return "Learner";
+    }
+  }, [userRole]);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        className="relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-all cursor-pointer group p-0.5 border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 shrink-0"
+        aria-label={displayUserName}
+      >
+        <Image
+          src={avatarSrc}
+          alt={displayUserName}
+          width={36}
+          height={36}
+          unoptimized
+          className="w-9 h-9 rounded-full bg-blue-500/20 object-cover group-hover:scale-105 transition-transform"
+        />
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent className="w-64 p-2 rounded-2xl shadow-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+        {/* User Info Header with Avatar and Stacked Role Badge */}
+        <div className="flex items-center gap-3 px-3.5 py-3.5 border-b border-slate-100 dark:border-slate-800 mb-1 bg-slate-50/50 dark:bg-slate-800/40 rounded-t-xl">
+          <Image
+            src={avatarSrc}
+            alt={displayUserName}
+            width={48}
+            height={48}
+            unoptimized
+            className="w-12 h-12 rounded-full bg-blue-500/20 object-cover ring-2 ring-blue-500/30 shrink-0"
+          />
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+              {displayUserName}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+              {userEmail}
+            </p>
+            <div>
+              <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                {roleLabel}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Menu Items */}
+        <DropdownMenuItem className="p-0">
+          <Link href="/auth/profile" className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium">
+            <svg className="w-4.5 h-4.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span>{t('navbar.profile') || 'Trang cá nhân'}</span>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem className="p-0">
+          <Link href="/my-courses" className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium">
+            <svg className="w-4.5 h-4.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <span>{t('navbar.myCourses') || 'Khóa học của tôi'}</span>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          onClick={() => {
+            toast.info(
+              t('navbar.myCertificates') || 'Chứng chỉ của tôi',
+              { description: 'Tính năng quản lý danh sách chứng chỉ cá nhân đang được phát triển.' }
+            );
+          }}
+          className="flex items-center justify-between w-full px-3.5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 cursor-pointer"
+        >
+          <span className="flex items-center gap-3">
+            <svg className="w-4.5 h-4.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            </svg>
+            <span>{t('navbar.myCertificates') || 'Chứng chỉ của tôi'}</span>
+          </span>
+          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
+            Soon
+          </span>
+        </DropdownMenuItem>
+
+        {isInstructorOrAdmin && (
+          <DropdownMenuItem className="p-0">
+            <Link href="/instructor/courses" className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium">
+              <svg className="w-4.5 h-4.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <span>{t('navbar.instructorPortal')}</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
+
+        {isAdmin && (
+          <DropdownMenuItem className="p-0">
+            <Link href="/admin/dashboard" className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium">
+              <svg className="w-4.5 h-4.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <span>Admin Portal</span>
+            </Link>
+          </DropdownMenuItem>
+        )}
+
+        <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
+
+        {/* Language — DropdownMenu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center justify-between w-full px-3.5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl transition-all cursor-pointer outline-none">
+            <span className="flex items-center gap-3">
+              <svg className="w-4.5 h-4.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 000 18M12.5 3a17 17 0 010 18" />
+              </svg>
+              <span>{locale === "vi" ? "Ngôn ngữ" : "Language"}</span>
+            </span>
+            <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+              <span>{locale === "vi" ? "Tiếng Việt" : "English"}</span>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-44">
+            <DropdownMenuItem
+              onClick={() => setLocale("vi")}
+              className={`flex items-center justify-between px-3.5 py-2.5 text-sm font-medium cursor-pointer ${locale === "vi" ? "text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-500/10" : ""}`}
+            >
+              <span className="flex items-center gap-2.5">
+                <span className="text-base">🇻🇳</span>
+                <span>Tiếng Việt</span>
+              </span>
+              {locale === "vi" && (
+                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setLocale("en")}
+              className={`flex items-center justify-between px-3.5 py-2.5 text-sm font-medium cursor-pointer ${locale === "en" ? "text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-500/10" : ""}`}
+            >
+              <span className="flex items-center gap-2.5">
+                <span className="text-base">🇺🇸</span>
+                <span>English</span>
+              </span>
+              {locale === "en" && (
+                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              )}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Theme — DropdownMenu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger className="flex items-center justify-between w-full px-3.5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl transition-all cursor-pointer outline-none">
+            <span className="flex items-center gap-3">
+              {theme === "dark" ? (
+                <svg className="w-4.5 h-4.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              ) : theme === "system" ? (
+                <svg className="w-4.5 h-4.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              ) : (
+                <svg className="w-4.5 h-4.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              )}
+              <span>{locale === "vi" ? "Giao diện" : "Theme"}</span>
+            </span>
+            <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+              <span>
+                {theme === "dark"
+                  ? (locale === "vi" ? "Tối" : "Dark")
+                  : theme === "system"
+                  ? (locale === "vi" ? "Hệ thống" : "System")
+                  : (locale === "vi" ? "Sáng" : "Light")}
+              </span>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-44">
+            <DropdownMenuItem
+              onClick={() => setTheme("light")}
+              className={`flex items-center justify-between px-3.5 py-2.5 text-sm font-medium cursor-pointer ${theme === "light" ? "text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-500/10" : ""}`}
+            >
+              <span className="flex items-center gap-2.5">
+                <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <span>{locale === "vi" ? "Sáng" : "Light"}</span>
+              </span>
+              {theme === "light" && (
+                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setTheme("dark")}
+              className={`flex items-center justify-between px-3.5 py-2.5 text-sm font-medium cursor-pointer ${theme === "dark" ? "text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-500/10" : ""}`}
+            >
+              <span className="flex items-center gap-2.5">
+                <svg className="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+                <span>{locale === "vi" ? "Tối" : "Dark"}</span>
+              </span>
+              {theme === "dark" && (
+                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              )}
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setTheme("system")}
+              className={`flex items-center justify-between px-3.5 py-2.5 text-sm font-medium cursor-pointer ${theme === "system" ? "text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-500/10" : ""}`}
+            >
+              <span className="flex items-center gap-2.5">
+                <svg className="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                <span>{locale === "vi" ? "Hệ thống" : "System"}</span>
+              </span>
+              {theme === "system" && (
+                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              )}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
+
+        <DropdownMenuItem
+          onClick={handleLogout}
+          className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer px-3.5 py-2.5 text-sm font-medium"
+        >
+          <span className="flex items-center gap-3">
+            <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span>{t('navbar.logout')}</span>
+          </span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+

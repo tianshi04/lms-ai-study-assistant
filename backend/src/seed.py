@@ -504,7 +504,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         learner_user1 = UserModel(
             id="user_learner_demo",
             email="learner@coursera.ai",
-            full_name="Nguyễn Văn A (Learner)",
+            full_name="Nguyễn Văn A",
             role=UserRole.LEARNER,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=learner@coursera.ai",
             enterprise_seat_key="ENT-DEMO-2026-X99",
@@ -515,7 +515,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         learner_user2 = UserModel(
             id="user_learner_02",
             email="learner2@coursera.ai",
-            full_name="Trần Thu Hà (Learner)",
+            full_name="Trần Thu Hà",
             role=UserRole.LEARNER,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=learner2@coursera.ai",
             enterprise_seat_key="ENT-UNI-HCMUT-2026",
@@ -526,7 +526,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         learner_user3 = UserModel(
             id="user_learner_03",
             email="learner3@coursera.ai",
-            full_name="Phạm Quốc Bảo (Learner)",
+            full_name="Phạm Quốc Bảo",
             role=UserRole.LEARNER,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=learner3@coursera.ai",
             enterprise_seat_key="",
@@ -537,7 +537,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         instructor_user = UserModel(
             id="user_instructor_01",
             email="instructor@coursera.ai",
-            full_name="Prof. Andrew Ng (Instructor)",
+            full_name="Prof. Andrew Ng",
             role=UserRole.INSTRUCTOR,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=instructor@coursera.ai",
             enterprise_seat_key="",
@@ -547,7 +547,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         ta_user = UserModel(
             id="user_ta_01",
             email="ta@coursera.ai",
-            full_name="ThS. Nguyễn Hoàng Nam (TA)",
+            full_name="ThS. Nguyễn Hoàng Nam",
             role=UserRole.TA,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=ta@coursera.ai",
             enterprise_seat_key="",
@@ -557,7 +557,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         admin_user = UserModel(
             id="user_admin_01",
             email="admin@coursera.ai",
-            full_name="Platform Admin (Super Admin)",
+            full_name="Platform Admin",
             role=UserRole.SUPER_ADMIN,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=admin@coursera.ai",
             enterprise_seat_key="",

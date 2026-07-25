@@ -7,11 +7,31 @@
   --foreground: #0f172a;
   --card: #ffffff;
   --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-foreground: #ffffff;
+  --secondary: #f8fafc;
+  --secondary-foreground: #0f172a;
   --muted: #f1f5f9;
   --muted-foreground: #64748b;
+  --accent: #f0f9ff;
+  --accent-foreground: #0284c7;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --success: #10b981;
+  --success-foreground: #ffffff;
+  --warning: #f59e0b;
+  --warning-foreground: #ffffff;
   --border: #e2e8f0;
   --input: #e2e8f0;
-  --ring: #0056d2;
+  --ring: #2563eb;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
   --scrollbar-thumb: #cbd5e1;
   --scrollbar-thumb-hover: #94a3b8;
   --scrollbar-track: transparent;
@@ -22,11 +42,26 @@
   --foreground: #f8fafc;
   --card: #1e293b;
   --card-foreground: #f8fafc;
+  --popover: #1e293b;
+  --popover-foreground: #f8fafc;
+  --primary: #3b82f6;
+  --primary-hover: #60a5fa;
+  --primary-foreground: #ffffff;
+  --secondary: #1e293b;
+  --secondary-foreground: #f8fafc;
   --muted: #334155;
   --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #38bdf8;
+  --destructive: #f87171;
+  --destructive-foreground: #ffffff;
+  --success: #34d399;
+  --success-foreground: #0f172a;
+  --warning: #fbbf24;
+  --warning-foreground: #0f172a;
   --border: #334155;
   --input: #334155;
-  --ring: #0056d2;
+  --ring: #3b82f6;
   --scrollbar-thumb: #334155;
   --scrollbar-thumb-hover: #475569;
   --scrollbar-track: transparent;
@@ -40,10 +75,10 @@ html,
 body {
   background-color: var(--background);
   color: var(--foreground);
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
 
-/* Hide native browser password reveal icon (MS Edge/IE/WebKit) to avoid duplicate eye icons */
+/* Hide native browser password reveal icon */
 input::-ms-reveal,
 input::-ms-clear {
   display: none;
@@ -88,5 +123,45 @@ input::-ms-clear {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Glassmorphism utility */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+}
+
+.dark .glass-effect {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+}
+
+/* Layout Keyframe Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 
 

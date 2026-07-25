@@ -8,7 +8,9 @@
     "login": "Đăng nhập",
     "register": "Đăng ký",
     "logout": "Thoát",
-    "myCourses": "Khóa học của tôi"
+    "myCourses": "Khóa học của tôi",
+    "profile": "Trang cá nhân",
+    "myCertificates": "Chứng chỉ của tôi"
   },
   "home": {
     "heroTag": "Next-Gen Coursera AI LMS",

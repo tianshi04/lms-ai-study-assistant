@@ -8,7 +8,9 @@
     "login": "Sign In",
     "register": "Sign Up",
     "logout": "Sign Out",
-    "myCourses": "My Courses"
+    "myCourses": "My Courses",
+    "profile": "My Profile",
+    "myCertificates": "My Certificates"
   },
   "home": {
     "heroTag": "Next-Gen Coursera AI LMS",

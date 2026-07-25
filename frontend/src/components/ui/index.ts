@@ -11,3 +11,4 @@ export * from "./Select";
 export * from "./Skeleton";
 export * from "./Tabs";
 export * from "./Toast";
+export * from "./LayoutPrimitives";
