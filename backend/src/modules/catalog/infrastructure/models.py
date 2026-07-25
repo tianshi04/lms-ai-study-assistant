@@ -66,7 +66,10 @@ class WeekModuleModel(Base):
         "CourseModel", back_populates="week_modules"
     )
     lessons: Mapped[list["LessonModel"]] = relationship(
-        "LessonModel", back_populates="week_module", cascade="all, delete-orphan"
+        "LessonModel",
+        back_populates="week_module",
+        cascade="all, delete-orphan",
+        order_by="LessonModel.order_index",
     )
 
 
@@ -79,12 +82,18 @@ class LessonModel(Base):
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     estimated_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=30)
+    order_index: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
 
     week_module: Mapped["WeekModuleModel"] = relationship(
         "WeekModuleModel", back_populates="lessons"
     )
     items: Mapped[list["LearningItemModel"]] = relationship(
-        "LearningItemModel", back_populates="lesson", cascade="all, delete-orphan"
+        "LearningItemModel",
+        back_populates="lesson",
+        cascade="all, delete-orphan",
+        order_by="LearningItemModel.order_index",
     )
 
 
@@ -105,6 +114,9 @@ class LearningItemModel(Base):
         String(512), nullable=False, default=""
     )
     reading_markdown: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    order_index: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
 
     lesson: Mapped["LessonModel"] = relationship("LessonModel", back_populates="items")
     interactive_transcripts: Mapped[list["InteractiveTranscriptModel"]] = relationship(
@@ -171,4 +183,21 @@ class CourseReviewModel(Base):
     )
     rating_stars: Mapped[int] = mapped_column(Integer, nullable=False)
     comment_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class CourseAnnouncementModel(Base):
+    __tablename__ = "course_announcements"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    course_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("courses.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    author_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    author_name: Mapped[str] = mapped_column(String(128), nullable=False, default="")
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)

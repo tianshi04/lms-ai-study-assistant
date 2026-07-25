@@ -10,15 +10,22 @@ export class InstructorCoursesPage {
   readonly builderLinks: Locator;
   readonly learnerWarningNotice: Locator;
 
+  readonly deleteCourseButton: Locator;
+  readonly analyticsLink: Locator;
+  readonly announcementsLink: Locator;
+
   constructor(page: Page) {
     this.page = page;
     this.createCourseButton = page.getByRole('button', { name: /Soạn Khóa Học Mới/i });
     this.titleInput = page.locator('input[placeholder*="Tiêu đề"], form input[type="text"]').first();
     this.descriptionTextarea = page.locator('form textarea').first();
     this.submitCourseButton = page.getByRole('button', { name: /Lưu & Đăng Khóa Học|Cập Nhật Khóa Học/i });
-    this.courseCards = page.locator('div.border.rounded-2xl');
+    this.courseCards = page.locator('div.border.rounded-3xl');
     this.builderLinks = page.locator('a[href^="/instructor/courses/"]');
     this.learnerWarningNotice = page.locator('text=/Learner/i');
+    this.deleteCourseButton = page.getByRole('button', { name: /Xóa/i }).first();
+    this.analyticsLink = page.locator('a[href*="/analytics"]').first();
+    this.announcementsLink = page.locator('a[href*="/announcements"]').first();
   }
 
   async goto() {
@@ -37,4 +44,5 @@ export class InstructorCoursesPage {
     await this.descriptionTextarea.fill(description);
     await this.submitCourseButton.click();
   }
+
 }

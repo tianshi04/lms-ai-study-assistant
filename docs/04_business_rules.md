@@ -166,3 +166,20 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_REVIEW_004 (Xung đột Quyền lợi & Chống Tự đánh giá):**
   * Giảng viên, Trợ giảng hoặc Admin phụ trách tạo/quản lý khóa học bị cấm tự gửi đánh giá cho khóa học của chính mình.
 
+---
+
+## 8. Quy tắc Quản lý Khóa học của Giảng viên (BR_INSTRUCTOR)
+
+* **BR_INSTRUCTOR_001 (Phân quyền & Kiểm tra Vai trò Thao tác Khóa học):**
+  * Chỉ các tài khoản có vai trò `INSTRUCTOR`, `TA`, `SUPER_ADMIN` hoặc `PARTNER_ADMIN` mới có quyền gọi các RPC tạo/cập nhật/xóa khóa học (`CreateCourse`, `UpdateCourse`, `DeleteCourse`), quản lý cấu trúc bài giảng (`CreateWeekModule`, `UpdateWeekModule`, `DeleteWeekModule`, `CreateLesson`, `UpdateLesson`, `DeleteLesson`, `CreateLearningItem`, `UpdateLearningItem`, `DeleteLearningItem`), đăng thông báo khóa học (`CreateCourseAnnouncement`) và xem phân tích thống kê lớp học (`GetInstructorAnalytics`).
+* **BR_INSTRUCTOR_002 (Cơ chế Delete Cascade Dữ liệu Phụ thuộc):**
+  * Khi thực hiện Xóa khóa học (`DeleteCourse`) hoặc Xóa các cấu trúc con (`DeleteWeekModule`, `DeleteLesson`, `DeleteLearningItem`), hệ thống tự động áp dụng cơ chế cascade xóa sạch các dữ liệu con liên quan (In-video Quizzes, Interactive Transcripts, Course Announcements) để bảo đảm tính toàn vẹn dữ liệu.
+* **BR_INSTRUCTOR_003 (Quy định Đăng Thông báo Khóa học Course Announcements):**
+  * Giảng viên đăng thông báo (`CreateCourseAnnouncement`) phải cung cấp Tiêu đề (`title`) và Nội dung (`content`). Thông báo sau khi đăng được lưu kèm mốc thời gian và hiển thị công khai cho tất cả học viên ghi danh khóa học qua RPC `ListCourseAnnouncements`.
+* **BR_INSTRUCTOR_004 (Thống kê Tiến độ Lớp học & Danh sách Học viên Instructor Analytics):**
+  * Giảng viên truy xuất báo cáo lớp học qua RPC `GetInstructorAnalytics` nhận thông tin thống kê thời gian thực: Tổng số học viên (`total_enrolled_students`), Tỷ lệ hoàn thành trung bình (`average_completion_rate`), Điểm đánh giá trung bình (`average_rating`), và Danh sách chi tiết tiến độ từng học viên (`students`).
+* **BR_INSTRUCTOR_005 (Kéo thả & Sắp xếp Thứ tự Cấu trúc Bài giảng Batch Reordering):**
+  * Giảng viên/Admin được phép sắp xếp lại thứ tự của Tuần học (`ReorderWeekModules`), Bài học (`ReorderLessons`) và Học liệu (`ReorderLearningItems`) bằng giao diện Kéo thả (Drag & Drop) hoặc Nút di chuyển Nhanh (Up/Down).
+  - Thứ tự vị trí mới được cập nhật đồng bộ trong 1 DB Transaction Atomic và duy trì chỉ số `order_index` cố định để hiển thị đồng nhất cho cả Học viên và Giảng viên.
+
+
