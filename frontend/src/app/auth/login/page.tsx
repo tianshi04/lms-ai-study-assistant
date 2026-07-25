@@ -10,14 +10,20 @@ import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { cn } from "@/lib/utils";
 
 function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTarget = searchParams.get("redirect") || "/courses";
+  const rawRedirect = searchParams.get("redirect");
+  const redirectTarget =
+    rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+      ? rawRedirect
+      : "/courses";
   const { t } = useTranslation();
   const toast = useToast();
+  const { setAuth } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -52,7 +58,15 @@ function LoginFormContent() {
           document.cookie = `user_role=${res.user.role}; path=/; max-age=2592000`;
           document.cookie = `access_token=${res.accessToken}; path=/; max-age=2592000`;
 
+          // Update React Auth Provider state so UI (Navbar, Profile) updates immediately
+          setAuth({
+            userName: res.user.fullName,
+            userEmail: res.user.email,
+            userRole: String(res.user.role),
+          });
+
           router.push(redirectTarget);
+          router.refresh();
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : t("auth.loginFailed");

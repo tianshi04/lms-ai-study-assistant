@@ -25,9 +25,14 @@ async function loginAndSave(
   // Wait until the app redirects away from the login page (successful auth)
   await expect(page).not.toHaveURL(/\/auth\/login/, { timeout: 15000 });
 
-  // Confirm a token was stored in localStorage
+  // Confirm token/cookie was stored after successful login
   const token = await page.evaluate(() => localStorage.getItem('access_token'));
-  expect(token, `access_token should be set after login for ${email}`).toBeTruthy();
+  const cookies = await page.context().cookies();
+  const hasAccessCookie = cookies.some((c) => c.name === 'access_token');
+  expect(
+    Boolean(token || hasAccessCookie),
+    `access_token (localStorage or cookie) should be set after login for ${email}`
+  ).toBeTruthy();
 
   await page.context().storageState({ path: stateFile });
 }

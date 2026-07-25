@@ -46,6 +46,8 @@ class AuthInterceptor(UnaryInterceptor):
             )
 
         current_user = None
+        token = None
+
         if auth_header:
             raw_header = str(auth_header).strip()
             token = (
@@ -53,7 +55,22 @@ class AuthInterceptor(UnaryInterceptor):
                 if raw_header.lower().startswith("bearer ")
                 else raw_header
             )
+        else:
+            cookie_header = ""
+            if hasattr(metadata, "get"):
+                cookie_header = metadata.get("cookie", "") or metadata.get("Cookie", "")
+            if cookie_header:
+                from http.cookies import SimpleCookie
 
+                try:
+                    cookie = SimpleCookie()
+                    cookie.load(str(cookie_header))
+                    if "access_token" in cookie:
+                        token = cookie["access_token"].value
+                except Exception:
+                    pass
+
+        if token:
             payload = decode_token(token)
             if payload and payload.get("type") == "access" and payload.get("sub"):
                 current_user = CurrentUser(

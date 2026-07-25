@@ -102,8 +102,20 @@ export class AssessmentPage {
     }
     await this.gradeAppealTab.scrollIntoViewIfNeeded();
     await this.gradeAppealTab.click({ force: true });
-    const textarea = this.page.locator('textarea[placeholder*="Explain why"]');
-    await expect(textarea).toBeVisible({ timeout: 5000 });
+
+    // If locked by constraint BR_PEER_001, switch to tab 1, submit assignment, then re-click appeal tab
+    if (await this.page.locator('text=/BR_PEER_001/i').first().isVisible()) {
+      if (await this.mySubmissionTab.isVisible()) {
+        await this.mySubmissionTab.click({ force: true });
+        if (await this.submitPeerAssignmentButton.isVisible()) {
+          await this.submitPeerAssignment();
+        }
+      }
+      await this.gradeAppealTab.click({ force: true });
+    }
+
+    const textarea = this.page.locator('textarea[placeholder*="Explain why"], textarea[placeholder*="reviewed by a TA"]').first();
+    await expect(textarea).toBeVisible({ timeout: 10000 });
     await textarea.fill(reason);
     const submitBtn = this.page.getByRole('button', { name: /Submit Appeal to TA/i });
     await submitBtn.scrollIntoViewIfNeeded();

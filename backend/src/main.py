@@ -122,10 +122,16 @@ routes = [
 middleware = [
     Middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+        allow_credentials=True,
         allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["connect-protocol-version", "content-type", "authorization"],
-        expose_headers=["connect-error-info", "connect-protocol-version"],
+        allow_headers=[
+            "connect-protocol-version",
+            "content-type",
+            "authorization",
+            "cookie",
+        ],
+        expose_headers=["connect-error-info", "connect-protocol-version", "set-cookie"],
         max_age=86400,
     )
 ]

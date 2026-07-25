@@ -9,6 +9,7 @@ from src.gen.identity.v1.identity_connect import IdentityService
 from src.modules.identity.application.identity_usecase import IdentityUseCase
 from src.modules.identity.domain.entities import User, UserRole
 from src.shared.auth import require_current_user
+from src.shared.config import settings
 
 
 def _to_pb_user_role(role: UserRole) -> pb.UserRole:
@@ -66,6 +67,14 @@ class IdentityHandler(IdentityService):
         )
         if err or not user:
             raise ConnectError(Code.UNAUTHENTICATED, err or "Đăng nhập thất bại")
+
+        resp_headers: Any = getattr(ctx, "response_headers", None)
+        if resp_headers is not None and hasattr(resp_headers, "__setitem__"):
+            access_max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+            resp_headers["set-cookie"] = (
+                f"access_token={access_token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={access_max_age}"
+            )
+
         return pb.LoginResponse(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -84,6 +93,14 @@ class IdentityHandler(IdentityService):
             raise ConnectError(
                 Code.UNAUTHENTICATED, err or "Refresh token không hợp lệ"
             )
+
+        resp_headers: Any = getattr(ctx, "response_headers", None)
+        if resp_headers is not None and hasattr(resp_headers, "__setitem__"):
+            access_max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+            resp_headers["set-cookie"] = (
+                f"access_token={new_access}; Path=/; HttpOnly; SameSite=Lax; Max-Age={access_max_age}"
+            )
+
         return pb.RefreshTokenResponse(
             access_token=new_access,
             refresh_token=new_refresh,

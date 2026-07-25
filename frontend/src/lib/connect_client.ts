@@ -15,12 +15,16 @@ async function doSilentRefreshToken(): Promise<string | null> {
 
   try {
     // Create direct un-intercepted client for refresh call to prevent infinite loop
-    const rawTransport = createConnectTransport({ baseUrl: API_BASE_URL });
+    const rawTransport = createConnectTransport({
+      baseUrl: API_BASE_URL,
+      fetch: (input, init) => fetch(input, { ...init, credentials: "include" }),
+    });
     const client = createClient(IdentityService, rawTransport);
     const res = await client.refreshToken({ refreshToken });
 
     if (res.accessToken) {
       localStorage.setItem("access_token", res.accessToken);
+      document.cookie = `access_token=${res.accessToken}; path=/; max-age=2592000; SameSite=Lax`;
       if (res.refreshToken) {
         localStorage.setItem("refresh_token", res.refreshToken);
       }
@@ -31,6 +35,13 @@ async function doSilentRefreshToken(): Promise<string | null> {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user_id");
+    localStorage.removeItem("user_email");
+    localStorage.removeItem("user_name");
+    localStorage.removeItem("user_role");
+    document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = "user_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = "user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = "user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   }
   return null;
 }
@@ -80,6 +91,7 @@ const authInterceptor: Interceptor = (next) => async (req) => {
  */
 export const transport = createConnectTransport({
   baseUrl: API_BASE_URL,
+  fetch: (input, init) => fetch(input, { ...init, credentials: "include" }),
   interceptors: [authInterceptor],
 });
 
