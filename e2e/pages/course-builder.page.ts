@@ -16,16 +16,16 @@ export class CourseBuilderPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.addWeekButton = page.getByRole('button', { name: /Thêm Tuần học/i });
-    this.weekTitleInput = page.locator('input[placeholder*="Neural Networks"]');
+    this.addWeekButton = page.getByRole('button', { name: /Thêm Tuần học|Add Week/i });
+    this.weekTitleInput = page.locator('input[placeholder*="Neural Networks"], input[placeholder*="Week"], input[placeholder*="Tuần"]');
     this.weekSummaryTextarea = page.locator('div.fixed form textarea, form textarea').first();
-    this.submitWeekButton = page.getByRole('button', { name: /Xác nhận tạo Tuần học/i });
-    this.addLessonButton = page.getByRole('button', { name: /Thêm Bài học/i }).first();
-    this.addLearningItemButton = page.getByRole('button', { name: /Thêm Học liệu/i }).first();
-    this.deleteWeekButton = page.getByRole('button', { name: /Xóa Tuần/i }).first();
-    this.deleteLessonButton = page.getByRole('button', { name: /Xóa Bài/i }).first();
-    this.analyticsLink = page.getByRole('link', { name: /Thống kê lớp học/i });
-    this.announcementsLink = page.getByRole('link', { name: /Đăng Thông báo/i });
+    this.submitWeekButton = page.getByRole('button', { name: /Xác nhận tạo Tuần học|Confirm|Create/i });
+    this.addLessonButton = page.getByRole('button', { name: /Thêm Bài học|Add Lesson/i }).first();
+    this.addLearningItemButton = page.getByRole('button', { name: /Thêm Học liệu|Add Item/i }).first();
+    this.deleteWeekButton = page.getByRole('button', { name: /Xóa Tuần|Delete Week/i }).first();
+    this.deleteLessonButton = page.getByRole('button', { name: /Xóa Bài|Delete Lesson/i }).first();
+    this.analyticsLink = page.getByRole('link', { name: /Thống kê lớp học|Analytics/i });
+    this.announcementsLink = page.getByRole('link', { name: /Đăng Thông báo|Announcements/i });
   }
 
   async goto(courseId: string) {

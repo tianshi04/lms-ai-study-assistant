@@ -12,10 +12,10 @@ export class CertificatePage {
   constructor(page: Page) {
     this.page = page;
     this.searchInput = page.locator('input[placeholder*="CERT-"]');
-    this.searchButton = page.getByRole('button', { name: /Tra Cứu & Xác Minh/i });
-    this.validBanner = page.locator('text=/Chứng chỉ Hợp lệ|Valid Verified Certificate/i');
-    this.copyLinkButton = page.getByRole('button', { name: /Sao chép Link Xác minh|Đã sao chép Link/i });
-    this.downloadBadgeButton = page.getByRole('button', { name: /Tải Hồ Sơ Chứng Chỉ \(JSON\)/i });
+    this.searchButton = page.getByRole('button', { name: /Tra Cứu & Xác Minh|Verify Certificate|Search/i });
+    this.validBanner = page.locator('text=/Chứng chỉ Hợp lệ|Chứng chỉ Xác minh Chính thức|Valid Verified Certificate|Official Verified Certificate/i');
+    this.copyLinkButton = page.getByRole('button', { name: /Sao chép|Copy/i });
+    this.downloadBadgeButton = page.getByRole('button', { name: /Tải Hồ Sơ|Download/i });
     this.qrCodeImage = page.locator('img[alt="Certificate Verification QR Code"]');
   }
 

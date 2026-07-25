@@ -16,10 +16,10 @@ export class InstructorCoursesPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.createCourseButton = page.getByRole('button', { name: /Soạn Khóa Học Mới/i });
+    this.createCourseButton = page.getByRole('button', { name: /Soạn Khóa Học Mới|Create New Course|New Course/i });
     this.titleInput = page.locator('input[placeholder*="Tiêu đề"], form input[type="text"]').first();
     this.descriptionTextarea = page.locator('form textarea').first();
-    this.submitCourseButton = page.getByRole('button', { name: /Lưu & Đăng Khóa Học|Cập Nhật Khóa Học/i });
+    this.submitCourseButton = page.locator('form button[type="submit"]');
     this.courseCards = page.locator('div.border.rounded-3xl');
     this.builderLinks = page.locator('a[href^="/instructor/courses/"]');
     this.learnerWarningNotice = page.locator('text=/Learner/i');

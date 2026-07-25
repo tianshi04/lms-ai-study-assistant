@@ -8,9 +8,9 @@ export class CourseCatalogPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.searchInput = page.locator('input[placeholder*="Tìm kiếm khóa học"]');
+    this.searchInput = page.locator('input[placeholder*="Tìm kiếm"], input[placeholder*="Search"]');
     this.courseCards = page.locator('a[href^="/courses/"]');
-    this.emptyStateMessage = page.locator('text=/Không tìm thấy khóa học/i');
+    this.emptyStateMessage = page.locator('text=/Không tìm thấy khóa học|No courses found/i');
   }
 
   async goto() {

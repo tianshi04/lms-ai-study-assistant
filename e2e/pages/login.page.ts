@@ -12,9 +12,9 @@ export class LoginPage {
     this.page = page;
     this.emailInput = page.locator('input[type="email"]');
     this.passwordInput = page.locator('input[type="password"]');
-    this.submitButton = page.getByRole('button', { name: /đăng nhập ngay/i });
-    this.errorBanner = page.locator('div.bg-rose-50, div.bg-rose-500\\/10');
-    this.registerLink = page.getByRole('link', { name: /đăng ký miễn phí/i });
+    this.submitButton = page.getByRole('button', { name: /đăng nhập ngay|sign in/i });
+    this.errorBanner = page.locator('div.bg-rose-50, div.bg-rose-500\\/10, div.border-rose-200, div.border-rose-900\\/50, [role="status"], [role="alert"]');
+    this.registerLink = page.getByRole('link', { name: /đăng ký miễn phí|register for free/i });
   }
 
   async goto(redirectUrl?: string) {
