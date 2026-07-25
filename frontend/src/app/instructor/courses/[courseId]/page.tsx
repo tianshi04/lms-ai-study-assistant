@@ -6,6 +6,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, ItemType, type Course, type LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { Navbar } from "@/components/layout/Navbar";
 import { Modal } from "@/components/ui/Modal";
+import { useToast } from "@/components/ui/Toast";
 
 const emptySubscribe = () => () => {};
 
@@ -26,7 +27,7 @@ export default function InstructorCourseBuilderPage({
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const toast = useToast();
 
   // Modals visibility
   const [showWeekModal, setShowWeekModal] = useState(false);
@@ -77,7 +78,7 @@ export default function InstructorCourseBuilderPage({
     } catch (err: unknown) {
       console.error("Failed to load course details:", err);
       const errMsg = err instanceof Error ? err.message : "Khóa học không tồn tại.";
-      setMessage({ type: "error", text: errMsg });
+      toast.error(errMsg);
     } finally {
       setLoading(false);
     }
@@ -98,7 +99,7 @@ export default function InstructorCourseBuilderPage({
         if (!ignore) {
           console.error("Failed to load course details:", err);
           const errMsg = err instanceof Error ? err.message : "Khóa học không tồn tại.";
-          setMessage({ type: "error", text: errMsg });
+          toast.error(errMsg);
         }
       } finally {
         if (!ignore) {
@@ -118,7 +119,6 @@ export default function InstructorCourseBuilderPage({
     if (!weekTitle.trim()) return;
 
     setSaving(true);
-    setMessage(null);
 
     try {
       const client = getRpcClient(CatalogService);
@@ -132,11 +132,11 @@ export default function InstructorCourseBuilderPage({
       setShowWeekModal(false);
       setWeekTitle("");
       setWeekSummary("");
-      setMessage({ type: "success", text: `Đã thêm Tuần ${weekNumber} vào khóa học thành công!` });
+      toast.success(`Đã thêm Tuần ${weekNumber} vào khóa học thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Thêm Tuần học thất bại.";
-      setMessage({ type: "error", text: msg });
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -147,7 +147,6 @@ export default function InstructorCourseBuilderPage({
     if (!showLessonModal || !lessonTitle.trim()) return;
 
     setSaving(true);
-    setMessage(null);
 
     try {
       const client = getRpcClient(CatalogService);
@@ -160,11 +159,11 @@ export default function InstructorCourseBuilderPage({
 
       setShowLessonModal(null);
       setLessonTitle("");
-      setMessage({ type: "success", text: `Đã thêm Bài học "${lessonTitle}" thành công!` });
+      toast.success(`Đã thêm Bài học "${lessonTitle}" thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Thêm Bài học thất bại.";
-      setMessage({ type: "error", text: msg });
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -175,7 +174,6 @@ export default function InstructorCourseBuilderPage({
     if (!showItemModal || !itemTitle.trim()) return;
 
     setSaving(true);
-    setMessage(null);
 
     try {
       const client = getRpcClient(CatalogService);
@@ -192,11 +190,11 @@ export default function InstructorCourseBuilderPage({
       setShowItemModal(null);
       setItemTitle("");
       setReadingMarkdown("");
-      setMessage({ type: "success", text: `Đã thêm Học liệu "${itemTitle}" vào bài học thành công!` });
+      toast.success(`Đã thêm Học liệu "${itemTitle}" vào bài học thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Thêm Học liệu thất bại.";
-      setMessage({ type: "error", text: msg });
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -207,7 +205,6 @@ export default function InstructorCourseBuilderPage({
     if (!editingWeek || !editingWeek.title.trim()) return;
 
     setSaving(true);
-    setMessage(null);
 
     try {
       const client = getRpcClient(CatalogService);
@@ -219,11 +216,11 @@ export default function InstructorCourseBuilderPage({
       });
 
       setEditingWeek(null);
-      setMessage({ type: "success", text: "Đã cập nhật thông tin Tuần học thành công!" });
+      toast.success("Đã cập nhật thông tin Tuần học thành công!");
       await fetchCourseDetail();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Cập nhật Tuần học thất bại.";
-      setMessage({ type: "error", text: msg });
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -234,7 +231,6 @@ export default function InstructorCourseBuilderPage({
     if (!editingLesson || !editingLesson.title.trim()) return;
 
     setSaving(true);
-    setMessage(null);
 
     try {
       const client = getRpcClient(CatalogService);
@@ -246,11 +242,11 @@ export default function InstructorCourseBuilderPage({
       });
 
       setEditingLesson(null);
-      setMessage({ type: "success", text: "Đã cập nhật Bài học thành công!" });
+      toast.success("Đã cập nhật Bài học thành công!");
       await fetchCourseDetail();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Cập nhật Bài học thất bại.";
-      setMessage({ type: "error", text: msg });
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -261,7 +257,6 @@ export default function InstructorCourseBuilderPage({
     if (!editingItem || !editingItem.title.trim()) return;
 
     setSaving(true);
-    setMessage(null);
 
     try {
       const client = getRpcClient(CatalogService);
@@ -275,11 +270,11 @@ export default function InstructorCourseBuilderPage({
       });
 
       setEditingItem(null);
-      setMessage({ type: "success", text: "Đã cập nhật nội dung Học liệu thành công!" });
+      toast.success("Đã cập nhật nội dung Học liệu thành công!");
       await fetchCourseDetail();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Cập nhật Học liệu thất bại.";
-      setMessage({ type: "error", text: msg });
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -292,11 +287,11 @@ export default function InstructorCourseBuilderPage({
     try {
       const client = getRpcClient(CatalogService);
       await client.deleteWeekModule({ id: weekId, courseId });
-      setMessage({ type: "success", text: `Đã xóa Tuần học "${weekTitle}" thành công!` });
+      toast.success(`Đã xóa Tuần học "${weekTitle}" thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Xóa Tuần học thất bại.";
-      setMessage({ type: "error", text: msg });
+      toast.error(msg);
     }
   };
 
@@ -307,11 +302,11 @@ export default function InstructorCourseBuilderPage({
     try {
       const client = getRpcClient(CatalogService);
       await client.deleteLesson({ id: lessonId, courseId });
-      setMessage({ type: "success", text: `Đã xóa Bài học "${lessonTitle}" thành công!` });
+      toast.success(`Đã xóa Bài học "${lessonTitle}" thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Xóa Bài học thất bại.";
-      setMessage({ type: "error", text: msg });
+      toast.error(msg);
     }
   };
 
@@ -322,11 +317,11 @@ export default function InstructorCourseBuilderPage({
     try {
       const client = getRpcClient(CatalogService);
       await client.deleteLearningItem({ id: itemId, courseId });
-      setMessage({ type: "success", text: `Đã xóa Học liệu "${itemTitle}" thành công!` });
+      toast.success(`Đã xóa Học liệu "${itemTitle}" thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Xóa Học liệu thất bại.";
-      setMessage({ type: "error", text: msg });
+      toast.error(msg);
     }
   };
 
@@ -350,7 +345,7 @@ export default function InstructorCourseBuilderPage({
         courseId,
         orderedWeekModuleIds: course.weekModules.map((w) => w.id),
       });
-      setMessage({ type: "success", text: "Đã cập nhật vị trí Tuần học thành công!" });
+      toast.success("Đã cập nhật vị trí Tuần học thành công!");
     } catch (err: unknown) {
       console.error("Failed to save week order:", err);
       await fetchCourseDetail();
@@ -386,7 +381,7 @@ export default function InstructorCourseBuilderPage({
         weekModuleId: weekId,
         orderedLessonIds: week.lessons.map((l) => l.id),
       });
-      setMessage({ type: "success", text: "Đã cập nhật thứ tự Bài học thành công!" });
+      toast.success("Đã cập nhật thứ tự Bài học thành công!");
     } catch (err: unknown) {
       console.error("Failed to save lesson order:", err);
       await fetchCourseDetail();
@@ -443,7 +438,7 @@ export default function InstructorCourseBuilderPage({
         lessonId,
         orderedItemIds: targetItems.map((i) => i.id),
       });
-      setMessage({ type: "success", text: "Đã cập nhật thứ tự Học liệu thành công!" });
+      toast.success("Đã cập nhật thứ tự Học liệu thành công!");
     } catch (err: unknown) {
       console.error("Failed to save item order:", err);
       await fetchCourseDetail();
@@ -560,34 +555,7 @@ export default function InstructorCourseBuilderPage({
           </div>
         )}
 
-        {/* Success / Error Toast Notification */}
-        {message && (
-          <div
-            className={`p-4 rounded-2xl text-sm font-semibold flex items-center justify-between shadow-md transition-all ${
-              message.type === "success"
-                ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20"
-                : "bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/20"
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              {message.type === "success" ? (
-                <svg className="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              )}
-              <span>{message.text}</span>
-            </div>
-            <button onClick={() => setMessage(null)} className="p-1 rounded-md opacity-60 hover:opacity-100">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        )}
+
 
         {/* Course Syllabus Tree Builder View */}
         <div className="space-y-6">
@@ -642,7 +610,8 @@ export default function InstructorCourseBuilderPage({
                     }
                   }}
                   onDragOver={(e) => e.preventDefault()}
-                  onDragEnd={async () => {
+                  onDragEnd={async (e) => {
+                    e.stopPropagation();
                     if (activeDrag && activeDrag.currentIndex !== activeDrag.startIndex) {
                       await handleSaveWeekOrder();
                     }
@@ -742,7 +711,8 @@ export default function InstructorCourseBuilderPage({
                             }
                           }}
                           onDragOver={(e) => e.preventDefault()}
-                          onDragEnd={async () => {
+                          onDragEnd={async (e) => {
+                            e.stopPropagation();
                             if (activeDrag && activeDrag.currentIndex !== activeDrag.startIndex && activeDrag.containerId) {
                               await handleSaveLessonOrder(activeDrag.containerId);
                             }
@@ -835,7 +805,8 @@ export default function InstructorCourseBuilderPage({
                                     }
                                   }}
                                   onDragOver={(e) => e.preventDefault()}
-                                  onDragEnd={async () => {
+                                  onDragEnd={async (e) => {
+                                    e.stopPropagation();
                                     if (activeDrag && activeDrag.currentIndex !== activeDrag.startIndex && activeDrag.containerId) {
                                       await handleSaveItemOrder(activeDrag.containerId);
                                     }
