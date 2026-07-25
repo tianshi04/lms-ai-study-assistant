@@ -171,7 +171,7 @@ class ForumHandler(ForumService):
             )
 
         success = await self.use_case.pin_staff_answer(
-            reply_id=request.reply_id, ta_user_id=current_user.id
+            reply_id=request.reply_id, ta_user_id=current_user.id, user=current_user
         )
         return pb.PinStaffAnswerResponse(success=success)
 
@@ -214,6 +214,7 @@ class ForumHandler(ForumService):
             thread_id=request.thread_id,
             current_user_id=current_user.id,
             is_staff=is_staff,
+            user=current_user,
         )
         return pb.DeleteThreadResponse(success=success)
 
@@ -255,5 +256,6 @@ class ForumHandler(ForumService):
             reply_id=request.reply_id,
             current_user_id=current_user.id,
             is_staff=is_staff,
+            user=current_user,
         )
         return pb.DeleteReplyResponse(success=success)

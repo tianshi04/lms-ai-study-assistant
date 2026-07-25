@@ -5,6 +5,7 @@ from typing import Sequence
 from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
 from src.modules.forum.domain.repository import IForumRepository
 from src.modules.forum.infrastructure.repository import ForumRepository
+from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 
 
@@ -128,9 +129,19 @@ class ForumUseCase:
             repo = self._get_repo(session)
             return await repo.vote_post(post_id, user_id=user_id, is_upvote=is_upvote)
 
-    async def pin_staff_answer(self, reply_id: str, ta_user_id: str) -> bool:
+    async def pin_staff_answer(
+        self, reply_id: str, ta_user_id: str, user: CurrentUser | None = None
+    ) -> bool:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
+            if user:
+                reply = await repo.get_reply_by_id(reply_id)
+                if reply:
+                    thread = await repo.get_thread_by_id(reply.thread_id)
+                    if thread:
+                        await _verify_staff_course_moderation(
+                            session, thread.course_id, user
+                        )
             return await repo.pin_staff_answer(reply_id, ta_user_id)
 
     async def update_thread(
@@ -165,24 +176,32 @@ class ForumUseCase:
             )
 
     async def delete_thread(
-        self, thread_id: str, current_user_id: str, is_staff: bool = False
+        self,
+        thread_id: str,
+        current_user_id: str,
+        is_staff: bool = False,
+        user: CurrentUser | None = None,
     ) -> bool:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             existing = await repo.get_thread_by_id(thread_id)
             if not existing:
                 return False
-            if (
-                existing.author_user_id
-                and existing.author_user_id != current_user_id
-                and not is_staff
-            ):
-                from connectrpc.code import Code
-                from connectrpc.errors import ConnectError
+            is_author = (
+                existing.author_user_id and existing.author_user_id == current_user_id
+            )
+            if not is_author:
+                if is_staff and user:
+                    await _verify_staff_course_moderation(
+                        session, existing.course_id, user
+                    )
+                else:
+                    from connectrpc.code import Code
+                    from connectrpc.errors import ConnectError
 
-                raise ConnectError(
-                    Code.PERMISSION_DENIED, "Bạn không có quyền xóa bài viết này."
-                )
+                    raise ConnectError(
+                        Code.PERMISSION_DENIED, "Bạn không có quyền xóa bài viết này."
+                    )
             return await repo.delete_thread(thread_id)
 
     async def update_reply(
@@ -214,22 +233,63 @@ class ForumUseCase:
             )
 
     async def delete_reply(
-        self, reply_id: str, current_user_id: str, is_staff: bool = False
+        self,
+        reply_id: str,
+        current_user_id: str,
+        is_staff: bool = False,
+        user: CurrentUser | None = None,
     ) -> bool:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             existing = await repo.get_reply_by_id(reply_id)
             if not existing:
                 return False
-            if (
-                existing.author_user_id
-                and existing.author_user_id != current_user_id
-                and not is_staff
-            ):
-                from connectrpc.code import Code
-                from connectrpc.errors import ConnectError
+            is_author = (
+                existing.author_user_id and existing.author_user_id == current_user_id
+            )
+            if not is_author:
+                if is_staff and user:
+                    thread = await repo.get_thread_by_id(existing.thread_id)
+                    course_id = thread.course_id if thread else ""
+                    await _verify_staff_course_moderation(session, course_id, user)
+                else:
+                    from connectrpc.code import Code
+                    from connectrpc.errors import ConnectError
 
-                raise ConnectError(
-                    Code.PERMISSION_DENIED, "Bạn không có quyền xóa bình luận này."
-                )
+                    raise ConnectError(
+                        Code.PERMISSION_DENIED, "Bạn không có quyền xóa bình luận này."
+                    )
             return await repo.delete_reply(reply_id)
+
+
+async def _verify_staff_course_moderation(
+    session, course_id: str, user: CurrentUser
+) -> None:
+    if not user:
+        return
+    user_role = (user.role or "").upper()
+    if user_role in (
+        "USER_ROLE_SUPER_ADMIN",
+        "USER_ROLE_PARTNER_ADMIN",
+        "SUPER_ADMIN",
+        "ADMIN",
+    ):
+        return
+    if course_id:
+        from sqlalchemy import select
+        from src.modules.catalog.infrastructure.models import CourseModel
+
+        stmt = select(CourseModel).where(
+            (CourseModel.id == course_id) | (CourseModel.slug == course_id)
+        )
+        res = await session.execute(stmt)
+        course = res.scalar_one_or_none()
+        if course:
+            from src.shared.permissions import enforce_course_ownership
+
+            enforce_course_ownership(
+                course.owner_id,
+                course.co_instructor_ids,
+                user,
+                "kiểm duyệt diễn đàn khóa học",
+            )
