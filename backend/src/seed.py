@@ -44,6 +44,7 @@ from src.modules.catalog.infrastructure.models import (
     LessonModel,
     SpecializationModel,
     WeekModuleModel,
+    CategoryModel,
 )
 from src.modules.certificate.infrastructure.models import (
     CertificateModel,
@@ -69,6 +70,18 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
 )
 logger = logging.getLogger("seed")
+
+
+def build_categories() -> list[CategoryModel]:
+    return [
+        CategoryModel(id="cat-subj-cs", name="Computer Science", slug="computer-science", type="SUBJECT", created_at="2026-07-20T00:00:00Z"),
+        CategoryModel(id="cat-subj-ds", name="Data Science", slug="data-science", type="SUBJECT", created_at="2026-07-20T00:00:00Z"),
+        CategoryModel(id="cat-subj-biz", name="Business", slug="business", type="SUBJECT", created_at="2026-07-20T00:00:00Z"),
+        CategoryModel(id="cat-subj-ai", name="Artificial Intelligence", slug="ai", type="SUBJECT", created_at="2026-07-20T00:00:00Z"),
+        CategoryModel(id="cat-lvl-beg", name="Beginner", slug="beginner", type="LEVEL", created_at="2026-07-20T00:00:00Z"),
+        CategoryModel(id="cat-lvl-int", name="Intermediate", slug="intermediate", type="LEVEL", created_at="2026-07-20T00:00:00Z"),
+        CategoryModel(id="cat-lvl-adv", name="Advanced", slug="advanced", type="LEVEL", created_at="2026-07-20T00:00:00Z"),
+    ]
 
 
 def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]]:
@@ -400,9 +413,12 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
                 await session.commit()
 
         logger.info("[SEED] Seeding demonstration catalog into PostgreSQL...")
+        categories = build_categories()
         courses, specializations = build_sample_catalog()
 
         # Idempotent Upsert using session.merge()
+        for cat in categories:
+            await session.merge(cat)
         for course in courses:
             await session.merge(course)
         for spec in specializations:
