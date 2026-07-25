@@ -402,5 +402,15 @@
     "btnReview": "Đánh giá khóa học",
     "btnStart": "Bắt đầu học",
     "btnContinue": "Tiếp tục học"
+  },
+  "notFound": {
+    "title": "Trang không tồn tại",
+    "badge": "Lỗi 404 - Không tìm thấy trang",
+    "subtitle": "Rất tiếc! Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển.",
+    "description": "Địa chỉ đường dẫn (URL) có thể đã bị thay đổi, bị xoá hoặc không khả dụng tạm thời. Hãy kiểm tra lại hoặc quay về trang chính.",
+    "backHome": "Về trang chủ",
+    "exploreCourses": "Khám phá khóa học",
+    "goBack": "Quay lại"
   }
 }
+
