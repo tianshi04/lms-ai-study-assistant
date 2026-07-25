@@ -6,10 +6,14 @@ import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { getAvatarDataUri } from "@/lib/avatar";
+import { useMemo } from "react";
 
 export function Navbar() {
   const { userName, userEmail, userRole, logout: handleLogout } = useAuth();
   const { t } = useTranslation();
+
+  const avatarSrc = useMemo(() => getAvatarDataUri(userEmail || "user"), [userEmail]);
 
   // Check if role is INSTRUCTOR (2), SUPER_ADMIN (4), or PARTNER_ADMIN (5)
   const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
@@ -80,7 +84,7 @@ export function Navbar() {
                 className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all"
               >
                 <Image
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userEmail || "user"}`}
+                  src={avatarSrc}
                   alt={userName}
                   width={28}
                   height={28}

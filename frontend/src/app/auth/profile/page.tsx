@@ -10,6 +10,8 @@ import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { useUserProfileQuery } from "@/lib/query_hooks";
 
+import { getAvatarDataUri } from "@/lib/avatar";
+
 const emptySubscribe = () => () => {};
 
 export default function ProfilePage() {
@@ -108,7 +110,7 @@ export default function ProfilePage() {
           {/* User Banner */}
           <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-slate-200 dark:border-slate-800">
             <Image
-              src={user?.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=default"}
+              src={(!user?.avatarUrl || user.avatarUrl.includes("api.dicebear.com")) ? getAvatarDataUri(user?.email || "default") : user.avatarUrl}
               alt={user?.fullName || "User Avatar"}
               width={96}
               height={96}
