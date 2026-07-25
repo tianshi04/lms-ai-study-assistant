@@ -1,13 +1,10 @@
 from connectrpc.code import Code
-
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
 
 from src.gen.catalog.v1 import catalog_pb as pb
 from src.gen.catalog.v1.catalog_connect import CatalogService
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-from src.shared.auth import CurrentUser, require_current_user
-from src.shared.permissions import enforce_course_ownership
 from src.modules.catalog.domain.entities import (
     Course,
     CourseReview,
@@ -19,6 +16,7 @@ from src.modules.catalog.domain.entities import (
     Specialization,
     WeekModule,
 )
+from src.shared.auth import CurrentUser, require_current_user
 
 
 def _to_pb_item_type(type_enum: ItemType) -> pb.ItemType:
@@ -195,18 +193,6 @@ class CatalogHandler(CatalogService):
             )
         return user
 
-    async def _verify_course_ownership(
-        self, course_id: str, action_name: str = "quản lý khóa học"
-    ) -> CurrentUser:
-        user = self._verify_instructor_permission()
-        if course_id:
-            course = await self.use_case.get_course_detail(course_id)
-            if course:
-                enforce_course_ownership(
-                    course.owner_id, course.co_instructor_ids, user, action_name
-                )
-        return user
-
     async def create_course(
         self,
         request: pb.CreateCourseRequest,
@@ -229,7 +215,7 @@ class CatalogHandler(CatalogService):
         request: pb.UpdateCourseRequest,
         ctx: RequestContext[pb.UpdateCourseRequest, pb.UpdateCourseResponse],
     ) -> pb.UpdateCourseResponse:
-        await self._verify_course_ownership(request.id, "chỉnh sửa khóa học")
+        user = self._verify_instructor_permission()
         course = await self.use_case.update_course(
             course_id=request.id,
             title=request.title,
@@ -237,6 +223,7 @@ class CatalogHandler(CatalogService):
             partner_name=request.partner_name,
             partner_logo_url=request.partner_logo_url,
             instructor_names=list(request.instructor_names),
+            current_user=user,
         )
         if not course:
             raise ConnectError(Code.NOT_FOUND, f"Khóa học {request.id} không tồn tại")
@@ -247,12 +234,13 @@ class CatalogHandler(CatalogService):
         request: pb.CreateWeekModuleRequest,
         ctx: RequestContext[pb.CreateWeekModuleRequest, pb.CreateWeekModuleResponse],
     ) -> pb.CreateWeekModuleResponse:
-        await self._verify_course_ownership(request.course_id, "tạo tuần học")
+        user = self._verify_instructor_permission()
         wm = await self.use_case.create_week_module(
             course_id=request.course_id,
             week_number=request.week_number,
             title=request.title,
             summary=request.summary,
+            current_user=user,
         )
         return pb.CreateWeekModuleResponse(week_module=_to_pb_week_module(wm))
 
@@ -261,12 +249,13 @@ class CatalogHandler(CatalogService):
         request: pb.CreateLessonRequest,
         ctx: RequestContext[pb.CreateLessonRequest, pb.CreateLessonResponse],
     ) -> pb.CreateLessonResponse:
-        await self._verify_course_ownership(request.course_id, "tạo bài học")
+        user = self._verify_instructor_permission()
         lesson = await self.use_case.create_lesson(
             course_id=request.course_id,
             week_module_id=request.week_module_id,
             title=request.title,
             estimated_minutes=request.estimated_minutes,
+            current_user=user,
         )
         return pb.CreateLessonResponse(lesson=_to_pb_lesson(lesson))
 
@@ -277,7 +266,7 @@ class CatalogHandler(CatalogService):
             pb.CreateLearningItemRequest, pb.CreateLearningItemResponse
         ],
     ) -> pb.CreateLearningItemResponse:
-        await self._verify_course_ownership(request.course_id, "tạo học liệu")
+        user = self._verify_instructor_permission()
         item = await self.use_case.create_learning_item(
             course_id=request.course_id,
             lesson_id=request.lesson_id,
@@ -286,6 +275,7 @@ class CatalogHandler(CatalogService):
             estimated_minutes=request.estimated_minutes,
             video_url=request.video_url,
             reading_markdown=request.reading_markdown,
+            current_user=user,
         )
         return pb.CreateLearningItemResponse(item=_to_pb_learning_item(item))
 
@@ -352,8 +342,10 @@ class CatalogHandler(CatalogService):
         request: pb.DeleteCourseRequest,
         ctx: RequestContext[pb.DeleteCourseRequest, pb.DeleteCourseResponse],
     ) -> pb.DeleteCourseResponse:
-        await self._verify_course_ownership(request.id, "xóa khóa học")
-        success = await self.use_case.delete_course(course_id=request.id)
+        user = self._verify_instructor_permission()
+        success = await self.use_case.delete_course(
+            course_id=request.id, current_user=user
+        )
         if not success:
             raise ConnectError(Code.NOT_FOUND, f"Khóa học {request.id} không tồn tại.")
         return pb.DeleteCourseResponse(success=True)
@@ -363,13 +355,14 @@ class CatalogHandler(CatalogService):
         request: pb.UpdateWeekModuleRequest,
         ctx: RequestContext[pb.UpdateWeekModuleRequest, pb.UpdateWeekModuleResponse],
     ) -> pb.UpdateWeekModuleResponse:
-        await self._verify_course_ownership(request.course_id, "chỉnh sửa tuần học")
+        user = self._verify_instructor_permission()
         wm = await self.use_case.update_week_module(
             id=request.id,
             course_id=request.course_id,
             week_number=request.week_number,
             title=request.title,
             summary=request.summary,
+            current_user=user,
         )
         if not wm:
             raise ConnectError(Code.NOT_FOUND, f"Module {request.id} không tồn tại.")
@@ -380,9 +373,9 @@ class CatalogHandler(CatalogService):
         request: pb.DeleteWeekModuleRequest,
         ctx: RequestContext[pb.DeleteWeekModuleRequest, pb.DeleteWeekModuleResponse],
     ) -> pb.DeleteWeekModuleResponse:
-        await self._verify_course_ownership(request.course_id, "xóa tuần học")
+        user = self._verify_instructor_permission()
         success = await self.use_case.delete_week_module(
-            id=request.id, course_id=request.course_id
+            id=request.id, course_id=request.course_id, current_user=user
         )
         if not success:
             raise ConnectError(Code.NOT_FOUND, f"Module {request.id} không tồn tại.")
@@ -393,13 +386,14 @@ class CatalogHandler(CatalogService):
         request: pb.UpdateLessonRequest,
         ctx: RequestContext[pb.UpdateLessonRequest, pb.UpdateLessonResponse],
     ) -> pb.UpdateLessonResponse:
-        await self._verify_course_ownership(request.course_id, "chỉnh sửa bài học")
+        user = self._verify_instructor_permission()
         lesson = await self.use_case.update_lesson(
             id=request.id,
             course_id=request.course_id,
             week_module_id=request.week_module_id,
             title=request.title,
             estimated_minutes=request.estimated_minutes,
+            current_user=user,
         )
         if not lesson:
             raise ConnectError(Code.NOT_FOUND, f"Bài học {request.id} không tồn tại.")
@@ -410,9 +404,9 @@ class CatalogHandler(CatalogService):
         request: pb.DeleteLessonRequest,
         ctx: RequestContext[pb.DeleteLessonRequest, pb.DeleteLessonResponse],
     ) -> pb.DeleteLessonResponse:
-        await self._verify_course_ownership(request.course_id, "xóa bài học")
+        user = self._verify_instructor_permission()
         success = await self.use_case.delete_lesson(
-            id=request.id, course_id=request.course_id
+            id=request.id, course_id=request.course_id, current_user=user
         )
         if not success:
             raise ConnectError(Code.NOT_FOUND, f"Bài học {request.id} không tồn tại.")
@@ -425,7 +419,7 @@ class CatalogHandler(CatalogService):
             pb.UpdateLearningItemRequest, pb.UpdateLearningItemResponse
         ],
     ) -> pb.UpdateLearningItemResponse:
-        await self._verify_course_ownership(request.course_id, "chỉnh sửa học liệu")
+        user = self._verify_instructor_permission()
         item = await self.use_case.update_learning_item(
             id=request.id,
             course_id=request.course_id,
@@ -436,6 +430,7 @@ class CatalogHandler(CatalogService):
             video_url=request.video_url,
             reading_markdown=request.reading_markdown,
             in_video_quizzes=list(request.in_video_quizzes),
+            current_user=user,
         )
         if not item:
             raise ConnectError(
@@ -450,9 +445,9 @@ class CatalogHandler(CatalogService):
             pb.DeleteLearningItemRequest, pb.DeleteLearningItemResponse
         ],
     ) -> pb.DeleteLearningItemResponse:
-        await self._verify_course_ownership(request.course_id, "xóa học liệu")
+        user = self._verify_instructor_permission()
         success = await self.use_case.delete_learning_item(
-            id=request.id, course_id=request.course_id
+            id=request.id, course_id=request.course_id, current_user=user
         )
         if not success:
             raise ConnectError(
@@ -467,9 +462,7 @@ class CatalogHandler(CatalogService):
             pb.CreateCourseAnnouncementRequest, pb.CreateCourseAnnouncementResponse
         ],
     ) -> pb.CreateCourseAnnouncementResponse:
-        user = await self._verify_course_ownership(
-            request.course_id, "đăng thông báo khóa học"
-        )
+        user = self._verify_instructor_permission()
         author_name = user.email.split("@")[0] if user.email else "Giảng viên"
         ann = await self.use_case.create_course_announcement(
             course_id=request.course_id,
@@ -477,6 +470,7 @@ class CatalogHandler(CatalogService):
             author_name=author_name,
             title=request.title,
             content=request.content,
+            current_user=user,
         )
         return pb.CreateCourseAnnouncementResponse(
             announcement=pb.CourseAnnouncement(
@@ -522,9 +516,9 @@ class CatalogHandler(CatalogService):
             pb.GetInstructorAnalyticsRequest, pb.GetInstructorAnalyticsResponse
         ],
     ) -> pb.GetInstructorAnalyticsResponse:
-        await self._verify_course_ownership(request.course_id, "xem báo cáo lớp học")
+        user = self._verify_instructor_permission()
         analytics = await self.use_case.get_instructor_analytics(
-            course_id=request.course_id
+            course_id=request.course_id, current_user=user
         )
         return pb.GetInstructorAnalyticsResponse(
             analytics=pb.InstructorAnalytics(
@@ -553,10 +547,11 @@ class CatalogHandler(CatalogService):
             pb.ReorderWeekModulesRequest, pb.ReorderWeekModulesResponse
         ],
     ) -> pb.ReorderWeekModulesResponse:
-        await self._verify_course_ownership(request.course_id, "sắp xếp tuần học")
+        user = self._verify_instructor_permission()
         success = await self.use_case.reorder_week_modules(
             course_id=request.course_id,
             ordered_week_module_ids=list(request.ordered_week_module_ids),
+            current_user=user,
         )
         return pb.ReorderWeekModulesResponse(success=success)
 
@@ -565,11 +560,12 @@ class CatalogHandler(CatalogService):
         request: pb.ReorderLessonsRequest,
         ctx: RequestContext[pb.ReorderLessonsRequest, pb.ReorderLessonsResponse],
     ) -> pb.ReorderLessonsResponse:
-        await self._verify_course_ownership(request.course_id, "sắp xếp bài học")
+        user = self._verify_instructor_permission()
         success = await self.use_case.reorder_lessons(
             course_id=request.course_id,
             week_module_id=request.week_module_id,
             ordered_lesson_ids=list(request.ordered_lesson_ids),
+            current_user=user,
         )
         return pb.ReorderLessonsResponse(success=success)
 
@@ -580,10 +576,11 @@ class CatalogHandler(CatalogService):
             pb.ReorderLearningItemsRequest, pb.ReorderLearningItemsResponse
         ],
     ) -> pb.ReorderLearningItemsResponse:
-        await self._verify_course_ownership(request.course_id, "sắp xếp học liệu")
+        user = self._verify_instructor_permission()
         success = await self.use_case.reorder_learning_items(
             course_id=request.course_id,
             lesson_id=request.lesson_id,
             ordered_item_ids=list(request.ordered_item_ids),
+            current_user=user,
         )
         return pb.ReorderLearningItemsResponse(success=success)
