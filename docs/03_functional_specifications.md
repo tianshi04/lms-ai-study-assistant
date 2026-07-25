@@ -59,10 +59,7 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 ```mermaid
 flowchart TD
     A[Giảng viên tải Video MP4 & Phụ đề VTT] --> B[Lưu Cloud Storage]
-    B --> C[Trích xuất Interactive Transcript & Text Chunks]
-    C --> D[Gửi Text Chunks tạo Vector Embeddings qua Gemini API]
-    D --> E[Lưu Vector & Metadata vào Vector Database]
-    E --> F[Kích hoạt sẵn sàng cho Coursera AI Coach]
+    B --> C[Trích xuất Interactive Transcript & Phụ đề cuộn]
 ```
 
 ### 2.3. Phân hệ Đánh giá & Chấm điểm (Assessments & Rubric Builder)
@@ -104,44 +101,6 @@ flowchart TD
 ### 3.2. Cơ chế Học tập Linh hoạt & Reset Deadlines (Flexible Weekly Schedule)
 * **Hạn nộp linh hoạt (Flexible Deadlines):** Mỗi tuần học có hạn nộp gợi ý (Suggested Deadlines) để học viên duy trì tiến độ.
 * **Tính năng "Reset My Deadlines":** Nếu học viên bận việc và quá hạn nộp bài (Overdue), màn hình khóa học sẽ xuất hiện nút **"Reset my deadlines"**. Khi bấm nút này, hệ thống sẽ tự động cập nhật lịch nộp bài sang đợt mới mà không trừ điểm thi. Đối với khóa Self-paced, hệ thống tự động gia hạn `Course_End_Date` tính từ mốc reset để phân bổ hạn nộp các tuần hợp lý mà không bị dồn cục (`BR_DEADLINE_001`).
-
-### 3.3. Trợ lý AI Coursera Coach (RAG-based Socratic AI Assistant)
-* **Khung chat Coursera AI Coach:** Tích hợp trực tiếp ở thanh công cụ góc phải giao diện bài học.
-* **Cơ chế RAG theo Ngữ cảnh:**
-  1. Học viên nhập câu hỏi (ví dụ: *"Giải thích đoạn code ở phút 02:30 của video"* hoặc *"Tóm tắt 3 ý chính của bài đọc này"*).
-  2. AI Coach truy vấn Vector DB giới hạn trong phạm vi `course_id` và `lesson_id` hiện tại.
-  3. Gemini LLM sinh câu trả lời theo đúng ngữ cảnh bài giảng kèm danh sách trích dẫn (`citations`).
-* **Trích dẫn Mốc thời gian & Link Bài học (Citation Links):** Mỗi câu trả lời tóm tắt/giải thích của AI Coach bắt buộc đính kèm các thẻ trích dẫn (`citations`) chứa mốc timestamp (ví dụ: `[Phút 03:15 - Bài học A]`). Học viên bấm vào thẻ để tua ngay trình phát video tới giây tương ứng (`BR_AI_004`).
-* **Phương pháp Gợi mở (Socratic Method) & Anti-Cheat Guardrails:**
-  * AI Coach hỗ trợ giải thích khái niệm, dịch phụ đề, tóm tắt video, sinh câu hỏi ôn tập phản xạ.
-  * **Chống gian lận (Anti-Cheat):** Nếu học viên copy câu hỏi bài thi Graded Quiz hoặc bài Peer Review thả vào chat, Input Guardrail lập tức chặn và AI Coach từ chối trả lời: *"Tôi là AI Coach hỗ trợ học tập, tôi không thể cung cấp đáp án trực tiếp cho bài kiểm tra tính điểm. Bạn hãy xem lại nội dung bài đọc để tự hoàn thành bài làm nhé!"*
-
-```
-        [Học viên đặt câu hỏi cho AI Coach]
-                         │
-                         ▼
-               ┌───────────────────┐
-               │   Input Guard     │ ───► Hỏi đáp án Graded Quiz ──► [Từ chối (Socratic Guard)]
-               └───────────────────┘
-                         │
-                         ▼ Vượt qua
-               ┌───────────────────┐
-               │  RAG Retrieval    │ (Truy xuất Vector chunks theo Course/Lesson ID)
-               └───────────────────┘
-                         │
-                         ▼
-               ┌───────────────────┐
-               │   Gemini LLM      │ (Sinh phản hồi giải thích theo phương pháp gợi mở + Citations)
-               └───────────────────┘
-                         │
-                         ▼
-               ┌───────────────────┐
-               │   Output Guard    │ ───► Kiểm soát ngôn từ & Hallucination
-               └───────────────────┘
-                         │
-                         ▼ Vượt qua
-            [Stream câu trả lời + Citation Links]
-```
 
 ### 3.4. Diễn đàn Thảo luận theo Bài học (Discussion Forum)
 * **Thảo luận gắn với Item (Item-level Discussion):** Dưới mỗi bài học video/bài đọc có mục "Discussion". Học viên gửi câu hỏi và nhận câu trả lời từ bạn học trên khắp thế giới.

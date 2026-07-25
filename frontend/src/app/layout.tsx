@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Coursera LMS Platform",
-  description: "Coursera-style Online Learning Platform integrated with Coursera AI Coach",
+  description: "Coursera-style Online Learning Platform",
 };
 
 export default async function RootLayout({

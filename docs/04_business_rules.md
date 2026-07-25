@@ -107,20 +107,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 
 ---
 
-## 4. Quy tắc An toàn và Phạm vi Hoạt động của AI Coach (BR_AI)
-
-* **BR_AI_001 (Phạm vi RAG bám sát khóa học):**
-  * AI Coach chỉ truy xuất dữ liệu từ các tài liệu, bài đọc và Video Transcript thuộc khóa học hiện tại (`course_id`).
-* **BR_AI_002 (Nguyên tắc Socratic Method & Anti-Cheat):**
-  * AI Coach đóng vai người hướng dẫn gợi mở tư duy, không đưa ra đáp án trực tiếp cho bài thi Graded Quiz hay Lab.
-* **BR_AI_003 (Chế tài xử phạt vi phạm Input Guard):**
-  * Tự động khóa quyền dùng AI Coach trong 24 giờ nếu vi phạm quá 3 lần/10 phút.
-* **BR_AI_004 (Định dạng Phản hồi Trích dẫn Timestamp & Link Bài học):**
-  * Phản hồi của AI Coach kèm danh sách `citations` (`item_id`, `timestamp_seconds`, `snippet`).
-
----
-
-## 5. Quy tắc Cấp phát và Thu hồi Chứng chỉ Xác minh (BR_CERT & BR_BADGE)
+## 4. Quy tắc Cấp phát và Thu hồi Chứng chỉ Xác minh (BR_CERT & BR_BADGE)
 
 * **BR_CERT_001 (Điều kiện cấp Verified Certificate tự động):**
   * Tự động phát hành Verified Certificate khi: (1) `Progress = 100%` và (2) `Điểm các bài Graded Items >= 80%`.

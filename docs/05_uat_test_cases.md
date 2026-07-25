@@ -67,23 +67,19 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
 
 ---
 
-## KỊCH BẢN UAT-04: KIỂM THỬ DIỄN ĐÀN THẢO LUẬN & TRỢ LÝ AI COACH SOCRATIC
+## KỊCH BẢN UAT-04: KIỂM THỬ DIỄN ĐÀN THẢO LUẬN & ĐIỀU PHỐI BÀI HỌC
 
-* **Mục tiêu:** Xác minh tính năng thảo luận theo bài học, ghim câu trả lời của Trợ giảng (Staff Pinning) và Trợ lý AI Coach hoạt động đúng phương pháp Socratic & chống gian lận.
+* **Mục tiêu:** Xác minh tính năng thảo luận theo bài học, ghim câu trả lời của Trợ giảng (Staff Pinning) và Upvote câu trả lời hữu ích.
 * **Tác nhân thực hiện:** Học viên & Trợ giảng (TA).
 * **Điều kiện bắt đầu:** Học viên đang ở giao diện bài đọc Week 2 của khóa học.
 * **Các bước thực hiện:**
-  1. **Học viên** mở khung chat **Coursera AI Coach** và nhập câu hỏi: *"Hãy tóm tắt 3 ý chính của bài đọc này và cho ví dụ minh họa."*
-  2. **Học viên** copy nguyên văn một câu hỏi trong bài thi Graded Quiz thả vào khung chat AI Coach: *"Hãy cho tôi biết đáp án đúng của câu hỏi thi này là gì?"*
-  3. **Học viên** cuộn xuống mục Diễn đàn thảo luận (Forum) dưới bài học, gửi 1 câu hỏi thắc mắc.
-  4. **Trợ giảng (TA)** đăng nhập vào diễn đàn, viết lời giải đáp cho câu hỏi của Học viên và bấm nút **"Staff Answer"**.
-  5. Một **Học viên khác** bấm nút **Upvote** cho câu trả lời của Trợ giảng.
+  1. **Học viên** cuộn xuống mục Diễn đàn thảo luận (Forum) dưới bài học, gửi 1 câu hỏi thắc mắc.
+  2. **Trợ giảng (TA)** đăng nhập vào diễn đàn, viết lời giải đáp cho câu hỏi của Học viên và bấm nút **"Staff Answer"**.
+  3. Một **Học viên khác** bấm nút **Upvote** cho câu trả lời của Trợ giảng.
 * **Kết quả mong đợi (Expected Results):**
-  * *Tại bước 1:* AI Coach phân tích bài đọc và trả lời đúng trọng tâm dạng tóm tắt kèm ví dụ minh họa trực quan.
-  * *Tại bước 2:* **Input Guardrail** phát hiện hành vi hỏi đáp án bài thi. AI Coach từ chối trả lời bằng câu thoại mẫu Socratic: *"Tôi không thể cung cấp đáp án trực tiếp cho bài thi tính điểm. Bạn hãy xem lại nội dung bài đọc ở trên để tự tìm câu trả lời nhé!"*
-  * *Tại bước 3:* Câu hỏi hiển thị trong mục thảo luận gắn liền với bài học hiện tại.
-  * *Tại bước 4:* Câu trả lời của TA được đẩy lên đầu mục thảo luận với huy hiệu nổi bật **"Staff Answer"**.
-  * *Tại bước 5:* Lượt Upvote tăng lên 1 và bài đăng được ưu tiên sắp xếp ở tab "Top Discussions".
+  * *Tại bước 1:* Câu hỏi hiển thị trong mục thảo luận gắn liền với bài học hiện tại.
+  * *Tại bước 2:* Câu trả lời của TA được đẩy lên đầu mục thảo luận với huy hiệu nổi bật **"Staff Answer"**.
+  * *Tại bước 3:* Lượt Upvote tăng lên 1 và bài đăng được ưu tiên sắp xếp ở tab "Top Discussions".
 
 ---
 
@@ -117,7 +113,11 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
   5. Giảng viên tạo ngân hàng câu hỏi (Question Bank) cho bài thi Graded Quiz, cấu hình rút ngẫu nhiên 5 câu từ 10 câu, đặt Passing Threshold = 80% và bật Cooldown 8 tiếng.
   6. Giảng viên kiểm tra lại toàn bộ nội dung và bấm nút **"Publish Course"** (Xuất bản khóa học).
 * **Kết quả mong đợi (Expected Results):**
-  * *Tại bước 2:* Hệ thống xử lý tải video thành công, tự động trích xuất chuỗi phụ đề thành **Interactive Transcript** và tạo dữ liệu tri thức (Vector Embeddings) cho AI Coach.
+  * *Tại bước 2:* Hệ thống xử lý tải video thành công và tự động trích xuất chuỗi phụ đề thành **Interactive Transcript**.
+  * *Tại bước 3:* Mốc thời gian 03:15 trên video được đánh dấu vị trí chèn quiz thành công.
+  * *Tại bước 4:* Bộ Rubric được lưu cấu trúc đầy đủ chuẩn xác (tiêu chí, thang điểm và hướng dẫn chấm bài cho học viên).
+  * *Tại bước 5:* Ngân hàng câu hỏi lưu 10 câu, cấu hình đề thi tính điểm hiển thị chính xác các tham số ngẫu nhiên & cooldown.
+  * *Tại bước 6:* Khóa học chuyển trạng thái từ `Draft` sang `Published`, hiển thị công khai trên danh mục khóa học (Catalog) cho Học viên đăng ký học.
   * *Tại bước 3:* Mốc thời gian 03:15 trên video được đánh dấu vị trí chèn quiz thành công.
   * *Tại bước 4:* Bộ Rubric được lưu cấu trúc đầy đủ chuẩn xác (tiêu chí, thang điểm và hướng dẫn chấm bài cho học viên).
   * *Tại bước 5:* Ngân hàng câu hỏi lưu 10 câu, cấu hình đề thi tính điểm hiển thị chính xác các tham số ngẫu nhiên & cooldown.
