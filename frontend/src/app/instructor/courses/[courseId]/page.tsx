@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 import { VideoUploadWidget } from "@/components/ui/VideoUploadWidget";
+import { InVideoQuizEditor, type InVideoQuizItem } from "@/components/ui/InVideoQuizEditor";
 
 const emptySubscribe = () => () => {};
 
@@ -48,6 +49,7 @@ export default function InstructorCourseBuilderPage({
   const [itemType, setItemType] = useState<ItemType>(ItemType.VIDEO);
   const [itemMinutes, setItemMinutes] = useState(10);
   const [videoUrl, setVideoUrl] = useState("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4");
+  const [inVideoQuizzes, setInVideoQuizzes] = useState<InVideoQuizItem[]>([]);
   const [readingMarkdown, setReadingMarkdown] = useState("");
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
 
@@ -201,12 +203,19 @@ export default function InstructorCourseBuilderPage({
     try {
       const client = getRpcClient(CatalogService);
       await client.createLearningItem({
-        courseId,
+        courseId: course?.id || courseId,
         lessonId: showItemModal,
         title: itemTitle,
         type: itemType,
         estimatedMinutes: itemMinutes,
         videoUrl: itemType === ItemType.VIDEO ? videoUrl : "",
+        inVideoQuizzes: itemType === ItemType.VIDEO ? inVideoQuizzes.map(q => ({
+          timestampSeconds: q.timestampSeconds,
+          question: q.question,
+          options: q.options,
+          correctOptionIndex: q.correctOptionIndex,
+          explanation: q.explanation,
+        })) : [],
         readingMarkdown: itemType === ItemType.READING ? readingMarkdown : "",
         starterCode: itemType === ItemType.AUTO_GRADED_LAB ? labStarterCode : "",
         testCasesJson: itemType === ItemType.AUTO_GRADED_LAB ? labTestCasesJson : "",
@@ -218,6 +227,7 @@ export default function InstructorCourseBuilderPage({
       setShowItemModal(null);
       setItemTitle("");
       setReadingMarkdown("");
+      setInVideoQuizzes([]);
       toast.success(`Đã thêm Học liệu "${itemTitle}" vào bài học thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
@@ -857,6 +867,7 @@ export default function InstructorCourseBuilderPage({
                                   onClick={() => {
                                     setShowItemModal(lesson.id);
                                     setItemTitle("");
+                                    setInVideoQuizzes([]);
                                   }}
                                   className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-bold hover:bg-blue-100 transition-colors flex items-center gap-1 cursor-pointer"
                                 >
@@ -1156,12 +1167,19 @@ export default function InstructorCourseBuilderPage({
           </div>
 
           {itemType === ItemType.VIDEO && (
-            <VideoUploadWidget
-              value={videoUrl}
-              onChange={setVideoUrl}
-              folder="videos"
-              label="Học liệu Video Bài giảng (Upload Tệp hoặc Đường dẫn)"
-            />
+            <div className="space-y-4">
+              <VideoUploadWidget
+                value={videoUrl}
+                onChange={setVideoUrl}
+                folder="videos"
+                label="Học liệu Video Bài giảng (Upload Tệp hoặc Đường dẫn)"
+              />
+              <InVideoQuizEditor
+                videoUrl={videoUrl}
+                quizzes={inVideoQuizzes}
+                onChange={setInVideoQuizzes}
+              />
+            </div>
           )}
 
           {itemType === ItemType.READING && (
