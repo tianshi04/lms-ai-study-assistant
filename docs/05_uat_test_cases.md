@@ -98,7 +98,7 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
   3. Học viên bấm nút **"Share to LinkedIn"**.
   4. Giả lập một Nhà tuyển dụng mở trình duyệt độc lập, truy cập đường dẫn URL xác thực (`/verify/CERT-8F9A2B3C`) in trên chứng chỉ hoặc quét mã QR code.
 * **Kết quả mong đợi (Expected Results):**
-  * *Tại bước 1 & 2:* Hệ thống hiển thị pháo hoa chúc mừng hoàn thành khóa học. Giao diện chứng chỉ hiển thị đẹp mắt với Tên học viên, Tên khóa học, Logo đối tác phát hành (Partner Logo), Chữ ký xác nhận và Mã chứng chỉ độc nhất (`CERT-8F9A2B3C`).
+  * *Tại bước 1 & 2:* Hệ thống hiển thị pháo hoa chúc mừng hoàn thành khóa học. Giao diện chứng chỉ hiển thị đẹp mắt với Tên học viên (Immutable Data Snapshot), Tên khóa học, Logo đối tác phát hành (Partner Logo), Chữ ký xác nhận, Mã chứng chỉ độc nhất (`CERT-8F9A2B3C`) và mã QR code sinh tự động in-memory SVG.
   * *Tại bước 3:* Hệ thống mở cửa sổ kết nối LinkedIn cho phép tự động điền các trường metadata OpenBadges (Name, Issuer, Certificate ID, Issue Date) vào hồ sơ cá nhân của học viên.
   * *Tại bước 4:* Trang xác thực công khai hiển thị trạng thái xanh **"Valid Verified Certificate"** kèm đầy đủ thông tin xác nhận chính chủ từ hệ thống, chứng minh chứng chỉ là thật và không bị giả mạo.
 

@@ -124,13 +124,14 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 
 * **BR_CERT_001 (Điều kiện cấp Verified Certificate tự động):**
   * Tự động phát hành Verified Certificate khi: (1) `Progress = 100%` và (2) `Điểm các bài Graded Items >= 80%`.
-* **BR_CERT_002 (Xác thực Công khai, Truy vấn Dữ liệu Thật & QR Code API):**
+* **BR_CERT_002 (Xác thực Công khai, Truy vấn Dữ liệu Thật & Sinh QR Code Nội bộ In-Memory):**
   * Mỗi chứng chỉ có mã duy nhất (dạng `CERT-XXXXXXXXXX`).
-  * Khi phát hành, hệ thống tự động truy vấn thông tin thực tế từ `UserModel` và `CourseModel` để gắn Tên học viên, Tên khóa học, Tên đối tác (Partner Name) và Logo đối tác (Partner Logo).
-  * Mã QR xác thực được sinh tự động thông qua công cụ API công khai: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={cert_id}`.
-* **BR_CERT_003 (Quy trình Xác minh Danh tính KYC Mock & Phạm vi Tài khoản):**
+  * Khi phát hành, hệ thống tự động khóa dữ liệu **Immutable Data Snapshot** từ `UserModel` và `CourseModel` để lưu cố định Tên học viên, Tên khóa học, Tên đối tác (Partner Name) và Logo đối tác (Partner Logo) tại thời điểm cấp. Mọi thay đổi tên trong User Profile về sau không làm thay đổi văn bản chứng chỉ cũ.
+  * Mã QR xác thực được sinh tự động trực tiếp dưới dạng thẻ SVG/Data URI in-memory (0 bytes storage, không phụ thuộc URL dịch vụ bên thứ ba) để hiển thị trên web và nhúng vào PDF.
+* **BR_CERT_003 (Quy trình Xác minh Danh tính KYC & Quy trình Re-issuance khi Đổi tên):**
   * Bắt buộc hoàn tất xác minh CCCD/Hộ chiếu và sinh trắc học webcam trước khi cấp chứng chỉ lần đầu.
-  * *Phạm vi hiệu lực:* Quy trình xác minh danh tính áp dụng ở **Cấp độ Tài khoản (Account-level Verification)** và **chỉ cần thực hiện 1 lần duy nhất**. Khi tài khoản đã đạt cờ `is_identity_verified = True`, học viên có thể nhận Verified Certificate cho tất cả các khóa học hoàn thành về sau mà không cần xác minh lại.
+  * *Quy trình Cấp lại Chứng chỉ khi Đổi tên (Re-issuance Workflow):* Nếu học viên cập nhật tên mới hợp pháp theo giấy tờ KYC, chứng chỉ cũ chuyển sang trạng thái `SUPERSEDED` (Đã được thay thế) kèm nhật ký lưu vết Audit Log, và hệ thống phát hành chứng chỉ phiên bản mới.
+  * *Phạm vi hiệu lực:* Quy trình xác minh danh tính áp dụng ở **Cấp độ Tài khoản (Account-level Verification)** và chỉ cần thực hiện 1 lần duy nhất.
   * *Trạng thái triển khai:* Phân hệ KYC hiện đang ở dạng giả lập (**Mocked**) bằng cờ `is_identity_verified` trong database, sẵn sàng tích hợp với Dịch vụ KYC nhận diện CCCD/Khuôn mặt thực tế khi triển khai chính thức.
 * **BR_CERT_004 (Trạng thái Giao diện Chứng chỉ bị Thu hồi):**
   * Khi chứng chỉ bị thu hồi do vi phạm quy chế liêm chính học thuật, trang xác thực công khai hiển thị thông báo trạng thái rõ ràng: *"Chứng chỉ này đã bị thu hồi do vi phạm điều khoản liêm chính học thuật của nền tảng (Certificate Revoked)"* (không trả về 404).

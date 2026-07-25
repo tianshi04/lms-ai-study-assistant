@@ -147,7 +147,7 @@ class CertificateUseCase:
             cert_id = f"CERT-{uuid.uuid4().hex[:10].upper()}"
             issue_date = datetime.now(timezone.utc).strftime("%d/%m/%Y")
             verification_url = f"/verify/{cert_id}"
-            qr_code_url = f"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={cert_id}"
+            qr_code_url = f"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'><rect width='150' height='150' fill='%23ffffff'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='12' fill='%230056D2'>QR:{cert_id}</text></svg>"
 
             open_badges = {
                 "@context": "https://w3id.org/openbadges/v2",
