@@ -58,7 +58,7 @@ export function CourseCard({ course }: { course: Course }) {
               <svg className="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
-              <span>Đã nhận chứng chỉ</span>
+              <span>{t("courseDetail.certReceived")}</span>
             </span>
           )}
         </div>

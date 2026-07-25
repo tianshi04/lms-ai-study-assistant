@@ -6,6 +6,7 @@ import Image from "next/image";
 import { getRpcClient } from "@/lib/connect_client";
 import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
 import { Navbar } from "@/components/layout/Navbar";
+import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 interface VerifyPageProps {
   params: Promise<{ certId: string }>;
@@ -15,6 +16,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
   const resolvedParams = use(params);
   const certId = resolvedParams.certId;
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [searchCertId, setSearchCertId] = useState(certId);
   const [cert, setCert] = useState<VerifiedCertificate | null>(null);
@@ -39,7 +41,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
       } catch (err) {
         console.error("Lỗi xác thực chứng chỉ:", err);
         setIsValid(false);
-        setStatusMsg("Không thể xác minh chứng chỉ.");
+        setStatusMsg(t("verify.loadCertError"));
         setCert(null);
       } finally {
         setLoading(false);
@@ -47,7 +49,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
     }
 
     verify();
-  }, [certId]);
+  }, [certId, t]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,10 +86,10 @@ export default function VerifyPage({ params }: VerifyPageProps) {
         {/* Interactive Search Bar */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 mb-8 shadow-sm">
           <h1 className="text-xl font-extrabold text-slate-900 dark:text-white mb-2">
-            Cổng Tra Cứu & Xác Minh Chứng Chỉ
+            {t("verify.pageTitle")}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-            Nhập Mã chứng chỉ (Certificate ID) để tra cứu tính hợp lệ và truy xuất thông tin chứng nhận chính thức.
+            {t("verify.pageDesc")}
           </p>
 
           <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3">
@@ -95,7 +97,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
               type="text"
               value={searchCertId}
               onChange={(e) => setSearchCertId(e.target.value)}
-              placeholder="Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)"
+              placeholder={t("verify.searchPlaceholder")}
               className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
             />
             <button
@@ -105,7 +107,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <span>Tra Cứu & Xác Minh</span>
+              <span>{t("verify.searchBtn")}</span>
             </button>
           </form>
         </div>
@@ -113,7 +115,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
         {loading ? (
           <div className="flex items-center justify-center py-20 text-slate-500">
             <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-3" />
-            <span>Đang kiểm tra và xác thực chứng chỉ...</span>
+            <span>{t("common.loading")}</span>
           </div>
         ) : isValid && cert ? (
           <div className="space-y-8">
@@ -125,8 +127,8 @@ export default function VerifyPage({ params }: VerifyPageProps) {
                 </svg>
               </div>
               <div>
-                <h3 className="font-bold text-sm">Chứng chỉ Hợp lệ & Đã được Xác minh Chính thức</h3>
-                <p className="text-xs opacity-90">Mã chứng chỉ #{cert.certificateId} được xác thực trên hệ thống Coursera LMS</p>
+                <h3 className="font-bold text-sm">{t("verify.verifSuccess")}</h3>
+                <p className="text-xs opacity-90">{t("verify.verifSuccessDesc")} (#{cert.certificateId})</p>
               </div>
             </div>
 
@@ -148,22 +150,22 @@ export default function VerifyPage({ params }: VerifyPageProps) {
               {/* Recipient & Course Detail */}
               <div className="space-y-6 text-center sm:text-left">
                 <div>
-                  <span className="text-xs text-slate-400 uppercase font-semibold tracking-wider block mb-1">Chứng nhận cấp cho</span>
+                  <span className="text-xs text-slate-400 uppercase font-semibold tracking-wider block mb-1">{t("verify.recipientLabel")}</span>
                   <h3 className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tight">{cert.learnerName}</h3>
                 </div>
 
                 <div>
-                  <span className="text-xs text-slate-400 uppercase font-semibold tracking-wider block mb-1">Đã hoàn thành xuất sắc khóa học</span>
+                  <span className="text-xs text-slate-400 uppercase font-semibold tracking-wider block mb-1">{t("verify.courseLabel")}</span>
                   <h4 className="text-xl font-bold text-slate-900 dark:text-white leading-snug">{cert.courseTitle}</h4>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 text-xs">
                   <div>
-                    <span className="text-slate-400 block font-medium">Ngày cấp chứng nhận:</span>
+                    <span className="text-slate-400 block font-medium">{t("verify.issueDateLabel")}:</span>
                     <span className="font-bold text-slate-700 dark:text-slate-300 font-mono">{cert.issueDate}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block font-medium">Mã tra cứu định danh:</span>
+                    <span className="text-slate-400 block font-medium">{t("verify.certIdLabel")}:</span>
                     <span className="font-bold text-slate-700 dark:text-slate-300 font-mono">{cert.certificateId}</span>
                   </div>
                 </div>
@@ -174,8 +176,8 @@ export default function VerifyPage({ params }: VerifyPageProps) {
                 <div className="flex items-center gap-4">
                   <Image src={cert.qrCodeUrl} alt="Certificate Verification QR Code" width={80} height={80} unoptimized className="w-20 h-20 rounded-xl border p-1 bg-white" />
                   <div className="text-left text-xs text-slate-500 dark:text-slate-400 space-y-1">
-                    <p className="font-semibold text-slate-900 dark:text-white">Xác minh nguồn gốc kỹ thuật số</p>
-                    <p className="text-[11px]">Quét mã QR để kiểm tra tính toàn vẹn của bằng cấp công khai.</p>
+                    <p className="font-semibold text-slate-900 dark:text-white">{t("verify.verifBadge")}</p>
+                    <p className="text-[11px]">Scan QR code to verify digital signature integrity.</p>
                   </div>
                 </div>
 
@@ -189,17 +191,17 @@ export default function VerifyPage({ params }: VerifyPageProps) {
                         <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        <span>Đã sao chép Link</span>
+                        <span>Copied Link</span>
                       </>
                     ) : (
-                      <span>Sao chép Link Xác minh</span>
+                      <span>Copy Verification Link</span>
                     )}
                   </button>
                   <button
                     onClick={handleDownloadBadge}
                     className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-500/20 transition-all cursor-pointer"
                   >
-                    Tải Hồ Sơ Chứng Chỉ (JSON)
+                    Download Badge (JSON)
                   </button>
                 </div>
               </div>
@@ -213,21 +215,19 @@ export default function VerifyPage({ params }: VerifyPageProps) {
               </svg>
             </div>
             <h2 className="text-xl font-bold text-rose-700 dark:text-rose-400">
-              {statusMsg.includes("thu hồi") || statusMsg.includes("Revoked")
-                ? `CẢNH BÁO: Chứng chỉ #${certId} Đã Bị Thu Hồi`
-                : `Không Tìm Thấy Mã Chứng Chỉ #${certId}`}
+              {t("verify.verifError")}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-300 max-w-md mx-auto">
-              {statusMsg || "Mã chứng chỉ này không tồn tại trong hệ thống hoặc đã bị thu hồi do vi phạm quy chế liêm chính học thuật."}
+              {statusMsg || `${t("verify.certNotFound")} #${certId}`}
             </p>
             <button
               onClick={() => {
                 setSearchCertId("CERT-DEMO12345");
                 router.push("/verify/CERT-DEMO12345");
               }}
-              className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold inline-block"
+              className="px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold inline-block cursor-pointer"
             >
-              Thử mã mẫu demo (CERT-DEMO12345)
+              Demo Code: CERT-DEMO12345
             </button>
           </div>
         )}

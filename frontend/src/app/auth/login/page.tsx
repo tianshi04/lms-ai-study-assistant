@@ -6,11 +6,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
+import { LanguageToggle } from "@/components/providers/LanguageToggle";
+import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTarget = searchParams.get("redirect") || "/courses";
+  const { t } = useTranslation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +23,7 @@ function LoginFormContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setError("Vui lòng nhập đầy đủ email và mật khẩu.");
+      setError(t("auth.fillAllFields"));
       return;
     }
 
@@ -42,7 +45,7 @@ function LoginFormContent() {
         router.push(redirectTarget);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
+      const msg = err instanceof Error ? err.message : t("auth.loginFailed");
       setError(msg);
     } finally {
       setLoading(false);
@@ -53,9 +56,9 @@ function LoginFormContent() {
     <div className="w-full max-w-md">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Đăng nhập tài khoản</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t("auth.loginTitle")}</h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            {searchParams.get("redirect") ? "Vui lòng đăng nhập để bắt đầu học bài giảng này" : "Chào mừng bạn quay trở lại với hệ thống học tập Coursera AI"}
+            {searchParams.get("redirect") ? t("auth.loginSubtitleRedirect") : t("auth.loginSubtitle")}
           </p>
         </div>
 
@@ -71,7 +74,7 @@ function LoginFormContent() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-              Địa chỉ Email
+              {t("auth.emailLabel")}
             </label>
             <input
               type="email"
@@ -86,7 +89,7 @@ function LoginFormContent() {
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                Mật khẩu
+                {t("auth.passwordLabel")}
               </label>
             </div>
             <input
@@ -110,10 +113,10 @@ function LoginFormContent() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
-                <span>Đang đăng nhập...</span>
+                <span>{t("auth.loggingIn")}</span>
               </>
             ) : (
-              <span>Đăng nhập ngay</span>
+              <span>{t("auth.loginBtn")}</span>
             )}
           </button>
         </form>
@@ -126,18 +129,18 @@ function LoginFormContent() {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                Tài khoản Test sẵn (Dev Mode)
+                {t("auth.devAccountsTitle")}
               </span>
-              <span className="text-[10px] font-mono text-slate-400">Mật khẩu: 123456</span>
+              <span className="text-[10px] font-mono text-slate-400">{t("auth.devPasswordHint")}</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {[
-                { label: "Learner (Học viên)", email: "learner@coursera.ai", roleTag: "Role 1", color: "blue" },
-                { label: "Instructor (Giảng viên)", email: "instructor@coursera.ai", roleTag: "Role 2", color: "emerald" },
-                { label: "TA (Trợ giảng)", email: "ta@coursera.ai", roleTag: "Role 3", color: "amber" },
-                { label: "Super Admin", email: "admin@coursera.ai", roleTag: "Role 4", color: "purple" },
-                { label: "Partner Admin", email: "partner@coursera.ai", roleTag: "Role 5", color: "indigo" },
+                { label: t("auth.roleLearner"), email: "learner@coursera.ai", roleTag: "Role 1" },
+                { label: t("auth.roleInstructor"), email: "instructor@coursera.ai", roleTag: "Role 2" },
+                { label: t("auth.roleTA"), email: "ta@coursera.ai", roleTag: "Role 3" },
+                { label: t("auth.roleSuperAdmin"), email: "admin@coursera.ai", roleTag: "Role 4" },
+                { label: t("auth.rolePartnerAdmin"), email: "partner@coursera.ai", roleTag: "Role 5" },
               ].map((acc) => (
                 <button
                   key={acc.email}
@@ -166,9 +169,9 @@ function LoginFormContent() {
 
         <div className="mt-6 text-center pt-4 border-t border-slate-200 dark:border-slate-800">
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Chưa có tài khoản?{" "}
+            {t("auth.noAccountYet")}{" "}
             <Link href="/auth/register" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-              Đăng ký miễn phí
+              {t("auth.registerFreeNow")}
             </Link>
           </p>
         </div>
@@ -178,6 +181,7 @@ function LoginFormContent() {
 }
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col justify-between transition-colors">
       <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
@@ -193,12 +197,15 @@ export default function LoginPage() {
               <span className="text-xs block text-slate-500 dark:text-slate-400 font-medium">LMS Platform</span>
             </div>
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-3">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
       <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <Suspense fallback={<div className="text-slate-500">Loading...</div>}>
+        <Suspense fallback={<div className="text-slate-500">{t("common.loading")}</div>}>
           <LoginFormContent />
         </Suspense>
       </main>

@@ -4,8 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { TranslationProvider } from "@/lib/i18n/TranslationProvider";
-import { getDictionary, Locale } from "@/lib/i18n/getDictionary";
-import { cookies } from "next/headers";
+import { getDictionary, detectLocale, Locale } from "@/lib/i18n/getDictionary";
+import { cookies, headers } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,7 +28,17 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies();
-  const locale = (cookieStore.get("NEXT_LOCALE")?.value as Locale) || "vi";
+  const cookieLocale = cookieStore.get("NEXT_LOCALE")?.value as Locale | undefined;
+
+  let locale: Locale;
+  if (cookieLocale && (cookieLocale === "en" || cookieLocale === "vi")) {
+    locale = cookieLocale;
+  } else {
+    const headerList = await headers();
+    const acceptLanguage = headerList.get("accept-language");
+    locale = detectLocale(acceptLanguage);
+  }
+
   const dictionary = getDictionary(locale);
   return (
     <html

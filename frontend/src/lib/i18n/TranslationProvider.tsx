@@ -1,7 +1,7 @@
 "use client";
 
-import React, { createContext, useContext, useState } from "react";
-import { Dictionary, Locale, getDictionary } from "./getDictionary";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { Dictionary, Locale, getDictionary, detectLocale } from "./getDictionary";
 import { useRouter } from "next/navigation";
 
 interface TranslationContextType {
@@ -35,6 +35,20 @@ export function TranslationProvider({
     router.refresh();
   };
 
+  useEffect(() => {
+    // If user hasn't explicitly set NEXT_LOCALE cookie, detect from client browser language
+    const hasCookie = document.cookie.split("; ").some((c) => c.startsWith("NEXT_LOCALE="));
+    if (!hasCookie && typeof navigator !== "undefined") {
+      const clientLocale = detectLocale(navigator.language);
+      if (clientLocale !== initialLocale) {
+        queueMicrotask(() => {
+          setLocale(clientLocale);
+        });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <TranslationContext.Provider value={{ locale, dictionary, setLocale }}>
       {children}
@@ -60,7 +74,7 @@ export function useTranslation() {
       if (current === undefined) return path;
       current = current[key];
     }
-    return current as unknown as string ?? path;
+    return (current as unknown as string) ?? path;
   };
 
   return { t, locale, setLocale };

@@ -6,9 +6,13 @@ import { useRouter } from "next/navigation";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, UserRole } from "@/gen/identity/v1/identity_pb";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
+import { LanguageToggle } from "@/components/providers/LanguageToggle";
+import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useTranslation();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -20,7 +24,7 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password || !fullName) {
-      setError("Vui lòng điền đầy đủ các thông tin bắt buộc.");
+      setError(t("auth.fillAllFields"));
       return;
     }
 
@@ -37,13 +41,13 @@ export default function RegisterPage() {
       });
 
       if (res.user) {
-        setSuccessMsg("Đăng ký thành công! Đang chuyển hướng đến trang đăng nhập...");
+        setSuccessMsg(t("auth.registerSuccess"));
         setTimeout(() => {
           router.push("/auth/login");
         }, 1500);
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Đăng ký thất bại. Vui lòng thử lại.";
+      const msg = err instanceof Error ? err.message : t("auth.registerFailed");
       setError(msg);
     } finally {
       setLoading(false);
@@ -66,7 +70,10 @@ export default function RegisterPage() {
               <span className="text-xs block text-slate-500 dark:text-slate-400 font-medium">LMS Platform</span>
             </div>
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-3">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </div>
       </header>
 
@@ -75,9 +82,9 @@ export default function RegisterPage() {
         <div className="w-full max-w-md">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none">
             <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Đăng ký tài khoản</h1>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t("auth.registerTitle")}</h1>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Bắt đầu hành trình học tập chuyên sâu cùng AI Coach
+                {t("auth.registerSubtitle")}
               </p>
             </div>
 
@@ -102,13 +109,13 @@ export default function RegisterPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                  Họ và tên
+                  {t("auth.fullNameLabel")}
                 </label>
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Nguyễn Văn A"
+                  placeholder={t("auth.fullNamePlaceholder")}
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
                   required
                 />
@@ -116,7 +123,7 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                  Địa chỉ Email
+                  {t("auth.emailLabel")}
                 </label>
                 <input
                   type="email"
@@ -130,7 +137,7 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                  Mật khẩu
+                  {t("auth.passwordLabel")}
                 </label>
                 <input
                   type="password"
@@ -144,16 +151,16 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
-                  Vai trò người dùng
+                  {t("auth.roleLabel")}
                 </label>
                 <select
                   value={role}
                   onChange={(e) => setRole(Number(e.target.value) as UserRole)}
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
                 >
-                  <option value={UserRole.LEARNER}>Học viên (Learner)</option>
-                  <option value={UserRole.INSTRUCTOR}>Giảng viên (Instructor)</option>
-                  <option value={UserRole.TA}>Trợ giảng (TA)</option>
+                  <option value={UserRole.LEARNER}>{t("auth.roleLearner")}</option>
+                  <option value={UserRole.INSTRUCTOR}>{t("auth.roleInstructor")}</option>
+                  <option value={UserRole.TA}>{t("auth.roleTA")}</option>
                 </select>
               </div>
 
@@ -168,19 +175,19 @@ export default function RegisterPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                     </svg>
-                    <span>Đang tạo tài khoản...</span>
+                    <span>{t("auth.registering")}</span>
                   </>
                 ) : (
-                  <span>Đăng ký ngay</span>
+                  <span>{t("auth.registerBtn")}</span>
                 )}
               </button>
             </form>
 
             <div className="mt-8 text-center pt-6 border-t border-slate-200 dark:border-slate-800">
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Đã có tài khoản?{" "}
+                {t("auth.existingAccount")}{" "}
                 <Link href="/auth/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-                  Đăng nhập tại đây
+                  {t("auth.loginHere")}
                 </Link>
               </p>
             </div>

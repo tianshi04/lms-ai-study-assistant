@@ -13,7 +13,9 @@ import { NotesPanel } from "@/components/player/NotesPanel";
 import { DeadlinesPanel } from "@/components/player/DeadlinesPanel";
 import { ForumTab } from "@/components/player/ForumTab";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
+import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
+import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 function getActiveUserId(): string {
   if (typeof window !== "undefined") {
@@ -25,6 +27,7 @@ function getActiveUserId(): string {
 export default function CoursePlayerPage() {
   const params = useParams();
   const courseId = params?.courseId as string;
+  const { t } = useTranslation();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [activeItem, setActiveItem] = useState<LearningItem | null>(null);
@@ -281,10 +284,11 @@ export default function CoursePlayerPage() {
               <svg className="w-4 h-4 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.25}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <span>Xem Chứng Chỉ & Đánh Giá</span>
+              <span>{t("courseDetail.viewCert")}</span>
             </button>
           )}
 
+          <LanguageToggle />
           <ThemeToggle />
 
           <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-medium">
@@ -340,7 +344,7 @@ export default function CoursePlayerPage() {
                               onClick={() => {
                                 if (!isUnlocked) {
                                   setLockNotice(
-                                    `🔒 Bài học "${item.title}" đang bị khóa. Bạn cần hoàn thành bài học "${prevItem?.title || "trước đó"}" trước.`
+                                    `Bài học "${item.title}" đang bị khóa. Bạn cần hoàn thành bài học "${prevItem?.title || "trước đó"}" trước.`
                                   );
                                   return;
                                 }
