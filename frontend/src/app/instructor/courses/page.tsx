@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Navbar } from "@/components/layout/Navbar";
+import { useToast } from "@/components/ui/Toast";
 
 const emptySubscribe = () => () => {};
 
@@ -20,7 +21,7 @@ export default function InstructorCoursesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const toast = useToast();
 
   // Read user_role safely for SSR & hydration
   const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
@@ -67,7 +68,7 @@ export default function InstructorCoursesPage() {
 
   const handleOpenCreateModal = () => {
     if (!isInstructorOrAdmin) {
-      setMessage("Tài khoản Học viên (Learner) không có quyền tạo khóa học. Vui lòng đăng nhập tài khoản Giảng viên (Instructor).");
+      toast.error("Tài khoản Học viên (Learner) không có quyền tạo khóa học. Vui lòng đăng nhập tài khoản Giảng viên (Instructor).");
       return;
     }
     setEditingCourseId(null);
@@ -82,7 +83,7 @@ export default function InstructorCoursesPage() {
 
   const handleOpenEditModal = (course: Course) => {
     if (!isInstructorOrAdmin) {
-      setMessage("Tài khoản Học viên (Learner) không có quyền chỉnh sửa khóa học.");
+      toast.error("Tài khoản Học viên (Learner) không có quyền chỉnh sửa khóa học.");
       return;
     }
     setEditingCourseId(course.id);
@@ -98,14 +99,13 @@ export default function InstructorCoursesPage() {
   const handleSaveCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isInstructorOrAdmin) {
-      setMessage("Quyền truy cập bị từ chối. Chỉ tài khoản Giảng viên (Instructor) mới có quyền tạo hoặc chỉnh sửa khóa học.");
+      toast.error("Quyền truy cập bị từ chối. Chỉ tài khoản Giảng viên (Instructor) mới có quyền tạo hoặc chỉnh sửa khóa học.");
       return;
     }
 
     if (!title.trim() || !description.trim()) return;
 
     setSaving(true);
-    setMessage(null);
 
     try {
       const client = getRpcClient(CatalogService);
@@ -123,7 +123,7 @@ export default function InstructorCoursesPage() {
         });
 
         if (res.course) {
-          setMessage(`Cập nhật thông tin khóa học "${res.course.title}" thành công!`);
+          toast.success(`Cập nhật thông tin khóa học "${res.course.title}" thành công!`);
           setShowModal(false);
           await refreshCourses();
         }
@@ -139,14 +139,14 @@ export default function InstructorCoursesPage() {
         });
 
         if (res.course) {
-          setMessage("Tạo khóa học mới thành công!");
+          toast.success("Tạo khóa học mới thành công!");
           setShowModal(false);
           await refreshCourses();
         }
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Thất bại khi lưu khóa học.";
-      setMessage(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -154,7 +154,7 @@ export default function InstructorCoursesPage() {
 
   const handleDeleteCourse = async (courseId: string, courseTitle: string) => {
     if (!isInstructorOrAdmin) {
-      setMessage("Tài khoản Học viên (Learner) không có quyền xóa khóa học.");
+      toast.error("Tài khoản Học viên (Learner) không có quyền xóa khóa học.");
       return;
     }
 
@@ -165,11 +165,11 @@ export default function InstructorCoursesPage() {
     try {
       const client = getRpcClient(CatalogService);
       await client.deleteCourse({ id: courseId });
-      setMessage(`Đã xóa thành công khóa học "${courseTitle}".`);
+      toast.success(`Đã xóa thành công khóa học "${courseTitle}".`);
       await refreshCourses();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Không thể xóa khóa học.";
-      setMessage(msg);
+      toast.error(msg);
     }
   };
 
@@ -227,15 +227,7 @@ export default function InstructorCoursesPage() {
           </div>
         )}
 
-        {/* Success / Error Message */}
-        {message && (
-          <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm flex items-center justify-between">
-            <span>{message}</span>
-            <button onClick={() => setMessage(null)} className="text-xs underline font-semibold cursor-pointer">
-              Đóng
-            </button>
-          </div>
-        )}
+
 
         {/* Courses Table / Cards */}
         {loading ? (

@@ -192,7 +192,15 @@
     "authorFallback": "Thành viên LMS",
     "noPostsYet": "Chưa có chủ đề thảo luận nào. Hãy là người đầu tiên đặt câu hỏi!"
   },
+  "toast": {
+    "success": "Thành công",
+    "error": "Lỗi xảy ra",
+    "warning": "Cảnh báo",
+    "info": "Thông báo",
+    "close": "Đóng"
+  },
   "common": {
+
     "loading": "Đang tải...",
     "error": "Có lỗi xảy ra",
     "themeLight": "Sáng",

@@ -4,7 +4,9 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { TranslationProvider } from "@/lib/i18n/TranslationProvider";
+import { ToastProvider } from "@/components/ui/Toast";
 import { getDictionary, detectLocale, Locale } from "@/lib/i18n/getDictionary";
+
 import { cookies, headers } from "next/headers";
 
 const geistSans = Geist({
@@ -50,8 +52,11 @@ export default async function RootLayout({
         <QueryProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <TranslationProvider initialLocale={locale} initialDictionary={dictionary}>
-              {children}
+              <ToastProvider>
+                {children}
+              </ToastProvider>
             </TranslationProvider>
+
           </ThemeProvider>
         </QueryProvider>
       </body>

@@ -9,6 +9,7 @@ import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
+import { useToast } from "@/components/ui/Toast";
 
 function FinancialAidContent() {
   const searchParams = useSearchParams();
@@ -23,7 +24,7 @@ function FinancialAidContent() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isReApplying, setIsReApplying] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const toast = useToast();
 
   const wordCount = essay.trim() === "" ? 0 : essay.trim().split(/\s+/).length;
   const isEnoughWords = wordCount >= 150;
@@ -47,7 +48,6 @@ function FinancialAidContent() {
     async function loadStatus() {
       setLoading(true);
       setIsReApplying(false);
-      setMessage(null);
       try {
         const client = getRpcClient(CertificateService);
         const res = await client.getFinancialAidStatus({ courseId: selectedCourseId });
@@ -71,12 +71,11 @@ function FinancialAidContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isEnoughWords) {
-      setMessage({ type: "error", text: t("financialAid.min150WordsError") });
+      toast.error(t("financialAid.min150WordsError"));
       return;
     }
 
     setSubmitting(true);
-    setMessage(null);
 
     try {
       const client = getRpcClient(CertificateService);
@@ -89,11 +88,11 @@ function FinancialAidContent() {
         setExistingApp(res.application);
         setIsReApplying(false);
         setEssay("");
-        setMessage({ type: "success", text: t("financialAid.appSuccessMsg") });
+        toast.success(t("financialAid.appSuccessMsg"));
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("financialAid.appFailedMsg");
-      setMessage({ type: "error", text: msg });
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -274,17 +273,7 @@ function FinancialAidContent() {
             </div>
           )}
 
-          {message && (
-            <div
-              className={`p-4 rounded-2xl border text-sm flex items-center gap-3 ${
-                message.type === "success"
-                  ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                  : "bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400"
-              }`}
-            >
-              <span>{message.text}</span>
-            </div>
-          )}
+
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>

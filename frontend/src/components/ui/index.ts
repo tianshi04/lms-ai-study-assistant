@@ -7,3 +7,5 @@ export * from "./Modal";
 export * from "./ProgressBar";
 export * from "./Skeleton";
 export * from "./Tabs";
+export * from "./Toast";
+

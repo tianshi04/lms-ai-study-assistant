@@ -10,6 +10,7 @@ import { CatalogService, type Course, type CourseReview } from "@/gen/catalog/v1
 import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { Navbar } from "@/components/layout/Navbar";
 import { Modal } from "@/components/ui/Modal";
+import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 export default function CourseDetailPage() {
@@ -34,15 +35,12 @@ export default function CourseDetailPage() {
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [comment, setComment] = useState<string>("");
   const [submittingReview, setSubmittingReview] = useState(false);
-  const [reviewError, setReviewError] = useState<string | null>(null);
-  const [reviewSuccess, setReviewSuccess] = useState(false);
+  const toast = useToast();
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!course) return;
     setSubmittingReview(true);
-    setReviewError(null);
-    setReviewSuccess(false);
 
     try {
       const client = getRpcClient(CatalogService);
@@ -51,7 +49,6 @@ export default function CourseDetailPage() {
         ratingStars: rating,
         commentText: comment,
       });
-      setReviewSuccess(true);
 
       // Re-fetch course detail and reviews in real-time
       const res = await client.getCourseDetail({ idOrSlug: course.id });
@@ -59,14 +56,14 @@ export default function CourseDetailPage() {
       const revRes = await client.listCourseReviews({ courseId: course.id });
       setReviews(revRes.reviews || []);
 
-      setTimeout(() => {
-        setIsReviewModalOpen(false);
-        setReviewSuccess(false);
-      }, 1500);
+      toast.success(t("courseDetail.reviewSuccessTitle"), {
+        description: t("courseDetail.reviewSuccessDesc"),
+      });
+      setIsReviewModalOpen(false);
     } catch (err: unknown) {
       console.error("Failed to submit review:", err);
       const msg = err instanceof Error ? err.message : t("courseDetail.submitting");
-      setReviewError(msg);
+      toast.error(msg);
     } finally {
       setSubmittingReview(false);
     }
@@ -434,96 +431,78 @@ export default function CourseDetailPage() {
         title={t("courseDetail.submitReviewModalTitle")}
         className="max-w-md"
       >
-        {reviewSuccess ? (
-          <div className="p-4 text-center bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl space-y-2">
-            <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/60 rounded-full flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-            </div>
-            <h4 className="text-sm font-bold text-emerald-900 dark:text-emerald-200">{t("courseDetail.reviewSuccessTitle")}</h4>
-            <p className="text-xs text-emerald-700 dark:text-emerald-300">{t("courseDetail.reviewSuccessDesc")}</p>
-          </div>
-        ) : (
-          <form onSubmit={handleReviewSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                {t("courseDetail.selectRatingStars")}
-              </label>
-              <div className="flex items-center gap-1.5 justify-center py-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(star)}
-                    onMouseEnter={() => setHoverRating(star)}
-                    onMouseLeave={() => setHoverRating(0)}
-                    className="p-1 transition-transform hover:scale-125 focus:outline-none cursor-pointer"
+        <form onSubmit={handleReviewSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              {t("courseDetail.selectRatingStars")}
+            </label>
+            <div className="flex items-center gap-1.5 justify-center py-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  className="p-1 transition-transform hover:scale-125 focus:outline-none cursor-pointer"
+                >
+                  <svg
+                    className={`w-7 h-7 ${
+                      star <= (hoverRating || rating)
+                        ? "fill-amber-400 text-amber-400"
+                        : "text-slate-300 dark:text-slate-700 fill-none"
+                    }`}
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
                   >
-                    <svg
-                      className={`w-7 h-7 ${
-                        star <= (hoverRating || rating)
-                          ? "fill-amber-400 text-amber-400"
-                          : "text-slate-300 dark:text-slate-700 fill-none"
-                      }`}
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                      />
-                    </svg>
-                  </button>
-                ))}
-              </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                    />
+                  </svg>
+                </button>
+              ))}
             </div>
+          </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  {t("courseDetail.commentLabel")}
-                </label>
-                <span className={`text-[10px] ${comment.length > 2000 ? "text-red-500 font-bold" : "text-slate-400"}`}>
-                  {comment.length}/2000
-                </span>
-              </div>
-              <textarea
-                rows={4}
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                maxLength={2000}
-                placeholder={t("courseDetail.commentPlaceholder")}
-                className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
-              />
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {t("courseDetail.commentLabel")}
+              </label>
+              <span className={`text-[10px] ${comment.length > 2000 ? "text-red-500 font-bold" : "text-slate-400"}`}>
+                {comment.length}/2000
+              </span>
             </div>
+            <textarea
+              rows={4}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              maxLength={2000}
+              placeholder={t("courseDetail.commentPlaceholder")}
+              className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+            />
+          </div>
 
-            {reviewError && (
-              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-medium">
-                {reviewError}
-              </div>
-            )}
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsReviewModalOpen(false)}
-                className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-              >
-                {t("courseDetail.cancel")}
-              </button>
-              <button
-                type="submit"
-                disabled={submittingReview}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
-              >
-                {submittingReview ? t("courseDetail.submitting") : t("courseDetail.submitReview")}
-              </button>
-            </div>
-          </form>
-        )}
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setIsReviewModalOpen(false)}
+              className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+            >
+              {t("courseDetail.cancel")}
+            </button>
+            <button
+              type="submit"
+              disabled={submittingReview}
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+            >
+              {submittingReview ? t("courseDetail.submitting") : t("courseDetail.submitReview")}
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

@@ -7,7 +7,9 @@ import { ForumService, ForumThreadSchema, ForumReplySchema, type ForumThread } f
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Navbar } from "@/components/layout/Navbar";
 import { Modal } from "@/components/ui/Modal";
+import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 
 function formatRoleName(role: string): string {
   if (!role) return "Learner";
@@ -15,12 +17,13 @@ function formatRoleName(role: string): string {
   if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Learner";
   if (r.includes("INSTRUCTOR") || r === "2") return "Instructor";
   if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "3") return "Teaching Assistant";
-  if (r.includes("SUPER_ADMIN") || r.includes("PARTNER_ADMIN") || r.includes("ADMIN")) return "Admin";
+  if (r.includes("SUPER_ADMIN") || r.includes("PARTNER_ADMIN") || r === "ADMIN") return "Admin";
   return role;
 }
 
 export default function ForumPage() {
   const { t, locale } = useTranslation();
+  const toast = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [threads, setThreads] = useState<ForumThread[]>([]);
@@ -132,9 +135,10 @@ export default function ForumPage() {
       setNewTitle("");
       setNewContent("");
       setShowCreateModal(false);
+      toast.success(locale === "vi" ? "Đã đăng chủ đề thảo luận mới!" : "New discussion thread created!");
       fetchThreads();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : t("common.error"));
+      toast.error(err instanceof Error ? err.message : t("common.error"));
     } finally {
       setSubmittingThread(false);
     }
@@ -155,9 +159,10 @@ export default function ForumPage() {
       });
 
       setReplyInputs((prev) => ({ ...prev, [threadId]: "" }));
+      toast.success(locale === "vi" ? "Đã gửi câu phản hồi!" : "Reply posted successfully!");
       fetchThreads();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : t("common.error"));
+      toast.error(err instanceof Error ? err.message : t("common.error"));
     } finally {
       setSubmittingReply((prev) => ({ ...prev, [threadId]: false }));
     }

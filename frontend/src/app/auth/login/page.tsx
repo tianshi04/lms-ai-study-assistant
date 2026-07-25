@@ -7,6 +7,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
+import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 function LoginFormContent() {
@@ -14,21 +15,20 @@ function LoginFormContent() {
   const searchParams = useSearchParams();
   const redirectTarget = searchParams.get("redirect") || "/courses";
   const { t } = useTranslation();
+  const toast = useToast();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setError(t("auth.fillAllFields"));
+      toast.error(t("auth.fillAllFields"));
       return;
     }
 
     setLoading(true);
-    setError("");
 
     try {
       const client = getRpcClient(IdentityService);
@@ -46,7 +46,7 @@ function LoginFormContent() {
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("auth.loginFailed");
-      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -62,14 +62,7 @@ function LoginFormContent() {
           </p>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm flex items-center gap-3">
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>{error}</span>
-          </div>
-        )}
+
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
@@ -148,8 +141,8 @@ function LoginFormContent() {
                   onClick={() => {
                     setEmail(acc.email);
                     setPassword("123456");
-                    setError("");
                   }}
+
                   className="w-full text-left px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all text-xs font-medium flex items-center justify-between group cursor-pointer"
                 >
                   <div className="truncate pr-1">

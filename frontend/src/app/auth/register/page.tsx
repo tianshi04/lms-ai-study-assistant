@@ -7,29 +7,28 @@ import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, UserRole } from "@/gen/identity/v1/identity_pb";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
+import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { t } = useTranslation();
+  const toast = useToast();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<UserRole>(UserRole.LEARNER);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password || !fullName) {
-      setError(t("auth.fillAllFields"));
+      toast.error(t("auth.fillAllFields"));
       return;
     }
 
     setLoading(true);
-    setError("");
 
     try {
       const client = getRpcClient(IdentityService);
@@ -41,14 +40,14 @@ export default function RegisterPage() {
       });
 
       if (res.user) {
-        setSuccessMsg(t("auth.registerSuccess"));
+        toast.success(t("auth.registerSuccess"));
         setTimeout(() => {
           router.push("/auth/login");
         }, 1500);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("auth.registerFailed");
-      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -88,23 +87,7 @@ export default function RegisterPage() {
               </p>
             </div>
 
-            {error && (
-              <div className="mb-6 p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-sm flex items-center gap-3">
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>{error}</span>
-              </div>
-            )}
 
-            {successMsg && (
-              <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-3">
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>{successMsg}</span>
-              </div>
-            )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>

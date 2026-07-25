@@ -192,7 +192,15 @@
     "authorFallback": "LMS Member",
     "noPostsYet": "No discussion threads yet. Be the first to start a conversation!"
   },
+  "toast": {
+    "success": "Success",
+    "error": "Error occurred",
+    "warning": "Warning",
+    "info": "Information",
+    "close": "Close"
+  },
   "common": {
+
     "loading": "Loading...",
     "error": "An error occurred",
     "themeLight": "Light",
