@@ -1,6 +1,40 @@
 import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService, type Course, type Category } from "@/gen/catalog/v1/catalog_pb";
+import { CatalogService, type Course, type Category, type CourseReview } from "@/gen/catalog/v1/catalog_pb";
+
+/**
+ * Custom TanStack Query hook for fetching single course details.
+ */
+export function useCourseDetailQuery(courseId: string, options?: Partial<UseQueryOptions<Course | null, Error>>) {
+  return useQuery<Course | null, Error>({
+    queryKey: ["courseDetail", courseId],
+    queryFn: async () => {
+      if (!courseId) return null;
+      const client = getRpcClient(CatalogService);
+      const res = await client.getCourseDetail({ idOrSlug: courseId });
+      return res.course ?? null;
+    },
+    enabled: !!courseId,
+    ...options,
+  });
+}
+
+/**
+ * Custom TanStack Query hook for fetching course reviews.
+ */
+export function useCourseReviewsQuery(courseId: string, options?: Partial<UseQueryOptions<CourseReview[], Error>>) {
+  return useQuery<CourseReview[], Error>({
+    queryKey: ["courseReviews", courseId],
+    queryFn: async () => {
+      if (!courseId) return [];
+      const client = getRpcClient(CatalogService);
+      const res = await client.listCourseReviews({ courseId });
+      return res.reviews || [];
+    },
+    enabled: !!courseId,
+    ...options,
+  });
+}
 
 import { IdentityService, type User, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
 import { LearningService, type LearningProgress, type PersonalNote } from "@/gen/learning/v1/learning_pb";

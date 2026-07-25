@@ -8,10 +8,25 @@ import { getRpcClient } from "@/lib/connect_client";
 import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
+import { useQueryClient } from "@tanstack/react-query";
+import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
+
 export function CourseCard({ course }: { course: Course }) {
   const [imgError, setImgError] = useState(false);
   const [hasCert, setHasCert] = useState(false);
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  const handlePrefetch = () => {
+    queryClient.prefetchQuery({
+      queryKey: ["courseDetail", course.id],
+      queryFn: async () => {
+        const client = getRpcClient(CatalogService);
+        const res = await client.getCourseDetail({ idOrSlug: course.id });
+        return res.course ?? null;
+      },
+    });
+  };
 
   useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
@@ -31,7 +46,10 @@ export function CourseCard({ course }: { course: Course }) {
   }, [course.id]);
 
   return (
-    <div className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 flex flex-col justify-between">
+    <div
+      onMouseEnter={handlePrefetch}
+      className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 flex flex-col justify-between"
+    >
       <div>
         {/* Partner Header */}
         <div className="flex items-center justify-between gap-3 mb-4 h-7">
@@ -64,9 +82,11 @@ export function CourseCard({ course }: { course: Course }) {
         </div>
 
         {/* Title & Description */}
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-3 line-clamp-2">
-          {course.title}
-        </h3>
+        <Link href={`/courses/${course.id}`} className="block">
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-3 line-clamp-2">
+            {course.title}
+          </h3>
+        </Link>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 line-clamp-3 leading-relaxed">
           {course.description}
         </p>

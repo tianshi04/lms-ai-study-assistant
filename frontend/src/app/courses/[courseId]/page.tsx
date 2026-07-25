@@ -3,10 +3,12 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 
 const emptySubscribe = () => () => {};
+import { useQueryClient } from "@tanstack/react-query";
+import { useCourseDetailQuery, useCourseReviewsQuery } from "@/lib/query_hooks";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService, type Course, type CourseReview } from "@/gen/catalog/v1/catalog_pb";
+import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { Navbar } from "@/components/layout/Navbar";
 import { Modal } from "@/components/ui/Modal";
@@ -17,11 +19,11 @@ export default function CourseDetailPage() {
   const params = useParams();
   const courseId = params?.courseId as string;
   const { t, locale } = useTranslation();
+  const queryClient = useQueryClient();
 
-  const [course, setCourse] = useState<Course | null>(null);
-  const [reviews, setReviews] = useState<CourseReview[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: course, isLoading: loadingCourse, error: courseErr } = useCourseDetailQuery(courseId);
+  const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(courseId);
+
   const [hasCert, setHasCert] = useState(false);
   const [certId, setCertId] = useState("");
 
@@ -50,11 +52,9 @@ export default function CourseDetailPage() {
         commentText: comment,
       });
 
-      // Re-fetch course detail and reviews in real-time
-      const res = await client.getCourseDetail({ idOrSlug: course.id });
-      setCourse(res.course ?? null);
-      const revRes = await client.listCourseReviews({ courseId: course.id });
-      setReviews(revRes.reviews || []);
+      // Invalidate queries in real-time
+      queryClient.invalidateQueries({ queryKey: ["courseDetail", course.id] });
+      queryClient.invalidateQueries({ queryKey: ["courseReviews", course.id] });
 
       toast.success(t("courseDetail.reviewSuccessTitle"), {
         description: t("courseDetail.reviewSuccessDesc"),
@@ -72,62 +72,80 @@ export default function CourseDetailPage() {
   useEffect(() => {
     if (!courseId) return;
 
-    async function fetchDetail() {
-      try {
-        const client = getRpcClient(CatalogService);
-        const res = await client.getCourseDetail({ idOrSlug: courseId });
-        setCourse(res.course ?? null);
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    if (!token) return;
 
-        const revRes = await client.listCourseReviews({ courseId });
-        setReviews(revRes.reviews || []);
-
-        const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-        if (token) {
-          try {
-            const certClient = getRpcClient(CertificateService);
-            const certRes = await certClient.getVerifiedCertificate({ courseId: res.course?.id || courseId });
-            if (certRes.certificate?.certificateId) {
-              setHasCert(true);
-              setCertId(certRes.certificate.certificateId);
-            }
-          } catch {
-            // Safe to ignore
-          }
+    const certClient = getRpcClient(CertificateService);
+    certClient
+      .getVerifiedCertificate({ courseId })
+      .then((res) => {
+        if (res.certificate?.certificateId) {
+          setHasCert(true);
+          setCertId(res.certificate.certificateId);
         }
-      } catch (err: unknown) {
-        console.error("Failed to load course detail:", err);
-        const message = err instanceof Error ? err.message : t("catalog.errorLoad");
-        setError(message);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchDetail();
-  }, [courseId, t]);
+      })
+      .catch(() => {});
+  }, [courseId]);
+
+  const loading = loadingCourse || loadingReviews;
+  const error = courseErr ? courseErr.message : null;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-500 dark:text-slate-400">
-        <div className="flex items-center gap-3">
-          <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <span>{t("common.loading")}</span>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors duration-200">
+        <Navbar />
+        {/* Hero Banner Skeleton */}
+        <div className="bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900/80 dark:to-slate-950 border-b border-slate-200 dark:border-slate-800/80 py-12 animate-pulse">
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <div className="lg:col-span-2 space-y-4">
+              <div className="flex gap-2">
+                <div className="h-6 w-32 bg-slate-200 dark:bg-slate-800 rounded-full" />
+                <div className="h-6 w-24 bg-slate-200 dark:bg-slate-800 rounded-full" />
+              </div>
+              <div className="h-10 w-3/4 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+              <div className="h-20 w-full bg-slate-200 dark:bg-slate-800 rounded-xl" />
+              <div className="flex gap-6 pt-4">
+                <div className="h-10 w-32 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+                <div className="h-10 w-32 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+              </div>
+            </div>
+            {/* Enrollment Card Skeleton */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-xl space-y-6">
+              <div className="h-6 w-24 bg-slate-200 dark:bg-slate-800 rounded" />
+              <div className="h-8 w-40 bg-slate-200 dark:bg-slate-800 rounded" />
+              <div className="h-12 w-full bg-slate-200 dark:bg-slate-800 rounded-xl" />
+              <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-800 rounded" />
+                <div className="h-4 w-2/3 bg-slate-200 dark:bg-slate-800 rounded" />
+              </div>
+            </div>
+          </div>
         </div>
+        {/* Content Skeleton */}
+        <main className="max-w-7xl mx-auto px-6 py-12 space-y-6 animate-pulse">
+          <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+          <div className="h-36 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6" />
+          <div className="h-36 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6" />
+        </main>
       </div>
     );
   }
 
   if (error || !course) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-slate-900 dark:text-slate-100">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl max-w-md shadow-sm">
-          <h2 className="text-xl font-bold text-red-500 dark:text-red-400 mb-2">{t("catalog.errorLoad")}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{error || `Course "${courseId}" not found.`}</p>
-          <Link
-            href="/courses"
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
-          >
-            ← {t("player.backToCatalog")}
-          </Link>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-200">
+        <Navbar />
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl max-w-md shadow-sm">
+            <h2 className="text-xl font-bold text-red-500 dark:text-red-400 mb-2">{t("catalog.errorLoad")}</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{error || `Course "${courseId}" not found.`}</p>
+            <Link
+              href="/courses"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
+            >
+              ← {t("player.backToCatalog")}
+            </Link>
+          </div>
         </div>
       </div>
     );
