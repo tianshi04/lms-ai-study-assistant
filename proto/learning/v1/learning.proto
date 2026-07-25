@@ -80,10 +80,31 @@ message MarkItemCompleteResponse {
   LearningProgress updated_progress = 2;
 }
 
+message GetScormTrackingStateRequest {
+  string course_id = 1;
+  string item_id = 2;
+}
+
+message GetScormTrackingStateResponse {
+  map<string, string> cmi_data = 1;
+}
+
+message SaveScormTrackingStateRequest {
+  string course_id = 1;
+  string item_id = 2;
+  map<string, string> cmi_data = 3;
+}
+
+message SaveScormTrackingStateResponse {
+  bool success = 1;
+}
+
 service LearningService {
   rpc GetProgress(GetProgressRequest) returns (GetProgressResponse);
   rpc ResetDeadlines(ResetDeadlinesRequest) returns (ResetDeadlinesResponse);
   rpc SavePersonalNote(SavePersonalNoteRequest) returns (SavePersonalNoteResponse);
   rpc ListPersonalNotes(ListPersonalNotesRequest) returns (ListPersonalNotesResponse);
   rpc MarkItemComplete(MarkItemCompleteRequest) returns (MarkItemCompleteResponse);
+  rpc GetScormTrackingState(GetScormTrackingStateRequest) returns (GetScormTrackingStateResponse);
+  rpc SaveScormTrackingState(SaveScormTrackingStateRequest) returns (SaveScormTrackingStateResponse);
 }

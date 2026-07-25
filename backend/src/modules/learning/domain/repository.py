@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
 
-from src.modules.learning.domain.entities import LearningProgress, PersonalNote
+from src.modules.learning.domain.entities import (
+    LearningProgress,
+    PersonalNote,
+    ScormTracking,
+)
 
 
 class ILearningRepository(ABC):
@@ -37,4 +41,16 @@ class ILearningRepository(ABC):
     async def mark_item_complete(
         self, user_id: str, course_id: str, item_id: str, total_course_items: int
     ) -> tuple[bool, LearningProgress]:
+        pass
+
+    @abstractmethod
+    async def get_scorm_tracking(
+        self, user_id: str, item_id: str
+    ) -> ScormTracking | None:
+        pass
+
+    @abstractmethod
+    async def save_scorm_tracking(
+        self, user_id: str, item_id: str, cmi_data: dict
+    ) -> ScormTracking:
         pass

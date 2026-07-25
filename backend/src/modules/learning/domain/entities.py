@@ -52,3 +52,19 @@ class PersonalNote(Entity):
         self.highlighted_text = highlighted_text
         self.note_comment = note_comment
         self.created_at = created_at
+
+
+class ScormTracking(Entity):
+    def __init__(
+        self,
+        id: str,
+        user_id: str,
+        item_id: str,
+        cmi_data: dict,
+        updated_at: str,
+    ) -> None:
+        super().__init__(id=id)
+        self.user_id = user_id
+        self.item_id = item_id
+        self.cmi_data = cmi_data or {}
+        self.updated_at = updated_at

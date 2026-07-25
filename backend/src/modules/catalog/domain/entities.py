@@ -11,6 +11,7 @@ class ItemType(str, Enum):
     GRADED_QUIZ = "GRADED_QUIZ"
     AUTO_GRADED_LAB = "AUTO_GRADED_LAB"
     PEER_REVIEW = "PEER_REVIEW"
+    SCORM = "SCORM"
 
 
 @dataclass(frozen=True)
@@ -40,6 +41,8 @@ class LearningItem(Entity):
         interactive_transcripts: list[InteractiveTranscript] | None = None,
         in_video_quizzes: list[InVideoQuiz] | None = None,
         reading_markdown: str = "",
+        scorm_package_path: str = "",
+        scorm_entry_html: str = "",
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -50,6 +53,8 @@ class LearningItem(Entity):
         self.interactive_transcripts = interactive_transcripts or []
         self.in_video_quizzes = in_video_quizzes or []
         self.reading_markdown = reading_markdown
+        self.scorm_package_path = scorm_package_path
+        self.scorm_entry_html = scorm_entry_html
 
 
 class Lesson(Entity):

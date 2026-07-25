@@ -1,4 +1,13 @@
-from sqlalchemy import ARRAY, Enum as SQLEnum, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    ARRAY,
+    Enum as SQLEnum,
+    Float,
+    ForeignKey,
+    Integer,
+    JSON,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.learning.domain.entities import DeadlineStatus
@@ -56,3 +65,13 @@ class PersonalNoteModel(Base):
     highlighted_text: Mapped[str] = mapped_column(Text, nullable=False)
     note_comment: Mapped[str] = mapped_column(Text, nullable=False, default="")
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class ScormTrackingModel(Base):
+    __tablename__ = "scorm_trackings"
+
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)  # user_id:item_id
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    cmi_data: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    updated_at: Mapped[str] = mapped_column(String(64), nullable=False)

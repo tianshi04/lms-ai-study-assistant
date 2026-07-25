@@ -45,6 +45,7 @@ export default function InstructorCourseBuilderPage({
   const [itemMinutes, setItemMinutes] = useState(10);
   const [videoUrl, setVideoUrl] = useState("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4");
   const [readingMarkdown, setReadingMarkdown] = useState("");
+  const [scormFile, setScormFile] = useState<File | null>(null);
 
   // Authorization Check
   const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
@@ -165,15 +166,60 @@ export default function InstructorCourseBuilderPage({
 
     try {
       const client = getRpcClient(CatalogService);
-      await client.createLearningItem({
-        courseId,
-        lessonId: showItemModal,
-        title: itemTitle,
-        type: itemType,
-        estimatedMinutes: itemMinutes,
-        videoUrl: itemType === ItemType.VIDEO ? videoUrl : "",
-        readingMarkdown: itemType === ItemType.READING ? readingMarkdown : "",
-      });
+
+      if (itemType === ItemType.SCORM) {
+        if (!scormFile) {
+          throw new Error("Vui lòng chọn tệp tin ZIP SCORM.");
+        }
+
+        // Generate a random ID for the new item
+        const itemId = typeof crypto.randomUUID === "function"
+          ? crypto.randomUUID()
+          : "scorm-" + Math.random().toString(36).substring(2, 15) + "-" + Date.now().toString(36);
+
+        // 1. Get presigned upload URL
+        const uploadRes = await client.getScormUploadUrl({
+          itemId,
+          filename: scormFile.name,
+        });
+
+        // Ensure http://minio:9000 internal domain is converted to http://localhost:9000 for browser fetch
+        const targetUploadUrl = uploadRes.uploadUrl.replace("http://minio:9000", "http://localhost:9000");
+
+        // 2. Upload file to S3
+        const uploadResponse = await fetch(targetUploadUrl, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/zip",
+          },
+          body: scormFile,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error("Không thể tải tệp tin ZIP lên bộ nhớ lưu trữ.");
+        }
+
+        // 3. Process SCORM package on backend
+        await client.processScormPackage({
+          courseId,
+          lessonId: showItemModal,
+          title: itemTitle,
+          estimatedMinutes: itemMinutes,
+          objectKey: uploadRes.objectKey,
+        });
+
+        setScormFile(null);
+      } else {
+        await client.createLearningItem({
+          courseId,
+          lessonId: showItemModal,
+          title: itemTitle,
+          type: itemType,
+          estimatedMinutes: itemMinutes,
+          videoUrl: itemType === ItemType.VIDEO ? videoUrl : "",
+          readingMarkdown: itemType === ItemType.READING ? readingMarkdown : "",
+        });
+      }
 
       setShowItemModal(null);
       setItemTitle("");
@@ -477,8 +523,11 @@ export default function InstructorCourseBuilderPage({
                 <input
                   type="number"
                   min={1}
-                  value={weekNumber}
-                  onChange={(e) => setWeekNumber(parseInt(e.target.value) || 1)}
+                  value={isNaN(weekNumber) ? "" : weekNumber}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    setWeekNumber(isNaN(val) ? 1 : val);
+                  }}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
                   required
                 />
@@ -488,7 +537,7 @@ export default function InstructorCourseBuilderPage({
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tiêu đề Tuần học</label>
                 <input
                   type="text"
-                  value={weekTitle}
+                  value={weekTitle ?? ""}
                   onChange={(e) => setWeekTitle(e.target.value)}
                   placeholder="Ví dụ: Week 1: Giới thiệu về Neural Networks"
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
@@ -500,7 +549,7 @@ export default function InstructorCourseBuilderPage({
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Mô tả tóm tắt</label>
                 <textarea
                   rows={3}
-                  value={weekSummary}
+                  value={weekSummary ?? ""}
                   onChange={(e) => setWeekSummary(e.target.value)}
                   placeholder="Tóm tắt nội dung chính học viên sẽ thu hoạch được..."
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
@@ -546,7 +595,7 @@ export default function InstructorCourseBuilderPage({
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tên Bài học</label>
                 <input
                   type="text"
-                  value={lessonTitle}
+                  value={lessonTitle ?? ""}
                   onChange={(e) => setLessonTitle(e.target.value)}
                   placeholder="Ví dụ: Lesson 1: Activation Functions (ReLU, Sigmoid)"
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
@@ -559,8 +608,11 @@ export default function InstructorCourseBuilderPage({
                 <input
                   type="number"
                   min={1}
-                  value={lessonMinutes}
-                  onChange={(e) => setLessonMinutes(parseInt(e.target.value) || 15)}
+                  value={isNaN(lessonMinutes) ? "" : lessonMinutes}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    setLessonMinutes(isNaN(val) ? 15 : val);
+                  }}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
                   required
                 />
@@ -593,7 +645,7 @@ export default function InstructorCourseBuilderPage({
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">Thêm Học liệu Mới (Learning Item)</h3>
-              <button onClick={() => setShowItemModal(null)} className="text-slate-400 hover:text-slate-600">
+              <button onClick={() => { setShowItemModal(null); setScormFile(null); setItemType(ItemType.VIDEO); }} className="text-slate-400 hover:text-slate-600">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -605,11 +657,15 @@ export default function InstructorCourseBuilderPage({
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Loại Học liệu</label>
                 <select
                   value={itemType}
-                  onChange={(e) => setItemType(parseInt(e.target.value) as ItemType)}
+                  onChange={(e) => {
+                    setItemType(parseInt(e.target.value) as ItemType);
+                    setScormFile(null);
+                  }}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
                 >
                   <option value={ItemType.VIDEO}>VIDEO (Bài giảng Video)</option>
                   <option value={ItemType.READING}>READING (Bài đọc Markdown)</option>
+                  <option value={ItemType.SCORM}>SCORM (Bài học tương tác SCORM)</option>
                 </select>
               </div>
 
@@ -617,9 +673,9 @@ export default function InstructorCourseBuilderPage({
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tên Học liệu</label>
                 <input
                   type="text"
-                  value={itemTitle}
+                  value={itemTitle ?? ""}
                   onChange={(e) => setItemTitle(e.target.value)}
-                  placeholder="Ví dụ: Video: Hướng dẫn cài đặt NumPy & PyTorch"
+                  placeholder={itemType === ItemType.SCORM ? "Ví dụ: Khóa học SCORM Golf" : "Ví dụ: Video: Hướng dẫn cài đặt NumPy & PyTorch"}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
                   required
                 />
@@ -630,8 +686,11 @@ export default function InstructorCourseBuilderPage({
                 <input
                   type="number"
                   min={1}
-                  value={itemMinutes}
-                  onChange={(e) => setItemMinutes(parseInt(e.target.value) || 10)}
+                  value={isNaN(itemMinutes) ? "" : itemMinutes}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    setItemMinutes(isNaN(val) ? 10 : val);
+                  }}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
                   required
                 />
@@ -642,31 +701,45 @@ export default function InstructorCourseBuilderPage({
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Đường dẫn Video URL (.mp4 / streaming)</label>
                   <input
                     type="url"
-                    value={videoUrl}
+                    value={videoUrl ?? ""}
                     onChange={(e) => setVideoUrl(e.target.value)}
                     placeholder="https://..."
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
                     required
                   />
                 </div>
-              ) : (
+              ) : itemType === ItemType.READING ? (
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Nội dung Bài đọc (Markdown format)</label>
                   <textarea
                     rows={5}
-                    value={readingMarkdown}
+                    value={readingMarkdown ?? ""}
                     onChange={(e) => setReadingMarkdown(e.target.value)}
                     placeholder="# Giới thiệu bài học&#10;&#10;Nội dung lý thuyết chi tiết..."
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
                     required
                   />
                 </div>
-              )}
+              ) : itemType === ItemType.SCORM ? (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tải lên gói SCORM (.zip)</label>
+                  <input
+                    type="file"
+                    accept=".zip"
+                    onChange={(e) => setScormFile(e.target.files?.[0] || null)}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+                    required
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Chọn tệp tin SCORM dạng nén ZIP (chứa file imsmanifest.xml ở thư mục gốc).
+                  </p>
+                </div>
+              ) : null}
 
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowItemModal(null)}
+                  onClick={() => { setShowItemModal(null); setScormFile(null); setItemType(ItemType.VIDEO); }}
                   className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                 >
                   Hủy

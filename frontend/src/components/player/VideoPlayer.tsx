@@ -6,6 +6,7 @@ import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
 import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
 import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentWorkspace";
+import { ScormPlayer } from "@/components/player/ScormPlayer";
 
 interface VideoPlayerProps {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -141,6 +142,20 @@ export function VideoPlayer({
     return (
       <div className="w-full h-full overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950">
         <PeerAssignmentWorkspace itemId={activeItem.id} userId={userId} />
+      </div>
+    );
+  }
+
+  // 4b. SCORM Item
+  if (activeItem.type === 7) {
+    return (
+      <div className="w-full h-full bg-slate-50 dark:bg-slate-950">
+        <ScormPlayer
+          itemId={activeItem.id}
+          scormEntryHtml={activeItem.scormEntryHtml}
+          scormPackagePath={activeItem.scormPackagePath}
+          onComplete={() => onMarkComplete?.(activeItem.id)}
+        />
       </div>
     );
   }

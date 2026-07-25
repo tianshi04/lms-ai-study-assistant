@@ -29,6 +29,7 @@ def _to_pb_item_type(type_enum: ItemType) -> pb.ItemType:
         ItemType.GRADED_QUIZ: pb.ItemType.GRADED_QUIZ,
         ItemType.AUTO_GRADED_LAB: pb.ItemType.AUTO_GRADED_LAB,
         ItemType.PEER_REVIEW: pb.ItemType.PEER_REVIEW,
+        ItemType.SCORM: pb.ItemType.SCORM,
     }
     return mapping.get(type_enum, pb.ItemType.UNSPECIFIED)
 
@@ -62,6 +63,8 @@ def _to_pb_learning_item(item: LearningItem) -> pb.LearningItem:
         ],
         in_video_quizzes=[_to_pb_quiz(q) for q in item.in_video_quizzes],
         reading_markdown=item.reading_markdown,
+        scorm_package_path=item.scorm_package_path,
+        scorm_entry_html=item.scorm_entry_html,
     )
 
 
@@ -328,3 +331,43 @@ class CatalogHandler(CatalogService):
             total_reviews=total_count,
             next_page_token=next_token,
         )
+
+    async def get_scorm_upload_url(
+        self,
+        request: pb.GetScormUploadUrlRequest,
+        ctx: RequestContext[pb.GetScormUploadUrlRequest, pb.GetScormUploadUrlResponse],
+    ) -> pb.GetScormUploadUrlResponse:
+        require_current_user()
+        try:
+            upload_url, object_key = await self.use_case.get_scorm_upload_url(
+                item_id=request.item_id, filename=request.filename
+            )
+            return pb.GetScormUploadUrlResponse(
+                upload_url=upload_url, object_key=object_key
+            )
+        except Exception as e:
+            raise ConnectError(
+                Code.INTERNAL, f"Không thể tạo URL tải lên SCORM: {str(e)}"
+            )
+
+    async def process_scorm_package(
+        self,
+        request: pb.ProcessScormPackageRequest,
+        ctx: RequestContext[
+            pb.ProcessScormPackageRequest, pb.ProcessScormPackageResponse
+        ],
+    ) -> pb.ProcessScormPackageResponse:
+        require_current_user()
+        try:
+            item = await self.use_case.process_scorm_package(
+                course_id=request.course_id,
+                lesson_id=request.lesson_id,
+                title=request.title,
+                estimated_minutes=request.estimated_minutes,
+                object_key=request.object_key,
+            )
+            return pb.ProcessScormPackageResponse(item=_to_pb_learning_item(item))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+        except Exception as e:
+            raise ConnectError(Code.INTERNAL, f"Lỗi khi xử lý gói SCORM: {str(e)}")

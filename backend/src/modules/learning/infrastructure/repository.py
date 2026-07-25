@@ -11,12 +11,14 @@ from src.modules.learning.domain.entities import (
     DeadlineStatus,
     LearningProgress,
     PersonalNote,
+    ScormTracking,
     WeeklyDeadline,
 )
 from src.modules.learning.domain.repository import ILearningRepository
 from src.modules.learning.infrastructure.models import (
     LearningProgressModel,
     PersonalNoteModel,
+    ScormTrackingModel,
     WeeklyDeadlineModel,
 )
 
@@ -205,3 +207,51 @@ class SQLAlchemyLearningRepository(ILearningRepository):
 
         await self.session.commit()
         return True, _model_to_domain_progress(model)
+
+    async def get_scorm_tracking(
+        self, user_id: str, item_id: str
+    ) -> ScormTracking | None:
+        key = f"{user_id}:{item_id}"
+        stmt = select(ScormTrackingModel).where(ScormTrackingModel.id == key)
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return None
+        return ScormTracking(
+            id=model.id,
+            user_id=model.user_id,
+            item_id=model.item_id,
+            cmi_data=model.cmi_data,
+            updated_at=model.updated_at,
+        )
+
+    async def save_scorm_tracking(
+        self, user_id: str, item_id: str, cmi_data: dict
+    ) -> ScormTracking:
+        key = f"{user_id}:{item_id}"
+        now_str = datetime.now(timezone.utc).isoformat()
+        insert_stmt = (
+            pg_insert(ScormTrackingModel)
+            .values(
+                id=key,
+                user_id=user_id,
+                item_id=item_id,
+                cmi_data=cmi_data,
+                updated_at=now_str,
+            )
+            .on_conflict_do_update(
+                index_elements=["id"],
+                set_={"cmi_data": cmi_data, "updated_at": now_str},
+            )
+            .returning(ScormTrackingModel)
+        )
+        res = await self.session.execute(insert_stmt)
+        model = res.scalar_one()
+        await self.session.commit()
+        return ScormTracking(
+            id=model.id,
+            user_id=model.user_id,
+            item_id=model.item_id,
+            cmi_data=model.cmi_data,
+            updated_at=model.updated_at,
+        )

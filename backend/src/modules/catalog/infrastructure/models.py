@@ -97,6 +97,12 @@ class LearningItemModel(Base):
         String(512), nullable=False, default=""
     )
     reading_markdown: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    scorm_package_path: Mapped[str] = mapped_column(
+        String(512), nullable=False, default=""
+    )
+    scorm_entry_html: Mapped[str] = mapped_column(
+        String(255), nullable=False, default=""
+    )
 
     lesson: Mapped["LessonModel"] = relationship("LessonModel", back_populates="items")
     interactive_transcripts: Mapped[list["InteractiveTranscriptModel"]] = relationship(

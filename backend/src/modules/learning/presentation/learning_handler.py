@@ -121,3 +121,32 @@ class LearningHandler(LearningService):
         return pb.MarkItemCompleteResponse(
             success=success, updated_progress=_to_pb_progress(progress)
         )
+
+    async def get_scorm_tracking_state(
+        self,
+        request: pb.GetScormTrackingStateRequest,
+        ctx: RequestContext[
+            pb.GetScormTrackingStateRequest, pb.GetScormTrackingStateResponse
+        ],
+    ) -> pb.GetScormTrackingStateResponse:
+        current_user = require_current_user()
+        tracking = await self.use_case.get_scorm_tracking(
+            user_id=current_user.id, item_id=request.item_id
+        )
+        cmi_data = tracking.cmi_data if tracking else {}
+        return pb.GetScormTrackingStateResponse(cmi_data=cmi_data)
+
+    async def save_scorm_tracking_state(
+        self,
+        request: pb.SaveScormTrackingStateRequest,
+        ctx: RequestContext[
+            pb.SaveScormTrackingStateRequest, pb.SaveScormTrackingStateResponse
+        ],
+    ) -> pb.SaveScormTrackingStateResponse:
+        current_user = require_current_user()
+        await self.use_case.save_scorm_tracking(
+            user_id=current_user.id,
+            item_id=request.item_id,
+            cmi_data=dict(request.cmi_data),
+        )
+        return pb.SaveScormTrackingStateResponse(success=True)

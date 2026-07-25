@@ -62,6 +62,8 @@ def _model_to_domain_course(
                         interactive_transcripts=transcripts,
                         in_video_quizzes=quizzes,
                         reading_markdown=i_model.reading_markdown,
+                        scorm_package_path=i_model.scorm_package_path,
+                        scorm_entry_html=i_model.scorm_entry_html,
                     )
                 )
             lessons.append(
@@ -322,6 +324,36 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             interactive_transcripts=[],
             in_video_quizzes=[],
             reading_markdown=reading_markdown or "",
+        )
+
+    async def create_scorm_learning_item(
+        self,
+        item_id: str,
+        course_id: str,
+        lesson_id: str,
+        title: str,
+        estimated_minutes: int,
+        scorm_package_path: str,
+        scorm_entry_html: str,
+    ) -> LearningItem:
+        item_model = LearningItemModel(
+            id=item_id,
+            lesson_id=lesson_id,
+            title=title,
+            type=ItemType.SCORM,
+            estimated_minutes=estimated_minutes or 10,
+            scorm_package_path=scorm_package_path,
+            scorm_entry_html=scorm_entry_html,
+        )
+        self.session.add(item_model)
+        await self.session.commit()
+        return LearningItem(
+            id=item_id,
+            title=title,
+            type=ItemType.SCORM,
+            estimated_minutes=estimated_minutes or 10,
+            scorm_package_path=scorm_package_path,
+            scorm_entry_html=scorm_entry_html,
         )
 
     async def submit_course_review(

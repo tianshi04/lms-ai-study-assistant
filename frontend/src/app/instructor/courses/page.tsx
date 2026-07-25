@@ -85,13 +85,13 @@ export default function InstructorCoursesPage() {
       setMessage("Tài khoản Học viên (Learner) không có quyền chỉnh sửa khóa học.");
       return;
     }
-    setEditingCourseId(course.id);
-    setTitle(course.title);
-    setSlug(course.slug);
-    setDescription(course.description);
-    setPartnerName(course.partnerName);
-    setPartnerLogoUrl(course.partnerLogoUrl);
-    setInstructorNames(course.instructorNames.join(", "));
+    setEditingCourseId(course.id ?? "");
+    setTitle(course.title ?? "");
+    setSlug(course.slug ?? "");
+    setDescription(course.description ?? "");
+    setPartnerName(course.partnerName ?? "");
+    setPartnerLogoUrl(course.partnerLogoUrl ?? "");
+    setInstructorNames(course.instructorNames?.join(", ") ?? "");
     setShowModal(true);
   };
 

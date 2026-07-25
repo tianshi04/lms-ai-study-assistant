@@ -19,6 +19,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: "/scorm-content/:path*",
+        destination: "http://localhost:9000/coursera-assets/:path*",
+      },
+    ];
+  },
 };
 
 export default nextConfig;

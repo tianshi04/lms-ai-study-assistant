@@ -2,6 +2,7 @@ import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions } 
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { IdentityService, type User, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
+import { LearningService } from "@/gen/learning/v1/learning_pb";
 
 /**
  * Custom TanStack Query hook for fetching the course catalog.
@@ -74,6 +75,53 @@ export function useRevokeEnterpriseSeatMutation(
       const client = getRpcClient(IdentityService);
       const res = await client.revokeEnterpriseSeat({ userId });
       return { success: res.success, message: res.message };
+    },
+    ...options,
+  });
+}
+
+/**
+ * Custom TanStack Query hook for fetching SCORM tracking state.
+ */
+export function useScormTrackingQuery(
+  courseId: string,
+  itemId: string,
+  options?: Partial<UseQueryOptions<Record<string, string>, Error>>
+) {
+  return useQuery<Record<string, string>, Error>({
+    queryKey: ["scormTracking", courseId, itemId],
+    queryFn: async () => {
+      if (!courseId || !itemId) throw new Error("Course ID and Item ID are required");
+      const client = getRpcClient(LearningService);
+      const res = await client.getScormTrackingState({ courseId, itemId });
+      return res.cmiData || {};
+    },
+    enabled: !!courseId && !!itemId,
+    ...options,
+  });
+}
+
+/**
+ * Custom TanStack Mutation hook for saving SCORM tracking state.
+ */
+export function useSaveScormTrackingMutation(
+  options?: Partial<
+    UseMutationOptions<
+      boolean,
+      Error,
+      { courseId: string; itemId: string; cmiData: Record<string, string> }
+    >
+  >
+) {
+  return useMutation<
+    boolean,
+    Error,
+    { courseId: string; itemId: string; cmiData: Record<string, string> }
+  >({
+    mutationFn: async ({ courseId, itemId, cmiData }) => {
+      const client = getRpcClient(LearningService);
+      const res = await client.saveScormTrackingState({ courseId, itemId, cmiData });
+      return res.success;
     },
     ...options,
   });

@@ -22,11 +22,11 @@ class S3StorageService:
             s3={"addressing_style": "path"},
         )
 
-    def _get_client(self):
+    def _get_client(self, endpoint_url: str | None = None):
         """Get an async S3 client context manager."""
         return self.session.client(
             "s3",
-            endpoint_url=self.endpoint_url,
+            endpoint_url=endpoint_url or self.endpoint_url,
             use_ssl=self.use_ssl,
             config=self.botocore_config,
         )
@@ -39,6 +39,30 @@ class S3StorageService:
                 await s3_client.head_bucket(Bucket=target_bucket)
             except Exception:
                 await s3_client.create_bucket(Bucket=target_bucket)
+
+            # Ensure public read policy is applied so that SCORM static files can be read anonymously in iframes
+            import json
+
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Sid": "PublicRead",
+                        "Effect": "Allow",
+                        "Principal": "*",
+                        "Action": ["s3:GetObject"],
+                        "Resource": [f"arn:aws:s3:::{target_bucket}/*"],
+                    }
+                ],
+            }
+            try:
+                await s3_client.put_bucket_policy(
+                    Bucket=target_bucket, Policy=json.dumps(policy)
+                )
+            except Exception as e:
+                print(
+                    f"Warning: Failed to set public bucket policy for {target_bucket}: {e}"
+                )
 
     async def upload_file(
         self,
@@ -81,7 +105,9 @@ class S3StorageService:
     ) -> str:
         """Generate a presigned GET URL for secure temporary file downloading/streaming."""
         target_bucket = bucket_name or self.bucket_name
-        async with self._get_client() as s3_client:
+        async with self._get_client(
+            endpoint_url=settings.MINIO_PUBLIC_ENDPOINT
+        ) as s3_client:
             return await s3_client.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": target_bucket, "Key": object_key},
@@ -97,7 +123,9 @@ class S3StorageService:
     ) -> str:
         """Generate a presigned PUT URL for client-side direct file uploading."""
         target_bucket = bucket_name or self.bucket_name
-        async with self._get_client() as s3_client:
+        async with self._get_client(
+            endpoint_url=settings.MINIO_PUBLIC_ENDPOINT
+        ) as s3_client:
             return await s3_client.generate_presigned_url(
                 "put_object",
                 Params={
