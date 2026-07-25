@@ -29,6 +29,8 @@ jobs:
 
       - name: Set up Buf CLI
         uses: bufbuild/buf-setup-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Lint Protobuf files
         uses: bufbuild/buf-lint-action@v1
