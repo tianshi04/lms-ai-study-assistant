@@ -14,6 +14,7 @@ enum ItemType {
   ITEM_TYPE_PEER_REVIEW = 6;
 }
 
+
 message InteractiveTranscript {
   int32 timestamp_seconds = 1;
   string text = 2;
@@ -56,6 +57,7 @@ message WeekModule {
   repeated Lesson lessons = 5;
 }
 
+// Course messages
 message Course {
   string id = 1;
   string title = 2;
@@ -67,8 +69,13 @@ message Course {
   repeated WeekModule week_modules = 8;
   double average_rating = 9;
   int32 review_count = 10;
+  
+  // Tags
+  string subject = 11;
+  string level = 12;
 }
 
+// Specialization messages
 message Specialization {
   string id = 1;
   string title = 2;
@@ -87,9 +94,14 @@ message GetSpecializationResponse {
   Specialization specialization = 1;
 }
 
+// Catalog queries
 message ListCoursesRequest {
   int32 page_size = 1;
   string page_token = 2;
+  string search_query = 3;
+  string subject = 4;
+  string level = 5;
+  string sort_by = 6;
 }
 
 message ListCoursesResponse {
@@ -113,6 +125,7 @@ message GetLessonDetailResponse {
   Lesson lesson = 1;
 }
 
+// Management messages (Instructors/Partners)
 message CreateCourseRequest {
   string title = 1;
   string slug = 2;
@@ -120,6 +133,8 @@ message CreateCourseRequest {
   string partner_name = 4;
   string partner_logo_url = 5;
   repeated string instructor_names = 6;
+  string subject = 7;
+  string level = 8;
 }
 
 message CreateCourseResponse {
@@ -134,6 +149,8 @@ message UpdateCourseRequest {
   string partner_name = 5;
   string partner_logo_url = 6;
   repeated string instructor_names = 7;
+  string subject = 8;
+  string level = 9;
 }
 
 message UpdateCourseResponse {
@@ -218,6 +235,8 @@ message CreateLearningItemRequest {
   string title = 3;
   ItemType type = 4;
   int32 estimated_minutes = 5;
+  
+  // Specific fields based on type
   string video_url = 6;
   string reading_markdown = 7;
   repeated InVideoQuiz in_video_quizzes = 8;
@@ -227,6 +246,7 @@ message CreateLearningItemResponse {
   LearningItem item = 1;
 }
 
+// Review Messages
 message UpdateLearningItemRequest {
   string id = 1;
   string course_id = 2;
@@ -285,6 +305,40 @@ message ListCourseReviewsResponse {
   int32 total_reviews = 3;
   string next_page_token = 4;
 }
+
+// Admin Category Messages
+message Category {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string type = 4; // "SUBJECT" or "LEVEL"
+}
+
+message ListCategoriesRequest {
+  string type = 1; // Optional filter by type
+}
+
+message ListCategoriesResponse {
+  repeated Category categories = 1;
+}
+
+message CreateCategoryRequest {
+  string name = 1;
+  string type = 2; // "SUBJECT" or "LEVEL"
+}
+
+message CreateCategoryResponse {
+  Category category = 1;
+}
+
+message DeleteCategoryRequest {
+  string id = 1;
+}
+
+message DeleteCategoryResponse {
+  bool success = 1;
+}
+
 
 message CourseAnnouncement {
   string id = 1;
@@ -439,6 +493,17 @@ service CatalogService {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
   }
   rpc GetInstructorAnalytics(GetInstructorAnalyticsRequest) returns (GetInstructorAnalyticsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  
+  // Category Admin endpoints
+  rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc CreateCategory(CreateCategoryRequest) returns (CreateCategoryResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteCategory(DeleteCategoryRequest) returns (DeleteCategoryResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }

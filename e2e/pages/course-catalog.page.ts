@@ -36,4 +36,22 @@ export class CourseCatalogPage {
     await expect(this.courseCards.first()).toBeVisible({ timeout: 10000 });
     await this.courseCards.first().click();
   }
+
+  async filterBySubject(subjectName: string) {
+    const responsePromise = this.page.waitForResponse(response => response.url().includes('ListCourses'));
+    await this.page.getByRole('button', { name: subjectName, exact: true }).click();
+    await responsePromise;
+  }
+
+  async filterByLevel(levelName: string) {
+    const responsePromise = this.page.waitForResponse(response => response.url().includes('ListCourses'));
+    await this.page.getByRole('button', { name: levelName, exact: true }).click();
+    await responsePromise;
+  }
+
+  async sortBy(sortValue: string) {
+    const responsePromise = this.page.waitForResponse(response => response.url().includes('ListCourses'));
+    await this.page.locator('select').selectOption(sortValue);
+    await responsePromise;
+  }
 }

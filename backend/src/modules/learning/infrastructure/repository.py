@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from src.modules.learning.domain.entities import (
     DeadlineStatus,
+    EnrolledCourseSummary,
     LearningProgress,
     PersonalNote,
     WeeklyDeadline,
@@ -215,3 +216,37 @@ class SQLAlchemyLearningRepository(ILearningRepository):
 
         await self.session.commit()
         return True, _model_to_domain_progress(model)
+
+    async def list_user_progresses(self, user_id: str) -> list[LearningProgress]:
+        stmt = (
+            select(LearningProgressModel)
+            .where(LearningProgressModel.user_id == user_id)
+            .options(selectinload(LearningProgressModel.weekly_deadlines))
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        return [_model_to_domain_progress(m) for m in models]
+
+    async def list_enrolled_courses(self, user_id: str) -> list[EnrolledCourseSummary]:
+        progresses = await self.list_user_progresses(user_id)
+        summaries = []
+        for lp in progresses:
+            progress = lp.overall_progress_percent
+            if progress <= 0:
+                status = "NOT_STARTED"
+            elif progress >= 100.0:
+                status = "COMPLETED"
+            else:
+                status = "IN_PROGRESS"
+
+            summaries.append(
+                EnrolledCourseSummary(
+                    course_id=lp.course_id,
+                    course_title="",
+                    partner_name="",
+                    progress_percent=progress,
+                    status=status,
+                    last_accessed_at=lp.last_reset_at or "",
+                )
+            )
+        return summaries

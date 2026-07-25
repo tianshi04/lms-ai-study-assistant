@@ -82,6 +82,21 @@ message MarkItemCompleteResponse {
   LearningProgress updated_progress = 2;
 }
 
+message ListMyEnrolledCoursesRequest {}
+
+message EnrolledCourseSummary {
+  string course_id = 1;
+  string course_title = 2;
+  string partner_name = 3;
+  float progress_percent = 4;
+  string status = 5;          // "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
+  string last_accessed_at = 6;
+}
+
+message ListMyEnrolledCoursesResponse {
+  repeated EnrolledCourseSummary courses = 1;
+}
+
 service LearningService {
   rpc GetProgress(GetProgressRequest) returns (GetProgressResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
@@ -96,6 +111,9 @@ service LearningService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc MarkItemComplete(MarkItemCompleteRequest) returns (MarkItemCompleteResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListMyEnrolledCourses(ListMyEnrolledCoursesRequest) returns (ListMyEnrolledCoursesResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }

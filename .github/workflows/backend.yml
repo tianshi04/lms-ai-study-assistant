@@ -50,6 +50,10 @@ jobs:
         run: make gen
         working-directory: backend
 
+      - name: Run database migrations
+        run: uv run alembic upgrade head
+        working-directory: backend
+
       - name: Run test suite (pytest + ruff + ty)
         run: make test
         working-directory: backend

@@ -1,6 +1,10 @@
 from typing import Any, Callable
 
-from src.modules.learning.domain.entities import LearningProgress, PersonalNote
+from src.modules.learning.domain.entities import (
+    EnrolledCourseSummary,
+    LearningProgress,
+    PersonalNote,
+)
 from src.modules.learning.domain.repository import ILearningRepository
 from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 from src.shared.infrastructure.database import async_session_scope
@@ -58,3 +62,37 @@ class LearningUseCase:
             return await repo.mark_item_complete(
                 user_id, course_id, item_id, total_course_items
             )
+
+    async def list_enrolled_courses(self, user_id: str) -> list[EnrolledCourseSummary]:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            progresses = await repo.list_user_progresses(user_id)
+
+        from src.modules.catalog.application.catalog_usecase import CatalogUseCase
+
+        catalog_usecase = CatalogUseCase()
+        summaries: list[EnrolledCourseSummary] = []
+        for p in progresses:
+            course = await catalog_usecase.get_course_detail(p.course_id)
+            c_title = course.title if course else f"Khóa học #{p.course_id}"
+            c_partner = course.partner_name if course else "Coursera Partner"
+
+            progress = p.overall_progress_percent
+            if progress <= 0:
+                status = "NOT_STARTED"
+            elif progress >= 100.0:
+                status = "COMPLETED"
+            else:
+                status = "IN_PROGRESS"
+
+            summaries.append(
+                EnrolledCourseSummary(
+                    course_id=p.course_id,
+                    course_title=c_title,
+                    partner_name=c_partner,
+                    progress_percent=progress,
+                    status=status,
+                    last_accessed_at=p.last_reset_at or "",
+                )
+            )
+        return summaries

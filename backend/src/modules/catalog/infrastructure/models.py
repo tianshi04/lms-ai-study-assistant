@@ -30,6 +30,16 @@ class SpecializationModel(Base):
     )
 
 
+class CategoryModel(Base):
+    __tablename__ = "categories"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    name: Mapped[str] = mapped_column(String(128), nullable=False)
+    slug: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    type: Mapped[str] = mapped_column(String(32), nullable=False)  # SUBJECT or LEVEL
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
 class CourseModel(Base):
     __tablename__ = "courses"
 
@@ -43,6 +53,12 @@ class CourseModel(Base):
     )
     instructor_names: Mapped[list[str]] = mapped_column(
         ARRAY(String(128)), nullable=False, default=list
+    )
+    subject: Mapped[str] = mapped_column(
+        String(64), nullable=False, server_default="UNSPECIFIED"
+    )
+    level: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default="UNSPECIFIED"
     )
     owner_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     co_instructor_ids: Mapped[list[str]] = mapped_column(

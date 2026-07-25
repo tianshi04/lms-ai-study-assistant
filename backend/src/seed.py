@@ -44,6 +44,7 @@ from src.modules.catalog.infrastructure.models import (
     LessonModel,
     SpecializationModel,
     WeekModuleModel,
+    CategoryModel,
 )
 from src.modules.certificate.infrastructure.models import (
     CertificateModel,
@@ -71,6 +72,60 @@ logging.basicConfig(
 logger = logging.getLogger("seed")
 
 
+def build_categories() -> list[CategoryModel]:
+    return [
+        CategoryModel(
+            id="cat-subj-cs",
+            name="Computer Science",
+            slug="computer-science",
+            type="SUBJECT",
+            created_at="2026-07-20T00:00:00Z",
+        ),
+        CategoryModel(
+            id="cat-subj-ds",
+            name="Data Science",
+            slug="data-science",
+            type="SUBJECT",
+            created_at="2026-07-20T00:00:00Z",
+        ),
+        CategoryModel(
+            id="cat-subj-biz",
+            name="Business",
+            slug="business",
+            type="SUBJECT",
+            created_at="2026-07-20T00:00:00Z",
+        ),
+        CategoryModel(
+            id="cat-subj-ai",
+            name="Artificial Intelligence",
+            slug="ai",
+            type="SUBJECT",
+            created_at="2026-07-20T00:00:00Z",
+        ),
+        CategoryModel(
+            id="cat-lvl-beg",
+            name="Beginner",
+            slug="beginner",
+            type="LEVEL",
+            created_at="2026-07-20T00:00:00Z",
+        ),
+        CategoryModel(
+            id="cat-lvl-int",
+            name="Intermediate",
+            slug="intermediate",
+            type="LEVEL",
+            created_at="2026-07-20T00:00:00Z",
+        ),
+        CategoryModel(
+            id="cat-lvl-adv",
+            name="Advanced",
+            slug="advanced",
+            type="LEVEL",
+            created_at="2026-07-20T00:00:00Z",
+        ),
+    ]
+
+
 def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]]:
     """Construct rich domain seed data objects for the initial catalog."""
     sample_url = (
@@ -91,6 +146,8 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         partner_logo_url=deeplearning_logo,
         instructor_names=["Andrew Ng", "Eddy Shyu"],
         owner_id="user_instructor_01",
+        subject="cat-subj-ds",
+        level="cat-lvl-int",
     )
 
     # Week 1
@@ -239,8 +296,10 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         description="Master modern Web Development using Next.js 15 App Router, TypeScript, ConnectRPC gRPC web, and Tailwind CSS v4.",
         partner_name="Meta",
         partner_logo_url=meta_logo,
-        instructor_names=["Jane Doe"],
-        owner_id="user_instructor_01",
+        instructor_names=["Rav Ahuja"],
+        owner_id="user_instructor_02",
+        subject="cat-subj-it",
+        level="cat-lvl-beg",
     )
 
     week_web1 = WeekModuleModel(
@@ -324,6 +383,8 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         partner_logo_url=deeplearning_logo,
         instructor_names=["Andrew Ng", "Kian Katanforoosh"],
         owner_id="user_instructor_01",
+        subject="cat-subj-cs",
+        level="cat-lvl-adv",
     )
     week_dl1 = WeekModuleModel(
         id="week-1-dl",
@@ -400,9 +461,12 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
                 await session.commit()
 
         logger.info("[SEED] Seeding demonstration catalog into PostgreSQL...")
+        categories = build_categories()
         courses, specializations = build_sample_catalog()
 
         # Idempotent Upsert using session.merge()
+        for cat in categories:
+            await session.merge(cat)
         for course in courses:
             await session.merge(course)
         for spec in specializations:

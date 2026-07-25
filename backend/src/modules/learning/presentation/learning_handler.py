@@ -5,11 +5,25 @@ from src.gen.learning.v1.learning_connect import LearningService
 from src.modules.learning.application.learning_usecase import LearningUseCase
 from src.modules.learning.domain.entities import (
     DeadlineStatus,
+    EnrolledCourseSummary,
     LearningProgress,
     PersonalNote,
     WeeklyDeadline,
 )
 from src.shared.auth import require_current_user
+
+
+def _to_pb_enrolled_course_summary(
+    s: EnrolledCourseSummary,
+) -> pb.EnrolledCourseSummary:
+    return pb.EnrolledCourseSummary(
+        course_id=s.course_id,
+        course_title=s.course_title,
+        partner_name=s.partner_name,
+        progress_percent=s.progress_percent,
+        status=s.status,
+        last_accessed_at=s.last_accessed_at,
+    )
 
 
 def _to_pb_deadline_status(status: DeadlineStatus) -> pb.DeadlineStatus:
@@ -120,4 +134,17 @@ class LearningHandler(LearningService):
         )
         return pb.MarkItemCompleteResponse(
             success=success, updated_progress=_to_pb_progress(progress)
+        )
+
+    async def list_my_enrolled_courses(
+        self,
+        request: pb.ListMyEnrolledCoursesRequest,
+        ctx: RequestContext[
+            pb.ListMyEnrolledCoursesRequest, pb.ListMyEnrolledCoursesResponse
+        ],
+    ) -> pb.ListMyEnrolledCoursesResponse:
+        current_user = require_current_user()
+        summaries = await self.use_case.list_enrolled_courses(user_id=current_user.id)
+        return pb.ListMyEnrolledCoursesResponse(
+            courses=[_to_pb_enrolled_course_summary(s) for s in summaries]
         )
