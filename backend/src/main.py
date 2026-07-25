@@ -55,8 +55,13 @@ async def run_auto_migrations() -> None:
 
 @asynccontextmanager
 async def lifespan(app: Starlette):
-    """Lifespan context manager for database migrations and initial seeding."""
+    """Lifespan context manager for AuthPolicy pre-initialization, database migrations and initial seeding."""
     try:
+        from src.shared.auth_policy import AuthPolicyRegistry
+
+        AuthPolicyRegistry._initialize()
+        print("[STARTUP] Pre-initialized AuthPolicyRegistry successfully.")
+
         await run_auto_migrations()
         from src.seed import seed_database
 
