@@ -140,11 +140,9 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             except ValueError:
                 pass
 
-        total_weeks = len(model.weekly_deadlines)
-        # BR_DEADLINE_001: Default Self-paced Course_End_Date = 180 days from enrollment/registration
-        course_end_date = min(
-            now + timedelta(days=7 * total_weeks), now + timedelta(days=180)
-        )
+        total_weeks = max(1, len(model.weekly_deadlines))
+        # BR_DEADLINE_001: Self-paced Course_End_Date is extended from current reset time to avoid clustered deadlines
+        course_end_date = now + timedelta(days=max(180, 7 * total_weeks + 30))
         for i, d in enumerate(model.weekly_deadlines, start=1):
             natural_due = now + timedelta(days=7 * i)
             d.due_date = min(natural_due, course_end_date).strftime("%Y-%m-%d")
