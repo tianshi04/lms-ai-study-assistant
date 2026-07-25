@@ -24,10 +24,10 @@ class Settings(BaseSettings):
 
     # 3. MinIO / S3 Object Storage credentials for SDK Client & Presigned URLs
     MINIO_ENDPOINT: str = Field(
-        default="http://localhost:9000", description="MinIO endpoint URL"
+        default="http://localhost:9090", description="MinIO endpoint URL"
     )
     MINIO_PUBLIC_ENDPOINT: str = Field(
-        default="http://localhost:9000",
+        default="http://localhost:8000",
         description="MinIO public endpoint URL for client access",
     )
     MINIO_ACCESS_KEY: str = Field(

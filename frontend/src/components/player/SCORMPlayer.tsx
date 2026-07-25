@@ -147,7 +147,7 @@ export function SCORMPlayer({ activeItem, userId, onComplete }: SCORMPlayerProps
   }
 
   // Construct iframe source URL targeting the public MinIO bucket assets
-  const scormUrl = `http://localhost:9000/coursera-assets/${activeItem.scormPackagePath}/${activeItem.scormEntryHtml}`;
+  const scormUrl = `http://localhost:8000/coursera-assets/${activeItem.scormPackagePath}/${activeItem.scormEntryHtml}`;
 
   return (
     <div className="w-full h-full bg-slate-950 flex flex-col relative">

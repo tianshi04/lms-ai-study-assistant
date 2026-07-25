@@ -8,6 +8,9 @@ class S3StorageService:
 
     def __init__(self) -> None:
         self.endpoint_url = settings.MINIO_ENDPOINT
+        self.public_endpoint_url = getattr(
+            settings, "MINIO_PUBLIC_ENDPOINT", self.endpoint_url
+        )
         self.access_key = settings.MINIO_ACCESS_KEY
         self.secret_key = settings.MINIO_SECRET_KEY
         self.bucket_name = settings.MINIO_BUCKET_NAME
@@ -25,17 +28,31 @@ class S3StorageService:
     def _to_public_url(self, url: str) -> str:
         """Replace internal minio endpoint with public endpoint for browser access."""
         internal_base = self.endpoint_url.rstrip("/")
-        public_endpoint = getattr(settings, "MINIO_PUBLIC_ENDPOINT", self.endpoint_url)
-        public_base = public_endpoint.rstrip("/")
+        public_base = self.public_endpoint_url.rstrip("/")
         if internal_base != public_base and url.startswith(internal_base):
             return url.replace(internal_base, public_base, 1)
         return url
 
     def _get_client(self):
-        """Get an async S3 client context manager."""
+        """Get an async S3 client for internal operations (upload, download, bucket mgmt)."""
         return self.session.client(
             "s3",
             endpoint_url=self.endpoint_url,
+            use_ssl=self.use_ssl,
+            config=self.botocore_config,
+        )
+
+    def _get_public_client(self):
+        """Get an async S3 client using public endpoint for presigned URL generation.
+
+        Presigned URLs include the host in the AWS4-HMAC-SHA256 signature.
+        If we generate the URL with 'minio:9000' but the browser sends it to
+        'localhost:9090', the signature will not match and MinIO rejects the request.
+        This client uses the public endpoint so the signature matches the browser's Host header.
+        """
+        return self.session.client(
+            "s3",
+            endpoint_url=self.public_endpoint_url,
             use_ssl=self.use_ssl,
             config=self.botocore_config,
         )
@@ -127,13 +144,13 @@ class S3StorageService:
     ) -> str:
         """Generate a presigned GET URL for secure temporary file downloading/streaming."""
         target_bucket = bucket_name or self.bucket_name
-        async with self._get_client() as s3_client:
+        async with self._get_public_client() as s3_client:
             url = await s3_client.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": target_bucket, "Key": object_key},
                 ExpiresIn=expiration,
             )
-            return self._to_public_url(url)
+            return url
 
     async def generate_presigned_upload_url(
         self,
@@ -144,7 +161,7 @@ class S3StorageService:
     ) -> str:
         """Generate a presigned PUT URL for client-side direct file uploading."""
         target_bucket = bucket_name or self.bucket_name
-        async with self._get_client() as s3_client:
+        async with self._get_public_client() as s3_client:
             url = await s3_client.generate_presigned_url(
                 "put_object",
                 Params={
@@ -154,7 +171,7 @@ class S3StorageService:
                 },
                 ExpiresIn=expiration,
             )
-            return self._to_public_url(url)
+            return url
 
     async def delete_file(
         self,

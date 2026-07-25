@@ -58,6 +58,11 @@ export function VideoUploadWidget({
           xhr.open("PUT", res.uploadUrl, true);
           xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
 
+          // Timeout: if Docker port forwarding is broken (common on WSL2/Windows),
+          // the presigned PUT will hang forever. Auto-abort after 8s to trigger fallback.
+          xhr.timeout = 8000;
+          xhr.ontimeout = () => reject(new Error("Presigned PUT timed out (MinIO port unreachable)"));
+
           xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) {
               const percent = Math.round(30 + (e.loaded / e.total) * 60);
