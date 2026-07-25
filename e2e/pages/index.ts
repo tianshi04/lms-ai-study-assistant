@@ -13,5 +13,4 @@ export { VerifyPortalPage } from './verify-portal.page';
 export { CertificatePage } from './certificate.page';
 export { InstructorAnnouncementsPage } from './instructor-announcements.page';
 export { InstructorAnalyticsPage } from './instructor-analytics.page';
-
-
+export { AdminDashboardPage } from './admin-dashboard.page';

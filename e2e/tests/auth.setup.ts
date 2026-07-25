@@ -1,4 +1,4 @@
-import { test as setup, expect } from '@playwright/test';
+import { test as setup, expect, Page } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
 import { E2E_CONFIG } from '../config/credentials';
@@ -10,7 +10,7 @@ const AUTH_DIR = path.join(__dirname, '../.auth');
  * Auth tokens are stored in localStorage by the Next.js app after successful login.
  */
 async function loginAndSave(
-  page: Parameters<Parameters<typeof setup>[1]>[0]['page'],
+  page: Page,
   email: string,
   password: string,
   stateFile: string,
