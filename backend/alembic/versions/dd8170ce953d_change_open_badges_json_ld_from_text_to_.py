@@ -21,6 +21,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Upgrade schema."""
+    op.execute("ALTER TABLE verified_certificates ALTER COLUMN open_badges_json_ld DROP DEFAULT")
     op.alter_column(
         "verified_certificates",
         "open_badges_json_ld",
