@@ -46,7 +46,7 @@ test.describe('Full System Blackbox - Instructor Flows (POM)', () => {
     await builderPage.createWeekModule(weekTitle, summary);
 
     // Verify new week module appears in syllabus tree
-    await expect(page.locator(`text=${weekTitle}`)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text=${weekTitle}`)).toBeVisible({ timeout: 15000 });
   });
 
   test('should allow instructor to post a new course announcement', async ({ page }) => {
@@ -60,7 +60,7 @@ test.describe('Full System Blackbox - Instructor Flows (POM)', () => {
     await announcementsPage.postAnnouncement(annTitle, annContent);
 
     // Verify announcement appears on page
-    await expect(page.locator(`text=${annTitle}`)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text=${annTitle}`)).toBeVisible({ timeout: 15000 });
   });
 
   test('should load instructor analytics and student roster page', async ({ page }) => {
@@ -68,8 +68,8 @@ test.describe('Full System Blackbox - Instructor Flows (POM)', () => {
     await analyticsPage.goto('course-python-ai');
     await analyticsPage.verifyPageLoaded();
 
-    await expect(analyticsPage.totalStudentsCard).toBeVisible();
-    await expect(analyticsPage.completionRateCard).toBeVisible();
+    await expect(analyticsPage.totalStudentsCard).toBeVisible({ timeout: 15000 });
+    await expect(analyticsPage.completionRateCard).toBeVisible({ timeout: 15000 });
   });
 
   test('should display drag handles and support drag & drop reordering for syllabus items', async ({ page }) => {

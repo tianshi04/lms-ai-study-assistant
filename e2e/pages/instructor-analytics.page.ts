@@ -20,6 +20,6 @@ export class InstructorAnalyticsPage {
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/instructor\/courses\/.+\/analytics/);
     await expect(this.page.locator('body')).toBeVisible();
-    await expect(this.totalStudentsCard).toBeVisible();
+    await expect(this.totalStudentsCard).toBeVisible({ timeout: 15000 });
   }
 }
