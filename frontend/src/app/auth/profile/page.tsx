@@ -1,13 +1,11 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
-import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService } from "@/gen/identity/v1/identity_pb";
-import { ThemeToggle } from "@/components/providers/ThemeToggle";
+import { Navbar } from "@/components/layout/Navbar";
 import { useUserProfileQuery } from "@/lib/query_hooks";
 
 import { getAvatarDataUri } from "@/lib/avatar";
@@ -15,7 +13,6 @@ import { getAvatarDataUri } from "@/lib/avatar";
 const emptySubscribe = () => () => {};
 
 export default function ProfilePage() {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const isMounted = useSyncExternalStore(
     emptySubscribe,
@@ -58,10 +55,6 @@ export default function ProfilePage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.clear();
-    router.push("/auth/login");
-  };
 
   if (loading) {
     return (
@@ -79,31 +72,7 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col justify-between transition-colors">
-      {/* Header */}
-      <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href="/courses" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              C
-            </div>
-            <div>
-              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                Coursera AI
-              </span>
-              <span className="text-xs block text-slate-500 dark:text-slate-400 font-medium">LMS Platform</span>
-            </div>
-          </Link>
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
-            <button
-              onClick={handleLogout}
-              className="text-xs font-semibold px-4 py-2 rounded-lg bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-100 transition-colors"
-            >
-              Đăng xuất
-            </button>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="max-w-4xl mx-auto px-4 py-12 w-full flex-1">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none">

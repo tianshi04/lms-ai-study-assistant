@@ -6,8 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { getRpcClient } from "@/lib/connect_client";
 import { CertificateService, type FinancialAidApplication } from "@/gen/certificate/v1/certificate_pb";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
-import { ThemeToggle } from "@/components/providers/ThemeToggle";
-import { LanguageToggle } from "@/components/providers/LanguageToggle";
+import { Navbar } from "@/components/layout/Navbar";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 import { useToast } from "@/components/ui/Toast";
 
@@ -337,25 +336,7 @@ function FinancialAidContent() {
 export default function FinancialAidPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col justify-between transition-colors">
-      <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href="/courses" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-              C
-            </div>
-            <div>
-              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                Coursera AI
-              </span>
-              <span className="text-xs block text-slate-500 dark:text-slate-400 font-medium">LMS Platform</span>
-            </div>
-          </Link>
-          <div className="flex items-center gap-3">
-            <LanguageToggle />
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       <Suspense fallback={
         <div className="flex items-center justify-center py-24">
