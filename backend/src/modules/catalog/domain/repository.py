@@ -6,6 +6,7 @@ from src.modules.catalog.domain.entities import (
     CourseAnnouncement,
     CourseReview,
     InstructorAnalytics,
+    ItemType,
     Lesson,
     Specialization,
 )
@@ -123,6 +124,26 @@ class ICatalogRepository(ABC):
         pass
 
     @abstractmethod
+    async def create_learning_item(
+        self,
+        course_id: str,
+        lesson_id: str,
+        title: str,
+        item_type: int | ItemType | str,
+        estimated_minutes: int,
+        video_url: str,
+        reading_markdown: str,
+        starter_code: str = "",
+        test_cases_json: str = "",
+        language: str = "",
+        rubric_criteria_json: str = "",
+        quiz_matrix_id: str = "",
+        scorm_package_path: str = "",
+        scorm_entry_html: str = "",
+    ):
+        pass
+
+    @abstractmethod
     async def update_learning_item(
         self,
         id: str,
@@ -134,6 +155,13 @@ class ICatalogRepository(ABC):
         video_url: str,
         reading_markdown: str,
         in_video_quizzes: list | None = None,
+        starter_code: str = "",
+        test_cases_json: str = "",
+        language: str = "",
+        rubric_criteria_json: str = "",
+        quiz_matrix_id: str = "",
+        scorm_package_path: str = "",
+        scorm_entry_html: str = "",
     ):
         pass
 

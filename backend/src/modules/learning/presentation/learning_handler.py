@@ -5,25 +5,11 @@ from src.gen.learning.v1.learning_connect import LearningService
 from src.modules.learning.application.learning_usecase import LearningUseCase
 from src.modules.learning.domain.entities import (
     DeadlineStatus,
-    EnrolledCourseSummary,
     LearningProgress,
     PersonalNote,
     WeeklyDeadline,
 )
 from src.shared.auth import require_current_user
-
-
-def _to_pb_enrolled_course_summary(
-    s: EnrolledCourseSummary,
-) -> pb.EnrolledCourseSummary:
-    return pb.EnrolledCourseSummary(
-        course_id=s.course_id,
-        course_title=s.course_title,
-        partner_name=s.partner_name,
-        progress_percent=s.progress_percent,
-        status=s.status,
-        last_accessed_at=s.last_accessed_at,
-    )
 
 
 def _to_pb_deadline_status(status: DeadlineStatus) -> pb.DeadlineStatus:
@@ -136,15 +122,54 @@ class LearningHandler(LearningService):
             success=success, updated_progress=_to_pb_progress(progress)
         )
 
-    async def list_my_enrolled_courses(
+    async def save_scorm_tracking(
         self,
-        request: pb.ListMyEnrolledCoursesRequest,
-        ctx: RequestContext[
-            pb.ListMyEnrolledCoursesRequest, pb.ListMyEnrolledCoursesResponse
-        ],
-    ) -> pb.ListMyEnrolledCoursesResponse:
+        request: pb.SaveScormTrackingRequest,
+        ctx: RequestContext[pb.SaveScormTrackingRequest, pb.SaveScormTrackingResponse],
+    ) -> pb.SaveScormTrackingResponse:
         current_user = require_current_user()
-        summaries = await self.use_case.list_enrolled_courses(user_id=current_user.id)
-        return pb.ListMyEnrolledCoursesResponse(
-            courses=[_to_pb_enrolled_course_summary(s) for s in summaries]
+        tracking = await self.use_case.save_scorm_tracking(
+            user_id=current_user.id,
+            item_id=request.item_id,
+            cmi_core_lesson_status=request.cmi_core_lesson_status,
+            cmi_core_score_raw=request.cmi_core_score_raw,
+            cmi_core_session_time=request.cmi_core_session_time,
+            cmi_core_lesson_location=request.cmi_core_lesson_location,
+            cmi_suspend_data=request.cmi_suspend_data,
+        )
+        return pb.SaveScormTrackingResponse(
+            tracking=pb.ScormTracking(
+                user_id=tracking.user_id,
+                item_id=tracking.item_id,
+                cmi_core_lesson_status=tracking.cmi_core_lesson_status,
+                cmi_core_score_raw=tracking.cmi_core_score_raw,
+                cmi_core_session_time=tracking.cmi_core_session_time,
+                cmi_core_lesson_location=tracking.cmi_core_lesson_location,
+                cmi_suspend_data=tracking.cmi_suspend_data,
+                updated_at=tracking.updated_at,
+            )
+        )
+
+    async def get_scorm_tracking(
+        self,
+        request: pb.GetScormTrackingRequest,
+        ctx: RequestContext[pb.GetScormTrackingRequest, pb.GetScormTrackingResponse],
+    ) -> pb.GetScormTrackingResponse:
+        current_user = require_current_user()
+        tracking = await self.use_case.get_scorm_tracking(
+            user_id=current_user.id, item_id=request.item_id
+        )
+        if not tracking:
+            return pb.GetScormTrackingResponse(tracking=None)
+        return pb.GetScormTrackingResponse(
+            tracking=pb.ScormTracking(
+                user_id=tracking.user_id,
+                item_id=tracking.item_id,
+                cmi_core_lesson_status=tracking.cmi_core_lesson_status,
+                cmi_core_score_raw=tracking.cmi_core_score_raw,
+                cmi_core_session_time=tracking.cmi_core_session_time,
+                cmi_core_lesson_location=tracking.cmi_core_lesson_location,
+                cmi_suspend_data=tracking.cmi_suspend_data,
+                updated_at=tracking.updated_at,
+            )
         )

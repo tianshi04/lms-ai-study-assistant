@@ -118,6 +118,69 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
     async def get_grade_appeal(self, submission_id: str) -> GradeAppeal | None:
         return self.grade_appeals.get(submission_id)
 
+    async def create_question_bank(
+        self, course_id: str, title: str, category: str, description: str
+    ):
+        from src.modules.assessment.domain.entities import QuestionBank
+
+        return QuestionBank(
+            id="bank_test_1",
+            course_id=course_id,
+            title=title,
+            category=category,
+            description=description,
+        )
+
+    async def list_question_banks(self, course_id: str):
+        return []
+
+    async def add_question_to_bank(
+        self,
+        bank_id: str,
+        text: str,
+        question_type: str,
+        difficulty: str,
+        explanation: str,
+        options_data: list[dict],
+    ):
+        from src.modules.assessment.domain.entities import Question
+
+        return Question(
+            id="q_test_1",
+            bank_id=bank_id,
+            text=text,
+            question_type=question_type,
+            difficulty=difficulty,
+            explanation=explanation,
+        )
+
+    async def configure_quiz_matrix(
+        self,
+        item_id: str,
+        bank_id: str,
+        time_limit_minutes: int,
+        passing_threshold_percent: float,
+        easy_count: int,
+        medium_count: int,
+        hard_count: int,
+        shuffle_options: bool,
+    ):
+        from src.modules.assessment.domain.entities import QuizMatrix
+
+        return QuizMatrix(
+            item_id=item_id,
+            bank_id=bank_id,
+            time_limit_minutes=time_limit_minutes,
+            passing_threshold_percent=passing_threshold_percent,
+            easy_count=easy_count,
+            medium_count=medium_count,
+            hard_count=hard_count,
+            shuffle_options=shuffle_options,
+        )
+
+    async def get_quiz_matrix(self, item_id: str):
+        return None
+
 
 @pytest.mark.asyncio
 async def test_honor_code_agreement():

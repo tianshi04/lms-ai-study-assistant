@@ -200,3 +200,168 @@ class AssessmentHandler(AssessmentService):
             ta_score=request.ta_score,
         )
         return pb.RegradePeerSubmissionByStaffResponse(success=success, message=msg)
+
+    async def create_question_bank(
+        self,
+        request: pb.CreateQuestionBankRequest,
+        ctx: RequestContext[
+            pb.CreateQuestionBankRequest, pb.CreateQuestionBankResponse
+        ],
+    ) -> pb.CreateQuestionBankResponse:
+        require_current_user()
+        bank = await self.use_case.create_question_bank(
+            course_id=request.course_id,
+            title=request.title,
+            category=request.category,
+            description=request.description,
+        )
+        return pb.CreateQuestionBankResponse(
+            bank=pb.QuestionBank(
+                id=bank.id,
+                course_id=bank.course_id,
+                title=bank.title,
+                category=bank.category,
+                description=bank.description,
+                created_at=bank.created_at or "",
+            )
+        )
+
+    async def list_question_banks(
+        self,
+        request: pb.ListQuestionBanksRequest,
+        ctx: RequestContext[pb.ListQuestionBanksRequest, pb.ListQuestionBanksResponse],
+    ) -> pb.ListQuestionBanksResponse:
+        banks = await self.use_case.list_question_banks(course_id=request.course_id)
+        pb_banks = []
+        for b in banks:
+            pb_questions = []
+            for q in b.questions:
+                pb_options = [
+                    pb.QuestionOption(
+                        id=opt.id,
+                        question_id=opt.question_id,
+                        option_text=opt.option_text,
+                        is_correct=opt.is_correct,
+                        order_index=opt.order_index,
+                    )
+                    for opt in q.options
+                ]
+                pb_questions.append(
+                    pb.Question(
+                        id=q.id,
+                        bank_id=q.bank_id,
+                        text=q.text,
+                        question_type=q.question_type,
+                        difficulty=q.difficulty,
+                        explanation=q.explanation,
+                        options=pb_options,
+                        created_at=q.created_at or "",
+                    )
+                )
+            pb_banks.append(
+                pb.QuestionBank(
+                    id=b.id,
+                    course_id=b.course_id,
+                    title=b.title,
+                    category=b.category,
+                    description=b.description,
+                    questions=pb_questions,
+                    created_at=b.created_at or "",
+                )
+            )
+        return pb.ListQuestionBanksResponse(banks=pb_banks)
+
+    async def add_question_to_bank(
+        self,
+        request: pb.AddQuestionToBankRequest,
+        ctx: RequestContext[pb.AddQuestionToBankRequest, pb.AddQuestionToBankResponse],
+    ) -> pb.AddQuestionToBankResponse:
+        require_current_user()
+        options_data = [
+            {"option_text": opt.option_text, "is_correct": opt.is_correct}
+            for opt in request.options
+        ]
+        q = await self.use_case.add_question_to_bank(
+            bank_id=request.bank_id,
+            text=request.text,
+            question_type=request.question_type,
+            difficulty=request.difficulty,
+            explanation=request.explanation,
+            options_data=options_data,
+        )
+        pb_options = [
+            pb.QuestionOption(
+                id=opt.id,
+                question_id=opt.question_id,
+                option_text=opt.option_text,
+                is_correct=opt.is_correct,
+                order_index=opt.order_index,
+            )
+            for opt in q.options
+        ]
+        return pb.AddQuestionToBankResponse(
+            question=pb.Question(
+                id=q.id,
+                bank_id=q.bank_id,
+                text=q.text,
+                question_type=q.question_type,
+                difficulty=q.difficulty,
+                explanation=q.explanation,
+                options=pb_options,
+                created_at=q.created_at or "",
+            )
+        )
+
+    async def configure_quiz_matrix(
+        self,
+        request: pb.ConfigureQuizMatrixRequest,
+        ctx: RequestContext[
+            pb.ConfigureQuizMatrixRequest, pb.ConfigureQuizMatrixResponse
+        ],
+    ) -> pb.ConfigureQuizMatrixResponse:
+        require_current_user()
+        matrix = await self.use_case.configure_quiz_matrix(
+            item_id=request.item_id,
+            bank_id=request.bank_id,
+            time_limit_minutes=request.time_limit_minutes,
+            passing_threshold_percent=request.passing_threshold_percent,
+            easy_count=request.easy_count,
+            medium_count=request.medium_count,
+            hard_count=request.hard_count,
+            shuffle_options=request.shuffle_options,
+        )
+        return pb.ConfigureQuizMatrixResponse(
+            matrix=pb.QuizMatrix(
+                item_id=matrix.item_id,
+                bank_id=matrix.bank_id,
+                time_limit_minutes=matrix.time_limit_minutes,
+                passing_threshold_percent=matrix.passing_threshold_percent,
+                easy_count=matrix.easy_count,
+                medium_count=matrix.medium_count,
+                hard_count=matrix.hard_count,
+                shuffle_options=matrix.shuffle_options,
+            )
+        )
+
+    async def get_quiz_matrix(
+        self,
+        request: pb.GetQuizMatrixRequest,
+        ctx: RequestContext[pb.GetQuizMatrixRequest, pb.GetQuizMatrixResponse],
+    ) -> pb.GetQuizMatrixResponse:
+        matrix = await self.use_case.get_quiz_matrix(item_id=request.item_id)
+        if not matrix:
+            raise ConnectError(
+                Code.NOT_FOUND, f"Quiz Matrix for item {request.item_id} not found"
+            )
+        return pb.GetQuizMatrixResponse(
+            matrix=pb.QuizMatrix(
+                item_id=matrix.item_id,
+                bank_id=matrix.bank_id,
+                time_limit_minutes=matrix.time_limit_minutes,
+                passing_threshold_percent=matrix.passing_threshold_percent,
+                easy_count=matrix.easy_count,
+                medium_count=matrix.medium_count,
+                hard_count=matrix.hard_count,
+                shuffle_options=matrix.shuffle_options,
+            )
+        )

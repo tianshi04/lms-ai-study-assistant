@@ -6,7 +6,10 @@ from src.modules.assessment.domain.entities import (
     LabSubmission,
     PeerAssignmentSubmission,
     PeerReview,
+    Question,
+    QuestionBank,
     QuizCooldown,
+    QuizMatrix,
     QuizSubmission,
 )
 
@@ -96,4 +99,44 @@ class AssessmentRepositoryInterface(ABC):
 
     @abstractmethod
     async def get_grade_appeal(self, submission_id: str) -> Optional[GradeAppeal]:
+        pass
+
+    @abstractmethod
+    async def create_question_bank(
+        self, course_id: str, title: str, category: str, description: str
+    ) -> QuestionBank:
+        pass
+
+    @abstractmethod
+    async def list_question_banks(self, course_id: str) -> list[QuestionBank]:
+        pass
+
+    @abstractmethod
+    async def add_question_to_bank(
+        self,
+        bank_id: str,
+        text: str,
+        question_type: str,
+        difficulty: str,
+        explanation: str,
+        options_data: list[dict],
+    ) -> Question:
+        pass
+
+    @abstractmethod
+    async def configure_quiz_matrix(
+        self,
+        item_id: str,
+        bank_id: str,
+        time_limit_minutes: int,
+        passing_threshold_percent: float,
+        easy_count: int,
+        medium_count: int,
+        hard_count: int,
+        shuffle_options: bool,
+    ) -> QuizMatrix:
+        pass
+
+    @abstractmethod
+    async def get_quiz_matrix(self, item_id: str) -> Optional[QuizMatrix]:
         pass

@@ -10,7 +10,10 @@ from src.modules.assessment.domain.entities import (
     LabSubmission,
     PeerAssignmentSubmission,
     PeerReview,
+    Question,
+    QuestionBank,
     QuizCooldown,
+    QuizMatrix,
     QuizSubmission,
     RubricCriteria,
 )
@@ -560,3 +563,69 @@ class AssessmentUseCase:
                 True,
                 "Đã gửi báo cáo lượt chấm chéo bất thường đến Trợ giảng (TA Review Queue). Bài nộp chuyển sang trạng thái PENDING_STAFF_REVIEW.",
             )
+
+    async def create_question_bank(
+        self, course_id: str, title: str, category: str, description: str
+    ) -> QuestionBank:
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            return await repo.create_question_bank(
+                course_id=course_id,
+                title=title,
+                category=category,
+                description=description,
+            )
+
+    async def list_question_banks(self, course_id: str) -> list[QuestionBank]:
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            return await repo.list_question_banks(course_id=course_id)
+
+    async def add_question_to_bank(
+        self,
+        bank_id: str,
+        text: str,
+        question_type: str,
+        difficulty: str,
+        explanation: str,
+        options_data: list[dict],
+    ) -> Question:
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            return await repo.add_question_to_bank(
+                bank_id=bank_id,
+                text=text,
+                question_type=question_type,
+                difficulty=difficulty,
+                explanation=explanation,
+                options_data=options_data,
+            )
+
+    async def configure_quiz_matrix(
+        self,
+        item_id: str,
+        bank_id: str,
+        time_limit_minutes: int,
+        passing_threshold_percent: float,
+        easy_count: int,
+        medium_count: int,
+        hard_count: int,
+        shuffle_options: bool,
+    ) -> QuizMatrix:
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            return await repo.configure_quiz_matrix(
+                item_id=item_id,
+                bank_id=bank_id,
+                time_limit_minutes=time_limit_minutes,
+                passing_threshold_percent=passing_threshold_percent,
+                easy_count=easy_count,
+                medium_count=medium_count,
+                hard_count=hard_count,
+                shuffle_options=shuffle_options,
+            )
+
+    async def get_quiz_matrix(self, item_id: str) -> Optional[QuizMatrix]:
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            return await repo.get_quiz_matrix(item_id=item_id)

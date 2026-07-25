@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -9,15 +10,16 @@ from sqlalchemy.orm import selectinload
 
 from src.modules.learning.domain.entities import (
     DeadlineStatus,
-    EnrolledCourseSummary,
     LearningProgress,
     PersonalNote,
+    ScormTracking,
     WeeklyDeadline,
 )
 from src.modules.learning.domain.repository import ILearningRepository
 from src.modules.learning.infrastructure.models import (
     LearningProgressModel,
     PersonalNoteModel,
+    ScormTrackingModel,
     WeeklyDeadlineModel,
 )
 
@@ -217,36 +219,77 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         await self.session.commit()
         return True, _model_to_domain_progress(model)
 
-    async def list_user_progresses(self, user_id: str) -> list[LearningProgress]:
-        stmt = (
-            select(LearningProgressModel)
-            .where(LearningProgressModel.user_id == user_id)
-            .options(selectinload(LearningProgressModel.weekly_deadlines))
-        )
+    async def save_scorm_tracking(
+        self,
+        user_id: str,
+        item_id: str,
+        cmi_core_lesson_status: str,
+        cmi_core_score_raw: float,
+        cmi_core_session_time: str,
+        cmi_core_lesson_location: str,
+        cmi_suspend_data: str,
+    ) -> ScormTracking:
+        now_str = datetime.now(timezone.utc).isoformat()
+        key = f"{user_id}:{item_id}"
+        stmt = select(ScormTrackingModel).where(ScormTrackingModel.id == key)
         res = await self.session.execute(stmt)
-        models = res.scalars().all()
-        return [_model_to_domain_progress(m) for m in models]
+        model = res.scalar_one_or_none()
 
-    async def list_enrolled_courses(self, user_id: str) -> list[EnrolledCourseSummary]:
-        progresses = await self.list_user_progresses(user_id)
-        summaries = []
-        for lp in progresses:
-            progress = lp.overall_progress_percent
-            if progress <= 0:
-                status = "NOT_STARTED"
-            elif progress >= 100.0:
-                status = "COMPLETED"
-            else:
-                status = "IN_PROGRESS"
-
-            summaries.append(
-                EnrolledCourseSummary(
-                    course_id=lp.course_id,
-                    course_title="",
-                    partner_name="",
-                    progress_percent=progress,
-                    status=status,
-                    last_accessed_at=lp.last_reset_at or "",
-                )
+        if model:
+            model.cmi_core_lesson_status = (
+                cmi_core_lesson_status or model.cmi_core_lesson_status
             )
-        return summaries
+            model.cmi_core_score_raw = cmi_core_score_raw
+            model.cmi_core_session_time = (
+                cmi_core_session_time or model.cmi_core_session_time
+            )
+            model.cmi_core_lesson_location = (
+                cmi_core_lesson_location or model.cmi_core_lesson_location
+            )
+            model.cmi_suspend_data = cmi_suspend_data or model.cmi_suspend_data
+            model.updated_at = now_str
+        else:
+            model = ScormTrackingModel(
+                id=key,
+                user_id=user_id,
+                item_id=item_id,
+                cmi_core_lesson_status=cmi_core_lesson_status or "not attempted",
+                cmi_core_score_raw=cmi_core_score_raw,
+                cmi_core_session_time=cmi_core_session_time or "",
+                cmi_core_lesson_location=cmi_core_lesson_location or "",
+                cmi_suspend_data=cmi_suspend_data or "",
+                updated_at=now_str,
+            )
+            self.session.add(model)
+
+        await self.session.commit()
+        return ScormTracking(
+            user_id=model.user_id,
+            item_id=model.item_id,
+            cmi_core_lesson_status=model.cmi_core_lesson_status,
+            cmi_core_score_raw=model.cmi_core_score_raw,
+            cmi_core_session_time=model.cmi_core_session_time,
+            cmi_core_lesson_location=model.cmi_core_lesson_location,
+            cmi_suspend_data=model.cmi_suspend_data,
+            updated_at=model.updated_at,
+        )
+
+    async def get_scorm_tracking(
+        self, user_id: str, item_id: str
+    ) -> Optional[ScormTracking]:
+        key = f"{user_id}:{item_id}"
+        stmt = select(ScormTrackingModel).where(ScormTrackingModel.id == key)
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return None
+        return ScormTracking(
+            user_id=model.user_id,
+            item_id=model.item_id,
+            cmi_core_lesson_status=model.cmi_core_lesson_status,
+            cmi_core_score_raw=model.cmi_core_score_raw,
+            cmi_core_session_time=model.cmi_core_session_time,
+            cmi_core_lesson_location=model.cmi_core_lesson_location,
+            cmi_suspend_data=model.cmi_suspend_data,
+            updated_at=model.updated_at,
+        )

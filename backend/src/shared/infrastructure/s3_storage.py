@@ -39,6 +39,24 @@ class S3StorageService:
                 await s3_client.head_bucket(Bucket=target_bucket)
             except Exception:
                 await s3_client.create_bucket(Bucket=target_bucket)
+                # Set public read policy so standard HTML5 iframe can load SCORM resources
+                import json
+
+                policy = {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Sid": "PublicRead",
+                            "Effect": "Allow",
+                            "Principal": "*",
+                            "Action": ["s3:GetObject"],
+                            "Resource": [f"arn:aws:s3:::{target_bucket}/*"],
+                        }
+                    ],
+                }
+                await s3_client.put_bucket_policy(
+                    Bucket=target_bucket, Policy=json.dumps(policy)
+                )
 
     async def upload_file(
         self,

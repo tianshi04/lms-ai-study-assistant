@@ -82,19 +82,37 @@ message MarkItemCompleteResponse {
   LearningProgress updated_progress = 2;
 }
 
-message ListMyEnrolledCoursesRequest {}
-
-message EnrolledCourseSummary {
-  string course_id = 1;
-  string course_title = 2;
-  string partner_name = 3;
-  float progress_percent = 4;
-  string status = 5;          // "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
-  string last_accessed_at = 6;
+message ScormTracking {
+  string id = 1;
+  string user_id = 2;
+  string item_id = 3;
+  string cmi_core_lesson_status = 4;
+  float cmi_core_score_raw = 5;
+  string cmi_core_lesson_location = 6;
+  string cmi_suspend_data = 7;
+  string updated_at = 8;
+  string cmi_core_session_time = 9;
 }
 
-message ListMyEnrolledCoursesResponse {
-  repeated EnrolledCourseSummary courses = 1;
+message SaveScormTrackingRequest {
+  string item_id = 1;
+  string cmi_core_lesson_status = 2;
+  float cmi_core_score_raw = 3;
+  string cmi_core_lesson_location = 4;
+  string cmi_suspend_data = 5;
+  string cmi_core_session_time = 6;
+}
+
+message SaveScormTrackingResponse {
+  ScormTracking tracking = 1;
+}
+
+message GetScormTrackingRequest {
+  string item_id = 1;
+}
+
+message GetScormTrackingResponse {
+  ScormTracking tracking = 1;
 }
 
 service LearningService {
@@ -113,7 +131,10 @@ service LearningService {
   rpc MarkItemComplete(MarkItemCompleteRequest) returns (MarkItemCompleteResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
-  rpc ListMyEnrolledCourses(ListMyEnrolledCoursesRequest) returns (ListMyEnrolledCoursesResponse) {
+  rpc SaveScormTracking(SaveScormTrackingRequest) returns (SaveScormTrackingResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetScormTracking(GetScormTrackingRequest) returns (GetScormTrackingResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }

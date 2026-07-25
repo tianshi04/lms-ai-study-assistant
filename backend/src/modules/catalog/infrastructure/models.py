@@ -145,6 +145,17 @@ class LearningItemModel(Base):
     order_index: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
     )
+    starter_code: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    test_cases_json: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    language: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    rubric_criteria_json: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    quiz_matrix_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    scorm_package_path: Mapped[str] = mapped_column(
+        String(512), nullable=False, default=""
+    )
+    scorm_entry_html: Mapped[str] = mapped_column(
+        String(255), nullable=False, default=""
+    )
 
     lesson: Mapped["LessonModel"] = relationship("LessonModel", back_populates="items")
     interactive_transcripts: Mapped[list["InteractiveTranscriptModel"]] = relationship(

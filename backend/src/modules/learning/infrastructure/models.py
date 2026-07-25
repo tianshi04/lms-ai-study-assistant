@@ -57,3 +57,25 @@ class PersonalNoteModel(Base):
     highlighted_text: Mapped[str] = mapped_column(Text, nullable=False)
     note_comment: Mapped[str] = mapped_column(Text, nullable=False, default="")
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class ScormTrackingModel(Base):
+    __tablename__ = "scorm_trackings"
+
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)  # user_id:item_id
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    cmi_core_lesson_status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="not attempted"
+    )
+    cmi_core_score_raw: Mapped[float] = mapped_column(
+        Float, nullable=False, default=0.0
+    )
+    cmi_core_session_time: Mapped[str] = mapped_column(
+        String(64), nullable=False, default=""
+    )
+    cmi_core_lesson_location: Mapped[str] = mapped_column(
+        String(255), nullable=False, default=""
+    )
+    cmi_suspend_data: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    updated_at: Mapped[str] = mapped_column(String(64), nullable=False)

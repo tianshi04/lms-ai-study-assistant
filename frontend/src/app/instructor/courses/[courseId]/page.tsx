@@ -48,6 +48,27 @@ export default function InstructorCourseBuilderPage({
   const [itemMinutes, setItemMinutes] = useState(10);
   const [videoUrl, setVideoUrl] = useState("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4");
   const [readingMarkdown, setReadingMarkdown] = useState("");
+  const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
+
+  // Extended Native Fields (Lab, Quiz Matrix, Rubric)
+  const [labLanguage, setLabLanguage] = useState("python");
+  const [labStarterCode, setLabStarterCode] = useState("# Starter code for lab\ndef solution():\n    pass\n");
+  const [labTestCasesJson, setLabTestCasesJson] = useState('[\n  {"input": "1, 2", "expected": "3"}\n]');
+  const [quizBankId, setQuizBankId] = useState("");
+  const [quizTimeLimit, setQuizTimeLimit] = useState(45);
+  const [quizPassingThreshold, setQuizPassingThreshold] = useState(80.0);
+  const [quizEasyCount, setQuizEasyCount] = useState(4);
+  const [quizMediumCount, setQuizMediumCount] = useState(4);
+  const [quizHardCount, setQuizHardCount] = useState(2);
+  const [peerRubricJson, setPeerRubricJson] = useState('[\n  {"title": "Clarity & Organization", "max_score": 10}\n]');
+
+  // SCORM Review Workspace State
+  const [showScormReviewModal, setShowScormReviewModal] = useState(false);
+  const [scormPreviewCourse, setScormPreviewCourse] = useState<Course | null>(null);
+  const [scormIsSingleItem, setScormIsSingleItem] = useState(false);
+  const [scormSingleItem, setScormSingleItem] = useState<LearningItem | null>(null);
+  const [scormObjectKey, setScormObjectKey] = useState("");
+  const [scormImporting, setScormImporting] = useState(false);
 
   // Edit Modals State
   const [editingWeek, setEditingWeek] = useState<{ id: string; title: string; summary: string } | null>(null);
@@ -186,6 +207,11 @@ export default function InstructorCourseBuilderPage({
         estimatedMinutes: itemMinutes,
         videoUrl: itemType === ItemType.VIDEO ? videoUrl : "",
         readingMarkdown: itemType === ItemType.READING ? readingMarkdown : "",
+        starterCode: itemType === ItemType.AUTO_GRADED_LAB ? labStarterCode : "",
+        testCasesJson: itemType === ItemType.AUTO_GRADED_LAB ? labTestCasesJson : "",
+        language: itemType === ItemType.AUTO_GRADED_LAB ? labLanguage : "",
+        rubricCriteriaJson: itemType === ItemType.PEER_REVIEW ? peerRubricJson : "",
+        quizMatrixId: (itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ) ? quizBankId : "",
       });
 
       setShowItemModal(null);
@@ -518,10 +544,71 @@ export default function InstructorCourseBuilderPage({
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    setSaving(true);
+                    const client = getRpcClient(CatalogService);
+                    const res = await client.exportCourseToScorm({ courseId });
+                    if (res.downloadUrl) {
+                      toast.success("Đã đóng gói khóa học thành SCORM 1.2 ZIP!");
+                      window.open(res.downloadUrl, "_blank");
+                    }
+                  } catch (err: unknown) {
+                    const msg = err instanceof Error ? err.message : "Xuất SCORM thất bại.";
+                    toast.error(msg);
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={saving}
+                className="px-3.5 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 text-xs font-bold hover:bg-amber-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>{t("instructorBuilder.scormExportBtn")}</span>
+              </button>
+
+              <label className="px-3.5 py-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 text-xs font-bold hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                <span>{t("instructorBuilder.scormImportBtn")}</span>
+                <input
+                  type="file"
+                  accept=".zip"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    try {
+                      setScormImporting(true);
+                      toast.info("Đang phân tích gói SCORM...");
+                      const mockKey = `scorm/uploads/${Date.now()}_${file.name}`;
+                      const client = getRpcClient(CatalogService);
+                      const res = await client.parseScormPackage({ scormObjectKey: mockKey, targetCourseId: courseId });
+                      setScormObjectKey(mockKey);
+                      setScormPreviewCourse(res.coursePreview || null);
+                      setScormIsSingleItem(res.isSingleItem);
+                      setScormSingleItem(res.singleItemPreview || null);
+                      setShowScormReviewModal(true);
+                    } catch (err: unknown) {
+                      const msg = err instanceof Error ? err.message : "Không thể phân tích gói SCORM.";
+                      toast.error(msg);
+                    } finally {
+                      setScormImporting(false);
+                      e.target.value = "";
+                    }
+                  }}
+                />
+              </label>
+
               <Link
                 href={`/instructor/courses/${courseId}/analytics`}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-xs font-bold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-xs font-bold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-1.5"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -531,7 +618,7 @@ export default function InstructorCourseBuilderPage({
 
               <Link
                 href={`/instructor/courses/${courseId}/announcements`}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 text-xs font-bold hover:bg-purple-100 transition-colors flex items-center justify-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 text-xs font-bold hover:bg-purple-100 transition-colors flex items-center justify-center gap-1.5"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
@@ -1036,6 +1123,10 @@ export default function InstructorCourseBuilderPage({
             >
               <option value={ItemType.VIDEO}>{t("instructorBuilder.optionVideo")}</option>
               <option value={ItemType.READING}>{t("instructorBuilder.optionReading")}</option>
+              <option value={ItemType.PRACTICE_QUIZ}>{t("instructorBuilder.optionPracticeQuiz")}</option>
+              <option value={ItemType.GRADED_QUIZ}>{t("instructorBuilder.optionGradedQuiz")}</option>
+              <option value={ItemType.AUTO_GRADED_LAB}>{t("instructorBuilder.optionLab")}</option>
+              <option value={ItemType.PEER_REVIEW}>{t("instructorBuilder.optionPeerReview")}</option>
             </select>
           </div>
 
@@ -1063,7 +1154,7 @@ export default function InstructorCourseBuilderPage({
             />
           </div>
 
-          {itemType === ItemType.VIDEO ? (
+          {itemType === ItemType.VIDEO && (
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldVideoUrl")}</label>
               <input
@@ -1075,17 +1166,150 @@ export default function InstructorCourseBuilderPage({
                 required
               />
             </div>
-          ) : (
+          )}
+
+          {itemType === ItemType.READING && (
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldReadingContent")}</label>
-              <textarea
-                rows={5}
-                value={readingMarkdown}
-                onChange={(e) => setReadingMarkdown(e.target.value)}
-                placeholder={t("instructorBuilder.fieldReadingPlaceholder")}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
-                required
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">{t("instructorBuilder.fieldReadingContent")}</label>
+                <button
+                  type="button"
+                  onClick={() => setShowMarkdownPreview(!showMarkdownPreview)}
+                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                >
+                  {showMarkdownPreview ? "Sửa Markdown" : "Xem Preview"}
+                </button>
+              </div>
+              {showMarkdownPreview ? (
+                <div className="p-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 prose dark:prose-invert max-w-none text-sm min-h-[140px]">
+                  {readingMarkdown || <span className="text-slate-400 italic">Chưa có nội dung xem trước...</span>}
+                </div>
+              ) : (
+                <textarea
+                  rows={6}
+                  value={readingMarkdown}
+                  onChange={(e) => setReadingMarkdown(e.target.value)}
+                  placeholder={t("instructorBuilder.fieldReadingPlaceholder")}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
+                  required
+                />
+              )}
+            </div>
+          )}
+
+          {(itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ) && (
+            <div className="space-y-3 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Cấu hình Ma trận Đề thi (Quiz Matrix)</div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Mã Kho Ngân hàng Đề (Question Bank ID)</label>
+                <input
+                  type="text"
+                  value={quizBankId}
+                  onChange={(e) => setQuizBankId(e.target.value)}
+                  placeholder="bank_python_basics_01"
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Thời gian đếm ngược (Phút)</label>
+                  <input
+                    type="number"
+                    value={quizTimeLimit}
+                    onChange={(e) => setQuizTimeLimit(parseInt(e.target.value) || 45)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Điểm đỗ tối thiểu (%)</label>
+                  <input
+                    type="number"
+                    value={quizPassingThreshold}
+                    onChange={(e) => setQuizPassingThreshold(parseFloat(e.target.value) || 80.0)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu Dễ (40%)</label>
+                  <input
+                    type="number"
+                    value={quizEasyCount}
+                    onChange={(e) => setQuizEasyCount(parseInt(e.target.value) || 4)}
+                    className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu TB (40%)</label>
+                  <input
+                    type="number"
+                    value={quizMediumCount}
+                    onChange={(e) => setQuizMediumCount(parseInt(e.target.value) || 4)}
+                    className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu Khó (20%)</label>
+                  <input
+                    type="number"
+                    value={quizHardCount}
+                    onChange={(e) => setQuizHardCount(parseInt(e.target.value) || 2)}
+                    className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {itemType === ItemType.AUTO_GRADED_LAB && (
+            <div className="space-y-3 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Cấu hình Docker Sandbox Lab</div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Ngôn ngữ Lập trình</label>
+                <select
+                  value={labLanguage}
+                  onChange={(e) => setLabLanguage(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
+                >
+                  <option value="python">Python 3.12</option>
+                  <option value="javascript">JavaScript / Node.js</option>
+                  <option value="cpp">C++ 20</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Mã mẫu ban đầu (Starter Code)</label>
+                <textarea
+                  rows={3}
+                  value={labStarterCode}
+                  onChange={(e) => setLabStarterCode(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Bộ Test Cases (JSON format)</label>
+                <textarea
+                  rows={3}
+                  value={labTestCasesJson}
+                  onChange={(e) => setLabTestCasesJson(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
+                />
+              </div>
+            </div>
+          )}
+
+          {itemType === ItemType.PEER_REVIEW && (
+            <div className="space-y-3 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Cấu hình Bảng tiêu chí Rubric Chấm chéo</div>
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Bảng tiêu chí Rubric (JSON Format)</label>
+                <textarea
+                  rows={4}
+                  value={peerRubricJson}
+                  onChange={(e) => setPeerRubricJson(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
+                />
+              </div>
             </div>
           )}
 
@@ -1286,6 +1510,99 @@ export default function InstructorCourseBuilderPage({
             </div>
           </form>
         )}
+      </Modal>
+
+      {/* Modal: SCORM Import & Review Editor Workspace */}
+      <Modal
+        isOpen={showScormReviewModal}
+        onClose={() => setShowScormReviewModal(false)}
+        title={t("instructorBuilder.scormImportTitle")}
+        size="xl"
+      >
+        <div className="space-y-6">
+          <div className="bg-indigo-50 dark:bg-indigo-500/10 p-4 rounded-2xl border border-indigo-200 dark:border-indigo-500/20 space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-600 text-white">
+                {scormIsSingleItem ? "Single Item Mode" : "Full Course Mode"}
+              </span>
+              <span className="text-xs font-mono text-slate-500">{scormObjectKey}</span>
+            </div>
+            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
+              {scormPreviewCourse?.title || "SCORM Package Extracted Structure"}
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              {t("instructorBuilder.scormReviewSubtitle")}
+            </p>
+          </div>
+
+          <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2">
+            {scormPreviewCourse?.weekModules?.map((wm, wIdx) => (
+              <div key={wm.id || wIdx} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                <div className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                  Tuần {wm.weekNumber}: {wm.title}
+                </div>
+                <div className="space-y-2 pl-4 border-l-2 border-indigo-400">
+                  {wm.lessons?.map((l, lIdx) => (
+                    <div key={l.id || lIdx} className="space-y-1">
+                      <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        📖 {l.title} ({l.estimatedMinutes} min)
+                      </div>
+                      <div className="space-y-1 pl-3">
+                        {l.items?.map((item, iIdx) => (
+                          <div key={item.id || iIdx} className="text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
+                            <span>📄 {item.title}</span>
+                            <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                              {ItemType[item.type] || "READING"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowScormReviewModal(false)}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            >
+              {t("instructorBuilder.cancelBtn")}
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  setScormImporting(true);
+                  const client = getRpcClient(CatalogService);
+                  await client.importCourseFromScorm({ scormObjectKey, courseId });
+                  toast.success("Đã bóc tách & lưu nội dung SCORM vào khóa học thành công!");
+                  setShowScormReviewModal(false);
+                  await fetchCourseDetail();
+                } catch (err: unknown) {
+                  const msg = err instanceof Error ? err.message : "Import SCORM thất bại.";
+                  toast.error(msg);
+                } finally {
+                  setScormImporting(false);
+                }
+              }}
+              disabled={scormImporting}
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+            >
+              {scormImporting ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Đang Import...</span>
+                </>
+              ) : (
+                <span>{t("instructorBuilder.scormConfirmImportBtn")}</span>
+              )}
+            </button>
+          </div>
+        </div>
       </Modal>
 
     </div>

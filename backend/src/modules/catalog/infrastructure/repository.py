@@ -69,6 +69,15 @@ def _model_to_domain_course(model: CourseModel) -> Course:
                         in_video_quizzes=quizzes,
                         reading_markdown=i_model.reading_markdown,
                         order_index=getattr(i_model, "order_index", 0),
+                        starter_code=getattr(i_model, "starter_code", ""),
+                        test_cases_json=getattr(i_model, "test_cases_json", ""),
+                        language=getattr(i_model, "language", ""),
+                        rubric_criteria_json=getattr(
+                            i_model, "rubric_criteria_json", ""
+                        ),
+                        quiz_matrix_id=getattr(i_model, "quiz_matrix_id", ""),
+                        scorm_package_path=getattr(i_model, "scorm_package_path", ""),
+                        scorm_entry_html=getattr(i_model, "scorm_entry_html", ""),
                     )
                 )
             lessons.append(
@@ -353,34 +362,74 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         course_id: str,
         lesson_id: str,
         title: str,
-        item_type: int,
+        item_type: int | ItemType | str,
         estimated_minutes: int,
         video_url: str,
         reading_markdown: str,
+        starter_code: str = "",
+        test_cases_json: str = "",
+        language: str = "",
+        rubric_criteria_json: str = "",
+        quiz_matrix_id: str = "",
+        scorm_package_path: str = "",
+        scorm_entry_html: str = "",
     ) -> LearningItem:
         item_id = f"item-{uuid.uuid4().hex[:8]}"
+        type_mapping = {
+            0: ItemType.UNSPECIFIED,
+            1: ItemType.VIDEO,
+            2: ItemType.READING,
+            3: ItemType.PRACTICE_QUIZ,
+            4: ItemType.GRADED_QUIZ,
+            5: ItemType.AUTO_GRADED_LAB,
+            6: ItemType.PEER_REVIEW,
+        }
+        if isinstance(item_type, ItemType):
+            enum_type = item_type
+        elif isinstance(item_type, str):
+            try:
+                enum_type = ItemType(item_type)
+            except ValueError:
+                enum_type = ItemType.UNSPECIFIED
+        else:
+            enum_type = type_mapping.get(item_type, ItemType.UNSPECIFIED)
+
         item_model = LearningItemModel(
             id=item_id,
             lesson_id=lesson_id,
             title=title,
-            type=item_type,
+            type=enum_type,
             estimated_minutes=estimated_minutes or 10,
             video_url=video_url or "",
             vtt_subtitle_url="",
             reading_markdown=reading_markdown or "",
+            starter_code=starter_code or "",
+            test_cases_json=test_cases_json or "",
+            language=language or "",
+            rubric_criteria_json=rubric_criteria_json or "",
+            quiz_matrix_id=quiz_matrix_id or "",
+            scorm_package_path=scorm_package_path or "",
+            scorm_entry_html=scorm_entry_html or "",
         )
         self.session.add(item_model)
         await self.session.commit()
         return LearningItem(
             id=item_id,
             title=title,
-            type=ItemType(item_type),
+            type=enum_type,
             estimated_minutes=estimated_minutes or 10,
             video_url=video_url or "",
             vtt_subtitle_url="",
             interactive_transcripts=[],
             in_video_quizzes=[],
             reading_markdown=reading_markdown or "",
+            starter_code=starter_code or "",
+            test_cases_json=test_cases_json or "",
+            language=language or "",
+            rubric_criteria_json=rubric_criteria_json or "",
+            quiz_matrix_id=quiz_matrix_id or "",
+            scorm_package_path=scorm_package_path or "",
+            scorm_entry_html=scorm_entry_html or "",
         )
 
     async def submit_course_review(
@@ -641,6 +690,13 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         video_url: str,
         reading_markdown: str,
         in_video_quizzes: list | None = None,
+        starter_code: str = "",
+        test_cases_json: str = "",
+        language: str = "",
+        rubric_criteria_json: str = "",
+        quiz_matrix_id: str = "",
+        scorm_package_path: str = "",
+        scorm_entry_html: str = "",
     ) -> LearningItem | None:
         stmt = (
             select(LearningItemModel)
@@ -665,6 +721,16 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         item.estimated_minutes = estimated_minutes
         item.video_url = video_url
         item.reading_markdown = reading_markdown
+        item.starter_code = starter_code
+        item.test_cases_json = test_cases_json
+        item.language = language
+        item.rubric_criteria_json = rubric_criteria_json
+        item.quiz_matrix_id = quiz_matrix_id
+        if scorm_package_path:
+            item.scorm_package_path = scorm_package_path
+        if scorm_entry_html:
+            item.scorm_entry_html = scorm_entry_html
+
         if lesson_id:
             item.lesson_id = lesson_id
 
@@ -704,6 +770,13 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             interactive_transcripts=[],
             in_video_quizzes=quizzes,
             reading_markdown=item.reading_markdown,
+            starter_code=item.starter_code,
+            test_cases_json=item.test_cases_json,
+            language=item.language,
+            rubric_criteria_json=item.rubric_criteria_json,
+            quiz_matrix_id=item.quiz_matrix_id,
+            scorm_package_path=item.scorm_package_path,
+            scorm_entry_html=item.scorm_entry_html,
         )
 
     async def delete_learning_item(self, id: str, course_id: str) -> bool:

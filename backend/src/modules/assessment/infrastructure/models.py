@@ -1,6 +1,6 @@
 from typing import Any
-from sqlalchemy import ARRAY, Boolean, Float, Integer, JSON, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import ARRAY, Boolean, Float, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.shared.infrastructure.database import Base
 
@@ -98,3 +98,82 @@ class GradeAppealModel(Base):
     appeal_reason: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class QuestionBankModel(Base):
+    __tablename__ = "question_banks"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    course_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    category: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="PRACTICE"
+    )
+    description: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+    questions: Mapped[list["QuestionModel"]] = relationship(
+        "QuestionModel", back_populates="bank", cascade="all, delete-orphan"
+    )
+
+
+class QuestionModel(Base):
+    __tablename__ = "questions"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    bank_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("question_banks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    question_type: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="SINGLE_CHOICE"
+    )
+    difficulty: Mapped[str] = mapped_column(String(16), nullable=False, default="EASY")
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    explanation: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+    bank: Mapped["QuestionBankModel"] = relationship(
+        "QuestionBankModel", back_populates="questions"
+    )
+    options: Mapped[list["QuestionOptionModel"]] = relationship(
+        "QuestionOptionModel", back_populates="question", cascade="all, delete-orphan"
+    )
+
+
+class QuestionOptionModel(Base):
+    __tablename__ = "question_options"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    question_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("questions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    option_text: Mapped[str] = mapped_column(Text, nullable=False)
+    is_correct: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    order_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    question: Mapped["QuestionModel"] = relationship(
+        "QuestionModel", back_populates="options"
+    )
+
+
+class QuizMatrixModel(Base):
+    __tablename__ = "quiz_matrices"
+
+    item_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    bank_id: Mapped[str] = mapped_column(
+        String(64), ForeignKey("question_banks.id"), nullable=False
+    )
+    time_limit_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=45)
+    passing_threshold_percent: Mapped[float] = mapped_column(
+        Float, nullable=False, default=80.0
+    )
+    easy_count: Mapped[int] = mapped_column(Integer, nullable=False, default=4)
+    medium_count: Mapped[int] = mapped_column(Integer, nullable=False, default=4)
+    hard_count: Mapped[int] = mapped_column(Integer, nullable=False, default=2)
+    shuffle_options: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

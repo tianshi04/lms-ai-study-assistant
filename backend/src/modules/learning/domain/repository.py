@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
 from src.modules.learning.domain.entities import (
-    EnrolledCourseSummary,
     LearningProgress,
     PersonalNote,
+    ScormTracking,
 )
 
 
@@ -44,9 +45,20 @@ class ILearningRepository(ABC):
         pass
 
     @abstractmethod
-    async def list_user_progresses(self, user_id: str) -> list[LearningProgress]:
+    async def save_scorm_tracking(
+        self,
+        user_id: str,
+        item_id: str,
+        cmi_core_lesson_status: str,
+        cmi_core_score_raw: float,
+        cmi_core_session_time: str,
+        cmi_core_lesson_location: str,
+        cmi_suspend_data: str,
+    ) -> ScormTracking:
         pass
 
     @abstractmethod
-    async def list_enrolled_courses(self, user_id: str) -> list[EnrolledCourseSummary]:
+    async def get_scorm_tracking(
+        self, user_id: str, item_id: str
+    ) -> Optional[ScormTracking]:
         pass
