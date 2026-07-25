@@ -41,6 +41,7 @@ class ICatalogRepository(ABC):
         course_id: str,
         rating_stars: int,
         comment_text: str,
+        is_verified_completer: bool,
     ) -> CourseReview:
         pass
 

@@ -43,12 +43,13 @@ async def test_submit_and_list_course_review():
                 comment_text="Khóa học tôi dạy rất hay!",
             )
 
-        # Mark 100% progress for testers
+        # Mark 100% progress for user_test_01
         await learning_uc.mark_item_complete(
             "user_test_01", course.id, "item_1", total_course_items=1
         )
+        # Mark 50% progress for user_test_02
         await learning_uc.mark_item_complete(
-            "user_test_02", course.id, "item_1", total_course_items=1
+            "user_test_02", course.id, "item_1", total_course_items=2
         )
 
         # 2. Submit Review 1 (5 stars)
@@ -62,6 +63,7 @@ async def test_submit_and_list_course_review():
         assert review1 is not None
         assert review1.rating_stars == 5
         assert review1.comment_text == "Khóa học xuất sắc!"
+        assert review1.is_verified_completer is True
 
         # 3. Submit Review 2 (4 stars)
         review2 = await usecase.submit_course_review(
@@ -73,6 +75,7 @@ async def test_submit_and_list_course_review():
         )
         assert review2 is not None
         assert review2.rating_stars == 4
+        assert review2.is_verified_completer is False
 
         # 4. List Reviews and check stats
         reviews, avg_rating, total_count, _ = await usecase.list_course_reviews(

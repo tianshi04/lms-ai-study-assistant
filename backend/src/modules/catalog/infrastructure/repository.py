@@ -32,9 +32,7 @@ from src.modules.catalog.infrastructure.models import (
 )
 
 
-def _model_to_domain_course(
-    model: CourseModel, avg_rating: float = 0.0, review_count: int = 0
-) -> Course:
+def _model_to_domain_course(model: CourseModel) -> Course:
     week_modules: list[WeekModule] = []
     for wm in model.week_modules or []:
         lessons: list[Lesson] = []
@@ -99,8 +97,8 @@ def _model_to_domain_course(
         partner_logo_url=model.partner_logo_url,
         instructor_names=model.instructor_names,
         week_modules=week_modules,
-        average_rating=avg_rating,
-        review_count=review_count,
+        average_rating=getattr(model, "average_rating", 0.0),
+        review_count=getattr(model, "review_count", 0),
         owner_id=getattr(model, "owner_id", ""),
         co_instructor_ids=getattr(model, "co_instructor_ids", None) or [],
     )
@@ -128,6 +126,7 @@ def _model_to_domain_review(model: CourseReviewModel) -> CourseReview:
         rating_stars=model.rating_stars,
         comment_text=model.comment_text,
         created_at=model.created_at,
+        is_verified_completer=model.is_verified_completer,
     )
 
 
@@ -154,8 +153,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         models = res.scalars().all()
         courses: list[Course] = []
         for m in models:
-            avg_rating, review_count = await self.get_course_rating_stats(m.id)
-            courses.append(_model_to_domain_course(m, avg_rating, review_count))
+            courses.append(_model_to_domain_course(m))
         return courses, ""
 
     async def get_course_detail(self, course_id: str) -> Course | None:
@@ -177,8 +175,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         model = res.scalar_one_or_none()
         if not model:
             return None
-        avg_rating, review_count = await self.get_course_rating_stats(model.id)
-        return _model_to_domain_course(model, avg_rating, review_count)
+        return _model_to_domain_course(model)
 
     async def get_lesson_detail(self, course_id: str, lesson_id: str) -> Lesson | None:
         course = await self.get_course_detail(course_id)
@@ -345,6 +342,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         course_id: str,
         rating_stars: int,
         comment_text: str,
+        is_verified_completer: bool,
     ) -> CourseReview:
         stmt = select(CourseReviewModel).where(
             (CourseReviewModel.user_id == user_id)
@@ -359,7 +357,19 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             existing.comment_text = comment_text
             existing.user_name = user_name or existing.user_name
             existing.created_at = now_str
+            existing.is_verified_completer = is_verified_completer
             await self.session.commit()
+
+            # Update CSAT cache
+            avg_rating, total_count = await self.get_course_rating_stats(course_id)
+            course_stmt = select(CourseModel).where(CourseModel.id == course_id)
+            course_res = await self.session.execute(course_stmt)
+            course_model = course_res.scalar_one_or_none()
+            if course_model:
+                course_model.average_rating = avg_rating
+                course_model.review_count = total_count
+                await self.session.commit()
+
             return _model_to_domain_review(existing)
 
         review_id = f"rev-{uuid.uuid4().hex[:10]}"
@@ -371,6 +381,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             rating_stars=rating_stars,
             comment_text=comment_text,
             created_at=now_str,
+            is_verified_completer=is_verified_completer,
         )
         self.session.add(model)
         try:
@@ -387,8 +398,30 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             existing_retry.comment_text = comment_text
             existing_retry.user_name = user_name or existing_retry.user_name
             existing_retry.created_at = now_str
+            existing_retry.is_verified_completer = is_verified_completer
             await self.session.commit()
+
+            # Update CSAT cache
+            avg_rating, total_count = await self.get_course_rating_stats(course_id)
+            course_stmt = select(CourseModel).where(CourseModel.id == course_id)
+            course_res = await self.session.execute(course_stmt)
+            course_model = course_res.scalar_one_or_none()
+            if course_model:
+                course_model.average_rating = avg_rating
+                course_model.review_count = total_count
+                await self.session.commit()
+
             return _model_to_domain_review(existing_retry)
+
+        # Update CSAT cache for new insert
+        avg_rating, total_count = await self.get_course_rating_stats(course_id)
+        course_stmt = select(CourseModel).where(CourseModel.id == course_id)
+        course_res = await self.session.execute(course_stmt)
+        course_model = course_res.scalar_one_or_none()
+        if course_model:
+            course_model.average_rating = avg_rating
+            course_model.review_count = total_count
+            await self.session.commit()
 
         return _model_to_domain_review(model)
 
