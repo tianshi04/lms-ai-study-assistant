@@ -7,3 +7,9 @@ __pycache__/
 
 # ConnectRPC generated files
 src/gen/
+
+# Test coverage & pytest cache
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
