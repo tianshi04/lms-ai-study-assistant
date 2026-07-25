@@ -38,6 +38,22 @@
     "errorNetwork": "Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.",
     "noResults": "Không tìm thấy khóa học nào phù hợp với từ khóa"
   },
+  "catalogFilter": {
+    "allSubjects": "Tất cả chủ đề",
+    "dataScience": "Khoa học dữ liệu",
+    "computerScience": "Khoa học máy tính",
+    "business": "Kinh doanh",
+    "ai": "Trí tuệ nhân tạo",
+    "allLevels": "Tất cả cấp độ",
+    "beginner": "Cơ bản",
+    "intermediate": "Trung cấp",
+    "advanced": "Nâng cao",
+    "sortDefault": "Sắp xếp: Mặc định",
+    "sortNewest": "Mới nhất",
+    "sortOldest": "Cũ nhất",
+    "sortRatingDesc": "Đánh giá cao nhất",
+    "sortRatingAsc": "Đánh giá thấp nhất"
+  },
   "auth": {
     "loginTitle": "Đăng nhập tài khoản",
     "loginSubtitle": "Chào mừng bạn quay trở lại với hệ thống học tập Coursera LMS",

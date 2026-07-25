@@ -38,6 +38,22 @@
     "errorNetwork": "Please check your network connection or try again later.",
     "noResults": "No courses found matching the keyword"
   },
+  "catalogFilter": {
+    "allSubjects": "All Subjects",
+    "dataScience": "Data Science",
+    "computerScience": "Computer Science",
+    "business": "Business",
+    "ai": "Artificial Intelligence",
+    "allLevels": "All Levels",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "sortDefault": "Sort: Default",
+    "sortNewest": "Newest",
+    "sortOldest": "Oldest",
+    "sortRatingDesc": "Highest Rating",
+    "sortRatingAsc": "Lowest Rating"
+  },
   "auth": {
     "loginTitle": "Sign In to Your Account",
     "loginSubtitle": "Welcome back to Coursera Learning Platform",
