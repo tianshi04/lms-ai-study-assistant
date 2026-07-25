@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Navbar } from "@/components/layout/Navbar";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 export default function VerifyPortalPage() {
@@ -18,10 +17,7 @@ export default function VerifyPortalPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col justify-between transition-colors">
-      <Navbar />
-
-      <main className="max-w-3xl mx-auto px-4 py-16 w-full flex-1 flex flex-col justify-center">
+    <main className="max-w-3xl mx-auto px-4 py-16 w-full flex-1 flex flex-col justify-center">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 sm:p-12 shadow-xl text-center space-y-6">
           <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-3xl mx-auto border border-blue-200 dark:border-blue-500/20">
             <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -67,6 +63,5 @@ export default function VerifyPortalPage() {
           </div>
         </div>
       </main>
-    </div>
   );
 }

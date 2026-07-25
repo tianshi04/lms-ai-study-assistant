@@ -25,6 +25,7 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { MainLayout } from "@/components/layout/MainLayout";
 
 export default async function RootLayout({
   children,
@@ -66,7 +67,9 @@ export default async function RootLayout({
             <AuthProvider initialAuth={initialAuth}>
               <TranslationProvider initialLocale={locale} initialDictionary={dictionary}>
                 <ToastProvider>
-                  {children}
+                  <MainLayout>
+                    {children}
+                  </MainLayout>
                 </ToastProvider>
               </TranslationProvider>
             </AuthProvider>

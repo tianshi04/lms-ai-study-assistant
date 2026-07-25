@@ -32,6 +32,10 @@
   --scrollbar-track: transparent;
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 html,
 body {
   background-color: var(--background);

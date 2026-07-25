@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Navbar } from "@/components/layout/Navbar";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 import { getRpcClient } from "@/lib/connect_client";
 import { LearningService, type EnrolledCourseSummary } from "@/gen/learning/v1/learning_pb";
@@ -66,10 +65,7 @@ export default function MyCoursesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors duration-200">
-      <Navbar />
-
-      <main className="max-w-7xl mx-auto px-6 py-12">
+    <main className="max-w-7xl mx-auto px-6 py-12 flex-1">
         <div className="mb-10 text-center md:text-left max-w-3xl">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">
             {t("myCoursesPage.title")}
@@ -196,6 +192,5 @@ export default function MyCoursesPage() {
           </div>
         )}
       </main>
-    </div>
   );
 }

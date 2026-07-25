@@ -4,7 +4,6 @@ import { useState, useSyncExternalStore, useMemo } from "react";
 import { useReactTable, getCoreRowModel, getSortedRowModel, flexRender, createColumnHelper } from "@tanstack/react-table";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
-import { Navbar } from "@/components/layout/Navbar";
 import { Modal } from "@/components/ui/Modal";
 import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
 
@@ -141,22 +140,17 @@ export default function AdminEnterpriseDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
-        <Navbar />
-        <div className="flex-1 flex items-center justify-center py-24">
-          <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-            <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm font-medium">Đang tải bảng điều khiển Enterprise Admin...</span>
-          </div>
+      <div className="flex-1 flex items-center justify-center py-24">
+        <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
+          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <span className="text-sm font-medium">Đang tải bảng điều khiển Enterprise Admin...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
-      <Navbar />
-
+    <>
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Header Title Banner */}
         <div className="bg-gradient-to-r from-indigo-900 via-slate-900 to-blue-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
@@ -461,6 +455,6 @@ export default function AdminEnterpriseDashboardPage() {
           </div>
         </form>
       </Modal>
-    </div>
+    </>
   );
 }

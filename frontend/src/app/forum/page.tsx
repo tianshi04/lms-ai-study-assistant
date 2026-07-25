@@ -5,7 +5,6 @@ import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import { ForumService, ForumThreadSchema, ForumReplySchema, type ForumThread, type ForumReply } from "@/gen/forum/v1/forum_pb";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
-import { Navbar } from "@/components/layout/Navbar";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
@@ -337,10 +336,8 @@ export default function ForumPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors duration-200">
-      <Navbar />
-
-      <main className="max-w-6xl mx-auto px-6 py-10">
+    <>
+      <main className="max-w-6xl mx-auto px-6 py-10 w-full">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 border-b border-slate-200 dark:border-slate-800 pb-6">
           <div>
@@ -795,6 +792,6 @@ export default function ForumPage() {
           </div>
         </form>
       </Modal>
-    </div>
+    </>
   );
 }

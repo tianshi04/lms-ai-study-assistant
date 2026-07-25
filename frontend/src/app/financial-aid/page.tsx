@@ -6,7 +6,6 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { getRpcClient } from "@/lib/connect_client";
 import { CertificateService, type FinancialAidApplication } from "@/gen/certificate/v1/certificate_pb";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
-import { Navbar } from "@/components/layout/Navbar";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 import { useToast } from "@/components/ui/Toast";
 
@@ -335,16 +334,12 @@ function FinancialAidContent() {
 
 export default function FinancialAidPage() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col justify-between transition-colors">
-      <Navbar />
-
-      <Suspense fallback={
-        <div className="flex items-center justify-center py-24">
-          <span className="text-sm text-slate-500">Loading...</span>
-        </div>
-      }>
-        <FinancialAidContent />
-      </Suspense>
-    </div>
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-24">
+        <span className="text-sm text-slate-500">Loading...</span>
+      </div>
+    }>
+      <FinancialAidContent />
+    </Suspense>
   );
 }

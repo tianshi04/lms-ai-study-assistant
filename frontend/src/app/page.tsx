@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Navbar } from "@/components/layout/Navbar";
 import { cookies } from "next/headers";
 import { getDictionary, Locale } from "@/lib/i18n/getDictionary";
 
@@ -9,12 +8,9 @@ export default async function Home() {
   const dictionary = getDictionary(locale);
   const t = dictionary.home;
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-blue-600 selection:text-white transition-colors duration-200">
+    <div className="flex-1 flex flex-col justify-between w-full relative">
       {/* Background decoration */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(14,165,233,0.1),transparent_40%),radial-gradient(circle_at_70%_80%,rgba(99,102,241,0.1),transparent_40%)] pointer-events-none" />
-
-      {/* Navigation Header */}
-      <Navbar />
 
       {/* Hero Banner with CTA */}
       <main className="flex-1 relative z-20 max-w-7xl mx-auto px-6 pt-12 pb-12 text-center md:text-left grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">

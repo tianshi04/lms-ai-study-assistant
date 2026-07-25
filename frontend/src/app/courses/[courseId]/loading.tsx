@@ -1,9 +1,6 @@
-import { Navbar } from "@/components/layout/Navbar";
-
 export default function CourseDetailLoading() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors duration-200">
-      <Navbar />
+    <div className="w-full">
 
       {/* Hero Banner Skeleton */}
       <div className="bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900/80 dark:to-slate-950 border-b border-slate-200 dark:border-slate-800/80 py-12 animate-pulse">

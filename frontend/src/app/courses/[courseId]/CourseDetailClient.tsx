@@ -7,7 +7,6 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
-import { Navbar } from "@/components/layout/Navbar";
 import { Modal } from "@/components/ui/Modal";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { useToast } from "@/components/ui/Toast";
@@ -94,8 +93,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors duration-200">
-        <Navbar />
+      <div className="w-full">
         {/* Hero Banner Skeleton */}
         <div className="bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900/80 dark:to-slate-950 border-b border-slate-200 dark:border-slate-800/80 py-12 animate-pulse">
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -135,28 +133,23 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
 
   if (error || !course) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-200">
-        <Navbar />
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl max-w-md shadow-sm">
-            <h2 className="text-xl font-bold text-red-500 dark:text-red-400 mb-2">{t("catalog.errorLoad")}</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{error || `Course "${courseId}" not found.`}</p>
-            <Link
-              href="/courses"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
-            >
-              ← {t("player.backToCatalog")}
-            </Link>
-          </div>
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl max-w-md shadow-sm">
+          <h2 className="text-xl font-bold text-red-500 dark:text-red-400 mb-2">{t("catalog.errorLoad")}</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{error || `Course "${courseId}" not found.`}</p>
+          <Link
+            href="/courses"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
+          >
+            ← {t("player.backToCatalog")}
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors duration-200">
-      <Navbar />
-
+    <>
       {/* Hero Banner */}
       <div className="bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900/80 dark:to-slate-950 border-b border-slate-200 dark:border-slate-800/80 py-12">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -515,6 +508,6 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           </div>
         </form>
       </Modal>
-    </div>
+    </>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Navbar } from "@/components/layout/Navbar";
 import { useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { type Category } from "@/gen/catalog/v1/catalog_pb";
@@ -89,9 +88,7 @@ export default function AdminCategoriesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-      <Navbar />
-      <main className="max-w-5xl mx-auto px-6 py-12">
+    <main className="max-w-5xl mx-auto px-6 py-12 flex-1">
         <div className="mb-8 flex justify-between items-end">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight">{t("adminCategories.title")}</h1>
@@ -143,6 +140,5 @@ export default function AdminCategoriesPage() {
           <CategoryList title={t("adminCategories.levelsTitle")} items={levels} type="LEVEL" handleDelete={handleDelete} noCategoriesText={t("adminCategories.noCategories")} deleteText={t("adminCategories.deleteBtn")} />
         </div>
       </main>
-    </div>
   );
 }

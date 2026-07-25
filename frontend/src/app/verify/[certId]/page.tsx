@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { getRpcClient } from "@/lib/connect_client";
 import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
-import { Navbar } from "@/components/layout/Navbar";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 interface VerifyPageProps {
@@ -78,11 +77,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col justify-between transition-colors">
-      <Navbar />
-
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-10 w-full flex-1">
+    <main className="max-w-4xl mx-auto px-4 py-10 w-full flex-1">
         {/* Interactive Search Bar */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 mb-8 shadow-sm">
           <h1 className="text-xl font-extrabold text-slate-900 dark:text-white mb-2">
@@ -232,6 +227,5 @@ export default function VerifyPage({ params }: VerifyPageProps) {
           </div>
         )}
       </main>
-    </div>
   );
 }

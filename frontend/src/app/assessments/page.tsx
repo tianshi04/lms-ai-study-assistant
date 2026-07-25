@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { Navbar } from "@/components/layout/Navbar";
 import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
 import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
 import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentWorkspace";
@@ -10,10 +9,7 @@ export default function AssessmentsPage() {
   const [activeAssessment, setActiveAssessment] = useState<"quiz" | "lab" | "peer">("quiz");
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans">
-      <Navbar />
-
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-8 space-y-8">
+    <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-8 space-y-8">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
           <div>
@@ -87,6 +83,5 @@ export default function AssessmentsPage() {
           )}
         </div>
       </main>
-    </div>
   );
 }

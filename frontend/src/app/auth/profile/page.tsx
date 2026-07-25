@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useQueryClient } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService } from "@/gen/identity/v1/identity_pb";
-import { Navbar } from "@/components/layout/Navbar";
 import { useUserProfileQuery } from "@/lib/query_hooks";
 
 import { getAvatarDataUri } from "@/lib/avatar";
@@ -71,10 +70,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white flex flex-col justify-between transition-colors">
-      <Navbar />
-
-      <main className="max-w-4xl mx-auto px-4 py-12 w-full flex-1">
+    <main className="max-w-4xl mx-auto px-4 py-12 w-full flex-1">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none">
           {/* User Banner */}
           <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-slate-200 dark:border-slate-800">
@@ -135,6 +131,5 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
-    </div>
   );
 }
