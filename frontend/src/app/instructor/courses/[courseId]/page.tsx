@@ -51,6 +51,7 @@ export default function InstructorCourseBuilderPage({
   const [videoUrl, setVideoUrl] = useState("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4");
   const [vttSubtitleUrl, setVttSubtitleUrl] = useState("");
   const [autoTranscribe, setAutoTranscribe] = useState(false);
+  const [prohibitSeeking, setProhibitSeeking] = useState(false);
   const [inVideoQuizzes, setInVideoQuizzes] = useState<InVideoQuizItem[]>([]);
   const [readingMarkdown, setReadingMarkdown] = useState("");
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
@@ -86,6 +87,7 @@ export default function InstructorCourseBuilderPage({
     videoUrl: string;
     vttSubtitleUrl: string;
     autoTranscribe: boolean;
+    prohibitSeeking: boolean;
     content: string;
   } | null>(null);
 
@@ -981,6 +983,7 @@ export default function InstructorCourseBuilderPage({
                                             videoUrl: item.videoUrl || "",
                                             vttSubtitleUrl: item.vttSubtitleUrl || "",
                                             autoTranscribe: item.autoTranscribe || false,
+                                            prohibitSeeking: item.prohibitSeeking || false,
                                             content: item.readingMarkdown || "",
                                           })}
                                           className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded transition-colors cursor-pointer"
@@ -1205,6 +1208,18 @@ export default function InstructorCourseBuilderPage({
                 />
                 <label htmlFor="autoTranscribeCheck" className="text-xs font-bold text-indigo-950 dark:text-indigo-200 cursor-pointer">
                   🤖 Tự động tạo phụ đề bằng AI (Speech-to-Text Auto-Transcribe) khi chưa có tệp phụ đề
+                </label>
+              </div>
+              <div className="flex items-center gap-2.5 p-3 rounded-xl bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-850/50">
+                <input
+                  type="checkbox"
+                  id="prohibitSeekingCheck"
+                  checked={prohibitSeeking}
+                  onChange={(e) => setProhibitSeeking(e.target.checked)}
+                  className="w-4 h-4 text-orange-600 rounded cursor-pointer"
+                />
+                <label htmlFor="prohibitSeekingCheck" className="text-xs font-bold text-orange-950 dark:text-orange-200 cursor-pointer">
+                  🚫 Cấm tua nhanh (Prohibit Seeking): Học viên bắt buộc phải xem tuần tự
                 </label>
               </div>
               <InVideoQuizEditor
@@ -1546,6 +1561,18 @@ export default function InstructorCourseBuilderPage({
                   />
                   <label htmlFor="editAutoTranscribeCheck" className="text-xs font-bold text-indigo-950 dark:text-indigo-200 cursor-pointer">
                     🤖 Tự động tạo phụ đề bằng AI (Speech-to-Text Auto-Transcribe) khi chưa có tệp phụ đề
+                  </label>
+                </div>
+                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-850/50">
+                  <input
+                    type="checkbox"
+                    id="editProhibitSeekingCheck"
+                    checked={editingItem.prohibitSeeking}
+                    onChange={(e) => setEditingItem({ ...editingItem, prohibitSeeking: e.target.checked })}
+                    className="w-4 h-4 text-orange-600 rounded cursor-pointer"
+                  />
+                  <label htmlFor="editProhibitSeekingCheck" className="text-xs font-bold text-orange-950 dark:text-orange-200 cursor-pointer">
+                    🚫 Cấm tua nhanh (Prohibit Seeking): Học viên bắt buộc phải xem tuần tự
                   </label>
                 </div>
               </div>

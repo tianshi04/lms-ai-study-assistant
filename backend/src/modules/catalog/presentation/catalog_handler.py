@@ -91,6 +91,7 @@ def _to_pb_learning_item(item: LearningItem) -> pb.LearningItem:
         video_url=item.video_url,
         vtt_subtitle_url=item.vtt_subtitle_url,
         auto_transcribe=getattr(item, "auto_transcribe", False),
+        prohibit_seeking=getattr(item, "prohibit_seeking", False),
         interactive_transcripts=[
             _to_pb_transcript(t) for t in item.interactive_transcripts
         ],
@@ -343,6 +344,7 @@ class CatalogHandler(CatalogService):
                 video_url=request.video_url or "",
                 vtt_subtitle_url=request.vtt_subtitle_url or "",
                 auto_transcribe=request.auto_transcribe,
+                prohibit_seeking=request.prohibit_seeking,
                 in_video_quizzes=list(request.in_video_quizzes)
                 if request.in_video_quizzes
                 else [],
@@ -552,6 +554,7 @@ class CatalogHandler(CatalogService):
             reading_markdown=request.reading_markdown,
             vtt_subtitle_url=request.vtt_subtitle_url,
             auto_transcribe=request.auto_transcribe,
+            prohibit_seeking=request.prohibit_seeking,
             in_video_quizzes=list(request.in_video_quizzes),
             starter_code=request.starter_code,
             test_cases_json=request.test_cases_json,

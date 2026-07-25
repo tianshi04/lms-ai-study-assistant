@@ -58,6 +58,7 @@ class LearningItem(Entity):
         scorm_package_path: str = "",
         scorm_entry_html: str = "",
         auto_transcribe: bool = False,
+        prohibit_seeking: bool = False,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -77,6 +78,7 @@ class LearningItem(Entity):
         self.scorm_package_path = scorm_package_path
         self.scorm_entry_html = scorm_entry_html
         self.auto_transcribe = auto_transcribe
+        self.prohibit_seeking = prohibit_seeking
 
 
 class Lesson(Entity):

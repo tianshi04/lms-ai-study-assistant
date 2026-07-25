@@ -211,22 +211,24 @@ function getYouTubeEmbedUrl(url: string, autoTranscribe: boolean = false): strin
         )}
 
         {/* Floating Top Control Overlay for Video Mark as Complete */}
-        <div className="absolute top-4 right-4 z-20">
-          <button
-            onClick={() => onMarkComplete?.(activeItem.id)}
-            disabled={isCompleted}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xl backdrop-blur-md flex items-center gap-2 ${
-              isCompleted
-                ? "bg-emerald-500/90 text-white cursor-default"
-                : "bg-slate-900/80 hover:bg-slate-900 text-white border border-slate-700 hover:border-emerald-500"
-            }`}
-          >
-            <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-            </svg>
-            {isCompleted ? "Đã Xem Video (>=80%)" : "Đánh dấu Xem Xong Video"}
-          </button>
-        </div>
+        {!activeItem.prohibitSeeking && (
+          <div className="absolute top-4 right-4 z-20">
+            <button
+              onClick={() => onMarkComplete?.(activeItem.id)}
+              disabled={isCompleted}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xl backdrop-blur-md flex items-center gap-2 ${
+                isCompleted
+                  ? "bg-emerald-500/90 text-white cursor-default"
+                  : "bg-slate-900/80 hover:bg-slate-900 text-white border border-slate-700 hover:border-emerald-500"
+              }`}
+            >
+              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+              {isCompleted ? "Đã Xem Video (>=80%)" : "Đánh dấu Xem Xong Video"}
+            </button>
+          </div>
+        )}
 
         {/* In-Video Quiz Overlay */}
         {activeQuiz && (

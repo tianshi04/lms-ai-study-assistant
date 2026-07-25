@@ -46,6 +46,7 @@ message LearningItem {
   string scorm_package_path = 16;
   string scorm_entry_html = 17;
   bool auto_transcribe = 18;
+  bool prohibit_seeking = 19;
 }
 
 message Lesson {
@@ -238,6 +239,7 @@ message CreateLearningItemRequest {
   string scorm_entry_html = 15;
   string vtt_subtitle_url = 16;
   bool auto_transcribe = 17;
+  bool prohibit_seeking = 18;
 }
 
 message CreateLearningItemResponse {
@@ -263,6 +265,7 @@ message UpdateLearningItemRequest {
   string scorm_entry_html = 16;
   string vtt_subtitle_url = 17;
   bool auto_transcribe = 18;
+  bool prohibit_seeking = 19;
 }
 
 message UpdateLearningItemResponse {
