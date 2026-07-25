@@ -146,6 +146,8 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         partner_logo_url=deeplearning_logo,
         instructor_names=["Andrew Ng", "Eddy Shyu"],
         owner_id="user_instructor_01",
+        subject="cat-subj-ds",
+        level="cat-lvl-intermediate",
     )
 
     # Week 1
@@ -294,8 +296,10 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         description="Master modern Web Development using Next.js 15 App Router, TypeScript, ConnectRPC gRPC web, and Tailwind CSS v4.",
         partner_name="Meta",
         partner_logo_url=meta_logo,
-        instructor_names=["Jane Doe"],
-        owner_id="user_instructor_01",
+        instructor_names=["Rav Ahuja"],
+        owner_id="user_instructor_02",
+        subject="cat-subj-it",
+        level="cat-lvl-beginner",
     )
 
     week_web1 = WeekModuleModel(
@@ -379,6 +383,8 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         partner_logo_url=deeplearning_logo,
         instructor_names=["Andrew Ng", "Kian Katanforoosh"],
         owner_id="user_instructor_01",
+        subject="cat-subj-cs",
+        level="cat-lvl-adv",
     )
     week_dl1 = WeekModuleModel(
         id="week-1-dl",
