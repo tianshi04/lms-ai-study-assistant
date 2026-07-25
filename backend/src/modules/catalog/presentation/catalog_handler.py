@@ -1,3 +1,4 @@
+from typing import Any
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
@@ -18,6 +19,38 @@ from src.modules.catalog.domain.entities import (
     Category,
 )
 from src.shared.auth import CurrentUser, require_current_user
+
+
+def _parse_request_item_type(val: Any) -> int:
+    if isinstance(val, int):
+        return val
+    if isinstance(val, pb.ItemType):
+        return int(val)
+    if isinstance(val, str):
+        if val.isdigit():
+            return int(val)
+        mapping = {
+            "ITEM_TYPE_UNSPECIFIED": 0,
+            "UNSPECIFIED": 0,
+            "ITEM_TYPE_VIDEO": 1,
+            "VIDEO": 1,
+            "ITEM_TYPE_READING": 2,
+            "READING": 2,
+            "ITEM_TYPE_PRACTICE_QUIZ": 3,
+            "PRACTICE_QUIZ": 3,
+            "ITEM_TYPE_GRADED_QUIZ": 4,
+            "GRADED_QUIZ": 4,
+            "ITEM_TYPE_AUTO_GRADED_LAB": 5,
+            "AUTO_GRADED_LAB": 5,
+            "ITEM_TYPE_PEER_REVIEW": 6,
+            "PEER_REVIEW": 6,
+        }
+        if val in mapping:
+            return mapping[val]
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return 0
 
 
 def _to_pb_item_type(type_enum: ItemType) -> pb.ItemType:
@@ -304,7 +337,7 @@ class CatalogHandler(CatalogService):
                 course_id=request.course_id,
                 lesson_id=request.lesson_id,
                 title=request.title.strip(),
-                item_type=int(request.type),
+                item_type=_parse_request_item_type(request.type),
                 estimated_minutes=request.estimated_minutes or 10,
                 video_url=request.video_url or "",
                 vtt_subtitle_url=request.vtt_subtitle_url or "",

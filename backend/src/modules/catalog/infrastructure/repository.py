@@ -389,10 +389,26 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         if isinstance(item_type, ItemType):
             enum_type = item_type
         elif isinstance(item_type, str):
-            try:
-                enum_type = ItemType(item_type)
-            except ValueError:
-                enum_type = ItemType.UNSPECIFIED
+            if item_type.isdigit():
+                enum_type = type_mapping.get(int(item_type), ItemType.UNSPECIFIED)
+            else:
+                str_map = {
+                    "ITEM_TYPE_UNSPECIFIED": ItemType.UNSPECIFIED,
+                    "UNSPECIFIED": ItemType.UNSPECIFIED,
+                    "ITEM_TYPE_VIDEO": ItemType.VIDEO,
+                    "VIDEO": ItemType.VIDEO,
+                    "ITEM_TYPE_READING": ItemType.READING,
+                    "READING": ItemType.READING,
+                    "ITEM_TYPE_PRACTICE_QUIZ": ItemType.PRACTICE_QUIZ,
+                    "PRACTICE_QUIZ": ItemType.PRACTICE_QUIZ,
+                    "ITEM_TYPE_GRADED_QUIZ": ItemType.GRADED_QUIZ,
+                    "GRADED_QUIZ": ItemType.GRADED_QUIZ,
+                    "ITEM_TYPE_AUTO_GRADED_LAB": ItemType.AUTO_GRADED_LAB,
+                    "AUTO_GRADED_LAB": ItemType.AUTO_GRADED_LAB,
+                    "ITEM_TYPE_PEER_REVIEW": ItemType.PEER_REVIEW,
+                    "PEER_REVIEW": ItemType.PEER_REVIEW,
+                }
+                enum_type = str_map.get(item_type, ItemType.UNSPECIFIED)
         else:
             enum_type = type_mapping.get(item_type, ItemType.UNSPECIFIED)
 
