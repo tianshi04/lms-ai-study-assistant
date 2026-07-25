@@ -45,6 +45,7 @@ message LearningItem {
   string quiz_matrix_id = 15;
   string scorm_package_path = 16;
   string scorm_entry_html = 17;
+  bool auto_transcribe = 18;
 }
 
 message Lesson {

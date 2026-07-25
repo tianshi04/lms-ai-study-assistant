@@ -57,6 +57,7 @@ class LearningItem(Entity):
         quiz_matrix_id: str = "",
         scorm_package_path: str = "",
         scorm_entry_html: str = "",
+        auto_transcribe: bool = False,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -75,6 +76,7 @@ class LearningItem(Entity):
         self.quiz_matrix_id = quiz_matrix_id
         self.scorm_package_path = scorm_package_path
         self.scorm_entry_html = scorm_entry_html
+        self.auto_transcribe = auto_transcribe
 
 
 class Lesson(Entity):

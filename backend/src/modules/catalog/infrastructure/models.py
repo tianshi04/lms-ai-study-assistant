@@ -157,6 +157,9 @@ class LearningItemModel(Base):
     scorm_entry_html: Mapped[str] = mapped_column(
         String(255), nullable=False, default=""
     )
+    auto_transcribe: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
 
     lesson: Mapped["LessonModel"] = relationship("LessonModel", back_populates="items")
     interactive_transcripts: Mapped[list["InteractiveTranscriptModel"]] = relationship(

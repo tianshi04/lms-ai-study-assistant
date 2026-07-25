@@ -367,6 +367,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         video_url: str,
         reading_markdown: str,
         vtt_subtitle_url: str = "",
+        auto_transcribe: bool = False,
         in_video_quizzes: list | None = None,
         starter_code: str = "",
         test_cases_json: str = "",
@@ -429,6 +430,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             estimated_minutes=estimated_minutes or 10,
             video_url=video_url or "",
             vtt_subtitle_url=vtt_subtitle_url or "",
+            auto_transcribe=auto_transcribe,
             reading_markdown=reading_markdown or "",
             starter_code=starter_code or "",
             test_cases_json=test_cases_json or "",
@@ -491,6 +493,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             estimated_minutes=estimated_minutes or 10,
             video_url=video_url or "",
             vtt_subtitle_url=vtt_subtitle_url or "",
+            auto_transcribe=auto_transcribe,
             interactive_transcripts=[],
             in_video_quizzes=in_video_quizzes or [],
             reading_markdown=reading_markdown or "",
@@ -760,6 +763,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         estimated_minutes: int,
         video_url: str,
         reading_markdown: str,
+        vtt_subtitle_url: str | None = None,
+        auto_transcribe: bool | None = None,
         in_video_quizzes: list | None = None,
         starter_code: str = "",
         test_cases_json: str = "",
@@ -791,6 +796,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         item.type = type_mapping.get(item_type, ItemType.UNSPECIFIED)
         item.estimated_minutes = estimated_minutes
         item.video_url = video_url
+        if vtt_subtitle_url is not None:
+            item.vtt_subtitle_url = vtt_subtitle_url
+        if auto_transcribe is not None:
+            item.auto_transcribe = auto_transcribe
         item.reading_markdown = reading_markdown
         item.starter_code = starter_code
         item.test_cases_json = test_cases_json
@@ -838,6 +847,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             estimated_minutes=item.estimated_minutes,
             video_url=item.video_url,
             vtt_subtitle_url=item.vtt_subtitle_url,
+            auto_transcribe=item.auto_transcribe,
             interactive_transcripts=[],
             in_video_quizzes=quizzes,
             reading_markdown=item.reading_markdown,
