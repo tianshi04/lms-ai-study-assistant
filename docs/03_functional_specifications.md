@@ -37,12 +37,18 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 
 ### 2.1. Quản lý Cấu trúc Học tập Coursera (Specialization & Course Management)
 * **Tạo Specialization (Chuỗi Chuyên ngành):** Nhóm nhiều khóa học liên quan theo một lộ trình nghề nghiệp (ví dụ: Chuyên ngành *Lập trình Python Nâng cao & AI* bao gồm 4 khóa học thành phần).
-* **Cấu trúc Khóa học (Course Hierarchy):**
+* **Cấu trúc Khóa học & Quản lý Vòng đời (Course Hierarchy & Lifecycle):**
+  * **Tạo & Cập nhật Khóa học:** Giảng viên tạo mới (`CreateCourse`) hoặc cập nhật (`UpdateCourse`) Tên khóa học, Mô tả, Slug, Logo và Giảng viên phụ trách.
+  * **Xóa Khóa học (`DeleteCourse`):** Giảng viên/Admin có quyền xóa hoàn toàn khóa học và toàn bộ bài giảng phụ thuộc khỏi hệ thống khi khóa học bị hủy bỏ.
   * Khóa học (Course) -> Tuần học (Module / Week) -> Bài học (Lesson) -> Các dạng bài học thành phần (Learning Items).
 * **Quản lý Đơn vị Phát hành (Partner Branding):** Chọn đối tác phát hành (Partner Logo), hiển thị tên Giảng viên chính và danh sách Trợ giảng (TA).
 
-### 2.2. Soạn thảo & Quản lý Học liệu đa dạng (Learning Items Builder)
-Giảng viên xây dựng bài học bằng cách thêm các loại Learning Items:
+### 2.2. Soạn thảo & Quản lý Học liệu đa dạng (Learning Items Builder & Management)
+* **Chỉnh sửa & Xóa Cấu trúc Bài giảng:** Giảng viên có toàn quyền chỉnh sửa và xóa các thành phần bài giảng ở mọi cấp độ:
+  * **Tuần/Module học:** Cập nhật thông tin (`UpdateWeekModule`), Xóa tuần học (`DeleteWeekModule`), hoặc Kéo thả sắp xếp thứ tự Tuần (`ReorderWeekModules`).
+  * **Bài học (Lesson):** Cập nhật tên và thời lượng (`UpdateLesson`), Xóa bài học (`DeleteLesson`), hoặc Kéo thả sắp xếp thứ tự Bài (`ReorderLessons`).
+  * **Vật liệu học tập (Learning Item):** Cập nhật nội dung/video/markdown (`UpdateLearningItem`), Xóa học liệu (`DeleteLearningItem`), hoặc Kéo thả sắp xếp thứ tự Học liệu (`ReorderLearningItems`).
+* Giảng viên xây dựng bài học bằng cách thêm các loại Learning Items (`CreateLearningItem`):
 1. **Video Item:**
    * Tải tệp Video (MP4) và tệp Phụ đề (VTT/SRT).
    * Hệ thống tự động trích xuất chuỗi văn bản tạo thành **Interactive Transcript** (cho phép bấm vào từng câu thoại để tua video đến giây tương ứng).
@@ -71,13 +77,16 @@ flowchart TD
    * Giảng viên soạn đề bài nộp dự án (yêu cầu đính kèm file, văn bản hoặc link).
    * **Bộ tiêu chí Rubric:** Giảng viên chia các tiêu chí chấm điểm chi tiết (ví dụ: Tiêu chí 1: Cấu trúc code - Max 5 điểm; Tiêu chí 2: Giao diện - Max 5 điểm) kèm hướng dẫn chi tiết cho học viên chấm chéo.
 
-### 2.4. Quản lý Diễn đàn Thảo luận (Forum Moderation & Staff Pinning)
+### 2.4. Quản lý Diễn đàn & Thông báo Khóa học (Forum Moderation & Course Announcements)
+* **Thông báo Khóa học (`CreateCourseAnnouncement`, `ListCourseAnnouncements`):** Giảng viên/Admin gửi thông báo truyền thông, lịch livestream hoặc nhắc nhở nộp bài tới toàn bộ học viên đăng ký khóa học.
 * **Điều phối Diễn đàn (Forum Moderation & Pinning):** Trợ giảng/Giảng viên/Quản trị viên có quyền ghim câu trả lời chính thức (`is_staff_answer`). Khi được ghim, hệ thống tự động đánh dấu `is_staff_pinned = True` trên bài thảo luận gốc (Thread) để ưu tiên hiển thị đầu danh sách.
 * **Hỗ trợ Giải đáp:** Giảng viên/Trợ giảng trực tiếp theo dõi các bài đăng gắn với bài học (Item-level Discussion) để giải thích kiến thức nâng cao cho học viên.
 
-### 2.5. Bảng Phân tích Giảng dạy (Instructor Analytics Dashboard)
+### 2.5. Bảng Phân tích & Quản lý Lớp học (Instructor Analytics & Student Roster)
+* **Báo cáo Thống kê Lớp học thời gian thực (`GetInstructorAnalytics`):** Giảng viên theo dõi tổng số học viên ghi danh (`total_enrolled_students`), tỷ lệ hoàn thành khóa học trung bình (`average_completion_rate`), điểm đánh giá sao trung bình (`average_rating`), và tổng số đánh giá.
+* **Danh sách Học viên (Student Roster):** Xem chi tiết thông tin và phần trăm tiến độ hoàn thành bài học của từng học viên ghi danh trong lớp.
 * **Phân tích Tỷ lệ Bỏ học (Student Drop-off Funnel):** Thống kê số lượng học viên dừng học tại từng bài học video/bài đọc để giúp Giảng viên nhận biết đoạn nội dung khó tiếp thu.
-* **Heatmap & Phân tích Độ khó Câu hỏi Quiz:** Biểu đồ tỷ lệ làm đúng/sai từng câu hỏi trắc nghiệm (Item Difficulty Index) để hỗ trợ điều chỉnh đề thi hoặc giải thích bài giảng.
+
 
 ---
 

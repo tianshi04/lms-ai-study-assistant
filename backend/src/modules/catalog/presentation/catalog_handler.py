@@ -62,9 +62,9 @@ def _to_pb_learning_item(item: LearningItem) -> pb.LearningItem:
             _to_pb_transcript(t) for t in item.interactive_transcripts
         ],
         in_video_quizzes=[_to_pb_quiz(q) for q in item.in_video_quizzes],
-        reading_markdown=item.reading_markdown,
         scorm_package_path=item.scorm_package_path,
         scorm_entry_html=item.scorm_entry_html,
+        order_index=getattr(item, "order_index", 0),
     )
 
 
@@ -74,6 +74,7 @@ def _to_pb_lesson(lesson: Lesson) -> pb.Lesson:
         title=lesson.title,
         estimated_minutes=lesson.estimated_minutes,
         items=[_to_pb_learning_item(i) for i in lesson.items],
+        order_index=getattr(lesson, "order_index", 0),
     )
 
 
@@ -372,3 +373,243 @@ class CatalogHandler(CatalogService):
             raise ConnectError(Code.INVALID_ARGUMENT, str(e))
         except Exception as e:
             raise ConnectError(Code.INTERNAL, f"Lỗi khi xử lý gói SCORM: {str(e)}")
+
+    async def delete_course(
+        self,
+        request: pb.DeleteCourseRequest,
+        ctx: RequestContext[pb.DeleteCourseRequest, pb.DeleteCourseResponse],
+    ) -> pb.DeleteCourseResponse:
+        self._verify_instructor_permission()
+        success = await self.use_case.delete_course(course_id=request.id)
+        if not success:
+            raise ConnectError(Code.NOT_FOUND, f"Khóa học {request.id} không tồn tại.")
+        return pb.DeleteCourseResponse(success=True)
+
+    async def update_week_module(
+        self,
+        request: pb.UpdateWeekModuleRequest,
+        ctx: RequestContext[pb.UpdateWeekModuleRequest, pb.UpdateWeekModuleResponse],
+    ) -> pb.UpdateWeekModuleResponse:
+        self._verify_instructor_permission()
+        wm = await self.use_case.update_week_module(
+            id=request.id,
+            course_id=request.course_id,
+            week_number=request.week_number,
+            title=request.title,
+            summary=request.summary,
+        )
+        if not wm:
+            raise ConnectError(Code.NOT_FOUND, f"Module {request.id} không tồn tại.")
+        return pb.UpdateWeekModuleResponse(week_module=_to_pb_week_module(wm))
+
+    async def delete_week_module(
+        self,
+        request: pb.DeleteWeekModuleRequest,
+        ctx: RequestContext[pb.DeleteWeekModuleRequest, pb.DeleteWeekModuleResponse],
+    ) -> pb.DeleteWeekModuleResponse:
+        self._verify_instructor_permission()
+        success = await self.use_case.delete_week_module(
+            id=request.id, course_id=request.course_id
+        )
+        if not success:
+            raise ConnectError(Code.NOT_FOUND, f"Module {request.id} không tồn tại.")
+        return pb.DeleteWeekModuleResponse(success=True)
+
+    async def update_lesson(
+        self,
+        request: pb.UpdateLessonRequest,
+        ctx: RequestContext[pb.UpdateLessonRequest, pb.UpdateLessonResponse],
+    ) -> pb.UpdateLessonResponse:
+        self._verify_instructor_permission()
+        lesson = await self.use_case.update_lesson(
+            id=request.id,
+            course_id=request.course_id,
+            week_module_id=request.week_module_id,
+            title=request.title,
+            estimated_minutes=request.estimated_minutes,
+        )
+        if not lesson:
+            raise ConnectError(Code.NOT_FOUND, f"Bài học {request.id} không tồn tại.")
+        return pb.UpdateLessonResponse(lesson=_to_pb_lesson(lesson))
+
+    async def delete_lesson(
+        self,
+        request: pb.DeleteLessonRequest,
+        ctx: RequestContext[pb.DeleteLessonRequest, pb.DeleteLessonResponse],
+    ) -> pb.DeleteLessonResponse:
+        self._verify_instructor_permission()
+        success = await self.use_case.delete_lesson(
+            id=request.id, course_id=request.course_id
+        )
+        if not success:
+            raise ConnectError(Code.NOT_FOUND, f"Bài học {request.id} không tồn tại.")
+        return pb.DeleteLessonResponse(success=True)
+
+    async def update_learning_item(
+        self,
+        request: pb.UpdateLearningItemRequest,
+        ctx: RequestContext[
+            pb.UpdateLearningItemRequest, pb.UpdateLearningItemResponse
+        ],
+    ) -> pb.UpdateLearningItemResponse:
+        self._verify_instructor_permission()
+        item = await self.use_case.update_learning_item(
+            id=request.id,
+            course_id=request.course_id,
+            lesson_id=request.lesson_id,
+            title=request.title,
+            item_type=int(request.type),
+            estimated_minutes=request.estimated_minutes,
+            video_url=request.video_url,
+            reading_markdown=request.reading_markdown,
+            in_video_quizzes=list(request.in_video_quizzes),
+        )
+        if not item:
+            raise ConnectError(
+                Code.NOT_FOUND, f"Vật liệu học tập {request.id} không tồn tại."
+            )
+        return pb.UpdateLearningItemResponse(item=_to_pb_learning_item(item))
+
+    async def delete_learning_item(
+        self,
+        request: pb.DeleteLearningItemRequest,
+        ctx: RequestContext[
+            pb.DeleteLearningItemRequest, pb.DeleteLearningItemResponse
+        ],
+    ) -> pb.DeleteLearningItemResponse:
+        self._verify_instructor_permission()
+        success = await self.use_case.delete_learning_item(
+            id=request.id, course_id=request.course_id
+        )
+        if not success:
+            raise ConnectError(
+                Code.NOT_FOUND, f"Vật liệu học tập {request.id} không tồn tại."
+            )
+        return pb.DeleteLearningItemResponse(success=True)
+
+    async def create_course_announcement(
+        self,
+        request: pb.CreateCourseAnnouncementRequest,
+        ctx: RequestContext[
+            pb.CreateCourseAnnouncementRequest, pb.CreateCourseAnnouncementResponse
+        ],
+    ) -> pb.CreateCourseAnnouncementResponse:
+        user = require_current_user()
+        self._verify_instructor_permission()
+        author_name = user.email.split("@")[0] if user.email else "Giảng viên"
+        ann = await self.use_case.create_course_announcement(
+            course_id=request.course_id,
+            author_id=user.id,
+            author_name=author_name,
+            title=request.title,
+            content=request.content,
+        )
+        return pb.CreateCourseAnnouncementResponse(
+            announcement=pb.CourseAnnouncement(
+                id=ann.id,
+                course_id=ann.course_id,
+                author_id=ann.author_id,
+                author_name=ann.author_name,
+                title=ann.title,
+                content=ann.content,
+                created_at=ann.created_at,
+            )
+        )
+
+    async def list_course_announcements(
+        self,
+        request: pb.ListCourseAnnouncementsRequest,
+        ctx: RequestContext[
+            pb.ListCourseAnnouncementsRequest, pb.ListCourseAnnouncementsResponse
+        ],
+    ) -> pb.ListCourseAnnouncementsResponse:
+        announcements = await self.use_case.list_course_announcements(
+            course_id=request.course_id
+        )
+        return pb.ListCourseAnnouncementsResponse(
+            announcements=[
+                pb.CourseAnnouncement(
+                    id=a.id,
+                    course_id=a.course_id,
+                    author_id=a.author_id,
+                    author_name=a.author_name,
+                    title=a.title,
+                    content=a.content,
+                    created_at=a.created_at,
+                )
+                for a in announcements
+            ]
+        )
+
+    async def get_instructor_analytics(
+        self,
+        request: pb.GetInstructorAnalyticsRequest,
+        ctx: RequestContext[
+            pb.GetInstructorAnalyticsRequest, pb.GetInstructorAnalyticsResponse
+        ],
+    ) -> pb.GetInstructorAnalyticsResponse:
+        self._verify_instructor_permission()
+        analytics = await self.use_case.get_instructor_analytics(
+            course_id=request.course_id
+        )
+        return pb.GetInstructorAnalyticsResponse(
+            analytics=pb.InstructorAnalytics(
+                course_id=analytics.course_id,
+                total_enrolled_students=analytics.total_enrolled_students,
+                average_completion_rate=analytics.average_completion_rate,
+                average_rating=analytics.average_rating,
+                review_count=analytics.review_count,
+                students=[
+                    pb.EnrolledStudent(
+                        user_id=s.user_id,
+                        user_name=s.user_name,
+                        user_email=s.user_email,
+                        progress_percent=s.progress_percent,
+                        enrolled_at=s.enrolled_at,
+                    )
+                    for s in analytics.students
+                ],
+            )
+        )
+
+    async def reorder_week_modules(
+        self,
+        request: pb.ReorderWeekModulesRequest,
+        ctx: RequestContext[
+            pb.ReorderWeekModulesRequest, pb.ReorderWeekModulesResponse
+        ],
+    ) -> pb.ReorderWeekModulesResponse:
+        self._verify_instructor_permission()
+        success = await self.use_case.reorder_week_modules(
+            course_id=request.course_id,
+            ordered_week_module_ids=list(request.ordered_week_module_ids),
+        )
+        return pb.ReorderWeekModulesResponse(success=success)
+
+    async def reorder_lessons(
+        self,
+        request: pb.ReorderLessonsRequest,
+        ctx: RequestContext[pb.ReorderLessonsRequest, pb.ReorderLessonsResponse],
+    ) -> pb.ReorderLessonsResponse:
+        self._verify_instructor_permission()
+        success = await self.use_case.reorder_lessons(
+            course_id=request.course_id,
+            week_module_id=request.week_module_id,
+            ordered_lesson_ids=list(request.ordered_lesson_ids),
+        )
+        return pb.ReorderLessonsResponse(success=success)
+
+    async def reorder_learning_items(
+        self,
+        request: pb.ReorderLearningItemsRequest,
+        ctx: RequestContext[
+            pb.ReorderLearningItemsRequest, pb.ReorderLearningItemsResponse
+        ],
+    ) -> pb.ReorderLearningItemsResponse:
+        self._verify_instructor_permission()
+        success = await self.use_case.reorder_learning_items(
+            course_id=request.course_id,
+            lesson_id=request.lesson_id,
+            ordered_item_ids=list(request.ordered_item_ids),
+        )
+        return pb.ReorderLearningItemsResponse(success=success)

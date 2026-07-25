@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+
+const emptySubscribe = () => () => {};
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
@@ -19,6 +21,10 @@ export default function CourseDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [hasCert, setHasCert] = useState(false);
   const [certId, setCertId] = useState("");
+
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
+  const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
 
   // Review Modal States
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -140,6 +146,17 @@ export default function CourseDetailPage() {
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider">
                 Specialization Course
               </div>
+              {isInstructorOrAdmin && (
+                <Link
+                  href={`/instructor/courses/${course.id}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md transition-all cursor-pointer"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>Biên soạn Bài giảng (Instructor Builder)</span>
+                </Link>
+              )}
               {hasCert && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
                   <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

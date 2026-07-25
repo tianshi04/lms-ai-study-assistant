@@ -152,6 +152,27 @@ export default function InstructorCoursesPage() {
     }
   };
 
+  const handleDeleteCourse = async (courseId: string, courseTitle: string) => {
+    if (!isInstructorOrAdmin) {
+      setMessage("Tài khoản Học viên (Learner) không có quyền xóa khóa học.");
+      return;
+    }
+
+    if (!confirm(`Bạn có chắc chắn muốn XÓA hoàn toàn khóa học "${courseTitle}"? Thao tác này không thể hoàn tác.`)) {
+      return;
+    }
+
+    try {
+      const client = getRpcClient(CatalogService);
+      await client.deleteCourse({ id: courseId });
+      setMessage(`Đã xóa thành công khóa học "${courseTitle}".`);
+      await refreshCourses();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Không thể xóa khóa học.";
+      setMessage(msg);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <Navbar />
@@ -167,7 +188,7 @@ export default function InstructorCoursesPage() {
               Quản lý Khóa học Giảng dạy
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Soạn thảo, quản lý bài giảng và tạo/chỉnh sửa các khóa học trên nền tảng Coursera AI.
+              Soạn thảo, quản lý bài giảng, xem thống kê và đăng thông báo cho các khóa học trên nền tảng Coursera AI.
             </p>
           </div>
 
@@ -210,7 +231,7 @@ export default function InstructorCoursesPage() {
         {message && (
           <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm flex items-center justify-between">
             <span>{message}</span>
-            <button onClick={() => setMessage(null)} className="text-xs underline font-semibold">
+            <button onClick={() => setMessage(null)} className="text-xs underline font-semibold cursor-pointer">
               Đóng
             </button>
           </div>
@@ -227,7 +248,7 @@ export default function InstructorCoursesPage() {
             <p className="text-slate-500 mb-4">Chưa có khóa học nào được tạo.</p>
             <button
               onClick={handleOpenCreateModal}
-              className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold"
+              className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold cursor-pointer"
             >
               Tạo khóa học đầu tiên
             </button>
@@ -246,12 +267,46 @@ export default function InstructorCoursesPage() {
                     </span>
                     <span className="text-xs text-slate-400 font-mono">{course.weekModules.length} Tuần học</span>
                   </div>
-                  <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2 line-clamp-2">
-                    {course.title}
-                  </h3>
+                  <Link href={`/instructor/courses/${course.id}`} className="block">
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                      {course.title}
+                    </h3>
+                  </Link>
                   <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 mb-4 leading-relaxed">
                     {course.description}
                   </p>
+
+                  <div className="flex items-center gap-2 mb-4">
+                    <Link
+                      href={`/instructor/courses/${course.id}`}
+                      className="px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-xs font-bold hover:bg-blue-100 transition-colors flex items-center gap-1"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      <span>Biên soạn</span>
+                    </Link>
+
+                    <Link
+                      href={`/instructor/courses/${course.id}/analytics`}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-xs font-semibold hover:bg-emerald-100 transition-colors flex items-center gap-1"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      <span>Thống kê</span>
+                    </Link>
+
+                    <Link
+                      href={`/instructor/courses/${course.id}/announcements`}
+                      className="px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 text-xs font-semibold hover:bg-purple-100 transition-colors flex items-center gap-1"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                      </svg>
+                      <span>Thông báo</span>
+                    </Link>
+                  </div>
                 </div>
 
                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
@@ -263,29 +318,29 @@ export default function InstructorCoursesPage() {
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
-                      <span>Sửa</span>
+                      <span>Sửa thông tin</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteCourse(course.id, course.title)}
+                      className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 text-xs font-semibold hover:bg-rose-100 transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      <span>Xóa</span>
                     </button>
 
                     <Link
-                      href={`/instructor/courses/${course.id}`}
-                      className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-xs font-bold hover:bg-blue-100 transition-colors flex items-center gap-1"
+                      href={`/courses/${course.id}`}
+                      className="text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1 ml-auto"
                     >
+                      <span>Xem bài giảng</span>
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                       </svg>
-                      <span>Soạn bài học</span>
                     </Link>
                   </div>
-
-                  <Link
-                    href={`/courses/${course.id}`}
-                    className="text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1"
-                  >
-                    <span>Xem bài giảng</span>
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                  </Link>
                 </div>
               </div>
             ))}

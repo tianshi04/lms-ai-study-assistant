@@ -9,6 +9,11 @@ export class CourseBuilderPage {
   readonly addLessonButton: Locator;
   readonly addLearningItemButton: Locator;
 
+  readonly deleteWeekButton: Locator;
+  readonly deleteLessonButton: Locator;
+  readonly analyticsLink: Locator;
+  readonly announcementsLink: Locator;
+
   constructor(page: Page) {
     this.page = page;
     this.addWeekButton = page.getByRole('button', { name: /Thêm Tuần học/i });
@@ -17,6 +22,10 @@ export class CourseBuilderPage {
     this.submitWeekButton = page.getByRole('button', { name: /Xác nhận tạo Tuần học/i });
     this.addLessonButton = page.getByRole('button', { name: /Thêm Bài học/i }).first();
     this.addLearningItemButton = page.getByRole('button', { name: /Thêm Học liệu/i }).first();
+    this.deleteWeekButton = page.getByRole('button', { name: /Xóa Tuần/i }).first();
+    this.deleteLessonButton = page.getByRole('button', { name: /Xóa Bài/i }).first();
+    this.analyticsLink = page.getByRole('link', { name: /Thống kê lớp học/i });
+    this.announcementsLink = page.getByRole('link', { name: /Đăng Thông báo/i });
   }
 
   async goto(courseId: string) {
@@ -38,4 +47,5 @@ export class CourseBuilderPage {
     }
     await this.submitWeekButton.click();
   }
+
 }

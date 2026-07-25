@@ -57,7 +57,9 @@ export class ScormAPIAdapter {
         return "true";
       },
       LMSGetLastError: (): string => "0",
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       LMSGetErrorString: (_errorCode: string): string => "No error",
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       LMSGetDiagnostic: (_errorCode: string): string => "Diagnostic info",
     };
   }
@@ -101,7 +103,9 @@ export class ScormAPIAdapter {
         return "true";
       },
       GetLastError: (): string => "0",
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       GetErrorString: (_errorCode: string): string => "No error",
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       GetDiagnostic: (_errorCode: string): string => "Diagnostic info",
     };
   }

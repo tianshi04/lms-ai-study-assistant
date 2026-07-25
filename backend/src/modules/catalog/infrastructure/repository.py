@@ -7,8 +7,11 @@ from sqlalchemy.orm import selectinload
 
 from src.modules.catalog.domain.entities import (
     Course,
+    CourseAnnouncement,
     CourseReview,
+    EnrolledStudent,
     InVideoQuiz,
+    InstructorAnalytics,
     InteractiveTranscript,
     ItemType,
     LearningItem,
@@ -18,8 +21,10 @@ from src.modules.catalog.domain.entities import (
 )
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.models import (
+    CourseAnnouncementModel,
     CourseModel,
     CourseReviewModel,
+    InVideoQuizModel,
     LearningItemModel,
     LessonModel,
     SpecializationModel,
@@ -62,9 +67,9 @@ def _model_to_domain_course(
                         vtt_subtitle_url=i_model.vtt_subtitle_url,
                         interactive_transcripts=transcripts,
                         in_video_quizzes=quizzes,
-                        reading_markdown=i_model.reading_markdown,
                         scorm_package_path=i_model.scorm_package_path,
                         scorm_entry_html=i_model.scorm_entry_html,
+                        order_index=getattr(i_model, "order_index", 0),
                     )
                 )
             lessons.append(
@@ -73,6 +78,7 @@ def _model_to_domain_course(
                     title=l_model.title,
                     estimated_minutes=l_model.estimated_minutes,
                     items=items,
+                    order_index=getattr(l_model, "order_index", 0),
                 )
             )
         week_modules.append(
@@ -450,3 +456,323 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         if row:
             return row[0], row[1] or []
         return course_id_or_slug, []
+
+    async def delete_course(self, course_id: str) -> bool:
+        real_id, _ = await self.get_course_id_by_slug_or_id(course_id)
+        stmt = select(CourseModel).where(CourseModel.id == real_id)
+        res = await self.session.execute(stmt)
+        course = res.scalar_one_or_none()
+        if not course:
+            return False
+        await self.session.delete(course)
+        await self.session.commit()
+        return True
+
+    async def update_week_module(
+        self, id: str, course_id: str, week_number: int, title: str, summary: str
+    ) -> WeekModule | None:
+        stmt = select(WeekModuleModel).where(WeekModuleModel.id == id)
+        res = await self.session.execute(stmt)
+        wm = res.scalar_one_or_none()
+        if not wm:
+            return None
+        wm.week_number = week_number
+        wm.title = title
+        wm.summary = summary
+        await self.session.commit()
+        await self.session.refresh(wm)
+        return WeekModule(
+            id=wm.id,
+            week_number=wm.week_number,
+            title=wm.title,
+            summary=wm.summary,
+            lessons=[],
+        )
+
+    async def delete_week_module(self, id: str, course_id: str) -> bool:
+        stmt = select(WeekModuleModel).where(WeekModuleModel.id == id)
+        res = await self.session.execute(stmt)
+        wm = res.scalar_one_or_none()
+        if not wm:
+            return False
+        await self.session.delete(wm)
+        await self.session.commit()
+        return True
+
+    async def update_lesson(
+        self,
+        id: str,
+        course_id: str,
+        week_module_id: str,
+        title: str,
+        estimated_minutes: int,
+    ) -> Lesson | None:
+        stmt = select(LessonModel).where(LessonModel.id == id)
+        res = await self.session.execute(stmt)
+        lesson = res.scalar_one_or_none()
+        if not lesson:
+            return None
+        lesson.title = title
+        lesson.estimated_minutes = estimated_minutes
+        if week_module_id:
+            lesson.week_module_id = week_module_id
+        await self.session.commit()
+        await self.session.refresh(lesson)
+        return Lesson(
+            id=lesson.id,
+            title=lesson.title,
+            estimated_minutes=lesson.estimated_minutes,
+            items=[],
+        )
+
+    async def delete_lesson(self, id: str, course_id: str) -> bool:
+        stmt = select(LessonModel).where(LessonModel.id == id)
+        res = await self.session.execute(stmt)
+        lesson = res.scalar_one_or_none()
+        if not lesson:
+            return False
+        await self.session.delete(lesson)
+        await self.session.commit()
+        return True
+
+    async def update_learning_item(
+        self,
+        id: str,
+        course_id: str,
+        lesson_id: str,
+        title: str,
+        item_type: int,
+        estimated_minutes: int,
+        video_url: str,
+        reading_markdown: str,
+        in_video_quizzes: list | None = None,
+    ) -> LearningItem | None:
+        stmt = (
+            select(LearningItemModel)
+            .options(selectinload(LearningItemModel.in_video_quizzes))
+            .where(LearningItemModel.id == id)
+        )
+        res = await self.session.execute(stmt)
+        item = res.scalar_one_or_none()
+        if not item:
+            return None
+
+        item.title = title
+        type_mapping = {
+            1: ItemType.VIDEO,
+            2: ItemType.READING,
+            3: ItemType.PRACTICE_QUIZ,
+            4: ItemType.GRADED_QUIZ,
+            5: ItemType.AUTO_GRADED_LAB,
+            6: ItemType.PEER_REVIEW,
+        }
+        item.type = type_mapping.get(item_type, ItemType.UNSPECIFIED)
+        item.estimated_minutes = estimated_minutes
+        item.video_url = video_url
+        item.reading_markdown = reading_markdown
+        if lesson_id:
+            item.lesson_id = lesson_id
+
+        if in_video_quizzes is not None:
+            item.in_video_quizzes.clear()
+            for q in in_video_quizzes:
+                quiz_model = InVideoQuizModel(
+                    item_id=item.id,
+                    timestamp_seconds=getattr(q, "timestamp_seconds", 0),
+                    question=getattr(q, "question", ""),
+                    options=list(getattr(q, "options", [])),
+                    correct_option_index=getattr(q, "correct_option_index", 0),
+                    explanation=getattr(q, "explanation", ""),
+                )
+                item.in_video_quizzes.append(quiz_model)
+
+        await self.session.commit()
+        await self.session.refresh(item)
+
+        quizzes = [
+            InVideoQuiz(
+                timestamp_seconds=q.timestamp_seconds,
+                question=q.question,
+                options=q.options,
+                correct_option_index=q.correct_option_index,
+                explanation=q.explanation,
+            )
+            for q in item.in_video_quizzes
+        ]
+        return LearningItem(
+            id=item.id,
+            title=item.title,
+            type=item.type,
+            estimated_minutes=item.estimated_minutes,
+            video_url=item.video_url,
+            vtt_subtitle_url=item.vtt_subtitle_url,
+            interactive_transcripts=[],
+            in_video_quizzes=quizzes,
+            reading_markdown=item.reading_markdown,
+        )
+
+    async def delete_learning_item(self, id: str, course_id: str) -> bool:
+        stmt = select(LearningItemModel).where(LearningItemModel.id == id)
+        res = await self.session.execute(stmt)
+        item = res.scalar_one_or_none()
+        if not item:
+            return False
+        await self.session.delete(item)
+        await self.session.commit()
+        return True
+
+    async def create_course_announcement(
+        self, course_id: str, author_id: str, author_name: str, title: str, content: str
+    ) -> CourseAnnouncement:
+        real_id, _ = await self.get_course_id_by_slug_or_id(course_id)
+        ann_id = f"ann_{uuid.uuid4().hex[:12]}"
+        now_iso = datetime.now(timezone.utc).isoformat()
+        ann = CourseAnnouncementModel(
+            id=ann_id,
+            course_id=real_id,
+            author_id=author_id,
+            author_name=author_name,
+            title=title,
+            content=content,
+            created_at=now_iso,
+        )
+        self.session.add(ann)
+        await self.session.commit()
+        return CourseAnnouncement(
+            id=ann.id,
+            course_id=ann.course_id,
+            author_id=ann.author_id,
+            author_name=ann.author_name,
+            title=ann.title,
+            content=ann.content,
+            created_at=ann.created_at,
+        )
+
+    async def list_course_announcements(
+        self, course_id: str
+    ) -> list[CourseAnnouncement]:
+        real_id, _ = await self.get_course_id_by_slug_or_id(course_id)
+        stmt = (
+            select(CourseAnnouncementModel)
+            .where(CourseAnnouncementModel.course_id == real_id)
+            .order_by(CourseAnnouncementModel.created_at.desc())
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        return [
+            CourseAnnouncement(
+                id=m.id,
+                course_id=m.course_id,
+                author_id=m.author_id,
+                author_name=m.author_name,
+                title=m.title,
+                content=m.content,
+                created_at=m.created_at,
+            )
+            for m in models
+        ]
+
+    async def get_instructor_analytics(self, course_id: str) -> InstructorAnalytics:
+        real_id, _ = await self.get_course_id_by_slug_or_id(course_id)
+        avg_rating, total_reviews = await self.get_course_rating_stats(real_id)
+
+        # Import LearningProgressModel dynamically to compute learner statistics
+        from src.modules.learning.infrastructure.models import LearningProgressModel
+        from src.modules.identity.infrastructure.models import UserModel
+
+        stmt = select(LearningProgressModel).where(
+            LearningProgressModel.course_id == real_id
+        )
+        res = await self.session.execute(stmt)
+        progresses = res.scalars().all()
+
+        students: list[EnrolledStudent] = []
+        total_students = len(progresses)
+        sum_progress = 0.0
+
+        for p in progresses:
+            sum_progress += p.overall_progress_percent
+            # Fetch user email/name if available
+            u_stmt = select(UserModel).where(UserModel.id == p.user_id)
+            u_res = await self.session.execute(u_stmt)
+            user_model = u_res.scalar_one_or_none()
+
+            u_name = (
+                user_model.email.split("@")[0]
+                if user_model and user_model.email
+                else f"Học viên #{p.user_id[:6]}"
+            )
+            u_email = user_model.email if user_model else ""
+
+            students.append(
+                EnrolledStudent(
+                    user_id=p.user_id,
+                    user_name=u_name,
+                    user_email=u_email,
+                    progress_percent=round(p.overall_progress_percent, 1),
+                    enrolled_at="2026-07-25T00:00:00Z",
+                )
+            )
+
+        avg_completion = (
+            round(sum_progress / total_students, 1) if total_students > 0 else 0.0
+        )
+
+        return InstructorAnalytics(
+            id=f"analytics_{real_id}",
+            course_id=real_id,
+            total_enrolled_students=total_students,
+            average_completion_rate=avg_completion,
+            average_rating=avg_rating,
+            review_count=total_reviews,
+            students=students,
+        )
+
+    async def reorder_week_modules(
+        self, course_id: str, ordered_week_module_ids: list[str]
+    ) -> bool:
+        real_id, _ = await self.get_course_id_by_slug_or_id(course_id)
+        for idx, wm_id in enumerate(ordered_week_module_ids, start=1):
+            stmt = (
+                select(WeekModuleModel)
+                .where(WeekModuleModel.id == wm_id)
+                .where(WeekModuleModel.course_id == real_id)
+            )
+            res = await self.session.execute(stmt)
+            wm = res.scalar_one_or_none()
+            if wm:
+                wm.week_number = idx
+        await self.session.commit()
+        return True
+
+    async def reorder_lessons(
+        self, course_id: str, week_module_id: str, ordered_lesson_ids: list[str]
+    ) -> bool:
+        for idx, lesson_id in enumerate(ordered_lesson_ids):
+            stmt = (
+                select(LessonModel)
+                .where(LessonModel.id == lesson_id)
+                .where(LessonModel.week_module_id == week_module_id)
+            )
+            res = await self.session.execute(stmt)
+            lesson = res.scalar_one_or_none()
+            if lesson:
+                lesson.order_index = idx
+        await self.session.commit()
+        return True
+
+    async def reorder_learning_items(
+        self, course_id: str, lesson_id: str, ordered_item_ids: list[str]
+    ) -> bool:
+        for idx, item_id in enumerate(ordered_item_ids):
+            stmt = (
+                select(LearningItemModel)
+                .where(LearningItemModel.id == item_id)
+                .where(LearningItemModel.lesson_id == lesson_id)
+            )
+            res = await self.session.execute(stmt)
+            item = res.scalar_one_or_none()
+            if item:
+                item.order_index = idx
+        await self.session.commit()
+        return True

@@ -7,6 +7,16 @@ import { ForumService, ForumThreadSchema, ForumReplySchema, type ForumThread } f
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Navbar } from "@/components/layout/Navbar";
 
+function formatRoleName(role: string): string {
+  if (!role) return "Learner";
+  const r = role.toUpperCase();
+  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Learner";
+  if (r.includes("INSTRUCTOR") || r === "2") return "Instructor";
+  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "3") return "Teaching Assistant";
+  if (r.includes("SUPER_ADMIN") || r.includes("PARTNER_ADMIN") || r.includes("ADMIN")) return "Admin";
+  return role;
+}
+
 export default function ForumPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
@@ -326,7 +336,7 @@ export default function ForumPage() {
                           </span>
                         )}
                         <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                          Đăng bởi <strong className="text-slate-700 dark:text-slate-300">{thread.authorName}</strong> ({thread.authorRole})
+                          Đăng bởi <strong className="text-slate-700 dark:text-slate-300">{thread.authorName}</strong> ({formatRoleName(thread.authorRole)})
                         </span>
                         <span className="text-slate-300 dark:text-slate-700">•</span>
                         <span className="text-xs text-slate-400">
@@ -407,7 +417,7 @@ export default function ForumPage() {
                                   Câu trả lời chính thức (TA)
                                 </span>
                               )}
-                              <span className="text-xs text-slate-400">({reply.authorRole})</span>
+                              <span className="text-xs text-slate-400">({formatRoleName(reply.authorRole)})</span>
                               <span className="text-xs text-slate-400">
                                 • {new Date(reply.createdAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
                               </span>
