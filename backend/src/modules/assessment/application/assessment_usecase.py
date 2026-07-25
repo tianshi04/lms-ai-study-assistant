@@ -486,6 +486,15 @@ class AssessmentUseCase:
         )
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
+            sub = await repo.get_peer_submission(submission_id)
+            if sub and sub.user_id != user_id:
+                from connectrpc.code import Code
+                from connectrpc.errors import ConnectError
+
+                raise ConnectError(
+                    Code.PERMISSION_DENIED,
+                    "Bạn chỉ có quyền gửi khiếu nại điểm đối với bài nộp của chính mình.",
+                )
             await repo.save_grade_appeal(appeal)
 
         return True, "PENDING"

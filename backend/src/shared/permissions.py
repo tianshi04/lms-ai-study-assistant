@@ -5,8 +5,8 @@ from src.shared.auth import CurrentUser
 
 
 def enforce_course_ownership(
-    owner_id: str,
-    co_instructor_ids: list[str],
+    owner_id: str | None,
+    co_instructor_ids: list[str] | None,
     user: CurrentUser,
     action_name: str = "quản lý khóa học",
 ) -> None:
@@ -25,8 +25,10 @@ def enforce_course_ownership(
     ):
         return
 
-    # If owner_id is set and user is neither owner nor co-instructor
-    if owner_id and user.id != owner_id and user.id not in (co_instructor_ids or []):
+    is_owner = bool(owner_id and user.id == owner_id)
+    is_co_instructor = bool(co_instructor_ids and user.id in co_instructor_ids)
+
+    if not is_owner and not is_co_instructor:
         raise ConnectError(
             Code.PERMISSION_DENIED,
             f"Bạn không có quyền {action_name} này vì bạn không phải là chủ sở hữu hoặc giảng viên phụ trách.",
