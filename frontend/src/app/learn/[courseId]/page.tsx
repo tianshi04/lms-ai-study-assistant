@@ -99,6 +99,14 @@ export default function CoursePlayerPage() {
     loadData();
   }, [courseId, router]);
 
+  // Reset in-video quiz state when switching learning items
+  useEffect(() => {
+    setActiveQuiz(null);
+    setSelectedOption(null);
+    setQuizSubmitted(false);
+    setAnsweredQuizTimestamps(new Set());
+  }, [activeItem?.id]);
+
   // Total course items count
   const totalCourseItems = course?.weekModules.reduce(
     (acc, wm) => acc + wm.lessons.reduce((lAcc, l) => lAcc + l.items.length, 0),
