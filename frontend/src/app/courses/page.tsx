@@ -85,10 +85,10 @@ export default function CoursesPage() {
           </div>
 
           {/* Filter Bar */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-t border-slate-100 dark:border-slate-800 pt-6">
-            <div className="flex-1 space-y-5">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 border-t border-slate-100 dark:border-slate-800 pt-6 mt-2">
+            <div className="flex-1 flex flex-col gap-5">
               {/* Subject Chips */}
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-3">
                 <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-2 hidden md:block">{t("catalogFilter.subjectHeader")}</span>
                 <button
                   onClick={() => setSubject("")}
@@ -108,7 +108,7 @@ export default function CoursesPage() {
               </div>
               
               {/* Level Chips */}
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-3">
                 <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-2 hidden md:block">{t("catalogFilter.levelHeader")}</span>
                 <button
                   onClick={() => setLevel("")}
@@ -129,7 +129,7 @@ export default function CoursesPage() {
             </div>
 
             {/* Sort Dropdown */}
-            <div className="shrink-0 w-full lg:w-48 mt-2 lg:mt-0">
+            <div className="shrink-0 w-full lg:w-48 mt-4 lg:mt-0">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
