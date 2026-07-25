@@ -1,7 +1,7 @@
 import html
 from typing import Any, Callable
 
-from src.modules.catalog.domain.entities import Course, Lesson, Specialization
+from src.modules.catalog.domain.entities import Course, Lesson, Specialization, Category
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
@@ -71,8 +71,8 @@ class CatalogUseCase:
         partner_name: str,
         partner_logo_url: str,
         instructor_names: list[str],
-        subject: str = "COURSE_SUBJECT_UNSPECIFIED",
-        level: str = "COURSE_LEVEL_UNSPECIFIED",
+        subject: str = "",
+        level: str = "",
     ) -> Course:
         async with async_session_scope() as session:
             repo = SQLAlchemyCatalogRepository(session)
@@ -95,8 +95,8 @@ class CatalogUseCase:
         partner_name: str,
         partner_logo_url: str,
         instructor_names: list[str],
-        subject: str = "COURSE_SUBJECT_UNSPECIFIED",
-        level: str = "COURSE_LEVEL_UNSPECIFIED",
+        subject: str = "",
+        level: str = "",
     ) -> Course | None:
         async with async_session_scope() as session:
             repo = SQLAlchemyCatalogRepository(session)
@@ -225,3 +225,19 @@ class CatalogUseCase:
             return await repo.list_course_reviews(
                 course_id=real_course_id, page_size=page_size, page_token=page_token
             )
+
+    async def list_categories(self, type_filter: str = "") -> list[Category]:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.list_categories(type_filter)
+
+    async def create_category(self, name: str, category_type: str) -> Category:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.create_category(name, category_type)
+
+    async def delete_category(self, category_id: str) -> bool:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.delete_category(category_id)
+

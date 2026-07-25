@@ -1,10 +1,13 @@
 from abc import ABC, abstractmethod
 
 from src.modules.catalog.domain.entities import (
+    Category,
     Course,
     CourseReview,
+    LearningItem,
     Lesson,
     Specialization,
+    WeekModule,
 )
 
 
@@ -38,6 +41,20 @@ class ICatalogRepository(ABC):
         pass
 
     @abstractmethod
+    async def create_course(
+        self,
+        title: str,
+        slug: str,
+        description: str,
+        partner_name: str,
+        partner_logo_url: str,
+        instructor_names: list[str],
+        subject: str = "",
+        level: str = "",
+    ) -> Course:
+        pass
+
+    @abstractmethod
     async def submit_course_review(
         self,
         user_id: str,
@@ -64,3 +81,16 @@ class ICatalogRepository(ABC):
         self, course_id_or_slug: str
     ) -> tuple[str, list[str]]:
         pass
+
+    @abstractmethod
+    async def list_categories(self, type_filter: str = "") -> list[Category]:
+        pass
+
+    @abstractmethod
+    async def create_category(self, name: str, category_type: str) -> Category:
+        pass
+
+    @abstractmethod
+    async def delete_category(self, category_id: str) -> bool:
+        pass
+

@@ -3,15 +3,14 @@
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { CourseCard } from "@/components/course/CourseCard";
-import { useCoursesQuery } from "@/lib/query_hooks";
+import { useCoursesQuery, useCategoriesQuery } from "@/lib/query_hooks";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
-import { CourseSubject, CourseLevel } from "@/gen/catalog/v1/catalog_pb";
 
 export default function CoursesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [subject, setSubject] = useState<CourseSubject>(CourseSubject.UNSPECIFIED);
-  const [level, setLevel] = useState<CourseLevel>(CourseLevel.UNSPECIFIED);
+  const [subject, setSubject] = useState<string>("");
+  const [level, setLevel] = useState<string>("");
   const [sortBy, setSortBy] = useState("");
 
   useEffect(() => {
@@ -25,6 +24,9 @@ export default function CoursesPage() {
     level,
     sortBy,
   });
+  
+  const { data: subjects = [] } = useCategoriesQuery("SUBJECT");
+  const { data: levels = [] } = useCategoriesQuery("LEVEL");
   const error = queryError ? queryError.message : null;
   const { t } = useTranslation();
 
@@ -83,58 +85,40 @@ export default function CoursesPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-2 hidden md:block">Chủ đề</span>
                 <button
-                  onClick={() => setSubject(CourseSubject.UNSPECIFIED)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.UNSPECIFIED ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300"}`}
+                  onClick={() => setSubject("")}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === "" ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300"}`}
                 >
                   {t("catalogFilter.allSubjects")}
                 </button>
-                <button
-                  onClick={() => setSubject(CourseSubject.AI_ML)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.AI_ML ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300"}`}
-                >
-                  {t("catalogFilter.aiMl")}
-                </button>
-                <button
-                  onClick={() => setSubject(CourseSubject.WEB_DEVELOPMENT)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.WEB_DEVELOPMENT ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300"}`}
-                >
-                  {t("catalogFilter.webDev")}
-                </button>
-                <button
-                  onClick={() => setSubject(CourseSubject.DATA_SCIENCE)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.DATA_SCIENCE ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300"}`}
-                >
-                  {t("catalogFilter.dataScience")}
-                </button>
+                {subjects.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => setSubject(s.slug)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === s.slug ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300"}`}
+                  >
+                    {s.name}
+                  </button>
+                ))}
               </div>
               
               {/* Level Chips */}
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-2 hidden md:block">Trình độ</span>
                 <button
-                  onClick={() => setLevel(CourseLevel.UNSPECIFIED)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.UNSPECIFIED ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20" : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                  onClick={() => setLevel("")}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === "" ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20" : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
                 >
                   {t("catalogFilter.allLevels")}
                 </button>
-                <button
-                  onClick={() => setLevel(CourseLevel.BEGINNER)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.BEGINNER ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20" : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
-                >
-                  {t("catalogFilter.beginner")}
-                </button>
-                <button
-                  onClick={() => setLevel(CourseLevel.INTERMEDIATE)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.INTERMEDIATE ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20" : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
-                >
-                  {t("catalogFilter.intermediate")}
-                </button>
-                <button
-                  onClick={() => setLevel(CourseLevel.ADVANCED)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.ADVANCED ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20" : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
-                >
-                  {t("catalogFilter.advanced")}
-                </button>
+                {levels.map(l => (
+                  <button
+                    key={l.id}
+                    onClick={() => setLevel(l.slug)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === l.slug ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20" : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                  >
+                    {l.name}
+                  </button>
+                ))}
               </div>
             </div>
 

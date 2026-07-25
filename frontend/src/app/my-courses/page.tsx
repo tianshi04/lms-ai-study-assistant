@@ -18,29 +18,37 @@ export default function MyCoursesPage() {
   const { t } = useTranslation();
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-    if (!token) {
-      setIsAuthenticated(false);
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        window.location.href = "/auth/login?redirect=/my-courses";
+        return;
+      }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsAuthenticated(true);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
-      window.location.href = "/auth/login?redirect=/my-courses";
-      return;
     }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
 
     async function fetchMyCourses() {
       try {
         const client = getRpcClient(LearningService);
         const res = await client.listMyEnrolledCourses({});
         setCourses(res.courses || []);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to fetch my courses:", err);
-        setError(err.message || t("myCoursesPage.errorFetch"));
+        setError(err instanceof Error ? err.message : t("myCoursesPage.errorFetch"));
       } finally {
         setLoading(false);
       }
     }
 
     fetchMyCourses();
-  }, []);
+  }, [t, isAuthenticated]);
 
   if (!isAuthenticated) {
     return (

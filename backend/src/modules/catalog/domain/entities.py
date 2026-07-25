@@ -13,22 +13,13 @@ class ItemType(str, Enum):
     PEER_REVIEW = "PEER_REVIEW"
 
 
-class CourseSubject(str, Enum):
-    UNSPECIFIED = "UNSPECIFIED"
-    DATA_SCIENCE = "DATA_SCIENCE"
-    COMPUTER_SCIENCE = "COMPUTER_SCIENCE"
-    BUSINESS = "BUSINESS"
-    AI_ML = "AI_ML"
-    WEB_DEVELOPMENT = "WEB_DEVELOPMENT"
-    CLOUD_COMPUTING = "CLOUD_COMPUTING"
-
-
-class CourseLevel(str, Enum):
-    UNSPECIFIED = "UNSPECIFIED"
-    BEGINNER = "BEGINNER"
-    INTERMEDIATE = "INTERMEDIATE"
-    ADVANCED = "ADVANCED"
-    MIXED = "MIXED"
+@dataclass(frozen=True)
+class Category(ValueObject):
+    id: str
+    name: str
+    slug: str
+    type: str
+    created_at: str
 
 
 @dataclass(frozen=True)
@@ -135,8 +126,8 @@ class Course(Entity):
         week_modules: list[WeekModule] | None = None,
         average_rating: float = 0.0,
         review_count: int = 0,
-        subject: CourseSubject = CourseSubject.UNSPECIFIED,
-        level: CourseLevel = CourseLevel.UNSPECIFIED,
+        subject: str = "",
+        level: str = "",
     ) -> None:
         super().__init__(id=id)
         self.title = title

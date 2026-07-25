@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-from src.modules.catalog.domain.entities import CourseLevel, CourseSubject
+from src.modules.catalog.domain.entities import Course
 
 
 @pytest.fixture
@@ -22,8 +22,8 @@ async def setup_test_courses(catalog_usecase):
         partner_name="DeepLearning.AI",
         partner_logo_url="",
         instructor_names=["Andrew Ng"],
-        subject="COURSE_SUBJECT_AI_ML",
-        level="COURSE_LEVEL_BEGINNER",
+        subject="AI_ML",
+        level="BEGINNER",
     )
     c2 = await usecase.create_course(
         title="Advanced ML",
@@ -32,8 +32,8 @@ async def setup_test_courses(catalog_usecase):
         partner_name="DeepLearning.AI",
         partner_logo_url="",
         instructor_names=["Andrew Ng"],
-        subject="COURSE_SUBJECT_AI_ML",
-        level="COURSE_LEVEL_ADVANCED",
+        subject="AI_ML",
+        level="ADVANCED",
     )
     c3 = await usecase.create_course(
         title="Web Dev 101",
@@ -42,8 +42,8 @@ async def setup_test_courses(catalog_usecase):
         partner_name="Meta",
         partner_logo_url="",
         instructor_names=["Jane Doe"],
-        subject="COURSE_SUBJECT_WEB_DEVELOPMENT",
-        level="COURSE_LEVEL_BEGINNER",
+        subject="WEB_DEVELOPMENT",
+        level="BEGINNER",
     )
     from src.shared.infrastructure.database import async_session_scope
     from src.modules.catalog.infrastructure.models import CourseModel
@@ -80,20 +80,20 @@ async def test_list_courses_no_filter(
 async def test_list_courses_filter_by_subject(
     catalog_usecase: CatalogUseCase, setup_test_courses
 ):
-    courses, _ = await catalog_usecase.list_courses(subject="COURSE_SUBJECT_AI_ML")
+    courses, _ = await catalog_usecase.list_courses(subject="AI_ML")
     assert len(courses) >= 2
     for c in courses:
-        assert c.subject == CourseSubject.AI_ML.value or c.subject == "AI_ML"
+        assert c.subject == "AI_ML"
 
 
 @pytest.mark.asyncio
 async def test_list_courses_filter_by_level(
     catalog_usecase: CatalogUseCase, setup_test_courses
 ):
-    courses, _ = await catalog_usecase.list_courses(level="COURSE_LEVEL_BEGINNER")
+    courses, _ = await catalog_usecase.list_courses(level="BEGINNER")
     assert len(courses) >= 2
     for c in courses:
-        assert c.level == CourseLevel.BEGINNER.value or c.level == "BEGINNER"
+        assert c.level == "BEGINNER"
 
 
 @pytest.mark.asyncio
@@ -101,12 +101,12 @@ async def test_list_courses_filter_combined(
     catalog_usecase: CatalogUseCase, setup_test_courses
 ):
     courses, _ = await catalog_usecase.list_courses(
-        subject="COURSE_SUBJECT_AI_ML", level="COURSE_LEVEL_ADVANCED"
+        subject="AI_ML", level="ADVANCED"
     )
     assert len(courses) >= 1
     for c in courses:
-        assert c.subject in (CourseSubject.AI_ML.value, "AI_ML")
-        assert c.level in (CourseLevel.ADVANCED.value, "ADVANCED")
+        assert c.subject == "AI_ML"
+        assert c.level == "ADVANCED"
 
 
 @pytest.mark.asyncio
@@ -147,3 +147,15 @@ async def test_list_courses_sort_by_popular(
     # Reviews should be sorted descending
     reviews = [c.review_count for c in test_courses]
     assert reviews == sorted(reviews, reverse=True)
+
+
+@pytest.mark.asyncio
+async def test_list_courses_sort_by_newest(
+    catalog_usecase: CatalogUseCase, setup_test_courses
+):
+    courses, _ = await catalog_usecase.list_courses(sort_by="newest")
+    assert len(courses) >= 3
+    test_courses = [c for c in courses if c.id.startswith("course-")]
+    # Newest should sort by id descending (assuming ids are monotonic in tests)
+    ids = [c.id for c in test_courses]
+    assert ids == sorted(ids, reverse=True)

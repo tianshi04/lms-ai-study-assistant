@@ -70,6 +70,7 @@ message WeekModule {
   repeated Lesson lessons = 5;
 }
 
+// Course messages
 message Course {
   string id = 1;
   string title = 2;
@@ -81,10 +82,13 @@ message Course {
   repeated WeekModule week_modules = 8;
   double average_rating = 9;
   int32 review_count = 10;
-  CourseSubject subject = 11;
-  CourseLevel level = 12;
+  
+  // Tags
+  string subject = 11;
+  string level = 12;
 }
 
+// Specialization messages
 message Specialization {
   string id = 1;
   string title = 2;
@@ -103,12 +107,13 @@ message GetSpecializationResponse {
   Specialization specialization = 1;
 }
 
+// Catalog queries
 message ListCoursesRequest {
   int32 page_size = 1;
   string page_token = 2;
   string search_query = 3;
-  CourseSubject subject = 4;
-  CourseLevel level = 5;
+  string subject = 4;
+  string level = 5;
   string sort_by = 6;
 }
 
@@ -133,6 +138,7 @@ message GetLessonDetailResponse {
   Lesson lesson = 1;
 }
 
+// Management messages (Instructors/Partners)
 message CreateCourseRequest {
   string title = 1;
   string slug = 2;
@@ -140,8 +146,8 @@ message CreateCourseRequest {
   string partner_name = 4;
   string partner_logo_url = 5;
   repeated string instructor_names = 6;
-  CourseSubject subject = 7;
-  CourseLevel level = 8;
+  string subject = 7;
+  string level = 8;
 }
 
 message CreateCourseResponse {
@@ -156,8 +162,8 @@ message UpdateCourseRequest {
   string partner_name = 5;
   string partner_logo_url = 6;
   repeated string instructor_names = 7;
-  CourseSubject subject = 8;
-  CourseLevel level = 9;
+  string subject = 8;
+  string level = 9;
 }
 
 message UpdateCourseResponse {
@@ -192,6 +198,8 @@ message CreateLearningItemRequest {
   string title = 3;
   ItemType type = 4;
   int32 estimated_minutes = 5;
+  
+  // Specific fields based on type
   string video_url = 6;
   string reading_markdown = 7;
 }
@@ -200,6 +208,7 @@ message CreateLearningItemResponse {
   LearningItem item = 1;
 }
 
+// Review Messages
 message CourseReview {
   string id = 1;
   string user_id = 2;
@@ -234,16 +243,60 @@ message ListCourseReviewsResponse {
   string next_page_token = 4;
 }
 
+// Admin Category Messages
+message Category {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string type = 4; // "SUBJECT" or "LEVEL"
+}
+
+message ListCategoriesRequest {
+  string type = 1; // Optional filter by type
+}
+
+message ListCategoriesResponse {
+  repeated Category categories = 1;
+}
+
+message CreateCategoryRequest {
+  string name = 1;
+  string type = 2; // "SUBJECT" or "LEVEL"
+}
+
+message CreateCategoryResponse {
+  Category category = 1;
+}
+
+message DeleteCategoryRequest {
+  string id = 1;
+}
+
+message DeleteCategoryResponse {
+  bool success = 1;
+}
+
+// Service definition
 service CatalogService {
+  // Public Catalog endpoints
   rpc GetSpecialization(GetSpecializationRequest) returns (GetSpecializationResponse);
   rpc ListCourses(ListCoursesRequest) returns (ListCoursesResponse);
   rpc GetCourseDetail(GetCourseDetailRequest) returns (GetCourseDetailResponse);
   rpc GetLessonDetail(GetLessonDetailRequest) returns (GetLessonDetailResponse);
+  
+  // Course Management endpoints
   rpc CreateCourse(CreateCourseRequest) returns (CreateCourseResponse);
   rpc UpdateCourse(UpdateCourseRequest) returns (UpdateCourseResponse);
   rpc CreateWeekModule(CreateWeekModuleRequest) returns (CreateWeekModuleResponse);
   rpc CreateLesson(CreateLessonRequest) returns (CreateLessonResponse);
   rpc CreateLearningItem(CreateLearningItemRequest) returns (CreateLearningItemResponse);
+
+  // Reviews endpoints
   rpc SubmitCourseReview(SubmitCourseReviewRequest) returns (SubmitCourseReviewResponse);
   rpc ListCourseReviews(ListCourseReviewsRequest) returns (ListCourseReviewsResponse);
+  
+  // Category Admin endpoints
+  rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse);
+  rpc CreateCategory(CreateCategoryRequest) returns (CreateCategoryResponse);
+  rpc DeleteCategory(DeleteCategoryRequest) returns (DeleteCategoryResponse);
 }

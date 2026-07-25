@@ -1,6 +1,6 @@
 import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService, type Course, type CourseSubject, type CourseLevel } from "@/gen/catalog/v1/catalog_pb";
+import { CatalogService, type Course, type Category } from "@/gen/catalog/v1/catalog_pb";
 
 import { IdentityService, type User, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
 import { LearningService, type LearningProgress, type PersonalNote } from "@/gen/learning/v1/learning_pb";
@@ -10,8 +10,8 @@ import { ForumService, type ForumThread } from "@/gen/forum/v1/forum_pb";
 
 export interface CourseFilters {
   searchQuery?: string;
-  subject?: CourseSubject;
-  level?: CourseLevel;
+  subject?: string;
+  level?: string;
   sortBy?: string;
   pageSize?: number;
 }
@@ -32,6 +32,47 @@ export function useCoursesQuery(filters?: CourseFilters, options?: Partial<UseQu
         pageSize: filters?.pageSize || 10,
       });
       return res.courses;
+    },
+    ...options,
+  });
+}
+
+/**
+ * Custom TanStack Query hook for fetching categories.
+ */
+export function useCategoriesQuery(typeFilter?: string, options?: Partial<UseQueryOptions<Category[], Error>>) {
+  return useQuery<Category[], Error>({
+    queryKey: ["categories", typeFilter],
+    queryFn: async () => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.listCategories({ type: typeFilter || "" });
+      return res.categories;
+    },
+    ...options,
+  });
+}
+
+export function useCreateCategoryMutation(
+  options?: Partial<UseMutationOptions<Category | undefined, Error, { name: string; type: string }>>
+) {
+  return useMutation<Category | undefined, Error, { name: string; type: string }>({
+    mutationFn: async ({ name, type }) => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.createCategory({ name, type });
+      return res.category;
+    },
+    ...options,
+  });
+}
+
+export function useDeleteCategoryMutation(
+  options?: Partial<UseMutationOptions<boolean, Error, { id: string }>>
+) {
+  return useMutation<boolean, Error, { id: string }>({
+    mutationFn: async ({ id }) => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.deleteCategory({ id });
+      return res.success;
     },
     ...options,
   });
