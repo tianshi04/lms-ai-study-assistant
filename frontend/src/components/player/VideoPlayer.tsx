@@ -157,18 +157,36 @@ export function VideoPlayer({
     );
   }
 
+function getYouTubeEmbedUrl(url: string): string | null {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?enablejsapi=1` : null;
+}
+
   // 5. Video Item Default Fallback
   if (activeItem.type === 1 && activeItem.videoUrl) {
+    const youtubeEmbedUrl = getYouTubeEmbedUrl(activeItem.videoUrl);
+
     return (
       <div className="w-full h-full relative flex items-center justify-center bg-slate-100 dark:bg-black transition-colors duration-200">
-        <video
-          ref={videoRef}
-          src={activeItem.videoUrl}
-          controls
-          onTimeUpdate={onTimeUpdate}
-          onEnded={() => onMarkComplete?.(activeItem.id)}
-          className="max-h-full max-w-full object-contain shadow-2xl rounded-lg border border-slate-300 dark:border-slate-800"
-        />
+        {youtubeEmbedUrl ? (
+          <iframe
+            src={youtubeEmbedUrl}
+            className="w-full h-full border-0 rounded-lg shadow-2xl"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <video
+            ref={videoRef}
+            src={activeItem.videoUrl}
+            controls
+            onTimeUpdate={onTimeUpdate}
+            onEnded={() => onMarkComplete?.(activeItem.id)}
+            className="max-h-full max-w-full object-contain shadow-2xl rounded-lg border border-slate-300 dark:border-slate-800"
+          />
+        )}
 
         {/* Floating Top Control Overlay for Video Mark as Complete */}
         <div className="absolute top-4 right-4 z-20">

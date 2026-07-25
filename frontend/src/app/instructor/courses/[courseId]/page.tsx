@@ -7,6 +7,7 @@ import { CatalogService, ItemType, type Course, type LearningItem } from "@/gen/
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
+import { VideoUploadWidget } from "@/components/ui/VideoUploadWidget";
 
 const emptySubscribe = () => () => {};
 
@@ -1155,17 +1156,12 @@ export default function InstructorCourseBuilderPage({
           </div>
 
           {itemType === ItemType.VIDEO && (
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldVideoUrl")}</label>
-              <input
-                type="url"
-                value={videoUrl}
-                onChange={(e) => setVideoUrl(e.target.value)}
-                placeholder="https://..."
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
-                required
-              />
-            </div>
+            <VideoUploadWidget
+              value={videoUrl}
+              onChange={setVideoUrl}
+              folder="videos"
+              label="Học liệu Video Bài giảng (Upload Tệp hoặc Đường dẫn)"
+            />
           )}
 
           {itemType === ItemType.READING && (
