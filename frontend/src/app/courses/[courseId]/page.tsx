@@ -381,9 +381,20 @@ export default function CourseDetailPage() {
                         {rev.userName ? rev.userName.slice(0, 2) : "HV"}
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                          {rev.userName || "Học viên LMS"}
-                        </h4>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                            {rev.userName || "Học viên LMS"}
+                          </h4>
+                          {rev.isVerifiedCompleter ? (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                              ✓ Verified Completer
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                              Active Learner Review
+                            </span>
+                          )}
+                        </div>
                         <span className="text-[11px] text-slate-400 dark:text-slate-500">
                           {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString("vi-VN") : "Gần đây"}
                         </span>

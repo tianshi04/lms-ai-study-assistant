@@ -188,12 +188,15 @@ class CatalogUseCase:
                     "Chỉ học viên hoàn thành tối thiểu 50% tiến độ khóa học mới có quyền gửi đánh giá (BR_REVIEW_001)."
                 )
 
+            is_verified_completer = progress.overall_progress_percent >= 100.0
+
             return await repo.submit_course_review(
                 user_id=user_id,
                 user_name=user_name,
                 course_id=real_course_id,
                 rating_stars=rating_stars,
                 comment_text=clean_comment,
+                is_verified_completer=is_verified_completer,
             )
 
     async def list_course_reviews(

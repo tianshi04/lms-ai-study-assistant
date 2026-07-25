@@ -92,6 +92,7 @@ class CourseReview(Entity):
         rating_stars: int,
         comment_text: str = "",
         created_at: str = "",
+        is_verified_completer: bool = False,
     ) -> None:
         super().__init__(id=id)
         self.user_id = user_id
@@ -100,6 +101,7 @@ class CourseReview(Entity):
         self.rating_stars = rating_stars
         self.comment_text = comment_text
         self.created_at = created_at
+        self.is_verified_completer = is_verified_completer
 
 
 class Course(Entity):

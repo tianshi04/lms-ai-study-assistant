@@ -180,6 +180,7 @@ message CourseReview {
   int32 rating_stars = 5;
   string comment_text = 6;
   string created_at = 7;
+  bool is_verified_completer = 8;
 }
 
 message SubmitCourseReviewRequest {
