@@ -366,6 +366,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         estimated_minutes: int,
         video_url: str,
         reading_markdown: str,
+        vtt_subtitle_url: str = "",
+        in_video_quizzes: list | None = None,
         starter_code: str = "",
         test_cases_json: str = "",
         language: str = "",
@@ -394,6 +396,15 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         else:
             enum_type = type_mapping.get(item_type, ItemType.UNSPECIFIED)
 
+        # Verify lesson existence to avoid foreign key violation
+        lesson_stmt = select(LessonModel).where(LessonModel.id == lesson_id)
+        lesson_res = await self.session.execute(lesson_stmt)
+        lesson_model = lesson_res.scalar_one_or_none()
+        if not lesson_model:
+            raise ValueError(
+                f"Bài học (Lesson) với ID '{lesson_id}' không tồn tại trong hệ thống."
+            )
+
         item_model = LearningItemModel(
             id=item_id,
             lesson_id=lesson_id,
@@ -401,7 +412,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             type=enum_type,
             estimated_minutes=estimated_minutes or 10,
             video_url=video_url or "",
-            vtt_subtitle_url="",
+            vtt_subtitle_url=vtt_subtitle_url or "",
             reading_markdown=reading_markdown or "",
             starter_code=starter_code or "",
             test_cases_json=test_cases_json or "",
@@ -412,6 +423,50 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             scorm_entry_html=scorm_entry_html or "",
         )
         self.session.add(item_model)
+
+        if in_video_quizzes:
+            for ivq in in_video_quizzes:
+                if isinstance(ivq, dict):
+                    ts = int(
+                        ivq.get("timestamp_seconds", ivq.get("timestampSeconds", 0))
+                    )
+                    q = str(ivq.get("question", ""))
+                    opts = list(ivq.get("options", []))
+                    corr = int(
+                        ivq.get(
+                            "correct_option_index", ivq.get("correctOptionIndex", 0)
+                        )
+                    )
+                    exp = str(ivq.get("explanation", ""))
+                else:
+                    ts = int(
+                        getattr(
+                            ivq,
+                            "timestamp_seconds",
+                            getattr(ivq, "timestampSeconds", 0),
+                        )
+                    )
+                    q = str(getattr(ivq, "question", ""))
+                    opts = list(getattr(ivq, "options", []))
+                    corr = int(
+                        getattr(
+                            ivq,
+                            "correct_option_index",
+                            getattr(ivq, "correctOptionIndex", 0),
+                        )
+                    )
+                    exp = str(getattr(ivq, "explanation", ""))
+
+                q_model = InVideoQuizModel(
+                    item_id=item_id,
+                    timestamp_seconds=ts,
+                    question=q,
+                    options=opts,
+                    correct_option_index=corr,
+                    explanation=exp,
+                )
+                self.session.add(q_model)
+
         await self.session.commit()
         return LearningItem(
             id=item_id,
@@ -419,9 +474,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             type=enum_type,
             estimated_minutes=estimated_minutes or 10,
             video_url=video_url or "",
-            vtt_subtitle_url="",
+            vtt_subtitle_url=vtt_subtitle_url or "",
             interactive_transcripts=[],
-            in_video_quizzes=[],
+            in_video_quizzes=in_video_quizzes or [],
             reading_markdown=reading_markdown or "",
             starter_code=starter_code or "",
             test_cases_json=test_cases_json or "",

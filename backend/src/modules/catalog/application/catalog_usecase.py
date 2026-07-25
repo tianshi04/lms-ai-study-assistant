@@ -171,6 +171,8 @@ class CatalogUseCase:
         estimated_minutes: int,
         video_url: str,
         reading_markdown: str,
+        vtt_subtitle_url: str = "",
+        in_video_quizzes: list | None = None,
         starter_code: str = "",
         test_cases_json: str = "",
         language: str = "",
@@ -191,6 +193,8 @@ class CatalogUseCase:
                 estimated_minutes=estimated_minutes,
                 video_url=video_url,
                 reading_markdown=reading_markdown,
+                vtt_subtitle_url=vtt_subtitle_url,
+                in_video_quizzes=in_video_quizzes,
                 starter_code=starter_code,
                 test_cases_json=test_cases_json,
                 language=language,
@@ -762,3 +766,45 @@ class CatalogUseCase:
             scorm_entry_html=entry_html,
             current_user=current_user,
         )
+
+    async def generate_upload_url(
+        self, filename: str, content_type: str, folder: str = "videos"
+    ) -> tuple[str, str, str]:
+        """Generate presigned upload URL and public file access URL for MinIO/S3."""
+        import uuid
+
+        s3 = get_s3_storage_service()
+        await s3.ensure_bucket_exists()
+        ext = filename.split(".")[-1] if "." in filename else "bin"
+        safe_folder = folder.strip("/") if folder else "videos"
+        object_key = f"{safe_folder}/{uuid.uuid4().hex[:12]}.{ext}"
+
+        upload_url = await s3.generate_presigned_upload_url(
+            object_key, content_type=content_type or "application/octet-stream"
+        )
+        file_url = f"{s3.endpoint_url}/{s3.bucket_name}/{object_key}"
+        return upload_url, file_url, object_key
+
+    async def upload_media_file(
+        self,
+        filename: str,
+        content_type: str,
+        file_bytes: bytes,
+        folder: str = "videos",
+    ) -> tuple[str, str]:
+        """Upload raw file bytes directly to MinIO/S3 storage."""
+        import uuid
+
+        s3 = get_s3_storage_service()
+        await s3.ensure_bucket_exists()
+        ext = filename.split(".")[-1] if "." in filename else "bin"
+        safe_folder = folder.strip("/") if folder else "videos"
+        object_key = f"{safe_folder}/{uuid.uuid4().hex[:12]}.{ext}"
+
+        await s3.upload_file(
+            file_bytes=file_bytes,
+            object_key=object_key,
+            content_type=content_type or "application/octet-stream",
+        )
+        file_url = f"{s3.endpoint_url}/{s3.bucket_name}/{object_key}"
+        return file_url, object_key

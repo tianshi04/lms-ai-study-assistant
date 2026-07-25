@@ -290,24 +290,42 @@ class CatalogHandler(CatalogService):
         ],
     ) -> pb.CreateLearningItemResponse:
         user = self._verify_instructor_permission()
-        item = await self.use_case.create_learning_item(
-            course_id=request.course_id,
-            lesson_id=request.lesson_id,
-            title=request.title,
-            item_type=int(request.type),
-            estimated_minutes=request.estimated_minutes,
-            video_url=request.video_url,
-            reading_markdown=request.reading_markdown,
-            starter_code=request.starter_code,
-            test_cases_json=request.test_cases_json,
-            language=request.language,
-            rubric_criteria_json=request.rubric_criteria_json,
-            quiz_matrix_id=request.quiz_matrix_id,
-            scorm_package_path=request.scorm_package_path,
-            scorm_entry_html=request.scorm_entry_html,
-            current_user=user,
-        )
-        return pb.CreateLearningItemResponse(item=_to_pb_learning_item(item))
+        if not request.title or not request.title.strip():
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Tên học liệu không được để trống"
+            )
+        if not request.lesson_id:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Mã bài học (lesson_id) không được để trống"
+            )
+
+        try:
+            item = await self.use_case.create_learning_item(
+                course_id=request.course_id,
+                lesson_id=request.lesson_id,
+                title=request.title.strip(),
+                item_type=int(request.type),
+                estimated_minutes=request.estimated_minutes or 10,
+                video_url=request.video_url or "",
+                vtt_subtitle_url=request.vtt_subtitle_url or "",
+                in_video_quizzes=list(request.in_video_quizzes)
+                if request.in_video_quizzes
+                else [],
+                reading_markdown=request.reading_markdown or "",
+                starter_code=request.starter_code or "",
+                test_cases_json=request.test_cases_json or "",
+                language=request.language or "",
+                rubric_criteria_json=request.rubric_criteria_json or "",
+                quiz_matrix_id=request.quiz_matrix_id or "",
+                scorm_package_path=request.scorm_package_path or "",
+                scorm_entry_html=request.scorm_entry_html or "",
+                current_user=user,
+            )
+            return pb.CreateLearningItemResponse(item=_to_pb_learning_item(item))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+        except Exception as e:
+            raise ConnectError(Code.INTERNAL, f"Không thể tạo học liệu: {str(e)}")
 
     async def submit_course_review(
         self,
@@ -713,3 +731,32 @@ class CatalogHandler(CatalogService):
         return pb.ExportCourseToScormResponse(
             download_url=download_url, object_key=object_key
         )
+
+    async def generate_upload_url(
+        self,
+        request: pb.GenerateUploadUrlRequest,
+        ctx: RequestContext[pb.GenerateUploadUrlRequest, pb.GenerateUploadUrlResponse],
+    ) -> pb.GenerateUploadUrlResponse:
+        self._verify_instructor_permission()
+        upload_url, file_url, object_key = await self.use_case.generate_upload_url(
+            filename=request.filename,
+            content_type=request.content_type,
+            folder=request.folder or "videos",
+        )
+        return pb.GenerateUploadUrlResponse(
+            upload_url=upload_url, file_url=file_url, object_key=object_key
+        )
+
+    async def upload_media_file(
+        self,
+        request: pb.UploadMediaFileRequest,
+        ctx: RequestContext[pb.UploadMediaFileRequest, pb.UploadMediaFileResponse],
+    ) -> pb.UploadMediaFileResponse:
+        self._verify_instructor_permission()
+        file_url, object_key = await self.use_case.upload_media_file(
+            filename=request.filename,
+            content_type=request.content_type,
+            file_bytes=request.file_bytes,
+            folder=request.folder or "videos",
+        )
+        return pb.UploadMediaFileResponse(file_url=file_url, object_key=object_key)

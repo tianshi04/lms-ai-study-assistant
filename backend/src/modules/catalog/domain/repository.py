@@ -133,6 +133,8 @@ class ICatalogRepository(ABC):
         estimated_minutes: int,
         video_url: str,
         reading_markdown: str,
+        vtt_subtitle_url: str = "",
+        in_video_quizzes: list | None = None,
         starter_code: str = "",
         test_cases_json: str = "",
         language: str = "",
