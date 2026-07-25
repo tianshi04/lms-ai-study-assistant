@@ -15,6 +15,7 @@ from src.modules.catalog.domain.entities import (
     Lesson,
     Specialization,
     WeekModule,
+    Category,
 )
 from src.shared.auth import CurrentUser, require_current_user
 
@@ -97,6 +98,17 @@ def _to_pb_course(course: Course) -> pb.Course:
         week_modules=[_to_pb_week_module(wm) for wm in course.week_modules],
         average_rating=course.average_rating,
         review_count=course.review_count,
+        subject=course.subject,
+        level=course.level,
+    )
+
+
+def _to_pb_category(cat: Category) -> pb.Category:
+    return pb.Category(
+        id=cat.id,
+        name=cat.name,
+        slug=cat.slug,
+        type=cat.type,
     )
 
 
@@ -136,7 +148,12 @@ class CatalogHandler(CatalogService):
         ctx: RequestContext[pb.ListCoursesRequest, pb.ListCoursesResponse],
     ) -> pb.ListCoursesResponse:
         courses, next_token = await self.use_case.list_courses(
-            page_size=request.page_size, page_token=request.page_token
+            page_size=request.page_size,
+            page_token=request.page_token,
+            search_query=request.search_query,
+            subject=request.subject,
+            level=request.level,
+            sort_by=request.sort_by,
         )
         return pb.ListCoursesResponse(
             courses=[_to_pb_course(c) for c in courses],
@@ -201,6 +218,8 @@ class CatalogHandler(CatalogService):
             partner_name=request.partner_name,
             partner_logo_url=request.partner_logo_url,
             instructor_names=list(request.instructor_names),
+            subject=request.subject,
+            level=request.level,
             owner_id=user.id,
         )
         return pb.CreateCourseResponse(course=_to_pb_course(course))
@@ -218,6 +237,8 @@ class CatalogHandler(CatalogService):
             partner_name=request.partner_name,
             partner_logo_url=request.partner_logo_url,
             instructor_names=list(request.instructor_names),
+            subject=request.subject,
+            level=request.level,
             current_user=user,
         )
         if not course:
@@ -331,6 +352,42 @@ class CatalogHandler(CatalogService):
             total_reviews=total_count,
             next_page_token=next_token,
         )
+
+    def _verify_super_admin(self) -> None:
+        user = require_current_user()
+        if user.role not in ("USER_ROLE_SUPER_ADMIN", "ADMIN"):
+            raise ConnectError(
+                Code.PERMISSION_DENIED,
+                "Chỉ Super Admin mới có quyền thực hiện thao tác này.",
+            )
+
+    async def list_categories(
+        self,
+        request: pb.ListCategoriesRequest,
+        ctx: RequestContext[pb.ListCategoriesRequest, pb.ListCategoriesResponse],
+    ) -> pb.ListCategoriesResponse:
+        cats = await self.use_case.list_categories(request.type)
+        return pb.ListCategoriesResponse(categories=[_to_pb_category(c) for c in cats])
+
+    async def create_category(
+        self,
+        request: pb.CreateCategoryRequest,
+        ctx: RequestContext[pb.CreateCategoryRequest, pb.CreateCategoryResponse],
+    ) -> pb.CreateCategoryResponse:
+        self._verify_super_admin()
+        cat = await self.use_case.create_category(request.name, request.type)
+        return pb.CreateCategoryResponse(category=_to_pb_category(cat))
+
+    async def delete_category(
+        self,
+        request: pb.DeleteCategoryRequest,
+        ctx: RequestContext[pb.DeleteCategoryRequest, pb.DeleteCategoryResponse],
+    ) -> pb.DeleteCategoryResponse:
+        self._verify_super_admin()
+        success = await self.use_case.delete_category(request.id)
+        if not success:
+            raise ConnectError(Code.NOT_FOUND, f"Category {request.id} not found")
+        return pb.DeleteCategoryResponse(success=True)
 
     async def delete_course(
         self,

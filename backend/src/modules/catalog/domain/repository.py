@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from src.modules.catalog.domain.entities import (
+    Category,
     Course,
     CourseAnnouncement,
     CourseReview,
@@ -15,7 +16,13 @@ class ICatalogRepository(ABC):
 
     @abstractmethod
     async def list_courses(
-        self, page_size: int = 10, page_token: str = ""
+        self,
+        page_size: int = 10,
+        page_token: str = "",
+        search_query: str = "",
+        subject: str = "",
+        level: str = "",
+        sort_by: str = "",
     ) -> tuple[list[Course], str]:
         pass
 
@@ -31,6 +38,20 @@ class ICatalogRepository(ABC):
     async def get_specialization(
         self, specialization_id: str
     ) -> tuple[Specialization | None, list[Course]]:
+        pass
+
+    @abstractmethod
+    async def create_course(
+        self,
+        title: str,
+        slug: str,
+        description: str,
+        partner_name: str,
+        partner_logo_url: str,
+        instructor_names: list[str],
+        subject: str = "",
+        level: str = "",
+    ) -> Course:
         pass
 
     @abstractmethod
@@ -62,8 +83,19 @@ class ICatalogRepository(ABC):
         pass
 
     @abstractmethod
-    async def delete_course(self, course_id: str) -> bool:
+    async def list_categories(self, type_filter: str = "") -> list[Category]:
         pass
+
+    @abstractmethod
+    async def create_category(self, name: str, category_type: str) -> Category:
+        pass
+
+    @abstractmethod
+    async def delete_category(self, category_id: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def delete_course(self, course_id: str) -> bool: ...
 
     @abstractmethod
     async def update_week_module(

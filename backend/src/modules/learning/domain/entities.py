@@ -54,3 +54,13 @@ class PersonalNote(Entity):
         self.highlighted_text = highlighted_text
         self.note_comment = note_comment
         self.created_at = created_at
+
+
+@dataclass(frozen=True)
+class EnrolledCourseSummary(ValueObject):
+    course_id: str
+    course_title: str
+    partner_name: str
+    progress_percent: float
+    status: str
+    last_accessed_at: str

@@ -1,7 +1,7 @@
 import html
 from typing import Any, Callable
 
-from src.modules.catalog.domain.entities import Course, Lesson, Specialization
+from src.modules.catalog.domain.entities import Course, Lesson, Specialization, Category
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
@@ -36,14 +36,22 @@ class CatalogUseCase:
                 )
 
     async def list_courses(
-        self, page_size: int = 10, page_token: str = ""
+        self,
+        page_size: int = 10,
+        page_token: str = "",
+        search_query: str = "",
+        subject: str = "",
+        level: str = "",
+        sort_by: str = "",
     ) -> tuple[list[Course], str]:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             seed_fn = getattr(repo, "seed_if_empty", None)
             if callable(seed_fn):
                 await seed_fn()
-            return await repo.list_courses(page_size, page_token)
+            return await repo.list_courses(
+                page_size, page_token, search_query, subject, level, sort_by
+            )
 
     async def get_course_detail(self, course_id: str) -> Course | None:
         async with async_session_scope() as session:
@@ -79,6 +87,8 @@ class CatalogUseCase:
         partner_name: str,
         partner_logo_url: str,
         instructor_names: list[str],
+        subject: str = "",
+        level: str = "",
         owner_id: str = "",
     ) -> Course:
         async with async_session_scope() as session:
@@ -90,6 +100,8 @@ class CatalogUseCase:
                 partner_name=partner_name,
                 partner_logo_url=partner_logo_url,
                 instructor_names=instructor_names,
+                subject=subject,
+                level=level,
                 owner_id=owner_id,
             )
 
@@ -101,6 +113,8 @@ class CatalogUseCase:
         partner_name: str,
         partner_logo_url: str,
         instructor_names: list[str],
+        subject: str = "",
+        level: str = "",
         current_user: CurrentUser | None = None,
     ) -> Course | None:
         async with async_session_scope() as session:
@@ -115,6 +129,8 @@ class CatalogUseCase:
                 partner_name=partner_name,
                 partner_logo_url=partner_logo_url,
                 instructor_names=instructor_names,
+                subject=subject,
+                level=level,
             )
 
     async def create_week_module(
@@ -245,6 +261,21 @@ class CatalogUseCase:
             return await repo.list_course_reviews(
                 course_id=real_course_id, page_size=page_size, page_token=page_token
             )
+
+    async def list_categories(self, type_filter: str = "") -> list[Category]:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.list_categories(type_filter)
+
+    async def create_category(self, name: str, category_type: str) -> Category:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.create_category(name, category_type)
+
+    async def delete_category(self, category_id: str) -> bool:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.delete_category(category_id)
 
     async def delete_course(
         self, course_id: str, current_user: CurrentUser | None = None

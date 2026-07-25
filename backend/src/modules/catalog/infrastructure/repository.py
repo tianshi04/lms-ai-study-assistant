@@ -18,6 +18,7 @@ from src.modules.catalog.domain.entities import (
     Lesson,
     Specialization,
     WeekModule,
+    Category,
 )
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.models import (
@@ -29,6 +30,7 @@ from src.modules.catalog.infrastructure.models import (
     LessonModel,
     SpecializationModel,
     WeekModuleModel,
+    CategoryModel,
 )
 
 
@@ -97,8 +99,10 @@ def _model_to_domain_course(model: CourseModel) -> Course:
         partner_logo_url=model.partner_logo_url,
         instructor_names=model.instructor_names,
         week_modules=week_modules,
-        average_rating=getattr(model, "average_rating", 0.0),
-        review_count=getattr(model, "review_count", 0),
+        average_rating=model.average_rating,
+        review_count=model.review_count,
+        subject=model.subject or "",
+        level=model.level or "",
         owner_id=getattr(model, "owner_id", ""),
         co_instructor_ids=getattr(model, "co_instructor_ids", None) or [],
     )
@@ -137,7 +141,13 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         self.session = session
 
     async def list_courses(
-        self, page_size: int = 10, page_token: str = ""
+        self,
+        page_size: int = 10,
+        page_token: str = "",
+        search_query: str = "",
+        subject: str = "",
+        level: str = "",
+        sort_by: str = "",
     ) -> tuple[list[Course], str]:
         stmt = select(CourseModel).options(
             selectinload(CourseModel.week_modules)
@@ -149,6 +159,31 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             .selectinload(LessonModel.items)
             .selectinload(LearningItemModel.in_video_quizzes),
         )
+
+        if search_query:
+            pattern = f"%{search_query}%"
+            stmt = stmt.where(
+                CourseModel.title.ilike(pattern)
+                | CourseModel.description.ilike(pattern)
+            )
+
+        if subject and subject != "UNSPECIFIED":
+            stmt = stmt.where(CourseModel.subject == subject)
+
+        if level and level != "UNSPECIFIED":
+            stmt = stmt.where(CourseModel.level == level)
+
+        if sort_by == "rating":
+            stmt = stmt.order_by(CourseModel.average_rating.desc())
+        elif sort_by == "newest":
+            stmt = stmt.order_by(CourseModel.id.desc())
+        elif sort_by == "popular":
+            stmt = stmt.order_by(CourseModel.review_count.desc())
+        else:
+            stmt = stmt.order_by(CourseModel.title.asc())
+
+        stmt = stmt.limit(page_size or 10)
+
         res = await self.session.execute(stmt)
         models = res.scalars().all()
         courses: list[Course] = []
@@ -212,10 +247,13 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         partner_name: str,
         partner_logo_url: str,
         instructor_names: list[str],
+        subject: str = "",
+        level: str = "",
         owner_id: str = "",
         co_instructor_ids: list[str] | None = None,
     ) -> Course:
         course_id = f"course-{slug}" if slug else f"course-{uuid.uuid4().hex[:8]}"
+
         model = CourseModel(
             id=course_id,
             title=title,
@@ -225,6 +263,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             partner_logo_url=partner_logo_url
             or "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
             instructor_names=instructor_names or ["Giảng viên AI"],
+            subject=subject,
+            level=level,
             owner_id=owner_id,
             co_instructor_ids=co_instructor_ids or [],
         )
@@ -241,6 +281,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         partner_name: str,
         partner_logo_url: str,
         instructor_names: list[str],
+        subject: str = "",
+        level: str = "",
     ) -> Course | None:
         stmt = select(CourseModel).where(CourseModel.id == course_id)
         res = await self.session.execute(stmt)
@@ -257,6 +299,12 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             model.partner_logo_url = partner_logo_url
         if instructor_names:
             model.instructor_names = instructor_names
+
+        if subject and subject != "UNSPECIFIED":
+            model.subject = subject
+        if level and level != "UNSPECIFIED":
+            model.level = level
+
         await self.session.commit()
         return await self.get_course_detail(course_id)
 
@@ -464,6 +512,45 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         if row:
             return row[0], row[1] or []
         return course_id_or_slug, []
+
+    async def list_categories(self, type_filter: str = "") -> list[Category]:
+        stmt = select(CategoryModel)
+        if type_filter:
+            stmt = stmt.where(CategoryModel.type == type_filter)
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        return [
+            Category(
+                id=m.id, name=m.name, slug=m.slug, type=m.type, created_at=m.created_at
+            )
+            for m in models
+        ]
+
+    async def create_category(self, name: str, category_type: str) -> Category:
+        import re
+
+        slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+        cat_id = f"cat-{uuid.uuid4().hex[:8]}"
+        now_str = datetime.now(timezone.utc).isoformat()
+
+        model = CategoryModel(
+            id=cat_id, name=name, slug=slug, type=category_type, created_at=now_str
+        )
+        self.session.add(model)
+        await self.session.commit()
+        return Category(
+            id=cat_id, name=name, slug=slug, type=category_type, created_at=now_str
+        )
+
+    async def delete_category(self, category_id: str) -> bool:
+        stmt = select(CategoryModel).where(CategoryModel.id == category_id)
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return False
+        await self.session.delete(model)
+        await self.session.commit()
+        return True
 
     async def delete_course(self, course_id: str) -> bool:
         real_id, _ = await self.get_course_id_by_slug_or_id(course_id)

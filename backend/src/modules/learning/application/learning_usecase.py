@@ -1,6 +1,10 @@
 from typing import Any, Callable
 
-from src.modules.learning.domain.entities import LearningProgress, PersonalNote
+from src.modules.learning.domain.entities import (
+    EnrolledCourseSummary,
+    LearningProgress,
+    PersonalNote,
+)
 from src.modules.learning.domain.repository import ILearningRepository
 from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 from src.shared.infrastructure.database import async_session_scope
@@ -58,3 +62,8 @@ class LearningUseCase:
             return await repo.mark_item_complete(
                 user_id, course_id, item_id, total_course_items
             )
+
+    async def list_enrolled_courses(self, user_id: str) -> list[EnrolledCourseSummary]:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.list_enrolled_courses(user_id)

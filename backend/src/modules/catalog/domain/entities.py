@@ -14,6 +14,15 @@ class ItemType(str, Enum):
 
 
 @dataclass(frozen=True)
+class Category(ValueObject):
+    id: str
+    name: str
+    slug: str
+    type: str
+    created_at: str
+
+
+@dataclass(frozen=True)
 class InteractiveTranscript(ValueObject):
     timestamp_seconds: int
     text: str
@@ -121,6 +130,8 @@ class Course(Entity):
         week_modules: list[WeekModule] | None = None,
         average_rating: float = 0.0,
         review_count: int = 0,
+        subject: str = "",
+        level: str = "",
         owner_id: str = "",
         co_instructor_ids: list[str] | None = None,
     ) -> None:
@@ -134,6 +145,8 @@ class Course(Entity):
         self.week_modules = week_modules or []
         self.average_rating = average_rating
         self.review_count = review_count
+        self.subject = subject
+        self.level = level
         self.owner_id = owner_id
         self.co_instructor_ids = co_instructor_ids or []
 

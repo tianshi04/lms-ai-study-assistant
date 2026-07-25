@@ -7,7 +7,8 @@
     "instructorPortal": "Instructor",
     "login": "Sign In",
     "register": "Sign Up",
-    "logout": "Sign Out"
+    "logout": "Sign Out",
+    "myCourses": "My Courses"
   },
   "home": {
     "heroTag": "Next-Gen Coursera AI LMS",
@@ -36,6 +37,25 @@
     "errorLoad": "Unable to load course list",
     "errorNetwork": "Please check your network connection or try again later.",
     "noResults": "No courses found matching the keyword"
+  },
+  "catalogFilter": {
+    "subjectHeader": "Subject",
+    "levelHeader": "Level",
+    "allSubjects": "All Subjects",
+    "dataScience": "Data Science",
+    "computerScience": "Computer Science",
+    "business": "Business",
+    "ai": "Artificial Intelligence",
+    "allLevels": "All Levels",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "sortDefault": "Sort: Default",
+    "sortPopular": "Most Popular",
+    "sortNewest": "Newest",
+    "sortOldest": "Oldest",
+    "sortRatingDesc": "Highest Rating",
+    "sortRatingAsc": "Lowest Rating"
   },
   "auth": {
     "loginTitle": "Sign In to Your Account",
@@ -341,5 +361,24 @@
     "toastWeekOrderSaved": "Week order saved successfully!",
     "toastLessonOrderSaved": "Lesson order saved successfully!",
     "toastItemOrderSaved": "Item order saved successfully!"
+  },
+  "myCoursesPage": {
+    "errorFetch": "Error fetching courses",
+    "redirecting": "Redirecting...",
+    "title": "My Courses",
+    "subtitle": "Track your learning progress, resume active courses, and review completed certificates.",
+    "tabAll": "All Enrolled",
+    "tabInProgress": "In Progress",
+    "tabCompleted": "Completed",
+    "noCoursesTitle": "No courses found",
+    "noCoursesDesc": "You are not enrolled in any courses yet. Start your learning journey today!",
+    "exploreCatalog": "Explore Catalog",
+    "statusCompleted": "Completed",
+    "statusInProgress": "In Progress",
+    "statusNotStarted": "Not Started",
+    "progress": "Progress:",
+    "btnReview": "Review Course",
+    "btnStart": "Start Course",
+    "btnContinue": "Continue Learning"
   }
 }
