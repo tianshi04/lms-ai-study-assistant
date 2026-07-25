@@ -81,6 +81,7 @@ This file provides rules, architectural conventions, and workspace instructions 
   - **TanStack Query (`@tanstack/react-query`)**: For headless server state management, automatic caching, background revalidation, and deduplication of ConnectRPC API calls. Place reusable query/mutation hooks inside `frontend/src/lib/query_hooks.ts`.
   - **TanStack Table (`@tanstack/react-table`)**: For headless table state, sorting, filtering, and pagination in complex dashboards and data views.
   - **TanStack Form (`@tanstack/react-form`)**: For headless form validation and state management in multi-step or complex form interfaces.
+- **Bilingual & i18n Internationalization**: Every new UI element, page, component, modal, form label, or user-facing notification MUST support dual languages (Vietnamese `vi` and English `en`). Whenever introducing new UI text, update both dictionary files (`frontend/src/dictionaries/vi.json` and `frontend/src/dictionaries/en.json`) simultaneously and consume translations using `useTranslation()` (`const { t } = useTranslation()`).
 - API Client calls are made by importing service schemas from the generated stubs (e.g. `import { CatalogService } from "@/gen/catalog/v1/catalog_pb"`) and using the `@connectrpc/connect` client.
 
 ---
