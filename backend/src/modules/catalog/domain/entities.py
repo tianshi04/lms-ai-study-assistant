@@ -13,6 +13,24 @@ class ItemType(str, Enum):
     PEER_REVIEW = "PEER_REVIEW"
 
 
+class CourseSubject(str, Enum):
+    UNSPECIFIED = "UNSPECIFIED"
+    DATA_SCIENCE = "DATA_SCIENCE"
+    COMPUTER_SCIENCE = "COMPUTER_SCIENCE"
+    BUSINESS = "BUSINESS"
+    AI_ML = "AI_ML"
+    WEB_DEVELOPMENT = "WEB_DEVELOPMENT"
+    CLOUD_COMPUTING = "CLOUD_COMPUTING"
+
+
+class CourseLevel(str, Enum):
+    UNSPECIFIED = "UNSPECIFIED"
+    BEGINNER = "BEGINNER"
+    INTERMEDIATE = "INTERMEDIATE"
+    ADVANCED = "ADVANCED"
+    MIXED = "MIXED"
+
+
 @dataclass(frozen=True)
 class InteractiveTranscript(ValueObject):
     timestamp_seconds: int
@@ -117,6 +135,8 @@ class Course(Entity):
         week_modules: list[WeekModule] | None = None,
         average_rating: float = 0.0,
         review_count: int = 0,
+        subject: CourseSubject = CourseSubject.UNSPECIFIED,
+        level: CourseLevel = CourseLevel.UNSPECIFIED,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -128,6 +148,8 @@ class Course(Entity):
         self.week_modules = week_modules or []
         self.average_rating = average_rating
         self.review_count = review_count
+        self.subject = subject
+        self.level = level
 
 
 class Specialization(Entity):

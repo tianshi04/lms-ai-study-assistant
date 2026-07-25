@@ -7,7 +7,8 @@
     "instructorPortal": "Instructor",
     "login": "Sign In",
     "register": "Sign Up",
-    "logout": "Sign Out"
+    "logout": "Sign Out",
+    "myCourses": "My Courses"
   },
   "home": {
     "heroTag": "Next-Gen Coursera AI LMS",
@@ -48,5 +49,24 @@
     "themeSystemDesc": "System Auto. Click to switch to Light.",
     "instructorFallback": "Coursera Instructor",
     "badge": "Coursera-Style Specializations & Courses"
+  },
+  "myCoursesPage": {
+    "title": "My Courses",
+    "subtitle": "Track your progress and continue your learning journey.",
+    "tabAll": "All Courses",
+    "tabInProgress": "In Progress",
+    "tabCompleted": "Completed",
+    "noCoursesTitle": "No courses yet",
+    "noCoursesDesc": "You haven't enrolled in any courses or there are no courses in this tab.",
+    "exploreCatalog": "Explore Catalog",
+    "statusCompleted": "Completed",
+    "statusInProgress": "In Progress",
+    "statusNotStarted": "Not Started",
+    "progress": "Progress",
+    "btnReview": "Review",
+    "btnStart": "Start Learning",
+    "btnContinue": "Resume",
+    "redirecting": "Redirecting to login page...",
+    "errorFetch": "Failed to fetch courses list"
   }
 }

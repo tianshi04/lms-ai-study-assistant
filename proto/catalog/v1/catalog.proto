@@ -12,6 +12,24 @@ enum ItemType {
   ITEM_TYPE_PEER_REVIEW = 6;
 }
 
+enum CourseSubject {
+  COURSE_SUBJECT_UNSPECIFIED = 0;
+  COURSE_SUBJECT_DATA_SCIENCE = 1;
+  COURSE_SUBJECT_COMPUTER_SCIENCE = 2;
+  COURSE_SUBJECT_BUSINESS = 3;
+  COURSE_SUBJECT_AI_ML = 4;
+  COURSE_SUBJECT_WEB_DEVELOPMENT = 5;
+  COURSE_SUBJECT_CLOUD_COMPUTING = 6;
+}
+
+enum CourseLevel {
+  COURSE_LEVEL_UNSPECIFIED = 0;
+  COURSE_LEVEL_BEGINNER = 1;
+  COURSE_LEVEL_INTERMEDIATE = 2;
+  COURSE_LEVEL_ADVANCED = 3;
+  COURSE_LEVEL_MIXED = 4;
+}
+
 message InteractiveTranscript {
   int32 timestamp_seconds = 1;
   string text = 2;
@@ -63,6 +81,8 @@ message Course {
   repeated WeekModule week_modules = 8;
   double average_rating = 9;
   int32 review_count = 10;
+  CourseSubject subject = 11;
+  CourseLevel level = 12;
 }
 
 message Specialization {
@@ -86,6 +106,10 @@ message GetSpecializationResponse {
 message ListCoursesRequest {
   int32 page_size = 1;
   string page_token = 2;
+  string search_query = 3;
+  CourseSubject subject = 4;
+  CourseLevel level = 5;
+  string sort_by = 6;
 }
 
 message ListCoursesResponse {
@@ -116,6 +140,8 @@ message CreateCourseRequest {
   string partner_name = 4;
   string partner_logo_url = 5;
   repeated string instructor_names = 6;
+  CourseSubject subject = 7;
+  CourseLevel level = 8;
 }
 
 message CreateCourseResponse {
@@ -130,6 +156,8 @@ message UpdateCourseRequest {
   string partner_name = 5;
   string partner_logo_url = 6;
   repeated string instructor_names = 7;
+  CourseSubject subject = 8;
+  CourseLevel level = 9;
 }
 
 message UpdateCourseResponse {

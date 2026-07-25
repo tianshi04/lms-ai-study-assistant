@@ -86,4 +86,20 @@ service LearningService {
   rpc SavePersonalNote(SavePersonalNoteRequest) returns (SavePersonalNoteResponse);
   rpc ListPersonalNotes(ListPersonalNotesRequest) returns (ListPersonalNotesResponse);
   rpc MarkItemComplete(MarkItemCompleteRequest) returns (MarkItemCompleteResponse);
+  rpc ListMyEnrolledCourses(ListMyEnrolledCoursesRequest) returns (ListMyEnrolledCoursesResponse);
+}
+
+message ListMyEnrolledCoursesRequest {}
+
+message EnrolledCourseSummary {
+  string course_id = 1;
+  string course_title = 2;
+  string partner_name = 3;
+  float progress_percent = 4;
+  string status = 5;          // "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED"
+  string last_accessed_at = 6;
+}
+
+message ListMyEnrolledCoursesResponse {
+  repeated EnrolledCourseSummary courses = 1;
 }

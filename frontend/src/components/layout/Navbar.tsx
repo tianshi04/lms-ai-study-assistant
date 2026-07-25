@@ -54,6 +54,11 @@ export function Navbar() {
           <Link href="/courses" className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             {t('navbar.catalog')}
           </Link>
+          {isMounted && userName && (
+            <Link href="/my-courses" className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+              {t('navbar.myCourses') || 'Khóa học của tôi'}
+            </Link>
+          )}
           <Link href="/forum" className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             {t('navbar.forum')}
           </Link>

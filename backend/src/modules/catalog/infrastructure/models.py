@@ -44,6 +44,12 @@ class CourseModel(Base):
     instructor_names: Mapped[list[str]] = mapped_column(
         ARRAY(String(128)), nullable=False, default=list
     )
+    subject: Mapped[str] = mapped_column(
+        String(64), nullable=False, server_default="UNSPECIFIED"
+    )
+    level: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default="UNSPECIFIED"
+    )
     average_rating: Mapped[float] = mapped_column(
         Float, nullable=False, server_default="0.0"
     )

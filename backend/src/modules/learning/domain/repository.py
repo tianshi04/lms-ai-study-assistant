@@ -1,6 +1,10 @@
 from abc import ABC, abstractmethod
 
-from src.modules.learning.domain.entities import LearningProgress, PersonalNote
+from src.modules.learning.domain.entities import (
+    EnrolledCourseSummary,
+    LearningProgress,
+    PersonalNote,
+)
 
 
 class ILearningRepository(ABC):
@@ -37,4 +41,8 @@ class ILearningRepository(ABC):
     async def mark_item_complete(
         self, user_id: str, course_id: str, item_id: str, total_course_items: int
     ) -> tuple[bool, LearningProgress]:
+        pass
+
+    @abstractmethod
+    async def list_enrolled_courses(self, user_id: str) -> list[EnrolledCourseSummary]:
         pass

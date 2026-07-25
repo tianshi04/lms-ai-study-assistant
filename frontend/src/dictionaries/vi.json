@@ -7,7 +7,8 @@
     "instructorPortal": "Giảng Viên",
     "login": "Đăng nhập",
     "register": "Đăng ký",
-    "logout": "Thoát"
+    "logout": "Thoát",
+    "myCourses": "Khóa học của tôi"
   },
   "home": {
     "heroTag": "Next-Gen Coursera AI LMS",
@@ -48,5 +49,24 @@
     "themeSystemDesc": "Giao diện: Theo Cài đặt Hệ thống (System Auto). Click để chuyển sang Sáng.",
     "instructorFallback": "Giảng viên Coursera",
     "badge": "Coursera-Style Specializations & Courses"
+  },
+  "myCoursesPage": {
+    "title": "Khóa học của tôi",
+    "subtitle": "Theo dõi tiến độ và tiếp tục hành trình học tập của bạn.",
+    "tabAll": "Tất cả khóa học",
+    "tabInProgress": "Đang học",
+    "tabCompleted": "Đã hoàn thành",
+    "noCoursesTitle": "Chưa có khóa học nào",
+    "noCoursesDesc": "Bạn chưa đăng ký hoặc không có khóa học nào trong mục này.",
+    "exploreCatalog": "Khám phá Catalog",
+    "statusCompleted": "Hoàn thành",
+    "statusInProgress": "Đang học",
+    "statusNotStarted": "Chưa bắt đầu",
+    "progress": "Tiến độ",
+    "btnReview": "Ôn tập lại",
+    "btnStart": "Bắt đầu học",
+    "btnContinue": "Vào học tiếp",
+    "redirecting": "Đang chuyển hướng đến trang đăng nhập...",
+    "errorFetch": "Không thể tải danh sách khóa học"
   }
 }
