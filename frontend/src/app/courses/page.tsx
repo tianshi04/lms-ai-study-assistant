@@ -1,21 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { CourseCard } from "@/components/course/CourseCard";
 import { useCoursesQuery } from "@/lib/query_hooks";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
+import { CourseSubject, CourseLevel } from "@/gen/catalog/v1/catalog_pb";
 
 export default function CoursesPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: courses = [], isLoading: loading, error: queryError } = useCoursesQuery();
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [subject, setSubject] = useState<CourseSubject>(CourseSubject.UNSPECIFIED);
+  const [level, setLevel] = useState<CourseLevel>(CourseLevel.UNSPECIFIED);
+  const [sortBy, setSortBy] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const { data: courses = [], isLoading: loading, error: queryError } = useCoursesQuery({
+    searchQuery: debouncedSearch,
+    subject,
+    level,
+    sortBy,
+  });
   const error = queryError ? queryError.message : null;
   const { t } = useTranslation();
-
-  const filteredCourses = courses.filter((c) =>
-    c.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors duration-200">
@@ -61,6 +72,82 @@ export default function CoursesPage() {
               />
             </svg>
           </div>
+
+          {/* Filter Bar */}
+          <div className="mt-8 flex flex-col md:flex-row md:items-start justify-between gap-6">
+            <div className="flex-1 space-y-4">
+              {/* Subject Chips */}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSubject(CourseSubject.UNSPECIFIED)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.UNSPECIFIED ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
+                >
+                  {t("catalogFilter.allSubjects")}
+                </button>
+                <button
+                  onClick={() => setSubject(CourseSubject.AI_ML)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.AI_ML ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
+                >
+                  {t("catalogFilter.aiMl")}
+                </button>
+                <button
+                  onClick={() => setSubject(CourseSubject.WEB_DEVELOPMENT)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.WEB_DEVELOPMENT ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
+                >
+                  {t("catalogFilter.webDev")}
+                </button>
+                <button
+                  onClick={() => setSubject(CourseSubject.DATA_SCIENCE)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.DATA_SCIENCE ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
+                >
+                  {t("catalogFilter.dataScience")}
+                </button>
+              </div>
+              
+              {/* Level Chips */}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setLevel(CourseLevel.UNSPECIFIED)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.UNSPECIFIED ? "bg-indigo-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                >
+                  {t("catalogFilter.allLevels")}
+                </button>
+                <button
+                  onClick={() => setLevel(CourseLevel.BEGINNER)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.BEGINNER ? "bg-indigo-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                >
+                  {t("catalogFilter.beginner")}
+                </button>
+                <button
+                  onClick={() => setLevel(CourseLevel.INTERMEDIATE)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.INTERMEDIATE ? "bg-indigo-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                >
+                  {t("catalogFilter.intermediate")}
+                </button>
+                <button
+                  onClick={() => setLevel(CourseLevel.ADVANCED)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.ADVANCED ? "bg-indigo-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                >
+                  {t("catalogFilter.advanced")}
+                </button>
+              </div>
+            </div>
+
+            {/* Sort Dropdown */}
+            <div className="shrink-0 mt-4 md:mt-0">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="w-full md:w-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none shadow-sm cursor-pointer"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem' }}
+              >
+                <option value="">{t("catalogFilter.sortDefault")}</option>
+                <option value="rating">{t("catalogFilter.sortRating")}</option>
+                <option value="popular">{t("catalogFilter.sortPopular")}</option>
+                <option value="newest">{t("catalogFilter.sortNewest")}</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* Content Section */}
@@ -83,13 +170,13 @@ export default function CoursesPage() {
             <p className="font-semibold">{error}</p>
             <p className="text-xs opacity-80 mt-2">{t("catalog.errorNetwork")}</p>
           </div>
-        ) : filteredCourses.length === 0 ? (
+        ) : courses.length === 0 ? (
           <div className="text-center py-16 text-slate-500">
-            {t("catalog.noResults")} &quot;{searchQuery}&quot;.
+            {t("catalog.noResults")} {searchQuery ? `"${searchQuery}"` : ""}.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCourses.map((course) => (
+            {courses.map((course) => (
               <CourseCard key={course.id} course={course} />
             ))}
           </div>

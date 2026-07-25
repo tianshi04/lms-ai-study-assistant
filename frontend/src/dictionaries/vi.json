@@ -38,6 +38,24 @@
     "errorNetwork": "Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.",
     "noResults": "Không tìm thấy khóa học nào phù hợp với từ khóa"
   },
+  "catalogFilter": {
+    "allSubjects": "Tất cả chủ đề",
+    "dataScience": "Khoa học dữ liệu",
+    "computerScience": "Khoa học máy tính",
+    "business": "Kinh doanh",
+    "aiMl": "AI & Machine Learning",
+    "webDev": "Lập trình Web",
+    "cloud": "Điện toán đám mây",
+    "allLevels": "Tất cả trình độ",
+    "beginner": "Người mới bắt đầu",
+    "intermediate": "Trung cấp",
+    "advanced": "Nâng cao",
+    "mixed": "Đa trình độ",
+    "sortDefault": "Mặc định (A-Z)",
+    "sortRating": "Đánh giá cao nhất",
+    "sortPopular": "Phổ biến nhất",
+    "sortNewest": "Mới nhất"
+  },
   "common": {
     "loading": "Đang tải...",
     "error": "Có lỗi xảy ra",

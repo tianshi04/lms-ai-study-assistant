@@ -1,24 +1,36 @@
 import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
+import { CatalogService, type Course, type CourseSubject, type CourseLevel } from "@/gen/catalog/v1/catalog_pb";
+
 import { IdentityService, type User, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
 import { LearningService, type LearningProgress, type PersonalNote } from "@/gen/learning/v1/learning_pb";
 import { AssessmentService, type QuizResult, type AutoGradedLabResult } from "@/gen/assessment/v1/assessment_pb";
 import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
 import { ForumService, type ForumThread } from "@/gen/forum/v1/forum_pb";
 
-
-// --- Catalog Hooks ---
+export interface CourseFilters {
+  searchQuery?: string;
+  subject?: CourseSubject;
+  level?: CourseLevel;
+  sortBy?: string;
+  pageSize?: number;
+}
 
 /**
  * Custom TanStack Query hook for fetching the course catalog.
  */
-export function useCoursesQuery(options?: Partial<UseQueryOptions<Course[], Error>>) {
+export function useCoursesQuery(filters?: CourseFilters, options?: Partial<UseQueryOptions<Course[], Error>>) {
   return useQuery<Course[], Error>({
-    queryKey: ["courses"],
+    queryKey: ["courses", filters],
     queryFn: async () => {
       const client = getRpcClient(CatalogService);
-      const res = await client.listCourses({});
+      const res = await client.listCourses({
+        searchQuery: filters?.searchQuery || "",
+        subject: filters?.subject,
+        level: filters?.level,
+        sortBy: filters?.sortBy || "",
+        pageSize: filters?.pageSize || 10,
+      });
       return res.courses;
     },
     ...options,

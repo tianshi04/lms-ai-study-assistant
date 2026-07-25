@@ -38,6 +38,24 @@
     "errorNetwork": "Please check your network connection or try again later.",
     "noResults": "No courses found matching the keyword"
   },
+  "catalogFilter": {
+    "allSubjects": "All Subjects",
+    "dataScience": "Data Science",
+    "computerScience": "Computer Science",
+    "business": "Business",
+    "aiMl": "AI & Machine Learning",
+    "webDev": "Web Development",
+    "cloud": "Cloud Computing",
+    "allLevels": "All Levels",
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced",
+    "mixed": "Mixed",
+    "sortDefault": "Default (A-Z)",
+    "sortRating": "Highest Rated",
+    "sortPopular": "Most Popular",
+    "sortNewest": "Newest"
+  },
   "common": {
     "loading": "Loading...",
     "error": "An error occurred",
