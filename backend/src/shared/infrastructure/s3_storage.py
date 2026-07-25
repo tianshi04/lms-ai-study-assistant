@@ -22,6 +22,15 @@ class S3StorageService:
             s3={"addressing_style": "path"},
         )
 
+    def _to_public_url(self, url: str) -> str:
+        """Replace internal minio endpoint with public endpoint for browser access."""
+        internal_base = self.endpoint_url.rstrip("/")
+        public_endpoint = getattr(settings, "MINIO_PUBLIC_ENDPOINT", self.endpoint_url)
+        public_base = public_endpoint.rstrip("/")
+        if internal_base != public_base and url.startswith(internal_base):
+            return url.replace(internal_base, public_base, 1)
+        return url
+
     def _get_client(self):
         """Get an async S3 client context manager."""
         return self.session.client(
@@ -100,11 +109,12 @@ class S3StorageService:
         """Generate a presigned GET URL for secure temporary file downloading/streaming."""
         target_bucket = bucket_name or self.bucket_name
         async with self._get_client() as s3_client:
-            return await s3_client.generate_presigned_url(
+            url = await s3_client.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": target_bucket, "Key": object_key},
                 ExpiresIn=expiration,
             )
+            return self._to_public_url(url)
 
     async def generate_presigned_upload_url(
         self,
@@ -116,7 +126,7 @@ class S3StorageService:
         """Generate a presigned PUT URL for client-side direct file uploading."""
         target_bucket = bucket_name or self.bucket_name
         async with self._get_client() as s3_client:
-            return await s3_client.generate_presigned_url(
+            url = await s3_client.generate_presigned_url(
                 "put_object",
                 Params={
                     "Bucket": target_bucket,
@@ -125,6 +135,7 @@ class S3StorageService:
                 },
                 ExpiresIn=expiration,
             )
+            return self._to_public_url(url)
 
     async def delete_file(
         self,

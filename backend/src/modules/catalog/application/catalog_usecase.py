@@ -792,7 +792,7 @@ class CatalogUseCase:
         upload_url = await s3.generate_presigned_upload_url(
             object_key, content_type=content_type or "application/octet-stream"
         )
-        file_url = f"{s3.endpoint_url}/{s3.bucket_name}/{object_key}"
+        file_url = s3._to_public_url(f"{s3.endpoint_url}/{s3.bucket_name}/{object_key}")
         return upload_url, file_url, object_key
 
     async def upload_media_file(
@@ -816,5 +816,5 @@ class CatalogUseCase:
             object_key=object_key,
             content_type=content_type or "application/octet-stream",
         )
-        file_url = f"{s3.endpoint_url}/{s3.bucket_name}/{object_key}"
+        file_url = s3._to_public_url(f"{s3.endpoint_url}/{s3.bucket_name}/{object_key}")
         return file_url, object_key

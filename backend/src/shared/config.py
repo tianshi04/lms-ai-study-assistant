@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     MINIO_ENDPOINT: str = Field(
         default="http://localhost:9000", description="MinIO endpoint URL"
     )
+    MINIO_PUBLIC_ENDPOINT: str = Field(
+        default="http://localhost:9000",
+        description="MinIO public endpoint URL for client access",
+    )
     MINIO_ACCESS_KEY: str = Field(
         default="minio_admin", description="MinIO access key / root user"
     )
