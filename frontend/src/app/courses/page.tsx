@@ -86,7 +86,7 @@ export default function CoursesPage() {
 
           {/* Filter Bar */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 border-t border-slate-100 dark:border-slate-800 pt-6 mt-2">
-            <div className="flex-1 flex flex-col gap-5">
+            <div className="flex-1 flex flex-col gap-8">
               {/* Subject Chips */}
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-2 hidden md:block">{t("catalogFilter.subjectHeader")}</span>
