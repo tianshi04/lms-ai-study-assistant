@@ -11,7 +11,7 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 * **Mã hóa Mật khẩu & Xác thực Token:** Mật khẩu được mã hóa băm PBKDF2-HMAC-SHA256 (100k iterations + salt ngẫu nhiên), tự động tạo avatar SVG ngẫu nhiên từ DiceBear API và hỗ trợ quy trình Refresh Token rotation (`BR_AUTH_002`).
 * **Quản lý Suất học Doanh nghiệp (Enterprise License):**
   * Tạo gói suất học cho đối tác (ví dụ: cấp 500 seats cho Trường Đại học X hoặc Công ty Y).
-  * Quản lý mã kích hoạt (Enterprise Key), kiểm tra trạng thái hoạt động (`is_active`) và theo dõi số lượng seat đã kích hoạt (`used_seats / total_seats`).
+  * Quản lý mã kích hoạt (Enterprise Key), kiểm tra trạng thái hoạt động (`is_active`) và theo dõi số lượng seat đã kích hoạt (`used_seats / total_seats`). Thao tác kích hoạt và thu hồi suất học bắt buộc thực hiện qua câu lệnh DB Atomic Update (`UPDATE enterprise_keys SET used_seats = used_seats + 1 ...`) để tránh Race Condition khi thao tác đồng thời (`BR_ACCESS_002`, `BR_ACCESS_003`).
 * **Xét duyệt Hỗ trợ Tài chính (Financial Aid Review):** Super Admin duyệt hoặc từ chối các đơn xin học bổng (bài luận >= 150 từ). Nếu quá 15 ngày chưa có thao tác thủ công, hệ thống tự động chuyển trạng thái đơn sang `AUTO_APPROVED` (`BR_FAID_001`).
 * **Khóa/Kích hoạt tài khoản:** Tạm khóa tài khoản vi phạm điều khoản. Thu hồi tức thì phiên làm việc (Session) của tài khoản bị khóa.
 
@@ -94,7 +94,7 @@ flowchart TD
 
 ### 3.2. Cơ chế Học tập Linh hoạt & Reset Deadlines (Flexible Weekly Schedule)
 * **Hạn nộp linh hoạt (Flexible Deadlines):** Mỗi tuần học có hạn nộp gợi ý (Suggested Deadlines) để học viên duy trì tiến độ.
-* **Tính năng "Reset My Deadlines":** Nếu học viên bận việc và quá hạn nộp bài (Overdue), màn hình khóa học sẽ xuất hiện nút **"Reset my deadlines"**. Khi bấm nút này, hệ thống sẽ tự động cập nhật lịch nộp bài sang đợt mới mà không trừ điểm thi.
+* **Tính năng "Reset My Deadlines":** Nếu học viên bận việc và quá hạn nộp bài (Overdue), màn hình khóa học sẽ xuất hiện nút **"Reset my deadlines"**. Khi bấm nút này, hệ thống sẽ tự động cập nhật lịch nộp bài sang đợt mới mà không trừ điểm thi. Đối với khóa Self-paced, hệ thống tự động gia hạn `Course_End_Date` tính từ mốc reset để phân bổ hạn nộp các tuần hợp lý mà không bị dồn cục (`BR_DEADLINE_001`).
 
 ### 3.3. Trợ lý AI Coursera Coach (RAG-based Socratic AI Assistant)
 * **Khung chat Coursera AI Coach:** Tích hợp trực tiếp ở thanh công cụ góc phải giao diện bài học.
@@ -140,27 +140,27 @@ flowchart TD
 
 ### 3.5. Phân hệ Đánh giá Năng lực (Assessments Sub-system)
 * **Cam kết Liêm chính Học thuật (Academic Honor Code):** Bắt buộc tích chọn xác nhận trước khi làm bài. Nếu từ chối (`is_agreed = False`), hệ thống chặn nộp bài và trả về thông báo lỗi kèm điểm số 0.
-* **Graded Quiz:** Ngân hàng câu hỏi xáo trộn (`BR_QUIZ_002`), đồng hồ đếm ngược Server-side (`BR_QUIZ_003`), tự động chấm điểm và hiển thị giải thích. Nếu trượt 3 lần, học viên phải đợi hết 8h Cooldown; khi đạt điểm Pass (>= 80%), hệ thống tự động reset lượt thi về 3.
+* **Graded Quiz:** Ngân hàng câu hỏi xáo trộn (`BR_QUIZ_002`), đồng đồng đếm ngược Server-side (`BR_QUIZ_003`), tự động chấm điểm và áp dụng nguyên tắc *Highest Score Wins* (giữ điểm thi cao nhất). Học viên trượt 3 lần phải chờ hết 8h Cooldown; học viên đã đạt điểm Pass (>= 80%) có thể thi lại cải thiện điểm mà không bị áp dụng Cooldown (`BR_QUIZ_001`).
 * **Auto-Graded Lab:** Học viên tải file code lên -> Sandbox gửi tới Auto-Grader chạy Test Cases -> Trả về danh sách Pass/Fail test cases, log stdout/stderr và điểm số tức thì.
 * **Peer-Graded Assignment Sub-system:**
   1. **Nộp bài:** Học viên nộp bài dự án trước deadline.
-  2. **Chấm chéo:** Hệ thống phân bổ 3 bài làm của bạn học ngẫu nhiên (tự động loại trừ bài của chính mình `exclude_user_id`). Học viên chấm theo bộ 3 tiêu chí Rubric (Code Quality, Documentation, Test Coverage - mỗi tiêu chí max 10đ).
+  2. **Chấm chéo:** Hệ thống phân bổ các bài làm của bạn học ngẫu nhiên (tự động loại trừ bài của chính mình `exclude_user_id`), số lượt bắt buộc tự động điều chỉnh theo $\min(3, \text{Pool\_Size})$ đối với lớp học mới (`BR_PEER_001`, `BR_PEER_006`). Học viên chấm theo bộ 3 tiêu chí Rubric (Code Quality, Documentation, Test Coverage - mỗi tiêu chí max 10đ).
   3. **Tính điểm & Outlier:** Điểm chính thức = Tổng điểm đạt / Tổng điểm tối đa * 100%. Nếu chênh lệch $Max(Scores) - Min(Scores) > 30.0\%$, hệ thống tự động gắn cờ Outlier (`is_outlier = True`) và gửi cảnh báo đến Trợ giảng (TA).
-  4. **Fallback khi thiếu bài chấm chéo:** Nếu sau 5 ngày nộp bài chưa nhận đủ 3 lượt chấm chéo, bài làm tự động chuyển vào Staff Regrade Queue cho TA chấm trực tiếp (`BR_PEER_004`).
+  4. **Fallback khi thiếu bài chấm chéo & Report:** Nếu sau 48h chưa đủ bài phân bổ hoặc bị học viên bấm Report Review, bài làm sẽ ở trạng thái `PENDING_STAFF_REVIEW` và chuyển vào Staff Regrade Queue cho TA chấm/xác minh trực tiếp để chống gian lận (`BR_PEER_004`, `BR_PEER_005`).
   5. **Khiếu nại điểm (Grade Appeal):** Học viên gửi đơn khiếu nại với lý do chi tiết (trạng thái `"PENDING"`) để Trợ giảng (TA) chấm lại thủ công.
 
 ### 3.6. Chứng nhận & Xác thực Thành tích (Verified Certificate & OpenBadges)
 * **Quy trình Xác minh Danh tính (Identity Verification):** Trước khi phát hành chứng chỉ Verified Certificate lần đầu tiên, học viên thực hiện bước xác minh danh tính bằng cách tải ảnh CCCD/Hộ chiếu và chụp ảnh sinh trắc học khuôn mặt qua Webcam (`BR_CERT_003`).
-* **Cấp Chứng chỉ Xác minh (Verified Certificate):** Khi hoàn thành 100% bài học và đạt điểm Pass ở tất cả bài Graded items (>= 80%), hệ thống tự động phát hành Verified Certificate với thông tin Tên học viên và Khóa học truy vấn trực tiếp từ DB.
-* **Mã xác minh công khai & QR Server API:** Mỗi chứng chỉ có đường dẫn công khai độc nhất (`/verify/CERT-XXXXXXXXXX`) và mã QR code được sinh tự động qua API `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={cert_id}` để nhà tuyển dụng kiểm tra tính hợp lệ.
+* **Cấp Chứng chỉ Xác minh (Verified Certificate):** Khi hoàn thành 100% bài học và đạt điểm Pass ở tất cả bài Graded items (>= 80%), hệ thống tự động phát hành Verified Certificate và lưu cố định dữ liệu **Immutable Data Snapshot** (Tên học viên, Tên khóa học) tại mốc cấp (`BR_CERT_002`, `BR_CERT_003`).
+* **Mã xác minh công khai & Sinh QR Code In-Memory:** Mỗi chứng chỉ có đường dẫn công khai độc nhất (`/verify/CERT-XXXXXXXXXX`) và mã QR code được sinh tự động trực tiếp dạng SVG/Data URI in-memory (0 bytes storage) để nhà tuyển dụng kiểm tra tính hợp lệ mà không phụ thuộc dịch vụ bên thứ ba.
 * **OpenBadges & LinkedIn Sharing:** Chứng chỉ được nhúng siêu dữ liệu JSON-LD chuẩn OpenBadges 2.0 đầy đủ thông tin `BadgeClass`, `issuer`, `criteria`. Học viên chỉ cần 1 cú nhấp chuột để chia sẻ trực tiếp thành tích lên hồ sơ LinkedIn.
 ### 3.7. Đánh giá Khóa học & Trải nghiệm Hoàn thành (Course Rating, Review & Completion Modal)
 * **Popup Chúc mừng Hoàn thành Khóa học (Course Completion Modal):** Khi tiến độ bài học đạt 100% và đạt đủ điều kiện Pass các bài kiểm tra, trình phát bài học `/learn/[courseId]` lập tức kích hoạt hiệu ứng pháo hoa và hiển thị Modal chúc mừng.
 * **Nhận chứng chỉ trực tiếp (Direct Certificate Claim):** Nút *"Nhận chứng chỉ xác minh (Claim Certificate)"* trên Modal điều hướng trực tiếp học viên tới cổng xác thực công khai `/verify/[certId]`.
 * **Đánh giá & Nhận xét Khóa học (Course Rating & Review):**
-  * Học viên chọn điểm đánh giá từ 1 đến 5 sao (⭐) và nhập lời bình luận chi tiết.
-  * RPC `SubmitCourseReview` gửi thông tin đánh giá về Backend lưu trữ.
-  * Trang thông tin khóa học `/courses/[courseId]` tự động tổng hợp và hiển thị điểm sao trung bình (ví dụ: `4.8 ★ (1,250 lượt đánh giá)`) cùng danh sách các nhận xét của học viên khác.
+  * Học viên đạt tối thiểu 50% tiến độ bài học chọn điểm đánh giá từ 1 đến 5 sao (⭐) và nhập lời bình luận chi tiết (`BR_REVIEW_001`).
+  * RPC `SubmitCourseReview` gửi thông tin đánh giá về Backend lưu trữ, phân loại cờ `is_verified_completer` và cập nhật trực tiếp cache CSAT trên `CourseModel` (`BR_REVIEW_002`).
+  * Trang thông tin khóa học `/courses/[courseId]` tự động tổng hợp và hiển thị điểm sao trung bình (ví dụ: `4.8 ★ (1,250 lượt đánh giá)`) cùng danh sách các nhận xét của học viên khác kèm badge phân loại (`Verified Completer` vs `Active Learner Review`).
 
 ---
 

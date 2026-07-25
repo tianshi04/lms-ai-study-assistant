@@ -5,12 +5,12 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from src.modules.identity.domain.entities import User, UserRole
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
 from src.modules.identity.infrastructure.repository import IdentityRepository
-from src.modules.learning.infrastructure.models import LearningProgressModel
+from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 from src.shared.auth import create_access_token, create_refresh_token, decode_token
 from src.shared.infrastructure.database import async_session_scope
 
@@ -140,7 +140,16 @@ class IdentityUseCase:
                     f"Mã Enterprise Key '{clean_key}' đã hết suất kích hoạt ({license_model.used_seats}/{license_model.total_seats} seats).",
                 )
 
-            license_model.used_seats += 1
+            # BR_ACCESS_002: Atomic DB update for activating enterprise seat
+            await session.execute(
+                update(EnterpriseLicenseModel)
+                .where(
+                    EnterpriseLicenseModel.key == clean_key,
+                    EnterpriseLicenseModel.used_seats
+                    < EnterpriseLicenseModel.total_seats,
+                )
+                .values(used_seats=EnterpriseLicenseModel.used_seats + 1)
+            )
             user.enterprise_seat_key = clean_key
             user.seat_assigned_at = datetime.now(timezone.utc).isoformat()
             await repo.save(user)
@@ -240,16 +249,12 @@ class IdentityUseCase:
                 within_30_days = False
 
             if within_30_days and course_id:
-                progress_key = f"{user_id}:{course_id}"
-                prog_stmt = select(LearningProgressModel).where(
-                    LearningProgressModel.id == progress_key
-                )
-                prog_res = await session.execute(prog_stmt)
-                prog_model = prog_res.scalar_one_or_none()
-                if prog_model and prog_model.overall_progress_percent >= 20.0:
+                learning_repo = SQLAlchemyLearningRepository(session)
+                progress = await learning_repo.get_progress(user_id, course_id)
+                if progress and progress.overall_progress_percent >= 20.0:
                     return (
                         False,
-                        f"Không thể thu hồi: Học viên đã đạt {prog_model.overall_progress_percent}% tiến độ (>= 20% trong 30 ngày đầu).",
+                        f"Không thể thu hồi: Học viên đã đạt {progress.overall_progress_percent}% tiến độ (>= 20% trong 30 ngày đầu).",
                     )
 
             seat_key = user.enterprise_seat_key
@@ -257,13 +262,15 @@ class IdentityUseCase:
             user.seat_assigned_at = None
             await repo.save(user)
 
-            lic_stmt = select(EnterpriseLicenseModel).where(
-                EnterpriseLicenseModel.key == seat_key
+            # BR_ACCESS_003: Atomic DB update for recycling enterprise seats
+            await session.execute(
+                update(EnterpriseLicenseModel)
+                .where(
+                    EnterpriseLicenseModel.key == seat_key,
+                    EnterpriseLicenseModel.used_seats > 0,
+                )
+                .values(used_seats=EnterpriseLicenseModel.used_seats - 1)
             )
-            res = await session.execute(lic_stmt)
-            license_model = res.scalar_one_or_none()
-            if license_model and license_model.used_seats > 0:
-                license_model.used_seats -= 1
-                await session.commit()
+            await session.commit()
 
             return True, f"Đã thu hồi suất học Enterprise Key '{seat_key}' thành công!"

@@ -211,7 +211,14 @@ class AssessmentUseCase:
                     pass
 
             score_percent = round((correct_count / total_questions) * 100.0, 2)
-            passed = score_percent >= 80.0
+
+            # BR_QUIZ_001: Highest Score Wins policy
+            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
+            all_scores = [sub.score_percent for sub in prev_submissions] + [
+                score_percent
+            ]
+            highest_score = max(all_scores)
+            passed = highest_score >= 80.0
 
             # 4. Handle Cooldown & Attempts tracking
             failed_count = cooldown.failed_attempts_count if cooldown else 0
@@ -235,7 +242,6 @@ class AssessmentUseCase:
 
             # Save submission
             submission_id = f"sub-{uuid.uuid4().hex[:8]}"
-            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
             attempt_number = len(prev_submissions) + 1
 
             submission = QuizSubmission(
@@ -244,7 +250,7 @@ class AssessmentUseCase:
                 item_id=item_id,
                 selected_option_indexes=selected_option_indexes,
                 score_percent=score_percent,
-                passed=passed,
+                passed=score_percent >= 80.0,
                 attempt_number=attempt_number,
                 created_at=now.isoformat(),
             )
@@ -487,9 +493,9 @@ class AssessmentUseCase:
     async def list_peer_submissions_needing_staff_regrade(
         self, item_id: str
     ) -> list[dict[str, Any]]:
-        """Returns list of peer assignment submissions older than 5 days with fewer than 3 reviews and not yet graded by staff (BR_PEER_004)."""
+        """Returns list of peer assignment submissions older than 48 hours (2 days) with fewer than 3 reviews and not yet graded by staff (BR_PEER_004 & BR_PEER_006)."""
         now = datetime.now(timezone.utc)
-        five_days_ago = now - timedelta(days=5)
+        cold_start_threshold = now - timedelta(hours=48)
 
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
@@ -504,7 +510,7 @@ class AssessmentUseCase:
                     sub_dt = now
 
                 reviews = await repo.get_peer_reviews_for_submission(s.id)
-                if len(reviews) < 3 and sub_dt <= five_days_ago:
+                if len(reviews) < 3 and sub_dt <= cold_start_threshold:
                     regrade_list.append(
                         {
                             "submission_id": s.id,
@@ -537,11 +543,11 @@ class AssessmentUseCase:
                 user_id=user_id,
                 submission_id=submission_id,
                 appeal_reason=f"[REPORT_REVIEW:{review_id}] {report_reason}",
-                status="PENDING",
+                status="PENDING_STAFF_REVIEW",
                 created_at=now_iso,
             )
             await repo.save_grade_appeal(appeal)
             return (
                 True,
-                "Đã gửi báo cáo lượt chấm chéo bất thường đến Trợ giảng (TA Queue).",
+                "Đã gửi báo cáo lượt chấm chéo bất thường đến Trợ giảng (TA Review Queue). Bài nộp chuyển sang trạng thái PENDING_STAFF_REVIEW.",
             )

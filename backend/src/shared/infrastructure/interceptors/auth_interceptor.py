@@ -40,9 +40,7 @@ class AuthInterceptor(UnaryInterceptor):
             ):
                 method_path = f"/{method_info.service_name}/{method_info.name}"
 
-        if method_path in PUBLIC_ENDPOINTS:
-            set_current_user(None)
-            return await call_next(request, ctx)
+        is_public = method_path in PUBLIC_ENDPOINTS
 
         # Extract authorization header from RequestContext
         metadata = (
@@ -57,31 +55,29 @@ class AuthInterceptor(UnaryInterceptor):
                 "Authorization", ""
             )
 
-        if not auth_header:
-            raise ConnectError(Code.UNAUTHENTICATED, "Thiếu header Authorization")
-
-        raw_header = str(auth_header).strip()
-        token = (
-            raw_header[7:].strip()
-            if raw_header.lower().startswith("bearer ")
-            else raw_header
-        )
-
-        payload = decode_token(token)
-        if not payload or payload.get("type") != "access":
-            raise ConnectError(
-                Code.UNAUTHENTICATED, "Token xác thực không hợp lệ hoặc đã hết hạn"
+        current_user = None
+        if auth_header:
+            raw_header = str(auth_header).strip()
+            token = (
+                raw_header[7:].strip()
+                if raw_header.lower().startswith("bearer ")
+                else raw_header
             )
 
-        user_id = payload.get("sub", "")
-        if not user_id:
-            raise ConnectError(Code.UNAUTHENTICATED, "Token thiếu thông tin user_id")
+            payload = decode_token(token)
+            if payload and payload.get("type") == "access" and payload.get("sub"):
+                current_user = CurrentUser(
+                    id=payload.get("sub", ""),
+                    email=payload.get("email", ""),
+                    role=payload.get("role", "LEARNER"),
+                )
+            elif not is_public:
+                raise ConnectError(
+                    Code.UNAUTHENTICATED, "Token xác thực không hợp lệ hoặc đã hết hạn"
+                )
+        elif not is_public:
+            raise ConnectError(Code.UNAUTHENTICATED, "Thiếu header Authorization")
 
-        current_user = CurrentUser(
-            id=user_id,
-            email=payload.get("email", ""),
-            role=payload.get("role", "LEARNER"),
-        )
         set_current_user(current_user)
 
         try:

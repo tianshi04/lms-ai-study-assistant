@@ -30,9 +30,10 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_ACCESS_002 (Quy chế Enterprise License & Quản lý Seat):**
   * Học viên tham gia khóa học qua mã Enterprise Key (do doanh nghiệp/trường học tài trợ) sẽ tự động hưởng toàn bộ quyền lợi của Paid Mode mà không cần thanh toán cá nhân.
   * *Ràng buộc Seat:* Mã Enterprise Key phải ở trạng thái kích hoạt (`is_active = True`) và số lượng suất đã dùng chưa vượt quá hạn mức (`used_seats < total_seats`, mặc định 500 seats/key). Khi kích hoạt thành công, hệ thống tự động tăng `used_seats += 1` và gán `user.enterprise_seat_key`.
-* **BR_ACCESS_003 (Thu hồi & Tái cấp Suất học Enterprise Seat Recycling):**
+* **BR_ACCESS_003 (Thu hồi & Tái cấp Suất học Enterprise Seat Recycling & Fallback):**
   * Partner Admin / Super Admin có quyền thu hồi suất học của nhân viên/sinh viên nếu tài khoản đó chưa đạt quá 20% tiến độ khóa học trong vòng 30 ngày kể từ ngày gán mã.
-  * Khi thu hồi thành công, hệ thống tự động hủy mã gán trên người dùng cũ và giảm bộ đếm `used_seats -= 1` để tái sử dụng cấp cho người dùng khác.
+  * Khi thu hồi thành công, hệ thống tự động hủy mã gán trên người dùng cũ và thực hiện giảm bộ đếm bằng khóa giao dịch DB Atomic Update (`UPDATE enterprise_keys SET used_seats = used_seats - 1 WHERE id = :key_id AND used_seats > 0`) nhằm ngăn ngừa triệt để nguy cơ sai lệch dữ liệu do Race Condition khi thao tác đồng thời.
+  * *Chuyển đổi trạng thái & Bảo lưu tiến độ:* Tài khoản bị thu hồi Suất học sẽ tự động chuyển về **Audit Mode (Miễn phí)**. Hệ thống **bảo lưu 100% tiến độ học tập (Completed Items) và Ghi chú cá nhân (Personal Notes)** của học viên. Nếu sau đó học viên tự nâng cấp Paid Mode hoặc được cấp đơn Financial Aid, toàn bộ tiến độ cũ sẽ được mở khóa lại trọn vẹn.
 * **BR_FAID_001 (Quy trình nộp & xét duyệt Financial Aid):**
   * Học viên nộp đơn phải điền bài luận tối thiểu 150 từ giải trình lý do hoàn cảnh và kế hoạch áp dụng kiến thức.
   * *Hạn xét duyệt:* Super Admin có tối đa 15 ngày kể từ ngày nộp đơn (`review_deadline_days_left = 15`) để xem xét duyệt hoặc từ chối đơn tài chính của nền tảng.
@@ -48,10 +49,11 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_HONOR_001 (Xác nhận Honor Code):**
   * Hệ thống bắt buộc học viên phải tích chọn xác nhận *"Academic Honor Code"* trước khi cho phép bấm nút mở làm bài Graded Quiz, nộp bài Auto-Graded Lab, hoặc nộp bài Peer Assignment.
   * Nếu chưa xác nhận Honor Code (`is_agreed = False`), hệ thống chặn làm bài và trả về điểm số `0.0`, `passed = False`, `attempts_left = 0` cùng thông điệp yêu cầu cam kết.
-* **BR_QUIZ_001 (Quy tắc Thi lại, Cooldown bài Graded Quiz & Khôi phục Lượt):**
+* **BR_QUIZ_001 (Quy tắc Thi lại, Nguyên tắc Điểm cao nhất & Cooldown bài Graded Quiz):**
   * Mỗi bài Graded Quiz bắt buộc đạt tối thiểu điểm Pass (>= 80.0%) mới tính là hoàn thành.
-  * Học viên được làm bài tối đa 3 lần liên tiếp. Nếu thi trượt cả 3 lần (`failed_attempts_count >= 3`), hệ thống kích hoạt **thời gian chờ (Cooldown) 8 tiếng** (`cooldown_until = now + 8h`, `cooldown_seconds_left = 28800`) trước khi cho phép làm lại.
-  * *Khôi phục lượt thi:* Ngay khi học viên đạt điểm Pass (>= 80.0%), bộ đếm trượt `failed_attempts_count` tự động reset về `0` và khôi phục lại đủ 3 lượt thi (`attempts_left = 3`).
+  * *Nguyên tắc Điểm cao nhất (Highest Score Wins):* Điểm số chính thức của bài thi luôn ghi nhận kết quả cao nhất giữa các lần thi. Học viên đã đạt điểm Pass vẫn được quyền thi lại để cải thiện điểm số mà không bị kích hoạt Cooldown 8 tiếng.
+  * *Giới hạn lượt thi & Cooldown:* Học viên được làm bài tối đa 3 lần liên tiếp khi chưa đạt điểm Pass. Nếu thi trượt cả 3 lần (`failed_attempts_count >= 3`), hệ thống kích hoạt **thời gian chờ (Cooldown) 8 tiếng** (`cooldown_until = now + 8h`, `cooldown_seconds_left = 28800`) trước khi cho phép làm lại.
+  * *Khôi phục lượt thi:* Ngay khi học viên đạt điểm Pass (>= 80.0%) hoặc hết thời gian 8 tiếng Cooldown, bộ đếm trượt `failed_attempts_count` tự động reset về `0` và khôi phục lại đủ 3 lượt thi (`attempts_left = 3`).
 * **BR_QUIZ_002 (Quy tắc Ngân hàng Câu hỏi & Xáo trộn Đáp án):**
   * Đề thi Graded Quiz được sinh tự động bằng cách rút ngẫu nhiên $N$ câu hỏi từ Pool $M$ câu ($N \le M$) theo tỷ lệ ma trận độ khó (Dễ, Trung bình, Khó).
   * Mỗi lần hiển thị đề thi, hệ thống tự động xáo trộn ngẫu nhiên thứ tự các tùy chọn đáp án (Options Shuffling) để chống hành vi học thuộc vị trí khoanh đáp án.
@@ -63,7 +65,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Điểm bài nộp = (Số lượng Test Cases Pass / Tổng số Test Cases) * 100%. Trả về log chi tiết stdout/stderr của từng testcase cho học viên.
 * **BR_PEER_001 (Điều kiện Nộp & Chấm chéo Peer Review):**
   * Học viên bắt buộc phải nộp bài dự án cá nhân trước mới được phân bổ quyền chấm chéo bài của bạn học (hệ thống tự động loại trừ bài nộp của chính mình `exclude_user_id`).
-  * Học viên bắt buộc phải **chấm đủ 3 bài làm của bạn học** theo đúng bộ tiêu chí Rubric thì hệ thống mới mở hiển thị điểm bài nộp của chính mình.
+  * Học viên bắt buộc phải **chấm đủ lượt bài làm theo phân bổ** $\min(3, N)$ (với $N$ là số bài nộp khả thi trong hàng chờ) thì hệ thống mới mở hiển thị điểm bài nộp của chính mình.
 * **BR_PEER_002 (Bộ Tiêu chí Rubric & Nguyên tắc TA Regrade Override):**
   * Bộ Rubric mặc định gồm 3 tiêu chí: (1) Code Quality & Structure (max 10đ), (2) Documentation & Comments (max 10đ), (3) Test Coverage (max 10đ).
   * Điểm số bài nộp mặc định = $\frac{\sum \text{Score Given}}{\sum \text{Max Score}} \times 100\%$.
@@ -74,9 +76,14 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_PEER_004 (Xử lý Hàng chờ Staff Regrade Queue & Chấm chéo muộn):**
   * Nếu sau 5 ngày kể từ khi nộp bài mà bài dự án chưa nhận đủ 3 lượt chấm chéo, hệ thống tự động chuyển bài nộp vào Hàng chờ xét duyệt của Trợ giảng (Staff Regrade Queue).
   * Hệ thống không khóa quyền chấm chéo muộn của học viên khác. Khi bài nộp nhận đủ 3 lượt chấm chéo và Trợ giảng chưa chấm (`graded_by_staff = False`), hệ thống tự động tính điểm trung bình và giải phóng bài nộp khỏi hàng chờ của TA. Ngược lại nếu TA đã chấm trước (`graded_by_staff = True`), kết quả của TA giữ nguyên làm điểm chính thức.
-* **BR_PEER_005 (Báo cáo Bài chấm chéo bất thường & Spam):**
-  * Học viên có quyền bấm nút **"Report Review"** đối với các lượt chấm chéo có dấu hiệu spam, vụ lợi hoặc cố tình cho 0 điểm không khách quan.
-  * Bài chấm chéo bị báo cáo sẽ lập tức được gắn cờ và chuyển về Hàng chờ kiểm tra của Trợ giảng (TA Review Queue).
+* **BR_PEER_005 (Báo cáo Bài chấm chéo bất thường & Chống lạm dụng Report):**
+  * Học viên có quyền bấm nút **"Report Review"** đối với các lượt chấm chéo có dấu hiệu spam, vụ lợi hoặc cố tình cho điểm thấp không khách quan.
+  * *Chống lạm dụng nộp đơn để nhận bằng:* Bài chấm chéo bị báo cáo sẽ chuyển sang trạng thái `PENDING_STAFF_REVIEW` và gửi về Hàng chờ kiểm tra của Trợ giảng (TA Review Queue). Điểm bài nộp sẽ ở trạng thái **tạm hoãn công nhận Pass & tạm dừng phát hành chứng chỉ** cho tới khi Trợ giảng (TA) rà soát xong để ngăn chặn hành vi cố tình gạch điểm thấp nhằm pass môn gian lận.
+* **BR_PEER_006 (Xử lý Thiếu bài chấm chéo do Ít bài nộp - Cold Start Dynamic Requirement):**
+  * Đối với lớp học mới (Cold Start), nếu số lượng bài nộp khả thi trong pool ít hơn 3 bài, số lượt chấm chéo bắt buộc đối với học viên tự động điều chỉnh theo công thức $\min(3, \text{Pool\_Size})$.
+  * Sau 48 giờ kể từ khi nộp bài mà hệ thống không tìm đủ bài phân bổ hoặc không đủ reviewers, bài nộp tự động đưa vào **Staff Regrade Queue** cho TA/Instructor chấm trực tiếp (thay vì bắt học viên chờ đủ 5 ngày).
+* **BR_PEER_007 (Quy định Hạn chấm chéo Review Window):**
+  * Hệ thống áp dụng mốc **Hạn chấm chéo (Review Window)** gia hạn thêm **3 ngày** tính từ mốc Hạn nộp bài (Submission Deadline). Học viên phải hoàn thành việc chấm chéo 3 bài của bạn học trong khoảng thời gian này.
 
 ---
 
@@ -85,9 +92,11 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_SCHEDULE_001 (Flexible Weekly Schedule & Khởi tạo Mặc định):**
   * Mốc deadline các tuần học được tính toán dựa trên thời điểm đăng ký.
   * *Mô phỏng ban đầu:* Để người học trải nghiệm tính năng quá hạn, hệ thống mặc định khởi tạo Tuần 1 quá hạn 3 ngày (`now - 3 days`, `OVERDUE`) và Tuần 2 (`now + 7 days`, `ON_TRACK`).
-* **BR_DEADLINE_001 (Công thức Reset My Deadlines có Hạn kết thúc Khóa học):**
+* **BR_DEADLINE_001 (Công thức Reset My Deadlines, Cooldown & Hạn Self-paced):**
   * Khi học viên bấm nút **"Reset my deadlines"**, hệ thống cập nhật lại hạn nộp cho toàn bộ các tuần học $N$ theo công thức bị chặn trên bởi Ngày kết thúc khóa học (`Course_End_Date`):
     $$\text{Due Date}_{\text{Week } N} = \min\left(\text{Thời điểm bấm nút} + (7 \times N) \text{ ngày}, \text{Course\_End\_Date}\right)$$
+  * *Hạn Cooldown:* Áp dụng thời gian chờ **24 giờ (Cooldown)** giữa 2 lần bấm Reset my deadlines liên tiếp để tránh việc đặt lại hạn nộp liên tục.
+  * *Tự động gia hạn cho Khóa học Self-paced:* Đối với khóa học tự học (Self-paced không có mốc `Course_End_Date` cố định từ Giảng viên), `Course_End_Date` được tự động tính và gia hạn thêm **180 ngày tính từ mốc bấm nút Reset** (hoặc $7 \times \text{Tổng số tuần} + 30 \text{ ngày}$) nhằm đảm bảo hạn nộp các tuần phân bổ đều 7 ngày/tuần, triệt tiêu hoàn toàn hiện tượng dồn cục hạn nộp khi reset ở giai đoạn cuối.
   * Tất cả các trạng thái hạn nộp tự động chuyển về `ON_TRACK` mà không trừ điểm thi hay làm mất tiến độ học tập cũ.
 * **BR_LEARNING_001 (Tính toán Tiến độ & Khử trùng lặp Completed Items):**
   * Mỗi khi hoàn thành 1 bài học (Video, Reading, Quiz), hệ thống tự động thêm `item_id` vào danh sách `completed_item_ids` (sử dụng tập hợp `set` để khử trùng lặp).
@@ -115,12 +124,15 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 
 * **BR_CERT_001 (Điều kiện cấp Verified Certificate tự động):**
   * Tự động phát hành Verified Certificate khi: (1) `Progress = 100%` và (2) `Điểm các bài Graded Items >= 80%`.
-* **BR_CERT_002 (Xác thực Công khai, Truy vấn Dữ liệu Thật & QR Code API):**
+* **BR_CERT_002 (Xác thực Công khai, Truy vấn Dữ liệu Thật & Sinh QR Code Nội bộ In-Memory):**
   * Mỗi chứng chỉ có mã duy nhất (dạng `CERT-XXXXXXXXXX`).
-  * Khi phát hành, hệ thống tự động truy vấn thông tin thực tế từ `UserModel` và `CourseModel` để gắn Tên học viên, Tên khóa học, Tên đối tác (Partner Name) và Logo đối tác (Partner Logo).
-  * Mã QR xác thực được sinh tự động thông qua công cụ API công khai: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={cert_id}`.
-* **BR_CERT_003 (Quy trình Xác minh Danh tính Sinh trắc học):**
+  * Khi phát hành, hệ thống tự động khóa dữ liệu **Immutable Data Snapshot** từ `UserModel` và `CourseModel` để lưu cố định Tên học viên, Tên khóa học, Tên đối tác (Partner Name) và Logo đối tác (Partner Logo) tại thời điểm cấp. Mọi thay đổi tên trong User Profile về sau không làm thay đổi văn bản chứng chỉ cũ.
+  * Mã QR xác thực được sinh tự động trực tiếp dưới dạng thẻ SVG/Data URI in-memory (0 bytes storage, không phụ thuộc URL dịch vụ bên thứ ba) để hiển thị trên web và nhúng vào PDF.
+* **BR_CERT_003 (Quy trình Xác minh Danh tính KYC & Quy trình Re-issuance khi Đổi tên):**
   * Bắt buộc hoàn tất xác minh CCCD/Hộ chiếu và sinh trắc học webcam trước khi cấp chứng chỉ lần đầu.
+  * *Quy trình Cấp lại Chứng chỉ khi Đổi tên (Re-issuance Workflow):* Nếu học viên cập nhật tên mới hợp pháp theo giấy tờ KYC, chứng chỉ cũ chuyển sang trạng thái `SUPERSEDED` (Đã được thay thế) kèm nhật ký lưu vết Audit Log, và hệ thống phát hành chứng chỉ phiên bản mới.
+  * *Phạm vi hiệu lực:* Quy trình xác minh danh tính áp dụng ở **Cấp độ Tài khoản (Account-level Verification)** và chỉ cần thực hiện 1 lần duy nhất.
+  * *Trạng thái triển khai:* Phân hệ KYC hiện đang ở dạng giả lập (**Mocked**) bằng cờ `is_identity_verified` trong database, sẵn sàng tích hợp với Dịch vụ KYC nhận diện CCCD/Khuôn mặt thực tế khi triển khai chính thức.
 * **BR_CERT_004 (Trạng thái Giao diện Chứng chỉ bị Thu hồi):**
   * Khi chứng chỉ bị thu hồi do vi phạm quy chế liêm chính học thuật, trang xác thực công khai hiển thị thông báo trạng thái rõ ràng: *"Chứng chỉ này đã bị thu hồi do vi phạm điều khoản liêm chính học thuật của nền tảng (Certificate Revoked)"* (không trả về 404).
 * **BR_CERT_005 (Chứng chỉ Chuỗi Chuyên ngành Specialization Certificate):**
@@ -137,4 +149,20 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_FORUM_002 (Phân quyền & Tự động Ghim Thread khi Pin Staff Answer):**
   * Chỉ tài khoản có vai trò `INSTRUCTOR`, `TA`, `SUPER_ADMIN` hoặc `PARTNER_ADMIN` mới có quyền gọi lệnh ghim câu trả lời chính thức (`pin_staff_answer`).
   * Khi một câu trả lời được ghim làm `is_staff_answer = True`, bài thảo luận gốc (Thread) cũng tự động được đánh dấu `is_staff_pinned = True` để ưu tiên hiển thị trên đầu danh sách diễn đàn.
+
+---
+
+## 7. Quy tắc Đánh giá Khóa học (BR_REVIEW)
+
+* **BR_REVIEW_001 (Ràng buộc Quyền Đánh giá & Ngưỡng 50% Tiến độ Khóa học):**
+  * Chỉ học viên đã đăng ký (Enrolled) và đạt tối thiểu **50% tiến độ khóa học** (`Progress >= 50.0%`) mới được phép gửi đánh giá khóa học qua RPC `SubmitCourseReview`. Backend bắt buộc kiểm tra điều kiện này ở tầng Use Case.
+* **BR_REVIEW_002 (Nhãn Phân loại Đánh giá, 1 Review/User & Aggregation Cache):**
+  * *Nhãn Phân loại:* Hệ thống tự động gắn cờ `is_verified_completer = True` (gắn nhãn badge `"Verified Completer"`) nếu học viên đã đạt 100% tiến độ và pass môn tại thời điểm review, ngược lại gắn nhãn `"Active Learner Review"`.
+  * *Anti-Spam & Upsert:* Mỗi `user_id` chỉ sở hữu tối đa **1 bản ghi đánh giá** cho mỗi `course_id`. Khi học viên nộp đánh giá lại, hệ thống tự động ghi đè/cập nhật (Upsert) số sao và bình luận cũ.
+  * *CSAT Aggregation Cache:* Điểm số hài lòng trung bình (`average_rating`) và tổng số lượt đánh giá (`review_count`) được cập nhật trực tiếp trên bản ghi `CourseModel` để tối ưu hóa hiệu năng truy vấn read path.
+* **BR_REVIEW_003 (Ràng buộc Dữ liệu Đầu vào & Chống Stored XSS):**
+  * Thang điểm đánh giá `rating_stars` là số nguyên bắt buộc nằm trong khoảng $[1, 5]$.
+  * Văn bản bình luận `comment_text` tối đa 2,000 ký tự và bắt buộc được làm sạch (Sanitize HTML/Script tags) tại Backend để chống tấn công Stored XSS khi hiển thị công khai. Bàn nộp quá 2,000 ký tự sẽ bị từ chối với lỗi Fail-fast validation (`ValueError`).
+* **BR_REVIEW_004 (Xung đột Quyền lợi & Chống Tự đánh giá):**
+  * Giảng viên, Trợ giảng hoặc Admin phụ trách tạo/quản lý khóa học bị cấm tự gửi đánh giá cho khóa học của chính mình.
 

@@ -1,3 +1,4 @@
+import html
 from typing import Any, Callable
 
 from src.modules.catalog.domain.entities import (
@@ -8,6 +9,7 @@ from src.modules.catalog.domain.entities import (
 )
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
+from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.s3_storage import get_s3_storage_service
 
@@ -152,18 +154,52 @@ class CatalogUseCase:
         course_id: str,
         rating_stars: int,
         comment_text: str,
+        user_role: str = "",
     ):
         if rating_stars < 1 or rating_stars > 5:
             raise ValueError("Rating stars must be between 1 and 5.")
 
+        # BR_REVIEW_003: Fail-fast 2000 char validation and safe Stored XSS sanitization
+        trimmed_comment = comment_text.strip()
+        if len(trimmed_comment) > 2000:
+            raise ValueError(
+                "Văn bản nhận xét không được vượt quá 2000 ký tự (BR_REVIEW_003)."
+            )
+        clean_comment = html.escape(trimmed_comment)
+
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
+            real_course_id, instructor_names = await repo.get_course_id_by_slug_or_id(
+                course_id
+            )
+
+            # BR_REVIEW_004: Check if user is instructor or TA of the course
+            is_instructor_role = any(
+                r in user_role.lower() for r in ["instructor", "ta"]
+            )
+            is_instructor_id_or_name = user_id.startswith("inst_") or (
+                instructor_names and user_name in instructor_names
+            )
+            if is_instructor_role or is_instructor_id_or_name:
+                raise ValueError(
+                    "Giảng viên không được phép tự gửi đánh giá cho khóa học của mình (BR_REVIEW_004)."
+                )
+
+            # BR_REVIEW_001: Check if user completed at least 50% of the course via Learning domain
+            learning_repo = SQLAlchemyLearningRepository(session)
+            progress = await learning_repo.get_progress(user_id, real_course_id)
+
+            if not progress or progress.overall_progress_percent < 50.0:
+                raise ValueError(
+                    "Chỉ học viên hoàn thành tối thiểu 50% tiến độ khóa học mới có quyền gửi đánh giá (BR_REVIEW_001)."
+                )
+
             return await repo.submit_course_review(
                 user_id=user_id,
                 user_name=user_name,
-                course_id=course_id,
+                course_id=real_course_id,
                 rating_stars=rating_stars,
-                comment_text=comment_text,
+                comment_text=clean_comment,
             )
 
     async def list_course_reviews(
@@ -171,8 +207,10 @@ class CatalogUseCase:
     ):
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
+            real_course_id, _ = await repo.get_course_id_by_slug_or_id(course_id)
+
             return await repo.list_course_reviews(
-                course_id=course_id, page_size=page_size, page_token=page_token
+                course_id=real_course_id, page_size=page_size, page_token=page_token
             )
 
     async def get_scorm_upload_url(

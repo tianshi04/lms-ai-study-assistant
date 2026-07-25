@@ -25,6 +25,7 @@ class LearningProgress(Entity):
         overall_progress_percent: float = 0.0,
         completed_item_ids: list[str] | None = None,
         weekly_deadlines: list[WeeklyDeadline] | None = None,
+        last_reset_at: str | None = None,
     ) -> None:
         super().__init__(id=f"{user_id}:{course_id}")
         self.user_id = user_id
@@ -32,6 +33,7 @@ class LearningProgress(Entity):
         self.overall_progress_percent = overall_progress_percent
         self.completed_item_ids = completed_item_ids or []
         self.weekly_deadlines = weekly_deadlines or []
+        self.last_reset_at = last_reset_at
 
 
 class PersonalNote(Entity):

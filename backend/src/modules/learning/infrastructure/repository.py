@@ -132,15 +132,25 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             model = res.scalar_one()
 
         now = datetime.now(timezone.utc)
-        total_weeks = len(model.weekly_deadlines)
-        # BR_DEADLINE_001: Course_End_Date = last week's natural deadline from now.
-        # Cap so no deadline exceeds the course's final week boundary.
-        course_end_date = now + timedelta(days=7 * total_weeks)
+
+        # BR_DEADLINE_001: 24h Cooldown check
+        if model.last_reset_at:
+            try:
+                last_dt = datetime.fromisoformat(model.last_reset_at)
+                if (now - last_dt).total_seconds() < 86400:
+                    return False, _model_to_domain_progress(model)
+            except ValueError:
+                pass
+
+        total_weeks = max(1, len(model.weekly_deadlines))
+        # BR_DEADLINE_001: Self-paced Course_End_Date is extended from current reset time to avoid clustered deadlines
+        course_end_date = now + timedelta(days=max(180, 7 * total_weeks + 30))
         for i, d in enumerate(model.weekly_deadlines, start=1):
             natural_due = now + timedelta(days=7 * i)
             d.due_date = min(natural_due, course_end_date).strftime("%Y-%m-%d")
             d.status = DeadlineStatus.ON_TRACK
 
+        model.last_reset_at = now.isoformat()
         await self.session.commit()
         return True, _model_to_domain_progress(model)
 
