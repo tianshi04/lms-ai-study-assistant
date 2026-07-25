@@ -51,3 +51,9 @@ class ICatalogRepository(ABC):
     @abstractmethod
     async def get_course_rating_stats(self, course_id: str) -> tuple[float, int]:
         pass
+
+    @abstractmethod
+    async def get_course_id_by_slug_or_id(
+        self, course_id_or_slug: str
+    ) -> tuple[str, list[str]]:
+        pass

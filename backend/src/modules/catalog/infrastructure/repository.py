@@ -405,3 +405,16 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             return 0.0, 0
         avg_rating, count = row
         return round(float(avg_rating), 1), int(count)
+
+    async def get_course_id_by_slug_or_id(
+        self, course_id_or_slug: str
+    ) -> tuple[str, list[str]]:
+        stmt = select(CourseModel.id, CourseModel.instructor_names).where(
+            (CourseModel.id == course_id_or_slug)
+            | (CourseModel.slug == course_id_or_slug)
+        )
+        res = await self.session.execute(stmt)
+        row = res.first()
+        if row:
+            return row[0], row[1] or []
+        return course_id_or_slug, []

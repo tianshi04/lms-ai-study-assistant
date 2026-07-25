@@ -1,13 +1,10 @@
 import html
 from typing import Any, Callable
 
-from sqlalchemy import select
-
 from src.modules.catalog.domain.entities import Course, Lesson, Specialization
 from src.modules.catalog.domain.repository import ICatalogRepository
-from src.modules.catalog.infrastructure.models import CourseModel
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
-from src.modules.learning.infrastructure.models import LearningProgressModel
+from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 from src.shared.infrastructure.database import async_session_scope
 
 
@@ -165,42 +162,32 @@ class CatalogUseCase:
         clean_comment = html.escape(trimmed_comment)
 
         async with async_session_scope() as session:
-            # Resolve real_course_id from id or slug
-            course_stmt = select(CourseModel).where(
-                (CourseModel.id == course_id) | (CourseModel.slug == course_id)
+            repo = self.repo_factory(session)
+            real_course_id, instructor_names = await repo.get_course_id_by_slug_or_id(
+                course_id
             )
-            course_res = await session.execute(course_stmt)
-            course_model = course_res.scalar_one_or_none()
-            real_course_id = course_model.id if course_model else course_id
 
             # BR_REVIEW_004: Check if user is instructor or TA of the course
             is_instructor_role = any(
                 r in user_role.lower() for r in ["instructor", "ta"]
             )
             is_instructor_id_or_name = user_id.startswith("inst_") or (
-                course_model
-                and course_model.instructor_names
-                and user_name in course_model.instructor_names
+                instructor_names and user_name in instructor_names
             )
             if is_instructor_role or is_instructor_id_or_name:
                 raise ValueError(
                     "Giảng viên không được phép tự gửi đánh giá cho khóa học của mình (BR_REVIEW_004)."
                 )
 
-            # BR_REVIEW_001: Check if user completed 100% of the course
-            prog_stmt = select(LearningProgressModel).where(
-                LearningProgressModel.user_id == user_id,
-                LearningProgressModel.course_id == real_course_id,
-            )
-            prog_res = await session.execute(prog_stmt)
-            prog_model = prog_res.scalar_one_or_none()
+            # BR_REVIEW_001: Check if user completed 100% of the course via Learning domain
+            learning_repo = SQLAlchemyLearningRepository(session)
+            progress = await learning_repo.get_progress(user_id, real_course_id)
 
-            if not prog_model or prog_model.overall_progress_percent < 100.0:
+            if not progress or progress.overall_progress_percent < 100.0:
                 raise ValueError(
                     "Chỉ học viên hoàn thành 100% tiến độ khóa học mới có quyền gửi đánh giá (BR_REVIEW_001)."
                 )
 
-            repo = self.repo_factory(session)
             return await repo.submit_course_review(
                 user_id=user_id,
                 user_name=user_name,
@@ -213,14 +200,9 @@ class CatalogUseCase:
         self, course_id: str, page_size: int = 10, page_token: str = ""
     ):
         async with async_session_scope() as session:
-            course_stmt = select(CourseModel).where(
-                (CourseModel.id == course_id) | (CourseModel.slug == course_id)
-            )
-            course_res = await session.execute(course_stmt)
-            course_model = course_res.scalar_one_or_none()
-            real_course_id = course_model.id if course_model else course_id
-
             repo = self.repo_factory(session)
+            real_course_id, _ = await repo.get_course_id_by_slug_or_id(course_id)
+
             return await repo.list_course_reviews(
                 course_id=real_course_id, page_size=page_size, page_token=page_token
             )

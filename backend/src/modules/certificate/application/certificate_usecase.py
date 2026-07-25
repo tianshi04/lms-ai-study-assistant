@@ -2,29 +2,11 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from sqlalchemy import select
-
-from src.modules.assessment.infrastructure.models import (
-    GradeAppealModel,
-    QuizSubmissionModel,
-    LabSubmissionModel,
-    PeerAssignmentSubmissionModel,
-)
-from src.modules.catalog.domain.entities import ItemType
-from src.modules.catalog.infrastructure.models import (
-    CourseModel,
-    SpecializationModel,
-    LearningItemModel,
-    LessonModel,
-    WeekModuleModel,
-)
 from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
     VerifiedCertificate,
 )
 from src.modules.certificate.infrastructure.repository import CertificateRepository
-from src.modules.identity.infrastructure.models import UserModel
-from src.modules.learning.infrastructure.models import LearningProgressModel
 from src.shared.infrastructure.database import async_session_scope
 
 
@@ -117,143 +99,49 @@ class CertificateUseCase:
         self, user_id: str, course_id: str
     ) -> tuple[Optional[VerifiedCertificate], str]:
         async with async_session_scope() as session:
-            # Resolve real_course_id from id or slug
-            course_stmt = select(CourseModel).where(
-                (CourseModel.id == course_id) | (CourseModel.slug == course_id)
-            )
-            course_res = await session.execute(course_stmt)
-            course_model = course_res.scalar_one_or_none()
-            real_course_id = course_model.id if course_model else course_id
-
             repo = CertificateRepository(session)
+            (
+                real_course_id,
+                course_title,
+                partner_name,
+                partner_logo_url,
+            ) = await repo.get_course_details_by_id_or_slug(course_id)
+
             cert = await repo.get_certificate(user_id, real_course_id)
             if cert:
                 return cert, ""
 
             # BR_CERT_001: Check if user has reached 100% progress in course
-            progress_key = f"{user_id}:{real_course_id}"
-            prog_stmt = select(LearningProgressModel).where(
-                LearningProgressModel.id == progress_key
+            current_percent = await repo.get_learning_progress_percent(
+                user_id, real_course_id
             )
-            prog_res = await session.execute(prog_stmt)
-            prog_model = prog_res.scalar_one_or_none()
-
-            current_percent = prog_model.overall_progress_percent if prog_model else 0.0
-            if not prog_model or current_percent < 100.0:
+            if current_percent < 100.0:
                 return (
                     None,
                     f"Chưa đủ điều kiện nhận chứng chỉ: Tiến độ khóa học phải đạt 100% (Hiện tại {current_percent}%).",
                 )
 
-            # BR_CERT_001 (Vế 2): Check if all REQUIRED Graded Items have max score >= 80%
-            graded_types = [
-                ItemType.GRADED_QUIZ,
-                ItemType.AUTO_GRADED_LAB,
-                ItemType.PEER_REVIEW,
-            ]
-            req_stmt = (
-                select(LearningItemModel)
-                .join(LessonModel, LearningItemModel.lesson_id == LessonModel.id)
-                .join(WeekModuleModel, LessonModel.week_module_id == WeekModuleModel.id)
-                .where(WeekModuleModel.course_id == course_id)
-                .where(LearningItemModel.type.in_(graded_types))
+            # BR_CERT_001 & BR_PEER_005: Check required graded items and pending appeals
+            (
+                is_eligible,
+                err_msg,
+            ) = await repo.check_graded_items_and_appeals_eligibility(
+                user_id, real_course_id
             )
-            req_res = await session.execute(req_stmt)
-            required_items = req_res.scalars().all()
+            if not is_eligible:
+                return None, err_msg
 
-            # Fetch all user submissions
-            quiz_stmt = select(QuizSubmissionModel).where(
-                QuizSubmissionModel.user_id == user_id
+            # BR_CERT_003: Check user identity & KYC status
+            email, full_name, is_identity_verified = await repo.get_user_kyc_info(
+                user_id
             )
-            quiz_res = await session.execute(quiz_stmt)
-
-            lab_stmt = select(LabSubmissionModel).where(
-                LabSubmissionModel.user_id == user_id
-            )
-            lab_res = await session.execute(lab_stmt)
-
-            peer_stmt = select(PeerAssignmentSubmissionModel).where(
-                PeerAssignmentSubmissionModel.user_id == user_id
-            )
-            peer_res = await session.execute(peer_stmt)
-
-            item_max_scores: dict[str, float] = {}
-            for s in quiz_res.scalars().all():
-                item_max_scores[s.item_id] = max(
-                    item_max_scores.get(s.item_id, 0.0),
-                    getattr(s, "score_percent", 0.0),
-                )
-            for s in lab_res.scalars().all():
-                item_max_scores[s.item_id] = max(
-                    item_max_scores.get(s.item_id, 0.0),
-                    getattr(s, "score_percent", 0.0),
-                )
-            for s in peer_res.scalars().all():
-                item_max_scores[s.item_id] = max(
-                    item_max_scores.get(s.item_id, 0.0),
-                    getattr(s, "final_score", 0.0) or 0.0,
-                )
-
-            for req_item in required_items:
-                max_score = item_max_scores.get(req_item.id)
-                if max_score is None:
-                    return (
-                        None,
-                        f"Chưa đủ điều kiện nhận chứng chỉ: Bạn chưa hoàn thành bài tập bắt buộc '{req_item.title}'.",
-                    )
-                if max_score < 80.0:
-                    return (
-                        None,
-                        f"Chưa đủ điều kiện nhận chứng chỉ: Bài tập '{req_item.title}' chưa đạt điểm tối thiểu >= 80% (Hiện tại {max_score}%).",
-                    )
-
-            # BR_PEER_005 Report Lock Rule: Check if user has any pending grade appeals or reported peer reviews
-            appeal_stmt = select(GradeAppealModel).where(
-                GradeAppealModel.user_id == user_id,
-                GradeAppealModel.status == "PENDING",
-            )
-            appeal_res = await session.execute(appeal_stmt)
-            if appeal_res.scalar_one_or_none():
-                return (
-                    None,
-                    "Chưa đủ điều kiện nhận chứng chỉ: Bạn đang có đơn khiếu nại/báo cáo bài chấm chéo chờ Trợ giảng thẩm định (Report Lock Rule).",
-                )
-
-            # Fetch real user details
-            user_stmt = select(UserModel).where(UserModel.id == user_id)
-            user_res = await session.execute(user_stmt)
-            user_model = user_res.scalar_one_or_none()
-
-            # BR_CERT_003: Check if user has completed KYC identity verification
-            if user_model and not getattr(user_model, "is_identity_verified", False):
+            if not is_identity_verified:
                 return (
                     None,
                     "Chưa đủ điều kiện nhận chứng chỉ: Bạn cần hoàn tất quy trình Xác minh Danh tính (KYC sinh trắc học/CCCD) trước khi phát hành chứng chỉ lần đầu (BR_CERT_003).",
                 )
 
-            learner_name = user_model.full_name if user_model else "Học viên Coursera"
-
-            # Fetch real course details
-            course_stmt = select(CourseModel).where(
-                (CourseModel.id == course_id) | (CourseModel.slug == course_id)
-            )
-            course_res = await session.execute(course_stmt)
-            course_model = course_res.scalar_one_or_none()
-            real_course_id = course_model.id if course_model else course_id
-
-            course_title = (
-                course_model.title if course_model else "Specialization Course"
-            )
-            partner_name = (
-                course_model.partner_name
-                if course_model and course_model.partner_name
-                else "DeepLearning.AI"
-            )
-            partner_logo_url = (
-                course_model.partner_logo_url
-                if course_model and course_model.partner_logo_url
-                else "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg"
-            )
+            learner_name = full_name or "Học viên Coursera"
 
             # Generate new certificate dynamically with REAL database metadata
             cert_id = f"CERT-{uuid.uuid4().hex[:10].upper()}"
@@ -268,9 +156,7 @@ class CertificateUseCase:
                 "recipient": {
                     "type": "email",
                     "hashed": False,
-                    "identity": user_model.email
-                    if user_model and user_model.email
-                    else "learner@coursera.ai",
+                    "identity": email,
                 },
                 "issuedOn": datetime.now(timezone.utc).isoformat(),
                 "badge": {
@@ -356,16 +242,16 @@ class CertificateUseCase:
         async with async_session_scope() as session:
             repo = CertificateRepository(session)
 
-            # 1. Load specialization to get component course_ids
-            spec_stmt = select(SpecializationModel).where(
-                SpecializationModel.id == specialization_id
-            )
-            spec_res = await session.execute(spec_stmt)
-            spec_model = spec_res.scalar_one_or_none()
-            if not spec_model:
+            # 1. Load specialization details
+            (
+                spec_title,
+                partner_name,
+                partner_logo_url,
+                course_ids,
+            ) = await repo.get_specialization_details(specialization_id)
+            if not spec_title:
                 return None, f"Không tìm thấy Specialization '{specialization_id}'."
 
-            course_ids: list[str] = spec_model.course_ids or []
             if not course_ids:
                 return None, "Specialization chưa có khóa học thành phần."
 
@@ -387,10 +273,8 @@ class CertificateUseCase:
                 return existing_spec_cert, ""
 
             # 4. Load user info for cert metadata
-            user_stmt = select(UserModel).where(UserModel.id == user_id)
-            user_res = await session.execute(user_stmt)
-            user_model = user_res.scalar_one_or_none()
-            learner_name = user_model.full_name if user_model else "Học viên"
+            _, full_name, _ = await repo.get_user_kyc_info(user_id)
+            learner_name = full_name or "Học viên"
 
             # 5. Build and save specialization certificate
             cert_id = f"CERT-SPEC-{uuid.uuid4().hex[:8].upper()}"
@@ -402,13 +286,13 @@ class CertificateUseCase:
                 "@context": "https://w3id.org/openbadges/v2",
                 "type": "BadgeClass",
                 "id": cert_id,
-                "name": f"Specialization Certificate: {spec_model.title}",
+                "name": f"Specialization Certificate: {spec_title}",
                 "description": f"Hoàn thành toàn bộ {len(course_ids)} khóa học trong chuỗi chuyên ngành.",
                 "image": qr_code_url,
                 "criteria": {"narrative": f"/specializations/{specialization_id}"},
                 "issuer": {
-                    "name": spec_model.partner_name,
-                    "url": spec_model.partner_logo_url,
+                    "name": partner_name,
+                    "url": partner_logo_url,
                 },
             }
 
@@ -417,9 +301,9 @@ class CertificateUseCase:
                 user_id=user_id,
                 course_id=f"spec:{specialization_id}",
                 learner_name=learner_name,
-                course_title=spec_model.title,
-                partner_name=spec_model.partner_name,
-                partner_logo_url=spec_model.partner_logo_url,
+                course_title=spec_title or "Specialization",
+                partner_name=partner_name or "Partner",
+                partner_logo_url=partner_logo_url or "",
                 issue_date=issue_date,
                 verification_url=verification_url,
                 qr_code_url=qr_code_url,
