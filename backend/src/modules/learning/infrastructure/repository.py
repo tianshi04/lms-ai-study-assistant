@@ -217,20 +217,21 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         await self.session.commit()
         return True, _model_to_domain_progress(model)
 
-    async def list_enrolled_courses(self, user_id: str) -> list[EnrolledCourseSummary]:
-        from src.modules.catalog.infrastructure.models import CourseModel
-
+    async def list_user_progresses(self, user_id: str) -> list[LearningProgress]:
         stmt = (
-            select(LearningProgressModel, CourseModel)
-            .join(CourseModel, LearningProgressModel.course_id == CourseModel.id)
+            select(LearningProgressModel)
             .where(LearningProgressModel.user_id == user_id)
+            .options(selectinload(LearningProgressModel.weekly_deadlines))
         )
         res = await self.session.execute(stmt)
-        results = res.all()
+        models = res.scalars().all()
+        return [_model_to_domain_progress(m) for m in models]
 
+    async def list_enrolled_courses(self, user_id: str) -> list[EnrolledCourseSummary]:
+        progresses = await self.list_user_progresses(user_id)
         summaries = []
-        for lp_model, course_model in results:
-            progress = lp_model.overall_progress_percent
+        for lp in progresses:
+            progress = lp.overall_progress_percent
             if progress <= 0:
                 status = "NOT_STARTED"
             elif progress >= 100.0:
@@ -240,12 +241,12 @@ class SQLAlchemyLearningRepository(ILearningRepository):
 
             summaries.append(
                 EnrolledCourseSummary(
-                    course_id=course_model.id,
-                    course_title=course_model.title,
-                    partner_name=course_model.partner_name,
+                    course_id=lp.course_id,
+                    course_title="",
+                    partner_name="",
                     progress_percent=progress,
                     status=status,
-                    last_accessed_at=lp_model.last_reset_at or "",
+                    last_accessed_at=lp.last_reset_at or "",
                 )
             )
         return summaries

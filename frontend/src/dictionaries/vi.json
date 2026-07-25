@@ -57,6 +57,26 @@
     "sortRatingDesc": "Đánh giá cao nhất",
     "sortRatingAsc": "Đánh giá thấp nhất"
   },
+  "adminCategories": {
+    "title": "Quản lý Danh mục",
+    "subtitle": "Quản lý động các Chủ đề và Trình độ của Khóa học",
+    "backToDashboard": "Quay lại Dashboard",
+    "addNewCategory": "Thêm Danh mục Mới",
+    "nameLabel": "Tên danh mục",
+    "namePlaceholder": "Ví dụ: Thiết kế Đồ họa",
+    "typeLabel": "Loại danh mục",
+    "subjectOption": "Chủ đề (Subject)",
+    "levelOption": "Trình độ (Level)",
+    "addBtn": "Thêm danh mục",
+    "addingBtn": "Đang thêm...",
+    "subjectsTitle": "Danh sách Chủ đề",
+    "levelsTitle": "Danh sách Trình độ",
+    "noCategories": "Chưa có danh mục nào.",
+    "deleteBtn": "Xóa",
+    "confirmDelete": "Bạn có chắc chắn muốn xóa danh mục này?",
+    "accessDenied": "Truy cập bị từ chối. Chỉ dành cho Super Admin.",
+    "loading": "Đang tải..."
+  },
   "auth": {
     "loginTitle": "Đăng nhập tài khoản",
     "loginSubtitle": "Chào mừng bạn quay trở lại với hệ thống học tập Coursera LMS",

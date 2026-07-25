@@ -44,5 +44,9 @@ class ILearningRepository(ABC):
         pass
 
     @abstractmethod
+    async def list_user_progresses(self, user_id: str) -> list[LearningProgress]:
+        pass
+
+    @abstractmethod
     async def list_enrolled_courses(self, user_id: str) -> list[EnrolledCourseSummary]:
         pass

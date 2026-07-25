@@ -177,4 +177,6 @@ def downgrade() -> None:
     op.drop_table("personal_notes")
     op.drop_table("learning_progresses")
     op.drop_table("courses")
+    op.execute("DROP TYPE IF EXISTS deadlinestatus")
+    op.execute("DROP TYPE IF EXISTS itemtype")
     # ### end Alembic commands ###

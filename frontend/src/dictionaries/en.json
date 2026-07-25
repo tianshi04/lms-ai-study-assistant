@@ -57,6 +57,26 @@
     "sortRatingDesc": "Highest Rating",
     "sortRatingAsc": "Lowest Rating"
   },
+  "adminCategories": {
+    "title": "Category Management",
+    "subtitle": "Manage dynamic Course Subjects and Levels",
+    "backToDashboard": "Back to Dashboard",
+    "addNewCategory": "Add New Category",
+    "nameLabel": "Category Name",
+    "namePlaceholder": "e.g. Graphic Design",
+    "typeLabel": "Category Type",
+    "subjectOption": "Subject",
+    "levelOption": "Level",
+    "addBtn": "Add Category",
+    "addingBtn": "Adding...",
+    "subjectsTitle": "Subjects",
+    "levelsTitle": "Levels",
+    "noCategories": "No categories found.",
+    "deleteBtn": "Delete",
+    "confirmDelete": "Are you sure you want to delete this category?",
+    "accessDenied": "Access Denied. Super Admins only.",
+    "loading": "Loading..."
+  },
   "auth": {
     "loginTitle": "Sign In to Your Account",
     "loginSubtitle": "Welcome back to Coursera Learning Platform",
