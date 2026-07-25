@@ -34,7 +34,7 @@ async def test_get_financial_aid_found(repo, mock_session):
         status="PENDING",
         review_deadline_days_left=14,
     )
-    mock_result.scalar_one_or_none.return_value = mock_model
+    mock_result.scalars().first.return_value = mock_model
     mock_session.execute.return_value = mock_result
 
     app = await repo.get_financial_aid("user_1", "course_1")
@@ -48,7 +48,7 @@ async def test_get_financial_aid_found(repo, mock_session):
 @pytest.mark.asyncio
 async def test_get_financial_aid_not_found(repo, mock_session):
     mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = None
+    mock_result.scalars().first.return_value = None
     mock_session.execute.return_value = mock_result
 
     app = await repo.get_financial_aid("user_1", "course_1")
@@ -205,7 +205,7 @@ async def test_save_certificate_new(repo, mock_session):
         issue_date="01/01/2026",
         verification_url="/verify/cert_123",
         qr_code_url="qr_url",
-        open_badges_json_ld="{}",
+        open_badges_json_ld={},
     )
 
     saved_cert = await repo.save_certificate(cert)
@@ -229,7 +229,7 @@ async def test_save_certificate_existing(repo, mock_session):
         issue_date="01/01/2026",
         verification_url="/verify/cert_123",
         qr_code_url="qr_url",
-        open_badges_json_ld="{}",
+        open_badges_json_ld={},
     )
     mock_result.scalar_one_or_none.return_value = mock_model
     mock_session.execute.return_value = mock_result
@@ -245,7 +245,7 @@ async def test_save_certificate_existing(repo, mock_session):
         issue_date="01/01/2026",
         verification_url="/verify/cert_123",
         qr_code_url="qr_url",
-        open_badges_json_ld="{}",
+        open_badges_json_ld={},
     )
 
     saved_cert = await repo.save_certificate(cert)

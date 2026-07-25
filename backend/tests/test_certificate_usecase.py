@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 from src.modules.certificate.application.certificate_usecase import (
     CertificateUseCase,
     count_words,
@@ -102,10 +102,18 @@ async def test_get_financial_aid_status(mock_session_scope, mock_repo_class, use
     mock_session = AsyncMock()
     mock_session_scope.return_value.__aenter__.return_value = mock_session
     mock_repo = mock_repo_class.return_value
-    mock_repo.get_financial_aid = AsyncMock(return_value="fake_app")
+    existing_app = FinancialAidApplication(
+        id="faid_1",
+        user_id="u1",
+        course_id="c1",
+        essay_150_words="word " * 150,
+        status="APPROVED",
+        review_deadline_days_left=0,
+    )
+    mock_repo.get_financial_aid = AsyncMock(return_value=existing_app)
 
     res = await usecase.get_financial_aid_status("u1", "c1")
-    assert res == "fake_app"
+    assert res == existing_app
     mock_repo.get_financial_aid.assert_called_once_with("u1", "c1")
 
 
@@ -130,12 +138,16 @@ async def test_get_verified_certificate_existing(
         issue_date="01/01",
         verification_url="V",
         qr_code_url="Q",
-        open_badges_json_ld="{}",
+        open_badges_json_ld={},
+    )
+    mock_repo.get_course_details_by_id_or_slug = AsyncMock(
+        return_value=("c1", "T", "P", "L")
     )
     mock_repo.get_certificate = AsyncMock(return_value=existing_cert)
 
-    cert = await usecase.get_verified_certificate("u1", "c1")
+    cert, err = await usecase.get_verified_certificate("u1", "c1")
     assert cert == existing_cert
+    assert err == ""
     mock_repo.get_certificate.assert_called_once_with("u1", "c1")
 
 
@@ -148,28 +160,27 @@ async def test_get_verified_certificate_new(
     mock_session = AsyncMock()
     mock_session_scope.return_value.__aenter__.return_value = mock_session
     mock_repo = mock_repo_class.return_value
-    mock_repo.get_certificate = AsyncMock(return_value=None)
 
-    mock_user_model = MagicMock(full_name="Alice")
-    mock_course_model = MagicMock(
-        title="Python Basics", partner_name="TechPartner", partner_logo_url="logo"
+    mock_repo.get_course_details_by_id_or_slug = AsyncMock(
+        return_value=("c1", "Python Basics", "TechPartner", "logo")
     )
-
-    mock_user_res = MagicMock()
-    mock_user_res.scalar_one_or_none.return_value = mock_user_model
-
-    mock_course_res = MagicMock()
-    mock_course_res.scalar_one_or_none.return_value = mock_course_model
-
-    mock_session.execute = AsyncMock(side_effect=[mock_user_res, mock_course_res])
+    mock_repo.get_certificate = AsyncMock(return_value=None)
+    mock_repo.get_learning_progress_percent = AsyncMock(return_value=100.0)
+    mock_repo.check_graded_items_and_appeals_eligibility = AsyncMock(
+        return_value=(True, "")
+    )
+    mock_repo.get_user_kyc_info = AsyncMock(
+        return_value=("alice@example.com", "Alice", True)
+    )
 
     def save_side_effect(c):
         return c
 
     mock_repo.save_certificate = AsyncMock(side_effect=save_side_effect)
 
-    cert = await usecase.get_verified_certificate("u1", "c1")
+    cert, err = await usecase.get_verified_certificate("u1", "c1")
 
+    assert err == ""
     assert cert is not None
     assert cert.learner_name == "Alice"
     assert cert.course_title == "Python Basics"
@@ -191,19 +202,32 @@ async def test_get_verified_certificate_new_defaults(
     mock_session = AsyncMock()
     mock_session_scope.return_value.__aenter__.return_value = mock_session
     mock_repo = mock_repo_class.return_value
-    mock_repo.get_certificate = AsyncMock(return_value=None)
 
-    mock_res = MagicMock()
-    mock_res.scalar_one_or_none.return_value = None
-    mock_session.execute = AsyncMock(return_value=mock_res)
+    mock_repo.get_course_details_by_id_or_slug = AsyncMock(
+        return_value=(
+            "c2",
+            "Specialization Course",
+            "DeepLearning.AI",
+            "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
+        )
+    )
+    mock_repo.get_certificate = AsyncMock(return_value=None)
+    mock_repo.get_learning_progress_percent = AsyncMock(return_value=100.0)
+    mock_repo.check_graded_items_and_appeals_eligibility = AsyncMock(
+        return_value=(True, "")
+    )
+    mock_repo.get_user_kyc_info = AsyncMock(
+        return_value=("learner@coursera.ai", "Học viên Coursera", True)
+    )
 
     def save_side_effect(c):
         return c
 
     mock_repo.save_certificate = AsyncMock(side_effect=save_side_effect)
 
-    cert = await usecase.get_verified_certificate("u2", "c2")
+    cert, err = await usecase.get_verified_certificate("u2", "c2")
 
+    assert err == ""
     assert cert is not None
     assert cert.learner_name == "Học viên Coursera"
     assert cert.course_title == "Specialization Course"
@@ -234,15 +258,15 @@ async def test_verify_certificate_public(mock_session_scope, mock_repo_class, us
         issue_date="01/01",
         verification_url="V",
         qr_code_url="Q",
-        open_badges_json_ld="{}",
+        open_badges_json_ld={},
     )
     mock_repo.get_certificate_by_id = AsyncMock(return_value=existing_cert)
 
-    valid, cert = await usecase.verify_certificate_public("cert_1")
+    valid, cert, msg = await usecase.verify_certificate_public("cert_1")
     assert valid is True
     assert cert == existing_cert
 
     mock_repo.get_certificate_by_id = AsyncMock(return_value=None)
-    valid, cert = await usecase.verify_certificate_public("cert_2")
+    valid, cert, msg = await usecase.verify_certificate_public("cert_2")
     assert valid is False
     assert cert is None

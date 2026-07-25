@@ -47,9 +47,21 @@ async def test_get_progress_existing(repository, mock_session):
 
 @pytest.mark.asyncio
 async def test_get_progress_not_existing(repository, mock_session):
-    mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = None
-    mock_session.execute.return_value = mock_result
+    mock_model = LearningProgressModel(
+        id="u2:c2",
+        user_id="u2",
+        course_id="c2",
+        overall_progress_percent=0.0,
+        completed_item_ids=[],
+        weekly_deadlines=[],
+    )
+    mock_res_none = MagicMock()
+    mock_res_none.scalar_one_or_none.return_value = None
+
+    mock_res_found = MagicMock()
+    mock_res_found.scalar_one.return_value = mock_model
+
+    mock_session.execute.side_effect = [mock_res_none, None, mock_res_found]
 
     progress = await repository.get_progress("u2", "c2")
 
@@ -58,9 +70,6 @@ async def test_get_progress_not_existing(repository, mock_session):
     assert progress.overall_progress_percent == 0.0
     assert progress.completed_item_ids == []
     assert len(progress.weekly_deadlines) == 2
-
-    mock_session.add.assert_called_once()
-    mock_session.commit.assert_awaited_once()
 
 
 @pytest.mark.asyncio
