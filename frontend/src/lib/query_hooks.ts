@@ -1,4 +1,4 @@
-import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions } from "@tanstack/react-query";
+import { useQuery, useMutation, keepPreviousData, type UseQueryOptions, type UseMutationOptions } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course, type Category, type CourseReview } from "@/gen/catalog/v1/catalog_pb";
 
@@ -69,6 +69,7 @@ export function useCoursesQuery(filters?: CourseFilters, options?: Partial<UseQu
       const res = await client.listCourses(normalizedFilters);
       return res.courses;
     },
+    placeholderData: keepPreviousData,
     ...options,
   });
 }

@@ -36,7 +36,9 @@
     "weekDuration": "Tuần học",
     "errorLoad": "Không thể tải danh sách khóa học",
     "errorNetwork": "Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.",
-    "noResults": "Không tìm thấy khóa học nào phù hợp với từ khóa"
+    "noResultsTitle": "Không tìm thấy khóa học phù hợp",
+    "noResults": "Không tìm thấy khóa học nào phù hợp với điều kiện lọc",
+    "noResultsDesc": "Hãy thử điều chỉnh từ khóa tìm kiếm hoặc bấm đặt lại bộ lọc để xem danh sách khóa học."
   },
   "catalogFilter": {
     "subjectHeader": "Chủ đề",

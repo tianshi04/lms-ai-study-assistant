@@ -19,7 +19,7 @@ export function CourseCatalogClient() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const { data: courses = [], isLoading: loading, error: queryError } = useCoursesQuery({
+  const { data: courses = [], isLoading: loading, isFetching, error: queryError } = useCoursesQuery({
     searchQuery: debouncedSearch,
     subject,
     level,
@@ -38,7 +38,7 @@ export function CourseCatalogClient() {
   };
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-12">
+    <main className="w-full max-w-7xl mx-auto px-6 py-12 min-h-[65vh]">
           <div className="mb-10 text-center md:text-left max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-4">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,7 +56,7 @@ export function CourseCatalogClient() {
           </div>
 
           {/* Controls Section: Search & Filters */}
-          <div className="mb-8 bg-white dark:bg-slate-900/60 p-4 md:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3.5">
+          <div className="w-full mb-8 bg-white dark:bg-slate-900/60 p-4 md:p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3.5">
             {/* Top Toolbar: Search Bar + Controls */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800/80">
               {/* Search Bar (Spans remaining space smoothly) */}
@@ -198,11 +198,37 @@ export function CourseCatalogClient() {
             <p className="text-xs opacity-80 mt-2">{t("catalog.errorNetwork")}</p>
           </div>
         ) : courses.length === 0 ? (
-          <div className="text-center py-16 text-slate-500">
-            {t("catalog.noResults")} {searchQuery ? `"${searchQuery}"` : ""}.
+          <div className="w-full min-h-[360px] flex flex-col items-center justify-center text-center p-8 bg-slate-50/50 dark:bg-slate-900/20 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
+            <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-slate-400 dark:text-slate-500 mb-4 shadow-inner">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-1">
+              {t("catalog.noResultsTitle")}
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
+              {t("catalog.noResultsDesc")}
+            </p>
+            {(subject || level || searchQuery || sortBy) && (
+              <button
+                onClick={() => {
+                  setSubject("");
+                  setLevel("");
+                  setSearchQuery("");
+                  setSortBy("");
+                }}
+                className="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 rounded-xl transition-all shadow-md shadow-blue-500/20 flex items-center gap-2"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>{t("catalogFilter.clearFilters")}</span>
+              </button>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className={`w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-200 ${isFetching ? "opacity-60 pointer-events-none" : "opacity-100"}`}>
             {courses.map((course) => (
               <CourseCard key={course.id} course={course} />
             ))}

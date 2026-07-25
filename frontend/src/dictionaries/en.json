@@ -36,7 +36,9 @@
     "weekDuration": "Weeks",
     "errorLoad": "Unable to load course list",
     "errorNetwork": "Please check your network connection or try again later.",
-    "noResults": "No courses found matching the keyword"
+    "noResultsTitle": "No matching courses found",
+    "noResults": "No courses found matching the keyword",
+    "noResultsDesc": "Try adjusting your search terms or resetting filters to explore courses."
   },
   "catalogFilter": {
     "subjectHeader": "Subject",
