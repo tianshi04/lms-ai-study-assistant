@@ -1,34 +1,18 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
-
-const emptySubscribe = () => () => {};
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export function Navbar() {
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false
-  );
-
-  const userName = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_name") : null;
-  const userEmail = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_email") : null;
-  const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
-
+  const { userName, userEmail, userRole, logout: handleLogout } = useAuth();
   const { t } = useTranslation();
 
   // Check if role is INSTRUCTOR (2), SUPER_ADMIN (4), or PARTNER_ADMIN (5)
   const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
-
-  const handleLogout = () => {
-    localStorage.clear();
-    window.location.href = "/auth/login";
-  };
 
   return (
     <header className="border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-50 transition-colors">
@@ -51,7 +35,7 @@ export function Navbar() {
           <Link href="/courses" className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
             {t('navbar.catalog')}
           </Link>
-          {isMounted && userName && (
+          {userName && (
             <Link href="/my-courses" className="text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
               {t('navbar.myCourses') || 'Khóa học của tôi'}
             </Link>
@@ -89,7 +73,7 @@ export function Navbar() {
           <LanguageToggle />
           <ThemeToggle />
 
-          {isMounted && userName ? (
+          {userName ? (
             <div className="flex items-center gap-3">
               <Link
                 href="/auth/profile"

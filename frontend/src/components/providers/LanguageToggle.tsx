@@ -1,6 +1,5 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 import {
   DropdownMenu,
@@ -9,19 +8,8 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/DropdownMenu";
 
-const emptySubscribe = () => () => {};
-
 export function LanguageToggle() {
   const { locale, setLocale } = useTranslation();
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false
-  );
-
-  if (!isMounted) {
-    return <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-800/40 animate-pulse" />;
-  }
 
   return (
     <DropdownMenu>

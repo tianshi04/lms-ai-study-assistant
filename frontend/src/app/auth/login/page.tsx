@@ -45,6 +45,13 @@ function LoginFormContent() {
           localStorage.setItem("user_email", res.user.email);
           localStorage.setItem("user_name", res.user.fullName);
           localStorage.setItem("user_role", String(res.user.role));
+
+          // Set cookies for SSR hydration
+          document.cookie = `user_name=${encodeURIComponent(res.user.fullName)}; path=/; max-age=2592000`;
+          document.cookie = `user_email=${encodeURIComponent(res.user.email)}; path=/; max-age=2592000`;
+          document.cookie = `user_role=${res.user.role}; path=/; max-age=2592000`;
+          document.cookie = `access_token=${res.accessToken}; path=/; max-age=2592000`;
+
           router.push(redirectTarget);
         }
       } catch (err: unknown) {
