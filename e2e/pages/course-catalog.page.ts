@@ -51,7 +51,15 @@ export class CourseCatalogPage {
 
   async sortBy(sortValue: string) {
     const responsePromise = this.page.waitForResponse(response => response.url().includes('ListCourses'));
-    await this.page.locator('select').selectOption(sortValue);
+    await this.page.getByRole('combobox').click();
+    const labelMap: Record<string, RegExp> = {
+      '': /Mặc định|Default/i,
+      'rating': /Đánh giá cao nhất|Highest Rating/i,
+      'popular': /Phổ biến nhất|Most Popular/i,
+      'newest': /Mới nhất|Newest/i,
+    };
+    const optionMatcher = labelMap[sortValue] || new RegExp(sortValue, 'i');
+    await this.page.getByRole('option', { name: optionMatcher }).click();
     await responsePromise;
   }
 }
