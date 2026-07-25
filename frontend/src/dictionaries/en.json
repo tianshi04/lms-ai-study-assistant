@@ -64,6 +64,12 @@
     "existingAccount": "Already have an account?",
     "loginHere": "Sign in here",
     "fillAllFields": "Please fill in all required fields.",
+    "invalidEmail": "Please enter a valid email address.",
+    "passwordRequired": "Password is required.",
+    "fullNameRequired": "Please enter your full name.",
+    "passwordTooShort": "Password must be at least 6 characters.",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "loginFailed": "Login failed. Please check your credentials.",
     "registerSuccess": "Registration successful! Redirecting to login page...",
     "registerFailed": "Registration failed. Please try again."

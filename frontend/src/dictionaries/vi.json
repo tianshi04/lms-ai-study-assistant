@@ -64,6 +64,12 @@
     "existingAccount": "Đã có tài khoản?",
     "loginHere": "Đăng nhập tại đây",
     "fillAllFields": "Vui lòng điền đầy đủ các thông tin bắt buộc.",
+    "invalidEmail": "Địa chỉ email không hợp lệ.",
+    "passwordRequired": "Vui lòng nhập mật khẩu.",
+    "fullNameRequired": "Vui lòng nhập họ và tên.",
+    "passwordTooShort": "Mật khẩu phải chứa ít nhất 6 ký tự.",
+    "showPassword": "Hiển thị mật khẩu",
+    "hidePassword": "Ẩn mật khẩu",
     "loginFailed": "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.",
     "registerSuccess": "Đăng ký thành công! Đang chuyển hướng đến trang đăng nhập...",
     "registerFailed": "Đăng ký thất bại. Vui lòng thử lại."
