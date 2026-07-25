@@ -10,12 +10,32 @@ from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntit
 from src.shared.auth import require_current_user
 
 
+ROLE_MAP = {
+    "USER_ROLE_LEARNER": "Learner",
+    "USER_ROLE_INSTRUCTOR": "Instructor",
+    "USER_ROLE_TA": "Teaching Assistant",
+    "USER_ROLE_SUPER_ADMIN": "Super Admin",
+    "USER_ROLE_PARTNER_ADMIN": "Partner Admin",
+    "1": "Learner",
+    "2": "Instructor",
+    "3": "Teaching Assistant",
+    "4": "Super Admin",
+    "5": "Partner Admin",
+}
+
+
+def _format_author_role(role: str) -> str:
+    if not role:
+        return "Learner"
+    return ROLE_MAP.get(role, role)
+
+
 def _to_pb_reply(reply: ForumReplyEntity) -> pb.ForumReply:
     return pb.ForumReply(
         id=reply.id,
         thread_id=reply.thread_id,
         author_name=reply.author_name,
-        author_role=reply.author_role,
+        author_role=_format_author_role(reply.author_role),
         content=reply.content,
         is_staff_answer=reply.is_staff_answer,
         upvote_count=reply.upvote_count,
@@ -31,7 +51,7 @@ def _to_pb_thread(thread: ForumThreadEntity) -> pb.ForumThread:
         item_id=thread.item_id,
         title=thread.title,
         author_name=thread.author_name,
-        author_role=thread.author_role,
+        author_role=_format_author_role(thread.author_role),
         created_at=thread.created_at,
         upvote_count=thread.upvote_count,
         is_staff_pinned=thread.is_staff_pinned,
@@ -79,7 +99,7 @@ class ForumHandler(ForumService):
             content=request.content,
             author_user_id=current_user.id,
             author_name=author_name,
-            author_role=current_user.role or "Student",
+            author_role=_format_author_role(current_user.role),
         )
         return pb.CreateThreadResponse(thread=_to_pb_thread(thread))
 
@@ -103,7 +123,7 @@ class ForumHandler(ForumService):
             content=request.content,
             author_user_id=current_user.id,
             author_name=author_name,
-            author_role=current_user.role or "Student",
+            author_role=_format_author_role(current_user.role),
         )
         return pb.PostReplyResponse(reply=_to_pb_reply(reply))
 

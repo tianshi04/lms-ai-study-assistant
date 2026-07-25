@@ -10,6 +10,16 @@ interface ForumTabProps {
   itemId: string;
 }
 
+function formatRoleName(role: string): string {
+  if (!role) return "Learner";
+  const r = role.toUpperCase();
+  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Learner";
+  if (r.includes("INSTRUCTOR") || r === "2") return "Instructor";
+  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "3") return "Teaching Assistant";
+  if (r.includes("SUPER_ADMIN") || r.includes("PARTNER_ADMIN") || r.includes("ADMIN")) return "Admin";
+  return role;
+}
+
 export function ForumTab({ courseId, itemId }: ForumTabProps) {
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState(true);
@@ -215,7 +225,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                       </span>
                     )}
                     <span className="font-semibold text-slate-700 dark:text-slate-300">{thread.authorName}</span>
-                    <span className="text-[10px] text-slate-400">({thread.authorRole})</span>
+                    <span className="text-[10px] text-slate-400">({formatRoleName(thread.authorRole)})</span>
                   </div>
                   <h4 className="font-bold text-slate-900 dark:text-white text-sm">{thread.title}</h4>
                 </div>

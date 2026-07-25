@@ -96,6 +96,11 @@ class ForumUseCase:
             "teaching assistant",
             "instructor",
             "staff",
+            "super admin",
+            "partner admin",
+            "user_role_ta",
+            "user_role_instructor",
+            "user_role_super_admin",
         )
 
         reply_entity = ForumReplyEntity(
