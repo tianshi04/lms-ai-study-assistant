@@ -48,18 +48,21 @@ export default function CoursesPage() {
           <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
             {t("catalog.subtitle")}
           </p>
+        </div>
 
+        {/* Controls Section: Search & Filters */}
+        <div className="mb-12 bg-white dark:bg-slate-900/40 p-5 md:p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm ring-1 ring-slate-900/5 dark:ring-white/5">
           {/* Search Bar */}
-          <div className="mt-8 relative max-w-xl">
+          <div className="relative mb-6">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t("catalog.searchPlaceholder")}
-              className="w-full bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3.5 pl-11 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all shadow-sm"
+              className="w-full bg-slate-50 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-700/80 rounded-2xl px-5 py-4 pl-12 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500 transition-all"
             />
             <svg
-              className="w-5 h-5 text-slate-400 dark:text-slate-500 absolute left-3.5 top-3.5"
+              className="w-5 h-5 text-slate-400 dark:text-slate-500 absolute left-4 top-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -74,59 +77,61 @@ export default function CoursesPage() {
           </div>
 
           {/* Filter Bar */}
-          <div className="mt-8 flex flex-col md:flex-row md:items-start justify-between gap-6">
-            <div className="flex-1 space-y-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-t border-slate-100 dark:border-slate-800 pt-6">
+            <div className="flex-1 space-y-5">
               {/* Subject Chips */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-2 hidden md:block">Chủ đề</span>
                 <button
                   onClick={() => setSubject(CourseSubject.UNSPECIFIED)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.UNSPECIFIED ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.UNSPECIFIED ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300"}`}
                 >
                   {t("catalogFilter.allSubjects")}
                 </button>
                 <button
                   onClick={() => setSubject(CourseSubject.AI_ML)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.AI_ML ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.AI_ML ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300"}`}
                 >
                   {t("catalogFilter.aiMl")}
                 </button>
                 <button
                   onClick={() => setSubject(CourseSubject.WEB_DEVELOPMENT)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.WEB_DEVELOPMENT ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.WEB_DEVELOPMENT ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300"}`}
                 >
                   {t("catalogFilter.webDev")}
                 </button>
                 <button
                   onClick={() => setSubject(CourseSubject.DATA_SCIENCE)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.DATA_SCIENCE ? "bg-blue-600 text-white" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === CourseSubject.DATA_SCIENCE ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300"}`}
                 >
                   {t("catalogFilter.dataScience")}
                 </button>
               </div>
               
               {/* Level Chips */}
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-2 hidden md:block">Trình độ</span>
                 <button
                   onClick={() => setLevel(CourseLevel.UNSPECIFIED)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.UNSPECIFIED ? "bg-indigo-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.UNSPECIFIED ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20" : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
                 >
                   {t("catalogFilter.allLevels")}
                 </button>
                 <button
                   onClick={() => setLevel(CourseLevel.BEGINNER)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.BEGINNER ? "bg-indigo-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.BEGINNER ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20" : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
                 >
                   {t("catalogFilter.beginner")}
                 </button>
                 <button
                   onClick={() => setLevel(CourseLevel.INTERMEDIATE)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.INTERMEDIATE ? "bg-indigo-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.INTERMEDIATE ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20" : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
                 >
                   {t("catalogFilter.intermediate")}
                 </button>
                 <button
                   onClick={() => setLevel(CourseLevel.ADVANCED)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.ADVANCED ? "bg-indigo-600 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === CourseLevel.ADVANCED ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20" : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
                 >
                   {t("catalogFilter.advanced")}
                 </button>
@@ -134,12 +139,12 @@ export default function CoursesPage() {
             </div>
 
             {/* Sort Dropdown */}
-            <div className="shrink-0 mt-4 md:mt-0">
+            <div className="shrink-0 w-full lg:w-48 mt-2 lg:mt-0">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-full md:w-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none shadow-sm cursor-pointer"
-                style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.5rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em', paddingRight: '2.5rem' }}
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none shadow-sm cursor-pointer hover:border-slate-300 transition-colors"
+                style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right 0.75rem center', backgroundRepeat: 'no-repeat', backgroundSize: '1.25em 1.25em', paddingRight: '2.5rem' }}
               >
                 <option value="">{t("catalogFilter.sortDefault")}</option>
                 <option value="rating">{t("catalogFilter.sortRating")}</option>
