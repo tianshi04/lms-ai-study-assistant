@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, ItemType, type Course, type LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { Navbar } from "@/components/layout/Navbar";
+import { Modal } from "@/components/ui/Modal";
 
 const emptySubscribe = () => () => {};
 
@@ -936,428 +937,386 @@ export default function InstructorCourseBuilderPage({
       </main>
 
       {/* Modal: Thêm Tuần học Mới */}
-      {showWeekModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">Thêm Tuần học Mới (Week Module)</h3>
-              <button onClick={() => setShowWeekModal(false)} className="text-slate-400 hover:text-slate-600">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateWeek} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Số Tuần học</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={weekNumber}
-                  onChange={(e) => setWeekNumber(parseInt(e.target.value) || 1)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tiêu đề Tuần học</label>
-                <input
-                  type="text"
-                  value={weekTitle}
-                  onChange={(e) => setWeekTitle(e.target.value)}
-                  placeholder="Ví dụ: Week 1: Giới thiệu về Neural Networks"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Mô tả tóm tắt</label>
-                <textarea
-                  rows={3}
-                  value={weekSummary}
-                  onChange={(e) => setWeekSummary(e.target.value)}
-                  placeholder="Tóm tắt nội dung chính học viên sẽ thu hoạch được..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowWeekModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
-                >
-                  {saving ? "Đang tạo..." : "Xác nhận tạo Tuần học"}
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showWeekModal}
+        onClose={() => setShowWeekModal(false)}
+        title="Thêm Tuần học Mới (Week Module)"
+        size="md"
+      >
+        <form onSubmit={handleCreateWeek} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Số Tuần học</label>
+            <input
+              type="number"
+              min={1}
+              value={weekNumber}
+              onChange={(e) => setWeekNumber(parseInt(e.target.value) || 1)}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
+              required
+            />
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tiêu đề Tuần học</label>
+            <input
+              type="text"
+              value={weekTitle}
+              onChange={(e) => setWeekTitle(e.target.value)}
+              placeholder="Ví dụ: Week 1: Giới thiệu về Neural Networks"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Mô tả tóm tắt</label>
+            <textarea
+              rows={3}
+              value={weekSummary}
+              onChange={(e) => setWeekSummary(e.target.value)}
+              placeholder="Tóm tắt nội dung chính học viên sẽ thu hoạch được..."
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowWeekModal(false)}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
+            >
+              {saving ? "Đang tạo..." : "Xác nhận tạo Tuần học"}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Modal: Thêm Bài học Mới */}
-      {showLessonModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">Thêm Bài học Mới (Lesson)</h3>
-              <button onClick={() => setShowLessonModal(null)} className="text-slate-400 hover:text-slate-600">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateLesson} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tên Bài học</label>
-                <input
-                  type="text"
-                  value={lessonTitle}
-                  onChange={(e) => setLessonTitle(e.target.value)}
-                  placeholder="Ví dụ: Lesson 1: Activation Functions (ReLU, Sigmoid)"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Thời lượng ước tính (Phút)</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={lessonMinutes}
-                  onChange={(e) => setLessonMinutes(parseInt(e.target.value) || 15)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                  required
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowLessonModal(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
-                >
-                  {saving ? "Đang tạo..." : "Xác nhận tạo Bài học"}
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={Boolean(showLessonModal)}
+        onClose={() => setShowLessonModal(null)}
+        title="Thêm Bài học Mới (Lesson)"
+        size="md"
+      >
+        <form onSubmit={handleCreateLesson} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tên Bài học</label>
+            <input
+              type="text"
+              value={lessonTitle}
+              onChange={(e) => setLessonTitle(e.target.value)}
+              placeholder="Ví dụ: Lesson 1: Activation Functions (ReLU, Sigmoid)"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+              required
+            />
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Thời lượng ước tính (Phút)</label>
+            <input
+              type="number"
+              min={1}
+              value={lessonMinutes}
+              onChange={(e) => setLessonMinutes(parseInt(e.target.value) || 15)}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+              required
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowLessonModal(null)}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
+            >
+              {saving ? "Đang tạo..." : "Xác nhận tạo Bài học"}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Modal: Thêm Học liệu Mới (Learning Item: Video/Reading) */}
-      {showItemModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">Thêm Học liệu Mới (Learning Item)</h3>
-              <button onClick={() => setShowItemModal(null)} className="text-slate-400 hover:text-slate-600">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateItem} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Loại Học liệu</label>
-                <select
-                  value={itemType}
-                  onChange={(e) => setItemType(parseInt(e.target.value) as ItemType)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
-                >
-                  <option value={ItemType.VIDEO}>VIDEO (Bài giảng Video)</option>
-                  <option value={ItemType.READING}>READING (Bài đọc Markdown)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tên Học liệu</label>
-                <input
-                  type="text"
-                  value={itemTitle}
-                  onChange={(e) => setItemTitle(e.target.value)}
-                  placeholder="Ví dụ: Video: Hướng dẫn cài đặt NumPy & PyTorch"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Thời lượng ước tính (Phút)</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={itemMinutes}
-                  onChange={(e) => setItemMinutes(parseInt(e.target.value) || 10)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                  required
-                />
-              </div>
-
-              {itemType === ItemType.VIDEO ? (
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Đường dẫn Video URL (.mp4 / streaming)</label>
-                  <input
-                    type="url"
-                    value={videoUrl}
-                    onChange={(e) => setVideoUrl(e.target.value)}
-                    placeholder="https://..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
-                    required
-                  />
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Nội dung Bài đọc (Markdown format)</label>
-                  <textarea
-                    rows={5}
-                    value={readingMarkdown}
-                    onChange={(e) => setReadingMarkdown(e.target.value)}
-                    placeholder="# Giới thiệu bài học&#10;&#10;Nội dung lý thuyết chi tiết..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
-                    required
-                  />
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowItemModal(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
-                >
-                  {saving ? "Đang tạo..." : "Xác nhận tạo Học liệu"}
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={Boolean(showItemModal)}
+        onClose={() => setShowItemModal(null)}
+        title="Thêm Học liệu Mới (Learning Item)"
+        size="lg"
+      >
+        <form onSubmit={handleCreateItem} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Loại Học liệu</label>
+            <select
+              value={itemType}
+              onChange={(e) => setItemType(parseInt(e.target.value) as ItemType)}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
+            >
+              <option value={ItemType.VIDEO}>VIDEO (Bài giảng Video)</option>
+              <option value={ItemType.READING}>READING (Bài đọc Markdown)</option>
+            </select>
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tên Học liệu</label>
+            <input
+              type="text"
+              value={itemTitle}
+              onChange={(e) => setItemTitle(e.target.value)}
+              placeholder="Ví dụ: Video: Hướng dẫn cài đặt NumPy & PyTorch"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Thời lượng ước tính (Phút)</label>
+            <input
+              type="number"
+              min={1}
+              value={itemMinutes}
+              onChange={(e) => setItemMinutes(parseInt(e.target.value) || 10)}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+              required
+            />
+          </div>
+
+          {itemType === ItemType.VIDEO ? (
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Đường dẫn Video URL (.mp4 / streaming)</label>
+              <input
+                type="url"
+                value={videoUrl}
+                onChange={(e) => setVideoUrl(e.target.value)}
+                placeholder="https://..."
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
+                required
+              />
+            </div>
+          ) : (
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Nội dung Bài đọc (Markdown format)</label>
+              <textarea
+                rows={5}
+                value={readingMarkdown}
+                onChange={(e) => setReadingMarkdown(e.target.value)}
+                placeholder="# Giới thiệu bài học&#10;&#10;Nội dung lý thuyết chi tiết..."
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
+                required
+              />
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowItemModal(null)}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
+            >
+              {saving ? "Đang tạo..." : "Xác nhận tạo Học liệu"}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Modal: Chỉnh sửa Tuần học */}
-      {editingWeek && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">Chỉnh sửa Tuần học</h3>
-              <button onClick={() => setEditingWeek(null)} className="text-slate-400 hover:text-slate-600">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+      <Modal
+        isOpen={Boolean(editingWeek)}
+        onClose={() => setEditingWeek(null)}
+        title="Chỉnh sửa Tuần học"
+        size="md"
+      >
+        {editingWeek && (
+          <form onSubmit={handleUpdateWeek} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tiêu đề Tuần học</label>
+              <input
+                type="text"
+                value={editingWeek.title}
+                onChange={(e) => setEditingWeek({ ...editingWeek, title: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
+                required
+              />
             </div>
 
-            <form onSubmit={handleUpdateWeek} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tiêu đề Tuần học</label>
-                <input
-                  type="text"
-                  value={editingWeek.title}
-                  onChange={(e) => setEditingWeek({ ...editingWeek, title: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
-                  required
-                />
-              </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Mô tả tóm tắt</label>
+              <textarea
+                rows={3}
+                value={editingWeek.summary}
+                onChange={(e) => setEditingWeek({ ...editingWeek, summary: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Mô tả tóm tắt</label>
-                <textarea
-                  rows={3}
-                  value={editingWeek.summary}
-                  onChange={(e) => setEditingWeek({ ...editingWeek, summary: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingWeek(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
-                >
-                  {saving ? "Đang lưu..." : "Lưu thay đổi"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditingWeek(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
+              >
+                {saving ? "Đang lưu..." : "Lưu thay đổi"}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
 
       {/* Modal: Chỉnh sửa Bài học */}
-      {editingLesson && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">Chỉnh sửa Bài học</h3>
-              <button onClick={() => setEditingLesson(null)} className="text-slate-400 hover:text-slate-600">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+      <Modal
+        isOpen={Boolean(editingLesson)}
+        onClose={() => setEditingLesson(null)}
+        title="Chỉnh sửa Bài học"
+        size="md"
+      >
+        {editingLesson && (
+          <form onSubmit={handleUpdateLesson} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tên Bài học</label>
+              <input
+                type="text"
+                value={editingLesson.title}
+                onChange={(e) => setEditingLesson({ ...editingLesson, title: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
+                required
+              />
             </div>
 
-            <form onSubmit={handleUpdateLesson} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tên Bài học</label>
-                <input
-                  type="text"
-                  value={editingLesson.title}
-                  onChange={(e) => setEditingLesson({ ...editingLesson, title: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
-                  required
-                />
-              </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Thời lượng ước tính (Phút)</label>
+              <input
+                type="number"
+                min={1}
+                value={editingLesson.estimatedMinutes}
+                onChange={(e) => setEditingLesson({ ...editingLesson, estimatedMinutes: parseInt(e.target.value) || 15 })}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+                required
+              />
+            </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Thời lượng ước tính (Phút)</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={editingLesson.estimatedMinutes}
-                  onChange={(e) => setEditingLesson({ ...editingLesson, estimatedMinutes: parseInt(e.target.value) || 15 })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                  required
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingLesson(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
-                >
-                  {saving ? "Đang lưu..." : "Lưu thay đổi"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditingLesson(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
+              >
+                {saving ? "Đang lưu..." : "Lưu thay đổi"}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
 
       {/* Modal: Chỉnh sửa Học liệu */}
-      {editingItem && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-lg w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">Chỉnh sửa Nội dung Học liệu</h3>
-              <button onClick={() => setEditingItem(null)} className="text-slate-400 hover:text-slate-600">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+      <Modal
+        isOpen={Boolean(editingItem)}
+        onClose={() => setEditingItem(null)}
+        title="Chỉnh sửa Nội dung Học liệu"
+        size="lg"
+      >
+        {editingItem && (
+          <form onSubmit={handleUpdateItem} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tên Học liệu</label>
+              <input
+                type="text"
+                value={editingItem.title}
+                onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
+                required
+              />
             </div>
 
-            <form onSubmit={handleUpdateItem} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Thời lượng ước tính (Phút)</label>
+              <input
+                type="number"
+                min={1}
+                value={editingItem.estimatedMinutes}
+                onChange={(e) => setEditingItem({ ...editingItem, estimatedMinutes: parseInt(e.target.value) || 10 })}
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+                required
+              />
+            </div>
+
+            {editingItem.type === ItemType.VIDEO ? (
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tên Học liệu</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Đường dẫn Video URL (.mp4 / streaming)</label>
                 <input
-                  type="text"
-                  value={editingItem.title}
-                  onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
+                  type="url"
+                  value={editingItem.videoUrl}
+                  onChange={(e) => setEditingItem({ ...editingItem, videoUrl: e.target.value })}
+                  placeholder="https://..."
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
                   required
                 />
               </div>
-
+            ) : (
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Thời lượng ước tính (Phút)</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={editingItem.estimatedMinutes}
-                  onChange={(e) => setEditingItem({ ...editingItem, estimatedMinutes: parseInt(e.target.value) || 10 })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Nội dung Bài đọc (Markdown format)</label>
+                <textarea
+                  rows={6}
+                  value={editingItem.content}
+                  onChange={(e) => setEditingItem({ ...editingItem, content: e.target.value })}
+                  placeholder="# Giới thiệu bài học..."
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
                   required
                 />
               </div>
+            )}
 
-              {editingItem.type === ItemType.VIDEO ? (
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Đường dẫn Video URL (.mp4 / streaming)</label>
-                  <input
-                    type="url"
-                    value={editingItem.videoUrl}
-                    onChange={(e) => setEditingItem({ ...editingItem, videoUrl: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
-                    required
-                  />
-                </div>
-              ) : (
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Nội dung Bài đọc (Markdown format)</label>
-                  <textarea
-                    rows={6}
-                    value={editingItem.content}
-                    onChange={(e) => setEditingItem({ ...editingItem, content: e.target.value })}
-                    placeholder="# Giới thiệu bài học..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
-                    required
-                  />
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingItem(null)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
-                >
-                  {saving ? "Đang lưu..." : "Lưu thay đổi"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setEditingItem(null)}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
+              >
+                {saving ? "Đang lưu..." : "Lưu thay đổi"}
+              </button>
+            </div>
+          </form>
+        )}
+      </Modal>
 
     </div>
   );
