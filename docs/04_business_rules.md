@@ -32,7 +32,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * *Ràng buộc Seat:* Mã Enterprise Key phải ở trạng thái kích hoạt (`is_active = True`) và số lượng suất đã dùng chưa vượt quá hạn mức (`used_seats < total_seats`, mặc định 500 seats/key). Khi kích hoạt thành công, hệ thống tự động tăng `used_seats += 1` và gán `user.enterprise_seat_key`.
 * **BR_ACCESS_003 (Thu hồi & Tái cấp Suất học Enterprise Seat Recycling & Fallback):**
   * Partner Admin / Super Admin có quyền thu hồi suất học của nhân viên/sinh viên nếu tài khoản đó chưa đạt quá 20% tiến độ khóa học trong vòng 30 ngày kể từ ngày gán mã.
-  * Khi thu hồi thành công, hệ thống tự động hủy mã gán trên người dùng cũ, giảm bộ đếm `used_seats -= 1` để tái sử dụng cấp cho người dùng khác.
+  * Khi thu hồi thành công, hệ thống tự động hủy mã gán trên người dùng cũ và thực hiện giảm bộ đếm bằng khóa giao dịch DB Atomic Update (`UPDATE enterprise_keys SET used_seats = used_seats - 1 WHERE id = :key_id AND used_seats > 0`) nhằm ngăn ngừa triệt để nguy cơ sai lệch dữ liệu do Race Condition khi thao tác đồng thời.
   * *Chuyển đổi trạng thái & Bảo lưu tiến độ:* Tài khoản bị thu hồi Suất học sẽ tự động chuyển về **Audit Mode (Miễn phí)**. Hệ thống **bảo lưu 100% tiến độ học tập (Completed Items) và Ghi chú cá nhân (Personal Notes)** của học viên. Nếu sau đó học viên tự nâng cấp Paid Mode hoặc được cấp đơn Financial Aid, toàn bộ tiến độ cũ sẽ được mở khóa lại trọn vẹn.
 * **BR_FAID_001 (Quy trình nộp & xét duyệt Financial Aid):**
   * Học viên nộp đơn phải điền bài luận tối thiểu 150 từ giải trình lý do hoàn cảnh và kế hoạch áp dụng kiến thức.

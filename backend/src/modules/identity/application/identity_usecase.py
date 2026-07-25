@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from src.modules.identity.domain.entities import User, UserRole
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
@@ -140,7 +140,16 @@ class IdentityUseCase:
                     f"Mã Enterprise Key '{clean_key}' đã hết suất kích hoạt ({license_model.used_seats}/{license_model.total_seats} seats).",
                 )
 
-            license_model.used_seats += 1
+            # BR_ACCESS_002: Atomic DB update for activating enterprise seat
+            await session.execute(
+                update(EnterpriseLicenseModel)
+                .where(
+                    EnterpriseLicenseModel.key == clean_key,
+                    EnterpriseLicenseModel.used_seats
+                    < EnterpriseLicenseModel.total_seats,
+                )
+                .values(used_seats=EnterpriseLicenseModel.used_seats + 1)
+            )
             user.enterprise_seat_key = clean_key
             user.seat_assigned_at = datetime.now(timezone.utc).isoformat()
             await repo.save(user)
@@ -253,13 +262,15 @@ class IdentityUseCase:
             user.seat_assigned_at = None
             await repo.save(user)
 
-            lic_stmt = select(EnterpriseLicenseModel).where(
-                EnterpriseLicenseModel.key == seat_key
+            # BR_ACCESS_003: Atomic DB update for recycling enterprise seats
+            await session.execute(
+                update(EnterpriseLicenseModel)
+                .where(
+                    EnterpriseLicenseModel.key == seat_key,
+                    EnterpriseLicenseModel.used_seats > 0,
+                )
+                .values(used_seats=EnterpriseLicenseModel.used_seats - 1)
             )
-            res = await session.execute(lic_stmt)
-            license_model = res.scalar_one_or_none()
-            if license_model and license_model.used_seats > 0:
-                license_model.used_seats -= 1
-                await session.commit()
+            await session.commit()
 
             return True, f"Đã thu hồi suất học Enterprise Key '{seat_key}' thành công!"

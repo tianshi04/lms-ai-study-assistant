@@ -11,7 +11,7 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 * **Mã hóa Mật khẩu & Xác thực Token:** Mật khẩu được mã hóa băm PBKDF2-HMAC-SHA256 (100k iterations + salt ngẫu nhiên), tự động tạo avatar SVG ngẫu nhiên từ DiceBear API và hỗ trợ quy trình Refresh Token rotation (`BR_AUTH_002`).
 * **Quản lý Suất học Doanh nghiệp (Enterprise License):**
   * Tạo gói suất học cho đối tác (ví dụ: cấp 500 seats cho Trường Đại học X hoặc Công ty Y).
-  * Quản lý mã kích hoạt (Enterprise Key), kiểm tra trạng thái hoạt động (`is_active`) và theo dõi số lượng seat đã kích hoạt (`used_seats / total_seats`).
+  * Quản lý mã kích hoạt (Enterprise Key), kiểm tra trạng thái hoạt động (`is_active`) và theo dõi số lượng seat đã kích hoạt (`used_seats / total_seats`). Thao tác kích hoạt và thu hồi suất học bắt buộc thực hiện qua câu lệnh DB Atomic Update (`UPDATE enterprise_keys SET used_seats = used_seats + 1 ...`) để tránh Race Condition khi thao tác đồng thời (`BR_ACCESS_002`, `BR_ACCESS_003`).
 * **Xét duyệt Hỗ trợ Tài chính (Financial Aid Review):** Super Admin duyệt hoặc từ chối các đơn xin học bổng (bài luận >= 150 từ). Nếu quá 15 ngày chưa có thao tác thủ công, hệ thống tự động chuyển trạng thái đơn sang `AUTO_APPROVED` (`BR_FAID_001`).
 * **Khóa/Kích hoạt tài khoản:** Tạm khóa tài khoản vi phạm điều khoản. Thu hồi tức thì phiên làm việc (Session) của tài khoản bị khóa.
 
