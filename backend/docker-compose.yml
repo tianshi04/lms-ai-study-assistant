@@ -1,18 +1,9 @@
-version: '3.8'
-
-# ====================================================================
-# ARCHITECTURE: DOCKER COMPOSE PROFILES (MÔ HÌNH MỞ RỘNG DỄ TÍCH HỢP)
-# - Profile 'infra': Chỉ khởi chạy Hạ tầng (PostgreSQL pg17 + MinIO S3)
-# - Profile 'app': Dành cho về sau khi đóng gói Backend / Frontend / Worker
-# - Profile 'all': Khởi chạy toàn bộ hệ thống
-# ====================================================================
-
 services:
   # ------------------------------------------------------------------
   # 1. HẠ TẦNG CƠ SỞ DỮ LIỆU: PostgreSQL 16/17 + PGVector
   # ------------------------------------------------------------------
   postgres:
-    profiles: ["infra", "all"]
+    profiles: ["infra", "app", "all"]
     image: pgvector/pgvector:pg17
     container_name: coursera_postgres
     restart: always
@@ -34,7 +25,7 @@ services:
   # 2. HẠ TẦNG LƯU TRỮ TỆP: MinIO (S3 Compatible Storage)
   # ------------------------------------------------------------------
   minio:
-    profiles: ["infra", "all"]
+    profiles: ["infra", "app", "all"]
     image: minio/minio:latest
     container_name: coursera_minio
     restart: always
