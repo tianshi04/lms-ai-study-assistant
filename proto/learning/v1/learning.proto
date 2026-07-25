@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package learning.v1;
 
+import "auth/v1/options.proto";
+
 enum DeadlineStatus {
   DEADLINE_STATUS_UNSPECIFIED = 0;
   DEADLINE_STATUS_ON_TRACK = 1;
@@ -81,9 +83,19 @@ message MarkItemCompleteResponse {
 }
 
 service LearningService {
-  rpc GetProgress(GetProgressRequest) returns (GetProgressResponse);
-  rpc ResetDeadlines(ResetDeadlinesRequest) returns (ResetDeadlinesResponse);
-  rpc SavePersonalNote(SavePersonalNoteRequest) returns (SavePersonalNoteResponse);
-  rpc ListPersonalNotes(ListPersonalNotesRequest) returns (ListPersonalNotesResponse);
-  rpc MarkItemComplete(MarkItemCompleteRequest) returns (MarkItemCompleteResponse);
+  rpc GetProgress(GetProgressRequest) returns (GetProgressResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ResetDeadlines(ResetDeadlinesRequest) returns (ResetDeadlinesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc SavePersonalNote(SavePersonalNoteRequest) returns (SavePersonalNoteResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListPersonalNotes(ListPersonalNotesRequest) returns (ListPersonalNotesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc MarkItemComplete(MarkItemCompleteRequest) returns (MarkItemCompleteResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }

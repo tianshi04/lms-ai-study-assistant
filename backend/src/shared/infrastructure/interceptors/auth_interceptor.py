@@ -5,21 +5,11 @@ from connectrpc.errors import ConnectError
 from connectrpc.interceptor import UnaryInterceptor
 
 from src.shared.auth import CurrentUser, decode_token, set_current_user
-
-PUBLIC_ENDPOINTS = {
-    "/identity.v1.IdentityService/Login",
-    "/identity.v1.IdentityService/Register",
-    "/identity.v1.IdentityService/RefreshToken",
-    "/catalog.v1.CatalogService/GetSpecialization",
-    "/catalog.v1.CatalogService/ListCourses",
-    "/catalog.v1.CatalogService/GetCourseDetail",
-    "/catalog.v1.CatalogService/GetLessonDetail",
-    "/certificate.v1.CertificateService/VerifyCertificatePublic",
-}
+from src.shared.auth_policy import AuthPolicyRegistry
 
 
 class AuthInterceptor(UnaryInterceptor):
-    """ConnectRPC interceptor that validates JWT tokens and populates CurrentUser context."""
+    """ConnectRPC interceptor that validates JWT tokens and populates CurrentUser context based on Protobuf AuthPolicy."""
 
     async def intercept_unary(
         self,
@@ -27,7 +17,7 @@ class AuthInterceptor(UnaryInterceptor):
         request: Any,
         ctx: Any,
     ) -> Any:
-        # Check if procedure/method is public
+        # Resolve method path
         method_path = getattr(getattr(ctx, "spec", None), "path", "") or getattr(
             ctx, "path", ""
         )
@@ -40,7 +30,7 @@ class AuthInterceptor(UnaryInterceptor):
             ):
                 method_path = f"/{method_info.service_name}/{method_info.name}"
 
-        is_public = method_path in PUBLIC_ENDPOINTS
+        is_public = AuthPolicyRegistry.is_public(method_path)
 
         # Extract authorization header from RequestContext
         metadata = (
@@ -77,6 +67,9 @@ class AuthInterceptor(UnaryInterceptor):
                 )
         elif not is_public:
             raise ConnectError(Code.UNAUTHENTICATED, "Thiếu header Authorization")
+
+        # Validate authorization policy (e.g. ADMIN role check)
+        AuthPolicyRegistry.authorize(method_path, current_user)
 
         set_current_user(current_user)
 

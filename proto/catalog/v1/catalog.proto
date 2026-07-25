@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package catalog.v1;
 
+import "auth/v1/options.proto";
+
 enum ItemType {
   ITEM_TYPE_UNSPECIFIED = 0;
   ITEM_TYPE_VIDEO = 1;
@@ -366,29 +368,77 @@ message ReorderLearningItemsResponse {
 }
 
 service CatalogService {
-  rpc GetSpecialization(GetSpecializationRequest) returns (GetSpecializationResponse);
-  rpc ListCourses(ListCoursesRequest) returns (ListCoursesResponse);
-  rpc GetCourseDetail(GetCourseDetailRequest) returns (GetCourseDetailResponse);
-  rpc GetLessonDetail(GetLessonDetailRequest) returns (GetLessonDetailResponse);
-  rpc CreateCourse(CreateCourseRequest) returns (CreateCourseResponse);
-  rpc UpdateCourse(UpdateCourseRequest) returns (UpdateCourseResponse);
-  rpc DeleteCourse(DeleteCourseRequest) returns (DeleteCourseResponse);
-  rpc CreateWeekModule(CreateWeekModuleRequest) returns (CreateWeekModuleResponse);
-  rpc UpdateWeekModule(UpdateWeekModuleRequest) returns (UpdateWeekModuleResponse);
-  rpc DeleteWeekModule(DeleteWeekModuleRequest) returns (DeleteWeekModuleResponse);
-  rpc CreateLesson(CreateLessonRequest) returns (CreateLessonResponse);
-  rpc UpdateLesson(UpdateLessonRequest) returns (UpdateLessonResponse);
-  rpc DeleteLesson(DeleteLessonRequest) returns (DeleteLessonResponse);
-  rpc CreateLearningItem(CreateLearningItemRequest) returns (CreateLearningItemResponse);
-  rpc UpdateLearningItem(UpdateLearningItemRequest) returns (UpdateLearningItemResponse);
-  rpc DeleteLearningItem(DeleteLearningItemRequest) returns (DeleteLearningItemResponse);
-  rpc ReorderWeekModules(ReorderWeekModulesRequest) returns (ReorderWeekModulesResponse);
-  rpc ReorderLessons(ReorderLessonsRequest) returns (ReorderLessonsResponse);
-  rpc ReorderLearningItems(ReorderLearningItemsRequest) returns (ReorderLearningItemsResponse);
-  rpc SubmitCourseReview(SubmitCourseReviewRequest) returns (SubmitCourseReviewResponse);
-  rpc ListCourseReviews(ListCourseReviewsRequest) returns (ListCourseReviewsResponse);
-  rpc CreateCourseAnnouncement(CreateCourseAnnouncementRequest) returns (CreateCourseAnnouncementResponse);
-  rpc ListCourseAnnouncements(ListCourseAnnouncementsRequest) returns (ListCourseAnnouncementsResponse);
-  rpc GetInstructorAnalytics(GetInstructorAnalyticsRequest) returns (GetInstructorAnalyticsResponse);
+  rpc GetSpecialization(GetSpecializationRequest) returns (GetSpecializationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc ListCourses(ListCoursesRequest) returns (ListCoursesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc GetCourseDetail(GetCourseDetailRequest) returns (GetCourseDetailResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc GetLessonDetail(GetLessonDetailRequest) returns (GetLessonDetailResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc CreateCourse(CreateCourseRequest) returns (CreateCourseResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UpdateCourse(UpdateCourseRequest) returns (UpdateCourseResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteCourse(DeleteCourseRequest) returns (DeleteCourseResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc CreateWeekModule(CreateWeekModuleRequest) returns (CreateWeekModuleResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UpdateWeekModule(UpdateWeekModuleRequest) returns (UpdateWeekModuleResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteWeekModule(DeleteWeekModuleRequest) returns (DeleteWeekModuleResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc CreateLesson(CreateLessonRequest) returns (CreateLessonResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UpdateLesson(UpdateLessonRequest) returns (UpdateLessonResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteLesson(DeleteLessonRequest) returns (DeleteLessonResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc CreateLearningItem(CreateLearningItemRequest) returns (CreateLearningItemResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UpdateLearningItem(UpdateLearningItemRequest) returns (UpdateLearningItemResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteLearningItem(DeleteLearningItemRequest) returns (DeleteLearningItemResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ReorderWeekModules(ReorderWeekModulesRequest) returns (ReorderWeekModulesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ReorderLessons(ReorderLessonsRequest) returns (ReorderLessonsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ReorderLearningItems(ReorderLearningItemsRequest) returns (ReorderLearningItemsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc SubmitCourseReview(SubmitCourseReviewRequest) returns (SubmitCourseReviewResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListCourseReviews(ListCourseReviewsRequest) returns (ListCourseReviewsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc CreateCourseAnnouncement(CreateCourseAnnouncementRequest) returns (CreateCourseAnnouncementResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListCourseAnnouncements(ListCourseAnnouncementsRequest) returns (ListCourseAnnouncementsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc GetInstructorAnalytics(GetInstructorAnalyticsRequest) returns (GetInstructorAnalyticsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }
 

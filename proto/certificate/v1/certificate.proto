@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package certificate.v1;
 
+import "auth/v1/options.proto";
+
 message FinancialAidApplication {
   string id = 1;
   string user_id = 2;
@@ -98,12 +100,28 @@ message IssueSpecializationCertificateResponse {
 }
 
 service CertificateService {
-  rpc ApplyFinancialAid(ApplyFinancialAidRequest) returns (ApplyFinancialAidResponse);
-  rpc GetFinancialAidStatus(GetFinancialAidStatusRequest) returns (GetFinancialAidStatusResponse);
-  rpc ListFinancialAidApplications(ListFinancialAidApplicationsRequest) returns (ListFinancialAidApplicationsResponse);
-  rpc ReviewFinancialAidApplication(ReviewFinancialAidApplicationRequest) returns (ReviewFinancialAidApplicationResponse);
-  rpc GetVerifiedCertificate(GetVerifiedCertificateRequest) returns (GetVerifiedCertificateResponse);
-  rpc VerifyCertificatePublic(VerifyCertificatePublicRequest) returns (VerifyCertificatePublicResponse);
-  rpc RevokeCertificate(RevokeCertificateRequest) returns (RevokeCertificateResponse);
-  rpc IssueSpecializationCertificate(IssueSpecializationCertificateRequest) returns (IssueSpecializationCertificateResponse);
+  rpc ApplyFinancialAid(ApplyFinancialAidRequest) returns (ApplyFinancialAidResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetFinancialAidStatus(GetFinancialAidStatusRequest) returns (GetFinancialAidStatusResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListFinancialAidApplications(ListFinancialAidApplicationsRequest) returns (ListFinancialAidApplicationsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
+  rpc ReviewFinancialAidApplication(ReviewFinancialAidApplicationRequest) returns (ReviewFinancialAidApplicationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
+  rpc GetVerifiedCertificate(GetVerifiedCertificateRequest) returns (GetVerifiedCertificateResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc VerifyCertificatePublic(VerifyCertificatePublicRequest) returns (VerifyCertificatePublicResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc RevokeCertificate(RevokeCertificateRequest) returns (RevokeCertificateResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
+  rpc IssueSpecializationCertificate(IssueSpecializationCertificateRequest) returns (IssueSpecializationCertificateResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }

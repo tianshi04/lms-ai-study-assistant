@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package forum.v1;
 
+import "auth/v1/options.proto";
+
 message ForumReply {
   string id = 1;
   string thread_id = 2;
@@ -116,13 +118,31 @@ message DeleteReplyResponse {
 }
 
 service ForumService {
-  rpc ListThreads(ListThreadsRequest) returns (ListThreadsResponse);
-  rpc CreateThread(CreateThreadRequest) returns (CreateThreadResponse);
-  rpc PostReply(PostReplyRequest) returns (PostReplyResponse);
-  rpc VotePost(VotePostRequest) returns (VotePostResponse);
-  rpc PinStaffAnswer(PinStaffAnswerRequest) returns (PinStaffAnswerResponse);
-  rpc UpdateThread(UpdateThreadRequest) returns (UpdateThreadResponse);
-  rpc DeleteThread(DeleteThreadRequest) returns (DeleteThreadResponse);
-  rpc UpdateReply(UpdateReplyRequest) returns (UpdateReplyResponse);
-  rpc DeleteReply(DeleteReplyRequest) returns (DeleteReplyResponse);
+  rpc ListThreads(ListThreadsRequest) returns (ListThreadsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc CreateThread(CreateThreadRequest) returns (CreateThreadResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc PostReply(PostReplyRequest) returns (PostReplyResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc VotePost(VotePostRequest) returns (VotePostResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc PinStaffAnswer(PinStaffAnswerRequest) returns (PinStaffAnswerResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
+  rpc UpdateThread(UpdateThreadRequest) returns (UpdateThreadResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteThread(DeleteThreadRequest) returns (DeleteThreadResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UpdateReply(UpdateReplyRequest) returns (UpdateReplyResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteReply(DeleteReplyRequest) returns (DeleteReplyResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }

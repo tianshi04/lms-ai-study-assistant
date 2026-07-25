@@ -92,3 +92,49 @@ async def test_require_current_user_raises_when_unauthenticated() -> None:
         require_current_user()
 
     assert exc_info.value.code == Code.UNAUTHENTICATED
+
+
+@pytest.mark.asyncio
+async def test_auth_interceptor_admin_endpoint_denies_learner() -> None:
+    clear_current_user()
+    token = create_access_token(
+        user_id="user_learner", email="learner@example.com", role="USER_ROLE_LEARNER"
+    )
+    interceptor = AuthInterceptor()
+    ctx = MockCtx(
+        path="/identity.v1.IdentityService/AssignEnterpriseSeat",
+        invocation_metadata={"authorization": f"Bearer {token}"},
+    )
+
+    async def call_next(req: Any, c: Any) -> str:
+        return "should_not_reach"
+
+    with pytest.raises(ConnectError) as exc_info:
+        await interceptor.intercept_unary(call_next, "dummy_req", ctx)
+
+    assert exc_info.value.code == Code.PERMISSION_DENIED
+    assert "quản trị" in exc_info.value.message
+
+
+@pytest.mark.asyncio
+async def test_auth_interceptor_admin_endpoint_allows_admin() -> None:
+    clear_current_user()
+    token = create_access_token(
+        user_id="user_admin", email="admin@example.com", role="USER_ROLE_SUPER_ADMIN"
+    )
+    interceptor = AuthInterceptor()
+    ctx = MockCtx(
+        path="/identity.v1.IdentityService/AssignEnterpriseSeat",
+        invocation_metadata={"authorization": f"Bearer {token}"},
+    )
+
+    called = False
+
+    async def call_next(req: Any, c: Any) -> str:
+        nonlocal called
+        called = True
+        return "success"
+
+    res = await interceptor.intercept_unary(call_next, "dummy_req", ctx)
+    assert res == "success"
+    assert called is True
