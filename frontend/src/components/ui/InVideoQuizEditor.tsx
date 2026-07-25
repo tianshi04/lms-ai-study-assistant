@@ -127,6 +127,22 @@ export function InVideoQuizEditor({
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
+  const isYouTubeUrl = (url: string) => {
+    return url.includes("youtube.com") || url.includes("youtu.be");
+  };
+
+  const getYouTubeEmbedUrl = (url: string) => {
+    let videoId = "";
+    if (url.includes("youtu.be/")) {
+      videoId = url.split("youtu.be/")[1]?.split("?")[0] || "";
+    } else if (url.includes("watch?v=")) {
+      videoId = url.split("watch?v=")[1]?.split("&")[0] || "";
+    } else if (url.includes("embed/")) {
+      videoId = url.split("embed/")[1]?.split("?")[0] || "";
+    }
+    return `https://www.youtube-nocookie.com/embed/${videoId}`;
+  };
+
   return (
     <div className="space-y-4 p-4 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
@@ -141,29 +157,41 @@ export function InVideoQuizEditor({
         </span>
       </div>
 
-      {/* Video Preview with Capture Time */}
+      {/* Single Video Preview Player */}
       {videoUrl && (
         <div className="space-y-2">
           <div className="aspect-video w-full rounded-xl overflow-hidden bg-black relative shadow-md">
-            <video
-              ref={videoRef}
-              src={videoUrl}
-              controls
-              className="w-full h-full object-contain"
-            />
+            {isYouTubeUrl(videoUrl) ? (
+              <iframe
+                src={getYouTubeEmbedUrl(videoUrl)}
+                title="YouTube Video Preview"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full border-0"
+              />
+            ) : (
+              <video
+                ref={videoRef}
+                src={videoUrl}
+                controls
+                className="w-full h-full object-contain"
+              />
+            )}
           </div>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={captureCurrentTime}
-              className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-xs font-bold hover:bg-blue-100 transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>Lấy mốc giây hiện tại từ Video</span>
-            </button>
-          </div>
+          {!isYouTubeUrl(videoUrl) && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={captureCurrentTime}
+                className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-xs font-bold hover:bg-blue-100 transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Lấy mốc giây hiện tại từ Video</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 

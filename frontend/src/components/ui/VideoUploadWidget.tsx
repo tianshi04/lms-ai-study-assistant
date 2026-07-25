@@ -213,27 +213,22 @@ export function VideoUploadWidget({
       )}
 
       {value && (
-        <div className="space-y-2 p-3 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-slate-700 dark:text-slate-300">Xem trước Video đã chọn:</span>
-            <button
-              type="button"
-              onClick={() => onChange("")}
-              className="text-rose-500 hover:underline font-semibold cursor-pointer"
-            >
-              Xóa Video
-            </button>
+        <div className="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 overflow-hidden text-xs">
+            <span className="px-2 py-0.5 rounded bg-blue-600 text-white font-bold text-[10px] uppercase tracking-wider shrink-0">
+              Video Đang Chọn
+            </span>
+            <span className="font-mono text-slate-700 dark:text-slate-300 truncate font-semibold">
+              {value}
+            </span>
           </div>
-          <div className="aspect-video w-full rounded-lg overflow-hidden bg-black flex items-center justify-center">
-            <video
-              src={value}
-              controls
-              className="w-full h-full object-contain"
-            />
-          </div>
-          <div className="text-[11px] font-mono text-slate-400 truncate">
-            {value}
-          </div>
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="text-xs text-rose-600 dark:text-rose-400 hover:underline font-bold shrink-0 cursor-pointer"
+          >
+            Gỡ bỏ Video
+          </button>
         </div>
       )}
     </div>
