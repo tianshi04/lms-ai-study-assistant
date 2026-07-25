@@ -101,6 +101,8 @@ def _model_to_domain_course(
         week_modules=week_modules,
         average_rating=avg_rating,
         review_count=review_count,
+        owner_id=getattr(model, "owner_id", ""),
+        co_instructor_ids=getattr(model, "co_instructor_ids", None) or [],
     )
 
 
@@ -213,6 +215,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         partner_name: str,
         partner_logo_url: str,
         instructor_names: list[str],
+        owner_id: str = "",
+        co_instructor_ids: list[str] | None = None,
     ) -> Course:
         course_id = f"course-{slug}" if slug else f"course-{uuid.uuid4().hex[:8]}"
         model = CourseModel(
@@ -224,6 +228,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             partner_logo_url=partner_logo_url
             or "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
             instructor_names=instructor_names or ["Giảng viên AI"],
+            owner_id=owner_id,
+            co_instructor_ids=co_instructor_ids or [],
         )
         self.session.add(model)
         await self.session.commit()

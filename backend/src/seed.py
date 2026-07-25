@@ -90,6 +90,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         partner_name="DeepLearning.AI",
         partner_logo_url=deeplearning_logo,
         instructor_names=["Andrew Ng", "Eddy Shyu"],
+        owner_id="user_instructor_01",
     )
 
     # Week 1
@@ -239,6 +240,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         partner_name="Meta",
         partner_logo_url=meta_logo,
         instructor_names=["Jane Doe"],
+        owner_id="user_instructor_01",
     )
 
     week_web1 = WeekModuleModel(
@@ -321,6 +323,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         partner_name="DeepLearning.AI",
         partner_logo_url=deeplearning_logo,
         instructor_names=["Andrew Ng", "Kian Katanforoosh"],
+        owner_id="user_instructor_01",
     )
     week_dl1 = WeekModuleModel(
         id="week-1-dl",

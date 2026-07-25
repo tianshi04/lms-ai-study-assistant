@@ -119,6 +119,8 @@ class Course(Entity):
         week_modules: list[WeekModule] | None = None,
         average_rating: float = 0.0,
         review_count: int = 0,
+        owner_id: str = "",
+        co_instructor_ids: list[str] | None = None,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -130,6 +132,8 @@ class Course(Entity):
         self.week_modules = week_modules or []
         self.average_rating = average_rating
         self.review_count = review_count
+        self.owner_id = owner_id
+        self.co_instructor_ids = co_instructor_ids or []
 
 
 class Specialization(Entity):

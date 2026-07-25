@@ -63,6 +63,7 @@ class CatalogUseCase:
         partner_name: str,
         partner_logo_url: str,
         instructor_names: list[str],
+        owner_id: str = "",
     ) -> Course:
         async with async_session_scope() as session:
             repo = SQLAlchemyCatalogRepository(session)
@@ -73,6 +74,7 @@ class CatalogUseCase:
                 partner_name=partner_name,
                 partner_logo_url=partner_logo_url,
                 instructor_names=instructor_names,
+                owner_id=owner_id,
             )
 
     async def update_course(

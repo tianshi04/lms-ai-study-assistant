@@ -42,6 +42,10 @@ class CourseModel(Base):
     instructor_names: Mapped[list[str]] = mapped_column(
         ARRAY(String(128)), nullable=False, default=list
     )
+    owner_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    co_instructor_ids: Mapped[list[str]] = mapped_column(
+        ARRAY(String(64)), nullable=False, default=list
+    )
 
     week_modules: Mapped[list["WeekModuleModel"]] = relationship(
         "WeekModuleModel",

@@ -6,7 +6,8 @@ from connectrpc.request import RequestContext
 from src.gen.catalog.v1 import catalog_pb as pb
 from src.gen.catalog.v1.catalog_connect import CatalogService
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-from src.shared.auth import require_current_user
+from src.shared.auth import CurrentUser, require_current_user
+from src.shared.permissions import enforce_course_ownership
 from src.modules.catalog.domain.entities import (
     Course,
     CourseReview,
@@ -179,7 +180,7 @@ class CatalogHandler(CatalogService):
             specialization=_to_pb_specialization(spec, courses),
         )
 
-    def _verify_instructor_permission(self) -> None:
+    def _verify_instructor_permission(self) -> CurrentUser:
         user = require_current_user()
         if user.role not in (
             "USER_ROLE_INSTRUCTOR",
@@ -192,13 +193,26 @@ class CatalogHandler(CatalogService):
                 Code.PERMISSION_DENIED,
                 "Chỉ tài khoản Giảng viên (Instructor) hoặc Quản trị viên mới có quyền tạo và chỉnh sửa khóa học.",
             )
+        return user
+
+    async def _verify_course_ownership(
+        self, course_id: str, action_name: str = "quản lý khóa học"
+    ) -> CurrentUser:
+        user = self._verify_instructor_permission()
+        if course_id:
+            course = await self.use_case.get_course_detail(course_id)
+            if course:
+                enforce_course_ownership(
+                    course.owner_id, course.co_instructor_ids, user, action_name
+                )
+        return user
 
     async def create_course(
         self,
         request: pb.CreateCourseRequest,
         ctx: RequestContext[pb.CreateCourseRequest, pb.CreateCourseResponse],
     ) -> pb.CreateCourseResponse:
-        self._verify_instructor_permission()
+        user = self._verify_instructor_permission()
         course = await self.use_case.create_course(
             title=request.title,
             slug=request.slug,
@@ -206,6 +220,7 @@ class CatalogHandler(CatalogService):
             partner_name=request.partner_name,
             partner_logo_url=request.partner_logo_url,
             instructor_names=list(request.instructor_names),
+            owner_id=user.id,
         )
         return pb.CreateCourseResponse(course=_to_pb_course(course))
 
@@ -214,7 +229,7 @@ class CatalogHandler(CatalogService):
         request: pb.UpdateCourseRequest,
         ctx: RequestContext[pb.UpdateCourseRequest, pb.UpdateCourseResponse],
     ) -> pb.UpdateCourseResponse:
-        self._verify_instructor_permission()
+        await self._verify_course_ownership(request.id, "chỉnh sửa khóa học")
         course = await self.use_case.update_course(
             course_id=request.id,
             title=request.title,
@@ -337,7 +352,7 @@ class CatalogHandler(CatalogService):
         request: pb.DeleteCourseRequest,
         ctx: RequestContext[pb.DeleteCourseRequest, pb.DeleteCourseResponse],
     ) -> pb.DeleteCourseResponse:
-        self._verify_instructor_permission()
+        await self._verify_course_ownership(request.id, "xóa khóa học")
         success = await self.use_case.delete_course(course_id=request.id)
         if not success:
             raise ConnectError(Code.NOT_FOUND, f"Khóa học {request.id} không tồn tại.")
