@@ -19,7 +19,7 @@ export class CourseBuilderPage {
     this.addWeekButton = page.getByRole('button', { name: /Thêm Tuần học|Add Week/i });
     this.weekTitleInput = page.locator('input[placeholder*="Neural Networks"], input[placeholder*="Week"], input[placeholder*="Tuần"]');
     this.weekSummaryTextarea = page.locator('div.fixed form textarea, form textarea').first();
-    this.submitWeekButton = page.getByRole('button', { name: /Xác nhận tạo Tuần học|Confirm|Create/i });
+    this.submitWeekButton = page.getByRole('button', { name: /Xác nhận tạo Tuần học|Confirm Create Week|Confirm|Create/i });
     this.addLessonButton = page.getByRole('button', { name: /Thêm Bài học|Add Lesson/i }).first();
     this.addLearningItemButton = page.getByRole('button', { name: /Thêm Học liệu|Add Item/i }).first();
     this.deleteWeekButton = page.getByRole('button', { name: /Xóa Tuần|Delete Week/i }).first();

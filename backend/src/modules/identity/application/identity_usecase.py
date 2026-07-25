@@ -25,12 +25,8 @@ def hash_password(password: str, salt: Optional[bytes] = None) -> str:
 def verify_password(password: str, password_hash: str) -> bool:
     if ":" not in password_hash:
         return False
-    try:
-        salt_hex, hash_hex = password_hash.split(":", 1)
-        salt = bytes.fromhex(salt_hex)
-    except ValueError:
-        return False
-
+    salt_hex, hash_hex = password_hash.split(":", 1)
+    salt = bytes.fromhex(salt_hex)
     new_hash = hashlib.pbkdf2_hmac(
         "sha256", password.encode("utf-8"), salt, 100_000
     ).hex()
