@@ -362,5 +362,24 @@
     "toastWeekOrderSaved": "Đã cập nhật vị trí Tuần học thành công!",
     "toastLessonOrderSaved": "Đã cập nhật thứ tự Bài học thành công!",
     "toastItemOrderSaved": "Đã cập nhật thứ tự Học liệu thành công!"
+  },
+  "myCoursesPage": {
+    "errorFetch": "Lỗi khi tải danh sách khóa học",
+    "redirecting": "Đang chuyển hướng...",
+    "title": "Khóa học của tôi",
+    "subtitle": "Theo dõi tiến độ học tập, tiếp tục các khóa đang học, và xem lại chứng chỉ đã hoàn thành.",
+    "tabAll": "Tất cả",
+    "tabInProgress": "Đang học",
+    "tabCompleted": "Hoàn thành",
+    "noCoursesTitle": "Chưa có khóa học nào",
+    "noCoursesDesc": "Bạn chưa ghi danh vào khóa học nào. Hãy bắt đầu hành trình học tập ngay hôm nay!",
+    "exploreCatalog": "Khám phá danh mục",
+    "statusCompleted": "Hoàn thành",
+    "statusInProgress": "Đang học",
+    "statusNotStarted": "Chưa bắt đầu",
+    "progress": "Tiến độ:",
+    "btnReview": "Đánh giá khóa học",
+    "btnStart": "Bắt đầu học",
+    "btnContinue": "Tiếp tục học"
   }
 }
