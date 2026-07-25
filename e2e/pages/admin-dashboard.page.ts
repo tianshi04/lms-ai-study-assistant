@@ -13,12 +13,12 @@ export class AdminDashboardPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.createSeatKeyButton = page.getByRole('button', { name: /Tạo Mã Enterprise Mới/i });
-    this.assignSeatButton = page.getByRole('button', { name: /Gán Suất học cho Học viên/i });
+    this.createSeatKeyButton = page.getByRole('button', { name: /Tạo Mã Enterprise Mới|Create Enterprise|Create License/i });
+    this.assignSeatButton = page.getByRole('button', { name: /Gán Suất học cho Học viên|Assign Seat/i });
 
-    this.partnerNameInput = page.locator('input[placeholder*="Bách Khoa"]');
-    this.seatKeyInput = page.locator('input[placeholder*="BKTPHCM"]');
-    this.submitCreateSeatButton = page.getByRole('button', { name: /Xác nhận tạo Giấy phép/i });
+    this.partnerNameInput = page.locator('input[placeholder*="Bách Khoa"], input[placeholder*="Partner"]');
+    this.seatKeyInput = page.locator('input[placeholder*="BKTPHCM"], input[placeholder*="KEY"]');
+    this.submitCreateSeatButton = page.getByRole('button', { name: /Xác nhận tạo Giấy phép|Confirm|Create/i });
     this.seatsList = page.locator('div.border.rounded-2xl');
   }
 

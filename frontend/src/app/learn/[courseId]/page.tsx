@@ -6,12 +6,16 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course, type LearningItem, type InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { LearningService, type LearningProgress, type PersonalNote } from "@/gen/learning/v1/learning_pb";
+import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { VideoPlayer } from "@/components/player/VideoPlayer";
 import { TranscriptPanel } from "@/components/player/TranscriptPanel";
 import { NotesPanel } from "@/components/player/NotesPanel";
 import { DeadlinesPanel } from "@/components/player/DeadlinesPanel";
 import { ForumTab } from "@/components/player/ForumTab";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
+import { LanguageToggle } from "@/components/providers/LanguageToggle";
+import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
+import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 function getActiveUserId(): string {
   if (typeof window !== "undefined") {
@@ -23,12 +27,15 @@ function getActiveUserId(): string {
 export default function CoursePlayerPage() {
   const params = useParams();
   const courseId = params?.courseId as string;
+  const { t } = useTranslation();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [activeItem, setActiveItem] = useState<LearningItem | null>(null);
   const [progress, setProgress] = useState<LearningProgress | null>(null);
   const [notes, setNotes] = useState<PersonalNote[]>([]);
   const [activeTab, setActiveTab] = useState<"transcript" | "forum" | "notes" | "deadlines">("transcript");
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [certificateId, setCertificateId] = useState<string>("");
 
   // Video & In-Video Quiz State
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -60,7 +67,7 @@ export default function CoursePlayerPage() {
     async function loadData() {
       try {
         const catalogClient = getRpcClient(CatalogService);
-        const courseRes = await catalogClient.getCourseDetail({ courseId });
+        const courseRes = await catalogClient.getCourseDetail({ idOrSlug: courseId });
         setCourse(courseRes.course ?? null);
 
         // Set initial item
@@ -70,6 +77,18 @@ export default function CoursePlayerPage() {
         const learningClient = getRpcClient(LearningService);
         const progressRes = await learningClient.getProgress({ courseId });
         setProgress(progressRes.progress ?? null);
+
+        if (progressRes.progress && progressRes.progress.overallProgressPercent >= 100) {
+          try {
+            const certClient = getRpcClient(CertificateService);
+            const certRes = await certClient.getVerifiedCertificate({ courseId });
+            if (certRes.certificate?.certificateId) {
+              setCertificateId(certRes.certificate.certificateId);
+            }
+          } catch (err) {
+            console.error("Failed to load certificate on load:", err);
+          }
+        }
 
         const notesRes = await learningClient.listPersonalNotes({ courseId });
         setNotes(notesRes.notes);
@@ -97,6 +116,24 @@ export default function CoursePlayerPage() {
       });
       if (res.updatedProgress) {
         setProgress(res.updatedProgress);
+        if (
+          res.updatedProgress.overallProgressPercent >= 100 ||
+          res.updatedProgress.completedItemIds.length >= totalCourseItems
+        ) {
+          try {
+            const certClient = getRpcClient(CertificateService);
+            const certRes = await certClient.getVerifiedCertificate({ courseId });
+            if (certRes.certificate?.certificateId) {
+              setCertificateId(certRes.certificate.certificateId);
+            } else {
+              setCertificateId("");
+            }
+          } catch (err) {
+            console.error("Failed to load certificate on completion:", err);
+            setCertificateId("");
+          }
+          setShowCompletionModal(true);
+        }
       }
     } catch (err) {
       console.error("Failed to mark item complete:", err);
@@ -239,14 +276,20 @@ export default function CoursePlayerPage() {
             </div>
           )}
 
-          <ThemeToggle />
+          {progress && (progress.overallProgressPercent >= 100 || progress.completedItemIds.length >= totalCourseItems) && (
+            <button
+              onClick={() => setShowCompletionModal(true)}
+              className="px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-sm hover:shadow transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <svg className="w-4 h-4 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.25}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{t("courseDetail.viewCert")}</span>
+            </button>
+          )}
 
-          <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-medium">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            AI Coach Active
-          </div>
+          <LanguageToggle />
+          <ThemeToggle />
         </div>
       </header>
 
@@ -294,7 +337,7 @@ export default function CoursePlayerPage() {
                               onClick={() => {
                                 if (!isUnlocked) {
                                   setLockNotice(
-                                    `🔒 Bài học "${item.title}" đang bị khóa. Bạn cần hoàn thành bài học "${prevItem?.title || "trước đó"}" trước.`
+                                    `Bài học "${item.title}" đang bị khóa. Bạn cần hoàn thành bài học "${prevItem?.title || "trước đó"}" trước.`
                                   );
                                   return;
                                 }
@@ -487,6 +530,14 @@ export default function CoursePlayerPage() {
           </div>
         </main>
       </div>
+
+      <CourseCompletionModal
+        isOpen={showCompletionModal}
+        onClose={() => setShowCompletionModal(false)}
+        courseId={courseId}
+        courseTitle={course?.title || "Khóa học LMS"}
+        certificateId={certificateId || `CERT-${courseId.replace("course-", "").toUpperCase()}`}
+      />
     </div>
   );
 }

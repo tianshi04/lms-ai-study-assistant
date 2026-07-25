@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Boolean, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.shared.infrastructure.database import Base
@@ -14,17 +14,27 @@ class ForumThreadORM(Base):
     __tablename__ = "forum_threads"
 
     id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+        String(64), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     course_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    item_id: Mapped[str] = mapped_column(String(255), nullable=False, default="", index=True)
+    item_id: Mapped[str] = mapped_column(
+        String(255), nullable=False, default="", index=True
+    )
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     author_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    author_role: Mapped[str] = mapped_column(String(100), nullable=False, default="Student")
+    author_role: Mapped[str] = mapped_column(
+        String(100), nullable=False, default="Student"
+    )
     author_user_id: Mapped[str] = mapped_column(String(255), nullable=False, default="")
-    created_at: Mapped[str] = mapped_column(String(100), nullable=False, default=utc_now_str)
+    created_at: Mapped[str] = mapped_column(
+        String(100), nullable=False, default=utc_now_str
+    )
     upvote_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    is_staff_pinned: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_staff_pinned: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
+    is_edited: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    edited_at: Mapped[str] = mapped_column(String(100), nullable=False, default="")
 
     replies: Mapped[list["ForumReplyORM"]] = relationship(
         "ForumReplyORM",
@@ -38,18 +48,29 @@ class ForumReplyORM(Base):
     __tablename__ = "forum_replies"
 
     id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+        String(64), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     thread_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("forum_threads.id", ondelete="CASCADE"), nullable=False, index=True
+        String(64),
+        ForeignKey("forum_threads.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     author_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    author_role: Mapped[str] = mapped_column(String(100), nullable=False, default="Student")
+    author_role: Mapped[str] = mapped_column(
+        String(100), nullable=False, default="Student"
+    )
     author_user_id: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    is_staff_answer: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_staff_answer: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False
+    )
     upvote_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    created_at: Mapped[str] = mapped_column(String(100), nullable=False, default=utc_now_str)
+    created_at: Mapped[str] = mapped_column(
+        String(100), nullable=False, default=utc_now_str
+    )
+    is_edited: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    edited_at: Mapped[str] = mapped_column(String(100), nullable=False, default="")
 
     thread: Mapped[ForumThreadORM] = relationship(
         "ForumThreadORM", back_populates="replies"
@@ -58,10 +79,15 @@ class ForumReplyORM(Base):
 
 class ForumVoteORM(Base):
     __tablename__ = "forum_votes"
+    __table_args__ = (
+        UniqueConstraint("user_id", "post_id", name="uq_forum_user_post_vote"),
+    )
 
     id: Mapped[str] = mapped_column(
-        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+        String(64), primary_key=True, default=lambda: str(uuid.uuid4())
     )
     user_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    post_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
-    created_at: Mapped[str] = mapped_column(String(100), nullable=False, default=utc_now_str)
+    post_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    created_at: Mapped[str] = mapped_column(
+        String(100), nullable=False, default=utc_now_str
+    )

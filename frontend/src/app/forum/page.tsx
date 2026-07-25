@@ -1,18 +1,46 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
-import { ForumService, ForumThreadSchema, ForumReplySchema, type ForumThread } from "@/gen/forum/v1/forum_pb";
+import { ForumService, ForumThreadSchema, ForumReplySchema, type ForumThread, type ForumReply } from "@/gen/forum/v1/forum_pb";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Navbar } from "@/components/layout/Navbar";
+import { Modal } from "@/components/ui/Modal";
+import { useToast } from "@/components/ui/Toast";
+import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
+const emptySubscribe = () => () => {};
+
+function formatRoleName(role: string): string {
+  if (!role) return "Learner";
+  const r = role.toUpperCase();
+  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Learner";
+  if (r.includes("INSTRUCTOR") || r === "2") return "Instructor";
+  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "3") return "Teaching Assistant";
+  if (r.includes("SUPER_ADMIN") || r.includes("PARTNER_ADMIN") || r === "ADMIN") return "Admin";
+  return role;
+}
 
 export default function ForumPage() {
+  const { t, locale } = useTranslation();
+  const toast = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+  const currentUserId = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
+  const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") || "" : "";
+  const isStaffOrAdmin = ["2", "3", "4", "5", "INSTRUCTOR", "TA", "ADMIN", "SUPER_ADMIN"].some((r) =>
+    userRole.toUpperCase().includes(r)
+  );
 
   // New Thread Form State
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -21,9 +49,20 @@ export default function ForumPage() {
   const [newCourseId, setNewCourseId] = useState("");
   const [submittingThread, setSubmittingThread] = useState(false);
 
+  // Thread Edit State
+  const [editingThread, setEditingThread] = useState<ForumThread | null>(null);
+  const [editThreadTitle, setEditThreadTitle] = useState("");
+  const [editThreadContent, setEditThreadContent] = useState("");
+  const [submittingEditThread, setSubmittingEditThread] = useState(false);
+
   // Reply Form State: threadId -> content
   const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
   const [submittingReply, setSubmittingReply] = useState<Record<string, boolean>>({});
+
+  // Reply Edit State
+  const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
+  const [editReplyContent, setEditReplyContent] = useState("");
+  const [submittingEditReply, setSubmittingEditReply] = useState(false);
 
   // Active Expanded Thread IDs
   const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
@@ -57,18 +96,18 @@ export default function ForumPage() {
       });
       setThreads(res.threads);
       const initialExpanded: Record<string, boolean> = {};
-      res.threads.forEach((t) => {
-        initialExpanded[t.id] = true;
+      res.threads.forEach((th) => {
+        initialExpanded[th.id] = true;
       });
       setExpandedThreads((prev) => ({ ...initialExpanded, ...prev }));
     } catch (err: unknown) {
       console.error("Failed to load forum threads:", err);
-      const msg = err instanceof Error ? err.message : "Không thể tải danh sách bài thảo luận";
+      const msg = err instanceof Error ? err.message : t("common.error");
       setError(msg);
     } finally {
       setLoading(false);
     }
-  }, [selectedCourseId]);
+  }, [selectedCourseId, t]);
 
   useEffect(() => {
     let isMounted = true;
@@ -80,8 +119,8 @@ export default function ForumPage() {
       if (isMounted) {
         setThreads(res.threads);
         const initialExpanded: Record<string, boolean> = {};
-        res.threads.forEach((t) => {
-          initialExpanded[t.id] = true;
+        res.threads.forEach((th) => {
+          initialExpanded[th.id] = true;
         });
         setExpandedThreads((prev) => ({ ...initialExpanded, ...prev }));
         setLoading(false);
@@ -89,7 +128,7 @@ export default function ForumPage() {
     }).catch((err) => {
       if (isMounted) {
         console.error("Failed to load forum threads:", err);
-        const msg = err instanceof Error ? err.message : "Không thể tải danh sách bài thảo luận";
+        const msg = err instanceof Error ? err.message : t("common.error");
         setError(msg);
         setLoading(false);
       }
@@ -98,7 +137,7 @@ export default function ForumPage() {
     return () => {
       isMounted = false;
     };
-  }, [selectedCourseId]);
+  }, [selectedCourseId, t]);
 
   // Handle Create Thread
   const handleCreateThread = async (e: React.FormEvent) => {
@@ -119,11 +158,53 @@ export default function ForumPage() {
       setNewTitle("");
       setNewContent("");
       setShowCreateModal(false);
+      toast.success(locale === "vi" ? "Đã đăng chủ đề thảo luận mới!" : "New discussion thread created!");
       fetchThreads();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Không thể đăng bài thảo luận");
+      toast.error(err instanceof Error ? err.message : t("common.error"));
     } finally {
       setSubmittingThread(false);
+    }
+  };
+
+  // Handle Edit Thread
+  const openEditThreadModal = (thread: ForumThread) => {
+    setEditingThread(thread);
+    setEditThreadTitle(thread.title);
+    setEditThreadContent("");
+  };
+
+  const handleUpdateThread = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingThread || !editThreadTitle.trim()) return;
+
+    setSubmittingEditThread(true);
+    try {
+      const client = getRpcClient(ForumService);
+      await client.updateThread({
+        threadId: editingThread.id,
+        title: editThreadTitle,
+        content: editThreadContent,
+      });
+      setEditingThread(null);
+      toast.success(t("forum.threadUpdated"));
+      fetchThreads();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("common.error"));
+    } finally {
+      setSubmittingEditThread(false);
+    }
+  };
+
+  const handleDeleteThread = async (threadId: string) => {
+    if (!window.confirm(t("forum.confirmDeleteThread"))) return;
+    try {
+      const client = getRpcClient(ForumService);
+      await client.deleteThread({ threadId });
+      toast.success(t("forum.threadDeleted"));
+      fetchThreads();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("common.error"));
     }
   };
 
@@ -142,29 +223,66 @@ export default function ForumPage() {
       });
 
       setReplyInputs((prev) => ({ ...prev, [threadId]: "" }));
+      toast.success(locale === "vi" ? "Đã gửi câu phản hồi!" : "Reply posted successfully!");
       fetchThreads();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Không thể gửi câu trả lời");
+      toast.error(err instanceof Error ? err.message : t("common.error"));
     } finally {
       setSubmittingReply((prev) => ({ ...prev, [threadId]: false }));
     }
   };
 
-  // Handle Upvote with Optimistic UI Update (Zero Flicker & Instant Response)
+  // Handle Edit Reply
+  const startEditReply = (reply: ForumReply) => {
+    setEditingReplyId(reply.id);
+    setEditReplyContent(reply.content);
+  };
+
+  const handleUpdateReply = async (replyId: string) => {
+    if (!editReplyContent.trim()) return;
+    setSubmittingEditReply(true);
+    try {
+      const client = getRpcClient(ForumService);
+      await client.updateReply({
+        replyId,
+        content: editReplyContent,
+      });
+      setEditingReplyId(null);
+      toast.success(t("forum.replyUpdated"));
+      fetchThreads();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("common.error"));
+    } finally {
+      setSubmittingEditReply(false);
+    }
+  };
+
+  const handleDeleteReply = async (replyId: string) => {
+    if (!window.confirm(t("forum.confirmDeleteReply"))) return;
+    try {
+      const client = getRpcClient(ForumService);
+      await client.deleteReply({ replyId });
+      toast.success(t("forum.replyDeleted"));
+      fetchThreads();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("common.error"));
+    }
+  };
+
+  // Handle Upvote with Optimistic UI Update
   const handleVote = async (postId: string, isUpvote: boolean) => {
-    // 1. Optimistically update local state immediately
     setThreads((prevThreads) =>
-      prevThreads.map((t) => {
-        if (t.id === postId) {
-          const wasVoted = t.isUpvotedByMe;
-          const newCount = wasVoted ? Math.max(0, t.upvoteCount - 1) : t.upvoteCount + 1;
+      prevThreads.map((th) => {
+        if (th.id === postId) {
+          const wasVoted = th.isUpvotedByMe;
+          const newCount = wasVoted ? Math.max(0, th.upvoteCount - 1) : th.upvoteCount + 1;
           return create(ForumThreadSchema, {
-            ...t,
+            ...th,
             isUpvotedByMe: !wasVoted,
             upvoteCount: newCount,
           });
         }
-        const updatedReplies = t.replies.map((r) => {
+        const updatedReplies = th.replies.map((r) => {
           if (r.id === postId) {
             const wasVoted = r.isUpvotedByMe;
             const newCount = wasVoted ? Math.max(0, r.upvoteCount - 1) : r.upvoteCount + 1;
@@ -176,27 +294,26 @@ export default function ForumPage() {
           }
           return r;
         });
-        return create(ForumThreadSchema, { ...t, replies: updatedReplies });
+        return create(ForumThreadSchema, { ...th, replies: updatedReplies });
       })
     );
 
-    // 2. Call backend in background and sync exact count
     try {
       const client = getRpcClient(ForumService);
       const res = await client.votePost({ postId, isUpvote });
 
       setThreads((prevThreads) =>
-        prevThreads.map((t) => {
-          if (t.id === postId) {
-            return create(ForumThreadSchema, { ...t, upvoteCount: res.updatedUpvoteCount });
+        prevThreads.map((th) => {
+          if (th.id === postId) {
+            return create(ForumThreadSchema, { ...th, upvoteCount: res.updatedUpvoteCount });
           }
-          const updatedReplies = t.replies.map((r) => {
+          const updatedReplies = th.replies.map((r) => {
             if (r.id === postId) {
               return create(ForumReplySchema, { ...r, upvoteCount: res.updatedUpvoteCount });
             }
             return r;
           });
-          return create(ForumThreadSchema, { ...t, replies: updatedReplies });
+          return create(ForumThreadSchema, { ...th, replies: updatedReplies });
         })
       );
     } catch (err) {
@@ -205,7 +322,6 @@ export default function ForumPage() {
     }
   };
 
-  // Handle Pin Staff Answer
   const handlePinStaffAnswer = async (replyId: string) => {
     try {
       const client = getRpcClient(ForumService);
@@ -235,22 +351,22 @@ export default function ForumPage() {
               Coursera Learning Forum
             </div>
             <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
-              Diễn Đàn Thảo Luận & Hỏi Đáp
+              {t("forum.forumTitle")}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-              Trao đổi kiến thức, câu hỏi bài học cùng các bạn học viên và đội ngũ Trợ giảng.
+              {t("forum.forumSubtitle")}
             </p>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-all shadow-md shadow-blue-600/20"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-all shadow-md shadow-blue-600/20 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Tạo Thảo Luận Mới
+              {t("forum.createPost")}
             </button>
           </div>
         </div>
@@ -259,14 +375,14 @@ export default function ForumPage() {
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-3 w-full md:w-auto">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
-              Lọc theo Khóa học:
+              {t("navbar.catalog")}:
             </span>
             <select
               value={selectedCourseId}
               onChange={(e) => setSelectedCourseId(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full md:w-80"
+              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full md:w-80 cursor-pointer"
             >
-              <option value="">-- Tất cả Khóa học --</option>
+              <option value="">-- All Courses --</option>
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.title}
@@ -276,7 +392,7 @@ export default function ForumPage() {
           </div>
 
           <div className="text-xs text-slate-500">
-            Hiển thị <span className="font-bold text-slate-800 dark:text-slate-200">{threads.length}</span> chủ đề thảo luận
+            Total <span className="font-bold text-slate-800 dark:text-slate-200">{threads.length}</span> threads
           </div>
         </div>
 
@@ -300,13 +416,14 @@ export default function ForumPage() {
             <svg className="w-12 h-12 text-slate-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            <p className="text-slate-600 dark:text-slate-400 font-medium">Chưa có chủ đề thảo luận nào.</p>
-            <p className="text-xs text-slate-400 mt-1">Hãy là người đầu tiên đặt câu hỏi cho khóa học này!</p>
+            <p className="text-slate-600 dark:text-slate-400 font-medium">{t("forum.noPostsYet")}</p>
           </div>
         ) : (
           <div className="space-y-6">
             {threads.map((thread) => {
               const isExpanded = expandedThreads[thread.id] ?? true;
+              const isThreadAuthor = Boolean(currentUserId && thread.authorUserId === currentUserId);
+              const canDeleteThread = isThreadAuthor || isStaffOrAdmin;
 
               return (
                 <div
@@ -326,12 +443,38 @@ export default function ForumPage() {
                           </span>
                         )}
                         <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                          Đăng bởi <strong className="text-slate-700 dark:text-slate-300">{thread.authorName}</strong> ({thread.authorRole})
+                          By <strong className="text-slate-700 dark:text-slate-300">{thread.authorName || t("forum.authorFallback")}</strong> ({formatRoleName(thread.authorRole)})
                         </span>
                         <span className="text-slate-300 dark:text-slate-700">•</span>
                         <span className="text-xs text-slate-400">
-                          {new Date(thread.createdAt).toLocaleString("vi-VN")}
+                          {new Date(thread.createdAt).toLocaleString(locale === "vi" ? "vi-VN" : "en-US")}
                         </span>
+                        {thread.isEdited && (
+                          <span className="text-xs text-amber-600 dark:text-amber-400 font-medium italic">
+                            {t("forum.edited")}
+                          </span>
+                        )}
+                        
+                        {(isThreadAuthor || canDeleteThread) && (
+                          <div className="ml-auto flex items-center gap-2">
+                            {isThreadAuthor && (
+                              <button
+                                onClick={() => openEditThreadModal(thread)}
+                                className="text-xs font-semibold text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+                              >
+                                {t("forum.edit")}
+                              </button>
+                            )}
+                            {canDeleteThread && (
+                              <button
+                                onClick={() => handleDeleteThread(thread.id)}
+                                className="text-xs font-semibold text-slate-500 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
+                              >
+                                {t("forum.delete")}
+                              </button>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-snug">
@@ -339,15 +482,14 @@ export default function ForumPage() {
                       </h2>
                     </div>
 
-                    {/* Upvote Button for Thread */}
+                    {/* Upvote Button */}
                     <button
                       onClick={() => handleVote(thread.id, true)}
-                      className={`group flex flex-col items-center justify-center px-3.5 py-2.5 rounded-xl border transition-all duration-200 min-w-[54px] select-none ${
+                      className={`group flex flex-col items-center justify-center px-3.5 py-2.5 rounded-xl border transition-all duration-200 min-w-[54px] select-none cursor-pointer ${
                         thread.isUpvotedByMe
                           ? "bg-gradient-to-b from-blue-600 to-indigo-600 border-blue-600 text-white shadow-lg shadow-blue-500/25 ring-2 ring-blue-400/30"
                           : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 hover:text-blue-600 dark:hover:text-blue-400"
                       }`}
-                      title={thread.isUpvotedByMe ? "Đã Upvote (Bấm để Hủy)" : "Upvote bài viết"}
                     >
                       <svg
                         className={`w-4 h-4 transition-transform duration-200 group-hover:-translate-y-0.5 ${
@@ -368,9 +510,9 @@ export default function ForumPage() {
                   <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-4 mt-4">
                     <button
                       onClick={() => toggleThreadExpand(thread.id)}
-                      className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                      className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
                     >
-                      <span>{isExpanded ? "Ẩn danh sách phản hồi" : `Xem (${thread.replies.length}) phản hồi`}</span>
+                      <span>{isExpanded ? "Hide replies" : `Show (${thread.replies.length}) ${t("forum.repliesCount")}`}</span>
                       <svg
                         className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                         fill="none"
@@ -385,80 +527,121 @@ export default function ForumPage() {
                   {/* Replies List */}
                   {isExpanded && (
                     <div className="mt-4 space-y-4 border-l-2 border-slate-200 dark:border-slate-800 pl-4 md:pl-6 pt-2">
-                      {thread.replies.map((reply) => (
-                        <div
-                          key={reply.id}
-                          className={`p-4 rounded-xl text-sm transition-all ${
-                            reply.isStaffAnswer
-                              ? "bg-amber-500/5 border border-amber-500/20"
-                              : "bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between gap-2 mb-2">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-semibold text-slate-800 dark:text-slate-200">
-                                {reply.authorName}
-                              </span>
-                              {reply.isStaffAnswer && (
-                                <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 px-3 py-1 rounded-full border border-amber-300/60 dark:border-amber-500/40 shadow-xs">
-                                  <svg className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                  </svg>
-                                  Câu trả lời chính thức (TA)
+                      {thread.replies.map((reply) => {
+                        const isReplyAuthor = Boolean(currentUserId && reply.authorUserId === currentUserId);
+                        const canDeleteReply = isReplyAuthor || isStaffOrAdmin;
+                        const isEditingThisReply = editingReplyId === reply.id;
+
+                        return (
+                          <div
+                            key={reply.id}
+                            className={`p-4 rounded-xl text-sm transition-all ${
+                              reply.isStaffAnswer
+                                ? "bg-amber-500/5 border border-amber-500/20"
+                                : "bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2 mb-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                  {reply.authorName || t("forum.authorFallback")}
                                 </span>
-                              )}
-                              <span className="text-xs text-slate-400">({reply.authorRole})</span>
-                              <span className="text-xs text-slate-400">
-                                • {new Date(reply.createdAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
-                              </span>
-                            </div>
+                                {reply.isStaffAnswer && (
+                                  <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 px-3 py-1 rounded-full border border-amber-300/60 dark:border-amber-500/40 shadow-xs">
+                                    Official Staff Answer
+                                  </span>
+                                )}
+                                <span className="text-xs text-slate-400">({formatRoleName(reply.authorRole)})</span>
+                                {reply.isEdited && (
+                                  <span className="text-xs text-amber-600 dark:text-amber-400 font-medium italic">
+                                    {t("forum.edited")}
+                                  </span>
+                                )}
+                              </div>
 
-                            <div className="flex items-center gap-2">
-                              {/* Pin Staff Answer Action for TA */}
-                              {!reply.isStaffAnswer && (
+                              <div className="flex items-center gap-2">
+                                {isReplyAuthor && (
+                                  <button
+                                    onClick={() => startEditReply(reply)}
+                                    className="text-xs font-semibold text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+                                  >
+                                    {t("forum.edit")}
+                                  </button>
+                                )}
+                                {canDeleteReply && (
+                                  <button
+                                    onClick={() => handleDeleteReply(reply.id)}
+                                    className="text-xs font-semibold text-slate-500 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
+                                  >
+                                    {t("forum.delete")}
+                                  </button>
+                                )}
+
+                                {isStaffOrAdmin && !reply.isStaffAnswer && (
+                                  <button
+                                    onClick={() => handlePinStaffAnswer(reply.id)}
+                                    className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/10 dark:hover:bg-amber-500/20 border border-amber-300 dark:border-amber-500/30 px-3 py-1 rounded-full transition-all cursor-pointer"
+                                  >
+                                    Pin Answer
+                                  </button>
+                                )}
+
                                 <button
-                                  onClick={() => handlePinStaffAnswer(reply.id)}
-                                  className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/10 dark:hover:bg-amber-500/20 border border-amber-300 dark:border-amber-500/30 px-3 py-1 rounded-full transition-all"
-                                  title="Đánh dấu câu trả lời chuẩn từ Giảng viên"
-                                >
-                                  <svg className="w-3 h-3 text-amber-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5v6l1 1 1-1v-6h5v-2l-2-2z" />
-                                  </svg>
-                                  Ghim câu trả lời
-                                </button>
-                              )}
-
-                              {/* Upvote Reply Button */}
-                              <button
-                                onClick={() => handleVote(reply.id, true)}
-                                className={`group inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all duration-200 select-none ${
-                                  reply.isUpvotedByMe
-                                    ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25"
-                                    : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
-                                }`}
-                                title={reply.isUpvotedByMe ? "Đã Upvote (Bấm để Hủy)" : "Upvote câu trả lời"}
-                              >
-                                <svg
-                                  className={`w-3.5 h-3.5 transition-transform duration-200 group-hover:-translate-y-0.5 ${
-                                    reply.isUpvotedByMe ? "text-white" : "text-blue-500 dark:text-blue-400"
+                                  onClick={() => handleVote(reply.id, true)}
+                                  className={`group inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all duration-200 select-none cursor-pointer ${
+                                    reply.isUpvotedByMe
+                                      ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25"
+                                      : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
                                   }`}
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth={2.5}
-                                  viewBox="0 0 24 24"
                                 >
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
-                                </svg>
-                                <span className="font-bold">{reply.upvoteCount}</span>
-                              </button>
+                                  <svg
+                                    className={`w-3.5 h-3.5 transition-transform duration-200 group-hover:-translate-y-0.5 ${
+                                      reply.isUpvotedByMe ? "text-white" : "text-blue-500 dark:text-blue-400"
+                                    }`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth={2.5}
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                                  </svg>
+                                  <span className="font-bold">{reply.upvoteCount}</span>
+                                </button>
+                              </div>
                             </div>
-                          </div>
 
-                          <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
-                            {reply.content}
-                          </p>
-                        </div>
-                      ))}
+                            {isEditingThisReply ? (
+                              <div className="mt-2 space-y-2">
+                                <textarea
+                                  value={editReplyContent}
+                                  onChange={(e) => setEditReplyContent(e.target.value)}
+                                  rows={3}
+                                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                />
+                                <div className="flex justify-end gap-2">
+                                  <button
+                                    onClick={() => setEditingReplyId(null)}
+                                    className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium cursor-pointer"
+                                  >
+                                    {t("courseDetail.cancel")}
+                                  </button>
+                                  <button
+                                    onClick={() => handleUpdateReply(reply.id)}
+                                    disabled={submittingEditReply || !editReplyContent.trim()}
+                                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-500 disabled:opacity-50 cursor-pointer"
+                                  >
+                                    {submittingEditReply ? "..." : t("forum.saveChanges")}
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                                {reply.content}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
 
                       {/* Reply Input Form */}
                       <div className="pt-2">
@@ -468,16 +651,16 @@ export default function ForumPage() {
                             onChange={(e) =>
                               setReplyInputs((prev) => ({ ...prev, [thread.id]: e.target.value }))
                             }
-                            placeholder="Nhập câu trả lời hoặc trao đổi thêm..."
+                            placeholder={t("forum.postContentPlaceholder")}
                             rows={2}
                             className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                           />
                           <button
                             onClick={() => handlePostReply(thread.id)}
                             disabled={submittingReply[thread.id] || !(replyInputs[thread.id] || "").trim()}
-                            className="px-4 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all shadow-sm shrink-0"
+                            className="px-4 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all shadow-sm shrink-0 cursor-pointer"
                           >
-                            {submittingReply[thread.id] ? "Đang gửi..." : "Gửi Phản Hồi"}
+                            {submittingReply[thread.id] ? t("courseDetail.submitting") : t("forum.submitPost")}
                           </button>
                         </div>
                       </div>
@@ -491,86 +674,127 @@ export default function ForumPage() {
       </main>
 
       {/* Modal Create New Thread */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl">
-            <div className="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                Tạo Thảo Luận Mới
-              </h3>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg font-bold"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateThread} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  Chọn Khóa Học
-                </label>
-                <select
-                  value={newCourseId}
-                  onChange={(e) => setNewCourseId(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                >
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  Tiêu Đề Thắc Mắc *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="Ví dụ: Làm thế nào để tính điểm Loss Function trong bài 1?"
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
-                  Nội Dung Chi Tiết (Tùy chọn)
-                </label>
-                <textarea
-                  rows={4}
-                  value={newContent}
-                  onChange={(e) => setNewContent(e.target.value)}
-                  placeholder="Mô tả cụ thể câu hỏi hoặc đoạn code bạn đang gặp vướng mắc..."
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold transition-all"
-                >
-                  Hủy Bỏ
-                </button>
-                <button
-                  type="submit"
-                  disabled={submittingThread || !newTitle.trim()}
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-blue-600/20"
-                >
-                  {submittingThread ? "Đang tạo..." : "Đăng Thảo Luận"}
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title={t("forum.createPost")}
+        size="lg"
+      >
+        <form onSubmit={handleCreateThread} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+              {t("navbar.catalog")}
+            </label>
+            <select
+              value={newCourseId}
+              onChange={(e) => setNewCourseId(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
+            >
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+              Title *
+            </label>
+            <input
+              type="text"
+              required
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder={t("forum.postTitlePlaceholder")}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+              Content
+            </label>
+            <textarea
+              rows={4}
+              value={newContent}
+              onChange={(e) => setNewContent(e.target.value)}
+              placeholder={t("forum.postContentPlaceholder")}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => setShowCreateModal(false)}
+              className="px-4 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+            >
+              {t("courseDetail.cancel")}
+            </button>
+            <button
+              type="submit"
+              disabled={submittingThread || !newTitle.trim()}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-blue-600/20 cursor-pointer"
+            >
+              {submittingThread ? "..." : t("forum.submitPost")}
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal Edit Thread */}
+      <Modal
+        isOpen={Boolean(editingThread)}
+        onClose={() => setEditingThread(null)}
+        title={t("forum.editThreadModalTitle")}
+        size="lg"
+      >
+        <form onSubmit={handleUpdateThread} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+              Title *
+            </label>
+            <input
+              type="text"
+              required
+              value={editThreadTitle}
+              onChange={(e) => setEditThreadTitle(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+              Content
+            </label>
+            <textarea
+              rows={4}
+              value={editThreadContent}
+              onChange={(e) => setEditThreadContent(e.target.value)}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              onClick={() => setEditingThread(null)}
+              className="px-4 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+            >
+              {t("courseDetail.cancel")}
+            </button>
+            <button
+              type="submit"
+              disabled={submittingEditThread || !editThreadTitle.trim()}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-blue-600/20 cursor-pointer"
+            >
+              {submittingEditThread ? "..." : t("forum.saveChanges")}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

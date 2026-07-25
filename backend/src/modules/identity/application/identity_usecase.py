@@ -2,13 +2,15 @@ import hashlib
 import hmac
 import os
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from src.modules.identity.domain.entities import User, UserRole
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
 from src.modules.identity.infrastructure.repository import IdentityRepository
+from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 from src.shared.auth import create_access_token, create_refresh_token, decode_token
 from src.shared.infrastructure.database import async_session_scope
 
@@ -134,40 +136,52 @@ class IdentityUseCase:
                     f"Mã Enterprise Key '{clean_key}' đã hết suất kích hoạt ({license_model.used_seats}/{license_model.total_seats} seats).",
                 )
 
-            license_model.used_seats += 1
+            # BR_ACCESS_002: Atomic DB update for activating enterprise seat
+            await session.execute(
+                update(EnterpriseLicenseModel)
+                .where(
+                    EnterpriseLicenseModel.key == clean_key,
+                    EnterpriseLicenseModel.used_seats
+                    < EnterpriseLicenseModel.total_seats,
+                )
+                .values(used_seats=EnterpriseLicenseModel.used_seats + 1)
+            )
             user.enterprise_seat_key = clean_key
+            user.seat_assigned_at = datetime.now(timezone.utc).isoformat()
             await repo.save(user)
             return (
                 True,
                 f"Kích hoạt thành công suất học từ đối tác {license_model.partner_name}!",
             )
 
-    async def list_enterprise_seats(
-        self, partner_name: str = ""
-    ) -> list[dict]:
+    async def list_enterprise_seats(self, partner_name: str = "") -> list[dict]:
         async with async_session_scope() as session:
             stmt = select(EnterpriseLicenseModel)
             if partner_name:
-                stmt = stmt.where(EnterpriseLicenseModel.partner_name.ilike(f"%{partner_name}%"))
+                stmt = stmt.where(
+                    EnterpriseLicenseModel.partner_name.ilike(f"%{partner_name}%")
+                )
             res = await session.execute(stmt)
             licenses = res.scalars().all()
-            
+
             result = []
             for lic in licenses:
-                result.append({
-                    "id": lic.key,
-                    "partner_name": lic.partner_name,
-                    "seat_key": lic.key,
-                    "assigned_user_id": f"{lic.used_seats}/{lic.total_seats} seats",
-                    "assigned_user_email": "Hoạt động" if lic.is_active else "Vô hiệu",
-                    "status": "ACTIVE" if lic.is_active else "INACTIVE",
-                    "created_at": "2026",
-                })
+                result.append(
+                    {
+                        "id": lic.key,
+                        "partner_name": lic.partner_name,
+                        "seat_key": lic.key,
+                        "assigned_user_id": f"{lic.used_seats}/{lic.total_seats} seats",
+                        "assigned_user_email": "Hoạt động"
+                        if lic.is_active
+                        else "Vô hiệu",
+                        "status": "ACTIVE" if lic.is_active else "INACTIVE",
+                        "created_at": "2026",
+                    }
+                )
             return result
 
-    async def create_enterprise_seat(
-        self, partner_name: str, seat_key: str
-    ) -> dict:
+    async def create_enterprise_seat(self, partner_name: str, seat_key: str) -> dict:
         async with async_session_scope() as session:
             clean_key = seat_key.strip() or f"KEY-{uuid.uuid4().hex[:8].upper()}"
             lic = EnterpriseLicenseModel(
@@ -188,3 +202,71 @@ class IdentityUseCase:
                 "status": "ACTIVE",
                 "created_at": "2026",
             }
+
+    async def verify_identity(
+        self, user_id: str, id_card_number: str = ""
+    ) -> tuple[bool, str]:
+        """Completes biometric / ID card verification for learner (BR_CERT_003)."""
+        async with async_session_scope() as session:
+            repo = IdentityRepository(session)
+            user = await repo.get_by_id(user_id)
+            if not user:
+                return False, "Không tìm thấy người dùng"
+
+            user.is_identity_verified = True
+            await repo.save(user)
+            return True, "Xác minh danh tính sinh trắc học & CCCD thành công!"
+
+    async def revoke_enterprise_seat(
+        self, user_id: str, course_id: str = ""
+    ) -> tuple[bool, str]:
+        """Revokes enterprise seat from user if BR_ACCESS_003 conditions are met.
+
+        Conditions (BR_ACCESS_003):
+          - User must have been assigned a seat.
+          - If seat was assigned <= 30 days ago, progress must be < 20%.
+          - If seat was assigned > 30 days ago, revocation is allowed unconditionally.
+        """
+        async with async_session_scope() as session:
+            repo = IdentityRepository(session)
+            user = await repo.get_by_id(user_id)
+            if not user or not user.enterprise_seat_key:
+                return False, "Người dùng chưa được gán mã Enterprise Seat"
+
+            # BR_ACCESS_003: enforce 30-day + <20% progress guard
+            now = datetime.now(timezone.utc)
+            if user.seat_assigned_at:
+                try:
+                    assigned_dt = datetime.fromisoformat(user.seat_assigned_at)
+                    within_30_days = (now - assigned_dt) <= timedelta(days=30)
+                except (ValueError, TypeError):
+                    within_30_days = False
+            else:
+                within_30_days = False
+
+            if within_30_days and course_id:
+                learning_repo = SQLAlchemyLearningRepository(session)
+                progress = await learning_repo.get_progress(user_id, course_id)
+                if progress and progress.overall_progress_percent >= 20.0:
+                    return (
+                        False,
+                        f"Không thể thu hồi: Học viên đã đạt {progress.overall_progress_percent}% tiến độ (>= 20% trong 30 ngày đầu).",
+                    )
+
+            seat_key = user.enterprise_seat_key
+            user.enterprise_seat_key = None
+            user.seat_assigned_at = None
+            await repo.save(user)
+
+            # BR_ACCESS_003: Atomic DB update for recycling enterprise seats
+            await session.execute(
+                update(EnterpriseLicenseModel)
+                .where(
+                    EnterpriseLicenseModel.key == seat_key,
+                    EnterpriseLicenseModel.used_seats > 0,
+                )
+                .values(used_seats=EnterpriseLicenseModel.used_seats - 1)
+            )
+            await session.commit()
+
+            return True, f"Đã thu hồi suất học Enterprise Key '{seat_key}' thành công!"

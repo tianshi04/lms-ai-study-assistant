@@ -6,7 +6,7 @@
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%2017%20pgvector-blueviolet)](backend/docker-compose.yml)
 [![Protocol](https://img.shields.io/badge/API-ConnectRPC%20%2F%20Protobuf-orange)](proto/)
 
-A state-of-the-art **Coursera-style Online Learning Management System (LMS)** built with a **Modular Monolith architecture** following **Domain-Driven Design (DDD)** principles. The platform features an integrated **Coursera AI Coach** powered by Retrieval-Augmented Generation (RAG) using PostgreSQL 17 `pgvector`, providing interactive, Socratic self-learning assistance.
+A state-of-the-art **Coursera-style Online Learning Management System (LMS)** built with a **Modular Monolith architecture** following **Domain-Driven Design (DDD)** principles.
 
 ---
 
@@ -38,7 +38,6 @@ A state-of-the-art **Coursera-style Online Learning Management System (LMS)** bu
 - 🎓 **Structured Learning Hierarchy:** Specialization → Course → Module/Week → Lesson → Learning Items.
 - 🎥 **Interactive Video Player:** Supports VTT subtitles, scrolling interactive transcripts, in-video quiz checkpoints, and light/dark theme adaptation.
 - 📊 **Dynamic Learning Progress:** Automatic video completion tracking (completes at $\ge 80\%$ watch time), lesson checkboxes, real-time course percentage progress, and flexible deadline resetting.
-- 🤖 **Coursera AI Coach (Socratic RAG):** Context-aware AI assistant utilizing video transcript embeddings stored in PostgreSQL `pgvector` to explain concepts, summarize content, and query course material.
 - 📝 **Assessments & Auto-Grading:** Practice quizzes, graded exams (pass grade threshold, cooldowns), auto-graded coding lab sandboxes, and rubric-based peer reviews.
 - 💬 **Lesson-Level Discussion Forums:** In-context discussion threads with staff answer pinning, upvoting/downvoting, and moderation.
 - 📜 **Financial Aid & Verified Certificates:** Financial Aid application workflow (150-word essay submission) and public verified digital certificates with shareable QR codes / OpenBadges.
@@ -63,7 +62,7 @@ The project follows a **Contract-First Modular Monolith** pattern:
                   │  ┌──────────┬───────────┬──────────────┐ │
                   │  │ Catalog  │ Learning  │ Assessment   │ │
                   │  ├──────────┼───────────┼──────────────┤ │
-                  │  │ AI Coach │ Identity  │ Certificate  │ │
+                  │  │ Forum    │ Identity  │ Certificate  │ │
                   │  └──────────┴───────────┴──────────────┘ │
                   └────────┬─────────────────────┬───────────┘
                            │                     │
@@ -116,7 +115,7 @@ Each backend module enforces strict DDD layer separation:
 │   │   │   ├── catalog/      # Course catalog bounded context
 │   │   │   ├── learning/     # Video player & progress tracking bounded context
 │   │   │   ├── assessment/   # Quizzes & peer review bounded context
-│   │   │   ├── ai_coach/     # Vector RAG & AI tutor bounded context
+│   │   │   ├── forum/        # Discussion forum bounded context
 │   │   │   ├── identity/     # User identity & financial aid bounded context
 │   │   │   └── certificate/  # Certificate verification bounded context
 │   │   ├── shared/           # Shared kernel (Base Entity, Value Object, DB Session)
@@ -133,15 +132,13 @@ Each backend module enforces strict DDD layer separation:
 │   │   └── gen/              # Auto-generated TypeScript stubs (DO NOT EDIT)
 │   └── package.json          # NPM package specification
 ├── proto/                    # Central Protocol Buffer shared contracts
-│   ├── ai_coach/             # AI Coach RPC schemas
 │   ├── assessment/           # Assessment & Quiz RPC schemas
 │   ├── catalog/              # Catalog & Course RPC schemas
 │   ├── certificate/          # Certificate verification RPC schemas
 │   ├── forum/                # Discussion forum RPC schemas
 │   ├── identity/             # Identity & Financial Aid RPC schemas
 │   └── learning/             # Learning progress RPC schemas
-├── docs/                     # Architectural & Business specifications
-└── SPRINT_PLAN.md            # Sprint execution roadmap
+└── docs/                     # Architectural & Business specifications
 ```
 
 ---
@@ -152,7 +149,7 @@ Each backend module enforces strict DDD layer separation:
 | :--- | :--- | :--- | :--- |
 | **Catalog & Learning** | `catalog`, `learning` | `modules/catalog/`<br>`modules/learning/` | `/courses`<br>`/learn/[courseId]` |
 | **Assessments** | `assessment` | `modules/assessment/` | `/assessments`<br>`/peer-review` |
-| **Coursera AI Coach** | `ai_coach`, `forum` | `modules/ai_coach/`<br>`modules/forum/` | `/forum`<br>Widget AI Coach (Video player) |
+| **Discussion Forum** | `forum` | `modules/forum/` | `/forum` |
 | **Identity & Certificates**| `identity`, `certificate` | `modules/identity/`<br>`modules/certificate/` | `/auth`<br>`/financial-aid`<br>`/verify/[certId]` |
 
 ---
@@ -284,6 +281,7 @@ Run these commands from the `backend/` directory:
 
 | Command | Description |
 | :--- | :--- |
+| `make setup` | Install and sync Python dependencies (`uv sync`) |
 | `make infra` | Start infrastructure containers (PostgreSQL 17 `pgvector` & MinIO) |
 | `make infra-down` | Stop infrastructure containers (preserves DB volume data) |
 | `make infra-clean` | Stop containers and wipe database volume completely (`down -v`) |

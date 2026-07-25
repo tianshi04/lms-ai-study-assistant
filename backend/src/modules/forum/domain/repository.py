@@ -27,11 +27,42 @@ class IForumRepository(ABC):
         pass
 
     @abstractmethod
-    async def vote_post(self, post_id: str, user_id: str = "", is_upvote: bool = True) -> int:
+    async def vote_post(
+        self, post_id: str, user_id: str = "", is_upvote: bool = True
+    ) -> int:
         """Vote on a thread or reply by post_id. Toggles vote per user and returns updated upvote count."""
         pass
 
     @abstractmethod
     async def pin_staff_answer(self, reply_id: str, ta_user_id: str) -> bool:
         """Pin a reply as staff answer."""
+        pass
+
+    @abstractmethod
+    async def get_reply_by_id(self, reply_id: str) -> ForumReplyEntity | None:
+        """Get a reply by its ID."""
+        pass
+
+    @abstractmethod
+    async def update_thread(
+        self, thread_id: str, title: str, content: str, edited_at: str
+    ) -> ForumThreadEntity | None:
+        """Update thread title/content and mark as edited."""
+        pass
+
+    @abstractmethod
+    async def delete_thread(self, thread_id: str) -> bool:
+        """Delete thread by ID."""
+        pass
+
+    @abstractmethod
+    async def update_reply(
+        self, reply_id: str, content: str, edited_at: str
+    ) -> ForumReplyEntity | None:
+        """Update reply content and mark as edited."""
+        pass
+
+    @abstractmethod
+    async def delete_reply(self, reply_id: str) -> bool:
+        """Delete reply by ID."""
         pass

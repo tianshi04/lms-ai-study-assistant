@@ -5,7 +5,11 @@ from sqlalchemy.orm import selectinload
 
 from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
 from src.modules.forum.domain.repository import IForumRepository
-from src.modules.forum.infrastructure.models import ForumReplyORM, ForumThreadORM, ForumVoteORM
+from src.modules.forum.infrastructure.models import (
+    ForumReplyORM,
+    ForumThreadORM,
+    ForumVoteORM,
+)
 
 
 class ForumRepository(IForumRepository):
@@ -26,6 +30,9 @@ class ForumRepository(IForumRepository):
             upvote_count=orm.upvote_count,
             created_at=orm.created_at,
             is_upvoted_by_me=is_voted,
+            is_edited=orm.is_edited,
+            edited_at=orm.edited_at,
+            author_user_id=orm.author_user_id,
         )
 
     def _to_thread_entity(
@@ -45,6 +52,9 @@ class ForumRepository(IForumRepository):
             is_staff_pinned=orm.is_staff_pinned,
             replies=replies,
             is_upvoted_by_me=is_voted,
+            is_edited=orm.is_edited,
+            edited_at=orm.edited_at,
+            author_user_id=orm.author_user_id,
         )
 
     async def list_threads(
@@ -63,7 +73,7 @@ class ForumRepository(IForumRepository):
             query = query.where(ForumThreadORM.course_id == course_id)
         if item_id:
             query = query.where(ForumThreadORM.item_id == item_id)
-        
+
         query = query.order_by(
             ForumThreadORM.is_staff_pinned.desc(),
             ForumThreadORM.created_at.desc(),
@@ -85,6 +95,14 @@ class ForumRepository(IForumRepository):
             return None
         return self._to_thread_entity(orm)
 
+    async def get_reply_by_id(self, reply_id: str) -> ForumReplyEntity | None:
+        query = select(ForumReplyORM).where(ForumReplyORM.id == reply_id)
+        result = await self.session.execute(query)
+        orm = result.scalar_one_or_none()
+        if not orm:
+            return None
+        return self._to_reply_entity(orm)
+
     async def create_thread(self, thread: ForumThreadEntity) -> ForumThreadEntity:
         orm = ForumThreadORM(
             id=thread.id,
@@ -93,9 +111,12 @@ class ForumRepository(IForumRepository):
             title=thread.title,
             author_name=thread.author_name,
             author_role=thread.author_role,
+            author_user_id=thread.author_user_id,
             created_at=thread.created_at,
             upvote_count=thread.upvote_count,
             is_staff_pinned=thread.is_staff_pinned,
+            is_edited=thread.is_edited,
+            edited_at=thread.edited_at,
         )
         self.session.add(orm)
         await self.session.commit()
@@ -104,23 +125,82 @@ class ForumRepository(IForumRepository):
         reloaded = await self.get_thread_by_id(orm.id)
         return reloaded or self._to_thread_entity(orm)
 
+    async def update_thread(
+        self, thread_id: str, title: str, content: str, edited_at: str
+    ) -> ForumThreadEntity | None:
+        stmt = select(ForumThreadORM).where(ForumThreadORM.id == thread_id)
+        res = await self.session.execute(stmt)
+        orm = res.scalar_one_or_none()
+        if not orm:
+            return None
+        if title:
+            orm.title = title
+        orm.is_edited = True
+        orm.edited_at = edited_at
+        await self.session.commit()
+        return await self.get_thread_by_id(thread_id)
+
+    async def delete_thread(self, thread_id: str) -> bool:
+        stmt = select(ForumThreadORM).where(ForumThreadORM.id == thread_id)
+        res = await self.session.execute(stmt)
+        orm = res.scalar_one_or_none()
+        if not orm:
+            return False
+        await self.session.delete(orm)
+        await self.session.commit()
+        return True
+
     async def create_reply(self, reply: ForumReplyEntity) -> ForumReplyEntity:
         orm = ForumReplyORM(
             id=reply.id,
             thread_id=reply.thread_id,
             author_name=reply.author_name,
             author_role=reply.author_role,
+            author_user_id=reply.author_user_id,
             content=reply.content,
             is_staff_answer=reply.is_staff_answer,
             upvote_count=reply.upvote_count,
             created_at=reply.created_at,
+            is_edited=reply.is_edited,
+            edited_at=reply.edited_at,
         )
         self.session.add(orm)
         await self.session.commit()
 
         return self._to_reply_entity(orm)
 
-    async def vote_post(self, post_id: str, user_id: str = "", is_upvote: bool = True) -> int:
+    async def update_reply(
+        self, reply_id: str, content: str, edited_at: str
+    ) -> ForumReplyEntity | None:
+        stmt = select(ForumReplyORM).where(ForumReplyORM.id == reply_id)
+        res = await self.session.execute(stmt)
+        orm = res.scalar_one_or_none()
+        if not orm:
+            return None
+        if content:
+            orm.content = content
+        orm.is_edited = True
+        orm.edited_at = edited_at
+        await self.session.commit()
+        return self._to_reply_entity(orm)
+
+    async def delete_reply(self, reply_id: str) -> bool:
+        stmt = select(ForumReplyORM).where(ForumReplyORM.id == reply_id)
+        res = await self.session.execute(stmt)
+        orm = res.scalar_one_or_none()
+        if not orm:
+            return False
+        await self.session.delete(orm)
+        await self.session.commit()
+        return True
+        self.session.add(orm)
+        await self.session.commit()
+
+        return self._to_reply_entity(orm)
+
+    async def vote_post(
+        self, post_id: str, user_id: str = "", is_upvote: bool = True
+    ) -> int:
         delta = 1
         if user_id:
             # Check if user has already voted on this post
@@ -171,9 +251,11 @@ class ForumRepository(IForumRepository):
             return False
 
         reply_orm.is_staff_answer = True
-        
+
         # Mark thread as staff pinned
-        thread_stmt = select(ForumThreadORM).where(ForumThreadORM.id == reply_orm.thread_id)
+        thread_stmt = select(ForumThreadORM).where(
+            ForumThreadORM.id == reply_orm.thread_id
+        )
         t_res = await self.session.execute(thread_stmt)
         thread_orm = t_res.scalar_one_or_none()
         if thread_orm:

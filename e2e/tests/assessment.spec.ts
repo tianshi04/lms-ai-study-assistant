@@ -82,4 +82,48 @@ test.describe('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () 
     // Verify submission success badge or grade peers tab unlocked
     await expect(page.locator('text=/Đã Nộp Bài|Submit Peer Assignment|Rubric Criteria Scoring/i').first()).toBeVisible({ timeout: 10000 });
   });
+
+  test('should allow grading peer submission using Rubric criteria', async ({ page }) => {
+    const assessmentPage = new AssessmentPage(page);
+    await assessmentPage.goto();
+    await assessmentPage.verifyPageLoaded();
+
+    await assessmentPage.switchTab('peer');
+    if (await assessmentPage.submitPeerAssignmentButton.isVisible()) {
+      await assessmentPage.submitPeerAssignment();
+    }
+
+    // Switch to Grade Peers tab and submit grade for Peer #1
+    await assessmentPage.gradeFirstPeer();
+  });
+
+  test('should allow submitting Grade Appeal to TA (BR_PEER_003)', async ({ page }) => {
+    const assessmentPage = new AssessmentPage(page);
+    await assessmentPage.goto();
+    await assessmentPage.verifyPageLoaded();
+
+    await assessmentPage.switchTab('peer');
+    if (await assessmentPage.submitPeerAssignmentButton.isVisible()) {
+      await assessmentPage.submitPeerAssignment();
+    }
+
+    const appealReason = 'Peer reviewers gave lower score on documentation section despite complete setup guide.';
+    await assessmentPage.submitAppeal(appealReason);
+
+    await expect(page.locator('text=/Appeal status:|PENDING|TA will review/i').first()).toBeVisible({ timeout: 5000 });
+  });
+
+  test('should allow reporting malicious or spam peer review (BR_PEER_005)', async ({ page }) => {
+    const assessmentPage = new AssessmentPage(page);
+    await assessmentPage.goto();
+    await assessmentPage.verifyPageLoaded();
+
+    await assessmentPage.switchTab('peer');
+    const reportBtn = page.getByRole('button', { name: /Report Review|Báo cáo/i }).first();
+    if (await reportBtn.isVisible()) {
+      await reportBtn.click();
+      await expect(page.locator('text=/Đã gửi báo cáo|TA Queue|bất thường/i').first()).toBeVisible({ timeout: 5000 });
+    }
+  });
 });
+

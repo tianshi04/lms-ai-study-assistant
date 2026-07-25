@@ -38,6 +38,36 @@ test.describe('Full System Blackbox - Financial Aid & Certificate Verification (
     await expect(page.locator('text=/thành công|PENDING|Đã nộp|Trạng thái/i').first()).toBeVisible({ timeout: 10000 });
   });
 
+  test('should allow instructor to view pending financial aid applications and approve', async ({ page }) => {
+    const aidPage = new FinancialAidPage(page);
+    await aidPage.gotoInstructorReview();
+    await expect(page).toHaveURL(/\/instructor\/financial-aid/);
+
+    // Switch to PENDING tab
+    await aidPage.switchStatusTab('PENDING');
+    await expect(page.locator('text=/Xét duyệt Đơn Hỗ trợ Tài chính/i')).toBeVisible();
+
+    // If there is any pending application, test approving
+    if (await page.getByRole('button', { name: /Phê duyệt đơn/i }).first().isVisible()) {
+      await aidPage.approveFirstApplication();
+      await expect(page.locator('text=/Đã phê duyệt đơn|Approved/i').first()).toBeVisible({ timeout: 5000 });
+    }
+  });
+
+  test('should allow instructor to reject financial aid application', async ({ page }) => {
+    const aidPage = new FinancialAidPage(page);
+    await aidPage.gotoInstructorReview();
+    await expect(page).toHaveURL(/\/instructor\/financial-aid/);
+
+    await aidPage.switchStatusTab('PENDING');
+
+    // If pending application exists, test rejecting
+    if (await page.getByRole('button', { name: /Từ chối đơn/i }).first().isVisible()) {
+      await aidPage.rejectFirstApplication();
+      await expect(page.locator('text=/Đã từ chối đơn|Rejected/i').first()).toBeVisible({ timeout: 5000 });
+    }
+  });
+
   test('should load public certificate verification portal', async ({ page }) => {
     const verifyPage = new VerifyPortalPage(page);
     await verifyPage.goto();
@@ -58,3 +88,4 @@ test.describe('Full System Blackbox - Financial Aid & Certificate Verification (
     await expect(page.locator('body')).toBeVisible();
   });
 });
+

@@ -1,3 +1,5 @@
+from connectrpc.code import Code
+from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
 
 from src.gen.assessment.v1 import assessment_pb as pb
@@ -8,7 +10,6 @@ from src.shared.auth import require_current_user
 
 
 class AssessmentHandler(AssessmentService):
-
     def __init__(self, use_case: AssessmentUseCase) -> None:
         self.use_case = use_case
 
@@ -48,7 +49,9 @@ class AssessmentHandler(AssessmentService):
     async def submit_auto_graded_lab(
         self,
         request: pb.SubmitAutoGradedLabRequest,
-        ctx: RequestContext[pb.SubmitAutoGradedLabRequest, pb.SubmitAutoGradedLabResponse],
+        ctx: RequestContext[
+            pb.SubmitAutoGradedLabRequest, pb.SubmitAutoGradedLabResponse
+        ],
     ) -> pb.SubmitAutoGradedLabResponse:
         current_user = require_current_user()
         res = await self.use_case.submit_auto_graded_lab(
@@ -69,7 +72,9 @@ class AssessmentHandler(AssessmentService):
     async def submit_peer_assignment(
         self,
         request: pb.SubmitPeerAssignmentRequest,
-        ctx: RequestContext[pb.SubmitPeerAssignmentRequest, pb.SubmitPeerAssignmentResponse],
+        ctx: RequestContext[
+            pb.SubmitPeerAssignmentRequest, pb.SubmitPeerAssignmentResponse
+        ],
     ) -> pb.SubmitPeerAssignmentResponse:
         current_user = require_current_user()
         sub_id, msg = await self.use_case.submit_peer_assignment(
@@ -83,7 +88,9 @@ class AssessmentHandler(AssessmentService):
     async def get_peer_reviews_to_grade(
         self,
         request: pb.GetPeerReviewsToGradeRequest,
-        ctx: RequestContext[pb.GetPeerReviewsToGradeRequest, pb.GetPeerReviewsToGradeResponse],
+        ctx: RequestContext[
+            pb.GetPeerReviewsToGradeRequest, pb.GetPeerReviewsToGradeResponse
+        ],
     ) -> pb.GetPeerReviewsToGradeResponse:
         current_user = require_current_user()
         items = await self.use_case.get_peer_reviews_to_grade(
@@ -114,7 +121,9 @@ class AssessmentHandler(AssessmentService):
     async def submit_peer_review_grade(
         self,
         request: pb.SubmitPeerReviewGradeRequest,
-        ctx: RequestContext[pb.SubmitPeerReviewGradeRequest, pb.SubmitPeerReviewGradeResponse],
+        ctx: RequestContext[
+            pb.SubmitPeerReviewGradeRequest, pb.SubmitPeerReviewGradeResponse
+        ],
     ) -> pb.SubmitPeerReviewGradeResponse:
         current_user = require_current_user()
         domain_rubrics = [
@@ -147,3 +156,47 @@ class AssessmentHandler(AssessmentService):
         )
         return pb.SubmitGradeAppealResponse(success=success, appeal_status=status)
 
+    async def report_peer_review(
+        self,
+        request: pb.ReportPeerReviewRequest,
+        ctx: RequestContext[pb.ReportPeerReviewRequest, pb.ReportPeerReviewResponse],
+    ) -> pb.ReportPeerReviewResponse:
+        current_user = require_current_user()
+        success, msg = await self.use_case.report_peer_review(
+            user_id=current_user.id,
+            review_id=request.review_id,
+            report_reason=request.report_reason,
+        )
+        return pb.ReportPeerReviewResponse(success=success, message=msg)
+
+    async def regrade_peer_submission_by_staff(
+        self,
+        request: pb.RegradePeerSubmissionByStaffRequest,
+        ctx: RequestContext[
+            pb.RegradePeerSubmissionByStaffRequest,
+            pb.RegradePeerSubmissionByStaffResponse,
+        ],
+    ) -> pb.RegradePeerSubmissionByStaffResponse:
+        current_user = require_current_user()
+        role = (current_user.role or "").lower()
+        is_staff = any(
+            r in role
+            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
+        ) or current_user.role in (
+            "USER_ROLE_INSTRUCTOR",
+            "USER_ROLE_TA",
+            "USER_ROLE_SUPER_ADMIN",
+            "USER_ROLE_PARTNER_ADMIN",
+        )
+        if not is_staff:
+            raise ConnectError(
+                Code.PERMISSION_DENIED,
+                "Chỉ Trợ giảng (TA) hoặc Giảng viên mới có quyền chấm điểm trực tiếp bài nộp của học viên.",
+            )
+
+        success, msg = await self.use_case.regrade_peer_submission_by_staff(
+            submission_id=request.submission_id,
+            staff_user_id=current_user.id,
+            ta_score=request.ta_score,
+        )
+        return pb.RegradePeerSubmissionByStaffResponse(success=success, message=msg)

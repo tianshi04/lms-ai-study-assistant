@@ -1,6 +1,7 @@
 "use client";
 
 import type { LearningProgress } from "@/gen/learning/v1/learning_pb";
+import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 interface DeadlinesPanelProps {
   progress: LearningProgress | null;
@@ -8,10 +9,12 @@ interface DeadlinesPanelProps {
 }
 
 export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelProps) {
+  const { t } = useTranslation();
+
   if (!progress) {
     return (
       <div className="text-center text-xs text-slate-500 py-6">
-        Chưa có thông tin tiến độ bài học.
+        {t("common.loading")}
       </div>
     );
   }
@@ -23,13 +26,13 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="font-bold text-sm text-slate-900 dark:text-white">Lịch Nộp Bài Hàng Tuần (Suggested Deadlines)</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Duy trì tiến độ học tập để đảm bảo hoàn thành khóa học đúng hạn.</p>
+            <h4 className="font-bold text-sm text-slate-900 dark:text-white">{t("player.upcomingDeadlines")}</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{t("courseDetail.flexibleDeadlines")}</p>
           </div>
           {hasOverdue && (
             <button
               onClick={onResetDeadlines}
-              className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-bold rounded-xl shadow-lg transition-all border border-amber-400/30 flex items-center gap-2 animate-pulse"
+              className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-bold rounded-xl shadow-lg transition-all border border-amber-400/30 flex items-center gap-2 animate-pulse cursor-pointer"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -50,8 +53,8 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
               }`}
             >
               <div>
-                <span className="font-bold block">Tuần {d.weekNumber}</span>
-                <span className="text-[10px] opacity-80">Hạn nộp: {d.dueDate}</span>
+                <span className="font-bold block">{t("courseDetail.weekLabel")} {d.weekNumber}</span>
+                <span className="text-[10px] opacity-80">{d.dueDate}</span>
               </div>
               <span
                 className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -60,7 +63,7 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
                     : "bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30"
                 }`}
               >
-                {d.status === 2 ? "OVERDUE (Quá hạn)" : "ON TRACK"}
+                {d.status === 2 ? "OVERDUE" : "ON TRACK"}
               </span>
             </div>
           ))}

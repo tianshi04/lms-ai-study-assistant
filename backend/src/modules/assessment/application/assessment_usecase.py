@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta, timezone
+import random
 import uuid
 from typing import Any, Callable, Optional
+
 
 from src.modules.assessment.domain.entities import (
     GradeAppeal,
@@ -13,13 +15,17 @@ from src.modules.assessment.domain.entities import (
     RubricCriteria,
 )
 from src.modules.assessment.domain.repositories import AssessmentRepositoryInterface
-from src.modules.assessment.infrastructure.repository import SQLAlchemyAssessmentRepository
-from src.modules.assessment.infrastructure.sandbox_service import PythonCodeSandboxExecutor
+from src.modules.assessment.infrastructure.repository import (
+    SQLAlchemyAssessmentRepository,
+)
+from src.modules.assessment.infrastructure.sandbox_service import (
+    PythonCodeSandboxExecutor,
+)
+from src.shared.access_policy import require_paid_access
 from src.shared.infrastructure.database import async_session_scope
 
 
 class AssessmentUseCase:
-
     def __init__(
         self,
         repository: Optional[AssessmentRepositoryInterface] = None,
@@ -51,11 +57,87 @@ class AssessmentUseCase:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             await repo.save_honor_code(agreement)
-        msg = "Academic Honor Code agreed successfully." if is_agreed else "Academic Honor Code rejected."
+        msg = (
+            "Academic Honor Code agreed successfully."
+            if is_agreed
+            else "Academic Honor Code rejected."
+        )
         return is_agreed, msg
 
+    def generate_quiz_session_questions(
+        self, item_id: str, seed: int = 42, pool_size: int = 10, sample_n: int = 5
+    ) -> list[dict[str, Any]]:
+        """Enforces BR_QUIZ_002: Samples N questions from a Pool of M and shuffles options reproducibly."""
+        rng = random.Random(seed)
+
+        # Question pool of M items
+        question_pool: list[dict[str, Any]] = [
+            {
+                "question_id": f"q_{i + 1}",
+                "text": f"Câu hỏi {i + 1} của bài thi {item_id}: Chọn đáp án đúng.",
+                "options": [
+                    "Tùy chọn Đúng (Gốc 0)",
+                    "Tùy chọn Sai 1",
+                    "Tùy chọn Sai 2",
+                    "Tùy chọn Sai 3",
+                ],
+                "correct_option_index": 0,
+            }
+            for i in range(pool_size)
+        ]
+
+        sampled = rng.sample(question_pool, min(sample_n, len(question_pool)))
+        result: list[dict[str, Any]] = []
+
+        for q in sampled:
+            raw_options = q.get("options", [])
+            opts: list[str] = (
+                [str(x) for x in raw_options] if isinstance(raw_options, list) else []
+            )
+            correct_idx = int(q.get("correct_option_index", 0))
+            correct_text = opts[correct_idx]
+            rng.shuffle(opts)
+            new_correct_idx = opts.index(correct_text)
+
+            result.append(
+                {
+                    "question_id": q["question_id"],
+                    "text": q["text"],
+                    "options": opts,
+                    "shuffled_correct_index": new_correct_idx,
+                }
+            )
+
+        return result
+
+    async def start_graded_quiz_session(
+        self, user_id: str, item_id: str, duration_minutes: int = 45
+    ) -> dict[str, Any]:
+        now = datetime.now(timezone.utc)
+        expires_at = now + timedelta(minutes=duration_minutes)
+
+        # BR_QUIZ_002: Generate N-sampled and option-shuffled questions using unique user/attempt seed
+        seed_val = abs(hash(f"{user_id}:{item_id}:{now.isoformat()[:16]}")) % (2**31)
+        questions = self.generate_quiz_session_questions(item_id, seed=seed_val)
+
+        return {
+            "session_id": f"qsess-{uuid.uuid4().hex[:8]}",
+            "start_time_iso": now.isoformat(),
+            "expires_at_iso": expires_at.isoformat(),
+            "duration_minutes": duration_minutes,
+            "session_seed": seed_val,
+            "questions": questions,
+        }
+
+    @require_paid_access()
     async def submit_graded_quiz(
-        self, user_id: str, item_id: str, selected_option_indexes: list[int]
+        self,
+        user_id: str,
+        item_id: str,
+        selected_option_indexes: list[int],
+        start_time_iso: Optional[str] = None,
+        duration_minutes: int = 45,
+        session_seed: Optional[int] = None,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
@@ -68,7 +150,9 @@ class AssessmentUseCase:
                     "passed": False,
                     "attempts_left": 0,
                     "cooldown_seconds_left": 0,
-                    "answer_explanations": ["Academic Honor Code must be agreed before taking quiz."],
+                    "answer_explanations": [
+                        "Academic Honor Code must be agreed before taking quiz."
+                    ],
                 }
 
             # 2. Check Cooldown timer
@@ -83,26 +167,58 @@ class AssessmentUseCase:
                         "passed": False,
                         "attempts_left": 0,
                         "cooldown_seconds_left": seconds_left,
-                        "answer_explanations": [f"Quiz is in 8-hour cooldown period. Please wait {seconds_left}s."],
+                        "answer_explanations": [
+                            f"Quiz is in 8-hour cooldown period. Please wait {seconds_left}s."
+                        ],
                     }
 
-            # 3. Grade Quiz (Sample correct answer pattern: Option index 0 for all or matches)
-            # Default correct options pattern: [0, 1, 2, 0, 1]
-            correct_answers = [0, 1, 2, 0, 1]
+            # 3. Grade Quiz (BR_QUIZ_002: Dynamic shuffled options grading)
+            if session_seed is not None:
+                generated_qs = self.generate_quiz_session_questions(
+                    item_id, seed=session_seed
+                )
+                correct_answers = [q["shuffled_correct_index"] for q in generated_qs]
+            else:
+                correct_answers = [0, 1, 2, 0, 1]
+
             total_questions = len(correct_answers)
             correct_count = 0
             explanations: list[str] = []
 
             for idx, corr in enumerate(correct_answers):
-                user_ans = selected_option_indexes[idx] if idx < len(selected_option_indexes) else -1
+                user_ans = (
+                    selected_option_indexes[idx]
+                    if idx < len(selected_option_indexes)
+                    else -1
+                )
                 if user_ans == corr:
                     correct_count += 1
                     explanations.append(f"Q{idx + 1}: Correct!")
                 else:
-                    explanations.append(f"Q{idx + 1}: Incorrect. Selected option {user_ans}, expected option {corr}.")
+                    explanations.append(
+                        f"Q{idx + 1}: Incorrect. Selected option {user_ans}, expected option {corr}."
+                    )
+
+            if start_time_iso:
+                try:
+                    start_dt = datetime.fromisoformat(start_time_iso)
+                    if (now - start_dt).total_seconds() > duration_minutes * 60:
+                        explanations.insert(
+                            0,
+                            f"Hết thời gian làm bài ({duration_minutes} phút). Máy chủ tự động nộp bài và chấm điểm (Auto-submit on timeout).",
+                        )
+                except ValueError:
+                    pass
 
             score_percent = round((correct_count / total_questions) * 100.0, 2)
-            passed = score_percent >= 80.0
+
+            # BR_QUIZ_001: Highest Score Wins policy
+            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
+            all_scores = [sub.score_percent for sub in prev_submissions] + [
+                score_percent
+            ]
+            highest_score = max(all_scores)
+            passed = highest_score >= 80.0
 
             # 4. Handle Cooldown & Attempts tracking
             failed_count = cooldown.failed_attempts_count if cooldown else 0
@@ -126,7 +242,6 @@ class AssessmentUseCase:
 
             # Save submission
             submission_id = f"sub-{uuid.uuid4().hex[:8]}"
-            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
             attempt_number = len(prev_submissions) + 1
 
             submission = QuizSubmission(
@@ -135,7 +250,7 @@ class AssessmentUseCase:
                 item_id=item_id,
                 selected_option_indexes=selected_option_indexes,
                 score_percent=score_percent,
-                passed=passed,
+                passed=score_percent >= 80.0,
                 attempt_number=attempt_number,
                 created_at=now.isoformat(),
             )
@@ -159,6 +274,7 @@ class AssessmentUseCase:
                 "answer_explanations": explanations,
             }
 
+    @require_paid_access()
     async def submit_auto_graded_lab(
         self, user_id: str, item_id: str, source_code: str, language: str
     ) -> dict[str, Any]:
@@ -210,6 +326,7 @@ class AssessmentUseCase:
             "test_logs": result.test_logs,
         }
 
+    @require_paid_access()
     async def submit_peer_assignment(
         self, user_id: str, item_id: str, submission_url: str, text_content: str
     ) -> tuple[str, str]:
@@ -227,21 +344,30 @@ class AssessmentUseCase:
             repo = await self._get_repo(session)
             await repo.save_peer_submission(submission)
 
-        return sub_id, "Assignment submitted successfully. Please complete 3 peer reviews to view your score."
+        return (
+            sub_id,
+            "Assignment submitted successfully. Please complete 3 peer reviews to view your score.",
+        )
 
     async def get_peer_reviews_to_grade(
         self, user_id: str, item_id: str
     ) -> list[dict[str, Any]]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
-            submissions = await repo.get_peer_submissions_for_item(item_id, exclude_user_id=user_id)
+            submissions = await repo.get_peer_submissions_for_item(
+                item_id, exclude_user_id=user_id
+            )
 
         selected = submissions[:3]
         result: list[dict[str, Any]] = []
 
         default_rubric = [
-            RubricCriteria(criteria_id="c1", title="Code Quality & Structure", max_score=10.0),
-            RubricCriteria(criteria_id="c2", title="Documentation & Comments", max_score=10.0),
+            RubricCriteria(
+                criteria_id="c1", title="Code Quality & Structure", max_score=10.0
+            ),
+            RubricCriteria(
+                criteria_id="c2", title="Documentation & Comments", max_score=10.0
+            ),
             RubricCriteria(criteria_id="c3", title="Test Coverage", max_score=10.0),
         ]
 
@@ -269,7 +395,9 @@ class AssessmentUseCase:
         max_possible = sum(c.max_score for c in graded_criteria) or 1.0
         score_percent = round((total_given / max_possible) * 100.0, 2)
 
-        submission_id = review_id.replace("rev-", "") if review_id.startswith("rev-") else review_id
+        submission_id = (
+            review_id.replace("rev-", "") if review_id.startswith("rev-") else review_id
+        )
 
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
@@ -301,10 +429,47 @@ class AssessmentUseCase:
             )
             await repo.save_peer_review(review)
 
+            # Update final_score on PeerAssignmentSubmission if not graded by staff
+            sub = await repo.get_peer_submission(submission_id)
+            if sub and not sub.graded_by_staff:
+                all_revs = await repo.get_peer_reviews_for_submission(submission_id)
+                if len(all_revs) >= 3:
+                    avg_score = round(
+                        sum(r.total_score for r in all_revs) / len(all_revs), 2
+                    )
+                    sub.final_score = avg_score
+                    await repo.save_peer_submission(sub)
+
         msg = "Peer review graded successfully."
         if is_outlier:
             msg += " (Outlier Flagged: Score variation exceeds 30%, TA notified)."
         return True, msg
+
+    async def regrade_peer_submission_by_staff(
+        self, submission_id: str, staff_user_id: str, ta_score: float
+    ) -> tuple[bool, str]:
+        """TA / Staff Regrade Override (BR_PEER_002, BR_PEER_003).
+        Overriding final_score 100% with TA score and resolving Grade Appeal if present.
+        """
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            sub = await repo.get_peer_submission(submission_id)
+            if not sub:
+                return False, "Không tìm thấy bài nộp dự án"
+
+            sub.final_score = round(ta_score, 2)
+            sub.graded_by_staff = True
+            await repo.save_peer_submission(sub)
+
+            appeal = await repo.get_grade_appeal(submission_id)
+            if appeal:
+                appeal.status = "RESOLVED"
+                await repo.save_grade_appeal(appeal)
+
+            return (
+                True,
+                f"Trợ giảng/Giảng viên đã chấm lại bài nộp thành công với điểm số {sub.final_score}% (TA Override).",
+            )
 
     async def submit_grade_appeal(
         self, user_id: str, submission_id: str, appeal_reason: str
@@ -321,6 +486,77 @@ class AssessmentUseCase:
         )
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
+            sub = await repo.get_peer_submission(submission_id)
+            if sub and sub.user_id != user_id:
+                from connectrpc.code import Code
+                from connectrpc.errors import ConnectError
+
+                raise ConnectError(
+                    Code.PERMISSION_DENIED,
+                    "Bạn chỉ có quyền gửi khiếu nại điểm đối với bài nộp của chính mình.",
+                )
             await repo.save_grade_appeal(appeal)
 
         return True, "PENDING"
+
+    async def list_peer_submissions_needing_staff_regrade(
+        self, item_id: str
+    ) -> list[dict[str, Any]]:
+        """Returns list of peer assignment submissions older than 48 hours (2 days) with fewer than 3 reviews and not yet graded by staff (BR_PEER_004 & BR_PEER_006)."""
+        now = datetime.now(timezone.utc)
+        cold_start_threshold = now - timedelta(hours=48)
+
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            submissions = await repo.get_peer_submissions_for_item(item_id)
+            regrade_list = []
+            for s in submissions:
+                if s.graded_by_staff:
+                    continue
+                try:
+                    sub_dt = datetime.fromisoformat(s.created_at)
+                except (ValueError, TypeError):
+                    sub_dt = now
+
+                reviews = await repo.get_peer_reviews_for_submission(s.id)
+                if len(reviews) < 3 and sub_dt <= cold_start_threshold:
+                    regrade_list.append(
+                        {
+                            "submission_id": s.id,
+                            "user_id": s.user_id,
+                            "item_id": s.item_id,
+                            "submission_url": s.submission_url,
+                            "text_content": s.text_content,
+                            "review_count": len(reviews),
+                            "created_at": s.created_at,
+                            "needs_staff_regrade": True,
+                        }
+                    )
+            return regrade_list
+
+    async def report_peer_review(
+        self, user_id: str, review_id: str, report_reason: str
+    ) -> tuple[bool, str]:
+        """Reports a malicious or spam peer review (BR_PEER_005)."""
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            submission_id = (
+                review_id.replace("rev-", "")
+                if review_id.startswith("rev-")
+                else review_id
+            )
+            appeal_id = f"report-{uuid.uuid4().hex[:8]}"
+            now_iso = datetime.now(timezone.utc).isoformat()
+            appeal = GradeAppeal(
+                id=appeal_id,
+                user_id=user_id,
+                submission_id=submission_id,
+                appeal_reason=f"[REPORT_REVIEW:{review_id}] {report_reason}",
+                status="PENDING_STAFF_REVIEW",
+                created_at=now_iso,
+            )
+            await repo.save_grade_appeal(appeal)
+            return (
+                True,
+                "Đã gửi báo cáo lượt chấm chéo bất thường đến Trợ giảng (TA Review Queue). Bài nộp chuyển sang trạng thái PENDING_STAFF_REVIEW.",
+            )

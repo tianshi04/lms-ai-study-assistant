@@ -40,6 +40,7 @@ class LearningItem(Entity):
         interactive_transcripts: list[InteractiveTranscript] | None = None,
         in_video_quizzes: list[InVideoQuiz] | None = None,
         reading_markdown: str = "",
+        order_index: int = 0,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -50,6 +51,7 @@ class LearningItem(Entity):
         self.interactive_transcripts = interactive_transcripts or []
         self.in_video_quizzes = in_video_quizzes or []
         self.reading_markdown = reading_markdown
+        self.order_index = order_index
 
 
 class Lesson(Entity):
@@ -59,11 +61,13 @@ class Lesson(Entity):
         title: str,
         estimated_minutes: int = 30,
         items: list[LearningItem] | None = None,
+        order_index: int = 0,
     ) -> None:
         super().__init__(id=id)
         self.title = title
         self.estimated_minutes = estimated_minutes
         self.items = items or []
+        self.order_index = order_index
 
 
 class WeekModule(Entity):
@@ -82,6 +86,28 @@ class WeekModule(Entity):
         self.lessons = lessons or []
 
 
+class CourseReview(Entity):
+    def __init__(
+        self,
+        id: str,
+        user_id: str,
+        user_name: str,
+        course_id: str,
+        rating_stars: int,
+        comment_text: str = "",
+        created_at: str = "",
+        is_verified_completer: bool = False,
+    ) -> None:
+        super().__init__(id=id)
+        self.user_id = user_id
+        self.user_name = user_name
+        self.course_id = course_id
+        self.rating_stars = rating_stars
+        self.comment_text = comment_text
+        self.created_at = created_at
+        self.is_verified_completer = is_verified_completer
+
+
 class Course(Entity):
     def __init__(
         self,
@@ -93,6 +119,10 @@ class Course(Entity):
         partner_logo_url: str = "",
         instructor_names: list[str] | None = None,
         week_modules: list[WeekModule] | None = None,
+        average_rating: float = 0.0,
+        review_count: int = 0,
+        owner_id: str = "",
+        co_instructor_ids: list[str] | None = None,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -102,6 +132,10 @@ class Course(Entity):
         self.partner_logo_url = partner_logo_url
         self.instructor_names = instructor_names or []
         self.week_modules = week_modules or []
+        self.average_rating = average_rating
+        self.review_count = review_count
+        self.owner_id = owner_id
+        self.co_instructor_ids = co_instructor_ids or []
 
 
 class Specialization(Entity):
@@ -120,3 +154,52 @@ class Specialization(Entity):
         self.partner_name = partner_name
         self.partner_logo_url = partner_logo_url
         self.course_ids = course_ids or []
+
+
+class CourseAnnouncement(Entity):
+    def __init__(
+        self,
+        id: str,
+        course_id: str,
+        author_id: str,
+        author_name: str,
+        title: str,
+        content: str,
+        created_at: str = "",
+    ) -> None:
+        super().__init__(id=id)
+        self.course_id = course_id
+        self.author_id = author_id
+        self.author_name = author_name
+        self.title = title
+        self.content = content
+        self.created_at = created_at
+
+
+@dataclass(frozen=True)
+class EnrolledStudent(ValueObject):
+    user_id: str
+    user_name: str
+    user_email: str
+    progress_percent: float
+    enrolled_at: str
+
+
+class InstructorAnalytics(Entity):
+    def __init__(
+        self,
+        id: str,
+        course_id: str,
+        total_enrolled_students: int = 0,
+        average_completion_rate: float = 0.0,
+        average_rating: float = 0.0,
+        review_count: int = 0,
+        students: list[EnrolledStudent] | None = None,
+    ) -> None:
+        super().__init__(id=id)
+        self.course_id = course_id
+        self.total_enrolled_students = total_enrolled_students
+        self.average_completion_rate = average_completion_rate
+        self.average_rating = average_rating
+        self.review_count = review_count
+        self.students = students or []

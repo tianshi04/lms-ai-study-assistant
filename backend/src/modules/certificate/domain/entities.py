@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 
 @dataclass
@@ -9,7 +9,7 @@ class FinancialAidApplication:
     course_id: str
     essay_150_words: str
     status: str  # PENDING, APPROVED, REJECTED
-    review_deadline_days_left: int = 14
+    review_deadline_days_left: int = 15
 
 
 @dataclass
@@ -23,5 +23,8 @@ class VerifiedCertificate:
     issue_date: str
     verification_url: str
     qr_code_url: str
-    open_badges_json_ld: str
+    open_badges_json_ld: dict[str, Any]
     course_id: Optional[str] = None
+    is_revoked: bool = False
+    revoked_reason: str = ""
+    specialization_id: Optional[str] = None

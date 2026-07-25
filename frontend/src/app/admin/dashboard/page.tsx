@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, useMemo } from "react";
+import { useReactTable, getCoreRowModel, getSortedRowModel, flexRender, createColumnHelper } from "@tanstack/react-table";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
 import { Navbar } from "@/components/layout/Navbar";
+import { Modal } from "@/components/ui/Modal";
+import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
 
 const emptySubscribe = () => () => {};
+
+const columnHelper = createColumnHelper<EnterpriseSeat>();
 
 export default function AdminEnterpriseDashboardPage() {
   const isMounted = useSyncExternalStore(
@@ -14,8 +19,7 @@ export default function AdminEnterpriseDashboardPage() {
     () => false
   );
 
-  const [seats, setSeats] = useState<EnterpriseSeat[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: seats = [], isLoading: loading, refetch: fetchEnterpriseSeats } = useEnterpriseSeatsQuery();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -34,48 +38,6 @@ export default function AdminEnterpriseDashboardPage() {
   const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
   const isAdmin = userRole === "4" || userRole === "5";
 
-  const fetchEnterpriseSeats = async () => {
-    try {
-      const client = getRpcClient(IdentityService);
-      const res = await client.listEnterpriseSeats({});
-      setSeats(res.seats);
-      if (res.seats.length > 0 && !selectedSeatKey) {
-        setSelectedSeatKey(res.seats[0].seatKey);
-      }
-    } catch (err: unknown) {
-      console.error("Lỗi lấy danh sách Enterprise Seats:", err);
-      const errMsg = err instanceof Error ? err.message : "Không thể tải danh sách suất học Enterprise.";
-      setMessage({ type: "error", text: errMsg });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    let ignore = false;
-    async function load() {
-      try {
-        const client = getRpcClient(IdentityService);
-        const res = await client.listEnterpriseSeats({});
-        if (!ignore) {
-          setSeats(res.seats);
-        }
-      } catch (err: unknown) {
-        if (!ignore) {
-          console.error("Lỗi lấy danh sách Enterprise Seats:", err);
-        }
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    }
-    load();
-    return () => {
-      ignore = true;
-    };
-  }, []);
-
   // Dynamic stat calculations
   const totalUsedSeats = seats.reduce((sum, s) => {
     const match = s.assignedUserId?.match(/^(\d+)\/(\d+)/);
@@ -88,6 +50,37 @@ export default function AdminEnterpriseDashboardPage() {
   }, 0);
 
   const activationRate = totalCapacitySeats > 0 ? ((totalUsedSeats / totalCapacitySeats) * 100).toFixed(1) : "0.0";
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor("partnerName", {
+        header: "Đối Tác Doanh Nghiệp",
+        cell: (info) => info.getValue() || "N/A",
+      }),
+      columnHelper.accessor("seatKey", {
+        header: "Mã Suất Học (License Key)",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor("assignedUserId", {
+        header: "Học Viên / Tỷ Lệ Kích Hoạt",
+        cell: (info) => info.getValue() || "Chưa gán",
+      }),
+      columnHelper.accessor("status", {
+        header: "Trạng Thái Giấy Phép",
+        cell: (info) => info.getValue() || "Sẵn sàng",
+      }),
+    ],
+    []
+  );
+
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const table = useReactTable({
+    data: seats,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
+
 
   // Handlers
   const handleAssignSeat = async (e: React.FormEvent) => {
@@ -313,13 +306,18 @@ export default function AdminEnterpriseDashboardPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase tracking-wider font-bold">
-                    <th className="py-3 px-4">Tên Tổ chức / Đối tác</th>
-                    <th className="py-3 px-4">Mã Enterprise Key</th>
-                    <th className="py-3 px-4">Số suất (Seats)</th>
-                    <th className="py-3 px-4">Trạng thái</th>
-                    <th className="py-3 px-4 text-right">Thao tác</th>
-                  </tr>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr key={headerGroup.id} className="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase tracking-wider font-bold">
+                      {headerGroup.headers.map((header) => (
+                        <th key={header.id} className="py-3 px-4">
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(header.column.columnDef.header, header.getContext())}
+                        </th>
+                      ))}
+                      <th className="py-3 px-4 text-right">Thao tác</th>
+                    </tr>
+                  ))}
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300">
                   {seats.map((seat) => (
@@ -359,126 +357,110 @@ export default function AdminEnterpriseDashboardPage() {
       </main>
 
       {/* Modal: Gán Suất học cho Học viên */}
-      {showAssignModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">Gán Suất học Enterprise</h3>
-              <button onClick={() => setShowAssignModal(false)} className="text-slate-400 hover:text-slate-600">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleAssignSeat} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Mã Học viên (User ID)</label>
-                <input
-                  type="text"
-                  value={targetUserId}
-                  onChange={(e) => setTargetUserId(e.target.value)}
-                  placeholder="Ví dụ: user-learner-demo"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Chọn Mã Enterprise Key</label>
-                <select
-                  value={selectedSeatKey}
-                  onChange={(e) => setSelectedSeatKey(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono font-semibold"
-                  required
-                >
-                  {seats.map((s) => (
-                    <option key={s.id} value={s.seatKey}>
-                      {s.partnerName} ({s.seatKey})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAssignModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md hover:bg-indigo-500 transition-all disabled:opacity-50"
-                >
-                  {saving ? "Đang xử lý..." : "Kích hoạt gán suất học"}
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showAssignModal}
+        onClose={() => setShowAssignModal(false)}
+        title="Gán Suất học Enterprise"
+        size="md"
+      >
+        <form onSubmit={handleAssignSeat} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Mã Học viên (User ID)</label>
+            <input
+              type="text"
+              value={targetUserId}
+              onChange={(e) => setTargetUserId(e.target.value)}
+              placeholder="Ví dụ: user-learner-demo"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
+              required
+            />
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Chọn Mã Enterprise Key</label>
+            <select
+              value={selectedSeatKey}
+              onChange={(e) => setSelectedSeatKey(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono font-semibold"
+              required
+            >
+              {seats.map((s) => (
+                <option key={s.id} value={s.seatKey}>
+                  {s.partnerName} ({s.seatKey})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowAssignModal(false)}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md hover:bg-indigo-500 transition-all disabled:opacity-50"
+            >
+              {saving ? "Đang xử lý..." : "Kích hoạt gán suất học"}
+            </button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Modal: Tạo Mã Enterprise Key Mới */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <h3 className="font-extrabold text-lg text-slate-900 dark:text-white">Tạo Mã Enterprise Mới</h3>
-              <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-slate-600">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateSeatKey} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tên Trường học / Doanh nghiệp Đối tác</label>
-                <input
-                  type="text"
-                  value={newPartnerName}
-                  onChange={(e) => setNewPartnerName(e.target.value)}
-                  placeholder="Ví dụ: Trường Đại học Bách Khoa TP.HCM"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Mã Enterprise Key</label>
-                <input
-                  type="text"
-                  value={newSeatKey}
-                  onChange={(e) => setNewSeatKey(e.target.value)}
-                  placeholder="Ví dụ: BKTPHCM-ENTERPRISE-2026"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
-                  required
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md hover:bg-indigo-500 transition-all disabled:opacity-50"
-                >
-                  {saving ? "Đang tạo..." : "Xác nhận tạo Giấy phép"}
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title="Tạo Mã Enterprise Mới"
+        size="md"
+      >
+        <form onSubmit={handleCreateSeatKey} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Tên Trường học / Doanh nghiệp Đối tác</label>
+            <input
+              type="text"
+              value={newPartnerName}
+              onChange={(e) => setNewPartnerName(e.target.value)}
+              placeholder="Ví dụ: Trường Đại học Bách Khoa TP.HCM"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+              required
+            />
           </div>
-        </div>
-      )}
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Mã Enterprise Key</label>
+            <input
+              type="text"
+              value={newSeatKey}
+              onChange={(e) => setNewSeatKey(e.target.value)}
+              placeholder="Ví dụ: BKTPHCM-ENTERPRISE-2026"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
+              required
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setShowCreateModal(false)}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md hover:bg-indigo-500 transition-all disabled:opacity-50"
+            >
+              {saving ? "Đang tạo..." : "Xác nhận tạo Giấy phép"}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

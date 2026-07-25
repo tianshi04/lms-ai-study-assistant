@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package assessment.v1;
 
+import "auth/v1/options.proto";
+
 message SubmitHonorCodeRequest {
   string item_id = 1;
   bool is_agreed = 2;
@@ -101,12 +103,52 @@ message SubmitGradeAppealResponse {
   string appeal_status = 2;
 }
 
+message ReportPeerReviewRequest {
+  string review_id = 1;
+  string report_reason = 2;
+}
+
+message ReportPeerReviewResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message RegradePeerSubmissionByStaffRequest {
+  string submission_id = 1;
+  float ta_score = 2;
+}
+
+message RegradePeerSubmissionByStaffResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 service AssessmentService {
-  rpc SubmitHonorCode(SubmitHonorCodeRequest) returns (SubmitHonorCodeResponse);
-  rpc SubmitGradedQuiz(SubmitGradedQuizRequest) returns (SubmitGradedQuizResponse);
-  rpc SubmitAutoGradedLab(SubmitAutoGradedLabRequest) returns (SubmitAutoGradedLabResponse);
-  rpc SubmitPeerAssignment(SubmitPeerAssignmentRequest) returns (SubmitPeerAssignmentResponse);
-  rpc GetPeerReviewsToGrade(GetPeerReviewsToGradeRequest) returns (GetPeerReviewsToGradeResponse);
-  rpc SubmitPeerReviewGrade(SubmitPeerReviewGradeRequest) returns (SubmitPeerReviewGradeResponse);
-  rpc SubmitGradeAppeal(SubmitGradeAppealRequest) returns (SubmitGradeAppealResponse);
+  rpc SubmitHonorCode(SubmitHonorCodeRequest) returns (SubmitHonorCodeResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc SubmitGradedQuiz(SubmitGradedQuizRequest) returns (SubmitGradedQuizResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc SubmitAutoGradedLab(SubmitAutoGradedLabRequest) returns (SubmitAutoGradedLabResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc SubmitPeerAssignment(SubmitPeerAssignmentRequest) returns (SubmitPeerAssignmentResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetPeerReviewsToGrade(GetPeerReviewsToGradeRequest) returns (GetPeerReviewsToGradeResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc SubmitPeerReviewGrade(SubmitPeerReviewGradeRequest) returns (SubmitPeerReviewGradeResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc SubmitGradeAppeal(SubmitGradeAppealRequest) returns (SubmitGradeAppealResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ReportPeerReview(ReportPeerReviewRequest) returns (ReportPeerReviewResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc RegradePeerSubmissionByStaff(RegradePeerSubmissionByStaffRequest) returns (RegradePeerSubmissionByStaffResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
 }

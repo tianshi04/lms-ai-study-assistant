@@ -36,6 +36,7 @@ from src.modules.assessment.infrastructure.models import (
 )
 from src.modules.catalog.infrastructure.models import (
     CourseModel,
+    CourseReviewModel,
     InVideoQuizModel,
     InteractiveTranscriptModel,
     ItemType,
@@ -48,7 +49,11 @@ from src.modules.certificate.infrastructure.models import (
     CertificateModel,
     FinancialAidModel,
 )
-from src.modules.forum.infrastructure.models import ForumReplyORM, ForumThreadORM, ForumVoteORM
+from src.modules.forum.infrastructure.models import (
+    ForumReplyORM,
+    ForumThreadORM,
+    ForumVoteORM,
+)
 from src.modules.identity.application.identity_usecase import hash_password
 from src.modules.identity.domain.entities import UserRole
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel, UserModel
@@ -74,9 +79,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
     deeplearning_logo = (
         "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg"
     )
-    meta_logo = (
-        "https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg"
-    )
+    meta_logo = "https://upload.wikimedia.org/wikipedia/commons/7/7b/Meta_Platforms_Inc._logo.svg"
 
     # Course 1: Supervised Machine Learning
     course1 = CourseModel(
@@ -87,6 +90,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         partner_name="DeepLearning.AI",
         partner_logo_url=deeplearning_logo,
         instructor_names=["Andrew Ng", "Eddy Shyu"],
+        owner_id="user_instructor_01",
     )
 
     # Week 1
@@ -236,6 +240,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         partner_name="Meta",
         partner_logo_url=meta_logo,
         instructor_names=["Jane Doe"],
+        owner_id="user_instructor_01",
     )
 
     week_web1 = WeekModuleModel(
@@ -318,6 +323,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         partner_name="DeepLearning.AI",
         partner_logo_url=deeplearning_logo,
         instructor_names=["Andrew Ng", "Kian Katanforoosh"],
+        owner_id="user_instructor_01",
     )
     week_dl1 = WeekModuleModel(
         id="week-1-dl",
@@ -385,9 +391,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
                 return
 
         if reset:
-            logger.info(
-                "[SEED] Truncating ALL database tables for full clean reset..."
-            )
+            logger.info("[SEED] Truncating ALL database tables for full clean reset...")
             tables = [f'"{table.name}"' for table in Base.metadata.sorted_tables]
             if tables:
                 await session.execute(
@@ -441,6 +445,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=learner@coursera.ai",
             enterprise_seat_key="ENT-DEMO-2026-X99",
             password_hash=default_pw_hash,
+            is_identity_verified=True,
         )
 
         learner_user2 = UserModel(
@@ -451,6 +456,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=learner2@coursera.ai",
             enterprise_seat_key="ENT-UNI-HCMUT-2026",
             password_hash=default_pw_hash,
+            is_identity_verified=True,
         )
 
         learner_user3 = UserModel(
@@ -461,6 +467,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=learner3@coursera.ai",
             enterprise_seat_key="",
             password_hash=default_pw_hash,
+            is_identity_verified=True,
         )
 
         instructor_user = UserModel(
@@ -616,7 +623,11 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             submission_id="peer_sub_demo_01",
             reviewer_user_id="user_learner_02",
             item_id="item-ml-peer-1",
-            rubric_criteria_json={"problem_formulation": 5, "feature_selection": 5, "model_evaluation": 4},
+            rubric_criteria_json={
+                "problem_formulation": 5,
+                "feature_selection": 5,
+                "model_evaluation": 4,
+            },
             total_score=93.3,
             is_outlier=False,
             created_at="2026-07-22T11:00:00Z",
@@ -626,7 +637,11 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             submission_id="peer_sub_demo_01",
             reviewer_user_id="user_ta_01",
             item_id="item-ml-peer-1",
-            rubric_criteria_json={"problem_formulation": 5, "feature_selection": 5, "model_evaluation": 5},
+            rubric_criteria_json={
+                "problem_formulation": 5,
+                "feature_selection": 5,
+                "model_evaluation": 5,
+            },
             total_score=100.0,
             is_outlier=False,
             created_at="2026-07-22T11:20:00Z",
@@ -683,7 +698,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
                 "Kính gửi Ban Giảng viên và Quản trị viên khóa học, Em hiện là sinh viên chuyên ngành Công nghệ thông tin đang rất khao khát tiếp cận tri thức chuyên sâu về Lập trình Python và AI Agent. Tuy nhiên do hoàn cảnh gia đình thuộc diện khó khăn và chưa có thu nhập độc lập, em chưa có khả năng chi trả học phí đầy đủ cho chứng chỉ khóa học. Em cam kết sẽ học tập nghiêm túc 100% thời lượng, hoàn thành đầy đủ các bài tập thực hành, bài thi Graded Quiz và bài nộp chấm chéo Peer Review đúng hạn. Kiến thức từ khóa học này sẽ là nền tảng quan trọng giúp em chuẩn bị cho đồ án tốt nghiệp và ứng tuyển vị trí thực tập sinh AI Engineer trong tương lai. Em rất mong nhận được sự hỗ trợ tài chính từ nhà trường để tiếp tục con đường học vấn của mình. Em chân thành cảm ơn!"
             ),
             status="PENDING",
-            review_deadline_days_left=14,
+            review_deadline_days_left=15,
         )
         faid2 = FinancialAidModel(
             id="faid_seed_02",
@@ -810,6 +825,37 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         await session.merge(vote1)
         await session.merge(vote2)
         await session.merge(vote3)
+
+        rev1 = CourseReviewModel(
+            id="rev-demo-01",
+            user_id="user_learner_demo",
+            user_name="Nguyễn Văn A",
+            course_id="course-python-ai",
+            rating_stars=5,
+            comment_text="Khóa học cực kỳ chất lượng! Thầy Andrew Ng giảng rất dễ hiểu và chi tiết.",
+            created_at="2026-07-22T14:30:00Z",
+        )
+        rev2 = CourseReviewModel(
+            id="rev-demo-02",
+            user_id="user_learner_02",
+            user_name="Trần Thị B",
+            course_id="course-python-ai",
+            rating_stars=5,
+            comment_text="Bài tập lập trình trên Jupyter notebook chuẩn thực tế, giao diện dễ dùng.",
+            created_at="2026-07-23T09:15:00Z",
+        )
+        rev3 = CourseReviewModel(
+            id="rev-demo-03",
+            user_id="user_learner_03",
+            user_name="Lê Hoàng C",
+            course_id="course-deep-learning",
+            rating_stars=4,
+            comment_text="Nội dung chuyên sâu về Deep Learning và PyTorch. Rất đáng học!",
+            created_at="2026-07-23T11:45:00Z",
+        )
+        await session.merge(rev1)
+        await session.merge(rev2)
+        await session.merge(rev3)
 
         await session.commit()
         logger.info("[SEED] Database seeding completed successfully!")

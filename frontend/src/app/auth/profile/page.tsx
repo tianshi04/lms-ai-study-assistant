@@ -1,45 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
-import { IdentityService, type User } from "@/gen/identity/v1/identity_pb";
+import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
+import { useUserProfileQuery } from "@/lib/query_hooks";
+
+const emptySubscribe = () => () => {};
 
 export default function ProfilePage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const queryClient = useQueryClient();
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+
+  const userId = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
+  const { data: user, isLoading: loading } = useUserProfileQuery(userId);
+
   const [enterpriseKey, setEnterpriseKey] = useState("");
-  const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
-  useEffect(() => {
-    const userId = localStorage.getItem("user_id");
-    if (!userId) {
-      router.push("/auth/login");
-      return;
-    }
-
-    async function loadProfile() {
-      try {
-        const client = getRpcClient(IdentityService);
-        const res = await client.getUserProfile({ userId: userId! });
-        if (res.user) {
-          setUser(res.user);
-          setEnterpriseKey(res.user.enterpriseSeatKey || "");
-        }
-      } catch (err) {
-        console.error("Lỗi tải thông tin cá nhân:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadProfile();
-  }, [router]);
 
   const handleAssignKey = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +44,7 @@ export default function ProfilePage() {
 
       if (res.success) {
         setMessage({ type: "success", text: res.message || "Kích hoạt suất học doanh nghiệp thành công!" });
-        setUser({ ...user, enterpriseSeatKey: enterpriseKey });
+        queryClient.invalidateQueries({ queryKey: ["userProfile", userId] });
       } else {
         setMessage({ type: "error", text: res.message || "Không thể kích hoạt mã này." });
       }

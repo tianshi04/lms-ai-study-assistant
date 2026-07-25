@@ -103,6 +103,8 @@ class PeerAssignmentSubmission(Entity):
         submission_url: str,
         text_content: str,
         created_at: str,
+        final_score: Optional[float] = None,
+        graded_by_staff: bool = False,
     ) -> None:
         super().__init__(id=id)
         self.user_id = user_id
@@ -110,6 +112,8 @@ class PeerAssignmentSubmission(Entity):
         self.submission_url = submission_url
         self.text_content = text_content
         self.created_at = created_at
+        self.final_score = final_score
+        self.graded_by_staff = graded_by_staff
 
 
 class PeerReview(Entity):

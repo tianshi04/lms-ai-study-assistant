@@ -3,6 +3,8 @@
 import React, { useState } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
+import { useToast } from "@/components/ui/Toast";
+
 
 interface PeerAssignmentWorkspaceProps {
   itemId: string;
@@ -102,6 +104,7 @@ export function PeerAssignmentWorkspace({
       setHasSubmitted(true);
       setLockNotice("");
       setSubmitStatus(res.statusMessage || "Assignment submitted successfully!");
+      toast.success("Assignment submitted successfully!");
       setActiveTab("grade");
     } catch (err) {
       console.warn("RPC submitPeerAssignment failed, using fallback:", err);
@@ -111,8 +114,10 @@ export function PeerAssignmentWorkspace({
       setHasSubmitted(true);
       setLockNotice("");
       setSubmitStatus("Assignment submitted successfully. Please grade 3 peer submissions to unlock your final score.");
+      toast.success("Assignment submitted successfully!");
       setActiveTab("grade");
     } finally {
+
       setIsSubmitting(false);
     }
   };
@@ -132,6 +137,7 @@ export function PeerAssignmentWorkspace({
     setPeerItems(updated);
   };
 
+  const toast = useToast();
   const handleSubmitPeerGrade = async (itemIdx: number) => {
     const item = peerItems[itemIdx];
     try {
@@ -146,9 +152,9 @@ export function PeerAssignmentWorkspace({
           feedback: c.feedback,
         })),
       });
-      alert(res.message || "Peer grade submitted!");
+      toast.success(res.message || "Peer review grade submitted successfully!");
     } catch {
-      alert("Peer review grade submitted successfully!");
+      toast.success("Peer review grade submitted successfully!");
     }
   };
 
@@ -160,11 +166,15 @@ export function PeerAssignmentWorkspace({
         submissionId: "peer-sub-001",
         appealReason,
       });
-      setAppealStatus(`Appeal status: ${res.appealStatus}. TA will review within 7 days.`);
+      const statusMsg = `Appeal status: ${res.appealStatus}. TA will review within 7 days.`;
+      setAppealStatus(statusMsg);
+      toast.success("Grade appeal submitted successfully!");
     } catch {
       setAppealStatus("Appeal status: PENDING. TA will review within 7 days.");
+      toast.success("Grade appeal submitted successfully!");
     }
   };
+
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">

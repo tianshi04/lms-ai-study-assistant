@@ -2,6 +2,8 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -69,29 +71,44 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         model = res.scalar_one_or_none()
 
         if not model:
-            past_date = (datetime.now(timezone.utc) - timedelta(days=3)).strftime(
-                "%Y-%m-%d"
+            # Atomic PostgreSQL UPSERT to prevent race conditions without exception overhead
+            insert_stmt = (
+                pg_insert(LearningProgressModel)
+                .values(
+                    id=key,
+                    user_id=user_id,
+                    course_id=course_id,
+                    overall_progress_percent=0.0,
+                    completed_item_ids=[],
+                )
+                .on_conflict_do_nothing(index_elements=["id"])
             )
-            future_date = (datetime.now(timezone.utc) + timedelta(days=7)).strftime(
-                "%Y-%m-%d"
-            )
-
-            model = LearningProgressModel(
-                id=key,
-                user_id=user_id,
-                course_id=course_id,
-                overall_progress_percent=0.0,
-                completed_item_ids=[],
-            )
-            d1 = WeeklyDeadlineModel(
-                week_number=1, due_date=past_date, status=DeadlineStatus.OVERDUE
-            )
-            d2 = WeeklyDeadlineModel(
-                week_number=2, due_date=future_date, status=DeadlineStatus.ON_TRACK
-            )
-            model.weekly_deadlines.extend([d1, d2])
-            self.session.add(model)
+            await self.session.execute(insert_stmt)
             await self.session.commit()
+
+            res = await self.session.execute(stmt)
+            model = res.scalar_one()
+
+            if not model.weekly_deadlines:
+                past_date = (datetime.now(timezone.utc) - timedelta(days=3)).strftime(
+                    "%Y-%m-%d"
+                )
+                future_date = (datetime.now(timezone.utc) + timedelta(days=7)).strftime(
+                    "%Y-%m-%d"
+                )
+                d1 = WeeklyDeadlineModel(
+                    week_number=1, due_date=past_date, status=DeadlineStatus.OVERDUE
+                )
+                d2 = WeeklyDeadlineModel(
+                    week_number=2, due_date=future_date, status=DeadlineStatus.ON_TRACK
+                )
+                model.weekly_deadlines.extend([d1, d2])
+                try:
+                    await self.session.commit()
+                except IntegrityError:
+                    await self.session.rollback()
+                    res = await self.session.execute(stmt)
+                    model = res.scalar_one()
 
         return _model_to_domain_progress(model)
 
@@ -113,10 +130,25 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             model = res.scalar_one()
 
         now = datetime.now(timezone.utc)
+
+        # BR_DEADLINE_001: 24h Cooldown check
+        if model.last_reset_at:
+            try:
+                last_dt = datetime.fromisoformat(model.last_reset_at)
+                if (now - last_dt).total_seconds() < 86400:
+                    return False, _model_to_domain_progress(model)
+            except ValueError:
+                pass
+
+        total_weeks = max(1, len(model.weekly_deadlines))
+        # BR_DEADLINE_001: Self-paced Course_End_Date is extended from current reset time to avoid clustered deadlines
+        course_end_date = now + timedelta(days=max(180, 7 * total_weeks + 30))
         for i, d in enumerate(model.weekly_deadlines, start=1):
-            d.due_date = (now + timedelta(days=7 * i)).strftime("%Y-%m-%d")
+            natural_due = now + timedelta(days=7 * i)
+            d.due_date = min(natural_due, course_end_date).strftime("%Y-%m-%d")
             d.status = DeadlineStatus.ON_TRACK
 
+        model.last_reset_at = now.isoformat()
         await self.session.commit()
         return True, _model_to_domain_progress(model)
 

@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package identity.v1;
 
+import "auth/v1/options.proto";
+
 enum UserRole {
   USER_ROLE_UNSPECIFIED = 0;
   USER_ROLE_LEARNER = 1;
@@ -96,12 +98,39 @@ message RefreshTokenResponse {
   string refresh_token = 2;
 }
 
+message RevokeEnterpriseSeatRequest {
+  string user_id = 1;
+  string course_id = 2;
+}
+
+message RevokeEnterpriseSeatResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 service IdentityService {
-  rpc Login(LoginRequest) returns (LoginResponse);
-  rpc Register(RegisterRequest) returns (RegisterResponse);
-  rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse);
-  rpc AssignEnterpriseSeat(AssignEnterpriseSeatRequest) returns (AssignEnterpriseSeatResponse);
-  rpc ListEnterpriseSeats(ListEnterpriseSeatsRequest) returns (ListEnterpriseSeatsResponse);
-  rpc CreateEnterpriseSeat(CreateEnterpriseSeatRequest) returns (CreateEnterpriseSeatResponse);
-  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc Login(LoginRequest) returns (LoginResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc AssignEnterpriseSeat(AssignEnterpriseSeatRequest) returns (AssignEnterpriseSeatResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
+  rpc ListEnterpriseSeats(ListEnterpriseSeatsRequest) returns (ListEnterpriseSeatsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
+  rpc CreateEnterpriseSeat(CreateEnterpriseSeatRequest) returns (CreateEnterpriseSeatResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc RevokeEnterpriseSeat(RevokeEnterpriseSeatRequest) returns (RevokeEnterpriseSeatResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
 }

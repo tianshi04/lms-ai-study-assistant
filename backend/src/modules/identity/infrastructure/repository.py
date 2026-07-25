@@ -35,7 +35,9 @@ class IdentityRepository:
                 role=user.role,
                 avatar_url=user.avatar_url,
                 enterprise_seat_key=user.enterprise_seat_key,
+                seat_assigned_at=user.seat_assigned_at,
                 password_hash=user.password_hash,
+                is_identity_verified=user.is_identity_verified,
             )
             self._session.add(model)
         else:
@@ -44,7 +46,9 @@ class IdentityRepository:
             model.role = user.role
             model.avatar_url = user.avatar_url
             model.enterprise_seat_key = user.enterprise_seat_key
+            model.seat_assigned_at = user.seat_assigned_at
             model.password_hash = user.password_hash
+            model.is_identity_verified = user.is_identity_verified
 
         await self._session.flush()
         return self._to_entity(model)
@@ -57,5 +61,7 @@ class IdentityRepository:
             role=UserRole(model.role),
             avatar_url=model.avatar_url,
             enterprise_seat_key=model.enterprise_seat_key,
+            seat_assigned_at=model.seat_assigned_at,
             password_hash=model.password_hash,
+            is_identity_verified=model.is_identity_verified,
         )

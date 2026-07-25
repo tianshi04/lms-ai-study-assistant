@@ -12,6 +12,38 @@ JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
+ADMIN_ROLES = {
+    "SUPER_ADMIN",
+    "PARTNER_ADMIN",
+    "ADMIN",
+    "USER_ROLE_SUPER_ADMIN",
+    "USER_ROLE_PARTNER_ADMIN",
+    "USER_ROLE_ADMIN",
+}
+
+STAFF_ROLES = ADMIN_ROLES | {
+    "INSTRUCTOR",
+    "TA",
+    "USER_ROLE_INSTRUCTOR",
+    "USER_ROLE_TA",
+}
+
+
+def is_admin_role(role: str | None) -> bool:
+    """Returns True if the role string represents an administrative role."""
+    if not role:
+        return False
+    role_upper = str(role).upper()
+    return any(r in role_upper for r in ADMIN_ROLES)
+
+
+def is_staff_role(role: str | None) -> bool:
+    """Returns True if the role string represents a staff or admin role."""
+    if not role:
+        return False
+    role_upper = str(role).upper()
+    return any(r in role_upper for r in STAFF_ROLES)
+
 
 @dataclass
 class CurrentUser:
@@ -19,8 +51,18 @@ class CurrentUser:
     email: str = ""
     role: str = ""
 
+    def is_admin(self) -> bool:
+        """Returns True if current user is an admin."""
+        return is_admin_role(self.role)
 
-_current_user_ctx: ContextVar[Optional[CurrentUser]] = ContextVar("current_user", default=None)
+    def is_staff(self) -> bool:
+        """Returns True if current user is a staff member (Admin, Instructor, or TA)."""
+        return is_staff_role(self.role)
+
+
+_current_user_ctx: ContextVar[Optional[CurrentUser]] = ContextVar(
+    "current_user", default=None
+)
 
 
 def set_current_user(user: Optional[CurrentUser]) -> None:
@@ -38,7 +80,9 @@ def clear_current_user() -> None:
 def require_current_user() -> CurrentUser:
     user = _current_user_ctx.get()
     if not user or not user.id:
-        raise ConnectError(Code.UNAUTHENTICATED, "Vui lòng đăng nhập để thực hiện thao tác này")
+        raise ConnectError(
+            Code.UNAUTHENTICATED, "Vui lòng đăng nhập để thực hiện thao tác này"
+        )
     return user
 
 
@@ -71,4 +115,3 @@ def decode_token(token: str) -> Optional[dict[str, Any]]:
         return jwt.decode(token, settings.JWT_SECRET, algorithms=[JWT_ALGORITHM])
     except (jwt.PyJWTError, Exception):
         return None
-

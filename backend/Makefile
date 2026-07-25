@@ -1,7 +1,8 @@
-.PHONY: help gen dev test format seed seed-reset infra infra-down infra-clean infra-logs app app-down all docker-build app-logs
+.PHONY: help setup gen dev test format seed seed-reset infra infra-down infra-clean infra-logs app app-down all docker-build app-logs
 
 help:
 	@echo "Available commands:"
+	@echo "  make setup        - Install and sync Python dependencies (uv sync)"
 	@echo "  make infra        - Start infrastructure containers (PostgreSQL pgvector & MinIO)"
 	@echo "  make infra-down   - Stop infrastructure containers (preserves DB volume data)"
 	@echo "  make infra-clean  - Stop containers & wipe database volumes completely (-v)"
@@ -45,6 +46,9 @@ all:
 docker-build:
 	docker build -t coursera-backend:latest .
 
+
+setup:
+	uv sync
 
 gen:
 	buf generate ../proto
