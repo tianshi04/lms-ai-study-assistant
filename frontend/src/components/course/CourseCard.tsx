@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
 import { getRpcClient } from "@/lib/connect_client";
-import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,7 +12,6 @@ import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 
 export function CourseCard({ course }: { course: Course }) {
   const [imgError, setImgError] = useState(false);
-  const [hasCert, setHasCert] = useState(false);
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
@@ -27,23 +25,6 @@ export function CourseCard({ course }: { course: Course }) {
       },
     });
   };
-
-  useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-    if (!token) return;
-
-    const client = getRpcClient(CertificateService);
-    client
-      .getVerifiedCertificate({ courseId: course.id })
-      .then((res) => {
-        if (res.certificate?.certificateId) {
-          setHasCert(true);
-        }
-      })
-      .catch(() => {
-        // Safe to ignore
-      });
-  }, [course.id]);
 
   return (
     <div
@@ -70,15 +51,6 @@ export function CourseCard({ course }: { course: Course }) {
               </span>
             )}
           </div>
-
-          {hasCert && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-0.5 rounded-full">
-              <svg className="w-3 h-3 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-              <span>{t("courseDetail.certReceived")}</span>
-            </span>
-          )}
         </div>
 
         {/* Title & Description */}
