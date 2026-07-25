@@ -54,7 +54,7 @@ gen:
 	buf generate ../proto
 
 dev:
-	uv run uvicorn main:app --port 8000 --reload
+	.venv/Scripts/python -m uvicorn src.main:app --port 8000 --reload
 
 seed:
 	uv run python -m src.seed
