@@ -394,3 +394,101 @@ async def test_assign_enterprise_seat_exhausted(mock_session_scope, mock_identit
 
     assert res is False
     assert "đã hết suất kích hoạt" in msg
+
+
+@pytest.mark.asyncio
+async def test_list_enterprise_seats(mock_session_scope):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
+
+    mock_license = EnterpriseLicenseModel(
+        key="KEY_1",
+        partner_name="Google",
+        total_seats=100,
+        used_seats=10,
+        is_active=True,
+    )
+    mock_res = MagicMock()
+    mock_res.scalars().all.return_value = [mock_license]
+    mock_session.execute.return_value = mock_res
+
+    usecase = IdentityUseCase()
+    res = await usecase.list_enterprise_seats("Google")
+    assert len(res) == 1
+    assert res[0]["partner_name"] == "Google"
+
+
+@pytest.mark.asyncio
+async def test_create_enterprise_seat(mock_session_scope):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    usecase = IdentityUseCase()
+    res = await usecase.create_enterprise_seat("Meta", "META_KEY_1")
+    assert res["seat_key"] == "META_KEY_1"
+    assert res["partner_name"] == "Meta"
+    mock_session.add.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_verify_identity(mock_session_scope, mock_identity_repo):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    mock_repo_instance = AsyncMock()
+    mock_identity_repo.return_value = mock_repo_instance
+    user = User(
+        id="u1",
+        email="test@test.com",
+        full_name="Test",
+        role=UserRole.LEARNER,
+        avatar_url="",
+        password_hash="",
+        is_identity_verified=False,
+    )
+    mock_repo_instance.get_by_id.return_value = user
+
+    usecase = IdentityUseCase()
+    ok, msg = await usecase.verify_identity("u1", "123456789")
+    assert ok is True
+    assert user.is_identity_verified is True
+    mock_repo_instance.save.assert_called_once()
+
+    # User not found case
+    mock_repo_instance.get_by_id.return_value = None
+    ok, msg = await usecase.verify_identity("u2", "123456789")
+    assert ok is False
+    assert "Không tìm thấy" in msg
+
+
+@pytest.mark.asyncio
+async def test_revoke_enterprise_seat(mock_session_scope, mock_identity_repo):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    mock_repo_instance = AsyncMock()
+    mock_identity_repo.return_value = mock_repo_instance
+    user = User(
+        id="u1",
+        email="test@test.com",
+        full_name="Test",
+        role=UserRole.LEARNER,
+        avatar_url="",
+        password_hash="",
+        enterprise_seat_key="KEY_1",
+    )
+    mock_repo_instance.get_by_id.return_value = user
+
+    usecase = IdentityUseCase()
+    ok, msg = await usecase.revoke_enterprise_seat("u1")
+    assert ok is True
+    assert user.enterprise_seat_key is None
+    assert "thu hồi" in msg
+
+    # No seat key assigned case
+    user.enterprise_seat_key = None
+    ok, msg = await usecase.revoke_enterprise_seat("u1")
+    assert ok is False
+    assert "chưa được gán" in msg

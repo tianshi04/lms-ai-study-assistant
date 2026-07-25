@@ -270,3 +270,151 @@ async def test_verify_certificate_public(mock_session_scope, mock_repo_class, us
     valid, cert, msg = await usecase.verify_certificate_public("cert_2")
     assert valid is False
     assert cert is None
+
+
+@pytest.mark.asyncio
+@patch("src.modules.certificate.application.certificate_usecase.CertificateRepository")
+@patch("src.modules.certificate.application.certificate_usecase.async_session_scope")
+async def test_list_financial_aid_applications(
+    mock_session_scope, mock_repo_class, usecase
+):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+    mock_repo = mock_repo_class.return_value
+
+    app1 = FinancialAidApplication(
+        id="fa1",
+        user_id="u1",
+        course_id="c1",
+        essay_150_words="test " * 150,
+        status="APPROVED",
+    )
+    mock_repo.list_financial_aids = AsyncMock(return_value=[app1])
+
+    apps = await usecase.list_financial_aid_applications("c1", "APPROVED")
+    assert len(apps) == 1
+    assert apps[0].id == "fa1"
+
+
+@pytest.mark.asyncio
+@patch("src.modules.certificate.application.certificate_usecase.CertificateRepository")
+@patch("src.modules.certificate.application.certificate_usecase.async_session_scope")
+async def test_review_financial_aid_application(
+    mock_session_scope, mock_repo_class, usecase
+):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+    mock_repo = mock_repo_class.return_value
+
+    app1 = FinancialAidApplication(
+        id="fa1",
+        user_id="u1",
+        course_id="c1",
+        essay_150_words="test " * 150,
+        status="PENDING",
+    )
+    mock_repo.get_financial_aid_by_id = AsyncMock(return_value=app1)
+    mock_repo.save_financial_aid = AsyncMock(side_effect=lambda a: a)
+
+    updated, err = await usecase.review_financial_aid_application("fa1", True)
+    assert err == ""
+    assert updated is not None
+    assert updated.status == "APPROVED"
+
+    mock_repo.get_financial_aid_by_id = AsyncMock(return_value=None)
+    updated, err = await usecase.review_financial_aid_application("fa2", False)
+    assert updated is None
+    assert "Không tìm thấy" in err
+
+
+@pytest.mark.asyncio
+@patch("src.modules.certificate.application.certificate_usecase.CertificateRepository")
+@patch("src.modules.certificate.application.certificate_usecase.async_session_scope")
+async def test_revoke_certificate(mock_session_scope, mock_repo_class, usecase):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+    mock_repo = mock_repo_class.return_value
+
+    existing_cert = VerifiedCertificate(
+        certificate_id="cert_1",
+        user_id="u1",
+        course_id="c1",
+        learner_name="A",
+        course_title="T",
+        partner_name="P",
+        partner_logo_url="L",
+        issue_date="01/01",
+        verification_url="V",
+        qr_code_url="Q",
+        open_badges_json_ld={},
+        is_revoked=False,
+    )
+    mock_repo.get_certificate_by_id = AsyncMock(return_value=existing_cert)
+    mock_repo.save_certificate = AsyncMock(side_effect=lambda c: c)
+
+    success, msg = await usecase.revoke_certificate("cert_1", "violation")
+    assert success is True
+    assert existing_cert.is_revoked is True
+
+    # Test revoking already revoked cert
+    success, msg = await usecase.revoke_certificate("cert_1", "violation")
+    assert success is False
+    assert "đã bị thu hồi" in msg
+
+    # Test revoking non-existent cert
+    mock_repo.get_certificate_by_id = AsyncMock(return_value=None)
+    success, msg = await usecase.revoke_certificate("cert_none", "violation")
+    assert success is False
+    assert "Không tìm thấy" in msg
+
+
+@pytest.mark.asyncio
+@patch("src.modules.certificate.application.certificate_usecase.CertificateRepository")
+@patch("src.modules.certificate.application.certificate_usecase.async_session_scope")
+async def test_issue_specialization_certificate(
+    mock_session_scope, mock_repo_class, usecase
+):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+    mock_repo = mock_repo_class.return_value
+
+    mock_repo.get_specialization_details = AsyncMock(
+        return_value=("Deep Learning Spec", "DeepLearning.AI", "logo", ["c1", "c2"])
+    )
+    cert1 = VerifiedCertificate(
+        certificate_id="cert_c1",
+        user_id="u1",
+        course_id="c1",
+        learner_name="Alice",
+        course_title="C1",
+        partner_name="P",
+        partner_logo_url="L",
+        issue_date="01/01",
+        verification_url="V",
+        qr_code_url="Q",
+        open_badges_json_ld={},
+    )
+    cert2 = VerifiedCertificate(
+        certificate_id="cert_c2",
+        user_id="u1",
+        course_id="c2",
+        learner_name="Alice",
+        course_title="C2",
+        partner_name="P",
+        partner_logo_url="L",
+        issue_date="01/01",
+        verification_url="V",
+        qr_code_url="Q",
+        open_badges_json_ld={},
+    )
+    mock_repo.get_certificates_by_user = AsyncMock(return_value=[cert1, cert2])
+    mock_repo.get_certificate = AsyncMock(return_value=None)
+    mock_repo.get_user_kyc_info = AsyncMock(
+        return_value=("alice@example.com", "Alice", True)
+    )
+    mock_repo.save_certificate = AsyncMock(side_effect=lambda c: c)
+
+    spec_cert, msg = await usecase.issue_specialization_certificate("u1", "spec_1")
+    assert spec_cert is not None
+    assert spec_cert.specialization_id == "spec_1"
+    assert spec_cert.learner_name == "Alice"
