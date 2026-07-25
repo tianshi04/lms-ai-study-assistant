@@ -49,6 +49,7 @@ export default function InstructorCourseBuilderPage({
   const [itemType, setItemType] = useState<ItemType>(ItemType.VIDEO);
   const [itemMinutes, setItemMinutes] = useState(10);
   const [videoUrl, setVideoUrl] = useState("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4");
+  const [vttSubtitleUrl, setVttSubtitleUrl] = useState("");
   const [inVideoQuizzes, setInVideoQuizzes] = useState<InVideoQuizItem[]>([]);
   const [readingMarkdown, setReadingMarkdown] = useState("");
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
@@ -82,6 +83,7 @@ export default function InstructorCourseBuilderPage({
     type: ItemType;
     estimatedMinutes: number;
     videoUrl: string;
+    vttSubtitleUrl: string;
     content: string;
   } | null>(null);
 
@@ -209,6 +211,7 @@ export default function InstructorCourseBuilderPage({
         type: itemType,
         estimatedMinutes: itemMinutes,
         videoUrl: itemType === ItemType.VIDEO ? videoUrl : "",
+        vttSubtitleUrl: itemType === ItemType.VIDEO ? vttSubtitleUrl : "",
         inVideoQuizzes: itemType === ItemType.VIDEO ? inVideoQuizzes.map(q => ({
           timestampSeconds: q.timestampSeconds,
           question: q.question,
@@ -226,6 +229,8 @@ export default function InstructorCourseBuilderPage({
 
       setShowItemModal(null);
       setItemTitle("");
+      setVideoUrl("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4");
+      setVttSubtitleUrl("");
       setReadingMarkdown("");
       setInVideoQuizzes([]);
       toast.success(`Đã thêm Học liệu "${itemTitle}" vào bài học thành công!`);
@@ -304,6 +309,7 @@ export default function InstructorCourseBuilderPage({
         title: editingItem.title,
         estimatedMinutes: editingItem.estimatedMinutes,
         videoUrl: editingItem.type === ItemType.VIDEO ? editingItem.videoUrl : undefined,
+        vttSubtitleUrl: editingItem.type === ItemType.VIDEO ? editingItem.vttSubtitleUrl : undefined,
         readingMarkdown: editingItem.type === ItemType.READING ? editingItem.content : undefined,
       });
 
@@ -968,6 +974,7 @@ export default function InstructorCourseBuilderPage({
                                             type: item.type,
                                             estimatedMinutes: item.estimatedMinutes,
                                             videoUrl: item.videoUrl || "",
+                                            vttSubtitleUrl: item.vttSubtitleUrl || "",
                                             content: item.readingMarkdown || "",
                                           })}
                                           className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded transition-colors cursor-pointer"
@@ -1173,6 +1180,14 @@ export default function InstructorCourseBuilderPage({
                 onChange={setVideoUrl}
                 folder="videos"
                 label="Học liệu Video Bài giảng (Upload Tệp hoặc Đường dẫn)"
+              />
+              <VideoUploadWidget
+                value={vttSubtitleUrl}
+                onChange={setVttSubtitleUrl}
+                folder="subtitles"
+                accept=".vtt,text/vtt"
+                label="Tệp Phụ đề WebVTT (.vtt) (Tùy chọn - Upload Tệp hoặc URL)"
+                placeholder="https://.../subtitles.vtt"
               />
               <InVideoQuizEditor
                 videoUrl={videoUrl}
@@ -1481,16 +1496,28 @@ export default function InstructorCourseBuilderPage({
             </div>
 
             {editingItem.type === ItemType.VIDEO ? (
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldVideoUrl")}</label>
-                <input
-                  type="url"
-                  value={editingItem.videoUrl}
-                  onChange={(e) => setEditingItem({ ...editingItem, videoUrl: e.target.value })}
-                  placeholder="https://..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
-                  required
-                />
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldVideoUrl")}</label>
+                  <input
+                    type="url"
+                    value={editingItem.videoUrl}
+                    onChange={(e) => setEditingItem({ ...editingItem, videoUrl: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Đường dẫn Phụ đề WebVTT (.vtt) (Tùy chọn)</label>
+                  <input
+                    type="url"
+                    value={editingItem.vttSubtitleUrl}
+                    onChange={(e) => setEditingItem({ ...editingItem, vttSubtitleUrl: e.target.value })}
+                    placeholder="https://.../subtitles.vtt"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
+                  />
+                </div>
               </div>
             ) : (
               <div>

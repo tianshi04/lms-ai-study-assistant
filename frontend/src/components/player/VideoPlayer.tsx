@@ -187,7 +187,17 @@ function getYouTubeEmbedUrl(url: string): string | null {
             onTimeUpdate={onTimeUpdate}
             onEnded={() => onMarkComplete?.(activeItem.id)}
             className="max-h-full max-w-full object-contain shadow-2xl rounded-lg border border-slate-300 dark:border-slate-800"
-          />
+          >
+            {activeItem.vttSubtitleUrl && (
+              <track
+                kind="subtitles"
+                src={activeItem.vttSubtitleUrl}
+                srcLang="vi"
+                label="Tiếng Việt (VTT)"
+                default
+              />
+            )}
+          </video>
         )}
 
         {/* Floating Top Control Overlay for Video Mark as Complete */}
