@@ -56,7 +56,8 @@
     "sortOldest": "Oldest",
     "sortRating": "Highest Rating",
     "sortRatingDesc": "Highest Rating",
-    "sortRatingAsc": "Lowest Rating"
+    "sortRatingAsc": "Lowest Rating",
+    "clearFilters": "Reset filters"
   },
   "adminCategories": {
     "title": "Category Management",
