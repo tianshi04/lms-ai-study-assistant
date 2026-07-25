@@ -4,6 +4,7 @@ export default function CourseDetailLoading() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors duration-200">
       <Navbar />
+
       {/* Hero Banner Skeleton */}
       <div className="bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900/80 dark:to-slate-950 border-b border-slate-200 dark:border-slate-800/80 py-12 animate-pulse">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -31,7 +32,8 @@ export default function CourseDetailLoading() {
           </div>
         </div>
       </div>
-      {/* Syllabus Skeleton */}
+
+      {/* Content Skeleton */}
       <main className="max-w-7xl mx-auto px-6 py-12 space-y-6 animate-pulse">
         <div className="h-8 w-48 bg-slate-200 dark:bg-slate-800 rounded-lg" />
         <div className="h-36 w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6" />

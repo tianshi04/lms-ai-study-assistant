@@ -54,17 +54,19 @@ export interface CourseFilters {
  * Custom TanStack Query hook for fetching the course catalog.
  */
 export function useCoursesQuery(filters?: CourseFilters, options?: Partial<UseQueryOptions<Course[], Error>>) {
+  const normalizedFilters: CourseFilters = {
+    searchQuery: filters?.searchQuery || "",
+    subject: filters?.subject || "",
+    level: filters?.level || "",
+    sortBy: filters?.sortBy || "",
+    pageSize: filters?.pageSize || 10,
+  };
+
   return useQuery<Course[], Error>({
-    queryKey: ["courses", filters],
+    queryKey: ["courses", normalizedFilters],
     queryFn: async () => {
       const client = getRpcClient(CatalogService);
-      const res = await client.listCourses({
-        searchQuery: filters?.searchQuery || "",
-        subject: filters?.subject,
-        level: filters?.level,
-        sortBy: filters?.sortBy || "",
-        pageSize: filters?.pageSize || 10,
-      });
+      const res = await client.listCourses(normalizedFilters);
       return res.courses;
     },
     ...options,
