@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
@@ -19,11 +20,7 @@ export function Navbar() {
   const userEmail = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_email") : null;
   const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
 
-  const { t, locale, setLocale } = useTranslation();
-
-  const toggleLanguage = () => {
-    setLocale(locale === "vi" ? "en" : "vi");
-  };
+  const { t } = useTranslation();
 
   // Check if role is INSTRUCTOR (2), SUPER_ADMIN (4), or PARTNER_ADMIN (5)
   const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
@@ -89,13 +86,7 @@ export function Navbar() {
 
         {/* User Auth Section */}
         <div className="flex items-center gap-3">
-          <button
-            onClick={toggleLanguage}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-lg"
-            title={locale === "vi" ? "Switch to English" : "Chuyển sang Tiếng Việt"}
-          >
-            {locale === "vi" ? "🇻🇳" : "🇺🇸"}
-          </button>
+          <LanguageToggle />
           <ThemeToggle />
 
           {isMounted && userName ? (

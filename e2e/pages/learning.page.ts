@@ -34,18 +34,18 @@ export class LearningPage {
     this.sidebarItems = page.locator('aside button');
     this.lockNotice = page.locator('div:has-text("🔒 Bài học")');
 
-    this.transcriptTab = page.getByRole('button', { name: /Interactive Transcript/i });
-    this.forumTab = page.getByRole('button', { name: /Diễn đàn Bài học/i });
-    this.notesTab = page.getByRole('button', { name: /Personal Notes/i });
-    this.deadlinesTab = page.getByRole('button', { name: /Deadlines & Tiến độ/i });
+    this.transcriptTab = page.getByRole('button', { name: /Interactive Transcript|Phụ đề & Transcripts|Transcripts/i });
+    this.forumTab = page.getByRole('button', { name: /Diễn đàn Bài học|Discussion|Thảo luận/i });
+    this.notesTab = page.getByRole('button', { name: /Personal Notes|My Notes|Ghi chú/i });
+    this.deadlinesTab = page.getByRole('button', { name: /Deadlines/i });
 
-    this.highlightInput = page.locator('input[placeholder*="Đoạn văn bản bôi đen"]');
-    this.commentInput = page.locator('input[placeholder*="Lời nhắn/nhận xét"]');
-    this.saveNoteButton = page.getByRole('button', { name: /Lưu Ghi Chú/i });
+    this.highlightInput = page.locator('form input').first();
+    this.commentInput = page.locator('form input').nth(1);
+    this.saveNoteButton = page.locator('form button[type="submit"]');
 
-    this.deadlinesHeading = page.locator('text=/Lịch Nộp Bài Hàng Tuần/i');
+    this.deadlinesHeading = page.locator('text=/Lịch Nộp Bài Hàng Tuần|Upcoming Course Deadlines|Các mốc Deadline/i');
     this.resetDeadlinesButton = page.getByRole('button', { name: /Reset My Deadlines/i });
-    this.markCompleteButton = page.getByRole('button', { name: /Đánh dấu Hoàn thành/i });
+    this.markCompleteButton = page.getByRole('button', { name: /Đánh dấu Hoàn thành|Mark Complete/i });
   }
 
   async goto(courseId: string) {

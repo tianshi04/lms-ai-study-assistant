@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package catalog.v1;
 
+import "auth/v1/options.proto";
+
 enum ItemType {
   ITEM_TYPE_UNSPECIFIED = 0;
   ITEM_TYPE_VIDEO = 1;
@@ -53,6 +55,7 @@ message LearningItem {
   repeated InteractiveTranscript interactive_transcripts = 7;
   repeated InVideoQuiz in_video_quizzes = 8;
   string reading_markdown = 9;
+  int32 order_index = 10;
 }
 
 message Lesson {
@@ -60,6 +63,7 @@ message Lesson {
   string title = 2;
   int32 estimated_minutes = 3;
   repeated LearningItem items = 4;
+  int32 order_index = 5;
 }
 
 message WeekModule {
@@ -170,6 +174,14 @@ message UpdateCourseResponse {
   Course course = 1;
 }
 
+message DeleteCourseRequest {
+  string id = 1;
+}
+
+message DeleteCourseResponse {
+  bool success = 1;
+}
+
 message CreateWeekModuleRequest {
   string course_id = 1;
   int32 week_number = 2;
@@ -179,6 +191,27 @@ message CreateWeekModuleRequest {
 
 message CreateWeekModuleResponse {
   WeekModule week_module = 1;
+}
+
+message UpdateWeekModuleRequest {
+  string id = 1;
+  string course_id = 2;
+  int32 week_number = 3;
+  string title = 4;
+  string summary = 5;
+}
+
+message UpdateWeekModuleResponse {
+  WeekModule week_module = 1;
+}
+
+message DeleteWeekModuleRequest {
+  string id = 1;
+  string course_id = 2;
+}
+
+message DeleteWeekModuleResponse {
+  bool success = 1;
 }
 
 message CreateLessonRequest {
@@ -192,6 +225,27 @@ message CreateLessonResponse {
   Lesson lesson = 1;
 }
 
+message UpdateLessonRequest {
+  string id = 1;
+  string course_id = 2;
+  string week_module_id = 3;
+  string title = 4;
+  int32 estimated_minutes = 5;
+}
+
+message UpdateLessonResponse {
+  Lesson lesson = 1;
+}
+
+message DeleteLessonRequest {
+  string id = 1;
+  string course_id = 2;
+}
+
+message DeleteLessonResponse {
+  bool success = 1;
+}
+
 message CreateLearningItemRequest {
   string course_id = 1;
   string lesson_id = 2;
@@ -202,6 +256,7 @@ message CreateLearningItemRequest {
   // Specific fields based on type
   string video_url = 6;
   string reading_markdown = 7;
+  repeated InVideoQuiz in_video_quizzes = 8;
 }
 
 message CreateLearningItemResponse {
@@ -209,6 +264,31 @@ message CreateLearningItemResponse {
 }
 
 // Review Messages
+message UpdateLearningItemRequest {
+  string id = 1;
+  string course_id = 2;
+  string lesson_id = 3;
+  string title = 4;
+  ItemType type = 5;
+  int32 estimated_minutes = 6;
+  string video_url = 7;
+  string reading_markdown = 8;
+  repeated InVideoQuiz in_video_quizzes = 9;
+}
+
+message UpdateLearningItemResponse {
+  LearningItem item = 1;
+}
+
+message DeleteLearningItemRequest {
+  string id = 1;
+  string course_id = 2;
+}
+
+message DeleteLearningItemResponse {
+  bool success = 1;
+}
+
 message CourseReview {
   string id = 1;
   string user_id = 2;
@@ -276,27 +356,172 @@ message DeleteCategoryResponse {
   bool success = 1;
 }
 
-// Service definition
-service CatalogService {
-  // Public Catalog endpoints
-  rpc GetSpecialization(GetSpecializationRequest) returns (GetSpecializationResponse);
-  rpc ListCourses(ListCoursesRequest) returns (ListCoursesResponse);
-  rpc GetCourseDetail(GetCourseDetailRequest) returns (GetCourseDetailResponse);
-  rpc GetLessonDetail(GetLessonDetailRequest) returns (GetLessonDetailResponse);
-  
-  // Course Management endpoints
-  rpc CreateCourse(CreateCourseRequest) returns (CreateCourseResponse);
-  rpc UpdateCourse(UpdateCourseRequest) returns (UpdateCourseResponse);
-  rpc CreateWeekModule(CreateWeekModuleRequest) returns (CreateWeekModuleResponse);
-  rpc CreateLesson(CreateLessonRequest) returns (CreateLessonResponse);
-  rpc CreateLearningItem(CreateLearningItemRequest) returns (CreateLearningItemResponse);
 
-  // Reviews endpoints
-  rpc SubmitCourseReview(SubmitCourseReviewRequest) returns (SubmitCourseReviewResponse);
-  rpc ListCourseReviews(ListCourseReviewsRequest) returns (ListCourseReviewsResponse);
+message CourseAnnouncement {
+  string id = 1;
+  string course_id = 2;
+  string author_id = 3;
+  string author_name = 4;
+  string title = 5;
+  string content = 6;
+  string created_at = 7;
+}
+
+message CreateCourseAnnouncementRequest {
+  string course_id = 1;
+  string title = 2;
+  string content = 3;
+}
+
+message CreateCourseAnnouncementResponse {
+  CourseAnnouncement announcement = 1;
+}
+
+message ListCourseAnnouncementsRequest {
+  string course_id = 1;
+}
+
+message ListCourseAnnouncementsResponse {
+  repeated CourseAnnouncement announcements = 1;
+}
+
+message EnrolledStudent {
+  string user_id = 1;
+  string user_name = 2;
+  string user_email = 3;
+  float progress_percent = 4;
+  string enrolled_at = 5;
+}
+
+message InstructorAnalytics {
+  string course_id = 1;
+  int32 total_enrolled_students = 2;
+  float average_completion_rate = 3;
+  double average_rating = 4;
+  int32 review_count = 5;
+  repeated EnrolledStudent students = 6;
+}
+
+message GetInstructorAnalyticsRequest {
+  string course_id = 1;
+}
+
+message GetInstructorAnalyticsResponse {
+  InstructorAnalytics analytics = 1;
+}
+
+message ReorderWeekModulesRequest {
+  string course_id = 1;
+  repeated string ordered_week_module_ids = 2;
+}
+
+message ReorderWeekModulesResponse {
+  bool success = 1;
+}
+
+message ReorderLessonsRequest {
+  string course_id = 1;
+  string week_module_id = 2;
+  repeated string ordered_lesson_ids = 3;
+}
+
+message ReorderLessonsResponse {
+  bool success = 1;
+}
+
+message ReorderLearningItemsRequest {
+  string course_id = 1;
+  string lesson_id = 2;
+  repeated string ordered_item_ids = 3;
+}
+
+message ReorderLearningItemsResponse {
+  bool success = 1;
+}
+
+service CatalogService {
+  rpc GetSpecialization(GetSpecializationRequest) returns (GetSpecializationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc ListCourses(ListCoursesRequest) returns (ListCoursesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc GetCourseDetail(GetCourseDetailRequest) returns (GetCourseDetailResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc GetLessonDetail(GetLessonDetailRequest) returns (GetLessonDetailResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc CreateCourse(CreateCourseRequest) returns (CreateCourseResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UpdateCourse(UpdateCourseRequest) returns (UpdateCourseResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteCourse(DeleteCourseRequest) returns (DeleteCourseResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc CreateWeekModule(CreateWeekModuleRequest) returns (CreateWeekModuleResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UpdateWeekModule(UpdateWeekModuleRequest) returns (UpdateWeekModuleResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteWeekModule(DeleteWeekModuleRequest) returns (DeleteWeekModuleResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc CreateLesson(CreateLessonRequest) returns (CreateLessonResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UpdateLesson(UpdateLessonRequest) returns (UpdateLessonResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteLesson(DeleteLessonRequest) returns (DeleteLessonResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc CreateLearningItem(CreateLearningItemRequest) returns (CreateLearningItemResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UpdateLearningItem(UpdateLearningItemRequest) returns (UpdateLearningItemResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteLearningItem(DeleteLearningItemRequest) returns (DeleteLearningItemResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ReorderWeekModules(ReorderWeekModulesRequest) returns (ReorderWeekModulesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ReorderLessons(ReorderLessonsRequest) returns (ReorderLessonsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ReorderLearningItems(ReorderLearningItemsRequest) returns (ReorderLearningItemsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc SubmitCourseReview(SubmitCourseReviewRequest) returns (SubmitCourseReviewResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListCourseReviews(ListCourseReviewsRequest) returns (ListCourseReviewsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc CreateCourseAnnouncement(CreateCourseAnnouncementRequest) returns (CreateCourseAnnouncementResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListCourseAnnouncements(ListCourseAnnouncementsRequest) returns (ListCourseAnnouncementsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc GetInstructorAnalytics(GetInstructorAnalyticsRequest) returns (GetInstructorAnalyticsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
   
   // Category Admin endpoints
-  rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse);
-  rpc CreateCategory(CreateCategoryRequest) returns (CreateCategoryResponse);
-  rpc DeleteCategory(DeleteCategoryRequest) returns (DeleteCategoryResponse);
+  rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc CreateCategory(CreateCategoryRequest) returns (CreateCategoryResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteCategory(DeleteCategoryRequest) returns (DeleteCategoryResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }
+

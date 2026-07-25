@@ -5,6 +5,8 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Navbar } from "@/components/layout/Navbar";
+import { useToast } from "@/components/ui/Toast";
+import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 const emptySubscribe = () => () => {};
 
@@ -20,7 +22,8 @@ export default function InstructorCoursesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const toast = useToast();
+  const { t } = useTranslation();
 
   // Read user_role safely for SSR & hydration
   const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
@@ -67,7 +70,7 @@ export default function InstructorCoursesPage() {
 
   const handleOpenCreateModal = () => {
     if (!isInstructorOrAdmin) {
-      setMessage("Tài khoản Học viên (Learner) không có quyền tạo khóa học. Vui lòng đăng nhập tài khoản Giảng viên (Instructor).");
+      toast.error(t("instructorCourses.toastNoPermCreate"));
       return;
     }
     setEditingCourseId(null);
@@ -82,7 +85,7 @@ export default function InstructorCoursesPage() {
 
   const handleOpenEditModal = (course: Course) => {
     if (!isInstructorOrAdmin) {
-      setMessage("Tài khoản Học viên (Learner) không có quyền chỉnh sửa khóa học.");
+      toast.error(t("instructorCourses.toastNoPermEdit"));
       return;
     }
     setEditingCourseId(course.id);
@@ -98,14 +101,13 @@ export default function InstructorCoursesPage() {
   const handleSaveCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isInstructorOrAdmin) {
-      setMessage("Quyền truy cập bị từ chối. Chỉ tài khoản Giảng viên (Instructor) mới có quyền tạo hoặc chỉnh sửa khóa học.");
+      toast.error(t("instructorCourses.toastNoPermSave"));
       return;
     }
 
     if (!title.trim() || !description.trim()) return;
 
     setSaving(true);
-    setMessage(null);
 
     try {
       const client = getRpcClient(CatalogService);
@@ -123,7 +125,7 @@ export default function InstructorCoursesPage() {
         });
 
         if (res.course) {
-          setMessage(`Cập nhật thông tin khóa học "${res.course.title}" thành công!`);
+          toast.success(`${t("instructorCourses.updateBtn").replace("Cập Nhật ", "")} "${res.course.title}" ${t("instructorCourses.toastCreateOk").split(" ").slice(-2).join(" ")}`);
           setShowModal(false);
           await refreshCourses();
         }
@@ -139,16 +141,37 @@ export default function InstructorCoursesPage() {
         });
 
         if (res.course) {
-          setMessage("Tạo khóa học mới thành công!");
+          toast.success(t("instructorCourses.toastCreateOk"));
           setShowModal(false);
           await refreshCourses();
         }
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Thất bại khi lưu khóa học.";
-      setMessage(msg);
+      const msg = err instanceof Error ? err.message : t("instructorCourses.toastSaveFail");
+      toast.error(msg);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteCourse = async (courseId: string, courseTitle: string) => {
+    if (!isInstructorOrAdmin) {
+      toast.error(t("instructorCourses.toastNoPermDelete"));
+      return;
+    }
+
+    if (!confirm(`${t("instructorCourses.deleteBtn")} khóa học "${courseTitle}"? Thao tác này không thể hoàn tác.`)) {
+      return;
+    }
+
+    try {
+      const client = getRpcClient(CatalogService);
+      await client.deleteCourse({ id: courseId });
+      toast.success(`Đã xóa thành công khóa học "${courseTitle}".`);
+      await refreshCourses();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t("instructorCourses.toastDeleteFail");
+      toast.error(msg);
     }
   };
 
@@ -161,13 +184,13 @@ export default function InstructorCoursesPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-slate-200 dark:border-slate-800">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">
-              Instructor Portal
+              {t("instructorCourses.portalBadge")}
             </div>
             <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
-              Quản lý Khóa học Giảng dạy
+              {t("instructorCourses.pageTitle")}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Soạn thảo, quản lý bài giảng và tạo/chỉnh sửa các khóa học trên nền tảng Coursera AI.
+              {t("instructorCourses.pageDesc")}
             </p>
           </div>
 
@@ -179,7 +202,7 @@ export default function InstructorCoursesPage() {
               <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <span>Duyệt Financial Aid</span>
+              <span>{t("instructorCourses.financialAidBtn")}</span>
             </Link>
 
             <button
@@ -189,7 +212,7 @@ export default function InstructorCoursesPage() {
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              <span>Soạn Khóa Học Mới</span>
+              <span>{t("instructorCourses.createCourseBtn")}</span>
             </button>
           </div>
         </div>
@@ -201,35 +224,27 @@ export default function InstructorCoursesPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
             <span>
-              <strong>Lưu ý Phân quyền:</strong> Bạn đang xem ở chế độ đọc với tài khoản <strong>Learner (Học viên)</strong>. Chỉ tài khoản <strong>Instructor (Giảng viên)</strong> mới có quyền tạo và chỉnh sửa khóa học.
+              <strong>{t("instructorCourses.roleBannerTitle")}</strong> {t("instructorCourses.roleBannerDesc")}
             </span>
           </div>
         )}
 
-        {/* Success / Error Message */}
-        {message && (
-          <div className="mb-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm flex items-center justify-between">
-            <span>{message}</span>
-            <button onClick={() => setMessage(null)} className="text-xs underline font-semibold">
-              Đóng
-            </button>
-          </div>
-        )}
+
 
         {/* Courses Table / Cards */}
         {loading ? (
           <div className="flex items-center justify-center py-20 text-slate-500">
             <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-3" />
-            <span>Đang tải danh sách khóa học...</span>
+            <span>{t("instructorCourses.loading")}</span>
           </div>
         ) : courses.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
-            <p className="text-slate-500 mb-4">Chưa có khóa học nào được tạo.</p>
+            <p className="text-slate-500 mb-4">{t("instructorCourses.noCourses")}</p>
             <button
               onClick={handleOpenCreateModal}
-              className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold"
+              className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold cursor-pointer"
             >
-              Tạo khóa học đầu tiên
+              {t("instructorCourses.createFirstCourse")}
             </button>
           </div>
         ) : (
@@ -244,14 +259,48 @@ export default function InstructorCoursesPage() {
                     <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
                       {course.partnerName}
                     </span>
-                    <span className="text-xs text-slate-400 font-mono">{course.weekModules.length} Tuần học</span>
+                    <span className="text-xs text-slate-400 font-mono">{course.weekModules.length} {t("instructorCourses.weekCount")}</span>
                   </div>
-                  <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2 line-clamp-2">
-                    {course.title}
-                  </h3>
+                  <Link href={`/instructor/courses/${course.id}`} className="block">
+                    <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                      {course.title}
+                    </h3>
+                  </Link>
                   <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 mb-4 leading-relaxed">
                     {course.description}
                   </p>
+
+                  <div className="flex items-center gap-2 mb-4">
+                    <Link
+                      href={`/instructor/courses/${course.id}`}
+                      className="px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-xs font-bold hover:bg-blue-100 transition-colors flex items-center gap-1"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      <span>{t("instructorCourses.editBtn")}</span>
+                    </Link>
+
+                    <Link
+                      href={`/instructor/courses/${course.id}/analytics`}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-xs font-semibold hover:bg-emerald-100 transition-colors flex items-center gap-1"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      <span>{t("instructorCourses.analyticsBtn")}</span>
+                    </Link>
+
+                    <Link
+                      href={`/instructor/courses/${course.id}/announcements`}
+                      className="px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 text-xs font-semibold hover:bg-purple-100 transition-colors flex items-center gap-1"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                      </svg>
+                      <span>{t("instructorCourses.announcementsBtn")}</span>
+                    </Link>
+                  </div>
                 </div>
 
                 <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
@@ -263,29 +312,29 @@ export default function InstructorCoursesPage() {
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
-                      <span>Sửa</span>
+                      <span>{t("instructorCourses.editInfoBtn")}</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteCourse(course.id, course.title)}
+                      className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 text-xs font-semibold hover:bg-rose-100 transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      <span>{t("instructorCourses.deleteBtn")}</span>
                     </button>
 
                     <Link
-                      href={`/instructor/courses/${course.id}`}
-                      className="px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-xs font-bold hover:bg-blue-100 transition-colors flex items-center gap-1"
+                      href={`/courses/${course.id}`}
+                      className="text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1 ml-auto"
                     >
+                      <span>{t("instructorCourses.viewLecturesBtn")}</span>
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                       </svg>
-                      <span>Soạn bài học</span>
                     </Link>
                   </div>
-
-                  <Link
-                    href={`/courses/${course.id}`}
-                    className="text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1"
-                  >
-                    <span>Xem bài giảng</span>
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                  </Link>
                 </div>
               </div>
             ))}
@@ -298,7 +347,7 @@ export default function InstructorCoursesPage() {
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-xl w-full shadow-2xl">
               <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  {editingCourseId ? "Chỉnh Sửa Khóa Học" : "Soạn Thảo Khóa Học Mới"}
+                {editingCourseId ? t("instructorCourses.modalEditTitle") : t("instructorCourses.modalCreateTitle")}
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
@@ -313,13 +362,13 @@ export default function InstructorCoursesPage() {
               <form onSubmit={handleSaveCourse} className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-                    Tên Khóa Học *
+                    {t("instructorCourses.fieldTitle")}
                   </label>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Ví dụ: Natural Language Processing with Transformers"
+                    placeholder={t("instructorCourses.fieldTitlePlaceholder")}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
@@ -328,13 +377,13 @@ export default function InstructorCoursesPage() {
                 {!editingCourseId && (
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-                      Slug URL
+                      {t("instructorCourses.fieldSlug")}
                     </label>
                     <input
                       type="text"
                       value={slug}
                       onChange={(e) => setSlug(e.target.value)}
-                      placeholder="course-nlp-transformers (Tự tạo nếu để trống)"
+                      placeholder={t("instructorCourses.fieldSlugPlaceholder")}
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                     />
                   </div>
@@ -342,13 +391,13 @@ export default function InstructorCoursesPage() {
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-                    Mô Tả Nội Dung *
+                    {t("instructorCourses.fieldDesc")}
                   </label>
                   <textarea
                     rows={3}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Tóm tắt tổng quan kiến thức và kỹ năng đạt được sau khóa học..."
+                    placeholder={t("instructorCourses.fieldDescPlaceholder")}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   />
@@ -357,7 +406,7 @@ export default function InstructorCoursesPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-                      Đối Tác Phát Hành
+                      {t("instructorCourses.fieldPartner")}
                     </label>
                     <input
                       type="text"
@@ -368,7 +417,7 @@ export default function InstructorCoursesPage() {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-                      Logo URL Đối Tác
+                      {t("instructorCourses.fieldPartnerLogo")}
                     </label>
                     <input
                       type="text"
@@ -381,7 +430,7 @@ export default function InstructorCoursesPage() {
 
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
-                    Giảng Viên (cách nhau bởi dấu phẩy)
+                    {t("instructorCourses.fieldInstructors")}
                   </label>
                   <input
                     type="text"
@@ -397,14 +446,14 @@ export default function InstructorCoursesPage() {
                     onClick={() => setShowModal(false)}
                     className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800"
                   >
-                    Hủy
+                    {t("instructorCourses.cancelBtn")}
                   </button>
                   <button
                     type="submit"
                     disabled={saving}
                     className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold shadow-lg shadow-blue-500/20 disabled:opacity-50"
                   >
-                    {saving ? "Đang lưu..." : editingCourseId ? "Cập Nhật Khóa Học" : "Lưu & Đăng Khóa Học"}
+                    {saving ? t("instructorCourses.savingBtn") : editingCourseId ? t("instructorCourses.updateBtn") : t("instructorCourses.saveBtn")}
                   </button>
                 </div>
               </form>

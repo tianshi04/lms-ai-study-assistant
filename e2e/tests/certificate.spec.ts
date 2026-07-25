@@ -32,7 +32,7 @@ test.describe('Full System Blackbox - Verified Certificate & OpenBadges (POM)', 
 
     await expect(certPage.copyLinkButton).toBeVisible();
     await certPage.copyLinkButton.click({ force: true });
-    await expect(page.locator('text=/Đã sao chép Link/i')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=/Đã sao chép Link|Link Copied|Copied/i')).toBeVisible({ timeout: 5000 });
   });
 
 

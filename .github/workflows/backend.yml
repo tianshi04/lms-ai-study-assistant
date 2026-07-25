@@ -31,6 +31,8 @@ jobs:
 
       - name: Set up Buf CLI
         uses: bufbuild/buf-setup-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
 
       - name: Set up uv

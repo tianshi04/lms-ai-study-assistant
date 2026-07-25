@@ -1,7 +1,6 @@
 import pytest
 import pytest_asyncio
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
-from src.modules.catalog.domain.entities import Course
 
 
 @pytest.fixture
@@ -100,9 +99,7 @@ async def test_list_courses_filter_by_level(
 async def test_list_courses_filter_combined(
     catalog_usecase: CatalogUseCase, setup_test_courses
 ):
-    courses, _ = await catalog_usecase.list_courses(
-        subject="AI_ML", level="ADVANCED"
-    )
+    courses, _ = await catalog_usecase.list_courses(subject="AI_ML", level="ADVANCED")
     assert len(courses) >= 1
     for c in courses:
         assert c.subject == "AI_ML"

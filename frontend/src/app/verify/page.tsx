@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
+import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 export default function VerifyPortalPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [certId, setCertId] = useState("");
 
   const handleSearch = (e: React.FormEvent) => {
@@ -30,10 +32,10 @@ export default function VerifyPortalPage() {
 
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-              Cổng Tra Cứu & Xác Minh Chứng Chỉ
+              {t("verify.pageTitle")}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto">
-              Nhập mã chứng chỉ (Certificate ID) của học viên để tra cứu dữ liệu gốc và tải thông tin chứng chỉ chính thức.
+              {t("verify.pageDesc")}
             </p>
           </div>
 
@@ -42,7 +44,7 @@ export default function VerifyPortalPage() {
               type="text"
               value={certId}
               onChange={(e) => setCertId(e.target.value)}
-              placeholder="Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)"
+              placeholder={t("verify.searchPlaceholder")}
               className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
               required
             />
@@ -50,12 +52,12 @@ export default function VerifyPortalPage() {
               type="submit"
               className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-500/20 transition-all cursor-pointer"
             >
-              Xác Minh Ngay
+              {t("verify.searchBtn")}
             </button>
           </form>
 
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-2 text-xs text-slate-400">
-            <span>Thử mã chứng chỉ mẫu:</span>
+            <span>Demo Certificate Code:</span>
             <button
               onClick={() => router.push("/verify/CERT-DEMO12345")}
               className="font-mono text-blue-600 dark:text-blue-400 hover:underline font-bold"

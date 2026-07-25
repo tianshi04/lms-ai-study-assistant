@@ -33,3 +33,9 @@ body {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
+/* Hide native browser password reveal icon (MS Edge/IE/WebKit) to avoid duplicate eye icons */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+

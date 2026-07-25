@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { InstructorCoursesPage, CourseBuilderPage } from '../pages';
+import {
+  InstructorCoursesPage,
+  CourseBuilderPage,
+  InstructorAnnouncementsPage,
+  InstructorAnalyticsPage,
+} from '../pages';
 
 test.describe('Full System Blackbox - Instructor Flows (POM)', () => {
   test('should load instructor courses list page', async ({ page }) => {
@@ -43,4 +48,48 @@ test.describe('Full System Blackbox - Instructor Flows (POM)', () => {
     // Verify new week module appears in syllabus tree
     await expect(page.locator(`text=${weekTitle}`)).toBeVisible({ timeout: 5000 });
   });
+
+  test('should allow instructor to post a new course announcement', async ({ page }) => {
+    const announcementsPage = new InstructorAnnouncementsPage(page);
+    await announcementsPage.goto('course-python-ai');
+    await announcementsPage.verifyPageLoaded();
+
+    const annTitle = `Thông Báo Kiểm Tra Tuần ${Date.now()}`;
+    const annContent = 'Nhắc nhở toàn bộ sinh viên hoàn thành bài tập trước hạn nộp.';
+
+    await announcementsPage.postAnnouncement(annTitle, annContent);
+
+    // Verify announcement appears on page
+    await expect(page.locator(`text=${annTitle}`)).toBeVisible({ timeout: 5000 });
+  });
+
+  test('should load instructor analytics and student roster page', async ({ page }) => {
+    const analyticsPage = new InstructorAnalyticsPage(page);
+    await analyticsPage.goto('course-python-ai');
+    await analyticsPage.verifyPageLoaded();
+
+    await expect(analyticsPage.totalStudentsCard).toBeVisible();
+    await expect(analyticsPage.completionRateCard).toBeVisible();
+  });
+
+  test('should display drag handles and support drag & drop reordering for syllabus items', async ({ page }) => {
+    const builderPage = new CourseBuilderPage(page);
+    await builderPage.goto('course-python-ai');
+    await builderPage.verifyPageLoaded();
+
+    // Verify drag handle grips ⋮⋮ are visible for syllabus items
+    const dragHandles = page.locator('span:has-text("⋮⋮")');
+    await expect(dragHandles.first()).toBeVisible({ timeout: 5000 });
+    const count = await dragHandles.count();
+    expect(count).toBeGreaterThan(0);
+
+    // Perform drag & drop reorder between items
+    const firstItem = page.locator('[draggable="true"]').first();
+    const secondItem = page.locator('[draggable="true"]').nth(1);
+
+    if (await secondItem.isVisible()) {
+      await firstItem.dragTo(secondItem);
+    }
+  });
 });
+

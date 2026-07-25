@@ -37,10 +37,11 @@ class CertificateRepository:
     ) -> Optional[FinancialAidApplication]:
         stmt = select(FinancialAidModel).where(
             FinancialAidModel.user_id == user_id,
-            FinancialAidModel.course_id == course_id,
         )
+        if course_id:
+            stmt = stmt.where(FinancialAidModel.course_id == course_id)
         result = await self._session.execute(stmt)
-        model = result.scalar_one_or_none()
+        model = result.scalars().first()
         if not model:
             return None
         return FinancialAidApplication(
@@ -51,6 +52,26 @@ class CertificateRepository:
             status=model.status,
             review_deadline_days_left=model.review_deadline_days_left,
         )
+
+    async def list_financial_aids_by_user(
+        self, user_id: str, course_id: str = ""
+    ) -> list[FinancialAidApplication]:
+        stmt = select(FinancialAidModel).where(FinancialAidModel.user_id == user_id)
+        if course_id:
+            stmt = stmt.where(FinancialAidModel.course_id == course_id)
+        result = await self._session.execute(stmt)
+        models = result.scalars().all()
+        return [
+            FinancialAidApplication(
+                id=m.id,
+                user_id=m.user_id,
+                course_id=m.course_id,
+                essay_150_words=m.essay_150_words,
+                status=m.status,
+                review_deadline_days_left=m.review_deadline_days_left,
+            )
+            for m in models
+        ]
 
     async def list_financial_aids(
         self, course_id: Optional[str] = None, status: Optional[str] = None

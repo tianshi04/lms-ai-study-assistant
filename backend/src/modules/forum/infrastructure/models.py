@@ -33,6 +33,8 @@ class ForumThreadORM(Base):
     is_staff_pinned: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
+    is_edited: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    edited_at: Mapped[str] = mapped_column(String(100), nullable=False, default="")
 
     replies: Mapped[list["ForumReplyORM"]] = relationship(
         "ForumReplyORM",
@@ -67,6 +69,8 @@ class ForumReplyORM(Base):
     created_at: Mapped[str] = mapped_column(
         String(100), nullable=False, default=utc_now_str
     )
+    is_edited: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    edited_at: Mapped[str] = mapped_column(String(100), nullable=False, default="")
 
     thread: Mapped[ForumThreadORM] = relationship(
         "ForumThreadORM", back_populates="replies"

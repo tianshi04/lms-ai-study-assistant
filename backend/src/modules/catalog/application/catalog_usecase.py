@@ -5,7 +5,9 @@ from src.modules.catalog.domain.entities import Course, Lesson, Specialization, 
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
+from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
+from src.shared.permissions import enforce_course_ownership
 
 
 class CatalogUseCase:
@@ -18,6 +20,20 @@ class CatalogUseCase:
         self.repo_factory = repo_factory or (
             lambda session: SQLAlchemyCatalogRepository(session)
         )
+
+    async def _verify_ownership(
+        self,
+        repo: ICatalogRepository,
+        course_id: str,
+        user: CurrentUser | None,
+        action_name: str = "quản lý khóa học",
+    ) -> None:
+        if user and course_id:
+            course = await repo.get_course_detail(course_id)
+            if course:
+                enforce_course_ownership(
+                    course.owner_id, course.co_instructor_ids, user, action_name
+                )
 
     async def list_courses(
         self,
@@ -73,6 +89,7 @@ class CatalogUseCase:
         instructor_names: list[str],
         subject: str = "",
         level: str = "",
+        owner_id: str = "",
     ) -> Course:
         async with async_session_scope() as session:
             repo = SQLAlchemyCatalogRepository(session)
@@ -85,6 +102,7 @@ class CatalogUseCase:
                 instructor_names=instructor_names,
                 subject=subject,
                 level=level,
+                owner_id=owner_id,
             )
 
     async def update_course(
@@ -97,9 +115,13 @@ class CatalogUseCase:
         instructor_names: list[str],
         subject: str = "",
         level: str = "",
+        current_user: CurrentUser | None = None,
     ) -> Course | None:
         async with async_session_scope() as session:
             repo = SQLAlchemyCatalogRepository(session)
+            await self._verify_ownership(
+                repo, course_id, current_user, "chỉnh sửa khóa học"
+            )
             return await repo.update_course(
                 course_id=course_id,
                 title=title,
@@ -112,10 +134,16 @@ class CatalogUseCase:
             )
 
     async def create_week_module(
-        self, course_id: str, week_number: int, title: str, summary: str
+        self,
+        course_id: str,
+        week_number: int,
+        title: str,
+        summary: str,
+        current_user: CurrentUser | None = None,
     ):
         async with async_session_scope() as session:
             repo = SQLAlchemyCatalogRepository(session)
+            await self._verify_ownership(repo, course_id, current_user, "tạo tuần học")
             return await repo.create_week_module(
                 course_id=course_id,
                 week_number=week_number,
@@ -124,10 +152,16 @@ class CatalogUseCase:
             )
 
     async def create_lesson(
-        self, course_id: str, week_module_id: str, title: str, estimated_minutes: int
+        self,
+        course_id: str,
+        week_module_id: str,
+        title: str,
+        estimated_minutes: int,
+        current_user: CurrentUser | None = None,
     ):
         async with async_session_scope() as session:
             repo = SQLAlchemyCatalogRepository(session)
+            await self._verify_ownership(repo, course_id, current_user, "tạo bài học")
             return await repo.create_lesson(
                 course_id=course_id,
                 week_module_id=week_module_id,
@@ -144,9 +178,11 @@ class CatalogUseCase:
         estimated_minutes: int,
         video_url: str,
         reading_markdown: str,
+        current_user: CurrentUser | None = None,
     ):
         async with async_session_scope() as session:
             repo = SQLAlchemyCatalogRepository(session)
+            await self._verify_ownership(repo, course_id, current_user, "tạo học liệu")
             return await repo.create_learning_item(
                 course_id=course_id,
                 lesson_id=lesson_id,
@@ -241,3 +277,196 @@ class CatalogUseCase:
             repo = self.repo_factory(session)
             return await repo.delete_category(category_id)
 
+    async def delete_course(
+        self, course_id: str, current_user: CurrentUser | None = None
+    ) -> bool:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(repo, course_id, current_user, "xóa khóa học")
+            return await repo.delete_course(course_id)
+
+    async def update_week_module(
+        self,
+        id: str,
+        course_id: str,
+        week_number: int,
+        title: str,
+        summary: str,
+        current_user: CurrentUser | None = None,
+    ):
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(
+                repo, course_id, current_user, "chỉnh sửa tuần học"
+            )
+            return await repo.update_week_module(
+                id=id,
+                course_id=course_id,
+                week_number=week_number,
+                title=title,
+                summary=summary,
+            )
+
+    async def delete_week_module(
+        self, id: str, course_id: str, current_user: CurrentUser | None = None
+    ) -> bool:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(repo, course_id, current_user, "xóa tuần học")
+            return await repo.delete_week_module(id=id, course_id=course_id)
+
+    async def update_lesson(
+        self,
+        id: str,
+        course_id: str,
+        week_module_id: str,
+        title: str,
+        estimated_minutes: int,
+        current_user: CurrentUser | None = None,
+    ):
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(
+                repo, course_id, current_user, "chỉnh sửa bài học"
+            )
+            return await repo.update_lesson(
+                id=id,
+                course_id=course_id,
+                week_module_id=week_module_id,
+                title=title,
+                estimated_minutes=estimated_minutes,
+            )
+
+    async def delete_lesson(
+        self, id: str, course_id: str, current_user: CurrentUser | None = None
+    ) -> bool:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(repo, course_id, current_user, "xóa bài học")
+            return await repo.delete_lesson(id=id, course_id=course_id)
+
+    async def update_learning_item(
+        self,
+        id: str,
+        course_id: str,
+        lesson_id: str,
+        title: str,
+        item_type: int,
+        estimated_minutes: int,
+        video_url: str,
+        reading_markdown: str,
+        in_video_quizzes: list | None = None,
+        current_user: CurrentUser | None = None,
+    ):
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(
+                repo, course_id, current_user, "chỉnh sửa học liệu"
+            )
+            return await repo.update_learning_item(
+                id=id,
+                course_id=course_id,
+                lesson_id=lesson_id,
+                title=title,
+                item_type=item_type,
+                estimated_minutes=estimated_minutes,
+                video_url=video_url,
+                reading_markdown=reading_markdown,
+                in_video_quizzes=in_video_quizzes,
+            )
+
+    async def delete_learning_item(
+        self, id: str, course_id: str, current_user: CurrentUser | None = None
+    ) -> bool:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(repo, course_id, current_user, "xóa học liệu")
+            return await repo.delete_learning_item(id=id, course_id=course_id)
+
+    async def create_course_announcement(
+        self,
+        course_id: str,
+        author_id: str,
+        author_name: str,
+        title: str,
+        content: str,
+        current_user: CurrentUser | None = None,
+    ):
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(
+                repo, course_id, current_user, "đăng thông báo khóa học"
+            )
+            return await repo.create_course_announcement(
+                course_id=course_id,
+                author_id=author_id,
+                author_name=author_name,
+                title=title,
+                content=content,
+            )
+
+    async def list_course_announcements(self, course_id: str):
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.list_course_announcements(course_id=course_id)
+
+    async def get_instructor_analytics(
+        self, course_id: str, current_user: CurrentUser | None = None
+    ):
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(
+                repo, course_id, current_user, "xem báo cáo lớp học"
+            )
+            return await repo.get_instructor_analytics(course_id=course_id)
+
+    async def reorder_week_modules(
+        self,
+        course_id: str,
+        ordered_week_module_ids: list[str],
+        current_user: CurrentUser | None = None,
+    ) -> bool:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(
+                repo, course_id, current_user, "sắp xếp tuần học"
+            )
+            return await repo.reorder_week_modules(
+                course_id=course_id, ordered_week_module_ids=ordered_week_module_ids
+            )
+
+    async def reorder_lessons(
+        self,
+        course_id: str,
+        week_module_id: str,
+        ordered_lesson_ids: list[str],
+        current_user: CurrentUser | None = None,
+    ) -> bool:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(
+                repo, course_id, current_user, "sắp xếp bài học"
+            )
+            return await repo.reorder_lessons(
+                course_id=course_id,
+                week_module_id=week_module_id,
+                ordered_lesson_ids=ordered_lesson_ids,
+            )
+
+    async def reorder_learning_items(
+        self,
+        course_id: str,
+        lesson_id: str,
+        ordered_item_ids: list[str],
+        current_user: CurrentUser | None = None,
+    ) -> bool:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(
+                repo, course_id, current_user, "sắp xếp học liệu"
+            )
+            return await repo.reorder_learning_items(
+                course_id=course_id,
+                lesson_id=lesson_id,
+                ordered_item_ids=ordered_item_ids,
+            )

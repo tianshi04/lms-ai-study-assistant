@@ -8,8 +8,8 @@ export class VerifyPortalPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.certIdInput = page.locator('input[placeholder*="CERT-DEMO"]');
-    this.verifyButton = page.getByRole('button', { name: /Xác Minh Ngay/i });
+    this.certIdInput = page.locator('input[placeholder*="CERT"]');
+    this.verifyButton = page.getByRole('button', { name: /Xác Minh Ngay|Tra Cứu & Xác Minh|Verify Now|Verify/i });
     this.sampleCertLink = page.getByRole('button', { name: /CERT-DEMO12345/i });
   }
 

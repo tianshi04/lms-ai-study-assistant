@@ -2,23 +2,14 @@
 
 import functools
 from typing import Any
-from sqlalchemy import select
 
-from src.modules.certificate.infrastructure.models import FinancialAidModel
-from src.modules.identity.infrastructure.models import UserModel
+from connectrpc.code import Code
+from connectrpc.errors import ConnectError
+
+from src.modules.certificate.infrastructure.repository import CertificateRepository
+from src.modules.identity.infrastructure.repository import IdentityRepository
+from src.shared.auth import is_staff_role
 from src.shared.infrastructure.database import async_session_scope
-
-STAFF_ROLES = {
-    "INSTRUCTOR",
-    "SUPER_ADMIN",
-    "PARTNER_ADMIN",
-    "TA",
-    "ADMIN",
-    "USER_ROLE_INSTRUCTOR",
-    "USER_ROLE_SUPER_ADMIN",
-    "USER_ROLE_PARTNER_ADMIN",
-    "USER_ROLE_TA",
-}
 
 
 class AccessPolicyService:
@@ -35,39 +26,36 @@ class AccessPolicyService:
         if not user_id:
             return False, "Thiếu thông tin người dùng."
 
-        # Query user attributes
-        user_stmt = select(UserModel).where(UserModel.id == user_id)
-        user_res = await session.execute(user_stmt)
-        user_model = user_res.scalar_one_or_none()
+        # Fetch user entity via IdentityRepository
+        id_repo = IdentityRepository(session)
+        user_entity = await id_repo.get_by_id(user_id)
 
-        if not user_model:
+        if not user_entity:
             return True, ""
 
         # 1. Staff role bypass (Coarse-Grained Role Check)
-        role_str = str(user_model.role).upper()
-        if any(r in role_str for r in STAFF_ROLES):
+        role_val = (
+            user_entity.role.value
+            if hasattr(user_entity.role, "value")
+            else str(user_entity.role)
+        )
+        if is_staff_role(role_val):
             return True, ""
 
         # 2. Enterprise Seat Key attribute (BR_ACCESS_002)
-        if user_model.enterprise_seat_key and user_model.enterprise_seat_key.strip():
+        if user_entity.enterprise_seat_key and user_entity.enterprise_seat_key.strip():
             return True, ""
 
         # 3. Approved / Auto-Approved Financial Aid context (BR_FAID_001)
-        fa_stmt = select(FinancialAidModel).where(
-            FinancialAidModel.user_id == user_id,
-        )
-        if course_id:
-            fa_stmt = fa_stmt.where(FinancialAidModel.course_id == course_id)
-
-        fa_res = await session.execute(fa_stmt)
-        fa_models = fa_res.scalars().all()
-        for fa in fa_models:
+        cert_repo = CertificateRepository(session)
+        fa_apps = await cert_repo.list_financial_aids_by_user(user_id, course_id)
+        for fa in fa_apps:
             if fa.status in ("APPROVED", "AUTO_APPROVED"):
                 return True, ""
             if fa.status == "PENDING" and fa.review_deadline_days_left <= 0:
                 fa.status = "AUTO_APPROVED"
                 fa.review_deadline_days_left = 0
-                await session.commit()
+                await cert_repo.save_financial_aid(fa)
                 return True, ""
 
         return (
@@ -93,25 +81,7 @@ def require_paid_access(course_id_param: str = ""):
                     session, user_id, course_id
                 )
                 if not is_paid:
-                    func_name = getattr(func, "__name__", "")
-                    if func_name == "submit_graded_quiz":
-                        return {
-                            "score_percent": 0.0,
-                            "passed": False,
-                            "attempts_left": 0,
-                            "cooldown_seconds_left": 0,
-                            "answer_explanations": [err],
-                        }
-                    elif func_name == "submit_auto_graded_lab":
-                        return {
-                            "score_percent": 0.0,
-                            "passed": False,
-                            "total_test_cases": 0,
-                            "passed_test_cases": 0,
-                            "test_logs": err,
-                        }
-                    elif func_name == "submit_peer_assignment":
-                        return "", err
+                    raise ConnectError(Code.PERMISSION_DENIED, err)
 
             return await func(self, user_id, *args, **kwargs)
 

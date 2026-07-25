@@ -1,6 +1,7 @@
 "use client";
 
 import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
+import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 interface TranscriptPanelProps {
   activeItem: LearningItem | null;
@@ -13,26 +14,28 @@ export function TranscriptPanel({
   currentTime,
   onSeekVideo,
 }: TranscriptPanelProps) {
+  const { t } = useTranslation();
+
   if (!activeItem?.interactiveTranscripts || activeItem.interactiveTranscripts.length === 0) {
     return (
       <p className="text-xs text-slate-500 dark:text-slate-500 text-center py-6">
-        Không có phụ đề tương tác cho bài học này.
+        {t("player.noTranscriptFound")}
       </p>
     );
   }
 
   return (
     <div className="space-y-2 max-w-4xl mx-auto">
-      {activeItem.interactiveTranscripts.map((t, i) => {
+      {activeItem.interactiveTranscripts.map((item, i) => {
         const isActive =
-          currentTime >= t.timestampSeconds &&
+          currentTime >= item.timestampSeconds &&
           (i === activeItem.interactiveTranscripts.length - 1 ||
             currentTime < activeItem.interactiveTranscripts[i + 1].timestampSeconds);
 
         return (
           <div
             key={i}
-            onClick={() => onSeekVideo(t.timestampSeconds)}
+            onClick={() => onSeekVideo(item.timestampSeconds)}
             className={`p-2.5 rounded-lg text-xs cursor-pointer transition-all flex items-start gap-4 ${
               isActive
                 ? "bg-blue-50 dark:bg-blue-600/20 text-blue-700 dark:text-blue-200 font-medium border-l-4 border-blue-500 pl-3 shadow-sm"
@@ -40,10 +43,10 @@ export function TranscriptPanel({
             }`}
           >
             <span className="font-mono text-blue-600 dark:text-blue-400 flex-shrink-0 font-bold">
-              {Math.floor(t.timestampSeconds / 60)}:
-              {(t.timestampSeconds % 60).toString().padStart(2, "0")}
+              {Math.floor(item.timestampSeconds / 60)}:
+              {(item.timestampSeconds % 60).toString().padStart(2, "0")}
             </span>
-            <span className="leading-relaxed">{t.text}</span>
+            <span className="leading-relaxed">{item.text}</span>
           </div>
         );
       })}

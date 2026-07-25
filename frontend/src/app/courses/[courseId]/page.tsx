@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+
+const emptySubscribe = () => () => {};
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
@@ -8,10 +10,13 @@ import { CatalogService, type Course, type CourseReview } from "@/gen/catalog/v1
 import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { Navbar } from "@/components/layout/Navbar";
 import { Modal } from "@/components/ui/Modal";
+import { useToast } from "@/components/ui/Toast";
+import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 export default function CourseDetailPage() {
   const params = useParams();
   const courseId = params?.courseId as string;
+  const { t, locale } = useTranslation();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [reviews, setReviews] = useState<CourseReview[]>([]);
@@ -20,21 +25,22 @@ export default function CourseDetailPage() {
   const [hasCert, setHasCert] = useState(false);
   const [certId, setCertId] = useState("");
 
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
+  const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
+
   // Review Modal States
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number>(0);
   const [comment, setComment] = useState<string>("");
   const [submittingReview, setSubmittingReview] = useState(false);
-  const [reviewError, setReviewError] = useState<string | null>(null);
-  const [reviewSuccess, setReviewSuccess] = useState(false);
+  const toast = useToast();
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!course) return;
     setSubmittingReview(true);
-    setReviewError(null);
-    setReviewSuccess(false);
 
     try {
       const client = getRpcClient(CatalogService);
@@ -43,7 +49,6 @@ export default function CourseDetailPage() {
         ratingStars: rating,
         commentText: comment,
       });
-      setReviewSuccess(true);
 
       // Re-fetch course detail and reviews in real-time
       const res = await client.getCourseDetail({ idOrSlug: course.id });
@@ -51,14 +56,14 @@ export default function CourseDetailPage() {
       const revRes = await client.listCourseReviews({ courseId: course.id });
       setReviews(revRes.reviews || []);
 
-      setTimeout(() => {
-        setIsReviewModalOpen(false);
-        setReviewSuccess(false);
-      }, 1500);
+      toast.success(t("courseDetail.reviewSuccessTitle"), {
+        description: t("courseDetail.reviewSuccessDesc"),
+      });
+      setIsReviewModalOpen(false);
     } catch (err: unknown) {
       console.error("Failed to submit review:", err);
-      const msg = err instanceof Error ? err.message : "Không thể gửi đánh giá";
-      setReviewError(msg);
+      const msg = err instanceof Error ? err.message : t("courseDetail.submitting");
+      toast.error(msg);
     } finally {
       setSubmittingReview(false);
     }
@@ -91,21 +96,21 @@ export default function CourseDetailPage() {
         }
       } catch (err: unknown) {
         console.error("Failed to load course detail:", err);
-        const message = err instanceof Error ? err.message : "Không thể tải thông tin khóa học";
+        const message = err instanceof Error ? err.message : t("catalog.errorLoad");
         setError(message);
       } finally {
         setLoading(false);
       }
     }
     fetchDetail();
-  }, [courseId]);
+  }, [courseId, t]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-500 dark:text-slate-400">
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <span>Đang tải thông tin khóa học...</span>
+          <span>{t("common.loading")}</span>
         </div>
       </div>
     );
@@ -115,13 +120,13 @@ export default function CourseDetailPage() {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-slate-900 dark:text-slate-100">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl max-w-md shadow-sm">
-          <h2 className="text-xl font-bold text-red-500 dark:text-red-400 mb-2">Không tìm thấy khóa học</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{error || `Khóa học với mã "${courseId}" không tồn tại.`}</p>
+          <h2 className="text-xl font-bold text-red-500 dark:text-red-400 mb-2">{t("catalog.errorLoad")}</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{error || `Course "${courseId}" not found.`}</p>
           <Link
             href="/courses"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
           >
-            ← Quay lại Catalog
+            ← {t("player.backToCatalog")}
           </Link>
         </div>
       </div>
@@ -138,14 +143,25 @@ export default function CourseDetailPage() {
           <div className="lg:col-span-2">
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider">
-                Specialization Course
+                {t("courseDetail.specializationCourse")}
               </div>
+              {isInstructorOrAdmin && (
+                <Link
+                  href={`/instructor/courses/${course.id}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-extrabold shadow-md transition-all cursor-pointer"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>{t("courseDetail.instructorBuilder")}</span>
+                </Link>
+              )}
               {hasCert && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
                   <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>✓ Đã Nhận Chứng Chỉ</span>
+                  <span>{t("courseDetail.certReceived")}</span>
                 </div>
               )}
               {course.averageRating > 0 && (
@@ -153,7 +169,7 @@ export default function CourseDetailPage() {
                   <svg className="w-4 h-4 text-amber-400 fill-amber-400" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
                   </svg>
-                  <span>{course.averageRating.toFixed(1)} ★ ({course.reviewCount} đánh giá)</span>
+                  <span>{course.averageRating.toFixed(1)} ★ ({course.reviewCount} {t("courseDetail.reviewsCount")})</span>
                 </div>
               )}
             </div>
@@ -165,12 +181,12 @@ export default function CourseDetailPage() {
             </p>
             <div className="flex flex-wrap items-center gap-6 text-sm text-slate-500 dark:text-slate-400">
               <div>
-                <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-semibold">Đối tác phát hành</span>
+                <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-semibold">{t("courseDetail.partnerPublisher")}</span>
                 <span className="font-semibold text-slate-900 dark:text-white">{course.partnerName}</span>
               </div>
               <div className="h-8 w-px bg-slate-200 dark:bg-slate-800" />
               <div>
-                <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-semibold">Giảng viên</span>
+                <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-semibold">{t("courseDetail.instructorLabel")}</span>
                 <span className="font-semibold text-slate-900 dark:text-white">{course.instructorNames.join(", ")}</span>
               </div>
             </div>
@@ -180,10 +196,10 @@ export default function CourseDetailPage() {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-xl space-y-6">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-1 rounded-md">
-                Enrollment Open
+                {t("courseDetail.enrollmentOpen")}
               </span>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-3">Miễn Phí Tham Gia</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Đã bao gồm bài giảng Video tương tác & Phụ đề cuộn</p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-3">{t("courseDetail.freeEnrollment")}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t("courseDetail.freeEnrollmentDesc")}</p>
             </div>
 
             {hasCert ? (
@@ -195,13 +211,13 @@ export default function CourseDetailPage() {
                   <svg className="w-4 h-4 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Xem Chứng Chỉ</span>
+                  <span>{t("courseDetail.viewCert")}</span>
                 </Link>
                 <Link
                   href={`/learn/${course.id}`}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition-all cursor-pointer"
                 >
-                  <span>Vào Học Lại</span>
+                  <span>{t("courseDetail.retakeCourse")}</span>
                 </Link>
               </div>
             ) : (
@@ -209,7 +225,7 @@ export default function CourseDetailPage() {
                 href={`/learn/${course.id}`}
                 className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm transition-all shadow-lg shadow-blue-600/20 cursor-pointer"
               >
-                Vào Học Ngay
+                {t("courseDetail.enrollNow")}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
@@ -221,19 +237,13 @@ export default function CourseDetailPage() {
                 <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                Hạn nộp linh hoạt (Flexible Deadlines)
+                {t("courseDetail.flexibleDeadlines")}
               </li>
               <li className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                Tích hợp Coursera AI Coach giải đáp
-              </li>
-              <li className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Chứng chỉ Xác thực Đã đăng ký
+                {t("courseDetail.verifiedCertIncluded")}
               </li>
             </ul>
           </div>
@@ -242,11 +252,11 @@ export default function CourseDetailPage() {
 
       {/* Course Syllabus Content */}
       <main className="max-w-7xl mx-auto px-6 py-12">
-        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-6">Nội Dung Chương Trình Học (Syllabus)</h2>
+        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-6">{t("courseDetail.syllabusTitle")}</h2>
 
         {course.weekModules.length === 0 ? (
           <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/80 p-8 rounded-2xl text-center text-slate-500 dark:text-slate-400">
-            Khóa học đang trong quá trình cập nhật các bài giảng tuần tiếp theo.
+            {t("courseDetail.updatingLectures")}
           </div>
         ) : (
           <div className="space-y-6">
@@ -254,10 +264,10 @@ export default function CourseDetailPage() {
               <div key={week.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-500/20">
-                    Tuần {week.weekNumber}
+                    {t("courseDetail.weekLabel")} {week.weekNumber}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {week.lessons.reduce((sum, l) => sum + l.items.length, 0)} Items bài học
+                    {week.lessons.reduce((sum, l) => sum + l.items.length, 0)} {t("courseDetail.itemsCount")}
                   </span>
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{week.title}</h3>
@@ -307,9 +317,9 @@ export default function CourseDetailPage() {
         <div className="mt-16 border-t border-slate-200 dark:border-slate-800 pt-12">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">Đánh giá & Nhận xét từ Học viên</h2>
+              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">{t("courseDetail.reviewsTitle")}</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Các nhận xét thực tế từ học viên đã tham gia khóa học này
+                {t("courseDetail.reviewsSubtitle")}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -339,7 +349,7 @@ export default function CourseDetailPage() {
                       ))}
                     </div>
                     <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-                      Tổng số {course.reviewCount} nhận xét
+                      {course.reviewCount} {t("courseDetail.reviewsCount")}
                     </span>
                   </div>
                 </div>
@@ -359,14 +369,14 @@ export default function CourseDetailPage() {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                 </svg>
-                <span>Viết / Sửa đánh giá</span>
+                <span>{t("courseDetail.writeReview")}</span>
               </button>
             </div>
           </div>
 
           {reviews.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl text-center text-slate-500 dark:text-slate-400">
-              Chưa có đánh giá nào cho khóa học này. Hãy là học viên đầu tiên hoàn thành và để lại nhận xét!
+              {t("courseDetail.noReviewsYet")}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -383,7 +393,7 @@ export default function CourseDetailPage() {
                       <div>
                         <div className="flex items-center gap-2 mb-0.5">
                           <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                            {rev.userName || "Học viên LMS"}
+                            {rev.userName || t("courseDetail.studentFallback")}
                           </h4>
                           {rev.isVerifiedCompleter ? (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
@@ -396,7 +406,7 @@ export default function CourseDetailPage() {
                           )}
                         </div>
                         <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                          {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString("vi-VN") : "Gần đây"}
+                          {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString(locale === "vi" ? "vi-VN" : "en-US") : t("courseDetail.recent")}
                         </span>
                       </div>
                     </div>
@@ -423,99 +433,81 @@ export default function CourseDetailPage() {
       <Modal
         isOpen={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}
-        title="Đánh giá khóa học"
+        title={t("courseDetail.submitReviewModalTitle")}
         className="max-w-md"
       >
-        {reviewSuccess ? (
-          <div className="p-4 text-center bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl space-y-2">
-            <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/60 rounded-full flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-            </div>
-            <h4 className="text-sm font-bold text-emerald-900 dark:text-emerald-200">Đã gửi đánh giá thành công!</h4>
-            <p className="text-xs text-emerald-700 dark:text-emerald-300">Cảm ơn bạn đã phản hồi ý kiến cho khóa học.</p>
-          </div>
-        ) : (
-          <form onSubmit={handleReviewSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
-                Chọn số sao đánh giá:
-              </label>
-              <div className="flex items-center gap-1.5 justify-center py-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(star)}
-                    onMouseEnter={() => setHoverRating(star)}
-                    onMouseLeave={() => setHoverRating(0)}
-                    className="p-1 transition-transform hover:scale-125 focus:outline-none cursor-pointer"
+        <form onSubmit={handleReviewSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              {t("courseDetail.selectRatingStars")}
+            </label>
+            <div className="flex items-center gap-1.5 justify-center py-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  className="p-1 transition-transform hover:scale-125 focus:outline-none cursor-pointer"
+                >
+                  <svg
+                    className={`w-7 h-7 ${
+                      star <= (hoverRating || rating)
+                        ? "fill-amber-400 text-amber-400"
+                        : "text-slate-300 dark:text-slate-700 fill-none"
+                    }`}
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
                   >
-                    <svg
-                      className={`w-7 h-7 ${
-                        star <= (hoverRating || rating)
-                          ? "fill-amber-400 text-amber-400"
-                          : "text-slate-300 dark:text-slate-700 fill-none"
-                      }`}
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={1.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                      />
-                    </svg>
-                  </button>
-                ))}
-              </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                    />
+                  </svg>
+                </button>
+              ))}
             </div>
+          </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Nội dung nhận xét:
-                </label>
-                <span className={`text-[10px] ${comment.length > 2000 ? "text-red-500 font-bold" : "text-slate-400"}`}>
-                  {comment.length}/2000
-                </span>
-              </div>
-              <textarea
-                rows={4}
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                maxLength={2000}
-                placeholder="Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng..."
-                className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
-              />
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                {t("courseDetail.commentLabel")}
+              </label>
+              <span className={`text-[10px] ${comment.length > 2000 ? "text-red-500 font-bold" : "text-slate-400"}`}>
+                {comment.length}/2000
+              </span>
             </div>
+            <textarea
+              rows={4}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              maxLength={2000}
+              placeholder={t("courseDetail.commentPlaceholder")}
+              className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+            />
+          </div>
 
-            {reviewError && (
-              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-medium">
-                {reviewError}
-              </div>
-            )}
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsReviewModalOpen(false)}
-                className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-              >
-                Hủy
-              </button>
-              <button
-                type="submit"
-                disabled={submittingReview}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
-              >
-                {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
-              </button>
-            </div>
-          </form>
-        )}
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => setIsReviewModalOpen(false)}
+              className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+            >
+              {t("courseDetail.cancel")}
+            </button>
+            <button
+              type="submit"
+              disabled={submittingReview}
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+            >
+              {submittingReview ? t("courseDetail.submitting") : t("courseDetail.submitReview")}
+            </button>
+          </div>
+        </form>
       </Modal>
     </div>
   );

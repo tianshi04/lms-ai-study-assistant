@@ -6,18 +6,16 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 
 ## 1. Quy tắc Phân quyền & Quản lý Tài khoản (BR_AUTH & BR_ACCESS)
 
-* **BR_AUTH_001 (Bảo mật Centralized AuthInterceptor & Danh sách Public RPCs):**
-  * Hệ thống áp dụng `AuthInterceptor` kiểm tra JWT Bearer Token tập trung cho toàn bộ các dịch vụ ConnectRPC.
-  * *Danh sách trắng API công khai (Public Endpoints - Không yêu cầu Bearer Token):*
-    1. `/identity.v1.IdentityService/Login`
-    2. `/identity.v1.IdentityService/Register`
-    3. `/identity.v1.IdentityService/RefreshToken`
-    4. `/catalog.v1.CatalogService/GetSpecialization`
-    5. `/catalog.v1.CatalogService/ListCourses`
-    6. `/catalog.v1.CatalogService/GetCourseDetail`
-    7. `/catalog.v1.CatalogService/GetLessonDetail`
-    8. `/certificate.v1.CertificateService/VerifyCertificatePublic`
-  * Tất cả các RPC endpoints còn lại bắt buộc gửi `Authorization: Bearer <access_token>` trong header và tự động giải mã `CurrentUser` (id, email, role) vào Request Context.
+* **BR_AUTH_001 (Bảo mật Declarative Auth Policy & Kiến trúc Phân quyền 3 Tầng):**
+  * **Khai báo Phân quyền Declarative ở Tầng Contract (Protobuf Custom Options):**
+    * Tất cả các phương thức RPC trong file `.proto` được gán nhãn khai báo cấp độ bảo mật qua Protobuf Custom Option `(auth.v1.policy) = ...` (Option `50001` trên `google.protobuf.MethodOptions`, với enum `AuthPolicy`: `PUBLIC = 1`, `AUTHENTICATED = 2`, `ADMIN = 3`, `INTERNAL = 4`).
+    * Lớp `AuthPolicyRegistry` tự động quét Protobuf Descriptors khi ứng dụng ASGI khởi chạy (Eager Pre-initialization), xây dựng bảng ánh xạ $O(1)$ phục vụ cho `AuthInterceptor`.
+  * **Kiến trúc Phân quyền Phân lớp 3 Tầng (3-Layer Authorization Architecture):**
+    * **Tầng 1 (API Method Policy - Endpoint Level):** Do `AuthInterceptor` & `AuthPolicyRegistry` đảm nhiệm. Tự động kiểm tra JWT Bearer Token đối với các API `AUTHENTICATED` hoặc `ADMIN`, inject `CurrentUser` vào Request Context. Với API `PUBLIC` (như Login, Register, RefreshToken, ListCourses, GetCourseDetail, VerifyCertificatePublic), request được phép đi qua không cần Bearer Token.
+    * **Tầng 2 (ABAC & Business Access Policy Level):** Do `AccessPolicyService` & Decorator `@require_paid_access` đảm nhiệm. Thực thi quy chế Paid Mode vs Audit Mode (`BR_ACCESS_001`), Enterprise Seats (`BR_ACCESS_002`), Financial Aid (`BR_FAID_001`). Khi tài khoản ở Audit Mode cố tình gọi RPC chấm điểm hoặc nhận chứng chỉ, hệ thống từ chối bằng `ConnectError(Code.PERMISSION_DENIED, err)` chuẩn ConnectRPC protocol.
+    * **Tầng 3 (Domain Resource & Ownership Level):** Do các Application Use Cases (ví dụ `CatalogUseCase._verify_ownership`) đảm nhiệm. Kiểm tra quyền sở hữu đối tượng domain (`owner_id`, `co_instructor_ids`) thông qua helper `enforce_course_ownership` để ngăn ngừa tấn công IDOR / Unauthorized Resource Access.
+  * **Quản lý Vai trò Tập trung (Centralized Role Helpers):**
+    * Đưa hằng số `ADMIN_ROLES`, `STAFF_ROLES` và các phương thức `user.is_admin()`, `user.is_staff()`, `is_admin_role()`, `is_staff_role()` tập trung vào `src/shared/auth.py`, loại bỏ hoàn toàn các câu lệnh so sánh chuỗi vai trò rải rác.
 * **BR_AUTH_002 (Cơ chế Refresh Token Rotation):**
   * Khi `access_token` hết hạn, client gọi RPC `RefreshToken` truyền `refresh_token` hợp lệ (yêu cầu payload claim `type == "refresh"` và tồn tại `user_id` sở hữu trong DB).
   * Hệ thống hủy cặp token cũ và phát hành mới đồng thời cả `access_token` và `refresh_token`.
@@ -107,20 +105,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 
 ---
 
-## 4. Quy tắc An toàn và Phạm vi Hoạt động của AI Coach (BR_AI)
-
-* **BR_AI_001 (Phạm vi RAG bám sát khóa học):**
-  * AI Coach chỉ truy xuất dữ liệu từ các tài liệu, bài đọc và Video Transcript thuộc khóa học hiện tại (`course_id`).
-* **BR_AI_002 (Nguyên tắc Socratic Method & Anti-Cheat):**
-  * AI Coach đóng vai người hướng dẫn gợi mở tư duy, không đưa ra đáp án trực tiếp cho bài thi Graded Quiz hay Lab.
-* **BR_AI_003 (Chế tài xử phạt vi phạm Input Guard):**
-  * Tự động khóa quyền dùng AI Coach trong 24 giờ nếu vi phạm quá 3 lần/10 phút.
-* **BR_AI_004 (Định dạng Phản hồi Trích dẫn Timestamp & Link Bài học):**
-  * Phản hồi của AI Coach kèm danh sách `citations` (`item_id`, `timestamp_seconds`, `snippet`).
-
----
-
-## 5. Quy tắc Cấp phát và Thu hồi Chứng chỉ Xác minh (BR_CERT & BR_BADGE)
+## 4. Quy tắc Cấp phát và Thu hồi Chứng chỉ Xác minh (BR_CERT & BR_BADGE)
 
 * **BR_CERT_001 (Điều kiện cấp Verified Certificate tự động):**
   * Tự động phát hành Verified Certificate khi: (1) `Progress = 100%` và (2) `Điểm các bài Graded Items >= 80%`.
@@ -149,6 +134,10 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_FORUM_002 (Phân quyền & Tự động Ghim Thread khi Pin Staff Answer):**
   * Chỉ tài khoản có vai trò `INSTRUCTOR`, `TA`, `SUPER_ADMIN` hoặc `PARTNER_ADMIN` mới có quyền gọi lệnh ghim câu trả lời chính thức (`pin_staff_answer`).
   * Khi một câu trả lời được ghim làm `is_staff_answer = True`, bài thảo luận gốc (Thread) cũng tự động được đánh dấu `is_staff_pinned = True` để ưu tiên hiển thị trên đầu danh sách diễn đàn.
+* **BR_FORUM_003 (Phân quyền Tác giả/Moderation & Chỉ báo Bài viết đã Chỉnh sửa):**
+  * *Quyền Chỉnh sửa & Xóa:* Tác giả bài viết (`author_user_id == current_user.id`) có quyền Cập nhật (`UpdateThread`, `UpdateReply`) hoặc Xóa (`DeleteThread`, `DeleteReply`) bài viết/bình luận của chính mình.
+  * *Chỉ báo đã Chỉnh sửa (Edit State Indicator):* Ngay khi tác giả chỉnh sửa bài viết/bình luận, hệ thống tự động cập nhật cờ `is_edited = True` và ghi lại mốc thời gian `edited_at` để tất cả người xem phân biệt được nội dung đã qua chỉnh sửa.
+  * *Ban kiểm duyệt (Staff Moderation):* Trợ giảng và Giảng viên (`TA`, `INSTRUCTOR`, `ADMIN`) có quyền Xóa (Delete) bài viết hoặc bình luận vi phạm của bất kỳ người dùng nào nhưng không được quyền thay đổi nội dung (Update) bài đăng của người khác.
 
 ---
 
@@ -165,4 +154,23 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Văn bản bình luận `comment_text` tối đa 2,000 ký tự và bắt buộc được làm sạch (Sanitize HTML/Script tags) tại Backend để chống tấn công Stored XSS khi hiển thị công khai. Bàn nộp quá 2,000 ký tự sẽ bị từ chối với lỗi Fail-fast validation (`ValueError`).
 * **BR_REVIEW_004 (Xung đột Quyền lợi & Chống Tự đánh giá):**
   * Giảng viên, Trợ giảng hoặc Admin phụ trách tạo/quản lý khóa học bị cấm tự gửi đánh giá cho khóa học của chính mình.
+
+---
+
+## 8. Quy tắc Quản lý Khóa học của Giảng viên (BR_INSTRUCTOR)
+
+* **BR_INSTRUCTOR_001 (Phân quyền Vai trò & Quyền sở hữu Khóa học - Course Ownership):**
+  * Chỉ các tài khoản có vai trò `INSTRUCTOR`, `TA`, `SUPER_ADMIN` hoặc `PARTNER_ADMIN` mới có quyền gọi các RPC quản lý khóa học.
+  * *Ràng buộc Quyền sở hữu (Course Ownership):* Mỗi khóa học được gắn với một Chủ sở hữu chính (`owner_id`) và danh sách Giảng viên đồng phụ trách (`co_instructor_ids`). Giảng viên chỉ có quyền chỉnh sửa (`UpdateCourse`), quản lý bài giảng (`CreateWeekModule`, `UpdateLesson`, v.v.) hoặc xóa (`DeleteCourse`) đối với khóa học do mình sở hữu hoặc phụ trách.
+  * *Quyền Admin toàn quyền:* `SUPER_ADMIN` và `PARTNER_ADMIN` giữ quyền ghi đè toàn hệ thống trên mọi khóa học.
+* **BR_INSTRUCTOR_002 (Cơ chế Delete Cascade Dữ liệu Phụ thuộc):**
+  * Khi thực hiện Xóa khóa học (`DeleteCourse`) hoặc Xóa các cấu trúc con (`DeleteWeekModule`, `DeleteLesson`, `DeleteLearningItem`), hệ thống tự động áp dụng cơ chế cascade xóa sạch các dữ liệu con liên quan (In-video Quizzes, Interactive Transcripts, Course Announcements) để bảo đảm tính toàn vẹn dữ liệu.
+* **BR_INSTRUCTOR_003 (Quy định Đăng Thông báo Khóa học Course Announcements):**
+  * Giảng viên đăng thông báo (`CreateCourseAnnouncement`) phải cung cấp Tiêu đề (`title`) và Nội dung (`content`). Thông báo sau khi đăng được lưu kèm mốc thời gian và hiển thị công khai cho tất cả học viên ghi danh khóa học qua RPC `ListCourseAnnouncements`.
+* **BR_INSTRUCTOR_004 (Thống kê Tiến độ Lớp học & Danh sách Học viên Instructor Analytics):**
+  * Giảng viên truy xuất báo cáo lớp học qua RPC `GetInstructorAnalytics` nhận thông tin thống kê thời gian thực: Tổng số học viên (`total_enrolled_students`), Tỷ lệ hoàn thành trung bình (`average_completion_rate`), Điểm đánh giá trung bình (`average_rating`), và Danh sách chi tiết tiến độ từng học viên (`students`).
+* **BR_INSTRUCTOR_005 (Kéo thả & Sắp xếp Thứ tự Cấu trúc Bài giảng Batch Reordering):**
+  * Giảng viên/Admin được phép sắp xếp lại thứ tự của Tuần học (`ReorderWeekModules`), Bài học (`ReorderLessons`) và Học liệu (`ReorderLearningItems`) bằng giao diện Kéo thả (Drag & Drop) hoặc Nút di chuyển Nhanh (Up/Down).
+  - Thứ tự vị trí mới được cập nhật đồng bộ trong 1 DB Transaction Atomic và duy trì chỉ số `order_index` cố định để hiển thị đồng nhất cho cả Học viên và Giảng viên.
+
 

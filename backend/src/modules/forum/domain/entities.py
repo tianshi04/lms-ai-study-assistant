@@ -15,6 +15,9 @@ class ForumReplyEntity(Entity):
         upvote_count: int = 0,
         created_at: str = "",
         is_upvoted_by_me: bool = False,
+        is_edited: bool = False,
+        edited_at: str = "",
+        author_user_id: str = "",
     ) -> None:
         super().__init__(id=id)
         self.thread_id = thread_id
@@ -25,6 +28,9 @@ class ForumReplyEntity(Entity):
         self.upvote_count = upvote_count
         self.created_at = created_at
         self.is_upvoted_by_me = is_upvoted_by_me
+        self.is_edited = is_edited
+        self.edited_at = edited_at
+        self.author_user_id = author_user_id
 
 
 @dataclass
@@ -42,6 +48,9 @@ class ForumThreadEntity(Entity):
         is_staff_pinned: bool = False,
         replies: list[ForumReplyEntity] | None = None,
         is_upvoted_by_me: bool = False,
+        is_edited: bool = False,
+        edited_at: str = "",
+        author_user_id: str = "",
     ) -> None:
         super().__init__(id=id)
         self.course_id = course_id
@@ -54,3 +63,6 @@ class ForumThreadEntity(Entity):
         self.is_staff_pinned = is_staff_pinned
         self.replies = replies or []
         self.is_upvoted_by_me = is_upvoted_by_me
+        self.is_edited = is_edited
+        self.edited_at = edited_at
+        self.author_user_id = author_user_id

@@ -49,6 +49,7 @@ class LearningItem(Entity):
         interactive_transcripts: list[InteractiveTranscript] | None = None,
         in_video_quizzes: list[InVideoQuiz] | None = None,
         reading_markdown: str = "",
+        order_index: int = 0,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -59,6 +60,7 @@ class LearningItem(Entity):
         self.interactive_transcripts = interactive_transcripts or []
         self.in_video_quizzes = in_video_quizzes or []
         self.reading_markdown = reading_markdown
+        self.order_index = order_index
 
 
 class Lesson(Entity):
@@ -68,11 +70,13 @@ class Lesson(Entity):
         title: str,
         estimated_minutes: int = 30,
         items: list[LearningItem] | None = None,
+        order_index: int = 0,
     ) -> None:
         super().__init__(id=id)
         self.title = title
         self.estimated_minutes = estimated_minutes
         self.items = items or []
+        self.order_index = order_index
 
 
 class WeekModule(Entity):
@@ -128,6 +132,8 @@ class Course(Entity):
         review_count: int = 0,
         subject: str = "",
         level: str = "",
+        owner_id: str = "",
+        co_instructor_ids: list[str] | None = None,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -141,6 +147,8 @@ class Course(Entity):
         self.review_count = review_count
         self.subject = subject
         self.level = level
+        self.owner_id = owner_id
+        self.co_instructor_ids = co_instructor_ids or []
 
 
 class Specialization(Entity):
@@ -159,3 +167,52 @@ class Specialization(Entity):
         self.partner_name = partner_name
         self.partner_logo_url = partner_logo_url
         self.course_ids = course_ids or []
+
+
+class CourseAnnouncement(Entity):
+    def __init__(
+        self,
+        id: str,
+        course_id: str,
+        author_id: str,
+        author_name: str,
+        title: str,
+        content: str,
+        created_at: str = "",
+    ) -> None:
+        super().__init__(id=id)
+        self.course_id = course_id
+        self.author_id = author_id
+        self.author_name = author_name
+        self.title = title
+        self.content = content
+        self.created_at = created_at
+
+
+@dataclass(frozen=True)
+class EnrolledStudent(ValueObject):
+    user_id: str
+    user_name: str
+    user_email: str
+    progress_percent: float
+    enrolled_at: str
+
+
+class InstructorAnalytics(Entity):
+    def __init__(
+        self,
+        id: str,
+        course_id: str,
+        total_enrolled_students: int = 0,
+        average_completion_rate: float = 0.0,
+        average_rating: float = 0.0,
+        review_count: int = 0,
+        students: list[EnrolledStudent] | None = None,
+    ) -> None:
+        super().__init__(id=id)
+        self.course_id = course_id
+        self.total_enrolled_students = total_enrolled_students
+        self.average_completion_rate = average_completion_rate
+        self.average_rating = average_rating
+        self.review_count = review_count
+        self.students = students or []
