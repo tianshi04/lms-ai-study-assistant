@@ -53,6 +53,7 @@ class ForumUseCase:
             upvote_count=0,
             is_staff_pinned=False,
             replies=[],
+            author_user_id=author_user_id,
         )
 
         async with async_session_scope() as session:
@@ -70,6 +71,7 @@ class ForumUseCase:
                     is_staff_answer=False,
                     upvote_count=0,
                     created_at=created_at,
+                    author_user_id=author_user_id,
                 )
                 await repo.create_reply(reply_entity)
                 # Re-fetch thread to include the reply
@@ -112,6 +114,7 @@ class ForumUseCase:
             is_staff_answer=is_staff,
             upvote_count=0,
             created_at=created_at,
+            author_user_id=author_user_id,
         )
 
         async with async_session_scope() as session:
@@ -129,3 +132,104 @@ class ForumUseCase:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             return await repo.pin_staff_answer(reply_id, ta_user_id)
+
+    async def update_thread(
+        self,
+        thread_id: str,
+        title: str,
+        content: str,
+        current_user_id: str,
+        is_staff: bool = False,
+    ) -> ForumThreadEntity | None:
+        async with async_session_scope() as session:
+            repo = self._get_repo(session)
+            existing = await repo.get_thread_by_id(thread_id)
+            if not existing:
+                return None
+            if (
+                existing.author_user_id
+                and existing.author_user_id != current_user_id
+                and not is_staff
+            ):
+                from connectrpc.code import Code
+                from connectrpc.errors import ConnectError
+
+                raise ConnectError(
+                    Code.PERMISSION_DENIED, "Bạn không có quyền chỉnh sửa bài viết này."
+                )
+            return await repo.update_thread(
+                thread_id=thread_id,
+                title=title,
+                content=content,
+                edited_at=utc_now_str(),
+            )
+
+    async def delete_thread(
+        self, thread_id: str, current_user_id: str, is_staff: bool = False
+    ) -> bool:
+        async with async_session_scope() as session:
+            repo = self._get_repo(session)
+            existing = await repo.get_thread_by_id(thread_id)
+            if not existing:
+                return False
+            if (
+                existing.author_user_id
+                and existing.author_user_id != current_user_id
+                and not is_staff
+            ):
+                from connectrpc.code import Code
+                from connectrpc.errors import ConnectError
+
+                raise ConnectError(
+                    Code.PERMISSION_DENIED, "Bạn không có quyền xóa bài viết này."
+                )
+            return await repo.delete_thread(thread_id)
+
+    async def update_reply(
+        self,
+        reply_id: str,
+        content: str,
+        current_user_id: str,
+        is_staff: bool = False,
+    ) -> ForumReplyEntity | None:
+        async with async_session_scope() as session:
+            repo = self._get_repo(session)
+            existing = await repo.get_reply_by_id(reply_id)
+            if not existing:
+                return None
+            if (
+                existing.author_user_id
+                and existing.author_user_id != current_user_id
+                and not is_staff
+            ):
+                from connectrpc.code import Code
+                from connectrpc.errors import ConnectError
+
+                raise ConnectError(
+                    Code.PERMISSION_DENIED,
+                    "Bạn không có quyền chỉnh sửa bình luận này.",
+                )
+            return await repo.update_reply(
+                reply_id=reply_id, content=content, edited_at=utc_now_str()
+            )
+
+    async def delete_reply(
+        self, reply_id: str, current_user_id: str, is_staff: bool = False
+    ) -> bool:
+        async with async_session_scope() as session:
+            repo = self._get_repo(session)
+            existing = await repo.get_reply_by_id(reply_id)
+            if not existing:
+                return False
+            if (
+                existing.author_user_id
+                and existing.author_user_id != current_user_id
+                and not is_staff
+            ):
+                from connectrpc.code import Code
+                from connectrpc.errors import ConnectError
+
+                raise ConnectError(
+                    Code.PERMISSION_DENIED, "Bạn không có quyền xóa bình luận này."
+                )
+            return await repo.delete_reply(reply_id)

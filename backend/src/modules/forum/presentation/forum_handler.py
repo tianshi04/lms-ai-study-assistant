@@ -1,5 +1,4 @@
 from connectrpc.code import Code
-
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
 
@@ -41,6 +40,9 @@ def _to_pb_reply(reply: ForumReplyEntity) -> pb.ForumReply:
         upvote_count=reply.upvote_count,
         created_at=reply.created_at,
         is_upvoted_by_me=reply.is_upvoted_by_me,
+        is_edited=reply.is_edited,
+        edited_at=reply.edited_at,
+        author_user_id=reply.author_user_id,
     )
 
 
@@ -57,6 +59,9 @@ def _to_pb_thread(thread: ForumThreadEntity) -> pb.ForumThread:
         is_staff_pinned=thread.is_staff_pinned,
         replies=[_to_pb_reply(r) for r in thread.replies],
         is_upvoted_by_me=thread.is_upvoted_by_me,
+        is_edited=thread.is_edited,
+        edited_at=thread.edited_at,
+        author_user_id=thread.author_user_id,
     )
 
 
@@ -149,7 +154,6 @@ class ForumHandler(ForumService):
         current_user = require_current_user()
         role = current_user.role
 
-        # Verify Instructor / TA permission
         normalized_role = str(role).lower()
         is_staff = any(
             r in normalized_role
@@ -170,3 +174,86 @@ class ForumHandler(ForumService):
             reply_id=request.reply_id, ta_user_id=current_user.id
         )
         return pb.PinStaffAnswerResponse(success=success)
+
+    async def update_thread(
+        self,
+        request: pb.UpdateThreadRequest,
+        ctx: RequestContext[pb.UpdateThreadRequest, pb.UpdateThreadResponse],
+    ) -> pb.UpdateThreadResponse:
+        current_user = require_current_user()
+        role = current_user.role.lower()
+        is_staff = any(
+            r in role
+            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
+        )
+        thread = await self.use_case.update_thread(
+            thread_id=request.thread_id,
+            title=request.title,
+            content=request.content,
+            current_user_id=current_user.id,
+            is_staff=is_staff,
+        )
+        if not thread:
+            raise ConnectError(
+                Code.NOT_FOUND, f"Bài viết {request.thread_id} không tồn tại."
+            )
+        return pb.UpdateThreadResponse(thread=_to_pb_thread(thread))
+
+    async def delete_thread(
+        self,
+        request: pb.DeleteThreadRequest,
+        ctx: RequestContext[pb.DeleteThreadRequest, pb.DeleteThreadResponse],
+    ) -> pb.DeleteThreadResponse:
+        current_user = require_current_user()
+        role = current_user.role.lower()
+        is_staff = any(
+            r in role
+            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
+        )
+        success = await self.use_case.delete_thread(
+            thread_id=request.thread_id,
+            current_user_id=current_user.id,
+            is_staff=is_staff,
+        )
+        return pb.DeleteThreadResponse(success=success)
+
+    async def update_reply(
+        self,
+        request: pb.UpdateReplyRequest,
+        ctx: RequestContext[pb.UpdateReplyRequest, pb.UpdateReplyResponse],
+    ) -> pb.UpdateReplyResponse:
+        current_user = require_current_user()
+        role = current_user.role.lower()
+        is_staff = any(
+            r in role
+            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
+        )
+        reply = await self.use_case.update_reply(
+            reply_id=request.reply_id,
+            content=request.content,
+            current_user_id=current_user.id,
+            is_staff=is_staff,
+        )
+        if not reply:
+            raise ConnectError(
+                Code.NOT_FOUND, f"Bình luận {request.reply_id} không tồn tại."
+            )
+        return pb.UpdateReplyResponse(reply=_to_pb_reply(reply))
+
+    async def delete_reply(
+        self,
+        request: pb.DeleteReplyRequest,
+        ctx: RequestContext[pb.DeleteReplyRequest, pb.DeleteReplyResponse],
+    ) -> pb.DeleteReplyResponse:
+        current_user = require_current_user()
+        role = current_user.role.lower()
+        is_staff = any(
+            r in role
+            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
+        )
+        success = await self.use_case.delete_reply(
+            reply_id=request.reply_id,
+            current_user_id=current_user.id,
+            is_staff=is_staff,
+        )
+        return pb.DeleteReplyResponse(success=success)

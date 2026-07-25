@@ -12,6 +12,9 @@ message ForumReply {
   int32 upvote_count = 7;
   string created_at = 8;
   bool is_upvoted_by_me = 9;
+  bool is_edited = 10;
+  string edited_at = 11;
+  string author_user_id = 12;
 }
 
 message ForumThread {
@@ -26,6 +29,9 @@ message ForumThread {
   bool is_staff_pinned = 9;
   repeated ForumReply replies = 10;
   bool is_upvoted_by_me = 11;
+  bool is_edited = 12;
+  string edited_at = 13;
+  string author_user_id = 14;
 }
 
 message ListThreadsRequest {
@@ -74,10 +80,49 @@ message PinStaffAnswerResponse {
   bool success = 1;
 }
 
+message UpdateThreadRequest {
+  string thread_id = 1;
+  string title = 2;
+  string content = 3;
+}
+
+message UpdateThreadResponse {
+  ForumThread thread = 1;
+}
+
+message DeleteThreadRequest {
+  string thread_id = 1;
+}
+
+message DeleteThreadResponse {
+  bool success = 1;
+}
+
+message UpdateReplyRequest {
+  string reply_id = 1;
+  string content = 2;
+}
+
+message UpdateReplyResponse {
+  ForumReply reply = 1;
+}
+
+message DeleteReplyRequest {
+  string reply_id = 1;
+}
+
+message DeleteReplyResponse {
+  bool success = 1;
+}
+
 service ForumService {
   rpc ListThreads(ListThreadsRequest) returns (ListThreadsResponse);
   rpc CreateThread(CreateThreadRequest) returns (CreateThreadResponse);
   rpc PostReply(PostReplyRequest) returns (PostReplyResponse);
   rpc VotePost(VotePostRequest) returns (VotePostResponse);
   rpc PinStaffAnswer(PinStaffAnswerRequest) returns (PinStaffAnswerResponse);
+  rpc UpdateThread(UpdateThreadRequest) returns (UpdateThreadResponse);
+  rpc DeleteThread(DeleteThreadRequest) returns (DeleteThreadResponse);
+  rpc UpdateReply(UpdateReplyRequest) returns (UpdateReplyResponse);
+  rpc DeleteReply(DeleteReplyRequest) returns (DeleteReplyResponse);
 }
