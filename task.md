@@ -39,12 +39,24 @@ Mỗi Khóa học (`Course`) trên hệ thống được tổ chức thành 3 Ph
 
 Giảng viên xây dựng nội dung theo cấu trúc: **Course $\rightarrow$ WeekModule $\rightarrow$ Lesson $\rightarrow$ LearningItems**.
 
-### 1. 📹 `VIDEO` (Bài giảng Video Lý thuyết & Tương tác)
-- **Thiết kế Biên tập (Instructor Studio)**: 
-  - Input đường dẫn Video MP4 (`video_url`).
-  - Upload tệp Phụ đề WebVTT (`vtt_subtitle_url`). Backend tự trích xuất **Interactive Transcript** tự cuộn theo lời nói trong video.
-  - Setup **In-Video Quiz** (Câu hỏi dừng màn hình): Kéo timeline đến giây `timestamp_seconds` $\rightarrow$ Nhập nội dung câu hỏi + 4 đáp án A/B/C/D + Lời giải thích.
-- **Trải nghiệm Học viên**: Trình phát Video HTML5 có phụ đề cuộn, bấm vào câu thoại tự nhảy video đến giây đó. Khi xem đến mốc `timestamp_seconds` $\rightarrow$ Video tự động `pause()`, hiển thị bảng câu hỏi trắc nghiệm đè lên màn hình. Trả lời xong bấm "Tiếp tục xem" $\rightarrow$ Video tự `play()`.
+### 1. 📹 `VIDEO` (Bài giảng Video Lý thuyết & Tương tác & Direct Test)
+- **Thiết kế Biên tập (Instructor Studio - Interactive Video Studio)**:
+  - **Kênh Tải Video Đa dụng (Smart Video Ingestion)**:
+    - *Upload Trực tiếp (Direct File Upload)*: Hỗ trợ kéo-thả tệp Video MP4 / WebM / MOV tải thẳng lên hệ thống lưu trữ Cloud Storage (MinIO / S3).
+    - *Đường dẫn Trực tuyến (URL Fallback)*: Cho phép dán trực tiếp liên kết Video MP4 / CDN công khai (`video_url`).
+  - **Quản lý Phụ đề & Trích xuất Lời thoại**:
+    - Upload tệp Phụ đề WebVTT (`vtt_subtitle_url`) hoặc bật chế độ tự động AI trích xuất lời thoại (`auto_transcribe`). Backend tự bóc tách thành **Interactive Transcript** cuộn theo lời nói.
+  - **Trình Biên tập In-Video Quiz Studio (Interactive Timeline Scrubber)**:
+    - Tích hợp khung xem trước Video kèm thanh timeline trực quan. Giảng viên phát video hoặc kéo con trượt đến mốc thời gian `timestamp_seconds` chính xác.
+    - Nhấn **"Chèn câu hỏi kiểm thử trực tiếp"** (Add In-Video Marker Pin) $\rightarrow$ Màn hình mở Form thiết kế câu hỏi dừng màn hình (Nội dung câu hỏi, 4 đáp án A/B/C/D, chọn đáp án đúng, Lời giải thích chi tiết).
+    - Các mốc câu hỏi được ghim (pin markers) trực tiếp lên thanh timeline phát video và hiển thị dưới dạng danh sách quản lý trực quan (thêm / sửa / xóa / kéo đổi mốc giây).
+- **Trải nghiệm Học viên (Learner View - Native Interactive Player)**:
+  - Trình phát Video HTML5 Native sắc nét, giao diện hiện đại với bộ chuyển đổi phụ đề và phụ đề tương tác cuộn bên lề.
+  - Các mốc câu hỏi kiểm thử trực tiếp (`In-Video Quizzes`) được đánh dấu điểm sáng (glow markers) trên thanh Seekbar.
+  - Khi luồng video phát chạm đến mốc `timestamp_seconds` $\rightarrow$ Video tự động `pause()`, phát hiệu ứng mở popup **In-Video Quiz Modal** đè lên màn hình với thiết kế glassmorphism hiện đại.
+  - Học viên chọn đáp án và bấm **"Kiểm Tra Đáp Án"**:
+    - Hiển thị phản hồi Đúng (xanh) / Sai (đỏ) thời gian thực kèm Lời giải thích.
+    - Nhấn **"Tiếp tục xem Video"** $\rightarrow$ Popup đóng lại, trình phát tự động `play()` nối tiếp bài giảng.
 
 ### 2. 📖 `READING` (Bài đọc Docs & Lý thuyết)
 - **Thiết kế Biên tập (Instructor Studio)**:
