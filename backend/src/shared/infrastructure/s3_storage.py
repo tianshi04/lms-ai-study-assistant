@@ -67,6 +67,25 @@ class S3StorageService:
                     Bucket=target_bucket, Policy=json.dumps(policy)
                 )
 
+            # Always configure CORS policy to allow direct frontend uploads
+            try:
+                cors_configuration = {
+                    "CORSRules": [
+                        {
+                            "AllowedHeaders": ["*"],
+                            "AllowedMethods": ["GET", "PUT", "POST", "HEAD", "DELETE"],
+                            "AllowedOrigins": ["*"],
+                            "ExposeHeaders": ["ETag"],
+                        }
+                    ]
+                }
+                await s3_client.put_bucket_cors(
+                    Bucket=target_bucket,
+                    CORSConfiguration=cors_configuration,
+                )
+            except Exception:
+                pass
+
     async def upload_file(
         self,
         file_bytes: bytes,
