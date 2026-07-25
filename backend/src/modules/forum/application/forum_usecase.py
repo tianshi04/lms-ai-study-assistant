@@ -157,16 +157,13 @@ class ForumUseCase:
             existing = await repo.get_thread_by_id(thread_id)
             if not existing:
                 return None
-            if (
-                existing.author_user_id
-                and existing.author_user_id != current_user_id
-                and not is_staff
-            ):
+            if existing.author_user_id and existing.author_user_id != current_user_id:
                 from connectrpc.code import Code
                 from connectrpc.errors import ConnectError
 
                 raise ConnectError(
-                    Code.PERMISSION_DENIED, "Bạn không có quyền chỉnh sửa bài viết này."
+                    Code.PERMISSION_DENIED,
+                    "Chỉ tác giả mới có quyền chỉnh sửa bài viết này.",
                 )
             return await repo.update_thread(
                 thread_id=thread_id,
@@ -216,17 +213,13 @@ class ForumUseCase:
             existing = await repo.get_reply_by_id(reply_id)
             if not existing:
                 return None
-            if (
-                existing.author_user_id
-                and existing.author_user_id != current_user_id
-                and not is_staff
-            ):
+            if existing.author_user_id and existing.author_user_id != current_user_id:
                 from connectrpc.code import Code
                 from connectrpc.errors import ConnectError
 
                 raise ConnectError(
                     Code.PERMISSION_DENIED,
-                    "Bạn không có quyền chỉnh sửa bình luận này.",
+                    "Chỉ tác giả mới có quyền chỉnh sửa bình luận này.",
                 )
             return await repo.update_reply(
                 reply_id=reply_id, content=content, edited_at=utc_now_str()
