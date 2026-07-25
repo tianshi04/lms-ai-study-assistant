@@ -20,8 +20,8 @@ async def test_submit_and_list_course_review():
         )
         assert course is not None
 
-        # 1b. Check BR_REVIEW_001: Submit without 100% progress fails
-        with pytest.raises(ValueError, match="Chỉ học viên hoàn thành 100%"):
+        # 1b. Check BR_REVIEW_001: Submit without 50% progress fails
+        with pytest.raises(ValueError, match="Chỉ học viên hoàn thành tối thiểu 50%"):
             await usecase.submit_course_review(
                 user_id="user_test_01",
                 user_name="Tester One",

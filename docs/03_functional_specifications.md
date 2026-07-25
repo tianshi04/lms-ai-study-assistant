@@ -158,9 +158,9 @@ flowchart TD
 * **Popup Chúc mừng Hoàn thành Khóa học (Course Completion Modal):** Khi tiến độ bài học đạt 100% và đạt đủ điều kiện Pass các bài kiểm tra, trình phát bài học `/learn/[courseId]` lập tức kích hoạt hiệu ứng pháo hoa và hiển thị Modal chúc mừng.
 * **Nhận chứng chỉ trực tiếp (Direct Certificate Claim):** Nút *"Nhận chứng chỉ xác minh (Claim Certificate)"* trên Modal điều hướng trực tiếp học viên tới cổng xác thực công khai `/verify/[certId]`.
 * **Đánh giá & Nhận xét Khóa học (Course Rating & Review):**
-  * Học viên chọn điểm đánh giá từ 1 đến 5 sao (⭐) và nhập lời bình luận chi tiết.
-  * RPC `SubmitCourseReview` gửi thông tin đánh giá về Backend lưu trữ.
-  * Trang thông tin khóa học `/courses/[courseId]` tự động tổng hợp và hiển thị điểm sao trung bình (ví dụ: `4.8 ★ (1,250 lượt đánh giá)`) cùng danh sách các nhận xét của học viên khác.
+  * Học viên đạt tối thiểu 50% tiến độ bài học chọn điểm đánh giá từ 1 đến 5 sao (⭐) và nhập lời bình luận chi tiết (`BR_REVIEW_001`).
+  * RPC `SubmitCourseReview` gửi thông tin đánh giá về Backend lưu trữ, phân loại cờ `is_verified_completer` và cập nhật trực tiếp cache CSAT trên `CourseModel` (`BR_REVIEW_002`).
+  * Trang thông tin khóa học `/courses/[courseId]` tự động tổng hợp và hiển thị điểm sao trung bình (ví dụ: `4.8 ★ (1,250 lượt đánh giá)`) cùng danh sách các nhận xét của học viên khác kèm badge phân loại (`Verified Completer` vs `Active Learner Review`).
 
 ---
 

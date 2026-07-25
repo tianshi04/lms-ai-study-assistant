@@ -179,13 +179,13 @@ class CatalogUseCase:
                     "Giảng viên không được phép tự gửi đánh giá cho khóa học của mình (BR_REVIEW_004)."
                 )
 
-            # BR_REVIEW_001: Check if user completed 100% of the course via Learning domain
+            # BR_REVIEW_001: Check if user completed at least 50% of the course via Learning domain
             learning_repo = SQLAlchemyLearningRepository(session)
             progress = await learning_repo.get_progress(user_id, real_course_id)
 
-            if not progress or progress.overall_progress_percent < 100.0:
+            if not progress or progress.overall_progress_percent < 50.0:
                 raise ValueError(
-                    "Chỉ học viên hoàn thành 100% tiến độ khóa học mới có quyền gửi đánh giá (BR_REVIEW_001)."
+                    "Chỉ học viên hoàn thành tối thiểu 50% tiến độ khóa học mới có quyền gửi đánh giá (BR_REVIEW_001)."
                 )
 
             return await repo.submit_course_review(

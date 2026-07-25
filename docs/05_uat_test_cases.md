@@ -127,7 +127,7 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
 
 ## KỊCH BẢN UAT-08: KIỂM THỬ HOÀN THÀNH KHÓA HỌC & ĐÁNH GIÁ CSAT (COURSE COMPLETION MODAL & REVIEW FLOW)
 
-* **Mục tiêu:** Xác minh khi học viên hoàn thành 100% tiến độ bài học và đạt điểm Pass ở tất cả các bài thi bắt buộc, hệ thống lập tức hiển thị Course Completion Modal mừng hoàn thành kèm hiệu ứng pháo hoa, Form chọn 1-5 sao và nhập bình luận đánh giá.
+* **Mục tiêu:** Xác minh khi học viên hoàn thành từ 50% tiến độ bài học trở lên, hệ thống cho phép nộp Đánh giá CSAT kèm nhãn phân loại ("Verified Completer" vs "Active Learner Review").
 * **Tác nhân thực hiện:** Học viên (Learner).
 * **Điều kiện bắt đầu:** Học viên đã hoàn thành 99% bài học của khóa học *"Lập trình Web Nâng cao"*.
 * **Các bước thực hiện:**
