@@ -109,6 +109,7 @@ def _to_pb_review(review: CourseReview) -> pb.CourseReview:
         rating_stars=review.rating_stars,
         comment_text=review.comment_text,
         created_at=review.created_at,
+        is_verified_completer=review.is_verified_completer,
     )
 
 

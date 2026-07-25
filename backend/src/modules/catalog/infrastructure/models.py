@@ -6,6 +6,8 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    Float,
+    Boolean,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -45,6 +47,12 @@ class CourseModel(Base):
     owner_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     co_instructor_ids: Mapped[list[str]] = mapped_column(
         ARRAY(String(64)), nullable=False, default=list
+    )
+    average_rating: Mapped[float] = mapped_column(
+        Float, nullable=False, server_default="0.0"
+    )
+    review_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0"
     )
 
     week_modules: Mapped[list["WeekModuleModel"]] = relationship(
@@ -188,6 +196,9 @@ class CourseReviewModel(Base):
     rating_stars: Mapped[int] = mapped_column(Integer, nullable=False)
     comment_text: Mapped[str] = mapped_column(Text, nullable=False, default="")
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+    is_verified_completer: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default="false"
+    )
 
 
 class CourseAnnouncementModel(Base):
