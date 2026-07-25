@@ -3,6 +3,9 @@
 import functools
 from typing import Any
 
+from connectrpc.code import Code
+from connectrpc.errors import ConnectError
+
 from src.modules.certificate.infrastructure.repository import CertificateRepository
 from src.modules.identity.infrastructure.repository import IdentityRepository
 from src.shared.auth import is_staff_role
@@ -78,25 +81,7 @@ def require_paid_access(course_id_param: str = ""):
                     session, user_id, course_id
                 )
                 if not is_paid:
-                    func_name = getattr(func, "__name__", "")
-                    if func_name == "submit_graded_quiz":
-                        return {
-                            "score_percent": 0.0,
-                            "passed": False,
-                            "attempts_left": 0,
-                            "cooldown_seconds_left": 0,
-                            "answer_explanations": [err],
-                        }
-                    elif func_name == "submit_auto_graded_lab":
-                        return {
-                            "score_percent": 0.0,
-                            "passed": False,
-                            "total_test_cases": 0,
-                            "passed_test_cases": 0,
-                            "test_logs": err,
-                        }
-                    elif func_name == "submit_peer_assignment":
-                        return "", err
+                    raise ConnectError(Code.PERMISSION_DENIED, err)
 
             return await func(self, user_id, *args, **kwargs)
 
