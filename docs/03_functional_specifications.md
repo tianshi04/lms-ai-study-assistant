@@ -8,7 +8,9 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 
 ### 1.1. Quản lý tài khoản, Suất học Doanh nghiệp & Duyệt Hỗ trợ Tài chính
 * **Thêm mới & Phân quyền:** Admin tạo tài khoản hoặc import danh sách hàng loạt (`.xlsx`, `.csv`). Phân quyền các vai trò: `Learner`, `Instructor`, `TA (Teaching Assistant)`, `Partner Admin`.
-* **Mã hóa Mật khẩu & Xác thực Token:** Mật khẩu được mã hóa băm PBKDF2-HMAC-SHA256 (100k iterations + salt ngẫu nhiên), tự động tạo avatar SVG ngẫu nhiên từ DiceBear API và hỗ trợ quy trình Refresh Token rotation (`BR_AUTH_002`).
+* **Mã hóa Mật khẩu, Declarative Auth Policy & Xác thực Token:**
+  * Mật khẩu được mã hóa băm PBKDF2-HMAC-SHA256 (100k iterations + salt ngẫu nhiên), tự động tạo avatar SVG ngẫu nhiên từ DiceBear API và hỗ trợ quy trình Refresh Token rotation (`BR_AUTH_002`).
+  * **Chính sách Phân quyền Declarative ở Tầng Contract (Protobuf Custom Options):** Toàn bộ các API ConnectRPC được gán nhãn chính sách bảo mật qua option `(auth.v1.policy)` trực tiếp trong hợp đồng `.proto`. `AuthPolicyRegistry` tự động quét descriptors khi khởi chạy server (Eager Pre-initialization) và phân lớp bảo mật 3 tầng (`BR_AUTH_001`): Tầng 1 (RPC Method Policy), Tầng 2 (ABAC Paid Access), Tầng 3 (Domain Resource Ownership).
 * **Quản lý Suất học Doanh nghiệp (Enterprise License):**
   * Tạo gói suất học cho đối tác (ví dụ: cấp 500 seats cho Trường Đại học X hoặc Công ty Y).
   * Quản lý mã kích hoạt (Enterprise Key), kiểm tra trạng thái hoạt động (`is_active`) và theo dõi số lượng seat đã kích hoạt (`used_seats / total_seats`). Thao tác kích hoạt và thu hồi suất học bắt buộc thực hiện qua câu lệnh DB Atomic Update (`UPDATE enterprise_keys SET used_seats = used_seats + 1 ...`) để tránh Race Condition khi thao tác đồng thời (`BR_ACCESS_002`, `BR_ACCESS_003`).
@@ -44,7 +46,8 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 * **Quản lý Đơn vị Phát hành (Partner Branding):** Chọn đối tác phát hành (Partner Logo), hiển thị tên Giảng viên chính và danh sách Trợ giảng (TA).
 
 ### 2.2. Soạn thảo & Quản lý Học liệu đa dạng (Learning Items Builder & Management)
-* **Chỉnh sửa & Xóa Cấu trúc Bài giảng:** Giảng viên có toàn quyền chỉnh sửa và xóa các thành phần bài giảng ở mọi cấp độ:
+* **Chỉnh sửa & Xóa Cấu trúc Bài giảng (Kiểm tra Ownership ở Tầng Application Use Case):**
+  * Tất cả các thao tác chỉnh sửa/xóa cấu trúc bài giảng được kiểm tra quyền sở hữu (`owner_id`, `co_instructor_ids`) trực tiếp bên trong Application Use Cases (`CatalogUseCase._verify_ownership`) thông qua `enforce_course_ownership`, đảm bảo an toàn tuyệt đối chống tấn công IDOR:
   * **Tuần/Module học:** Cập nhật thông tin (`UpdateWeekModule`), Xóa tuần học (`DeleteWeekModule`), hoặc Kéo thả sắp xếp thứ tự Tuần (`ReorderWeekModules`).
   * **Bài học (Lesson):** Cập nhật tên và thời lượng (`UpdateLesson`), Xóa bài học (`DeleteLesson`), hoặc Kéo thả sắp xếp thứ tự Bài (`ReorderLessons`).
   * **Vật liệu học tập (Learning Item):** Cập nhật nội dung/video/markdown (`UpdateLearningItem`), Xóa học liệu (`DeleteLearningItem`), hoặc Kéo thả sắp xếp thứ tự Học liệu (`ReorderLearningItems`).

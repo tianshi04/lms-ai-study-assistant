@@ -6,18 +6,16 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 
 ## 1. Quy tắc Phân quyền & Quản lý Tài khoản (BR_AUTH & BR_ACCESS)
 
-* **BR_AUTH_001 (Bảo mật Centralized AuthInterceptor & Danh sách Public RPCs):**
-  * Hệ thống áp dụng `AuthInterceptor` kiểm tra JWT Bearer Token tập trung cho toàn bộ các dịch vụ ConnectRPC.
-  * *Danh sách trắng API công khai (Public Endpoints - Không yêu cầu Bearer Token):*
-    1. `/identity.v1.IdentityService/Login`
-    2. `/identity.v1.IdentityService/Register`
-    3. `/identity.v1.IdentityService/RefreshToken`
-    4. `/catalog.v1.CatalogService/GetSpecialization`
-    5. `/catalog.v1.CatalogService/ListCourses`
-    6. `/catalog.v1.CatalogService/GetCourseDetail`
-    7. `/catalog.v1.CatalogService/GetLessonDetail`
-    8. `/certificate.v1.CertificateService/VerifyCertificatePublic`
-  * Tất cả các RPC endpoints còn lại bắt buộc gửi `Authorization: Bearer <access_token>` trong header và tự động giải mã `CurrentUser` (id, email, role) vào Request Context.
+* **BR_AUTH_001 (Bảo mật Declarative Auth Policy & Kiến trúc Phân quyền 3 Tầng):**
+  * **Khai báo Phân quyền Declarative ở Tầng Contract (Protobuf Custom Options):**
+    * Tất cả các phương thức RPC trong file `.proto` được gán nhãn khai báo cấp độ bảo mật qua Protobuf Custom Option `(auth.v1.policy) = ...` (Option `50001` trên `google.protobuf.MethodOptions`, với enum `AuthPolicy`: `PUBLIC = 1`, `AUTHENTICATED = 2`, `ADMIN = 3`, `INTERNAL = 4`).
+    * Lớp `AuthPolicyRegistry` tự động quét Protobuf Descriptors khi ứng dụng ASGI khởi chạy (Eager Pre-initialization), xây dựng bảng ánh xạ $O(1)$ phục vụ cho `AuthInterceptor`.
+  * **Kiến trúc Phân quyền Phân lớp 3 Tầng (3-Layer Authorization Architecture):**
+    * **Tầng 1 (API Method Policy - Endpoint Level):** Do `AuthInterceptor` & `AuthPolicyRegistry` đảm nhiệm. Tự động kiểm tra JWT Bearer Token đối với các API `AUTHENTICATED` hoặc `ADMIN`, inject `CurrentUser` vào Request Context. Với API `PUBLIC` (như Login, Register, RefreshToken, ListCourses, GetCourseDetail, VerifyCertificatePublic), request được phép đi qua không cần Bearer Token.
+    * **Tầng 2 (ABAC & Business Access Policy Level):** Do `AccessPolicyService` & Decorator `@require_paid_access` đảm nhiệm. Thực thi quy chế Paid Mode vs Audit Mode (`BR_ACCESS_001`), Enterprise Seats (`BR_ACCESS_002`), Financial Aid (`BR_FAID_001`). Khi tài khoản ở Audit Mode cố tình gọi RPC chấm điểm hoặc nhận chứng chỉ, hệ thống từ chối bằng `ConnectError(Code.PERMISSION_DENIED, err)` chuẩn ConnectRPC protocol.
+    * **Tầng 3 (Domain Resource & Ownership Level):** Do các Application Use Cases (ví dụ `CatalogUseCase._verify_ownership`) đảm nhiệm. Kiểm tra quyền sở hữu đối tượng domain (`owner_id`, `co_instructor_ids`) thông qua helper `enforce_course_ownership` để ngăn ngừa tấn công IDOR / Unauthorized Resource Access.
+  * **Quản lý Vai trò Tập trung (Centralized Role Helpers):**
+    * Đưa hằng số `ADMIN_ROLES`, `STAFF_ROLES` và các phương thức `user.is_admin()`, `user.is_staff()`, `is_admin_role()`, `is_staff_role()` tập trung vào `src/shared/auth.py`, loại bỏ hoàn toàn các câu lệnh so sánh chuỗi vai trò rải rác.
 * **BR_AUTH_002 (Cơ chế Refresh Token Rotation):**
   * Khi `access_token` hết hạn, client gọi RPC `RefreshToken` truyền `refresh_token` hợp lệ (yêu cầu payload claim `type == "refresh"` và tồn tại `user_id` sở hữu trong DB).
   * Hệ thống hủy cặp token cũ và phát hành mới đồng thời cả `access_token` và `refresh_token`.
