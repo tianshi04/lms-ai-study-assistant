@@ -81,7 +81,8 @@ export class AssessmentPage {
   async submitPeerAssignment() {
     await this.submitPeerAssignmentButton.scrollIntoViewIfNeeded();
     await this.submitPeerAssignmentButton.click();
-    await this.page.waitForTimeout(500);
+    // Wait for async RPC call + setHasSubmitted(true) state update to settle
+    await this.page.waitForTimeout(1500);
   }
 
   async gradeFirstPeer() {
@@ -103,14 +104,9 @@ export class AssessmentPage {
     await this.gradeAppealTab.scrollIntoViewIfNeeded();
     await this.gradeAppealTab.click({ force: true });
 
-    // If locked by constraint BR_PEER_001, switch to tab 1, submit assignment, then re-click appeal tab
+    // If still locked (BR_PEER_001), assignment state hasn't settled yet — retry once
     if (await this.page.locator('text=/BR_PEER_001/i').first().isVisible()) {
-      if (await this.mySubmissionTab.isVisible()) {
-        await this.mySubmissionTab.click({ force: true });
-        if (await this.submitPeerAssignmentButton.isVisible()) {
-          await this.submitPeerAssignment();
-        }
-      }
+      await this.page.waitForTimeout(1000);
       await this.gradeAppealTab.click({ force: true });
     }
 
@@ -120,6 +116,8 @@ export class AssessmentPage {
     const submitBtn = this.page.getByRole('button', { name: /Submit Appeal to TA/i });
     await submitBtn.scrollIntoViewIfNeeded();
     await submitBtn.click({ force: true });
+    // Wait for appeal status state to update and render
+    await this.page.waitForTimeout(1000);
   }
 }
 
