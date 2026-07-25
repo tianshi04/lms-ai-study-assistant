@@ -140,7 +140,7 @@ flowchart TD
 
 ### 3.5. Phân hệ Đánh giá Năng lực (Assessments Sub-system)
 * **Cam kết Liêm chính Học thuật (Academic Honor Code):** Bắt buộc tích chọn xác nhận trước khi làm bài. Nếu từ chối (`is_agreed = False`), hệ thống chặn nộp bài và trả về thông báo lỗi kèm điểm số 0.
-* **Graded Quiz:** Ngân hàng câu hỏi xáo trộn (`BR_QUIZ_002`), đồng hồ đếm ngược Server-side (`BR_QUIZ_003`), tự động chấm điểm và hiển thị giải thích. Nếu trượt 3 lần, học viên phải đợi hết 8h Cooldown; khi đạt điểm Pass (>= 80%), hệ thống tự động reset lượt thi về 3.
+* **Graded Quiz:** Ngân hàng câu hỏi xáo trộn (`BR_QUIZ_002`), đồng đồng đếm ngược Server-side (`BR_QUIZ_003`), tự động chấm điểm và áp dụng nguyên tắc *Highest Score Wins* (giữ điểm thi cao nhất). Học viên trượt 3 lần phải chờ hết 8h Cooldown; học viên đã đạt điểm Pass (>= 80%) có thể thi lại cải thiện điểm mà không bị áp dụng Cooldown (`BR_QUIZ_001`).
 * **Auto-Graded Lab:** Học viên tải file code lên -> Sandbox gửi tới Auto-Grader chạy Test Cases -> Trả về danh sách Pass/Fail test cases, log stdout/stderr và điểm số tức thì.
 * **Peer-Graded Assignment Sub-system:**
   1. **Nộp bài:** Học viên nộp bài dự án trước deadline.

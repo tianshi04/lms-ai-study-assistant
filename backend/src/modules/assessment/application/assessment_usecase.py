@@ -211,7 +211,14 @@ class AssessmentUseCase:
                     pass
 
             score_percent = round((correct_count / total_questions) * 100.0, 2)
-            passed = score_percent >= 80.0
+
+            # BR_QUIZ_001: Highest Score Wins policy
+            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
+            all_scores = [sub.score_percent for sub in prev_submissions] + [
+                score_percent
+            ]
+            highest_score = max(all_scores)
+            passed = highest_score >= 80.0
 
             # 4. Handle Cooldown & Attempts tracking
             failed_count = cooldown.failed_attempts_count if cooldown else 0
@@ -235,7 +242,6 @@ class AssessmentUseCase:
 
             # Save submission
             submission_id = f"sub-{uuid.uuid4().hex[:8]}"
-            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
             attempt_number = len(prev_submissions) + 1
 
             submission = QuizSubmission(
@@ -244,7 +250,7 @@ class AssessmentUseCase:
                 item_id=item_id,
                 selected_option_indexes=selected_option_indexes,
                 score_percent=score_percent,
-                passed=passed,
+                passed=score_percent >= 80.0,
                 attempt_number=attempt_number,
                 created_at=now.isoformat(),
             )
