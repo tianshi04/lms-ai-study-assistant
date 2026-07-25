@@ -39,6 +39,8 @@
     "noResults": "No courses found matching the keyword"
   },
   "catalogFilter": {
+    "subjectHeader": "Subject",
+    "levelHeader": "Level",
     "allSubjects": "All Subjects",
     "dataScience": "Data Science",
     "computerScience": "Computer Science",

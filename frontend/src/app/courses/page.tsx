@@ -30,6 +30,12 @@ export default function CoursesPage() {
   const error = queryError ? queryError.message : null;
   const { t } = useTranslation();
 
+  const getCategoryTranslation = (slug: string, fallback: string) => {
+    const camelSlug = slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+    const translated = t(`catalogFilter.${camelSlug}`);
+    return translated === `catalogFilter.${camelSlug}` ? fallback : translated;
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors duration-200">
       <Navbar />
@@ -83,7 +89,7 @@ export default function CoursesPage() {
             <div className="flex-1 space-y-5">
               {/* Subject Chips */}
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-2 hidden md:block">Chủ đề</span>
+                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-2 hidden md:block">{t("catalogFilter.subjectHeader")}</span>
                 <button
                   onClick={() => setSubject("")}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === "" ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300"}`}
@@ -96,14 +102,14 @@ export default function CoursesPage() {
                     onClick={() => setSubject(s.slug)}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${subject === s.slug ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300"}`}
                   >
-                    {s.name}
+                    {getCategoryTranslation(s.slug, s.name)}
                   </button>
                 ))}
               </div>
               
               {/* Level Chips */}
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-2 hidden md:block">Trình độ</span>
+                <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-2 hidden md:block">{t("catalogFilter.levelHeader")}</span>
                 <button
                   onClick={() => setLevel("")}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === "" ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20" : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
@@ -116,7 +122,7 @@ export default function CoursesPage() {
                     onClick={() => setLevel(l.slug)}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${level === l.slug ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20" : "bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"}`}
                   >
-                    {l.name}
+                    {getCategoryTranslation(l.slug, l.name)}
                   </button>
                 ))}
               </div>

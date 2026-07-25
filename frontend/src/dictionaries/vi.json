@@ -39,6 +39,8 @@
     "noResults": "Không tìm thấy khóa học nào phù hợp với từ khóa"
   },
   "catalogFilter": {
+    "subjectHeader": "Chủ đề",
+    "levelHeader": "Trình độ",
     "allSubjects": "Tất cả chủ đề",
     "dataScience": "Khoa học dữ liệu",
     "computerScience": "Khoa học máy tính",
