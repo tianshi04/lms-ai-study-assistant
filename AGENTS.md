@@ -59,7 +59,12 @@ This file provides rules, architectural conventions, and workspace instructions 
 - **Backend (Python)**:
   - **Linter & Formatter**: We use `ruff` for code styling, sorting imports, and linting.
   - **Type Checker**: We use `ty` (Astral's Rust-powered static type checker) for type checking.
-  - **Testing**: We use `pytest` and `pytest-asyncio` for unit, integration, and code quality tests.
+  - **Testing & Coverage**: We use `pytest`, `pytest-asyncio`, and `pytest-cov` for unit, integration, and code quality tests.
+  - **Pragmatic Layered Test Coverage Rule**: Whenever introducing new business features, domain entities, use cases, or repository methods, agents MUST write corresponding unit/integration tests (`pytest-cov`) in `backend/tests/` according to the following layer coverage targets:
+    - **Domain Logic & Entities (95% - 100%)**: Core Business Rules must be strictly tested and verified for absolute accuracy.
+    - **Application Use Cases (85% - 95%)**: Main application orchestration flows, state transitions, and error handling.
+    - **Infrastructure / Repositories (70% - 80%)**: Database queries, ORM mapping, and external resource interactions.
+    - **Handlers / Presentation / Stubs (30% - 50%)**: Network stubs and ConnectRPC handlers (primarily verified via E2E / Black-box integration tests).
   - Code quality tests are located in `backend/tests/test_code_quality.py`. These tests execute `ruff` and `ty` checks during the test run to ensure style consistency.
 - **Frontend (TypeScript)**:
   - **Linter**: We use **ESLint** for code quality. The generated `src/gen/` folder is globally ignored from ESLint.
