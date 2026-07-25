@@ -322,6 +322,8 @@ class CatalogHandler(CatalogService):
                 current_user=user,
             )
             return pb.CreateLearningItemResponse(item=_to_pb_learning_item(item))
+        except ConnectError:
+            raise
         except ValueError as e:
             raise ConnectError(Code.INVALID_ARGUMENT, str(e))
         except Exception as e:

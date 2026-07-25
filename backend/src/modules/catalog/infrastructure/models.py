@@ -3,6 +3,7 @@ from sqlalchemy import (
     Enum as SQLEnum,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Text,
     UniqueConstraint,
@@ -196,7 +197,9 @@ class InVideoQuizModel(Base):
     )
     timestamp_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
     question: Mapped[str] = mapped_column(Text, nullable=False)
-    options: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False)
+    options: Mapped[list[str]] = mapped_column(
+        JSON().with_variant(ARRAY(Text), "postgresql"), nullable=False
+    )
     correct_option_index: Mapped[int] = mapped_column(Integer, nullable=False)
     explanation: Mapped[str] = mapped_column(Text, nullable=False, default="")
 
