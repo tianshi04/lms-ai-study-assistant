@@ -56,12 +56,14 @@ Tài liệu này định nghĩa các kịch bản kiểm thử nghiệm thu ngư
   4. Giả lập Học viên B nhận được điểm số từ 3 bạn học chấm (lần lượt là 8, 9, 8 điểm).
   5. Giả lập Học viên C nhận được điểm số lệch lớn từ 3 bạn học (lần lượt là 10, 9, 2 điểm).
   6. **Học viên C** bấm nút "Grade Appeal" (Khiếu nại điểm).
+  7. **Học viên D** bấm nút "Report Review" cho 1 lượt chấm bị cố tình cho điểm thấp bất thường.
 * **Kết quả mong đợi (Expected Results):**
   * *Tại bước 1:* Nếu chưa tích Honor Code, nút Submit bị vô hiệu hóa. Khi nộp file code, Sandbox Auto-Grader chạy test cases và trả về bảng điểm chi tiết (ví dụ: Pass 4/5 test cases -> Điểm 80/100).
-  * *Tại bước 3:* Hệ thống ghi nhận Học viên A đã hoàn thành chấm đủ 3 bài peer và mở hiển thị trang kết quả điểm số cho A.
+  * *Tại bước 3:* Hệ thống ghi nhận Học viên A đã hoàn thành chấm đủ lượt bài peer theo phân bổ và mở hiển thị trang kết quả điểm số cho A.
   * *Tại bước 4:* Điểm chính thức của Học viên B được tính bằng trung bình cộng: `(8 + 9 + 8) / 3 = 8.33 điểm` (Đạt Pass).
   * *Tại bước 5:* Hệ thống phát hiện chênh lệch điểm > 30%, tự động gắn cờ **"Outlier Flag"** gửi về bảng quản trị của Trợ giảng (TA).
   * *Tại bước 6:* Đơn khiếu nại của C gửi đến TA. TA chấm lại 9 điểm -> Hệ thống cập nhật điểm chính thức mới cho C là `9.0 điểm`.
+  * *Tại bước 7:* Hệ thống ghi nhận đơn báo cáo của D, chuyển bài nộp sang trạng thái `PENDING_STAFF_REVIEW` và tạm ngưng cấp chứng chỉ cho đến khi TA duyệt xong để chống lạm dụng.
 
 ---
 

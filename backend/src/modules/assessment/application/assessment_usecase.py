@@ -543,11 +543,11 @@ class AssessmentUseCase:
                 user_id=user_id,
                 submission_id=submission_id,
                 appeal_reason=f"[REPORT_REVIEW:{review_id}] {report_reason}",
-                status="PENDING",
+                status="PENDING_STAFF_REVIEW",
                 created_at=now_iso,
             )
             await repo.save_grade_appeal(appeal)
             return (
                 True,
-                "Đã gửi báo cáo lượt chấm chéo bất thường đến Trợ giảng (TA Queue).",
+                "Đã gửi báo cáo lượt chấm chéo bất thường đến Trợ giảng (TA Review Queue). Bài nộp chuyển sang trạng thái PENDING_STAFF_REVIEW.",
             )
