@@ -13,7 +13,13 @@ class ICatalogRepository(ABC):
 
     @abstractmethod
     async def list_courses(
-        self, page_size: int = 10, page_token: str = ""
+        self,
+        page_size: int = 10,
+        page_token: str = "",
+        search_query: str = "",
+        subject: str = "",
+        level: str = "",
+        sort_by: str = "",
     ) -> tuple[list[Course], str]:
         pass
 

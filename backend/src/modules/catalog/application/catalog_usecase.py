@@ -20,14 +20,22 @@ class CatalogUseCase:
         )
 
     async def list_courses(
-        self, page_size: int = 10, page_token: str = ""
+        self,
+        page_size: int = 10,
+        page_token: str = "",
+        search_query: str = "",
+        subject: str = "",
+        level: str = "",
+        sort_by: str = "",
     ) -> tuple[list[Course], str]:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             seed_fn = getattr(repo, "seed_if_empty", None)
             if callable(seed_fn):
                 await seed_fn()
-            return await repo.list_courses(page_size, page_token)
+            return await repo.list_courses(
+                page_size, page_token, search_query, subject, level, sort_by
+            )
 
     async def get_course_detail(self, course_id: str) -> Course | None:
         async with async_session_scope() as session:
@@ -63,6 +71,8 @@ class CatalogUseCase:
         partner_name: str,
         partner_logo_url: str,
         instructor_names: list[str],
+        subject: str = "COURSE_SUBJECT_UNSPECIFIED",
+        level: str = "COURSE_LEVEL_UNSPECIFIED",
     ) -> Course:
         async with async_session_scope() as session:
             repo = SQLAlchemyCatalogRepository(session)
@@ -73,6 +83,8 @@ class CatalogUseCase:
                 partner_name=partner_name,
                 partner_logo_url=partner_logo_url,
                 instructor_names=instructor_names,
+                subject=subject,
+                level=level,
             )
 
     async def update_course(
@@ -83,6 +95,8 @@ class CatalogUseCase:
         partner_name: str,
         partner_logo_url: str,
         instructor_names: list[str],
+        subject: str = "COURSE_SUBJECT_UNSPECIFIED",
+        level: str = "COURSE_LEVEL_UNSPECIFIED",
     ) -> Course | None:
         async with async_session_scope() as session:
             repo = SQLAlchemyCatalogRepository(session)
@@ -93,6 +107,8 @@ class CatalogUseCase:
                 partner_name=partner_name,
                 partner_logo_url=partner_logo_url,
                 instructor_names=instructor_names,
+                subject=subject,
+                level=level,
             )
 
     async def create_week_module(

@@ -96,6 +96,28 @@ def _to_pb_course(course: Course) -> pb.Course:
         week_modules=[_to_pb_week_module(wm) for wm in course.week_modules],
         average_rating=course.average_rating,
         review_count=course.review_count,
+        subject=pb.CourseSubject(
+            getattr(
+                pb.CourseSubject,
+                f"COURSE_SUBJECT_{course.subject.name}"
+                if hasattr(course.subject, "name")
+                else f"COURSE_SUBJECT_{course.subject}",
+                0,
+            )
+        )
+        if course.subject
+        else pb.CourseSubject(0),
+        level=pb.CourseLevel(
+            getattr(
+                pb.CourseLevel,
+                f"COURSE_LEVEL_{course.level.name}"
+                if hasattr(course.level, "name")
+                else f"COURSE_LEVEL_{course.level}",
+                0,
+            )
+        )
+        if course.level
+        else pb.CourseLevel(0),
     )
 
 
@@ -134,8 +156,16 @@ class CatalogHandler(CatalogService):
         request: pb.ListCoursesRequest,
         ctx: RequestContext[pb.ListCoursesRequest, pb.ListCoursesResponse],
     ) -> pb.ListCoursesResponse:
+        subject_str = pb.CourseSubject.Name(request.subject) if request.subject else ""  # type: ignore
+        level_str = pb.CourseLevel.Name(request.level) if request.level else ""  # type: ignore
+
         courses, next_token = await self.use_case.list_courses(
-            page_size=request.page_size, page_token=request.page_token
+            page_size=request.page_size,
+            page_token=request.page_token,
+            search_query=request.search_query,
+            subject=subject_str,
+            level=level_str,
+            sort_by=request.sort_by,
         )
         return pb.ListCoursesResponse(
             courses=[_to_pb_course(c) for c in courses],
@@ -205,6 +235,12 @@ class CatalogHandler(CatalogService):
             partner_name=request.partner_name,
             partner_logo_url=request.partner_logo_url,
             instructor_names=list(request.instructor_names),
+            subject=pb.CourseSubject.Name(request.subject)  # type: ignore
+            if request.subject
+            else "COURSE_SUBJECT_UNSPECIFIED",
+            level=pb.CourseLevel.Name(request.level)  # type: ignore
+            if request.level
+            else "COURSE_LEVEL_UNSPECIFIED",
         )
         return pb.CreateCourseResponse(course=_to_pb_course(course))
 
@@ -221,6 +257,12 @@ class CatalogHandler(CatalogService):
             partner_name=request.partner_name,
             partner_logo_url=request.partner_logo_url,
             instructor_names=list(request.instructor_names),
+            subject=pb.CourseSubject.Name(request.subject)  # type: ignore
+            if request.subject
+            else "COURSE_SUBJECT_UNSPECIFIED",
+            level=pb.CourseLevel.Name(request.level)  # type: ignore
+            if request.level
+            else "COURSE_LEVEL_UNSPECIFIED",
         )
         if not course:
             raise ConnectError(Code.NOT_FOUND, f"Khóa học {request.id} không tồn tại")
