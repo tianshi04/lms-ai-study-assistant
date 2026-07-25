@@ -136,6 +136,10 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_FORUM_002 (Phân quyền & Tự động Ghim Thread khi Pin Staff Answer):**
   * Chỉ tài khoản có vai trò `INSTRUCTOR`, `TA`, `SUPER_ADMIN` hoặc `PARTNER_ADMIN` mới có quyền gọi lệnh ghim câu trả lời chính thức (`pin_staff_answer`).
   * Khi một câu trả lời được ghim làm `is_staff_answer = True`, bài thảo luận gốc (Thread) cũng tự động được đánh dấu `is_staff_pinned = True` để ưu tiên hiển thị trên đầu danh sách diễn đàn.
+* **BR_FORUM_003 (Phân quyền Tác giả/Moderation & Chỉ báo Bài viết đã Chỉnh sửa):**
+  * *Quyền Chỉnh sửa & Xóa:* Tác giả bài viết (`author_user_id == current_user.id`) có quyền Cập nhật (`UpdateThread`, `UpdateReply`) hoặc Xóa (`DeleteThread`, `DeleteReply`) bài viết/bình luận của chính mình.
+  * *Chỉ báo đã Chỉnh sửa (Edit State Indicator):* Ngay khi tác giả chỉnh sửa bài viết/bình luận, hệ thống tự động cập nhật cờ `is_edited = True` và ghi lại mốc thời gian `edited_at` để tất cả người xem phân biệt được nội dung đã qua chỉnh sửa.
+  * *Ban kiểm duyệt (Staff Moderation):* Trợ giảng và Giảng viên (`TA`, `INSTRUCTOR`, `ADMIN`) có quyền Xóa (Delete) bài viết hoặc bình luận vi phạm của bất kỳ người dùng nào nhưng không được quyền thay đổi nội dung (Update) bài đăng của người khác.
 
 ---
 
@@ -157,8 +161,10 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 
 ## 8. Quy tắc Quản lý Khóa học của Giảng viên (BR_INSTRUCTOR)
 
-* **BR_INSTRUCTOR_001 (Phân quyền & Kiểm tra Vai trò Thao tác Khóa học):**
-  * Chỉ các tài khoản có vai trò `INSTRUCTOR`, `TA`, `SUPER_ADMIN` hoặc `PARTNER_ADMIN` mới có quyền gọi các RPC tạo/cập nhật/xóa khóa học (`CreateCourse`, `UpdateCourse`, `DeleteCourse`), quản lý cấu trúc bài giảng (`CreateWeekModule`, `UpdateWeekModule`, `DeleteWeekModule`, `CreateLesson`, `UpdateLesson`, `DeleteLesson`, `CreateLearningItem`, `UpdateLearningItem`, `DeleteLearningItem`), đăng thông báo khóa học (`CreateCourseAnnouncement`) và xem phân tích thống kê lớp học (`GetInstructorAnalytics`).
+* **BR_INSTRUCTOR_001 (Phân quyền Vai trò & Quyền sở hữu Khóa học - Course Ownership):**
+  * Chỉ các tài khoản có vai trò `INSTRUCTOR`, `TA`, `SUPER_ADMIN` hoặc `PARTNER_ADMIN` mới có quyền gọi các RPC quản lý khóa học.
+  * *Ràng buộc Quyền sở hữu (Course Ownership):* Mỗi khóa học được gắn với một Chủ sở hữu chính (`owner_id`) và danh sách Giảng viên đồng phụ trách (`co_instructor_ids`). Giảng viên chỉ có quyền chỉnh sửa (`UpdateCourse`), quản lý bài giảng (`CreateWeekModule`, `UpdateLesson`, v.v.) hoặc xóa (`DeleteCourse`) đối với khóa học do mình sở hữu hoặc phụ trách.
+  * *Quyền Admin toàn quyền:* `SUPER_ADMIN` và `PARTNER_ADMIN` giữ quyền ghi đè toàn hệ thống trên mọi khóa học.
 * **BR_INSTRUCTOR_002 (Cơ chế Delete Cascade Dữ liệu Phụ thuộc):**
   * Khi thực hiện Xóa khóa học (`DeleteCourse`) hoặc Xóa các cấu trúc con (`DeleteWeekModule`, `DeleteLesson`, `DeleteLearningItem`), hệ thống tự động áp dụng cơ chế cascade xóa sạch các dữ liệu con liên quan (In-video Quizzes, Interactive Transcripts, Course Announcements) để bảo đảm tính toàn vẹn dữ liệu.
 * **BR_INSTRUCTOR_003 (Quy định Đăng Thông báo Khóa học Course Announcements):**
