@@ -112,6 +112,16 @@ class IdentityHandler(IdentityService):
     ) -> pb.GetUserProfileResponse:
         current_user = require_current_user()
         target_user_id = request.user_id or current_user.id
+        if target_user_id != current_user.id:
+            role_str = str(current_user.role).upper()
+            is_staff_or_admin = any(
+                r in role_str for r in ("ADMIN", "SUPER", "PARTNER", "INSTRUCTOR", "TA")
+            )
+            if not is_staff_or_admin:
+                raise ConnectError(
+                    Code.PERMISSION_DENIED,
+                    "Bạn không có quyền xem hồ sơ cá nhân của người dùng khác.",
+                )
         user = await self._use_case.get_user_profile(target_user_id)
         if not user:
             raise ConnectError(Code.NOT_FOUND, "Không tìm thấy người dùng")
@@ -124,8 +134,18 @@ class IdentityHandler(IdentityService):
             pb.AssignEnterpriseSeatRequest, pb.AssignEnterpriseSeatResponse
         ],
     ) -> pb.AssignEnterpriseSeatResponse:
+        current_user = require_current_user()
+        target_user_id = request.user_id or current_user.id
+        if target_user_id != current_user.id:
+            role_str = str(current_user.role).upper()
+            is_admin = any(r in role_str for r in ("ADMIN", "SUPER", "PARTNER"))
+            if not is_admin:
+                raise ConnectError(
+                    Code.PERMISSION_DENIED,
+                    "Bạn không có quyền gán suất Enterprise Seat cho người dùng khác.",
+                )
         success, msg = await self._use_case.assign_enterprise_seat(
-            request.user_id, request.enterprise_seat_key
+            target_user_id, request.enterprise_seat_key
         )
         return pb.AssignEnterpriseSeatResponse(success=success, message=msg)
 
@@ -136,6 +156,13 @@ class IdentityHandler(IdentityService):
             pb.ListEnterpriseSeatsRequest, pb.ListEnterpriseSeatsResponse
         ],
     ) -> pb.ListEnterpriseSeatsResponse:
+        current_user = require_current_user()
+        role_str = str(current_user.role).upper()
+        if not any(r in role_str for r in ("ADMIN", "SUPER", "PARTNER")):
+            raise ConnectError(
+                Code.PERMISSION_DENIED,
+                "Chỉ Quản trị viên mới có quyền xem danh sách Enterprise Seats.",
+            )
         items = await self._use_case.list_enterprise_seats(request.partner_name)
         pb_seats = [
             pb.EnterpriseSeat(
@@ -158,6 +185,13 @@ class IdentityHandler(IdentityService):
             pb.CreateEnterpriseSeatRequest, pb.CreateEnterpriseSeatResponse
         ],
     ) -> pb.CreateEnterpriseSeatResponse:
+        current_user = require_current_user()
+        role_str = str(current_user.role).upper()
+        if not any(r in role_str for r in ("ADMIN", "SUPER", "PARTNER")):
+            raise ConnectError(
+                Code.PERMISSION_DENIED,
+                "Chỉ Quản trị viên mới có quyền tạo Enterprise Seat key.",
+            )
         item = await self._use_case.create_enterprise_seat(
             request.partner_name, request.seat_key
         )
@@ -179,6 +213,13 @@ class IdentityHandler(IdentityService):
             pb.RevokeEnterpriseSeatRequest, pb.RevokeEnterpriseSeatResponse
         ],
     ) -> pb.RevokeEnterpriseSeatResponse:
+        current_user = require_current_user()
+        role_str = str(current_user.role).upper()
+        if not any(r in role_str for r in ("ADMIN", "SUPER", "PARTNER")):
+            raise ConnectError(
+                Code.PERMISSION_DENIED,
+                "Chỉ Quản trị viên mới có quyền thu hồi Enterprise Seat.",
+            )
         success, msg = await self._use_case.revoke_enterprise_seat(
             request.user_id, request.course_id
         )
