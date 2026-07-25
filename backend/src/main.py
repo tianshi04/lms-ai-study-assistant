@@ -178,12 +178,12 @@ async def proxy_media(request):
     
     async def generate():
         try:
-            async with s3_resp["Body"] as stream:
-                while True:
-                    chunk = await stream.read(256 * 1024)  # 256KB chunks
-                    if not chunk:
-                        break
-                    yield chunk
+            body = s3_resp["Body"]
+            while True:
+                chunk = await body.read(256 * 1024)  # 256KB chunks
+                if not chunk:
+                    break
+                yield chunk
         finally:
             await s3_client_ctx.__aexit__(None, None, None)
             
