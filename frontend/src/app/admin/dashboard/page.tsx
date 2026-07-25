@@ -72,12 +72,14 @@ export default function AdminEnterpriseDashboardPage() {
     []
   );
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: seats,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
+
 
   // Handlers
   const handleAssignSeat = async (e: React.FormEvent) => {

@@ -25,7 +25,7 @@ from src.modules.identity.presentation.identity_handler import IdentityHandler
 from src.modules.learning.application.learning_usecase import LearningUseCase
 from src.modules.learning.presentation.learning_handler import LearningHandler
 from src.shared.config import settings
-from src.shared.infrastructure.interceptors import AuthInterceptor
+from src.shared.infrastructure.interceptors import AuthInterceptor, ErrorInterceptor
 
 
 async def run_auto_migrations() -> None:
@@ -67,41 +67,42 @@ async def lifespan(app: Starlette):
 
 
 # 1. Dependency Injection (Bootstrapping Use Cases & Handlers)
+error_interceptor = ErrorInterceptor()
 auth_interceptor = AuthInterceptor()
+interceptors = [error_interceptor, auth_interceptor]
 
 catalog_usecase = CatalogUseCase()
 catalog_handler = CatalogHandler(use_case=catalog_usecase)
-catalog_app = CatalogServiceASGIApplication(
-    catalog_handler, interceptors=[auth_interceptor]
-)
+catalog_app = CatalogServiceASGIApplication(catalog_handler, interceptors=interceptors)
 
 learning_usecase = LearningUseCase()
 learning_handler = LearningHandler(use_case=learning_usecase)
 learning_app = LearningServiceASGIApplication(
-    learning_handler, interceptors=[auth_interceptor]
+    learning_handler, interceptors=interceptors
 )
 
 identity_usecase = IdentityUseCase()
 identity_handler = IdentityHandler(use_case=identity_usecase)
 identity_app = IdentityServiceASGIApplication(
-    identity_handler, interceptors=[auth_interceptor]
+    identity_handler, interceptors=interceptors
 )
 
 certificate_usecase = CertificateUseCase()
 certificate_handler = CertificateHandler(use_case=certificate_usecase)
 certificate_app = CertificateServiceASGIApplication(
-    certificate_handler, interceptors=[auth_interceptor]
+    certificate_handler, interceptors=interceptors
 )
 
 assessment_usecase = AssessmentUseCase()
 assessment_handler = AssessmentHandler(use_case=assessment_usecase)
 assessment_app = AssessmentServiceASGIApplication(
-    assessment_handler, interceptors=[auth_interceptor]
+    assessment_handler, interceptors=interceptors
 )
 
 forum_usecase = ForumUseCase()
 forum_handler = ForumHandler(use_case=forum_usecase)
-forum_app = ForumServiceASGIApplication(forum_handler, interceptors=[auth_interceptor])
+forum_app = ForumServiceASGIApplication(forum_handler, interceptors=interceptors)
+
 
 # 2. Register Routes & Middleware using Starlette
 routes = [

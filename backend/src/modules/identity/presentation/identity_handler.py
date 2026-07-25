@@ -8,6 +8,7 @@ from src.gen.identity.v1 import identity_pb as pb
 from src.gen.identity.v1.identity_connect import IdentityService
 from src.modules.identity.application.identity_usecase import IdentityUseCase
 from src.modules.identity.domain.entities import User, UserRole
+from src.shared.auth import require_current_user
 
 
 def _to_pb_user_role(role: UserRole) -> pb.UserRole:
@@ -109,7 +110,9 @@ class IdentityHandler(IdentityService):
         request: pb.GetUserProfileRequest,
         ctx: RequestContext[pb.GetUserProfileRequest, pb.GetUserProfileResponse],
     ) -> pb.GetUserProfileResponse:
-        user = await self._use_case.get_user_profile(request.user_id)
+        current_user = require_current_user()
+        target_user_id = request.user_id or current_user.id
+        user = await self._use_case.get_user_profile(target_user_id)
         if not user:
             raise ConnectError(Code.NOT_FOUND, "Không tìm thấy người dùng")
         return pb.GetUserProfileResponse(user=_to_pb_user(user))

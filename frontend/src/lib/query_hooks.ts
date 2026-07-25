@@ -2,6 +2,13 @@ import { useQuery, useMutation, type UseQueryOptions, type UseMutationOptions } 
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { IdentityService, type User, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
+import { LearningService, type LearningProgress, type PersonalNote } from "@/gen/learning/v1/learning_pb";
+import { AssessmentService, type QuizResult, type AutoGradedLabResult } from "@/gen/assessment/v1/assessment_pb";
+import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
+import { ForumService, type ForumThread } from "@/gen/forum/v1/forum_pb";
+
+
+// --- Catalog Hooks ---
 
 /**
  * Custom TanStack Query hook for fetching the course catalog.
@@ -17,6 +24,8 @@ export function useCoursesQuery(options?: Partial<UseQueryOptions<Course[], Erro
     ...options,
   });
 }
+
+// --- Identity Hooks ---
 
 /**
  * Custom TanStack Query hook for fetching current user profile.
@@ -51,6 +60,7 @@ export function useSaveEnterpriseKeyMutation(
     ...options,
   });
 }
+
 export function useEnterpriseSeatsQuery(options?: Partial<UseQueryOptions<EnterpriseSeat[], Error>>) {
   return useQuery<EnterpriseSeat[], Error>({
     queryKey: ["enterpriseSeats"],
@@ -75,6 +85,92 @@ export function useRevokeEnterpriseSeatMutation(
       const res = await client.revokeEnterpriseSeat({ userId });
       return { success: res.success, message: res.message };
     },
+    ...options,
+  });
+}
+
+// --- Learning Hooks ---
+
+export function useLearningProgressQuery(courseId: string, options?: Partial<UseQueryOptions<LearningProgress | undefined, Error>>) {
+  return useQuery<LearningProgress | undefined, Error>({
+    queryKey: ["learningProgress", courseId],
+    queryFn: async () => {
+      const client = getRpcClient(LearningService);
+      const res = await client.getProgress({ courseId });
+      return res.progress;
+    },
+    enabled: !!courseId,
+    ...options,
+  });
+}
+
+export function usePersonalNotesQuery(courseId: string, options?: Partial<UseQueryOptions<PersonalNote[], Error>>) {
+  return useQuery<PersonalNote[], Error>({
+    queryKey: ["personalNotes", courseId],
+    queryFn: async () => {
+      const client = getRpcClient(LearningService);
+      const res = await client.listPersonalNotes({ courseId });
+      return res.notes;
+    },
+    enabled: !!courseId,
+    ...options,
+  });
+}
+
+// --- Assessment Hooks ---
+
+export function useSubmitQuizMutation(
+  options?: Partial<UseMutationOptions<QuizResult | undefined, Error, { itemId: string; selectedOptionIndexes: number[] }>>
+) {
+  return useMutation<QuizResult | undefined, Error, { itemId: string; selectedOptionIndexes: number[] }>({
+    mutationFn: async ({ itemId, selectedOptionIndexes }) => {
+      const client = getRpcClient(AssessmentService);
+      const res = await client.submitGradedQuiz({ itemId, selectedOptionIndexes });
+      return res.result;
+    },
+    ...options,
+  });
+}
+
+export function useSubmitLabMutation(
+  options?: Partial<UseMutationOptions<AutoGradedLabResult | undefined, Error, { itemId: string; sourceCode: string; language: string }>>
+) {
+  return useMutation<AutoGradedLabResult | undefined, Error, { itemId: string; sourceCode: string; language: string }>({
+    mutationFn: async ({ itemId, sourceCode, language }) => {
+      const client = getRpcClient(AssessmentService);
+      const res = await client.submitAutoGradedLab({ itemId, sourceCode, language });
+      return res.result;
+    },
+    ...options,
+  });
+}
+
+// --- Certificate Hooks ---
+
+export function useCertificateVerificationQuery(certificateId: string, options?: Partial<UseQueryOptions<{ isValid: boolean; cert?: VerifiedCertificate; message: string }, Error>>) {
+  return useQuery<{ isValid: boolean; cert?: VerifiedCertificate; message: string }, Error>({
+    queryKey: ["certificate", certificateId],
+    queryFn: async () => {
+      const client = getRpcClient(CertificateService);
+      const res = await client.verifyCertificatePublic({ certificateId });
+      return { isValid: res.isValid, cert: res.certificate, message: res.statusMessage };
+    },
+    enabled: !!certificateId,
+    ...options,
+  });
+}
+
+// --- Forum Hooks ---
+
+export function useForumThreadsQuery(courseId: string, options?: Partial<UseQueryOptions<ForumThread[], Error>>) {
+  return useQuery<ForumThread[], Error>({
+    queryKey: ["forumThreads", courseId],
+    queryFn: async () => {
+      const client = getRpcClient(ForumService);
+      const res = await client.listThreads({ courseId });
+      return res.threads;
+    },
+    enabled: !!courseId,
     ...options,
   });
 }
