@@ -57,6 +57,7 @@ export default function ForumPage() {
   // Reply Form State: threadId -> content
   const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
   const [submittingReply, setSubmittingReply] = useState<Record<string, boolean>>({});
+  const [activeReplyBoxIds, setActiveReplyBoxIds] = useState<Record<string, boolean>>({});
 
   // Reply Edit State
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
@@ -222,6 +223,7 @@ export default function ForumPage() {
       });
 
       setReplyInputs((prev) => ({ ...prev, [threadId]: "" }));
+      setActiveReplyBoxIds((prev) => ({ ...prev, [threadId]: false }));
       toast.success(locale === "vi" ? "Đã gửi câu phản hồi!" : "Reply posted successfully!");
       fetchThreads();
     } catch (err: unknown) {
@@ -642,24 +644,48 @@ export default function ForumPage() {
 
                       {/* Reply Input Form */}
                       <div className="pt-2">
-                        <div className="flex gap-3 items-start">
-                          <textarea
-                            value={replyInputs[thread.id] || ""}
-                            onChange={(e) =>
-                              setReplyInputs((prev) => ({ ...prev, [thread.id]: e.target.value }))
-                            }
-                            placeholder={t("forum.postContentPlaceholder")}
-                            rows={2}
-                            className="flex-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                          />
+                        {!activeReplyBoxIds[thread.id] && !(replyInputs[thread.id] || "").trim() ? (
                           <button
-                            onClick={() => handlePostReply(thread.id)}
-                            disabled={submittingReply[thread.id] || !(replyInputs[thread.id] || "").trim()}
-                            className="px-4 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all shadow-sm shrink-0 cursor-pointer"
+                            onClick={() => setActiveReplyBoxIds((prev) => ({ ...prev, [thread.id]: true }))}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-100/80 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs font-medium text-slate-500 dark:text-slate-400 transition-all cursor-pointer text-left group"
                           >
-                            {submittingReply[thread.id] ? t("courseDetail.submitting") : t("forum.submitPost")}
+                            <svg className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg>
+                            <span>{t("forum.postContentPlaceholder")}...</span>
                           </button>
-                        </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <textarea
+                              autoFocus
+                              value={replyInputs[thread.id] || ""}
+                              onChange={(e) =>
+                                setReplyInputs((prev) => ({ ...prev, [thread.id]: e.target.value }))
+                              }
+                              placeholder={t("forum.postContentPlaceholder")}
+                              rows={3}
+                              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                            />
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => {
+                                  setActiveReplyBoxIds((prev) => ({ ...prev, [thread.id]: false }));
+                                  setReplyInputs((prev) => ({ ...prev, [thread.id]: "" }));
+                                }}
+                                className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium cursor-pointer"
+                              >
+                                {t("courseDetail.cancel")}
+                              </button>
+                              <button
+                                onClick={() => handlePostReply(thread.id)}
+                                disabled={submittingReply[thread.id] || !(replyInputs[thread.id] || "").trim()}
+                                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-all shadow-xs cursor-pointer"
+                              >
+                                {submittingReply[thread.id] ? t("courseDetail.submitting") : t("forum.submitPost")}
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
