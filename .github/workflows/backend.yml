@@ -42,6 +42,10 @@ jobs:
           python-version: "3.13"
           enable-cache: true
 
+      - name: Install Python dependencies
+        run: uv sync --frozen
+        working-directory: backend
+
       - name: Start Docker Compose Infrastructure
         run: make infra
         working-directory: backend
