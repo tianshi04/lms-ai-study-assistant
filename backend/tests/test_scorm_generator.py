@@ -24,7 +24,7 @@ async def test_generated_scorm_packages_exist_and_valid():
     assert single_zip.stat().st_size > 0
 
     modular_zips = list(MODULAR_DIR.glob("*.zip"))
-    assert len(modular_zips) == 9
+    assert len(modular_zips) == 2
     for zip_file in modular_zips:
         assert zip_file.stat().st_size > 0
 

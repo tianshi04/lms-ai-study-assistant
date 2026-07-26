@@ -56,6 +56,16 @@ class PersonalNote(Entity):
         self.created_at = created_at
 
 
+@dataclass(frozen=True)
+class EnrolledCourseSummary(ValueObject):
+    course_id: str
+    course_title: str
+    partner_name: str
+    progress_percent: float
+    status: str
+    last_accessed_at: str
+
+
 class ScormTracking(Entity):
     def __init__(
         self,

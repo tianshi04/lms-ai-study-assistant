@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 from src.modules.learning.domain.entities import (
+    EnrolledCourseSummary,
     LearningProgress,
     PersonalNote,
     ScormTracking,
@@ -42,6 +43,14 @@ class ILearningRepository(ABC):
     async def mark_item_complete(
         self, user_id: str, course_id: str, item_id: str, total_course_items: int
     ) -> tuple[bool, LearningProgress]:
+        pass
+
+    @abstractmethod
+    async def list_user_progresses(self, user_id: str) -> list[LearningProgress]:
+        pass
+
+    @abstractmethod
+    async def list_enrolled_courses(self, user_id: str) -> list[EnrolledCourseSummary]:
         pass
 
     @abstractmethod
