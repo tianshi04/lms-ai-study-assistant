@@ -142,8 +142,6 @@ class ICatalogRepository(ABC):
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
-        scorm_package_path: str = "",
-        scorm_entry_html: str = "",
     ):
         pass
 
@@ -167,8 +165,6 @@ class ICatalogRepository(ABC):
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
-        scorm_package_path: str = "",
-        scorm_entry_html: str = "",
     ):
         pass
 

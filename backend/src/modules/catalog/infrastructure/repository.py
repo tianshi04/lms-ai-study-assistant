@@ -76,8 +76,6 @@ def _model_to_domain_course(model: CourseModel) -> Course:
                             i_model, "rubric_criteria_json", ""
                         ),
                         quiz_matrix_id=getattr(i_model, "quiz_matrix_id", ""),
-                        scorm_package_path=getattr(i_model, "scorm_package_path", ""),
-                        scorm_entry_html=getattr(i_model, "scorm_entry_html", ""),
                         auto_transcribe=getattr(i_model, "auto_transcribe", False),
                         prohibit_seeking=getattr(i_model, "prohibit_seeking", False),
                     )
@@ -377,8 +375,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
-        scorm_package_path: str = "",
-        scorm_entry_html: str = "",
     ) -> LearningItem:
         item_id = f"item-{uuid.uuid4().hex[:8]}"
         type_mapping = {
@@ -441,8 +437,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             language=language or "",
             rubric_criteria_json=rubric_criteria_json or "",
             quiz_matrix_id=quiz_matrix_id or "",
-            scorm_package_path=scorm_package_path or "",
-            scorm_entry_html=scorm_entry_html or "",
         )
         self.session.add(item_model)
 
@@ -507,8 +501,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             language=language or "",
             rubric_criteria_json=rubric_criteria_json or "",
             quiz_matrix_id=quiz_matrix_id or "",
-            scorm_package_path=scorm_package_path or "",
-            scorm_entry_html=scorm_entry_html or "",
         )
 
     async def submit_course_review(
@@ -777,8 +769,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
-        scorm_package_path: str = "",
-        scorm_entry_html: str = "",
     ) -> LearningItem | None:
         stmt = (
             select(LearningItemModel)
@@ -813,11 +803,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         item.test_cases_json = test_cases_json
         item.language = language
         item.rubric_criteria_json = rubric_criteria_json
-        item.quiz_matrix_id = quiz_matrix_id
-        if scorm_package_path:
-            item.scorm_package_path = scorm_package_path
-        if scorm_entry_html:
-            item.scorm_entry_html = scorm_entry_html
+        if quiz_matrix_id:
+            item.quiz_matrix_id = quiz_matrix_id
 
         if lesson_id:
             item.lesson_id = lesson_id
@@ -865,8 +852,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             language=item.language,
             rubric_criteria_json=item.rubric_criteria_json,
             quiz_matrix_id=item.quiz_matrix_id,
-            scorm_package_path=item.scorm_package_path,
-            scorm_entry_html=item.scorm_entry_html,
         )
 
     async def delete_learning_item(self, id: str, course_id: str) -> bool:

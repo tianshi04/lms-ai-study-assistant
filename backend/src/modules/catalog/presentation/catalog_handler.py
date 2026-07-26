@@ -103,8 +103,6 @@ def _to_pb_learning_item(item: LearningItem) -> pb.LearningItem:
         language=getattr(item, "language", ""),
         rubric_criteria_json=getattr(item, "rubric_criteria_json", ""),
         quiz_matrix_id=getattr(item, "quiz_matrix_id", ""),
-        scorm_package_path=getattr(item, "scorm_package_path", ""),
-        scorm_entry_html=getattr(item, "scorm_entry_html", ""),
     )
 
 
@@ -354,8 +352,6 @@ class CatalogHandler(CatalogService):
                 language=request.language or "",
                 rubric_criteria_json=request.rubric_criteria_json or "",
                 quiz_matrix_id=request.quiz_matrix_id or "",
-                scorm_package_path=request.scorm_package_path or "",
-                scorm_entry_html=request.scorm_entry_html or "",
                 current_user=user,
             )
             return pb.CreateLearningItemResponse(item=_to_pb_learning_item(item))
@@ -561,8 +557,6 @@ class CatalogHandler(CatalogService):
             language=request.language,
             rubric_criteria_json=request.rubric_criteria_json,
             quiz_matrix_id=request.quiz_matrix_id,
-            scorm_package_path=request.scorm_package_path,
-            scorm_entry_html=request.scorm_entry_html,
             current_user=user,
         )
         if not item:
@@ -717,62 +711,6 @@ class CatalogHandler(CatalogService):
             current_user=user,
         )
         return pb.ReorderLearningItemsResponse(success=success)
-
-    async def parse_scorm_package(
-        self,
-        request: pb.ParseScormPackageRequest,
-        ctx: RequestContext[pb.ParseScormPackageRequest, pb.ParseScormPackageResponse],
-    ) -> pb.ParseScormPackageResponse:
-        self._verify_instructor_permission()
-        (
-            preview_course,
-            is_single,
-            single_item,
-        ) = await self.use_case.parse_scorm_package(
-            scorm_object_key=request.scorm_object_key,
-            target_course_id=request.target_course_id,
-        )
-        return pb.ParseScormPackageResponse(
-            course_preview=_to_pb_course(preview_course) if preview_course else None,
-            is_single_item=is_single,
-            single_item_preview=_to_pb_learning_item(single_item)
-            if single_item
-            else None,
-        )
-
-    async def import_course_from_scorm(
-        self,
-        request: pb.ImportCourseFromScormRequest,
-        ctx: RequestContext[
-            pb.ImportCourseFromScormRequest, pb.ImportCourseFromScormResponse
-        ],
-    ) -> pb.ImportCourseFromScormResponse:
-        user = self._verify_instructor_permission()
-        course, item = await self.use_case.import_course_from_scorm(
-            scorm_object_key=request.scorm_object_key,
-            course_id=request.course_id,
-            target_lesson_id=request.target_lesson_id,
-            current_user=user,
-        )
-        return pb.ImportCourseFromScormResponse(
-            course=_to_pb_course(course) if course else None,
-            imported_item=_to_pb_learning_item(item) if item else None,
-        )
-
-    async def export_course_to_scorm(
-        self,
-        request: pb.ExportCourseToScormRequest,
-        ctx: RequestContext[
-            pb.ExportCourseToScormRequest, pb.ExportCourseToScormResponse
-        ],
-    ) -> pb.ExportCourseToScormResponse:
-        user = self._verify_instructor_permission()
-        download_url, object_key = await self.use_case.export_course_to_scorm(
-            course_id=request.course_id, current_user=user
-        )
-        return pb.ExportCourseToScormResponse(
-            download_url=download_url, object_key=object_key
-        )
 
     async def generate_upload_url(
         self,

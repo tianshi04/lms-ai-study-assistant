@@ -55,8 +55,6 @@ class LearningItem(Entity):
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
-        scorm_package_path: str = "",
-        scorm_entry_html: str = "",
         auto_transcribe: bool = False,
         prohibit_seeking: bool = False,
     ) -> None:
@@ -75,8 +73,6 @@ class LearningItem(Entity):
         self.language = language
         self.rubric_criteria_json = rubric_criteria_json
         self.quiz_matrix_id = quiz_matrix_id
-        self.scorm_package_path = scorm_package_path
-        self.scorm_entry_html = scorm_entry_html
         self.auto_transcribe = auto_transcribe
         self.prohibit_seeking = prohibit_seeking
 

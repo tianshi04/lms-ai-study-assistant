@@ -7,21 +7,17 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from typing import Optional
-
 from src.modules.learning.domain.entities import (
     DeadlineStatus,
     EnrolledCourseSummary,
     LearningProgress,
     PersonalNote,
-    ScormTracking,
     WeeklyDeadline,
 )
 from src.modules.learning.domain.repository import ILearningRepository
 from src.modules.learning.infrastructure.models import (
     LearningProgressModel,
     PersonalNoteModel,
-    ScormTrackingModel,
     WeeklyDeadlineModel,
 )
 
@@ -254,78 +250,3 @@ class SQLAlchemyLearningRepository(ILearningRepository):
                 )
             )
         return summaries
-
-    async def save_scorm_tracking(
-        self,
-        user_id: str,
-        item_id: str,
-        cmi_core_lesson_status: str,
-        cmi_core_score_raw: float,
-        cmi_core_session_time: str,
-        cmi_core_lesson_location: str,
-        cmi_suspend_data: str,
-    ) -> ScormTracking:
-        now_str = datetime.now(timezone.utc).isoformat()
-        key = f"{user_id}:{item_id}"
-        stmt = select(ScormTrackingModel).where(ScormTrackingModel.id == key)
-        res = await self.session.execute(stmt)
-        model = res.scalar_one_or_none()
-
-        if model:
-            model.cmi_core_lesson_status = (
-                cmi_core_lesson_status or model.cmi_core_lesson_status
-            )
-            model.cmi_core_score_raw = cmi_core_score_raw
-            model.cmi_core_session_time = (
-                cmi_core_session_time or model.cmi_core_session_time
-            )
-            model.cmi_core_lesson_location = (
-                cmi_core_lesson_location or model.cmi_core_lesson_location
-            )
-            model.cmi_suspend_data = cmi_suspend_data or model.cmi_suspend_data
-            model.updated_at = now_str
-        else:
-            model = ScormTrackingModel(
-                id=key,
-                user_id=user_id,
-                item_id=item_id,
-                cmi_core_lesson_status=cmi_core_lesson_status or "not attempted",
-                cmi_core_score_raw=cmi_core_score_raw,
-                cmi_core_session_time=cmi_core_session_time or "",
-                cmi_core_lesson_location=cmi_core_lesson_location or "",
-                cmi_suspend_data=cmi_suspend_data or "",
-                updated_at=now_str,
-            )
-            self.session.add(model)
-
-        await self.session.commit()
-        return ScormTracking(
-            user_id=model.user_id,
-            item_id=model.item_id,
-            cmi_core_lesson_status=model.cmi_core_lesson_status,
-            cmi_core_score_raw=model.cmi_core_score_raw,
-            cmi_core_session_time=model.cmi_core_session_time,
-            cmi_core_lesson_location=model.cmi_core_lesson_location,
-            cmi_suspend_data=model.cmi_suspend_data,
-            updated_at=model.updated_at,
-        )
-
-    async def get_scorm_tracking(
-        self, user_id: str, item_id: str
-    ) -> Optional[ScormTracking]:
-        key = f"{user_id}:{item_id}"
-        stmt = select(ScormTrackingModel).where(ScormTrackingModel.id == key)
-        res = await self.session.execute(stmt)
-        model = res.scalar_one_or_none()
-        if not model:
-            return None
-        return ScormTracking(
-            user_id=model.user_id,
-            item_id=model.item_id,
-            cmi_core_lesson_status=model.cmi_core_lesson_status,
-            cmi_core_score_raw=model.cmi_core_score_raw,
-            cmi_core_session_time=model.cmi_core_session_time,
-            cmi_core_lesson_location=model.cmi_core_lesson_location,
-            cmi_suspend_data=model.cmi_suspend_data,
-            updated_at=model.updated_at,
-        )

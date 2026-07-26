@@ -151,12 +151,6 @@ class LearningItemModel(Base):
     language: Mapped[str] = mapped_column(String(32), nullable=False, default="")
     rubric_criteria_json: Mapped[str] = mapped_column(Text, nullable=False, default="")
     quiz_matrix_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
-    scorm_package_path: Mapped[str] = mapped_column(
-        String(512), nullable=False, default=""
-    )
-    scorm_entry_html: Mapped[str] = mapped_column(
-        String(255), nullable=False, default=""
-    )
     auto_transcribe: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"
     )

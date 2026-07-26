@@ -1,5 +1,4 @@
 import html
-import uuid
 from typing import Any, Callable
 
 from src.modules.catalog.domain.entities import (
@@ -8,8 +7,6 @@ from src.modules.catalog.domain.entities import (
     Specialization,
     Category,
     ItemType,
-    LearningItem,
-    WeekModule,
 )
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
@@ -197,8 +194,6 @@ class CatalogUseCase:
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
-        scorm_package_path: str = "",
-        scorm_entry_html: str = "",
         current_user: CurrentUser | None = None,
     ):
         async with async_session_scope() as session:
@@ -221,8 +216,6 @@ class CatalogUseCase:
                 language=language,
                 rubric_criteria_json=rubric_criteria_json,
                 quiz_matrix_id=quiz_matrix_id,
-                scorm_package_path=scorm_package_path,
-                scorm_entry_html=scorm_entry_html,
             )
 
     async def submit_course_review(
@@ -396,8 +389,6 @@ class CatalogUseCase:
         language: str = "",
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
-        scorm_package_path: str = "",
-        scorm_entry_html: str = "",
         current_user: CurrentUser | None = None,
     ):
         async with async_session_scope() as session:
@@ -423,8 +414,6 @@ class CatalogUseCase:
                 language=language,
                 rubric_criteria_json=rubric_criteria_json,
                 quiz_matrix_id=quiz_matrix_id,
-                scorm_package_path=scorm_package_path,
-                scorm_entry_html=scorm_entry_html,
             )
 
     async def delete_learning_item(
@@ -522,281 +511,6 @@ class CatalogUseCase:
                 lesson_id=lesson_id,
                 ordered_item_ids=ordered_item_ids,
             )
-
-    async def parse_scorm_package(
-        self, scorm_object_key: str, target_course_id: str
-    ) -> tuple[Course | None, bool, LearningItem | None]:
-        import io
-        import zipfile
-        import xml.etree.ElementTree as ET
-        import uuid
-
-        s3 = get_s3_storage_service()
-        zip_bytes = await s3.download_file(scorm_object_key)
-
-        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
-            if "imsmanifest.xml" not in zf.namelist():
-                raise ValueError(
-                    "Gói SCORM không hợp lệ: Không tìm thấy imsmanifest.xml"
-                )
-
-            manifest_data = zf.read("imsmanifest.xml")
-            root = ET.fromstring(manifest_data)
-
-            # Clean namespaces if prefix not matched
-            ns_uri = ""
-            if root.tag.startswith("{"):
-                ns_uri = root.tag.split("}")[0].strip("{")
-            ns_dict = {"imscp": ns_uri} if ns_uri else {}
-
-            title_elem = root.find(".//imscp:organization/imscp:title", ns_dict)
-            course_title = (
-                title_elem.text if title_elem is not None else None
-            ) or "Khóa học SCORM đã nhập"
-
-            items = root.findall(".//imscp:item", ns_dict)
-            if not items:
-                raise ValueError("Không tìm thấy tổ chức học liệu nào trong gói SCORM.")
-
-            is_single = len(items) == 1
-            preview_items = []
-            for item in items:
-                title = item.find("imscp:title", ns_dict)
-                title_text = (
-                    title.text if title is not None else None
-                ) or "Học liệu SCORM"
-                preview_items.append(
-                    LearningItem(
-                        id=item.attrib.get(
-                            "identifier", f"item_{uuid.uuid4().hex[:8]}"
-                        ),
-                        title=title_text,
-                        type=ItemType.READING,
-                        estimated_minutes=10,
-                        video_url="",
-                        reading_markdown="",
-                    )
-                )
-
-            preview_lesson = Lesson(
-                id=f"lesson_{uuid.uuid4().hex[:8]}",
-                title="SCORM Lessons",
-                estimated_minutes=15,
-                items=preview_items,
-            )
-
-            preview_module = WeekModule(
-                id=f"module_{uuid.uuid4().hex[:8]}",
-                week_number=1,
-                title="Week 1: SCORM Content",
-                summary="SCORM preview summary",
-                lessons=[preview_lesson],
-            )
-
-            preview_course = Course(
-                id=target_course_id or f"course_{uuid.uuid4().hex[:8]}",
-                title=course_title,
-                slug="scorm-preview",
-                description="SCORM imported course preview",
-                partner_name="SCORM Importer",
-                partner_logo_url="",
-                instructor_names=["Instructor"],
-                week_modules=[preview_module],
-            )
-
-            single_item = preview_items[0] if is_single else None
-            return preview_course, is_single, single_item
-
-    async def import_course_from_scorm(
-        self,
-        scorm_object_key: str,
-        course_id: str | None = None,
-        target_lesson_id: str | None = None,
-        current_user: CurrentUser | None = None,
-    ) -> tuple[Course, LearningItem | None]:
-        preview_course, is_single, single_item = await self.parse_scorm_package(
-            scorm_object_key, course_id or ""
-        )
-
-        if not course_id:
-            if preview_course is None:
-                raise ValueError(
-                    "Failed to parse SCORM package preview course metadata"
-                )
-            course = await self.create_course(
-                title=preview_course.title,
-                slug=f"scorm-course-{uuid.uuid4().hex[:6]}",
-                description=preview_course.description,
-                partner_name="SCORM Importer",
-                partner_logo_url="",
-                instructor_names=["Instructor"],
-                owner_id=current_user.id if current_user else "",
-            )
-            course_id = course.id
-
-        module = await self.create_week_module(
-            course_id=course_id,
-            week_number=1,
-            title="Week 1: Imported SCORM Content",
-            summary="Automatically imported SCORM package content",
-            current_user=current_user,
-        )
-
-        lesson = await self.create_lesson(
-            course_id=course_id,
-            week_module_id=module.id,
-            title="Lesson 1: SCORM Items",
-            estimated_minutes=15,
-            current_user=current_user,
-        )
-
-        imported_item = None
-        if preview_course and preview_course.week_modules:
-            for wm in preview_course.week_modules:
-                for l_item in wm.lessons:
-                    for i in l_item.items:
-                        imported_item = await self.create_learning_item(
-                            course_id=course_id,
-                            lesson_id=lesson.id,
-                            title=i.title,
-                            item_type=i.type,
-                            estimated_minutes=i.estimated_minutes,
-                            video_url=i.video_url,
-                            reading_markdown=i.reading_markdown,
-                            starter_code=i.starter_code,
-                            test_cases_json=i.test_cases_json,
-                            language=i.language,
-                            rubric_criteria_json=i.rubric_criteria_json,
-                            quiz_matrix_id=i.quiz_matrix_id,
-                            scorm_package_path=i.scorm_package_path,
-                            scorm_entry_html=i.scorm_entry_html,
-                            current_user=current_user,
-                        )
-
-        final_course = await self.get_course_detail(course_id)
-        res_course = final_course or preview_course
-        assert res_course is not None
-        return res_course, imported_item
-
-    async def export_course_to_scorm(
-        self, course_id: str, current_user: CurrentUser | None = None
-    ) -> tuple[str, str]:
-        import io
-        import zipfile
-
-        course = await self.get_course_detail(course_id)
-        if not course:
-            raise ValueError(f"Course with ID '{course_id}' not found")
-
-        zip_buffer = io.BytesIO()
-        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
-            items_xml = []
-            resources_xml = []
-
-            item_count = 0
-            for wm in course.week_modules or []:
-                for lesson in wm.lessons or []:
-                    for item in lesson.items or []:
-                        item_count += 1
-                        file_name = f"item_{item.id}.html"
-                        html_content = f"""<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>{item.title}</title>
-    <script>
-        var api = window.parent.API || window.opener.API;
-        if (api && typeof api.LMSInitialize === "function") {{
-            api.LMSInitialize("");
-            api.LMSSetValue("cmi.core.lesson_status", "completed");
-            api.LMSCommit("");
-        }}
-    </script>
-</head>
-<body>
-    <h1>{item.title}</h1>
-    <div>{item.reading_markdown or item.video_url}</div>
-</body>
-</html>"""
-                        zf.writestr(file_name, html_content)
-                        items_xml.append(
-                            f'<item identifier="item_{item.id}" identifierref="res_{item.id}"><title>{item.title}</title></item>'
-                        )
-                        resources_xml.append(
-                            f'<resource identifier="res_{item.id}" type="webcontent" adlcp:scormtype="sco" href="{file_name}"><file href="{file_name}"/></resource>'
-                        )
-
-            manifest_content = f"""<?xml version="1.0" encoding="UTF-8"?>
-<manifest identifier="COURSE_{course.id}" version="1.2"
-          xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2"
-          xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2">
-  <metadata><schema>ADL SCORM</schema><schemaversion>1.2</schemaversion></metadata>
-  <organizations default="org_1">
-    <organization identifier="org_1">
-      <title>{course.title}</title>
-      {"".join(items_xml)}
-    </organization>
-  </organizations>
-  <resources>
-    {"".join(resources_xml)}
-  </resources>
-</manifest>"""
-            zf.writestr("imsmanifest.xml", manifest_content)
-
-        zip_bytes = zip_buffer.getvalue()
-        object_key = f"scorm/exports/{course.id}_scorm12.zip"
-        s3 = get_s3_storage_service()
-        await s3.upload_file(zip_bytes, object_key, content_type="application/zip")
-        download_url = await s3.generate_presigned_download_url(object_key)
-        return download_url, object_key
-
-    async def process_scorm_package(
-        self,
-        course_id: str,
-        lesson_id: str,
-        title: str,
-        estimated_minutes: int,
-        object_key: str,
-        current_user: CurrentUser | None = None,
-    ) -> LearningItem:
-        import io
-        import zipfile
-        import uuid
-
-        s3 = get_s3_storage_service()
-        zip_bytes = await s3.download_file(object_key)
-
-        pkg_id = f"scorm_{uuid.uuid4().hex[:8]}"
-        base_pkg_path = f"scorm/packages/{pkg_id}"
-        entry_html = "index.html"
-
-        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
-            for fname in zf.namelist():
-                if fname.endswith("/") or fname.startswith("__MACOSX"):
-                    continue
-                file_content = zf.read(fname)
-                s3_key = f"{base_pkg_path}/{fname}"
-                c_type = (
-                    "text/html"
-                    if fname.endswith(".html")
-                    else "application/octet-stream"
-                )
-                await s3.upload_file(file_content, s3_key, content_type=c_type)
-                if fname.lower().endswith("index.html"):
-                    entry_html = fname
-
-        return await self.create_learning_item(
-            course_id=course_id,
-            lesson_id=lesson_id,
-            title=title,
-            item_type=2,
-            estimated_minutes=estimated_minutes,
-            video_url="",
-            reading_markdown="",
-            scorm_package_path=base_pkg_path,
-            scorm_entry_html=entry_html,
-            current_user=current_user,
-        )
 
     async def generate_upload_url(
         self, filename: str, content_type: str, folder: str = "videos"
