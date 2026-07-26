@@ -40,3 +40,9 @@ Thumbs.db
 
 # Archive files
 *.zip
+
+# Unwanted local artifacts
+task.md
+backend/samples/
+backend/scorm-samples/
+backend/%SystemDrive%/
