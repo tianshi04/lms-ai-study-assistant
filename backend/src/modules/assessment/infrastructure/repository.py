@@ -555,6 +555,75 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             created_at=now_str,
         )
 
+    async def delete_question(self, question_id: str) -> bool:
+        stmt = select(QuestionModel).where(QuestionModel.id == question_id)
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return False
+        await self.session.delete(model)
+        await self.session.commit()
+        return True
+
+    async def update_question(
+        self,
+        question_id: str,
+        text: str,
+        question_type: str,
+        difficulty: str,
+        explanation: str,
+        options_data: list[dict],
+    ) -> Question:
+        stmt = (
+            select(QuestionModel)
+            .options(selectinload(QuestionModel.options))
+            .where(QuestionModel.id == question_id)
+        )
+        res = await self.session.execute(stmt)
+        q_model = res.scalar_one_or_none()
+        if not q_model:
+            raise ValueError(f"Question with ID {question_id} not found")
+
+        q_model.text = text
+        q_model.question_type = question_type
+        q_model.difficulty = difficulty
+        q_model.explanation = explanation
+
+        q_model.options.clear()
+
+        domain_options = []
+        for idx, opt in enumerate(options_data):
+            opt_id = f"opt-{uuid.uuid4().hex[:8]}"
+            opt_model = QuestionOptionModel(
+                id=opt_id,
+                question_id=question_id,
+                option_text=opt.get("option_text", ""),
+                is_correct=bool(opt.get("is_correct", False)),
+                order_index=idx,
+            )
+            q_model.options.append(opt_model)
+            domain_options.append(
+                QuestionOption(
+                    id=opt_id,
+                    question_id=question_id,
+                    option_text=opt.get("option_text", ""),
+                    is_correct=bool(opt.get("is_correct", False)),
+                    order_index=idx,
+                )
+            )
+
+        await self.session.commit()
+        return Question(
+            id=q_model.id,
+            bank_id=q_model.bank_id,
+            text=q_model.text,
+            question_type=q_model.question_type,
+            difficulty=q_model.difficulty,
+            explanation=q_model.explanation,
+            options=domain_options,
+            created_at=q_model.created_at or datetime.now(timezone.utc).isoformat(),
+        )
+
     async def configure_quiz_matrix(
         self,
         item_id: str,

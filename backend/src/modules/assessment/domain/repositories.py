@@ -124,6 +124,22 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
+    async def delete_question(self, question_id: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def update_question(
+        self,
+        question_id: str,
+        text: str,
+        question_type: str,
+        difficulty: str,
+        explanation: str,
+        options_data: list[dict],
+    ) -> Question:
+        pass
+
+    @abstractmethod
     async def configure_quiz_matrix(
         self,
         item_id: str,

@@ -218,6 +218,28 @@ message GetQuizMatrixResponse {
   QuizMatrix matrix = 1;
 }
 
+message UpdateQuestionRequest {
+  string question_id = 1;
+  string question_type = 2;
+  string difficulty = 3;
+  string text = 4;
+  string explanation = 5;
+  repeated QuestionOption options = 6;
+}
+
+message UpdateQuestionResponse {
+  Question question = 1;
+}
+
+message DeleteQuestionRequest {
+  string question_id = 1;
+}
+
+message DeleteQuestionResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 service AssessmentService {
   rpc SubmitHonorCode(SubmitHonorCodeRequest) returns (SubmitHonorCodeResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
@@ -259,6 +281,12 @@ service AssessmentService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc GetQuizMatrix(GetQuizMatrixRequest) returns (GetQuizMatrixResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UpdateQuestion(UpdateQuestionRequest) returns (UpdateQuestionResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteQuestion(DeleteQuestionRequest) returns (DeleteQuestionResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }

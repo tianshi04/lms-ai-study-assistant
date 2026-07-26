@@ -4,13 +4,15 @@ import { useEffect, useState, useSyncExternalStore, use } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, ItemType, type Course, type LearningItem } from "@/gen/catalog/v1/catalog_pb";
+import { AssessmentService, type QuestionBank } from "@/gen/assessment/v1/assessment_pb";
+import { Navbar } from "@/components/layout/Navbar";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 import { VideoUploadWidget } from "@/components/ui/VideoUploadWidget";
 import { InVideoQuizEditor, type InVideoQuizItem } from "@/components/ui/InVideoQuizEditor";
 
-const emptySubscribe = () => () => {};
+const emptySubscribe = () => () => { };
 
 export default function InstructorCourseBuilderPage({
   params,
@@ -61,12 +63,13 @@ export default function InstructorCourseBuilderPage({
   const [labStarterCode, setLabStarterCode] = useState("# Starter code for lab\ndef solution():\n    pass\n");
   const [labTestCasesJson, setLabTestCasesJson] = useState('[\n  {"input": "1, 2", "expected": "3"}\n]');
   const [quizBankId, setQuizBankId] = useState("");
-  const [quizTimeLimit, setQuizTimeLimit] = useState(45);
-  const [quizPassingThreshold, setQuizPassingThreshold] = useState(80.0);
-  const [quizEasyCount, setQuizEasyCount] = useState(4);
-  const [quizMediumCount, setQuizMediumCount] = useState(4);
-  const [quizHardCount, setQuizHardCount] = useState(2);
+  const [quizTimeLimit, setQuizTimeLimit] = useState<string | number>("45");
+  const [quizPassingThreshold, setQuizPassingThreshold] = useState<string | number>("80");
+  const [quizEasyCount, setQuizEasyCount] = useState<string | number>("4");
+  const [quizMediumCount, setQuizMediumCount] = useState<string | number>("4");
+  const [quizHardCount, setQuizHardCount] = useState<string | number>("2");
   const [peerRubricJson, setPeerRubricJson] = useState('[\n  {"title": "Clarity & Organization", "max_score": 10}\n]');
+  const [questionBanks, setQuestionBanks] = useState<QuestionBank[]>([]);
 
   // SCORM Review Workspace State
   const [showScormReviewModal, setShowScormReviewModal] = useState(false);
@@ -112,6 +115,11 @@ export default function InstructorCourseBuilderPage({
         const nextWeekNum = (res.course.weekModules?.length || 0) + 1;
         setWeekNumber(nextWeekNum);
       }
+
+      // Fetch Question Banks
+      const assessmentClient = getRpcClient(AssessmentService);
+      const banksRes = await assessmentClient.listQuestionBanks({ courseId });
+      setQuestionBanks(banksRes.banks || []);
     } catch (err: unknown) {
       console.error("Failed to load course details:", err);
       const errMsg = err instanceof Error ? err.message : t("instructorBuilder.toastLoadFail");
@@ -131,6 +139,13 @@ export default function InstructorCourseBuilderPage({
           setCourse(res.course);
           const nextWeekNum = (res.course.weekModules?.length || 0) + 1;
           setWeekNumber(nextWeekNum);
+        }
+
+        // Fetch Question Banks
+        const assessmentClient = getRpcClient(AssessmentService);
+        const banksRes = await assessmentClient.listQuestionBanks({ courseId });
+        if (!ignore) {
+          setQuestionBanks(banksRes.banks || []);
         }
       } catch (err: unknown) {
         if (!ignore) {
@@ -531,6 +546,7 @@ export default function InstructorCourseBuilderPage({
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
+        <Navbar />
         <div className="flex-1 flex items-center justify-center py-24">
           <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -543,6 +559,7 @@ export default function InstructorCourseBuilderPage({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
+      <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Breadcrumb & Return Nav */}
@@ -653,6 +670,16 @@ export default function InstructorCourseBuilderPage({
               </label>
 
               <Link
+                href={`/instructor/courses/${courseId}/question-bank`}
+                className="px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-xs font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-1.5"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                <span>{t("instructorBuilder.questionBankMenuBtn")}</span>
+              </Link>
+
+              <Link
                 href={`/instructor/courses/${courseId}/analytics`}
                 className="px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-xs font-bold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-1.5"
               >
@@ -749,11 +776,10 @@ export default function InstructorCourseBuilderPage({
                     }
                     setActiveDrag(null);
                   }}
-                  className={`bg-white dark:bg-slate-900 rounded-3xl border ${
-                    activeDrag?.type === "week" && activeDrag.id === week.id
-                      ? "border-blue-500 ring-2 ring-blue-500/50 shadow-xl opacity-100 scale-[1.01]"
-                      : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
-                  } p-6 shadow-sm space-y-4`}
+                  className={`bg-white dark:bg-slate-900 rounded-3xl border ${activeDrag?.type === "week" && activeDrag.id === week.id
+                    ? "border-blue-500 ring-2 ring-blue-500/50 shadow-xl opacity-100 scale-[1.01]"
+                    : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                    } p-6 shadow-sm space-y-4`}
                 >
                   {/* Week Module Header */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -850,11 +876,10 @@ export default function InstructorCourseBuilderPage({
                             }
                             setActiveDrag(null);
                           }}
-                          className={`bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-4 border ${
-                            activeDrag?.type === "lesson" && activeDrag.id === lesson.id
-                              ? "border-indigo-500 ring-2 ring-indigo-500/50 shadow-xl opacity-100 scale-[1.01]"
-                              : "border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700"
-                          } space-y-3`}
+                          className={`bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-4 border ${activeDrag?.type === "lesson" && activeDrag.id === lesson.id
+                            ? "border-indigo-500 ring-2 ring-indigo-500/50 shadow-xl opacity-100 scale-[1.01]"
+                            : "border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700"
+                            } space-y-3`}
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
@@ -945,11 +970,10 @@ export default function InstructorCourseBuilderPage({
                                     }
                                     setActiveDrag(null);
                                   }}
-                                  className={`flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border ${
-                                    activeDrag?.type === "item" && activeDrag.id === item.id
-                                      ? "border-blue-500 ring-2 ring-blue-500/50 shadow-xl opacity-100 scale-[1.01]"
-                                      : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
-                  } text-xs shadow-2xs cursor-grab active:cursor-grabbing`}
+                                  className={`flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border ${activeDrag?.type === "item" && activeDrag.id === item.id
+                                    ? "border-blue-500 ring-2 ring-blue-500/50 shadow-xl opacity-100 scale-[1.01]"
+                                    : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                                    } text-xs shadow-2xs cursor-grab active:cursor-grabbing`}
                                 >
                                   <div className="flex items-center gap-2">
                                     {isInstructorOrAdmin && (
@@ -1279,21 +1303,36 @@ export default function InstructorCourseBuilderPage({
               <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Cấu hình Ma trận Đề thi (Quiz Matrix)</div>
               <div>
                 <label className="block text-[11px] font-semibold text-slate-500 mb-1">Mã Kho Ngân hàng Đề (Question Bank ID)</label>
-                <input
-                  type="text"
+                <select
                   value={quizBankId}
                   onChange={(e) => setQuizBankId(e.target.value)}
-                  placeholder="bank_python_basics_01"
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
-                />
+                  className="w-full px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
+                >
+                  <option value="">{t("instructorBuilder.selectQuestionBankPlaceholder")}</option>
+                  {questionBanks.map((bank) => (
+                    <option key={bank.id} value={bank.id}>
+                      {bank.title} ({bank.id})
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-500 mb-1">Thời gian đếm ngược (Phút)</label>
                   <input
                     type="number"
+                    min={1}
+                    max={1440}
                     value={quizTimeLimit}
-                    onChange={(e) => setQuizTimeLimit(parseInt(e.target.value) || 45)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        setQuizTimeLimit("");
+                      } else {
+                        const num = parseInt(val);
+                        setQuizTimeLimit(isNaN(num) ? "" : Math.min(1440, Math.max(1, num)));
+                      }
+                    }}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
                   />
                 </div>
@@ -1301,8 +1340,18 @@ export default function InstructorCourseBuilderPage({
                   <label className="block text-[11px] font-semibold text-slate-500 mb-1">Điểm đỗ tối thiểu (%)</label>
                   <input
                     type="number"
+                    min={0}
+                    max={100}
                     value={quizPassingThreshold}
-                    onChange={(e) => setQuizPassingThreshold(parseFloat(e.target.value) || 80.0)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        setQuizPassingThreshold("");
+                      } else {
+                        const num = parseFloat(val);
+                        setQuizPassingThreshold(isNaN(num) ? "" : Math.min(100, Math.max(0, num)));
+                      }
+                    }}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
                   />
                 </div>
@@ -1312,8 +1361,18 @@ export default function InstructorCourseBuilderPage({
                   <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu Dễ (40%)</label>
                   <input
                     type="number"
+                    min={0}
+                    max={200}
                     value={quizEasyCount}
-                    onChange={(e) => setQuizEasyCount(parseInt(e.target.value) || 4)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        setQuizEasyCount("");
+                      } else {
+                        const num = parseInt(val);
+                        setQuizEasyCount(isNaN(num) ? "" : Math.min(200, Math.max(0, num)));
+                      }
+                    }}
                     className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                   />
                 </div>
@@ -1321,8 +1380,18 @@ export default function InstructorCourseBuilderPage({
                   <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu TB (40%)</label>
                   <input
                     type="number"
+                    min={0}
+                    max={200}
                     value={quizMediumCount}
-                    onChange={(e) => setQuizMediumCount(parseInt(e.target.value) || 4)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        setQuizMediumCount("");
+                      } else {
+                        const num = parseInt(val);
+                        setQuizMediumCount(isNaN(num) ? "" : Math.min(200, Math.max(0, num)));
+                      }
+                    }}
                     className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                   />
                 </div>
@@ -1330,8 +1399,18 @@ export default function InstructorCourseBuilderPage({
                   <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu Khó (20%)</label>
                   <input
                     type="number"
+                    min={0}
+                    max={200}
                     value={quizHardCount}
-                    onChange={(e) => setQuizHardCount(parseInt(e.target.value) || 2)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        setQuizHardCount("");
+                      } else {
+                        const num = parseInt(val);
+                        setQuizHardCount(isNaN(num) ? "" : Math.min(200, Math.max(0, num)));
+                      }
+                    }}
                     className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                   />
                 </div>
@@ -1592,13 +1671,18 @@ export default function InstructorCourseBuilderPage({
                 <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Cấu hình Ma trận Đề thi (Quiz Matrix)</div>
                 <div>
                   <label className="block text-[11px] font-semibold text-slate-500 mb-1">Mã Kho Ngân hàng Đề (Question Bank ID)</label>
-                  <input
-                    type="text"
+                  <select
                     value={editingItem.quizMatrixId}
                     onChange={(e) => setEditingItem({ ...editingItem, quizMatrixId: e.target.value })}
-                    placeholder="bank_python_basics_01"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
-                  />
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
+                  >
+                    <option value="">{t("instructorBuilder.selectQuestionBankPlaceholder")}</option>
+                    {questionBanks.map((bank) => (
+                      <option key={bank.id} value={bank.id}>
+                        {bank.title} ({bank.id})
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 {/* Visual configurations to match creation UI */}
                 <div className="grid grid-cols-2 gap-3">
@@ -1606,6 +1690,8 @@ export default function InstructorCourseBuilderPage({
                     <label className="block text-[11px] font-semibold text-slate-500 mb-1">Thời gian đếm ngược (Phút)</label>
                     <input
                       type="number"
+                      min={1}
+                      max={1440}
                       defaultValue={45}
                       className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
                     />
@@ -1614,6 +1700,8 @@ export default function InstructorCourseBuilderPage({
                     <label className="block text-[11px] font-semibold text-slate-500 mb-1">Điểm đỗ tối thiểu (%)</label>
                     <input
                       type="number"
+                      min={0}
+                      max={100}
                       defaultValue={80}
                       className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
                     />
@@ -1624,6 +1712,8 @@ export default function InstructorCourseBuilderPage({
                     <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu Dễ (40%)</label>
                     <input
                       type="number"
+                      min={0}
+                      max={200}
                       defaultValue={4}
                       className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                     />
@@ -1632,6 +1722,8 @@ export default function InstructorCourseBuilderPage({
                     <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu TB (40%)</label>
                     <input
                       type="number"
+                      min={0}
+                      max={200}
                       defaultValue={4}
                       className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                     />
@@ -1640,6 +1732,8 @@ export default function InstructorCourseBuilderPage({
                     <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu Khó (20%)</label>
                     <input
                       type="number"
+                      min={0}
+                      max={200}
                       defaultValue={2}
                       className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                     />

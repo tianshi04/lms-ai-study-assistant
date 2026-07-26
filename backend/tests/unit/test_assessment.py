@@ -154,6 +154,40 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
             explanation=explanation,
         )
 
+    async def delete_question(self, question_id: str) -> bool:
+        return True
+
+    async def update_question(
+        self,
+        question_id: str,
+        text: str,
+        question_type: str,
+        difficulty: str,
+        explanation: str,
+        options_data: list[dict],
+    ):
+        from src.modules.assessment.domain.entities import Question, QuestionOption
+
+        opts = [
+            QuestionOption(
+                id=f"opt_{i}",
+                question_id=question_id,
+                option_text=opt["option_text"],
+                is_correct=opt["is_correct"],
+                order_index=i,
+            )
+            for i, opt in enumerate(options_data)
+        ]
+        return Question(
+            id=question_id,
+            bank_id="bank_test_1",
+            text=text,
+            question_type=question_type,
+            difficulty=difficulty,
+            explanation=explanation,
+            options=opts,
+        )
+
     async def configure_quiz_matrix(
         self,
         item_id: str,
@@ -451,3 +485,34 @@ async def test_quiz_question_pool_and_option_shuffling():
     )
     assert res["score_percent"] == 100.0
     assert res["passed"] is True
+
+
+@pytest.mark.asyncio
+async def test_update_and_delete_question():
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+
+    # Test update_question
+    updated_q = await usecase.update_question(
+        question_id="q_test_1",
+        text="Updated Question text?",
+        question_type="SINGLE_CHOICE",
+        difficulty="MEDIUM",
+        explanation="Simple explanation",
+        options_data=[
+            {"option_text": "Option A", "is_correct": True},
+            {"option_text": "Option B", "is_correct": False},
+        ],
+    )
+    assert updated_q.id == "q_test_1"
+    assert updated_q.text == "Updated Question text?"
+    assert updated_q.question_type == "SINGLE_CHOICE"
+    assert updated_q.difficulty == "MEDIUM"
+    assert updated_q.explanation == "Simple explanation"
+    assert len(updated_q.options) == 2
+    assert updated_q.options[0].option_text == "Option A"
+    assert updated_q.options[0].is_correct is True
+
+    # Test delete_question
+    success = await usecase.delete_question(question_id="q_test_1")
+    assert success is True

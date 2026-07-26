@@ -629,3 +629,28 @@ class AssessmentUseCase:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             return await repo.get_quiz_matrix(item_id=item_id)
+
+    async def delete_question(self, question_id: str) -> bool:
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            return await repo.delete_question(question_id=question_id)
+
+    async def update_question(
+        self,
+        question_id: str,
+        text: str,
+        question_type: str,
+        difficulty: str,
+        explanation: str,
+        options_data: list[dict],
+    ) -> Question:
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            return await repo.update_question(
+                question_id=question_id,
+                text=text,
+                question_type=question_type,
+                difficulty=difficulty,
+                explanation=explanation,
+                options_data=options_data,
+            )

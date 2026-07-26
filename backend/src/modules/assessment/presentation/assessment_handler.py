@@ -365,3 +365,54 @@ class AssessmentHandler(AssessmentService):
                 shuffle_options=matrix.shuffle_options,
             )
         )
+
+    async def update_question(
+        self,
+        request: pb.UpdateQuestionRequest,
+        ctx: RequestContext[pb.UpdateQuestionRequest, pb.UpdateQuestionResponse],
+    ) -> pb.UpdateQuestionResponse:
+        require_current_user()
+        options_data = [
+            {"option_text": opt.option_text, "is_correct": opt.is_correct}
+            for opt in request.options
+        ]
+        q = await self.use_case.update_question(
+            question_id=request.question_id,
+            text=request.text,
+            question_type=request.question_type,
+            difficulty=request.difficulty,
+            explanation=request.explanation,
+            options_data=options_data,
+        )
+        pb_options = [
+            pb.QuestionOption(
+                id=opt.id,
+                question_id=opt.question_id,
+                option_text=opt.option_text,
+                is_correct=opt.is_correct,
+                order_index=opt.order_index,
+            )
+            for opt in q.options
+        ]
+        return pb.UpdateQuestionResponse(
+            question=pb.Question(
+                id=q.id,
+                bank_id=q.bank_id,
+                text=q.text,
+                question_type=q.question_type,
+                difficulty=q.difficulty,
+                explanation=q.explanation,
+                options=pb_options,
+                created_at=q.created_at or "",
+            )
+        )
+
+    async def delete_question(
+        self,
+        request: pb.DeleteQuestionRequest,
+        ctx: RequestContext[pb.DeleteQuestionRequest, pb.DeleteQuestionResponse],
+    ) -> pb.DeleteQuestionResponse:
+        require_current_user()
+        success = await self.use_case.delete_question(question_id=request.question_id)
+        msg = "Deleted successfully" if success else "Failed to delete question or not found"
+        return pb.DeleteQuestionResponse(success=success, message=msg)
