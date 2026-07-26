@@ -118,6 +118,16 @@ class IdentityUseCase:
                 return False, "Không tìm thấy người dùng"
 
             clean_key = enterprise_seat_key.strip()
+
+            if user.enterprise_seat_key == clean_key:
+                return True, "Bạn đã được kích hoạt suất học từ đối tác này trước đó!"
+
+            if user.enterprise_seat_key and user.enterprise_seat_key != clean_key:
+                return (
+                    False,
+                    "Bạn đã có suất học Enterprise khác đang kích hoạt. Vui lòng liên hệ Admin để đổi mã.",
+                )
+
             stmt = select(EnterpriseLicenseModel).where(
                 EnterpriseLicenseModel.key == clean_key
             )

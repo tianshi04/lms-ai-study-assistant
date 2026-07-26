@@ -1,6 +1,13 @@
 import pytest
 from unittest.mock import AsyncMock, patch
 from src.modules.learning.application.learning_usecase import LearningUseCase
+from src.modules.catalog.domain.entities import (
+    Course,
+    WeekModule,
+    Lesson,
+    LearningItem,
+    ItemType,
+)
 from src.modules.learning.domain.entities import LearningProgress, PersonalNote
 
 
@@ -99,7 +106,21 @@ async def test_list_personal_notes(use_case, mock_repo, mock_session_scope):
 
 
 @pytest.mark.asyncio
-async def test_mark_item_complete(use_case, mock_repo, mock_session_scope):
+@patch("src.modules.learning.application.learning_usecase.CatalogUseCase")
+async def test_mark_item_complete(
+    mock_catalog_class, use_case, mock_repo, mock_session_scope
+):
+    mock_catalog_instance = mock_catalog_class.return_value
+
+    # Setup mock course
+    item = LearningItem(id="i1", title="item 1", type=ItemType.VIDEO)
+    lesson = Lesson(id="l1", title="lesson 1", items=[item])
+    week = WeekModule(id="w1", week_number=1, title="week 1", lessons=[lesson])
+    mock_course = Course(
+        id="c1", title="course 1", slug="course-1", week_modules=[week]
+    )
+    mock_catalog_instance.get_course_detail = AsyncMock(return_value=mock_course)
+
     expected = LearningProgress(
         user_id="u1",
         course_id="c1",
@@ -111,4 +132,4 @@ async def test_mark_item_complete(use_case, mock_repo, mock_session_scope):
 
     result = await use_case.mark_item_complete("u1", "c1", "i1", 1)
     assert result == (True, expected)
-    mock_repo.mark_item_complete.assert_awaited_once_with("u1", "c1", "i1", 1)
+    mock_repo.mark_item_complete.assert_awaited_once_with("u1", "c1", "i1", 1, {"i1"})

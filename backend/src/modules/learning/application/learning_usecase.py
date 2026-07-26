@@ -1,5 +1,6 @@
 from typing import Any, Callable
 
+from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 from src.modules.learning.domain.entities import (
     EnrolledCourseSummary,
     LearningProgress,
@@ -57,18 +58,38 @@ class LearningUseCase:
     async def mark_item_complete(
         self, user_id: str, course_id: str, item_id: str, total_course_items: int
     ) -> tuple[bool, LearningProgress]:
+
+        catalog_usecase = CatalogUseCase()
+        course = await catalog_usecase.get_course_detail(course_id)
+
+        if not course:
+            return False, LearningProgress(
+                user_id=user_id, course_id=course_id, overall_progress_percent=0.0
+            )
+
+        valid_item_ids = set()
+        for week in course.week_modules:
+            for lesson in week.lessons:
+                for item in lesson.items:
+                    valid_item_ids.add(item.id)
+
+        if item_id not in valid_item_ids:
+            return False, LearningProgress(
+                user_id=user_id, course_id=course_id, overall_progress_percent=0.0
+            )
+
+        real_total_items = max(1, len(valid_item_ids))
+
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             return await repo.mark_item_complete(
-                user_id, course_id, item_id, total_course_items
+                user_id, course_id, item_id, real_total_items, valid_item_ids
             )
 
     async def list_enrolled_courses(self, user_id: str) -> list[EnrolledCourseSummary]:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             progresses = await repo.list_user_progresses(user_id)
-
-        from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 
         catalog_usecase = CatalogUseCase()
         summaries: list[EnrolledCourseSummary] = []
