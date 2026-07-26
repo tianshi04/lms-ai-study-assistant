@@ -90,7 +90,7 @@ export function InVideoQuizEditor({
       explanation: explanation.trim(),
     };
 
-    let updatedList = [...quizzes];
+    const updatedList = [...quizzes];
     if (editingIndex !== null) {
       updatedList[editingIndex] = newQuiz;
       toast.success("Đã cập nhật câu hỏi dừng video!");

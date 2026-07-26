@@ -20,7 +20,7 @@ interface SCORMTrackingState {
   cmi_suspend_data: string;
 }
 
-export function SCORMPlayer({ activeItem, userId, onComplete }: SCORMPlayerProps) {
+export function SCORMPlayer({ activeItem, onComplete }: SCORMPlayerProps) {
   const toast = useToast();
 
   const [trackingState, setTrackingState] = useState<SCORMTrackingState>({
@@ -125,15 +125,15 @@ export function SCORMPlayer({ activeItem, userId, onComplete }: SCORMPlayerProps
         return "true";
       },
       LMSGetLastError: () => 0,
-      LMSGetErrorString: (errorCode: number) => "No error",
-      LMSGetDiagnostic: (errorCode: number) => "No diagnostic info",
+      LMSGetErrorString: () => "No error",
+      LMSGetDiagnostic: () => "No diagnostic info",
     };
 
     // Bind to parent window context
-    (window as any).API = scormApi;
+    (window as unknown as Record<string, unknown>).API = scormApi;
 
     return () => {
-      delete (window as any).API;
+      delete (window as unknown as Record<string, unknown>).API;
     };
   }, [loading, trackingState, activeItem.id, onComplete]);
 

@@ -103,14 +103,17 @@ export default function CoursePlayerPage() {
   }, [courseId, router]);
 
   // Reset in-video quiz state when switching learning items
+  const activeItemId = activeItem?.id;
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     setCurrentTime(0);
     maxTimeRef.current = 0;
     setActiveQuiz(null);
     setSelectedOption(null);
     setQuizSubmitted(false);
     setAnsweredQuizTimestamps(new Set());
-  }, [activeItem?.id]);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [activeItemId]);
 
   // Total course items count
   const totalCourseItems = course?.weekModules.reduce(
