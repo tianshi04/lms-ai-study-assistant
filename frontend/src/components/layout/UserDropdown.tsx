@@ -7,7 +7,6 @@ import { useTheme } from "next-themes";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { getAvatarDataUri } from "@/lib/avatar";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
-import { useToast } from "@/components/ui/Toast";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -19,7 +18,6 @@ export function UserDropdown() {
   const { userName, userEmail, userRole, logout: handleLogout } = useAuth();
   const { t, locale, setLocale } = useTranslation();
   const { theme, setTheme } = useTheme();
-  const toast = useToast();
 
   const avatarSrc = useMemo(() => getAvatarDataUri(userEmail || "user"), [userEmail]);
 
@@ -101,24 +99,13 @@ export function UserDropdown() {
           </Link>
         </DropdownMenuItem>
 
-        <DropdownMenuItem
-          onClick={() => {
-            toast.info(
-              t('navbar.myCertificates') || 'Chứng chỉ của tôi',
-              { description: 'Tính năng quản lý danh sách chứng chỉ cá nhân đang được phát triển.' }
-            );
-          }}
-          className="flex items-center justify-between w-full px-3.5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 cursor-pointer"
-        >
-          <span className="flex items-center gap-3">
+        <DropdownMenuItem className="p-0">
+          <Link href="/certificates" className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium">
             <svg className="w-4.5 h-4.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
             </svg>
             <span>{t('navbar.myCertificates') || 'Chứng chỉ của tôi'}</span>
-          </span>
-          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
-            Soon
-          </span>
+          </Link>
         </DropdownMenuItem>
 
         {isInstructorOrAdmin && (

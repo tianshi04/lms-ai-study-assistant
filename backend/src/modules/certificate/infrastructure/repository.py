@@ -210,10 +210,9 @@ class CertificateRepository:
         )
 
     async def get_certificates_by_user(self, user_id: str) -> list[VerifiedCertificate]:
-        """Returns all certificates for a user (for specialization completion check)."""
+        """Returns all valid (non-revoked) certificates for a user."""
         stmt = select(CertificateModel).where(
             CertificateModel.user_id == user_id,
-            CertificateModel.specialization_id.is_(None),
             CertificateModel.is_revoked.is_(False),
         )
         result = await self._session.execute(stmt)

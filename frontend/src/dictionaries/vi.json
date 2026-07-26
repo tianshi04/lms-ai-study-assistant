@@ -208,6 +208,21 @@
     "returnHome": "Quay lại Trang chủ",
     "loadCertError": "Không thể tải thông tin chứng chỉ"
   },
+  "certificatesPage": {
+    "title": "Chứng chỉ của tôi",
+    "subtitle": "Quản lý và tra cứu tất cả các chứng chỉ hoàn thành khóa học & chuyên ngành đã đạt được.",
+    "searchPlaceholder": "Tìm kiếm chứng chỉ theo tên khóa học hoặc mã ID...",
+    "totalCertificates": "Tổng số chứng chỉ",
+    "noCertificatesTitle": "Chưa có chứng chỉ nào",
+    "noCertificatesDesc": "Bạn chưa hoàn thành khóa học nào hoặc chưa yêu cầu phát hành chứng chỉ. Hãy tiếp tục hoàn thành bài học và các bài kiểm tra!",
+    "exploreCourses": "Khám phá khóa học ngay",
+    "viewCertificate": "Xem & Xác thực",
+    "shareCertificate": "Chia sẻ / Tải về",
+    "issuedOn": "Cấp ngày",
+    "certCode": "Mã xác thực",
+    "partner": "Đơn vị đào tạo",
+    "errorFetch": "Không thể tải danh sách chứng chỉ cá nhân."
+  },
   "player": {
     "backToCatalog": "Trở lại Catalog",
     "lessonSyllabus": "Lộ trình Bài học",

@@ -218,5 +218,10 @@ async def test_get_verified_certificate_with_slug():
         assert cert is not None
         assert err == ""
         assert cert.course_title == "Cert Slug Course"
+
+        # Test list_my_certificates
+        user_certs = await cert_uc.list_my_certificates("user_slug_cert")
+        assert len(user_certs) >= 1
+        assert any(c.certificate_id == cert.certificate_id for c in user_certs)
     except Exception as e:
-        pytest.skip(f"Skipping cert slug test: DB not reachable ({e})")
+        pytest.skip(f"Skipping cert slug & list test: DB not reachable ({e})")

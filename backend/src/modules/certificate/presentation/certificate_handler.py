@@ -208,3 +208,17 @@ class CertificateHandler(CertificateService):
         return pb.IssueSpecializationCertificateResponse(
             certificate=_to_pb_certificate(cert), message=msg
         )
+
+    async def list_my_certificates(
+        self,
+        request: pb.ListMyCertificatesRequest,
+        ctx: RequestContext[
+            pb.ListMyCertificatesRequest,
+            pb.ListMyCertificatesResponse,
+        ],
+    ) -> pb.ListMyCertificatesResponse:
+        current_user = require_current_user()
+        certs = await self._use_case.list_my_certificates(current_user.id)
+        return pb.ListMyCertificatesResponse(
+            certificates=[_to_pb_certificate(c) for c in certs]
+        )

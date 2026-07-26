@@ -99,6 +99,12 @@ message IssueSpecializationCertificateResponse {
   string message = 2;
 }
 
+message ListMyCertificatesRequest {}
+
+message ListMyCertificatesResponse {
+  repeated VerifiedCertificate certificates = 1;
+}
+
 service CertificateService {
   rpc ApplyFinancialAid(ApplyFinancialAidRequest) returns (ApplyFinancialAidResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
@@ -122,6 +128,9 @@ service CertificateService {
     option (auth.v1.policy) = AUTH_POLICY_ADMIN;
   }
   rpc IssueSpecializationCertificate(IssueSpecializationCertificateRequest) returns (IssueSpecializationCertificateResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListMyCertificates(ListMyCertificatesRequest) returns (ListMyCertificatesResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }

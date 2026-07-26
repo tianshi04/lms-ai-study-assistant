@@ -208,6 +208,21 @@
     "returnHome": "Back to Home",
     "loadCertError": "Unable to verify certificate details"
   },
+  "certificatesPage": {
+    "title": "My Certificates",
+    "subtitle": "Manage and verify all your completed course & specialization certificates.",
+    "searchPlaceholder": "Search certificates by course title or ID...",
+    "totalCertificates": "Total Certificates",
+    "noCertificatesTitle": "No Certificates Earned Yet",
+    "noCertificatesDesc": "You haven't completed any courses yet or claimed your certificate. Continue your learning journey to earn industry-recognized credentials!",
+    "exploreCourses": "Explore Courses",
+    "viewCertificate": "View & Verify",
+    "shareCertificate": "Share / Download",
+    "issuedOn": "Issued On",
+    "certCode": "Certificate Code",
+    "partner": "Partner Institution",
+    "errorFetch": "Failed to fetch certificates."
+  },
   "player": {
     "backToCatalog": "Back to Catalog",
     "lessonSyllabus": "Syllabus",
