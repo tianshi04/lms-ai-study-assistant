@@ -36,6 +36,8 @@ class AssessmentHandler(AssessmentService):
             user_id=current_user.id,
             item_id=request.item_id,
             selected_option_indexes=list(request.selected_option_indexes),
+            session_seed=request.session_seed or None,
+            start_time_iso=request.start_time_iso or None,
         )
         quiz_result = pb.QuizResult(
             score_percent=res["score_percent"],
@@ -416,3 +418,43 @@ class AssessmentHandler(AssessmentService):
         success = await self.use_case.delete_question(question_id=request.question_id)
         msg = "Deleted successfully" if success else "Failed to delete question or not found"
         return pb.DeleteQuestionResponse(success=success, message=msg)
+
+    async def start_graded_quiz_session(
+        self,
+        request: pb.StartGradedQuizSessionRequest,
+        ctx: RequestContext[
+            pb.StartGradedQuizSessionRequest, pb.StartGradedQuizSessionResponse
+        ],
+    ) -> pb.StartGradedQuizSessionResponse:
+        current_user = require_current_user()
+        res = await self.use_case.start_graded_quiz_session(
+            user_id=current_user.id,
+            item_id=request.item_id,
+        )
+
+        pb_questions = []
+        for q in res["questions"]:
+            pb_options = [
+                pb.QuizSessionQuestionOption(
+                    option_index=idx,
+                    option_text=opt_text,
+                )
+                for idx, opt_text in enumerate(q["options"])
+            ]
+            pb_questions.append(
+                pb.QuizSessionQuestion(
+                    question_id=q["question_id"],
+                    text=q["text"],
+                    options=pb_options,
+                    question_type=q.get("question_type", "SINGLE_CHOICE"),
+                )
+            )
+
+        return pb.StartGradedQuizSessionResponse(
+            session_id=res["session_id"],
+            time_limit_minutes=res["duration_minutes"],
+            passing_threshold_percent=res.get("passing_threshold_percent", 80.0),
+            questions=pb_questions,
+            start_time_iso=res["start_time_iso"],
+            session_seed=res["session_seed"],
+        )

@@ -215,6 +215,31 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
     async def get_quiz_matrix(self, item_id: str):
         return None
 
+    async def get_questions_by_bank(self, bank_id: str):
+        from src.modules.assessment.domain.entities import Question, QuestionOption
+        return [
+            Question(
+                id=f"q_{i}",
+                bank_id=bank_id,
+                text=f"Question {i} text",
+                question_type="SINGLE_CHOICE",
+                difficulty="EASY" if i < 2 else ("MEDIUM" if i < 4 else "HARD"),
+                explanation="Explanation",
+                options=[
+                    QuestionOption(
+                        id=f"opt_{i}_{j}",
+                        question_id=f"q_{i}",
+                        option_text=f"Option {j}",
+                        is_correct=(j == 0),
+                        order_index=j,
+                    )
+                    for j in range(4)
+                ],
+                created_at="",
+            )
+            for i in range(5)
+        ]
+
 
 @pytest.mark.asyncio
 async def test_honor_code_agreement():

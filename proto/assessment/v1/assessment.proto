@@ -17,6 +17,8 @@ message SubmitHonorCodeResponse {
 message SubmitGradedQuizRequest {
   string item_id = 1;
   repeated int32 selected_option_indexes = 2;
+  int32 session_seed = 3;
+  string start_time_iso = 4;
 }
 
 message QuizResult {
@@ -289,4 +291,32 @@ service AssessmentService {
   rpc DeleteQuestion(DeleteQuestionRequest) returns (DeleteQuestionResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc StartGradedQuizSession(StartGradedQuizSessionRequest) returns (StartGradedQuizSessionResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+}
+
+message StartGradedQuizSessionRequest {
+  string item_id = 1;
+}
+
+message QuizSessionQuestionOption {
+  int32 option_index = 1;
+  string option_text = 2;
+}
+
+message QuizSessionQuestion {
+  string question_id = 1;
+  string text = 2;
+  repeated QuizSessionQuestionOption options = 3;
+  string question_type = 4;
+}
+
+message StartGradedQuizSessionResponse {
+  string session_id = 1;
+  int32 time_limit_minutes = 2;
+  float passing_threshold_percent = 3;
+  repeated QuizSessionQuestion questions = 4;
+  string start_time_iso = 5;
+  int32 session_seed = 6;
 }

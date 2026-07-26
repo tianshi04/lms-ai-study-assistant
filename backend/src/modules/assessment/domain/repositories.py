@@ -156,3 +156,7 @@ class AssessmentRepositoryInterface(ABC):
     @abstractmethod
     async def get_quiz_matrix(self, item_id: str) -> Optional[QuizMatrix]:
         pass
+
+    @abstractmethod
+    async def get_questions_by_bank(self, bank_id: str) -> list[Question]:
+        pass

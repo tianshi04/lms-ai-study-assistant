@@ -688,3 +688,37 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             hard_count=m.hard_count,
             shuffle_options=m.shuffle_options,
         )
+
+    async def get_questions_by_bank(self, bank_id: str) -> list[Question]:
+        stmt = (
+            select(QuestionModel)
+            .options(selectinload(QuestionModel.options))
+            .where(QuestionModel.bank_id == bank_id)
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+
+        questions = []
+        for q in models:
+            questions.append(
+                Question(
+                    id=q.id,
+                    bank_id=q.bank_id,
+                    text=q.text,
+                    question_type=q.question_type,
+                    difficulty=q.difficulty,
+                    explanation=q.explanation,
+                    options=[
+                        QuestionOption(
+                            id=opt.id,
+                            question_id=opt.question_id,
+                            option_text=opt.option_text,
+                            is_correct=opt.is_correct,
+                            order_index=opt.order_index,
+                        )
+                        for opt in q.options
+                    ],
+                    created_at=q.created_at,
+                )
+            )
+        return questions

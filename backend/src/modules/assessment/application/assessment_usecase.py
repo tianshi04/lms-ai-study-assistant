@@ -67,13 +67,75 @@ class AssessmentUseCase:
         )
         return is_agreed, msg
 
-    def generate_quiz_session_questions(
-        self, item_id: str, seed: int = 42, pool_size: int = 10, sample_n: int = 5
+    async def generate_quiz_session_questions(
+        self, repo: AssessmentRepositoryInterface, item_id: str, seed: int = 42
     ) -> list[dict[str, Any]]:
         """Enforces BR_QUIZ_002: Samples N questions from a Pool of M and shuffles options reproducibly."""
-        rng = random.Random(seed)
+        # 1. Fetch Quiz Matrix
+        matrix = await repo.get_quiz_matrix(item_id)
+        if not matrix:
+            # Fallback mock pool if no matrix exists (e.g. default/demo)
+            return self._get_fallback_mock_questions(item_id, seed)
 
-        # Question pool of M items
+        # 2. Fetch Questions in Bank
+        bank_questions = await repo.get_questions_by_bank(matrix.bank_id)
+        if not bank_questions:
+            return []
+
+        # 3. Categorize by difficulty
+        easy_qs = [q for q in bank_questions if q.difficulty == "EASY"]
+        medium_qs = [q for q in bank_questions if q.difficulty == "MEDIUM"]
+        hard_qs = [q for q in bank_questions if q.difficulty == "HARD"]
+
+        # 4. Sample according to matrix configuration
+        rng = random.Random(seed)
+        sampled_easy = rng.sample(easy_qs, min(matrix.easy_count, len(easy_qs)))
+        sampled_medium = rng.sample(medium_qs, min(matrix.medium_count, len(medium_qs)))
+        sampled_hard = rng.sample(hard_qs, min(matrix.hard_count, len(hard_qs)))
+
+        sampled = sampled_easy + sampled_medium + sampled_hard
+
+        # 5. Format and optionally shuffle options
+        result: list[dict[str, Any]] = []
+        for q in sampled:
+            # Gather options
+            opts_data = [
+                {
+                    "option_text": opt.option_text,
+                    "is_correct": opt.is_correct,
+                }
+                for opt in q.options
+            ]
+            
+            if matrix.shuffle_options:
+                rng.shuffle(opts_data)
+
+            # Build final options list and correct index
+            options_text = [opt["option_text"] for opt in opts_data]
+            
+            correct_idx = 0
+            for idx, opt in enumerate(opts_data):
+                if opt["is_correct"]:
+                    correct_idx = idx
+                    break
+
+            result.append(
+                {
+                    "question_id": q.id,
+                    "text": q.text,
+                    "options": options_text,
+                    "shuffled_correct_index": correct_idx,
+                    "question_type": q.question_type,
+                    "difficulty": q.difficulty,
+                }
+            )
+
+        return result
+
+    def _get_fallback_mock_questions(
+        self, item_id: str, seed: int = 42
+    ) -> list[dict[str, Any]]:
+        rng = random.Random(seed)
         question_pool: list[dict[str, Any]] = [
             {
                 "question_id": f"q_{i + 1}",
@@ -86,51 +148,55 @@ class AssessmentUseCase:
                 ],
                 "correct_option_index": 0,
             }
-            for i in range(pool_size)
+            for i in range(10)
         ]
-
-        sampled = rng.sample(question_pool, min(sample_n, len(question_pool)))
+        sampled = rng.sample(question_pool, min(5, len(question_pool)))
         result: list[dict[str, Any]] = []
-
         for q in sampled:
             raw_options = q.get("options", [])
-            opts: list[str] = (
-                [str(x) for x in raw_options] if isinstance(raw_options, list) else []
-            )
+            opts: list[str] = [str(x) for x in raw_options]
             correct_idx = int(q.get("correct_option_index", 0))
             correct_text = opts[correct_idx]
             rng.shuffle(opts)
             new_correct_idx = opts.index(correct_text)
-
             result.append(
                 {
                     "question_id": q["question_id"],
                     "text": q["text"],
                     "options": opts,
                     "shuffled_correct_index": new_correct_idx,
+                    "question_type": "SINGLE_CHOICE",
+                    "difficulty": "EASY",
                 }
             )
-
         return result
 
     async def start_graded_quiz_session(
         self, user_id: str, item_id: str, duration_minutes: int = 45
     ) -> dict[str, Any]:
-        now = datetime.now(timezone.utc)
-        expires_at = now + timedelta(minutes=duration_minutes)
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            matrix = await repo.get_quiz_matrix(item_id)
+            if matrix:
+                duration_minutes = matrix.time_limit_minutes
+            passing_threshold = matrix.passing_threshold_percent if matrix else 80.0
+            
+            now = datetime.now(timezone.utc)
+            expires_at = now + timedelta(minutes=duration_minutes)
 
-        # BR_QUIZ_002: Generate N-sampled and option-shuffled questions using unique user/attempt seed
-        seed_val = abs(hash(f"{user_id}:{item_id}:{now.isoformat()[:16]}")) % (2**31)
-        questions = self.generate_quiz_session_questions(item_id, seed=seed_val)
+            # BR_QUIZ_002: Generate N-sampled and option-shuffled questions using unique user/attempt seed
+            seed_val = abs(hash(f"{user_id}:{item_id}:{now.isoformat()[:16]}")) % (2**31)
+            questions = await self.generate_quiz_session_questions(repo, item_id, seed=seed_val)
 
-        return {
-            "session_id": f"qsess-{uuid.uuid4().hex[:8]}",
-            "start_time_iso": now.isoformat(),
-            "expires_at_iso": expires_at.isoformat(),
-            "duration_minutes": duration_minutes,
-            "session_seed": seed_val,
-            "questions": questions,
-        }
+            return {
+                "session_id": f"qsess-{uuid.uuid4().hex[:8]}",
+                "start_time_iso": now.isoformat(),
+                "expires_at_iso": expires_at.isoformat(),
+                "duration_minutes": duration_minutes,
+                "passing_threshold_percent": passing_threshold,
+                "session_seed": seed_val,
+                "questions": questions,
+            }
 
     @require_paid_access()
     async def submit_graded_quiz(
@@ -177,8 +243,8 @@ class AssessmentUseCase:
 
             # 3. Grade Quiz (BR_QUIZ_002: Dynamic shuffled options grading)
             if session_seed is not None:
-                generated_qs = self.generate_quiz_session_questions(
-                    item_id, seed=session_seed
+                generated_qs = await self.generate_quiz_session_questions(
+                    repo, item_id, seed=session_seed
                 )
                 correct_answers = [q["shuffled_correct_index"] for q in generated_qs]
             else:
