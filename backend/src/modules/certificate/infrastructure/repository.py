@@ -18,8 +18,10 @@ from src.modules.catalog.infrastructure.models import (
 )
 from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
+    FinancialAidStatus,
     VerifiedCertificate,
 )
+from src.modules.certificate.domain.repositories import ICertificateRepository
 from src.modules.certificate.infrastructure.models import (
     CertificateModel,
     FinancialAidModel,
@@ -28,7 +30,7 @@ from src.modules.identity.infrastructure.models import UserModel
 from src.modules.learning.infrastructure.models import LearningProgressModel
 
 
-class CertificateRepository:
+class CertificateRepository(ICertificateRepository):
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
@@ -49,7 +51,7 @@ class CertificateRepository:
             user_id=model.user_id,
             course_id=model.course_id,
             essay_150_words=model.essay_150_words,
-            status=model.status,
+            status=FinancialAidStatus(model.status),
             review_deadline_days_left=model.review_deadline_days_left,
         )
 
@@ -67,7 +69,7 @@ class CertificateRepository:
                 user_id=m.user_id,
                 course_id=m.course_id,
                 essay_150_words=m.essay_150_words,
-                status=m.status,
+                status=FinancialAidStatus(m.status),
                 review_deadline_days_left=m.review_deadline_days_left,
             )
             for m in models
@@ -91,7 +93,7 @@ class CertificateRepository:
                 user_id=m.user_id,
                 course_id=m.course_id,
                 essay_150_words=m.essay_150_words,
-                status=m.status,
+                status=FinancialAidStatus(m.status),
                 review_deadline_days_left=m.review_deadline_days_left,
             )
             for m in models
@@ -110,7 +112,7 @@ class CertificateRepository:
             user_id=model.user_id,
             course_id=model.course_id,
             essay_150_words=model.essay_150_words,
-            status=model.status,
+            status=FinancialAidStatus(model.status),
             review_deadline_days_left=model.review_deadline_days_left,
         )
 
@@ -132,6 +134,7 @@ class CertificateRepository:
             )
             self._session.add(model)
         else:
+            model.essay_150_words = app.essay_150_words
             model.status = app.status
             model.review_deadline_days_left = app.review_deadline_days_left
 

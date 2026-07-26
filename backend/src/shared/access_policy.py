@@ -6,6 +6,7 @@ from typing import Any
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 
+from src.modules.certificate.domain.entities import FinancialAidStatus
 from src.modules.certificate.infrastructure.repository import CertificateRepository
 from src.modules.identity.infrastructure.repository import IdentityRepository
 from src.shared.auth import is_staff_role
@@ -19,21 +20,16 @@ class AccessPolicyService:
     async def verify_paid_access(
         session: Any, user_id: str, course_id: str = ""
     ) -> tuple[bool, str]:
-        """Evaluates whether a user has Paid Mode access for graded items and certificates (BR_ACCESS_001).
-
-        Returns (is_allowed, error_message).
-        """
+        """Evaluates fine-grained access policy for Paid Content (BR_ACCESS_001, BR_ACCESS_002, BR_FAID_001)."""
+        # 1. Staff override (BR_ACCESS_001)
         if not user_id:
             return False, "Thiếu thông tin người dùng."
 
-        # Fetch user entity via IdentityRepository
         id_repo = IdentityRepository(session)
         user_entity = await id_repo.get_by_id(user_id)
-
         if not user_entity:
             return True, ""
 
-        # 1. Staff role bypass (Coarse-Grained Role Check)
         role_val = (
             user_entity.role.value
             if hasattr(user_entity.role, "value")
@@ -50,11 +46,12 @@ class AccessPolicyService:
         cert_repo = CertificateRepository(session)
         fa_apps = await cert_repo.list_financial_aids_by_user(user_id, course_id)
         for fa in fa_apps:
-            if fa.status in ("APPROVED", "AUTO_APPROVED"):
+            if fa.status in (
+                FinancialAidStatus.APPROVED,
+                FinancialAidStatus.AUTO_APPROVED,
+            ):
                 return True, ""
-            if fa.status == "PENDING" and fa.review_deadline_days_left <= 0:
-                fa.status = "AUTO_APPROVED"
-                fa.review_deadline_days_left = 0
+            if fa.auto_approve_if_overdue():
                 await cert_repo.save_financial_aid(fa)
                 return True, ""
 

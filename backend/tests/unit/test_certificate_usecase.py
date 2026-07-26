@@ -6,6 +6,7 @@ from src.modules.certificate.application.certificate_usecase import (
 )
 from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
+    FinancialAidStatus,
     VerifiedCertificate,
 )
 
@@ -48,7 +49,7 @@ async def test_apply_financial_aid_existing(
         user_id="u1",
         course_id="c1",
         essay_150_words="word " * 150,
-        status="PENDING",
+        status=FinancialAidStatus.PENDING,
         review_deadline_days_left=14,
     )
     mock_repo.get_financial_aid = AsyncMock(return_value=existing_app)
@@ -107,7 +108,7 @@ async def test_get_financial_aid_status(mock_session_scope, mock_repo_class, use
         user_id="u1",
         course_id="c1",
         essay_150_words="word " * 150,
-        status="APPROVED",
+        status=FinancialAidStatus.APPROVED,
         review_deadline_days_left=0,
     )
     mock_repo.get_financial_aid = AsyncMock(return_value=existing_app)
@@ -287,7 +288,7 @@ async def test_list_financial_aid_applications(
         user_id="u1",
         course_id="c1",
         essay_150_words="test " * 150,
-        status="APPROVED",
+        status=FinancialAidStatus.APPROVED,
     )
     mock_repo.list_financial_aids = AsyncMock(return_value=[app1])
 
@@ -311,7 +312,7 @@ async def test_review_financial_aid_application(
         user_id="u1",
         course_id="c1",
         essay_150_words="test " * 150,
-        status="PENDING",
+        status=FinancialAidStatus.PENDING,
     )
     mock_repo.get_financial_aid_by_id = AsyncMock(return_value=app1)
     mock_repo.save_financial_aid = AsyncMock(side_effect=lambda a: a)
@@ -319,7 +320,7 @@ async def test_review_financial_aid_application(
     updated, err = await usecase.review_financial_aid_application("fa1", True)
     assert err == ""
     assert updated is not None
-    assert updated.status == "APPROVED"
+    assert updated.status == FinancialAidStatus.APPROVED
 
     mock_repo.get_financial_aid_by_id = AsyncMock(return_value=None)
     updated, err = await usecase.review_financial_aid_application("fa2", False)

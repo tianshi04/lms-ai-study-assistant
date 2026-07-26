@@ -1,40 +1,43 @@
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Optional
 
 from src.modules.certificate.domain.entities import (
+    MIN_FINANCIAL_AID_ESSAY_WORDS,
     FinancialAidApplication,
+    FinancialAidStatus,
     VerifiedCertificate,
+    count_words,
 )
+from src.modules.certificate.domain.repositories import ICertificateRepository
 from src.modules.certificate.infrastructure.repository import CertificateRepository
 from src.shared.infrastructure.database import async_session_scope
 
 
-def count_words(text: str) -> int:
-    return len(text.strip().split())
-
-
 class CertificateUseCase:
+    def __init__(self, repo: Optional[ICertificateRepository] = None) -> None:
+        self._repo = repo
+
+    def _get_repo(self, session: Any) -> ICertificateRepository:
+        return self._repo if self._repo is not None else CertificateRepository(session)
+
     async def apply_financial_aid(
         self, user_id: str, course_id: str, essay_150_words: str
     ) -> tuple[Optional[FinancialAidApplication], str]:
         words = count_words(essay_150_words)
-        if words < 150:
+        if words < MIN_FINANCIAL_AID_ESSAY_WORDS:
             return (
                 None,
                 f"Bài luận hỗ trợ tài chính chưa đủ độ dài tối thiểu (Hiện tại {words}/150 từ). Vui lòng chia sẻ chi tiết hơn về hoàn cảnh và mục tiêu học tập.",
             )
 
         async with async_session_scope() as session:
-            repo = CertificateRepository(session)
+            repo = self._get_repo(session)
             existing = await repo.get_financial_aid(user_id, course_id)
             if existing:
-                if existing.status in ("PENDING", "APPROVED", "AUTO_APPROVED"):
+                if existing.prevents_resubmission:
                     return existing, ""
-                # If existing status is REJECTED, allow re-applying by updating essay & resetting to PENDING
-                existing.essay_150_words = essay_150_words
-                existing.status = "PENDING"
-                existing.review_deadline_days_left = 15
+                existing.resubmit(essay_150_words)
                 saved = await repo.save_financial_aid(existing)
                 return saved, ""
 
@@ -44,7 +47,7 @@ class CertificateUseCase:
                 user_id=user_id,
                 course_id=course_id,
                 essay_150_words=essay_150_words,
-                status="PENDING",
+                status=FinancialAidStatus.PENDING,
                 review_deadline_days_left=15,
             )
 
@@ -52,11 +55,9 @@ class CertificateUseCase:
             return saved, ""
 
     async def _check_auto_approve(
-        self, app: Optional[FinancialAidApplication], repo: CertificateRepository
+        self, app: Optional[FinancialAidApplication], repo: ICertificateRepository
     ) -> Optional[FinancialAidApplication]:
-        if app and app.status == "PENDING" and app.review_deadline_days_left <= 0:
-            app.status = "AUTO_APPROVED"
-            app.review_deadline_days_left = 0
+        if app and app.auto_approve_if_overdue():
             return await repo.save_financial_aid(app)
         return app
 
@@ -64,7 +65,7 @@ class CertificateUseCase:
         self, user_id: str, course_id: str
     ) -> Optional[FinancialAidApplication]:
         async with async_session_scope() as session:
-            repo = CertificateRepository(session)
+            repo = self._get_repo(session)
             app = await repo.get_financial_aid(user_id, course_id)
             return await self._check_auto_approve(app, repo)
 
@@ -72,7 +73,7 @@ class CertificateUseCase:
         self, course_id: Optional[str] = None, status: Optional[str] = None
     ) -> list[FinancialAidApplication]:
         async with async_session_scope() as session:
-            repo = CertificateRepository(session)
+            repo = self._get_repo(session)
             apps = await repo.list_financial_aids(course_id=course_id, status=status)
             checked_apps = []
             for a in apps:
@@ -85,13 +86,12 @@ class CertificateUseCase:
         self, application_id: str, is_approved: bool
     ) -> tuple[Optional[FinancialAidApplication], str]:
         async with async_session_scope() as session:
-            repo = CertificateRepository(session)
+            repo = self._get_repo(session)
             app = await repo.get_financial_aid_by_id(application_id)
             if not app:
                 return None, "Không tìm thấy đơn nộp Hỗ trợ tài chính"
 
-            app.status = "APPROVED" if is_approved else "REJECTED"
-            app.review_deadline_days_left = 0
+            app.review(is_approved)
             updated_app = await repo.save_financial_aid(app)
             return updated_app, ""
 
@@ -99,7 +99,7 @@ class CertificateUseCase:
         self, user_id: str, course_id: str
     ) -> tuple[Optional[VerifiedCertificate], str]:
         async with async_session_scope() as session:
-            repo = CertificateRepository(session)
+            repo = self._get_repo(session)
             (
                 real_course_id,
                 course_title,
@@ -201,7 +201,7 @@ class CertificateUseCase:
         Only Super Admin should call this endpoint.
         """
         async with async_session_scope() as session:
-            repo = CertificateRepository(session)
+            repo = self._get_repo(session)
             cert = await repo.get_certificate_by_id(certificate_id)
             if not cert:
                 return False, f"Không tìm thấy chứng chỉ '{certificate_id}'."
@@ -219,7 +219,7 @@ class CertificateUseCase:
         Returns (is_valid, certificate, status_message).
         """
         async with async_session_scope() as session:
-            repo = CertificateRepository(session)
+            repo = self._get_repo(session)
             cert = await repo.get_certificate_by_id(certificate_id)
             if not cert:
                 return False, None, "Không tìm thấy chứng chỉ hợp lệ trên hệ thống."
@@ -240,7 +240,7 @@ class CertificateUseCase:
         Returns (certificate, error_message). certificate is None on failure.
         """
         async with async_session_scope() as session:
-            repo = CertificateRepository(session)
+            repo = self._get_repo(session)
 
             # 1. Load specialization details
             (
@@ -316,5 +316,5 @@ class CertificateUseCase:
     async def list_my_certificates(self, user_id: str) -> list[VerifiedCertificate]:
         """Lists all verified certificates for the given user."""
         async with async_session_scope() as session:
-            repo = CertificateRepository(session)
+            repo = self._get_repo(session)
             return await repo.get_certificates_by_user(user_id)

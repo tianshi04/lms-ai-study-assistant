@@ -1,5 +1,8 @@
 import pytest
-from src.modules.certificate.domain.entities import FinancialAidApplication
+from src.modules.certificate.domain.entities import (
+    FinancialAidApplication,
+    FinancialAidStatus,
+)
 from src.modules.certificate.infrastructure.repository import CertificateRepository
 from src.modules.identity.domain.entities import User, UserRole
 from src.modules.identity.infrastructure.repository import IdentityRepository
@@ -79,7 +82,7 @@ async def test_access_policy_financial_aid_approved():
                 user_id="user_faid_policy",
                 course_id="course_python",
                 essay_150_words="Valid essay text " * 20,
-                status="APPROVED",
+                status=FinancialAidStatus.APPROVED,
                 review_deadline_days_left=0,
             )
             await cert_repo.save_financial_aid(fa_app)

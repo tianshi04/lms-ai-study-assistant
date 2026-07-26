@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.certificate.infrastructure.repository import CertificateRepository
 from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
+    FinancialAidStatus,
     VerifiedCertificate,
 )
 from src.modules.certificate.infrastructure.models import (
@@ -68,7 +69,7 @@ async def test_save_financial_aid_new(repo, mock_session):
         user_id="user_1",
         course_id="course_1",
         essay_150_words="test " * 150,
-        status="PENDING",
+        status=FinancialAidStatus.PENDING,
         review_deadline_days_left=14,
     )
 
@@ -98,7 +99,7 @@ async def test_save_financial_aid_update(repo, mock_session):
         user_id="user_1",
         course_id="course_1",
         essay_150_words="test " * 150,
-        status="APPROVED",
+        status=FinancialAidStatus.APPROVED,
         review_deadline_days_left=0,
     )
 
