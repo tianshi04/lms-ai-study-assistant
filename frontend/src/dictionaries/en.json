@@ -430,6 +430,11 @@
     "backHome": "Back to Home",
     "exploreCourses": "Explore Catalog",
     "goBack": "Go Back"
+  },
+  "ai": {
+    "title": "AI Assistant",
+    "welcome": "Hi! How can I help you today?",
+    "placeholder": "Ask AI assistant..."
   }
 }
 

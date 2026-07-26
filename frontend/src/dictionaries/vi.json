@@ -431,6 +431,11 @@
     "backHome": "Về trang chủ",
     "exploreCourses": "Khám phá khóa học",
     "goBack": "Quay lại"
+  },
+  "ai": {
+    "title": "Trợ lý AI",
+    "welcome": "Xin chào! Tôi có thể giúp gì cho bạn?",
+    "placeholder": "Nhập câu hỏi cho AI..."
   }
 }
 
