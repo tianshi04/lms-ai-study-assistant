@@ -4,7 +4,6 @@ import { useEffect, useState, useSyncExternalStore, use } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type CourseAnnouncement } from "@/gen/catalog/v1/catalog_pb";
-import { Navbar } from "@/components/layout/Navbar";
 
 const emptySubscribe = () => () => {};
 
@@ -97,7 +96,6 @@ export default function InstructorAnnouncementsPage({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
-      <Navbar />
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Breadcrumbs */}

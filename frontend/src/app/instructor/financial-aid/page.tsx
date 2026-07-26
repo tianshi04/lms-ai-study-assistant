@@ -5,7 +5,6 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { ConnectError, Code } from "@connectrpc/connect";
 import { CertificateService, type FinancialAidApplication } from "@/gen/certificate/v1/certificate_pb";
-import { Navbar } from "@/components/layout/Navbar";
 
 const emptySubscribe = () => () => {};
 
@@ -117,7 +116,6 @@ export default function InstructorFinancialAidPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
-      <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Breadcrumb & Navigation */}
