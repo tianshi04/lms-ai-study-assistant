@@ -35,7 +35,20 @@
     "weekDuration": "Weeks",
     "errorLoad": "Unable to load course list",
     "errorNetwork": "Please check your network connection or try again later.",
-    "noResults": "No courses found matching the keyword"
+    "noResults": "No courses found matching the keyword",
+    "noResultsTitle": "No matching courses found",
+    "noResultsDesc": "We couldn't find any courses matching your search terms. Please try again with a different keyword."
+  },
+  "catalogFilter": {
+    "clearFilters": "Clear Filters",
+    "sortDefault": "Default",
+    "sortRating": "Highest Rating",
+    "sortPopular": "Most Popular",
+    "sortNewest": "Newest",
+    "subjectHeader": "Subject",
+    "allSubjects": "All Subjects",
+    "levelHeader": "Level",
+    "allLevels": "All Levels"
   },
   "auth": {
     "loginTitle": "Sign In to Your Account",

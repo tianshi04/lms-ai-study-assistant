@@ -35,7 +35,20 @@
     "weekDuration": "Tuần học",
     "errorLoad": "Không thể tải danh sách khóa học",
     "errorNetwork": "Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.",
-    "noResults": "Không tìm thấy khóa học nào phù hợp với từ khóa"
+    "noResults": "Không tìm thấy khóa học nào phù hợp với từ khóa",
+    "noResultsTitle": "Không tìm thấy khóa học phù hợp",
+    "noResultsDesc": "Chúng tôi không tìm thấy kết quả nào khớp với từ khóa tìm kiếm của bạn. Vui lòng thử từ khóa khác."
+  },
+  "catalogFilter": {
+    "clearFilters": "Xóa bộ lọc",
+    "sortDefault": "Mặc định",
+    "sortRating": "Đánh giá cao nhất",
+    "sortPopular": "Phổ biến nhất",
+    "sortNewest": "Mới nhất",
+    "subjectHeader": "Chủ đề",
+    "allSubjects": "Tất cả chủ đề",
+    "levelHeader": "Cấp độ",
+    "allLevels": "Tất cả cấp độ"
   },
   "auth": {
     "loginTitle": "Đăng nhập tài khoản",

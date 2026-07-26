@@ -18,8 +18,8 @@ export class RegisterPage {
     this.passwordInput = page.locator('input[type="password"]');
     this.roleSelect = page.locator('select');
     this.submitButton = page.getByRole('button', { name: /đăng ký ngay|register now/i });
-    this.errorBanner = page.locator('div.bg-rose-50, div.bg-rose-500\\/10, div.border-rose-200, div.border-rose-900\\/50, [role="status"], [role="alert"]');
-    this.successBanner = page.locator('div.bg-emerald-50, div.bg-emerald-500\\/10, div.border-emerald-200, div.border-emerald-900\\/50, [role="status"], [role="alert"]');
+    this.errorBanner = page.locator('div.bg-rose-50, div.bg-rose-500\\/10, div.border-rose-200, div.border-rose-900\\/50, [role="status"], [role="alert"]').first();
+    this.successBanner = page.locator('div.bg-emerald-50, div.bg-emerald-500\\/10, div.border-emerald-200, div.border-emerald-900\\/50, [data-type="success"], div[role="status"]:not([id="__next-route-announcer__"]), div[role="alert"]:not([id="__next-route-announcer__"])').first();
     this.loginLink = page.getByRole('link', { name: /đăng nhập tại đây|sign in here/i });
   }
 
