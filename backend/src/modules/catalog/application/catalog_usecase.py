@@ -1,4 +1,5 @@
 import html
+import uuid
 from typing import Any, Callable
 
 from src.modules.catalog.domain.entities import (
@@ -535,15 +536,13 @@ class CatalogUseCase:
 
         with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
             if "imsmanifest.xml" not in zf.namelist():
-                raise ValueError("Gói SCORM không hợp lệ: Không tìm thấy imsmanifest.xml")
+                raise ValueError(
+                    "Gói SCORM không hợp lệ: Không tìm thấy imsmanifest.xml"
+                )
 
             manifest_data = zf.read("imsmanifest.xml")
             root = ET.fromstring(manifest_data)
 
-            ns = {
-                "imscp": "http://www.imsproject.org/xsd/imscp_rootv1p1p2",
-                "adlcp": "http://www.adlnet.org/xsd/adlcp_rootv1p2",
-            }
             # Clean namespaces if prefix not matched
             ns_uri = ""
             if root.tag.startswith("{"):
@@ -552,8 +551,8 @@ class CatalogUseCase:
 
             title_elem = root.find(".//imscp:organization/imscp:title", ns_dict)
             course_title = (
-                title_elem.text if title_elem is not None else "Khóa học SCORM đã nhập"
-            )
+                title_elem.text if title_elem is not None else None
+            ) or "Khóa học SCORM đã nhập"
 
             items = root.findall(".//imscp:item", ns_dict)
             if not items:
@@ -563,12 +562,16 @@ class CatalogUseCase:
             preview_items = []
             for item in items:
                 title = item.find("imscp:title", ns_dict)
-                title_text = title.text if title is not None else "Học liệu SCORM"
+                title_text = (
+                    title.text if title is not None else None
+                ) or "Học liệu SCORM"
                 preview_items.append(
                     LearningItem(
-                        id=item.attrib.get("identifier", f"item_{uuid.uuid4().hex[:8]}"),
+                        id=item.attrib.get(
+                            "identifier", f"item_{uuid.uuid4().hex[:8]}"
+                        ),
                         title=title_text,
-                        type=ItemType.SCORM_PACKAGE,
+                        type=ItemType.READING,
                         estimated_minutes=10,
                         video_url="",
                         reading_markdown="",
@@ -616,6 +619,10 @@ class CatalogUseCase:
         )
 
         if not course_id:
+            if preview_course is None:
+                raise ValueError(
+                    "Failed to parse SCORM package preview course metadata"
+                )
             course = await self.create_course(
                 title=preview_course.title,
                 slug=f"scorm-course-{uuid.uuid4().hex[:6]}",

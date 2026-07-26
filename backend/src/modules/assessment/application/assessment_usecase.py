@@ -106,13 +106,13 @@ class AssessmentUseCase:
                 }
                 for opt in q.options
             ]
-            
+
             if matrix.shuffle_options:
                 rng.shuffle(opts_data)
 
             # Build final options list and correct index
             options_text = [opt["option_text"] for opt in opts_data]
-            
+
             correct_idx = 0
             for idx, opt in enumerate(opts_data):
                 if opt["is_correct"]:
@@ -180,13 +180,17 @@ class AssessmentUseCase:
             if matrix:
                 duration_minutes = matrix.time_limit_minutes
             passing_threshold = matrix.passing_threshold_percent if matrix else 80.0
-            
+
             now = datetime.now(timezone.utc)
             expires_at = now + timedelta(minutes=duration_minutes)
 
             # BR_QUIZ_002: Generate N-sampled and option-shuffled questions using unique user/attempt seed
-            seed_val = abs(hash(f"{user_id}:{item_id}:{now.isoformat()[:16]}")) % (2**31)
-            questions = await self.generate_quiz_session_questions(repo, item_id, seed=seed_val)
+            seed_val = abs(hash(f"{user_id}:{item_id}:{now.isoformat()[:16]}")) % (
+                2**31
+            )
+            questions = await self.generate_quiz_session_questions(
+                repo, item_id, seed=seed_val
+            )
 
             return {
                 "session_id": f"qsess-{uuid.uuid4().hex[:8]}",

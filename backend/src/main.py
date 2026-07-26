@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import Response, StreamingResponse
 from starlette.routing import Mount, Route
 
 from src.gen.assessment.v1.assessment_connect import AssessmentServiceASGIApplication
@@ -109,13 +110,12 @@ forum_handler = ForumHandler(use_case=forum_usecase)
 forum_app = ForumServiceASGIApplication(forum_handler, interceptors=interceptors)
 
 
-from starlette.responses import StreamingResponse, Response
-
 async def proxy_media(request):
     path = request.path_params["path"]
     from src.shared.infrastructure.s3_storage import get_s3_storage_service
+
     s3 = get_s3_storage_service()
-    
+
     if request.method == "OPTIONS":
         return Response(
             status_code=204,
@@ -124,9 +124,9 @@ async def proxy_media(request):
                 "Access-Control-Allow-Methods": "GET, HEAD, PUT, OPTIONS",
                 "Access-Control-Allow-Headers": "Content-Type, Range, Authorization",
                 "Access-Control-Expose-Headers": "Content-Range, Accept-Ranges, Content-Length",
-            }
+            },
         )
-        
+
     if request.method == "PUT":
         try:
             body = await request.body()
@@ -135,33 +135,36 @@ async def proxy_media(request):
                     Bucket=s3.bucket_name,
                     Key=path,
                     Body=body,
-                    ContentType=request.headers.get("content-type", "application/octet-stream")
+                    ContentType=request.headers.get(
+                        "content-type", "application/octet-stream"
+                    ),
                 )
             return Response(
                 status_code=200,
                 content="Upload success",
-                headers={"Access-Control-Allow-Origin": "*"}
+                headers={"Access-Control-Allow-Origin": "*"},
             )
         except Exception as e:
-            return Response(status_code=500, content=str(e), headers={"Access-Control-Allow-Origin": "*"})
-            
+            return Response(
+                status_code=500,
+                content=str(e),
+                headers={"Access-Control-Allow-Origin": "*"},
+            )
+
     s3_client_ctx = s3._get_client()
     s3_client = await s3_client_ctx.__aenter__()
-    
-    params = {
-        "Bucket": s3.bucket_name,
-        "Key": path
-    }
+
+    params = {"Bucket": s3.bucket_name, "Key": path}
     range_header = request.headers.get("range")
     if range_header:
         params["Range"] = range_header
-        
+
     try:
         s3_resp = await s3_client.get_object(**params)
     except Exception as e:
         await s3_client_ctx.__aexit__(None, None, None)
         return Response(status_code=404, content=str(e))
-        
+
     headers = {}
     if "ContentType" in s3_resp:
         headers["Content-Type"] = s3_resp["ContentType"]
@@ -172,10 +175,10 @@ async def proxy_media(request):
         status_code = 206
     else:
         status_code = 200
-        
+
     headers["Accept-Ranges"] = "bytes"
     headers["Access-Control-Allow-Origin"] = "*"
-    
+
     async def generate():
         try:
             body = s3_resp["Body"]
@@ -186,7 +189,7 @@ async def proxy_media(request):
                 yield chunk
         finally:
             await s3_client_ctx.__aexit__(None, None, None)
-            
+
     return StreamingResponse(generate(), status_code=status_code, headers=headers)
 
 
@@ -198,7 +201,11 @@ routes = [
     Mount("/certificate.v1.CertificateService", app=certificate_app),
     Mount("/assessment.v1.AssessmentService", app=assessment_app),
     Mount("/forum.v1.ForumService", app=forum_app),
-    Route("/coursera-assets/{path:path}", endpoint=proxy_media, methods=["GET", "HEAD", "PUT", "OPTIONS"]),
+    Route(
+        "/coursera-assets/{path:path}",
+        endpoint=proxy_media,
+        methods=["GET", "HEAD", "PUT", "OPTIONS"],
+    ),
 ]
 
 middleware = [
@@ -206,8 +213,19 @@ middleware = [
         CORSMiddleware,
         allow_origins=["*"],
         allow_methods=["GET", "POST", "PUT", "OPTIONS"],
-        allow_headers=["connect-protocol-version", "content-type", "authorization", "range"],
-        expose_headers=["connect-error-info", "connect-protocol-version", "accept-ranges", "content-range", "content-length"],
+        allow_headers=[
+            "connect-protocol-version",
+            "content-type",
+            "authorization",
+            "range",
+        ],
+        expose_headers=[
+            "connect-error-info",
+            "connect-protocol-version",
+            "accept-ranges",
+            "content-range",
+            "content-length",
+        ],
         max_age=86400,
     )
 ]

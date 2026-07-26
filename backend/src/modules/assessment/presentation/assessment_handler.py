@@ -416,7 +416,11 @@ class AssessmentHandler(AssessmentService):
     ) -> pb.DeleteQuestionResponse:
         require_current_user()
         success = await self.use_case.delete_question(question_id=request.question_id)
-        msg = "Deleted successfully" if success else "Failed to delete question or not found"
+        msg = (
+            "Deleted successfully"
+            if success
+            else "Failed to delete question or not found"
+        )
         return pb.DeleteQuestionResponse(success=success, message=msg)
 
     async def start_graded_quiz_session(

@@ -217,6 +217,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
 
     async def get_questions_by_bank(self, bank_id: str):
         from src.modules.assessment.domain.entities import Question, QuestionOption
+
         return [
             Question(
                 id=f"q_{i}",
