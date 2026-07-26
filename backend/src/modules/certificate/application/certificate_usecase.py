@@ -313,9 +313,7 @@ class CertificateUseCase:
             saved = await repo.save_certificate(spec_cert)
             return saved, ""
 
-    async def list_my_certificates(
-        self, user_id: str
-    ) -> list[VerifiedCertificate]:
+    async def list_my_certificates(self, user_id: str) -> list[VerifiedCertificate]:
         """Lists all verified certificates for the given user."""
         async with async_session_scope() as session:
             repo = CertificateRepository(session)

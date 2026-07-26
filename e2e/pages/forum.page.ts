@@ -15,8 +15,8 @@ export class ForumPage {
     this.modalTitleInput = page.locator('input[placeholder*="Loss Function"], input[placeholder*="Title"], input[placeholder*="Tiêu đề"]');
     this.modalContentInput = page.locator('textarea[placeholder*="Mô tả"], textarea[placeholder*="Write"], textarea[placeholder*="Content"]').last();
     this.modalSubmitButton = page.getByRole('button', { name: /Đăng Thảo Luận|Post Thread|Post/i });
-    this.replyInput = page.locator('textarea[placeholder*="Nhập câu trả lời"], textarea[placeholder*="Write"], input[placeholder*="Trả lời"]').first();
-    this.submitReplyButton = page.getByRole('button', { name: /Gửi Phản Hồi|Gửi|Reply|Post/i }).first();
+    this.replyInput = page.locator('textarea[placeholder*="Nội dung thắc mắc"], textarea[placeholder*="Nhập câu trả lời"], textarea[placeholder*="Write"], input[placeholder*="Trả lời"]').first();
+    this.submitReplyButton = page.getByRole('button', { name: /Đăng bài|Post Thread|Gửi Phản Hồi|Gửi|Reply/i }).first();
   }
 
   async goto() {
@@ -40,6 +40,12 @@ export class ForumPage {
   }
 
   async postFirstReply(replyContent: string) {
+    if (!(await this.replyInput.isVisible())) {
+      const replyTrigger = this.page.locator('button').filter({ hasText: /Nội dung thắc mắc|Write your detailed question/i }).first();
+      if (await replyTrigger.isVisible()) {
+        await replyTrigger.click();
+      }
+    }
     await expect(this.replyInput).toBeVisible({ timeout: 5000 });
     await this.replyInput.fill(replyContent);
     await this.submitReplyButton.click();
