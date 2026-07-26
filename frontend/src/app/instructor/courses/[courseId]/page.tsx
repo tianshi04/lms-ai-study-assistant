@@ -89,6 +89,12 @@ export default function InstructorCourseBuilderPage({
     autoTranscribe: boolean;
     prohibitSeeking: boolean;
     content: string;
+    inVideoQuizzes: InVideoQuizItem[];
+    starterCode: string;
+    testCasesJson: string;
+    language: string;
+    rubricCriteriaJson: string;
+    quizMatrixId: string;
   } | null>(null);
 
 
@@ -230,6 +236,7 @@ export default function InstructorCourseBuilderPage({
         language: itemType === ItemType.AUTO_GRADED_LAB ? labLanguage : "",
         rubricCriteriaJson: itemType === ItemType.PEER_REVIEW ? peerRubricJson : "",
         quizMatrixId: (itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ) ? quizBankId : "",
+        prohibitSeeking: itemType === ItemType.VIDEO ? prohibitSeeking : false,
       });
 
       setShowItemModal(null);
@@ -237,6 +244,7 @@ export default function InstructorCourseBuilderPage({
       setVideoUrl("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4");
       setVttSubtitleUrl("");
       setAutoTranscribe(false);
+      setProhibitSeeking(false);
       setReadingMarkdown("");
       setInVideoQuizzes([]);
       toast.success(`Đã thêm Học liệu "${itemTitle}" vào bài học thành công!`);
@@ -313,11 +321,25 @@ export default function InstructorCourseBuilderPage({
         id: editingItem.id,
         courseId,
         title: editingItem.title,
+        type: editingItem.type,
         estimatedMinutes: editingItem.estimatedMinutes,
         videoUrl: editingItem.type === ItemType.VIDEO ? editingItem.videoUrl : undefined,
         vttSubtitleUrl: editingItem.type === ItemType.VIDEO ? editingItem.vttSubtitleUrl : undefined,
         autoTranscribe: editingItem.type === ItemType.VIDEO ? editingItem.autoTranscribe : undefined,
         readingMarkdown: editingItem.type === ItemType.READING ? editingItem.content : undefined,
+        prohibitSeeking: editingItem.type === ItemType.VIDEO ? editingItem.prohibitSeeking : undefined,
+        inVideoQuizzes: editingItem.type === ItemType.VIDEO ? editingItem.inVideoQuizzes.map(q => ({
+          timestampSeconds: q.timestampSeconds,
+          question: q.question,
+          options: q.options,
+          correctOptionIndex: q.correctOptionIndex,
+          explanation: q.explanation,
+        })) : undefined,
+        starterCode: editingItem.type === ItemType.AUTO_GRADED_LAB ? editingItem.starterCode : undefined,
+        testCasesJson: editingItem.type === ItemType.AUTO_GRADED_LAB ? editingItem.testCasesJson : undefined,
+        language: editingItem.type === ItemType.AUTO_GRADED_LAB ? editingItem.language : undefined,
+        rubricCriteriaJson: editingItem.type === ItemType.PEER_REVIEW ? editingItem.rubricCriteriaJson : undefined,
+        quizMatrixId: (editingItem.type === ItemType.PRACTICE_QUIZ || editingItem.type === ItemType.GRADED_QUIZ) ? editingItem.quizMatrixId : undefined,
       });
 
       setEditingItem(null);
@@ -985,6 +1007,18 @@ export default function InstructorCourseBuilderPage({
                                             autoTranscribe: item.autoTranscribe || false,
                                             prohibitSeeking: item.prohibitSeeking || false,
                                             content: item.readingMarkdown || "",
+                                            inVideoQuizzes: item.inVideoQuizzes ? item.inVideoQuizzes.map(q => ({
+                                              timestampSeconds: q.timestampSeconds,
+                                              question: q.question,
+                                              options: q.options ? Array.from(q.options) : [],
+                                              correctOptionIndex: q.correctOptionIndex,
+                                              explanation: q.explanation || ""
+                                            })) : [],
+                                            starterCode: item.starterCode || "",
+                                            testCasesJson: item.testCasesJson || "",
+                                            language: item.language || "",
+                                            rubricCriteriaJson: item.rubricCriteriaJson || "",
+                                            quizMatrixId: item.quizMatrixId || "",
                                           })}
                                           className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded transition-colors cursor-pointer"
                                           title={t("instructorBuilder.editItemTooltip")}
@@ -1509,20 +1543,15 @@ export default function InstructorCourseBuilderPage({
               />
             </div>
 
-            {editingItem.type === ItemType.VIDEO ? (
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldVideoUrl")}</label>
-                  <input
-                    type="url"
-                    value={editingItem.videoUrl}
-                    onChange={(e) => setEditingItem({ ...editingItem, videoUrl: e.target.value })}
-                    placeholder="https://..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
-                    required
-                  />
+            {editingItem.type === ItemType.VIDEO && (
+              <div className="space-y-4">
+                <VideoUploadWidget
+                  value={editingItem.videoUrl}
+                  onChange={(url) => setEditingItem({ ...editingItem, videoUrl: url })}
+                  folder="videos"
+                  label="Học liệu Video Bài giảng (Upload Tệp hoặc Đường dẫn)"
+                />
 
-                </div>
                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-850/50">
                   <input
                     type="checkbox"
@@ -1535,8 +1564,16 @@ export default function InstructorCourseBuilderPage({
                     🚫 Cấm tua nhanh (Prohibit Seeking): Học viên bắt buộc phải xem tuần tự
                   </label>
                 </div>
+
+                <InVideoQuizEditor
+                  videoUrl={editingItem.videoUrl}
+                  quizzes={editingItem.inVideoQuizzes || []}
+                  onChange={(quizzes) => setEditingItem({ ...editingItem, inVideoQuizzes: quizzes })}
+                />
               </div>
-            ) : (
+            )}
+
+            {editingItem.type === ItemType.READING && (
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldReadingContent")}</label>
                 <textarea
@@ -1547,6 +1584,118 @@ export default function InstructorCourseBuilderPage({
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
                   required
                 />
+              </div>
+            )}
+
+            {(editingItem.type === ItemType.PRACTICE_QUIZ || editingItem.type === ItemType.GRADED_QUIZ) && (
+              <div className="space-y-3 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Cấu hình Ma trận Đề thi (Quiz Matrix)</div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Mã Kho Ngân hàng Đề (Question Bank ID)</label>
+                  <input
+                    type="text"
+                    value={editingItem.quizMatrixId}
+                    onChange={(e) => setEditingItem({ ...editingItem, quizMatrixId: e.target.value })}
+                    placeholder="bank_python_basics_01"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
+                  />
+                </div>
+                {/* Visual configurations to match creation UI */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">Thời gian đếm ngược (Phút)</label>
+                    <input
+                      type="number"
+                      defaultValue={45}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">Điểm đỗ tối thiểu (%)</label>
+                    <input
+                      type="number"
+                      defaultValue={80}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu Dễ (40%)</label>
+                    <input
+                      type="number"
+                      defaultValue={4}
+                      className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu TB (40%)</label>
+                    <input
+                      type="number"
+                      defaultValue={4}
+                      className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu Khó (20%)</label>
+                    <input
+                      type="number"
+                      defaultValue={2}
+                      className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {editingItem.type === ItemType.AUTO_GRADED_LAB && (
+              <div className="space-y-3 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Cấu hình Docker Sandbox Lab</div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Ngôn ngữ Lập trình</label>
+                  <select
+                    value={editingItem.language}
+                    onChange={(e) => setEditingItem({ ...editingItem, language: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
+                  >
+                    <option value="python">Python 3.12</option>
+                    <option value="javascript">JavaScript / Node.js</option>
+                    <option value="cpp">C++ 20</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Mã mẫu ban đầu (Starter Code)</label>
+                  <textarea
+                    rows={3}
+                    value={editingItem.starterCode}
+                    onChange={(e) => setEditingItem({ ...editingItem, starterCode: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Bộ Test Cases (JSON format)</label>
+                  <textarea
+                    rows={3}
+                    value={editingItem.testCasesJson}
+                    onChange={(e) => setEditingItem({ ...editingItem, testCasesJson: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
+                  />
+                </div>
+              </div>
+            )}
+
+            {editingItem.type === ItemType.PEER_REVIEW && (
+              <div className="space-y-3 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Cấu hình Bảng tiêu chí Rubric Chấm chéo</div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Bảng tiêu chí Rubric (JSON Format)</label>
+                  <textarea
+                    rows={4}
+                    value={editingItem.rubricCriteriaJson}
+                    onChange={(e) => setEditingItem({ ...editingItem, rubricCriteriaJson: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
+                  />
+                </div>
               </div>
             )}
 
