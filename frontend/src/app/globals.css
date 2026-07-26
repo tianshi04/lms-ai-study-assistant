@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@copilotkit/react-core/v2/styles.css";
 
 @variant dark (&:where(.dark, .dark *));
 
@@ -161,6 +162,20 @@ input::-ms-clear {
 
 .animate-scale-up {
   animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* CopilotKit Popup Positioning & Layout Fixes */
+[data-copilotkit] {
+  z-index: 9999 !important;
+}
+
+/* Fix popup container bounds to prevent overflow off-screen */
+.cpk\:fixed.cpk\:bottom-6.cpk\:right-6,
+.cpk\:fixed.cpk\:bottom-0.cpk\:right-0 {
+  bottom: 1.5rem !important;
+  right: 1.5rem !important;
+  max-width: calc(100vw - 2rem) !important;
+  max-height: calc(100vh - 2rem) !important;
 }
 
 

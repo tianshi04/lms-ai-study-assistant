@@ -25,6 +25,7 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from "@/components/providers/AuthProvider";
+import { CopilotProvider } from "@/components/providers/CopilotProvider";
 import { MainLayout } from "@/components/layout/MainLayout";
 
 export default async function RootLayout({
@@ -65,13 +66,15 @@ export default async function RootLayout({
         <QueryProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <AuthProvider initialAuth={initialAuth}>
-              <TranslationProvider initialLocale={locale} initialDictionary={dictionary}>
-                <ToastProvider>
-                  <MainLayout>
-                    {children}
-                  </MainLayout>
-                </ToastProvider>
-              </TranslationProvider>
+              <CopilotProvider>
+                <TranslationProvider initialLocale={locale} initialDictionary={dictionary}>
+                  <ToastProvider>
+                    <MainLayout>
+                      {children}
+                    </MainLayout>
+                  </ToastProvider>
+                </TranslationProvider>
+              </CopilotProvider>
             </AuthProvider>
           </ThemeProvider>
         </QueryProvider>

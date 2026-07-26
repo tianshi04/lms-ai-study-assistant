@@ -399,5 +399,38 @@
     "toastQuestionUpdateFail": "Cập nhật câu hỏi thất bại.",
     "toastQuestionDeleted": "Đã xóa câu hỏi thành công!",
     "toastQuestionDeleteFail": "Xóa câu hỏi thất bại."
+  },
+  "myCoursesPage": {
+    "errorFetch": "Lỗi khi tải danh sách khóa học",
+    "redirecting": "Đang chuyển hướng...",
+    "title": "Khóa học của tôi",
+    "subtitle": "Theo dõi tiến độ học tập, tiếp tục các khóa đang học, và xem lại chứng chỉ đã hoàn thành.",
+    "tabAll": "Tất cả",
+    "tabInProgress": "Đang học",
+    "tabCompleted": "Hoàn thành",
+    "noCoursesTitle": "Chưa có khóa học nào",
+    "noCoursesDesc": "Bạn chưa ghi danh vào khóa học nào. Hãy bắt đầu hành trình học tập ngay hôm nay!",
+    "exploreCatalog": "Khám phá danh mục",
+    "statusCompleted": "Hoàn thành",
+    "statusInProgress": "Đang học",
+    "statusNotStarted": "Chưa bắt đầu",
+    "progress": "Tiến độ:",
+    "btnReview": "Đánh giá khóa học",
+    "btnStart": "Bắt đầu học",
+    "btnContinue": "Tiếp tục học"
+  },
+  "notFound": {
+    "title": "Trang không tồn tại",
+    "badge": "Lỗi 404 - Không tìm thấy trang",
+    "subtitle": "Rất tiếc! Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển.",
+    "description": "Địa chỉ đường dẫn (URL) có thể đã bị thay đổi, bị xoá hoặc không khả dụng tạm thời. Hãy kiểm tra lại hoặc quay về trang chính.",
+    "backHome": "Về trang chủ",
+    "exploreCourses": "Khám phá khóa học",
+    "goBack": "Quay lại"
+  },
+  "ai": {
+    "title": "Trợ lý AI",
+    "welcome": "Xin chào! Tôi có thể giúp gì cho bạn?",
+    "placeholder": "Nhập câu hỏi cho AI..."
   }
 }

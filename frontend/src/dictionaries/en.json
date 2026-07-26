@@ -398,5 +398,38 @@
     "toastQuestionUpdateFail": "Failed to update question.",
     "toastQuestionDeleted": "Question deleted successfully!",
     "toastQuestionDeleteFail": "Failed to delete question."
+  },
+  "myCoursesPage": {
+    "errorFetch": "Error fetching courses",
+    "redirecting": "Redirecting...",
+    "title": "My Courses",
+    "subtitle": "Track your learning progress, resume active courses, and review completed certificates.",
+    "tabAll": "All Enrolled",
+    "tabInProgress": "In Progress",
+    "tabCompleted": "Completed",
+    "noCoursesTitle": "No courses found",
+    "noCoursesDesc": "You are not enrolled in any courses yet. Start your learning journey today!",
+    "exploreCatalog": "Explore Catalog",
+    "statusCompleted": "Completed",
+    "statusInProgress": "In Progress",
+    "statusNotStarted": "Not Started",
+    "progress": "Progress:",
+    "btnReview": "Review Course",
+    "btnStart": "Start Course",
+    "btnContinue": "Continue Learning"
+  },
+  "notFound": {
+    "title": "Page Not Found",
+    "badge": "404 Error - Page Not Found",
+    "subtitle": "Oops! The page you are looking for doesn't exist or has been moved.",
+    "description": "The URL might be misspelled, moved, or temporarily unavailable. Please double check the link or head back to our catalog.",
+    "backHome": "Back to Home",
+    "exploreCourses": "Explore Catalog",
+    "goBack": "Go Back"
+  },
+  "ai": {
+    "title": "AI Assistant",
+    "welcome": "Hi! How can I help you today?",
+    "placeholder": "Ask AI assistant..."
   }
 }
