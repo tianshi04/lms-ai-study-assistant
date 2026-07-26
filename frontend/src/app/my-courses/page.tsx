@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 import { getRpcClient } from "@/lib/connect_client";
@@ -8,54 +8,53 @@ import { LearningService, type EnrolledCourseSummary } from "@/gen/learning/v1/l
 
 type Tab = "ALL" | "IN_PROGRESS" | "COMPLETED";
 
+const emptySubscribe = () => () => {};
+
 export default function MyCoursesPage() {
   const [courses, setCourses] = useState<EnrolledCourseSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("ALL");
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const { t } = useTranslation();
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("access_token");
-      if (!token) {
-        window.location.href = "/auth/login?redirect=/my-courses";
-        return;
-      }
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsAuthenticated(true);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLoading(false);
-    }
-  }, []);
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isMounted) return;
+
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      window.location.href = "/auth/login?redirect=/my-courses";
+      return;
+    }
+
+    let isCancelled = false;
 
     async function fetchMyCourses() {
       try {
         const client = getRpcClient(LearningService);
         const res = await client.listMyEnrolledCourses({});
-        setCourses(res.courses || []);
+        if (!isCancelled) {
+          setCourses(res.courses || []);
+        }
       } catch (err: unknown) {
-        console.error("Failed to fetch my courses:", err);
-        setError(err instanceof Error ? err.message : t("myCoursesPage.errorFetch"));
+        if (!isCancelled) {
+          console.error("Failed to fetch my courses:", err);
+          setError(err instanceof Error ? err.message : t("myCoursesPage.errorFetch"));
+        }
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
     }
 
     fetchMyCourses();
-  }, [t, isAuthenticated]);
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-500">
-        {t("myCoursesPage.redirecting")}
-      </div>
-    );
-  }
+    return () => {
+      isCancelled = true;
+    };
+  }, [t, isMounted]);
 
   const filteredCourses = courses.filter((c) => {
     if (activeTab === "ALL") return true;
@@ -65,8 +64,8 @@ export default function MyCoursesPage() {
   });
 
   return (
-    <main className="max-w-7xl mx-auto px-6 py-12 flex-1">
-        <div className="mb-10 text-center md:text-left max-w-3xl">
+    <main className="w-full max-w-7xl mx-auto px-6 py-12 flex-1">
+        <div className="w-full mb-10 text-center md:text-left max-w-3xl">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">
             {t("myCoursesPage.title")}
           </h1>
@@ -76,7 +75,7 @@ export default function MyCoursesPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-2 mb-8 border-b border-slate-200 dark:border-slate-800">
+        <div className="w-full flex items-center gap-2 mb-8 border-b border-slate-200 dark:border-slate-800">
           {[
             { id: "ALL", label: t("myCoursesPage.tabAll") },
             { id: "IN_PROGRESS", label: t("myCoursesPage.tabInProgress") },
@@ -105,15 +104,24 @@ export default function MyCoursesPage() {
 
         {/* Content Section */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((n) => (
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((n) => (
               <div
                 key={n}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 animate-pulse shadow-sm"
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 animate-pulse shadow-sm flex flex-col justify-between h-64"
               >
-                <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4 mb-4" />
-                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2 mb-6" />
-                <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded" />
+                <div>
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/4" />
+                    <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/5" />
+                  </div>
+                  <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4 mb-3" />
+                  <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2 mb-6" />
+                </div>
+                <div>
+                  <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded mb-4" />
+                  <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded-xl" />
+                </div>
               </div>
             ))}
           </div>
@@ -133,7 +141,7 @@ export default function MyCoursesPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredCourses.map((course) => (
               <div key={course.courseId} className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col">
                 <div className="p-6 flex-1">
