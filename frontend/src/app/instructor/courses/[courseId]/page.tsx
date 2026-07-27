@@ -649,7 +649,6 @@ export default function InstructorCourseBuilderPage({
                       setScormObjectKey(mockKey);
                       setScormPreviewCourse(res.coursePreview || null);
                       setScormIsSingleItem(res.isSingleItem);
-                      setScormSingleItem(res.singleItemPreview || null);
                       setShowScormReviewModal(true);
                     } catch (err: unknown) {
                       const msg = err instanceof Error ? err.message : "Không thể phân tích gói SCORM.";
