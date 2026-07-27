@@ -42,6 +42,7 @@ export function GradedQuizRunner({
   const [passingThreshold, setPassingThreshold] = useState<number>(80);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [quizResult, setQuizResult] = useState<{
     scorePercent: number;
@@ -116,6 +117,7 @@ export function GradedQuizRunner({
     }
 
     setIsSubmitting(true);
+    setSubmitError(null);
 
     try {
       const client = getRpcClient(AssessmentService);
@@ -142,26 +144,13 @@ export function GradedQuizRunner({
           onComplete();
         }
       }
-    } catch (err) {
-      console.warn("RPC submitGradedQuiz failed, applying local fallback evaluation:", err);
-      // Fallback evaluation if server grading fails
-      const correct = [0, 1, 2, 0, 1];
-      let matches = 0;
-      selectedAnswers.forEach((ans, i) => {
-        if (ans === correct[i % correct.length]) matches++;
-      });
-      const score = (matches / Math.max(1, selectedAnswers.length)) * 100;
-      const pass = score >= passingThreshold;
-
-      setQuizResult({
-        scorePercent: score,
-        passed: pass,
-        attemptsLeft: pass ? 3 : 2,
-        cooldownSecondsLeft: 0,
-        explanations: ["Answers graded successfully (local evaluation)."],
-      });
-
-      if (pass && onComplete) onComplete();
+    } catch (err: unknown) {
+      console.error("RPC submitGradedQuiz failed:", err);
+      const errMsg =
+        err instanceof Error
+          ? err.message
+          : "Nộp bài thi thất bại. Vui lòng kiểm tra kết nối mạng và thử lại.";
+      setSubmitError(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -339,6 +328,19 @@ export function GradedQuizRunner({
               </ul>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Submission Error Banner */}
+      {submitError && (
+        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-200 text-xs font-semibold flex items-center justify-between shadow-xs">
+          <span>{submitError}</span>
+          <button
+            onClick={() => setSubmitError(null)}
+            className="text-rose-500 hover:text-rose-700 font-bold ml-2 text-sm"
+          >
+            ✕
+          </button>
         </div>
       )}
 
