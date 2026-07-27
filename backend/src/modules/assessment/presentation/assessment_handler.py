@@ -6,7 +6,7 @@ from src.gen.assessment.v1 import assessment_pb as pb
 from src.gen.assessment.v1.assessment_connect import AssessmentService
 from src.modules.assessment.application.assessment_usecase import AssessmentUseCase
 from src.modules.assessment.domain.entities import RubricCriteria
-from src.shared.auth import require_current_user
+from src.shared.auth import CurrentUser, require_current_user
 
 
 class AssessmentHandler(AssessmentService):

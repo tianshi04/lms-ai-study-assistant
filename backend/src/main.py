@@ -121,35 +121,11 @@ async def proxy_media(request):
             status_code=204,
             headers={
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, HEAD, PUT, OPTIONS",
+                "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
                 "Access-Control-Allow-Headers": "Content-Type, Range, Authorization",
                 "Access-Control-Expose-Headers": "Content-Range, Accept-Ranges, Content-Length",
             },
         )
-
-    if request.method == "PUT":
-        try:
-            body = await request.body()
-            async with s3._get_client() as s3_client:
-                await s3_client.put_object(
-                    Bucket=s3.bucket_name,
-                    Key=path,
-                    Body=body,
-                    ContentType=request.headers.get(
-                        "content-type", "application/octet-stream"
-                    ),
-                )
-            return Response(
-                status_code=200,
-                content="Upload success",
-                headers={"Access-Control-Allow-Origin": "*"},
-            )
-        except Exception as e:
-            return Response(
-                status_code=500,
-                content=str(e),
-                headers={"Access-Control-Allow-Origin": "*"},
-            )
 
     s3_client_ctx = s3._get_client()
     s3_client = await s3_client_ctx.__aenter__()
@@ -204,7 +180,7 @@ routes = [
     Route(
         "/coursera-assets/{path:path}",
         endpoint=proxy_media,
-        methods=["GET", "HEAD", "PUT", "OPTIONS"],
+        methods=["GET", "HEAD", "OPTIONS"],
     ),
 ]
 

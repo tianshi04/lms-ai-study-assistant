@@ -1,3 +1,4 @@
+from typing import Any
 import pytest
 from src.modules.assessment.application.assessment_usecase import AssessmentUseCase
 from src.modules.assessment.domain.entities import (
@@ -545,7 +546,7 @@ async def test_update_and_delete_question():
 
 
 @pytest.mark.asyncio
-async def test_quiz_submission_empty_question_pool():
+async def test_quiz_submission_empty_question_pool(monkeypatch: pytest.MonkeyPatch):
     repo = InMemoryAssessmentRepository()
     usecase = AssessmentUseCase(repository=repo)
     user_id = "user-empty-pool"
@@ -553,15 +554,18 @@ async def test_quiz_submission_empty_question_pool():
 
     await usecase.submit_honor_code(user_id, item_id, True)
 
-    # Mock empty questions returned by pool
-    async def mock_empty_questions(*args, **kwargs):
+    async def mock_empty_questions(
+        self: Any, repo_arg: Any, item_id_arg: str, seed: int = 42
+    ) -> list[dict[str, Any]]:
         return []
 
-    usecase.generate_quiz_session_questions = mock_empty_questions
-
-    res = await usecase.submit_graded_quiz(
-        user_id, item_id, [], session_seed=12345
+    monkeypatch.setattr(
+        usecase,
+        "generate_quiz_session_questions",
+        mock_empty_questions.__get__(usecase, AssessmentUseCase),
     )
+
+    res = await usecase.submit_graded_quiz(user_id, item_id, [], session_seed=12345)
     assert res["score_percent"] == 0.0
     assert res["passed"] is False
     assert any("rỗng" in exp or "empty" in exp for exp in res["answer_explanations"])
