@@ -41,6 +41,7 @@ jobs:
           version: "latest"
           python-version: "3.13"
           enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
 
       - name: Install Python dependencies
         run: uv sync --frozen
