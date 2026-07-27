@@ -291,13 +291,20 @@ class AssessmentUseCase:
             else:
                 score_percent = round((correct_count / total_questions) * 100.0, 2)
 
-            # BR_QUIZ_001: Highest Score Wins policy
+            # BR_QUIZ_001: Highest Score Wins policy & Dynamic Quiz Matrix Threshold
+            matrix = await repo.get_quiz_matrix(item_id)
+            passing_threshold = (
+                matrix.passing_threshold_percent
+                if matrix and matrix.passing_threshold_percent > 0
+                else 80.0
+            )
+
             prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
             all_scores = [sub.score_percent for sub in prev_submissions] + [
                 score_percent
             ]
             highest_score = max(all_scores)
-            passed = highest_score >= 80.0
+            passed = highest_score >= passing_threshold
 
             # 4. Handle Cooldown & Attempts tracking
             failed_count = cooldown.failed_attempts_count if cooldown else 0
@@ -329,7 +336,7 @@ class AssessmentUseCase:
                 item_id=item_id,
                 selected_option_indexes=selected_option_indexes,
                 score_percent=score_percent,
-                passed=score_percent >= 80.0,
+                passed=score_percent >= passing_threshold,
                 attempt_number=attempt_number,
                 created_at=now.isoformat(),
             )
