@@ -52,9 +52,12 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * *Nguyên tắc Điểm cao nhất (Highest Score Wins):* Điểm số chính thức của bài thi luôn ghi nhận kết quả cao nhất giữa các lần thi. Học viên đã đạt điểm Pass vẫn được quyền thi lại để cải thiện điểm số mà không bị kích hoạt Cooldown 8 tiếng.
   * *Giới hạn lượt thi & Cooldown:* Học viên được làm bài tối đa 3 lần liên tiếp khi chưa đạt điểm Pass. Nếu thi trượt cả 3 lần (`failed_attempts_count >= 3`), hệ thống kích hoạt **thời gian chờ (Cooldown) 8 tiếng** (`cooldown_until = now + 8h`, `cooldown_seconds_left = 28800`) trước khi cho phép làm lại.
   * *Khôi phục lượt thi:* Ngay khi học viên đạt điểm Pass (>= 80.0%) hoặc hết thời gian 8 tiếng Cooldown, bộ đếm trượt `failed_attempts_count` tự động reset về `0` và khôi phục lại đủ 3 lượt thi (`attempts_left = 3`).
-* **BR_QUIZ_002 (Quy tắc Ngân hàng Câu hỏi & Xáo trộn Đáp án):**
-  * Đề thi Graded Quiz được sinh tự động bằng cách rút ngẫu nhiên $N$ câu hỏi từ Pool $M$ câu ($N \le M$) theo tỷ lệ ma trận độ khó (Dễ, Trung bình, Khó).
-  * Mỗi lần hiển thị đề thi, hệ thống tự động xáo trộn ngẫu nhiên thứ tự các tùy chọn đáp án (Options Shuffling) để chống hành vi học thuộc vị trí khoanh đáp án.
+* **BR_QUIZ_002 (Quy tắc Ngân hàng Câu hỏi, Ma trận Đề thi & Xáo trộn Đáp án):**
+  * Đề thi Graded Quiz được sinh tự động thông qua Ma trận đề thi (`QuizMatrix`) liên kết với Kho ngân hàng câu hỏi (`QuestionBank`).
+  * *Cấu hình Ma trận:* Giảng viên/Admin thiết lập số lượng câu hỏi rút ngẫu nhiên theo từng bậc độ khó (`easy_count`, `medium_count`, `hard_count`), thời gian làm bài (`time_limit_minutes`), ngưỡng điểm đạt tùy chỉnh (`passing_threshold_percent`), và chế độ xáo trộn tùy chọn đáp án (`shuffle_options`).
+  * *Xáo trộn Đáp án (Options Shuffling):* Mỗi phiên thi (`session_seed`), hệ thống tái cấu trúc và xáo trộn ngẫu nhiên thứ tự hiển thị các lựa chọn đáp án để chống học thuộc vị trí.
+  * *Bảo vệ Kho rỗng (ZeroDivisionError Protection):* Nếu ngân hàng câu hỏi chưa được thêm câu hỏi (tổng số câu hỏi rút ra = 0), hệ thống tự động ghi nhận điểm 0.0%, `passed = False`, và trả về thông báo giải thích cụ thể cho học viên thay vì làm crash phiên thi.
+  * *Phân quyền quản lý:* Chỉ tài khoản Giảng viên (Instructor), Trợ giảng (TA) hoặc Quản trị viên (Admin) mới có quyền tạo/sửa/xóa Ngân hàng câu hỏi và Ma trận đề thi.
 * **BR_QUIZ_003 (Quy tắc Quản lý Session Đếm ngược & Auto-submit):**
   * Mọi bài thi Graded Quiz có giới hạn thời gian (Timed Quiz) được quản lý thời gian đếm ngược trực tiếp từ phía Server (Server-side Session Timer) tính từ mốc bấm nút "Start Quiz".
   * Việc tải lại trang (F5) hoặc tạm đóng trình duyệt không làm dừng đồng hồ đếm ngược. Khi hết giờ đếm ngược, Server tự động đóng phiên và thực hiện chấm điểm (Auto-submit on timeout) với các câu trả lời hiện tại.
