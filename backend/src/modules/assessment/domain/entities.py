@@ -154,3 +154,66 @@ class GradeAppeal(Entity):
         self.appeal_reason = appeal_reason
         self.status = status
         self.created_at = created_at
+
+
+@dataclass(frozen=True)
+class QuestionOption(ValueObject):
+    id: str
+    question_id: str
+    option_text: str
+    is_correct: bool = False
+    order_index: int = 0
+
+
+class Question(Entity):
+    def __init__(
+        self,
+        id: str,
+        bank_id: str,
+        text: str,
+        question_type: str = "SINGLE_CHOICE",
+        difficulty: str = "EASY",
+        explanation: str = "",
+        options: Optional[list[QuestionOption]] = None,
+        created_at: Optional[str] = None,
+    ) -> None:
+        super().__init__(id=id)
+        self.bank_id = bank_id
+        self.text = text
+        self.question_type = question_type
+        self.difficulty = difficulty
+        self.explanation = explanation
+        self.options = options or []
+        self.created_at = created_at
+
+
+class QuestionBank(Entity):
+    def __init__(
+        self,
+        id: str,
+        course_id: str,
+        title: str,
+        category: str = "PRACTICE",
+        description: str = "",
+        questions: Optional[list[Question]] = None,
+        created_at: Optional[str] = None,
+    ) -> None:
+        super().__init__(id=id)
+        self.course_id = course_id
+        self.title = title
+        self.category = category
+        self.description = description
+        self.questions = questions or []
+        self.created_at = created_at
+
+
+@dataclass(frozen=True)
+class QuizMatrix(ValueObject):
+    item_id: str
+    bank_id: str
+    time_limit_minutes: int = 45
+    passing_threshold_percent: float = 80.0
+    easy_count: int = 4
+    medium_count: int = 4
+    hard_count: int = 2
+    shuffle_options: bool = True

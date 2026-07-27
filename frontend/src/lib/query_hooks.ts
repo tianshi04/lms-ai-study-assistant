@@ -38,7 +38,7 @@ export function useCourseReviewsQuery(courseId: string, options?: Partial<UseQue
 
 import { IdentityService, type User, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
 import { LearningService, type LearningProgress, type PersonalNote } from "@/gen/learning/v1/learning_pb";
-import { AssessmentService, type QuizResult, type AutoGradedLabResult } from "@/gen/assessment/v1/assessment_pb";
+import { AssessmentService, type QuizResult, type AutoGradedLabResult, type QuestionBank, type Question, type QuestionOption } from "@/gen/assessment/v1/assessment_pb";
 import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
 import { ForumService, type ForumThread } from "@/gen/forum/v1/forum_pb";
 
@@ -264,4 +264,89 @@ export function useForumThreadsQuery(courseId: string, options?: Partial<UseQuer
     ...options,
   });
 }
+
+// --- Question Bank Hooks ---
+
+export function useQuestionBanksQuery(courseId: string, options?: Partial<UseQueryOptions<QuestionBank[], Error>>) {
+  return useQuery<QuestionBank[], Error>({
+    queryKey: ["questionBanks", courseId],
+    queryFn: async () => {
+      const client = getRpcClient(AssessmentService);
+      const res = await client.listQuestionBanks({ courseId });
+      return res.banks;
+    },
+    enabled: !!courseId,
+    ...options,
+  });
+}
+
+export function useCreateQuestionBankMutation(
+  options?: Partial<UseMutationOptions<QuestionBank, Error, { courseId: string; title: string; category: string; description: string }>>
+) {
+  return useMutation<QuestionBank, Error, { courseId: string; title: string; category: string; description: string }>({
+    mutationFn: async ({ courseId, title, category, description }) => {
+      const client = getRpcClient(AssessmentService);
+      const res = await client.createQuestionBank({ courseId, title, category, description });
+      if (!res.bank) throw new Error("Failed to create question bank");
+      return res.bank;
+    },
+    ...options,
+  });
+}
+
+export function useAddQuestionToBankMutation(
+  options?: Partial<UseMutationOptions<Question, Error, { bankId: string; questionType: string; difficulty: string; text: string; explanation: string; options: Partial<QuestionOption>[] }>>
+) {
+  return useMutation<Question, Error, { bankId: string; questionType: string; difficulty: string; text: string; explanation: string; options: Partial<QuestionOption>[] }>({
+    mutationFn: async ({ bankId, questionType, difficulty, text, explanation, options: questionOptions }) => {
+      const client = getRpcClient(AssessmentService);
+      const res = await client.addQuestionToBank({
+        bankId,
+        questionType,
+        difficulty,
+        text,
+        explanation,
+        options: questionOptions as QuestionOption[],
+      });
+      if (!res.question) throw new Error("Failed to add question to bank");
+      return res.question;
+    },
+    ...options,
+  });
+}
+
+export function useUpdateQuestionMutation(
+  options?: Partial<UseMutationOptions<Question, Error, { questionId: string; questionType: string; difficulty: string; text: string; explanation: string; options: Partial<QuestionOption>[] }>>
+) {
+  return useMutation<Question, Error, { questionId: string; questionType: string; difficulty: string; text: string; explanation: string; options: Partial<QuestionOption>[] }>({
+    mutationFn: async ({ questionId, questionType, difficulty, text, explanation, options: questionOptions }) => {
+      const client = getRpcClient(AssessmentService);
+      const res = await client.updateQuestion({
+        questionId,
+        questionType,
+        difficulty,
+        text,
+        explanation,
+        options: questionOptions as QuestionOption[],
+      });
+      if (!res.question) throw new Error("Failed to update question");
+      return res.question;
+    },
+    ...options,
+  });
+}
+
+export function useDeleteQuestionMutation(
+  options?: Partial<UseMutationOptions<{ success: boolean; message: string }, Error, { questionId: string }>>
+) {
+  return useMutation<{ success: boolean; message: string }, Error, { questionId: string }>({
+    mutationFn: async ({ questionId }) => {
+      const client = getRpcClient(AssessmentService);
+      const res = await client.deleteQuestion({ questionId });
+      return { success: res.success, message: res.message };
+    },
+    ...options,
+  });
+}
+
 

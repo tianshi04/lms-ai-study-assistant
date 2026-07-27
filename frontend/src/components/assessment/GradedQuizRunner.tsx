@@ -5,39 +5,17 @@ import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { HonorCodeModal } from "./HonorCodeModal";
 
-interface Question {
-  id: number;
-  questionText: string;
-  options: string[];
+interface QuizSessionQuestionOption {
+  optionIndex: number;
+  optionText: string;
 }
 
-const SAMPLE_QUIZ_QUESTIONS: Question[] = [
-  {
-    id: 1,
-    questionText: "What algorithm fits a straight line through dataset points to predict continuous values?",
-    options: ["Linear Regression", "Logistic Regression", "Decision Tree", "K-Means Clustering"],
-  },
-  {
-    id: 2,
-    questionText: "What cost function is standard for Linear Regression?",
-    options: ["Cross-Entropy Loss", "Mean Squared Error (MSE)", "Hinge Loss", "F1 Score"],
-  },
-  {
-    id: 3,
-    questionText: "Which parameter controls step size in Gradient Descent iterations?",
-    options: ["Batch Size", "Epochs", "Learning Rate (Alpha)", "Momentum"],
-  },
-  {
-    id: 4,
-    questionText: "Which feature scaling method standardizes data to mean 0 and variance 1?",
-    options: ["Z-Score Normalization", "Min-Max Scaling", "L2 Normalization", "One-Hot Encoding"],
-  },
-  {
-    id: 5,
-    questionText: "What issue occurs when a model fits training data perfectly but fails to generalize?",
-    options: ["Underfitting", "Overfitting", "Convergence", "Bias Error"],
-  },
-];
+interface QuizSessionQuestion {
+  questionId: string;
+  text: string;
+  options: QuizSessionQuestionOption[];
+  questionType: string;
+}
 
 interface GradedQuizRunnerProps {
   itemId: string;
@@ -51,10 +29,20 @@ export function GradedQuizRunner({
   onComplete,
 }: GradedQuizRunnerProps) {
   const effectiveUserId = userId || (typeof window !== "undefined" ? localStorage.getItem("user_id") || "user-demo-1" : "user-demo-1");
-  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([0, 1, 2, 0, 1]);
+  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [isHonorAgreed, setIsHonorAgreed] = useState(false);
   const [isHonorModalOpen, setIsHonorModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Dynamic quiz session state
+  const [questions, setQuestions] = useState<QuizSessionQuestion[]>([]);
+  const [sessionSeed, setSessionSeed] = useState<number>(0);
+  const [startTimeIso, setStartTimeIso] = useState<string>("");
+  const [timeLimit, setTimeLimit] = useState<number>(45);
+  const [passingThreshold, setPassingThreshold] = useState<number>(80);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const [quizResult, setQuizResult] = useState<{
     scorePercent: number;
@@ -66,6 +54,40 @@ export function GradedQuizRunner({
 
   const [cooldownCountdown, setCooldownCountdown] = useState<number>(0);
 
+  // Fetch quiz session questions on load
+  useEffect(() => {
+    let ignore = false;
+    async function loadQuiz() {
+      setLoading(true);
+      setError(null);
+      try {
+        const client = getRpcClient(AssessmentService);
+        const res = await client.startGradedQuizSession({ itemId });
+        if (!ignore) {
+          setQuestions(res.questions || []);
+          setSessionSeed(res.sessionSeed);
+          setStartTimeIso(res.startTimeIso);
+          setTimeLimit(res.timeLimitMinutes || 45);
+          setPassingThreshold(res.passingThresholdPercent || 80.0);
+          setSelectedAnswers(new Array(res.questions?.length || 0).fill(0));
+        }
+      } catch (err: unknown) {
+        console.error("Failed to start graded quiz session:", err);
+        if (!ignore) {
+          const errMsg = err instanceof Error ? err.message : "Không thể khởi động bài thi hoặc chưa cấu hình Ma trận đề.";
+          setError(errMsg);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+    loadQuiz();
+    return () => {
+      ignore = true;
+    };
+  }, [itemId]);
 
   useEffect(() => {
     if (cooldownCountdown <= 0) return;
@@ -95,12 +117,15 @@ export function GradedQuizRunner({
     }
 
     setIsSubmitting(true);
+    setSubmitError(null);
 
     try {
       const client = getRpcClient(AssessmentService);
       const res = await client.submitGradedQuiz({
         itemId,
         selectedOptionIndexes: selectedAnswers,
+        sessionSeed,
+        startTimeIso,
       });
 
       if (res.result) {
@@ -119,30 +144,46 @@ export function GradedQuizRunner({
           onComplete();
         }
       }
-    } catch (err) {
-      console.warn("RPC submitGradedQuiz failed, applying local fallback evaluation:", err);
-      // Fallback evaluation
-      const correct = [0, 1, 2, 0, 1];
-      let matches = 0;
-      selectedAnswers.forEach((ans, i) => {
-        if (ans === correct[i]) matches++;
-      });
-      const score = (matches / correct.length) * 100;
-      const pass = score >= 80;
-
-      setQuizResult({
-        scorePercent: score,
-        passed: pass,
-        attemptsLeft: pass ? 3 : 2,
-        cooldownSecondsLeft: 0,
-        explanations: ["Answers graded successfully."],
-      });
-
-      if (pass && onComplete) onComplete();
+    } catch (err: unknown) {
+      console.error("RPC submitGradedQuiz failed:", err);
+      const errMsg =
+        err instanceof Error
+          ? err.message
+          : "Nộp bài thi thất bại. Vui lòng kiểm tra kết nối mạng và thử lại.";
+      setSubmitError(errMsg);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+        <p className="text-sm text-slate-500 font-semibold">Đang tạo phiên làm bài và tải câu hỏi...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-8 rounded-2xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 text-rose-950 dark:text-rose-200 text-center space-y-3 shadow-xs">
+        <svg className="w-10 h-10 text-rose-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <p className="text-sm font-bold">{error}</p>
+        <p className="text-xs text-slate-400">Vui lòng liên hệ giảng viên hoặc thiết lập cấu hình Ma trận đề thi cho bài thi này.</p>
+      </div>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div className="max-w-4xl mx-auto p-8 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-center space-y-3">
+        <p className="text-slate-500 text-sm font-medium">Kho đề thi chưa có câu hỏi nào hoặc thiết lập không khớp.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
@@ -153,7 +194,7 @@ export function GradedQuizRunner({
             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50">
               GRADED QUIZ
             </span>
-            <span className="text-xs text-slate-400">Pass Threshold: 80%</span>
+            <span className="text-xs text-slate-400">Pass Threshold: {passingThreshold}% • Thời gian: {timeLimit} phút</span>
           </div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1">
             Supervised Machine Learning & Regression Quiz
@@ -201,13 +242,13 @@ export function GradedQuizRunner({
 
       {/* Quiz Questions List */}
       <div className="space-y-6">
-        {SAMPLE_QUIZ_QUESTIONS.map((q, qIdx) => (
+        {questions.map((q, qIdx) => (
           <div
-            key={q.id}
+            key={q.questionId}
             className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-3"
           >
             <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-              Q{q.id}. {q.questionText}
+              Q{qIdx + 1}. {q.text}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {q.options.map((opt, optIdx) => {
@@ -232,7 +273,7 @@ export function GradedQuizRunner({
                     >
                       {String.fromCharCode(65 + optIdx)}
                     </span>
-                    {opt}
+                    {opt.optionText}
                   </button>
                 );
               })}
@@ -268,7 +309,7 @@ export function GradedQuizRunner({
                   {quizResult.passed ? "Congratulations! Quiz Passed" : "Quiz Failed"}
                 </h3>
                 <p className="text-xs opacity-80">
-                  Score: {quizResult.scorePercent}% (Required: 80%) • Attempts left: {quizResult.attemptsLeft}
+                  Score: {quizResult.scorePercent}% (Required: {passingThreshold}%) • Attempts left: {quizResult.attemptsLeft}
                 </p>
               </div>
             </div>
@@ -287,6 +328,19 @@ export function GradedQuizRunner({
               </ul>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Submission Error Banner */}
+      {submitError && (
+        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-200 text-xs font-semibold flex items-center justify-between shadow-xs">
+          <span>{submitError}</span>
+          <button
+            onClick={() => setSubmitError(null)}
+            className="text-rose-500 hover:text-rose-700 font-bold ml-2 text-sm"
+          >
+            ✕
+          </button>
         </div>
       )}
 

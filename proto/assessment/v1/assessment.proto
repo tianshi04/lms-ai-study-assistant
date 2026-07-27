@@ -17,6 +17,8 @@ message SubmitHonorCodeResponse {
 message SubmitGradedQuizRequest {
   string item_id = 1;
   repeated int32 selected_option_indexes = 2;
+  int32 session_seed = 3;
+  string start_time_iso = 4;
 }
 
 message QuizResult {
@@ -123,6 +125,123 @@ message RegradePeerSubmissionByStaffResponse {
   string message = 2;
 }
 
+message QuestionOption {
+  string id = 1;
+  string question_id = 2;
+  string option_text = 3;
+  bool is_correct = 4;
+  int32 order_index = 5;
+}
+
+message Question {
+  string id = 1;
+  string bank_id = 2;
+  string question_type = 3; // 'SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE', 'FILL_IN_BLANK'
+  string difficulty = 4;    // 'EASY', 'MEDIUM', 'HARD'
+  string text = 5;
+  string explanation = 6;
+  repeated QuestionOption options = 7;
+  string created_at = 8;
+}
+
+message QuestionBank {
+  string id = 1;
+  string course_id = 2;
+  string title = 3;
+  string category = 4; // 'PRACTICE', 'MODULE_EXAM', 'FINAL_EXAM'
+  string description = 5;
+  repeated Question questions = 6;
+  string created_at = 7;
+}
+
+message QuizMatrix {
+  string item_id = 1;
+  string bank_id = 2;
+  int32 time_limit_minutes = 3;
+  float passing_threshold_percent = 4;
+  int32 easy_count = 5;
+  int32 medium_count = 6;
+  int32 hard_count = 7;
+  bool shuffle_options = 8;
+}
+
+message CreateQuestionBankRequest {
+  string course_id = 1;
+  string title = 2;
+  string category = 3;
+  string description = 4;
+}
+
+message CreateQuestionBankResponse {
+  QuestionBank bank = 1;
+}
+
+message ListQuestionBanksRequest {
+  string course_id = 1;
+}
+
+message ListQuestionBanksResponse {
+  repeated QuestionBank banks = 1;
+}
+
+message AddQuestionToBankRequest {
+  string bank_id = 1;
+  string question_type = 2;
+  string difficulty = 3;
+  string text = 4;
+  string explanation = 5;
+  repeated QuestionOption options = 6;
+}
+
+message AddQuestionToBankResponse {
+  Question question = 1;
+}
+
+message ConfigureQuizMatrixRequest {
+  string item_id = 1;
+  string bank_id = 2;
+  int32 time_limit_minutes = 3;
+  float passing_threshold_percent = 4;
+  int32 easy_count = 5;
+  int32 medium_count = 6;
+  int32 hard_count = 7;
+  bool shuffle_options = 8;
+}
+
+message ConfigureQuizMatrixResponse {
+  QuizMatrix matrix = 1;
+}
+
+message GetQuizMatrixRequest {
+  string item_id = 1;
+}
+
+message GetQuizMatrixResponse {
+  QuizMatrix matrix = 1;
+}
+
+message UpdateQuestionRequest {
+  string question_id = 1;
+  string question_type = 2;
+  string difficulty = 3;
+  string text = 4;
+  string explanation = 5;
+  repeated QuestionOption options = 6;
+}
+
+message UpdateQuestionResponse {
+  Question question = 1;
+}
+
+message DeleteQuestionRequest {
+  string question_id = 1;
+}
+
+message DeleteQuestionResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 service AssessmentService {
   rpc SubmitHonorCode(SubmitHonorCodeRequest) returns (SubmitHonorCodeResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
@@ -151,4 +270,53 @@ service AssessmentService {
   rpc RegradePeerSubmissionByStaff(RegradePeerSubmissionByStaffRequest) returns (RegradePeerSubmissionByStaffResponse) {
     option (auth.v1.policy) = AUTH_POLICY_ADMIN;
   }
+  rpc CreateQuestionBank(CreateQuestionBankRequest) returns (CreateQuestionBankResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListQuestionBanks(ListQuestionBanksRequest) returns (ListQuestionBanksResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc AddQuestionToBank(AddQuestionToBankRequest) returns (AddQuestionToBankResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ConfigureQuizMatrix(ConfigureQuizMatrixRequest) returns (ConfigureQuizMatrixResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetQuizMatrix(GetQuizMatrixRequest) returns (GetQuizMatrixResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UpdateQuestion(UpdateQuestionRequest) returns (UpdateQuestionResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc DeleteQuestion(DeleteQuestionRequest) returns (DeleteQuestionResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc StartGradedQuizSession(StartGradedQuizSessionRequest) returns (StartGradedQuizSessionResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+}
+
+message StartGradedQuizSessionRequest {
+  string item_id = 1;
+}
+
+message QuizSessionQuestionOption {
+  int32 option_index = 1;
+  string option_text = 2;
+}
+
+message QuizSessionQuestion {
+  string question_id = 1;
+  string text = 2;
+  repeated QuizSessionQuestionOption options = 3;
+  string question_type = 4;
+}
+
+message StartGradedQuizSessionResponse {
+  string session_id = 1;
+  int32 time_limit_minutes = 2;
+  float passing_threshold_percent = 3;
+  repeated QuizSessionQuestion questions = 4;
+  string start_time_iso = 5;
+  int32 session_seed = 6;
 }

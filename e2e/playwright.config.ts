@@ -62,7 +62,7 @@ export default defineConfig({
     // ─── Instructor role ──────────────────────────────────────────────────────
     {
       name: 'chromium-instructor',
-      testMatch: ['**/instructor.spec.ts', '**/financial-aid.spec.ts'],
+      testMatch: ['**/instructor.spec.ts', '**/question-bank.spec.ts', '**/financial-aid.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: INSTRUCTOR_AUTH,

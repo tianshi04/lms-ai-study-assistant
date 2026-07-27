@@ -36,7 +36,7 @@ async def test_s3_storage_operations():
         expiration=600,
         bucket_name=test_bucket,
     )
-    assert "http://localhost:9000" in download_url
+    assert s3_service.public_endpoint_url in download_url
     assert object_key in download_url
 
     # 5. Generate presigned upload URL
@@ -46,7 +46,7 @@ async def test_s3_storage_operations():
         expiration=600,
         bucket_name=test_bucket,
     )
-    assert "http://localhost:9000" in upload_url
+    assert s3_service.public_endpoint_url in upload_url
 
     # 6. Delete test object
     await s3_service.delete_file(object_key=object_key, bucket_name=test_bucket)

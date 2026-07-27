@@ -39,6 +39,14 @@ message LearningItem {
   repeated InVideoQuiz in_video_quizzes = 8;
   string reading_markdown = 9;
   int32 order_index = 10;
+  string starter_code = 11;
+  string test_cases_json = 12;
+  string language = 13;
+  string rubric_criteria_json = 14;
+  string quiz_matrix_id = 15;
+  string scorm_package_path = 16;
+  string scorm_entry_html = 17;
+  bool auto_transcribe = 18;
 }
 
 message Lesson {
@@ -240,6 +248,15 @@ message CreateLearningItemRequest {
   string video_url = 6;
   string reading_markdown = 7;
   repeated InVideoQuiz in_video_quizzes = 8;
+  string starter_code = 9;
+  string test_cases_json = 10;
+  string language = 11;
+  string rubric_criteria_json = 12;
+  string quiz_matrix_id = 13;
+  string scorm_package_path = 14;
+  string scorm_entry_html = 15;
+  string vtt_subtitle_url = 16;
+  bool auto_transcribe = 17;
 }
 
 message CreateLearningItemResponse {
@@ -257,6 +274,15 @@ message UpdateLearningItemRequest {
   string video_url = 7;
   string reading_markdown = 8;
   repeated InVideoQuiz in_video_quizzes = 9;
+  string starter_code = 10;
+  string test_cases_json = 11;
+  string language = 12;
+  string rubric_criteria_json = 13;
+  string quiz_matrix_id = 14;
+  string scorm_package_path = 15;
+  string scorm_entry_html = 16;
+  string vtt_subtitle_url = 17;
+  bool auto_transcribe = 18;
 }
 
 message UpdateLearningItemResponse {
@@ -506,5 +532,76 @@ service CatalogService {
   rpc DeleteCategory(DeleteCategoryRequest) returns (DeleteCategoryResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc ParseScormPackage(ParseScormPackageRequest) returns (ParseScormPackageResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ImportCourseFromScorm(ImportCourseFromScormRequest) returns (ImportCourseFromScormResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ExportCourseToScorm(ExportCourseToScormRequest) returns (ExportCourseToScormResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GenerateUploadUrl(GenerateUploadUrlRequest) returns (GenerateUploadUrlResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UploadMediaFile(UploadMediaFileRequest) returns (UploadMediaFileResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }
+
+message ParseScormPackageRequest {
+  string scorm_object_key = 1;
+  string target_course_id = 2;
+}
+
+message ParseScormPackageResponse {
+  Course course_preview = 1;
+  bool is_single_item = 2;
+  LearningItem single_item_preview = 3;
+}
+
+message ImportCourseFromScormRequest {
+  string scorm_object_key = 1;
+  string course_id = 2;
+  string target_lesson_id = 3;
+}
+
+message ImportCourseFromScormResponse {
+  Course course = 1;
+  LearningItem imported_item = 2;
+}
+
+message ExportCourseToScormRequest {
+  string course_id = 1;
+}
+
+message ExportCourseToScormResponse {
+  string download_url = 1;
+  string object_key = 2;
+}
+
+message GenerateUploadUrlRequest {
+  string filename = 1;
+  string content_type = 2;
+  string folder = 3;
+}
+
+message GenerateUploadUrlResponse {
+  string upload_url = 1;
+  string file_url = 2;
+  string object_key = 3;
+}
+
+message UploadMediaFileRequest {
+  string filename = 1;
+  string content_type = 2;
+  bytes file_bytes = 3;
+  string folder = 4;
+}
+
+message UploadMediaFileResponse {
+  string file_url = 1;
+  string object_key = 2;
+}
+
 

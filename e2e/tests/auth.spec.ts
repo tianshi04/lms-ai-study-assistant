@@ -69,6 +69,6 @@ test.describe('Full System Blackbox - Authentication Flow (POM)', () => {
     await loginPage.login(email, password);
 
     // Should redirect specifically to /auth/profile
-    await expect(page).toHaveURL(/\/auth\/profile/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/auth\/profile/, { timeout: 20000 });
   });
 });

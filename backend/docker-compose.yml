@@ -1,18 +1,9 @@
-version: '3.8'
-
-# ====================================================================
-# ARCHITECTURE: DOCKER COMPOSE PROFILES (MÔ HÌNH MỞ RỘNG DỄ TÍCH HỢP)
-# - Profile 'infra': Chỉ khởi chạy Hạ tầng (PostgreSQL pg17 + MinIO S3)
-# - Profile 'app': Dành cho về sau khi đóng gói Backend / Frontend / Worker
-# - Profile 'all': Khởi chạy toàn bộ hệ thống
-# ====================================================================
-
 services:
   # ------------------------------------------------------------------
   # 1. HẠ TẦNG CƠ SỞ DỮ LIỆU: PostgreSQL 16/17 + PGVector
   # ------------------------------------------------------------------
   postgres:
-    profiles: ["infra", "all"]
+    profiles: ["infra", "app", "all"]
     image: pgvector/pgvector:pg17
     container_name: coursera_postgres
     restart: always
@@ -34,7 +25,7 @@ services:
   # 2. HẠ TẦNG LƯU TRỮ TỆP: MinIO (S3 Compatible Storage)
   # ------------------------------------------------------------------
   minio:
-    profiles: ["infra", "all"]
+    profiles: ["infra", "app", "all"]
     image: minio/minio:latest
     container_name: coursera_minio
     restart: always
@@ -43,7 +34,7 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio_password123}
     command: server /data --console-address ":9001"
     ports:
-      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_PORT:-9090}:9000"
       - "${MINIO_CONSOLE_PORT:-9001}:9001"
     volumes:
       - minio_data:/data
@@ -69,6 +60,7 @@ services:
       - BACKEND_PORT=8000
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-coursera_admin}:${POSTGRES_PASSWORD:-coursera_password123}@postgres:5432/${POSTGRES_DB:-coursera_lms}
       - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_PUBLIC_ENDPOINT=http://localhost:8000
       - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-minio_admin}
       - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minio_password123}
       - MINIO_BUCKET_NAME=coursera-assets

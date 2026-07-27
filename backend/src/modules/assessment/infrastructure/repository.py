@@ -1,6 +1,9 @@
+import uuid
+from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from src.modules.assessment.domain.entities import (
     GradeAppeal,
@@ -8,7 +11,11 @@ from src.modules.assessment.domain.entities import (
     LabSubmission,
     PeerAssignmentSubmission,
     PeerReview,
+    Question,
+    QuestionBank,
+    QuestionOption,
     QuizCooldown,
+    QuizMatrix,
     QuizSubmission,
     RubricCriteria,
 )
@@ -19,7 +26,11 @@ from src.modules.assessment.infrastructure.models import (
     LabSubmissionModel,
     PeerAssignmentSubmissionModel,
     PeerReviewModel,
+    QuestionBankModel,
+    QuestionModel,
+    QuestionOptionModel,
     QuizCooldownModel,
+    QuizMatrixModel,
     QuizSubmissionModel,
 )
 
@@ -412,3 +423,303 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             status=model.status,
             created_at=model.created_at,
         )
+
+    async def create_question_bank(
+        self, course_id: str, title: str, category: str, description: str
+    ) -> QuestionBank:
+        now_str = datetime.now(timezone.utc).isoformat()
+        bank_id = f"qbank-{uuid.uuid4().hex[:8]}"
+        model = QuestionBankModel(
+            id=bank_id,
+            course_id=course_id,
+            title=title,
+            category=category or "PRACTICE",
+            description=description or "",
+            created_at=now_str,
+        )
+        self.session.add(model)
+        await self.session.commit()
+        return QuestionBank(
+            id=bank_id,
+            course_id=course_id,
+            title=title,
+            category=category,
+            description=description,
+            questions=[],
+            created_at=now_str,
+        )
+
+    async def list_question_banks(self, course_id: str) -> list[QuestionBank]:
+        stmt = (
+            select(QuestionBankModel)
+            .options(
+                selectinload(QuestionBankModel.questions).selectinload(
+                    QuestionModel.options
+                )
+            )
+            .where(QuestionBankModel.course_id == course_id)
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+
+        banks = []
+        for m in models:
+            questions = [
+                Question(
+                    id=q.id,
+                    bank_id=q.bank_id,
+                    text=q.text,
+                    question_type=q.question_type,
+                    difficulty=q.difficulty,
+                    explanation=q.explanation,
+                    options=[
+                        QuestionOption(
+                            id=opt.id,
+                            question_id=opt.question_id,
+                            option_text=opt.option_text,
+                            is_correct=opt.is_correct,
+                            order_index=opt.order_index,
+                        )
+                        for opt in q.options
+                    ],
+                    created_at=q.created_at,
+                )
+                for q in m.questions
+            ]
+            banks.append(
+                QuestionBank(
+                    id=m.id,
+                    course_id=m.course_id,
+                    title=m.title,
+                    category=m.category,
+                    description=m.description,
+                    questions=questions,
+                    created_at=m.created_at,
+                )
+            )
+        return banks
+
+    async def add_question_to_bank(
+        self,
+        bank_id: str,
+        text: str,
+        question_type: str,
+        difficulty: str,
+        explanation: str,
+        options_data: list[dict],
+    ) -> Question:
+        now_str = datetime.now(timezone.utc).isoformat()
+        q_id = f"q-{uuid.uuid4().hex[:8]}"
+        q_model = QuestionModel(
+            id=q_id,
+            bank_id=bank_id,
+            text=text,
+            question_type=question_type or "SINGLE_CHOICE",
+            difficulty=difficulty or "EASY",
+            explanation=explanation or "",
+            created_at=now_str,
+        )
+        self.session.add(q_model)
+        await self.session.flush()
+
+        domain_options = []
+        for idx, opt in enumerate(options_data):
+            opt_id = f"opt-{uuid.uuid4().hex[:8]}"
+            opt_model = QuestionOptionModel(
+                id=opt_id,
+                question_id=q_id,
+                option_text=opt.get("option_text", ""),
+                is_correct=bool(opt.get("is_correct", False)),
+                order_index=idx,
+            )
+            self.session.add(opt_model)
+            domain_options.append(
+                QuestionOption(
+                    id=opt_id,
+                    question_id=q_id,
+                    option_text=opt.get("option_text", ""),
+                    is_correct=bool(opt.get("is_correct", False)),
+                    order_index=idx,
+                )
+            )
+
+        await self.session.commit()
+        return Question(
+            id=q_id,
+            bank_id=bank_id,
+            text=text,
+            question_type=question_type,
+            difficulty=difficulty,
+            explanation=explanation,
+            options=domain_options,
+            created_at=now_str,
+        )
+
+    async def delete_question(self, question_id: str) -> bool:
+        stmt = select(QuestionModel).where(QuestionModel.id == question_id)
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return False
+        await self.session.delete(model)
+        await self.session.commit()
+        return True
+
+    async def update_question(
+        self,
+        question_id: str,
+        text: str,
+        question_type: str,
+        difficulty: str,
+        explanation: str,
+        options_data: list[dict],
+    ) -> Question:
+        stmt = (
+            select(QuestionModel)
+            .options(selectinload(QuestionModel.options))
+            .where(QuestionModel.id == question_id)
+        )
+        res = await self.session.execute(stmt)
+        q_model = res.scalar_one_or_none()
+        if not q_model:
+            raise ValueError(f"Question with ID {question_id} not found")
+
+        q_model.text = text
+        q_model.question_type = question_type
+        q_model.difficulty = difficulty
+        q_model.explanation = explanation
+
+        q_model.options.clear()
+
+        domain_options = []
+        for idx, opt in enumerate(options_data):
+            opt_id = f"opt-{uuid.uuid4().hex[:8]}"
+            opt_model = QuestionOptionModel(
+                id=opt_id,
+                question_id=question_id,
+                option_text=opt.get("option_text", ""),
+                is_correct=bool(opt.get("is_correct", False)),
+                order_index=idx,
+            )
+            q_model.options.append(opt_model)
+            domain_options.append(
+                QuestionOption(
+                    id=opt_id,
+                    question_id=question_id,
+                    option_text=opt.get("option_text", ""),
+                    is_correct=bool(opt.get("is_correct", False)),
+                    order_index=idx,
+                )
+            )
+
+        await self.session.commit()
+        return Question(
+            id=q_model.id,
+            bank_id=q_model.bank_id,
+            text=q_model.text,
+            question_type=q_model.question_type,
+            difficulty=q_model.difficulty,
+            explanation=q_model.explanation,
+            options=domain_options,
+            created_at=q_model.created_at or datetime.now(timezone.utc).isoformat(),
+        )
+
+    async def configure_quiz_matrix(
+        self,
+        item_id: str,
+        bank_id: str,
+        time_limit_minutes: int,
+        passing_threshold_percent: float,
+        easy_count: int,
+        medium_count: int,
+        hard_count: int,
+        shuffle_options: bool,
+    ) -> QuizMatrix:
+        stmt = select(QuizMatrixModel).where(QuizMatrixModel.item_id == item_id)
+        res = await self.session.execute(stmt)
+        existing = res.scalar_one_or_none()
+
+        if existing:
+            existing.bank_id = bank_id
+            existing.time_limit_minutes = time_limit_minutes
+            existing.passing_threshold_percent = passing_threshold_percent
+            existing.easy_count = easy_count
+            existing.medium_count = medium_count
+            existing.hard_count = hard_count
+            existing.shuffle_options = shuffle_options
+        else:
+            existing = QuizMatrixModel(
+                item_id=item_id,
+                bank_id=bank_id,
+                time_limit_minutes=time_limit_minutes,
+                passing_threshold_percent=passing_threshold_percent,
+                easy_count=easy_count,
+                medium_count=medium_count,
+                hard_count=hard_count,
+                shuffle_options=shuffle_options,
+            )
+            self.session.add(existing)
+
+        await self.session.commit()
+        return QuizMatrix(
+            item_id=existing.item_id,
+            bank_id=existing.bank_id,
+            time_limit_minutes=existing.time_limit_minutes,
+            passing_threshold_percent=existing.passing_threshold_percent,
+            easy_count=existing.easy_count,
+            medium_count=existing.medium_count,
+            hard_count=existing.hard_count,
+            shuffle_options=existing.shuffle_options,
+        )
+
+    async def get_quiz_matrix(self, item_id: str) -> Optional[QuizMatrix]:
+        stmt = select(QuizMatrixModel).where(QuizMatrixModel.item_id == item_id)
+        res = await self.session.execute(stmt)
+        m = res.scalar_one_or_none()
+        if not m:
+            return None
+        return QuizMatrix(
+            item_id=m.item_id,
+            bank_id=m.bank_id,
+            time_limit_minutes=m.time_limit_minutes,
+            passing_threshold_percent=m.passing_threshold_percent,
+            easy_count=m.easy_count,
+            medium_count=m.medium_count,
+            hard_count=m.hard_count,
+            shuffle_options=m.shuffle_options,
+        )
+
+    async def get_questions_by_bank(self, bank_id: str) -> list[Question]:
+        stmt = (
+            select(QuestionModel)
+            .options(selectinload(QuestionModel.options))
+            .where(QuestionModel.bank_id == bank_id)
+            .order_by(QuestionModel.id)
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+
+        questions = []
+        for q in models:
+            questions.append(
+                Question(
+                    id=q.id,
+                    bank_id=q.bank_id,
+                    text=q.text,
+                    question_type=q.question_type,
+                    difficulty=q.difficulty,
+                    explanation=q.explanation,
+                    options=[
+                        QuestionOption(
+                            id=opt.id,
+                            question_id=opt.question_id,
+                            option_text=opt.option_text,
+                            is_correct=opt.is_correct,
+                            order_index=opt.order_index,
+                        )
+                        for opt in q.options
+                    ],
+                    created_at=q.created_at,
+                )
+            )
+        return questions

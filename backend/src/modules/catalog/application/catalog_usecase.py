@@ -1,12 +1,19 @@
 import html
 from typing import Any, Callable
 
-from src.modules.catalog.domain.entities import Course, Lesson, Specialization, Category
+from src.modules.catalog.domain.entities import (
+    Course,
+    Lesson,
+    Specialization,
+    Category,
+    ItemType,
+)
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
+from src.shared.infrastructure.s3_storage import get_s3_storage_service
 from src.shared.permissions import enforce_course_ownership
 
 
@@ -174,10 +181,18 @@ class CatalogUseCase:
         course_id: str,
         lesson_id: str,
         title: str,
-        item_type: int,
-        estimated_minutes: int,
-        video_url: str,
-        reading_markdown: str,
+        item_type: int | ItemType | str = ItemType.UNSPECIFIED,
+        estimated_minutes: int = 10,
+        video_url: str = "",
+        reading_markdown: str = "",
+        vtt_subtitle_url: str = "",
+        auto_transcribe: bool = False,
+        in_video_quizzes: list | None = None,
+        starter_code: str = "",
+        test_cases_json: str = "",
+        language: str = "",
+        rubric_criteria_json: str = "",
+        quiz_matrix_id: str = "",
         current_user: CurrentUser | None = None,
     ):
         async with async_session_scope() as session:
@@ -191,6 +206,14 @@ class CatalogUseCase:
                 estimated_minutes=estimated_minutes,
                 video_url=video_url,
                 reading_markdown=reading_markdown,
+                vtt_subtitle_url=vtt_subtitle_url,
+                auto_transcribe=auto_transcribe,
+                in_video_quizzes=in_video_quizzes,
+                starter_code=starter_code,
+                test_cases_json=test_cases_json,
+                language=language,
+                rubric_criteria_json=rubric_criteria_json,
+                quiz_matrix_id=quiz_matrix_id,
             )
 
     async def submit_course_review(
@@ -355,7 +378,14 @@ class CatalogUseCase:
         estimated_minutes: int,
         video_url: str,
         reading_markdown: str,
+        vtt_subtitle_url: str | None = None,
+        auto_transcribe: bool | None = None,
         in_video_quizzes: list | None = None,
+        starter_code: str = "",
+        test_cases_json: str = "",
+        language: str = "",
+        rubric_criteria_json: str = "",
+        quiz_matrix_id: str = "",
         current_user: CurrentUser | None = None,
     ):
         async with async_session_scope() as session:
@@ -372,7 +402,14 @@ class CatalogUseCase:
                 estimated_minutes=estimated_minutes,
                 video_url=video_url,
                 reading_markdown=reading_markdown,
+                vtt_subtitle_url=vtt_subtitle_url,
+                auto_transcribe=auto_transcribe,
                 in_video_quizzes=in_video_quizzes,
+                starter_code=starter_code,
+                test_cases_json=test_cases_json,
+                language=language,
+                rubric_criteria_json=rubric_criteria_json,
+                quiz_matrix_id=quiz_matrix_id,
             )
 
     async def delete_learning_item(
@@ -470,3 +507,45 @@ class CatalogUseCase:
                 lesson_id=lesson_id,
                 ordered_item_ids=ordered_item_ids,
             )
+
+    async def generate_upload_url(
+        self, filename: str, content_type: str, folder: str = "videos"
+    ) -> tuple[str, str, str]:
+        """Generate presigned upload URL and public file access URL for MinIO/S3."""
+        import uuid
+
+        s3 = get_s3_storage_service()
+        await s3.ensure_bucket_exists()
+        ext = filename.split(".")[-1] if "." in filename else "bin"
+        safe_folder = folder.strip("/") if folder else "videos"
+        object_key = f"{safe_folder}/{uuid.uuid4().hex[:12]}.{ext}"
+
+        upload_url = await s3.generate_presigned_upload_url(
+            object_key, content_type=content_type or "application/octet-stream"
+        )
+        file_url = s3._to_public_url(f"{s3.endpoint_url}/{s3.bucket_name}/{object_key}")
+        return upload_url, file_url, object_key
+
+    async def upload_media_file(
+        self,
+        filename: str,
+        content_type: str,
+        file_bytes: bytes,
+        folder: str = "videos",
+    ) -> tuple[str, str]:
+        """Upload raw file bytes directly to MinIO/S3 storage."""
+        import uuid
+
+        s3 = get_s3_storage_service()
+        await s3.ensure_bucket_exists()
+        ext = filename.split(".")[-1] if "." in filename else "bin"
+        safe_folder = folder.strip("/") if folder else "videos"
+        object_key = f"{safe_folder}/{uuid.uuid4().hex[:12]}.{ext}"
+
+        await s3.upload_file(
+            file_bytes=file_bytes,
+            object_key=object_key,
+            content_type=content_type or "application/octet-stream",
+        )
+        file_url = s3._to_public_url(f"{s3.endpoint_url}/{s3.bucket_name}/{object_key}")
+        return file_url, object_key

@@ -66,10 +66,11 @@ flowchart TD
 ```
 
 ### 2.3. Phân hệ Đánh giá & Chấm điểm (Assessments & Rubric Builder)
-1. **Graded Quiz Builder:**
-   * **Ngân hàng câu hỏi (Question Bank):** Quản lý tập trung các câu hỏi trắc nghiệm (1 đáp án / Nhiều đáp án) theo chủ đề và độ khó (Dễ, Trung bình, Khó). Cấu hình số câu hỏi rút ngẫu nhiên $N$ từ Pool $M$ câu ($N \le M$) và bật tính năng xáo trộn đáp án (`BR_QUIZ_002`).
-   * **Timed Quiz Server-side:** Cấu hình thời gian giới hạn làm bài (ví dụ: 45 phút), đếm ngược đồng bộ từ Server và tự động nộp bài (Auto-submit) khi hết giờ (`BR_QUIZ_003`).
-   * Cấu hình điểm đạt (Passing Threshold, ví dụ: 80%) và Cooldown (chờ 8 tiếng nếu thi trượt 3 lần).
+1. **Graded Quiz & Question Bank Builder:**
+   * **Ngân hàng câu hỏi (Question Bank - `CreateQuestionBank`, `ListQuestionBanks`, `AddQuestionToBank`, `UpdateQuestion`, `DeleteQuestion`):** Quản lý tập trung các kho câu hỏi theo môn học và phân loại (`PRACTICE`, `MODULE_EXAM`, `FINAL_EXAM`). Hỗ trợ các dạng câu hỏi (`SINGLE_CHOICE`, `MULTIPLE_CHOICE`, `TRUE_FALSE`, `FILL_IN_BLANK`), độ khó (`EASY`, `MEDIUM`, `HARD`), nội dung Markdown và giải thích đáp án chi tiết.
+   * **Cấu hình Ma trận đề thi (Quiz Matrix - `ConfigureQuizMatrix`, `GetQuizMatrix`):** Thiết lập cấu hình rút đề thi động cho từng bài thi (`item_id`), bao gồm số lượng câu hỏi rút ngẫu nhiên theo từng tầng độ khó (`easy_count`, `medium_count`, `hard_count`), thời gian giới hạn làm bài (`time_limit_minutes`), ngưỡng điểm đạt tùy chỉnh (`passing_threshold_percent`), và bật/tắt xáo trộn đáp án (`shuffle_options`) (`BR_QUIZ_002`).
+   * **Phân quyền Quản lý:** Tất cả các thao tác tạo/sửa/xóa Ngân hàng câu hỏi và thiết lập Ma trận đề thi bắt buộc phải thông qua kiểm tra phân quyền Giảng viên (`INSTRUCTOR`), Trợ giảng (`TA`) hoặc Quản trị viên (`ADMIN`).
+   * **Timed Quiz Server-side (`StartGradedQuizSession`):** Khởi tạo phiên thi đếm ngược đồng bộ từ Server (`BR_QUIZ_003`), tự động cấp `session_seed` để phục vụ lấy mẫu đề thi và chấm điểm chuẩn xác.
 2. **Auto-Graded Lab Builder (Dành cho bài tập lập trình):**
    * Giảng viên tải lên bộ Test Cases và File mẫu (Starter Code).
    * Cấu hình môi trường chạy (Python, Node.js...) và giới hạn tài nguyên (Timeout, Memory Limit).
