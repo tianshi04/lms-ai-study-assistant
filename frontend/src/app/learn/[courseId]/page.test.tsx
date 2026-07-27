@@ -1,55 +1,33 @@
 import { render, screen, waitFor } from '@testing-library/react';
-
 import CoursePlayerPage from './page';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/TranslationProvider';
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 
-// --- Mocks ---
-vi.mock('next/navigation', () => ({
-  useRouter: vi.fn(),
-  useParams: vi.fn(),
-}));
+// --- Mocks: Navigation & i18n ---
+vi.mock('next/navigation', () => ({ useRouter: vi.fn(), useParams: vi.fn() }));
+vi.mock('@/lib/i18n/TranslationProvider', () => ({ useTranslation: vi.fn() }));
 
-vi.mock('@/lib/i18n/TranslationProvider', () => ({
-  useTranslation: vi.fn(),
-}));
-
-// Mock the grpc clients to prevent real network calls
+// --- Mock: RPC client (bare minimum) ---
 vi.mock('@/lib/connect_client', () => ({
   getRpcClient: vi.fn().mockReturnValue({
-    getCourseDetail: vi.fn().mockResolvedValue({ 
-      course: { 
-        id: 'course-123', 
-        title: 'Mock Course',
-        weekModules: [{ 
-          lessons: [{ 
-            items: [{ 
-              id: 'item-1', 
-              type: 1,
-              interactiveTranscripts: [],
-              inVideoQuizzes: []
-            }] 
-          }] 
-        }] 
-      } 
-    }),
-    getProgress: vi.fn().mockResolvedValue({ progress: null }),
+    getCourseDetail: vi.fn().mockResolvedValue({ course: { id: 'c1', weekModules: [{ lessons: [{ items: [{ id: 'i1', type: 1, interactiveTranscripts: [] }] }] }] } }),
+    getProgress: vi.fn().mockResolvedValue({}),
     listPersonalNotes: vi.fn().mockResolvedValue({ notes: [] }),
   }),
 }));
 
-// Mock sub-components to isolate test to CoursePlayerPage logic
+// --- Mock: Sub-components (stub to isolate page logic) ---
 vi.mock('@/components/player/VideoPlayer', () => ({
-  VideoPlayer: ({ userId }: { userId: string }) => <div data-testid="video-player" data-userid={userId}>VideoPlayer</div>
+  VideoPlayer: ({ userId }: { userId: string }) => <div data-testid="video-player" data-userid={userId} />,
 }));
-vi.mock('@/components/player/TranscriptPanel', () => ({ TranscriptPanel: () => <div>TranscriptPanel</div> }));
-vi.mock('@/components/player/NotesPanel', () => ({ NotesPanel: () => <div>NotesPanel</div> }));
-vi.mock('@/components/player/DeadlinesPanel', () => ({ DeadlinesPanel: () => <div>DeadlinesPanel</div> }));
-vi.mock('@/components/player/ForumTab', () => ({ ForumTab: () => <div>ForumTab</div> }));
-vi.mock('@/components/providers/ThemeToggle', () => ({ ThemeToggle: () => <div>ThemeToggle</div> }));
-vi.mock('@/components/providers/LanguageToggle', () => ({ LanguageToggle: () => <div>LanguageToggle</div> }));
-vi.mock('@/components/course/CourseCompletionModal', () => ({ CourseCompletionModal: () => <div>CourseCompletionModal</div> }));
+vi.mock('@/components/player/TranscriptPanel', () => ({ TranscriptPanel: () => null }));
+vi.mock('@/components/player/NotesPanel', () => ({ NotesPanel: () => null }));
+vi.mock('@/components/player/DeadlinesPanel', () => ({ DeadlinesPanel: () => null }));
+vi.mock('@/components/player/ForumTab', () => ({ ForumTab: () => null }));
+vi.mock('@/components/providers/ThemeToggle', () => ({ ThemeToggle: () => null }));
+vi.mock('@/components/providers/LanguageToggle', () => ({ LanguageToggle: () => null }));
+vi.mock('@/components/course/CourseCompletionModal', () => ({ CourseCompletionModal: () => null }));
 
 describe('CoursePlayerPage Authentication & UserId', () => {
   const mockRouterPush = vi.fn();
