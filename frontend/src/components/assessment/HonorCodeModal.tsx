@@ -76,8 +76,11 @@ export function HonorCodeModal({
           <button
             onClick={onClose}
             className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors"
+            aria-label="Close modal"
           >
-            ✕
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
 
@@ -87,7 +90,10 @@ export function HonorCodeModal({
           </p>
           <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-900 dark:text-amber-200 space-y-2">
             <h4 className="font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5">
-              ⚠️ Strict Honor Guidelines:
+              <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>Strict Honor Guidelines:</span>
             </h4>
             <ul className="list-disc list-inside space-y-1 text-xs text-amber-800 dark:text-amber-300">
               <li>I will not plagiarize code, text, or answers from external sources.</li>
@@ -127,7 +133,12 @@ export function HonorCodeModal({
             disabled={!isChecked || isSubmitting}
             className="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-xs transition-all flex items-center gap-2"
           >
-            {isSubmitting ? "Submitting..." : "I Agree & Continue 🚀"}
+            <span>{isSubmitting ? "Submitting..." : "I Agree & Continue"}</span>
+            {!isSubmitting && (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            )}
           </button>
         </div>
       </div>
