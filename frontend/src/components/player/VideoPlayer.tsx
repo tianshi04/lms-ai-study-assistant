@@ -6,7 +6,6 @@ import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
 import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
 import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentWorkspace";
-import { SCORMPlayer } from "@/components/player/SCORMPlayer";
 
 interface VideoPlayerProps {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -145,17 +144,6 @@ export function VideoPlayer({
       <div className="w-full h-full overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950">
         <PeerAssignmentWorkspace itemId={activeItem.id} userId={userId} />
       </div>
-    );
-  }
-
-  // 4.5 SCORM Interactive Package
-  if (activeItem.scormPackagePath && activeItem.scormEntryHtml) {
-    return (
-      <SCORMPlayer
-        activeItem={activeItem}
-        userId={userId}
-        onComplete={() => onMarkComplete?.(activeItem.id)}
-      />
     );
   }
 

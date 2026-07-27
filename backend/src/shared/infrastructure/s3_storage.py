@@ -65,7 +65,7 @@ class S3StorageService:
                 await s3_client.head_bucket(Bucket=target_bucket)
             except Exception:
                 await s3_client.create_bucket(Bucket=target_bucket)
-                # Set public read policy so standard HTML5 iframe can load SCORM resources
+                # Set public read policy for media assets
                 import json
 
                 policy = {
