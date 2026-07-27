@@ -28,6 +28,8 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_ACCESS_002 (Quy chế Enterprise License & Quản lý Seat):**
   * Học viên tham gia khóa học qua mã Enterprise Key (do doanh nghiệp/trường học tài trợ) sẽ tự động hưởng toàn bộ quyền lợi của Paid Mode mà không cần thanh toán cá nhân.
   * *Ràng buộc Seat:* Mã Enterprise Key phải ở trạng thái kích hoạt (`is_active = True`) và số lượng suất đã dùng chưa vượt quá hạn mức (`used_seats < total_seats`, mặc định 500 seats/key). Khi kích hoạt thành công, hệ thống tự động tăng `used_seats += 1` và gán `user.enterprise_seat_key`.
+  * *Xử lý trùng lặp (Idempotent Activation):* Khi học viên kích hoạt lại đúng mã Enterprise Key đã sở hữu trước đó (`user.enterprise_seat_key == clean_key`), hệ thống phản hồi thành công và bảo lưu trạng thái hiện tại mà **không tăng số lượng `used_seats`** (tránh cạn kiệt suất học).
+  * *Ràng buộc 1 mã duy nhất (Single Active Key):* Mỗi tài khoản học viên chỉ được phép có 1 mã Enterprise Key hoạt động tại một thời điểm (`user.enterprise_seat_key`). Trường hợp tài khoản đã có mã Enterprise khác đang kích hoạt, hệ thống sẽ từ chối và yêu cầu thu hồi (Revoke) mã cũ trước khi gán mã mới.
 * **BR_ACCESS_003 (Thu hồi & Tái cấp Suất học Enterprise Seat Recycling & Fallback):**
   * Partner Admin / Super Admin có quyền thu hồi suất học của nhân viên/sinh viên nếu tài khoản đó chưa đạt quá 20% tiến độ khóa học trong vòng 30 ngày kể từ ngày gán mã.
   * Khi thu hồi thành công, hệ thống tự động hủy mã gán trên người dùng cũ và thực hiện giảm bộ đếm bằng khóa giao dịch DB Atomic Update (`UPDATE enterprise_keys SET used_seats = used_seats - 1 WHERE id = :key_id AND used_seats > 0`) nhằm ngăn ngừa triệt để nguy cơ sai lệch dữ liệu do Race Condition khi thao tác đồng thời.
@@ -98,6 +100,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Tất cả các trạng thái hạn nộp tự động chuyển về `ON_TRACK` mà không trừ điểm thi hay làm mất tiến độ học tập cũ.
 * **BR_LEARNING_001 (Tính toán Tiến độ & Khử trùng lặp Completed Items):**
   * Mỗi khi hoàn thành 1 bài học (Video, Reading, Quiz), hệ thống tự động thêm `item_id` vào danh sách `completed_item_ids` (sử dụng tập hợp `set` để khử trùng lặp).
+  * *Xác thực danh mục Server-side (Server-side Item Validation):* Hệ thống tự động truy vấn danh mục bài học từ Catalog module (`CatalogUseCase.get_course_detail`) để lấy tập hợp bài học hợp lệ (`valid_item_ids`) và tổng số bài học thực tế (`real_total_items`). Tất cả `item_id` không nằm trong danh mục khóa học sẽ bị từ chối (`item_id in valid_item_ids`), đồng thời danh sách bài hoàn thành được lọc loại bỏ các item không còn tồn tại (`completed = completed.intersection(valid_item_ids)`). Loại bỏ hoàn toàn khả năng gửi tham số `total_course_items` tùy ý từ phía client.
   * Phần trăm tiến độ được tính toán và làm tròn 1 chữ số thập phân:
     $$\text{Overall Progress \%} = \min\left(100.0, \text{round}\left(\frac{|\text{Completed Items}|}{\max(1, \text{Total Course Items})} \times 100, 1\right)\right)$$
 * **BR_LEARNING_002 (Bảo lưu Tiến độ & Ghi chú khi Nâng cấp Chế độ):**
