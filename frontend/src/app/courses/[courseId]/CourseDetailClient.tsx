@@ -299,19 +299,19 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                         {lesson.items.map((item) => (
                           <div key={item.id} className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
                             <span className="flex items-center gap-1">
-                              {item.type === 1 || item.type === ItemType.ITEM_TYPE_VIDEO ? (
+                              {item.type === ItemType.VIDEO ? (
                                 <svg className="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                                 </svg>
-                              ) : item.type === 2 || item.type === ItemType.ITEM_TYPE_READING ? (
+                              ) : item.type === ItemType.READING ? (
                                 <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                              ) : item.type === 5 || item.type === ItemType.ITEM_TYPE_AUTO_GRADED_LAB ? (
+                              ) : item.type === ItemType.AUTO_GRADED_LAB ? (
                                 <svg className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                                 </svg>
-                              ) : item.type === 6 || item.type === ItemType.ITEM_TYPE_PEER_REVIEW ? (
+                              ) : item.type === ItemType.PEER_REVIEW ? (
                                 <svg className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
