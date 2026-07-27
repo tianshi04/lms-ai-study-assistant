@@ -59,13 +59,13 @@ export default function CoursePlayerPage() {
       return;
     }
 
-    // Safely get userId after auth guard passes
+    // Safely get userId after auth guard passes (will be set in loadData)
     const storedUserId = localStorage.getItem("user_id");
-    if (storedUserId) {
-      setUserId(storedUserId);
-    }
 
     async function loadData() {
+      if (storedUserId) {
+        setUserId(storedUserId);
+      }
       try {
         const catalogClient = getRpcClient(CatalogService);
         const courseRes = await catalogClient.getCourseDetail({ idOrSlug: courseId });

@@ -1,9 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+
 import CoursePlayerPage from './page';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslation } from '@/lib/i18n/TranslationProvider';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 
 // --- Mocks ---
 vi.mock('next/navigation', () => ({
@@ -56,9 +56,9 @@ describe('CoursePlayerPage Authentication & UserId', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    (useRouter as any).mockReturnValue({ push: mockRouterPush });
-    (useParams as any).mockReturnValue({ courseId: 'course-123' });
-    (useTranslation as any).mockReturnValue({ t: (key: string) => key });
+    (useRouter as Mock).mockReturnValue({ push: mockRouterPush });
+    (useParams as Mock).mockReturnValue({ courseId: 'course-123' });
+    (useTranslation as Mock).mockReturnValue({ t: (key: string) => key });
     
     // Clear localStorage before each test
     window.localStorage.clear();
