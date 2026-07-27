@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, ItemType, type Course, type LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { AssessmentService, type QuestionBank } from "@/gen/assessment/v1/assessment_pb";
-import { Navbar } from "@/components/layout/Navbar";
+
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
@@ -540,8 +540,7 @@ export default function InstructorCourseBuilderPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
-        <Navbar />
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-center items-center py-24">
         <div className="flex-1 flex items-center justify-center py-24">
           <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
@@ -554,7 +553,6 @@ export default function InstructorCourseBuilderPage({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
-      <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Breadcrumb & Return Nav */}

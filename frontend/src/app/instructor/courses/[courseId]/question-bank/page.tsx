@@ -2,7 +2,7 @@
 
 import React, { useState, use } from "react";
 import Link from "next/link";
-import { Navbar } from "@/components/layout/Navbar";
+
 import { Modal, ConfirmDialog } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
@@ -226,7 +226,6 @@ export default function QuestionBankPage({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
-      <Navbar />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Breadcrumb */}
