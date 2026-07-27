@@ -423,6 +423,7 @@ async def test_list_enterprise_seats(mock_session_scope):
 @pytest.mark.asyncio
 async def test_create_enterprise_seat(mock_session_scope):
     mock_session = AsyncMock()
+    mock_session.add = MagicMock()
     mock_session_scope.return_value.__aenter__.return_value = mock_session
 
     usecase = IdentityUseCase()
