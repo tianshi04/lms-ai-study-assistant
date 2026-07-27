@@ -694,6 +694,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             select(QuestionModel)
             .options(selectinload(QuestionModel.options))
             .where(QuestionModel.bank_id == bank_id)
+            .order_by(QuestionModel.id)
         )
         res = await self.session.execute(stmt)
         models = res.scalars().all()
