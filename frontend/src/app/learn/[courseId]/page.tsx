@@ -40,6 +40,7 @@ export default function CoursePlayerPage() {
   // Video & In-Video Quiz State
   const videoRef = useRef<HTMLVideoElement>(null);
   const maxTimeRef = useRef<number>(0);
+  const isMarkingRef = useRef<boolean>(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [activeQuiz, setActiveQuiz] = useState<InVideoQuiz | null>(null);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -121,6 +122,8 @@ export default function CoursePlayerPage() {
 
   // Mark Item as Complete
   const handleMarkItemComplete = async (itemId: string) => {
+    if (!course || !progress || isMarkingRef.current) return;
+    isMarkingRef.current = true;
     try {
       const learningClient = getRpcClient(LearningService);
       const res = await learningClient.markItemComplete({
@@ -151,6 +154,8 @@ export default function CoursePlayerPage() {
       }
     } catch (err) {
       console.error("Failed to mark item complete:", err);
+    } finally {
+      isMarkingRef.current = false;
     }
   };
 
