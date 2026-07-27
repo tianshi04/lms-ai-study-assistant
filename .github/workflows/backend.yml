@@ -39,7 +39,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
-          python-version: "3.13"
+          python-version-file: "backend/.python-version"
           enable-cache: true
           cache-dependency-glob: "backend/uv.lock"
 
