@@ -74,7 +74,6 @@ export default function InstructorCourseBuilderPage({
   const [showScormReviewModal, setShowScormReviewModal] = useState(false);
   const [scormPreviewCourse, setScormPreviewCourse] = useState<Course | null>(null);
   const [scormIsSingleItem, setScormIsSingleItem] = useState(false);
-  const [scormSingleItem, setScormSingleItem] = useState<LearningItem | null>(null);
   const [scormObjectKey, setScormObjectKey] = useState("");
   const [scormImporting, setScormImporting] = useState(false);
 
@@ -161,6 +160,7 @@ export default function InstructorCourseBuilderPage({
     return () => {
       ignore = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
   // Handlers for creating elements

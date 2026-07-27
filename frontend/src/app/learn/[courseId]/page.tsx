@@ -16,7 +16,6 @@ import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
-import { useToast } from "@/components/ui/Toast";
 
 function getActiveUserId(): string {
   if (typeof window !== "undefined") {
@@ -29,7 +28,6 @@ export default function CoursePlayerPage() {
   const params = useParams();
   const courseId = params?.courseId as string;
   const { t } = useTranslation();
-  const toast = useToast();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [activeItem, setActiveItem] = useState<LearningItem | null>(null);
