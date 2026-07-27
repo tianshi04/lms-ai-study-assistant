@@ -233,6 +233,7 @@ class AssessmentHandler(AssessmentService):
         request: pb.ListQuestionBanksRequest,
         ctx: RequestContext[pb.ListQuestionBanksRequest, pb.ListQuestionBanksResponse],
     ) -> pb.ListQuestionBanksResponse:
+        require_current_user()
         banks = await self.use_case.list_question_banks(course_id=request.course_id)
         pb_banks = []
         for b in banks:
@@ -350,6 +351,7 @@ class AssessmentHandler(AssessmentService):
         request: pb.GetQuizMatrixRequest,
         ctx: RequestContext[pb.GetQuizMatrixRequest, pb.GetQuizMatrixResponse],
     ) -> pb.GetQuizMatrixResponse:
+        require_current_user()
         matrix = await self.use_case.get_quiz_matrix(item_id=request.item_id)
         if not matrix:
             raise ConnectError(
