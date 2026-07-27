@@ -14,6 +14,7 @@ Usage:
 
 import argparse
 import asyncio
+import json
 import logging
 import sys
 from pathlib import Path
@@ -222,6 +223,15 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         reading_markdown="# Math Foundations of Gradient Descent\n\nGradient descent is an optimization algorithm used to minimize cost functions in machine learning models.\n\n## Key Concepts\n- **Learning Rate (alpha)**: Controls the step size at each iteration.\n- **Loss Function**: Measures the prediction error.\n\n> *Tip: Choosing an appropriate learning rate is crucial for convergence.*",
     )
 
+    item3_practice = LearningItemModel(
+        id="item-ml-practice-1",
+        lesson_id=lesson1.id,
+        title="Practice Quiz: Linear Algebra & Numpy Fundamentals",
+        type=ItemType.PRACTICE_QUIZ,
+        estimated_minutes=15,
+        quiz_matrix_id="qb-ml-practice",
+    )
+
     item3 = LearningItemModel(
         id="item-ml-quiz-1",
         lesson_id=lesson1.id,
@@ -231,13 +241,60 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         quiz_matrix_id="qb-ml-01",
     )
 
+    sample_starter_code = """def solve_linear_loss(y_true: list[float], y_pred: list[float]) -> float:
+    \"\"\"
+    Calculate Mean Squared Error (MSE) between actual and predicted targets.
+    Formula: MSE = (1/N) * sum((y_true[i] - y_pred[i]) ** 2)
+    \"\"\"
+    # TODO: Implement your solution here
+    pass
+"""
+    sample_test_cases = [
+        {
+            "input": "[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]",
+            "expected_output": "0.0",
+            "is_hidden": False,
+        },
+        {
+            "input": "[2.0, 4.0], [4.0, 6.0]",
+            "expected_output": "4.0",
+            "is_hidden": False,
+        },
+        {
+            "input": "[0.0, 1.0, 5.0], [1.0, 3.0, 5.0]",
+            "expected_output": "1.6666666666666667",
+            "is_hidden": True,
+        },
+    ]
+
     item4 = LearningItemModel(
         id="item-ml-lab-1",
         lesson_id=lesson1.id,
-        title="Auto-Graded Lab: Implementing Array Sum Solution in Python",
+        title="Auto-Graded Lab: Implementing MSE Loss Function in Python",
         type=ItemType.AUTO_GRADED_LAB,
         estimated_minutes=30,
+        language="python",
+        starter_code=sample_starter_code,
+        test_cases_json=json.dumps(sample_test_cases),
     )
+
+    sample_rubric = [
+        {
+            "criterion": "1. Model Architecture & Mathematical Formulations",
+            "max_points": 40,
+            "description": "Clear explanation of linear/logistic regression hypotheses, cost functions, and gradient equations.",
+        },
+        {
+            "criterion": "2. Feature Engineering & Preprocessing Strategy",
+            "max_points": 30,
+            "description": "Evaluation of feature scaling (Standardization/MinMax) and missing value handling techniques.",
+        },
+        {
+            "criterion": "3. Code Organization & Documentation",
+            "max_points": 30,
+            "description": "Clean modular Python code with type annotations, docstrings, and comprehensive Markdown reports.",
+        },
+    ]
 
     item5 = LearningItemModel(
         id="item-ml-peer-1",
@@ -245,9 +302,10 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         title="Peer-Graded Assignment: Supervised Machine Learning Model Design",
         type=ItemType.PEER_REVIEW,
         estimated_minutes=45,
+        rubric_criteria_json=json.dumps(sample_rubric),
     )
 
-    lesson1.items.extend([item1, item2, item3, item4, item5])
+    lesson1.items.extend([item1, item2, item3_practice, item3, item4, item5])
     week1.lessons.append(lesson1)
 
     # Week 2
@@ -288,6 +346,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         title="Graded Quiz: Classification & Logistic Regression",
         type=ItemType.GRADED_QUIZ,
         estimated_minutes=22,
+        quiz_matrix_id="qb-ml-02",
     )
     lesson2.items.extend([item6, item7])
     week2.lessons.append(lesson2)
@@ -1157,7 +1216,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         await session.merge(opt5_3)
         await session.merge(opt5_4)
 
-        # Seed Quiz Matrix Model
+        # Seed Quiz Matrix Models
         qm_ml = QuizMatrixModel(
             item_id="item-ml-quiz-1",
             bank_id="qb-ml-01",
@@ -1168,7 +1227,29 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             hard_count=1,
             shuffle_options=True,
         )
+        qm_practice = QuizMatrixModel(
+            item_id="item-ml-practice-1",
+            bank_id="qb-ml-01",
+            time_limit_minutes=15,
+            passing_threshold_percent=60.0,
+            easy_count=2,
+            medium_count=1,
+            hard_count=0,
+            shuffle_options=True,
+        )
+        qm_ml2 = QuizMatrixModel(
+            item_id="item-ml-quiz-2",
+            bank_id="qb-ml-01",
+            time_limit_minutes=45,
+            passing_threshold_percent=80.0,
+            easy_count=2,
+            medium_count=2,
+            hard_count=1,
+            shuffle_options=True,
+        )
         await session.merge(qm_ml)
+        await session.merge(qm_practice)
+        await session.merge(qm_ml2)
 
         await session.commit()
         logger.info("[SEED] Database seeding completed successfully!")
