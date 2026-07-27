@@ -1,7 +1,7 @@
 """complete_scorm_questionbank_schema
 
 Revision ID: f9caddc81895
-Revises: 55863ba0dee5
+Revises: 8ddf086a3a4d
 Create Date: 2026-07-25 23:24:29.317335
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "f9caddc81895"
-down_revision: Union[str, Sequence[str], None] = "55863ba0dee5"
+down_revision: Union[str, Sequence[str], None] = "8ddf086a3a4d"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
