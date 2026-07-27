@@ -1,6 +1,8 @@
 {
   "navbar": {
     "catalog": "Catalog",
+    "myCourses": "My Courses",
+    "myCourse": "My Courses",
     "forum": "Forum",
     "financialAid": "Financial Aid",
     "verifyCert": "Verify Cert",

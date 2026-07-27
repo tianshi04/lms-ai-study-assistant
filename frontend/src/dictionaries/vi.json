@@ -1,6 +1,8 @@
 {
   "navbar": {
     "catalog": "Khóa học",
+    "myCourses": "Khóa học của tôi",
+    "myCourse": "Khóa học của tôi",
     "forum": "Diễn đàn",
     "financialAid": "Hỗ trợ tài chính",
     "verifyCert": "Xác minh chứng chỉ",
