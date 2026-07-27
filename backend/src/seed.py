@@ -14,6 +14,7 @@ Usage:
 
 import argparse
 import asyncio
+import json
 import logging
 import sys
 from pathlib import Path
@@ -31,7 +32,11 @@ from src.modules.assessment.infrastructure.models import (
     LabSubmissionModel,
     PeerAssignmentSubmissionModel,
     PeerReviewModel,
+    QuestionBankModel,
+    QuestionModel,
+    QuestionOptionModel,
     QuizCooldownModel,
+    QuizMatrixModel,
     QuizSubmissionModel,
 )
 from src.modules.catalog.infrastructure.models import (
@@ -218,21 +223,78 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         reading_markdown="# Math Foundations of Gradient Descent\n\nGradient descent is an optimization algorithm used to minimize cost functions in machine learning models.\n\n## Key Concepts\n- **Learning Rate (alpha)**: Controls the step size at each iteration.\n- **Loss Function**: Measures the prediction error.\n\n> *Tip: Choosing an appropriate learning rate is crucial for convergence.*",
     )
 
+    item3_practice = LearningItemModel(
+        id="item-ml-practice-1",
+        lesson_id=lesson1.id,
+        title="Practice Quiz: Linear Algebra & Numpy Fundamentals",
+        type=ItemType.PRACTICE_QUIZ,
+        estimated_minutes=15,
+        quiz_matrix_id="qb-ml-practice",
+    )
+
     item3 = LearningItemModel(
         id="item-ml-quiz-1",
         lesson_id=lesson1.id,
         title="Graded Quiz: Supervised Learning & Regression Basics",
         type=ItemType.GRADED_QUIZ,
         estimated_minutes=20,
+        quiz_matrix_id="qb-ml-01",
     )
+
+    sample_starter_code = """def solve_linear_loss(y_true: list[float], y_pred: list[float]) -> float:
+    \"\"\"
+    Calculate Mean Squared Error (MSE) between actual and predicted targets.
+    Formula: MSE = (1/N) * sum((y_true[i] - y_pred[i]) ** 2)
+    \"\"\"
+    # TODO: Implement your solution here
+    pass
+"""
+    sample_test_cases = [
+        {
+            "input": "[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]",
+            "expected_output": "0.0",
+            "is_hidden": False,
+        },
+        {
+            "input": "[2.0, 4.0], [4.0, 6.0]",
+            "expected_output": "4.0",
+            "is_hidden": False,
+        },
+        {
+            "input": "[0.0, 1.0, 5.0], [1.0, 3.0, 5.0]",
+            "expected_output": "1.6666666666666667",
+            "is_hidden": True,
+        },
+    ]
 
     item4 = LearningItemModel(
         id="item-ml-lab-1",
         lesson_id=lesson1.id,
-        title="Auto-Graded Lab: Implementing Array Sum Solution in Python",
+        title="Auto-Graded Lab: Implementing MSE Loss Function in Python",
         type=ItemType.AUTO_GRADED_LAB,
         estimated_minutes=30,
+        language="python",
+        starter_code=sample_starter_code,
+        test_cases_json=json.dumps(sample_test_cases),
     )
+
+    sample_rubric = [
+        {
+            "criterion": "1. Model Architecture & Mathematical Formulations",
+            "max_points": 40,
+            "description": "Clear explanation of linear/logistic regression hypotheses, cost functions, and gradient equations.",
+        },
+        {
+            "criterion": "2. Feature Engineering & Preprocessing Strategy",
+            "max_points": 30,
+            "description": "Evaluation of feature scaling (Standardization/MinMax) and missing value handling techniques.",
+        },
+        {
+            "criterion": "3. Code Organization & Documentation",
+            "max_points": 30,
+            "description": "Clean modular Python code with type annotations, docstrings, and comprehensive Markdown reports.",
+        },
+    ]
 
     item5 = LearningItemModel(
         id="item-ml-peer-1",
@@ -240,9 +302,10 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         title="Peer-Graded Assignment: Supervised Machine Learning Model Design",
         type=ItemType.PEER_REVIEW,
         estimated_minutes=45,
+        rubric_criteria_json=json.dumps(sample_rubric),
     )
 
-    lesson1.items.extend([item1, item2, item3, item4, item5])
+    lesson1.items.extend([item1, item2, item3_practice, item3, item4, item5])
     week1.lessons.append(lesson1)
 
     # Week 2
@@ -283,6 +346,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         title="Graded Quiz: Classification & Logistic Regression",
         type=ItemType.GRADED_QUIZ,
         estimated_minutes=22,
+        quiz_matrix_id="qb-ml-02",
     )
     lesson2.items.extend([item6, item7])
     week2.lessons.append(lesson2)
@@ -920,6 +984,272 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         await session.merge(rev1)
         await session.merge(rev2)
         await session.merge(rev3)
+
+        # Seed Question Bank & Quiz Matrix for Dynamic Quiz Sessions
+        qb_ml = QuestionBankModel(
+            id="qb-ml-01",
+            course_id="course-python-ai",
+            title="Ngân hàng câu hỏi Máy học cơ bản (ML Fundamentals)",
+            category="PRACTICE",
+            description="Tập hợp câu hỏi trắc nghiệm lý thuyết và bài tập Máy học cơ bản.",
+            created_at="2026-07-25T12:00:00Z",
+        )
+        await session.merge(qb_ml)
+
+        # Question 1 (EASY)
+        q1 = QuestionModel(
+            id="q-ml-01",
+            bank_id="qb-ml-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="EASY",
+            text="Thuật toán nào dưới đây thuộc nhóm Học có giám sát (Supervised Learning)?",
+            explanation="Hồi quy tuyến tính (Linear Regression) yêu cầu nhãn dữ liệu đầu ra (Target label) để huấn luyện.",
+            created_at="2026-07-25T12:05:00Z",
+        )
+        await session.merge(q1)
+        opt1_1 = QuestionOptionModel(
+            id="opt-q1-1",
+            question_id="q-ml-01",
+            option_text="Hồi quy tuyến tính (Linear Regression)",
+            is_correct=True,
+            order_index=0,
+        )
+        opt1_2 = QuestionOptionModel(
+            id="opt-q1-2",
+            question_id="q-ml-01",
+            option_text="Phân cụm K-Means",
+            is_correct=False,
+            order_index=1,
+        )
+        opt1_3 = QuestionOptionModel(
+            id="opt-q1-3",
+            question_id="q-ml-01",
+            option_text="Phân tích thành phần chính (PCA)",
+            is_correct=False,
+            order_index=2,
+        )
+        opt1_4 = QuestionOptionModel(
+            id="opt-q1-4",
+            question_id="q-ml-01",
+            option_text="Thuật toán DBSCAN",
+            is_correct=False,
+            order_index=3,
+        )
+        await session.merge(opt1_1)
+        await session.merge(opt1_2)
+        await session.merge(opt1_3)
+        await session.merge(opt1_4)
+
+        # Question 2 (EASY)
+        q2 = QuestionModel(
+            id="q-ml-02",
+            bank_id="qb-ml-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="EASY",
+            text="Hàm mất mát phổ biến nhất được dùng cho bài toán Hồi quy tuyến tính là gì?",
+            explanation="Mean Squared Error (MSE - Sai số bình phương trung bình) đo lường khoảng cách giữa dự đoán và thực tế.",
+            created_at="2026-07-25T12:10:00Z",
+        )
+        await session.merge(q2)
+        opt2_1 = QuestionOptionModel(
+            id="opt-q2-1",
+            question_id="q-ml-02",
+            option_text="Mean Squared Error (MSE)",
+            is_correct=True,
+            order_index=0,
+        )
+        opt2_2 = QuestionOptionModel(
+            id="opt-q2-2",
+            question_id="q-ml-02",
+            option_text="Cross-Entropy Loss",
+            is_correct=False,
+            order_index=1,
+        )
+        opt2_3 = QuestionOptionModel(
+            id="opt-q2-3",
+            question_id="q-ml-02",
+            option_text="Hinge Loss",
+            is_correct=False,
+            order_index=2,
+        )
+        opt2_4 = QuestionOptionModel(
+            id="opt-q2-4",
+            question_id="q-ml-02",
+            option_text="Binary Cross-Entropy",
+            is_correct=False,
+            order_index=3,
+        )
+        await session.merge(opt2_1)
+        await session.merge(opt2_2)
+        await session.merge(opt2_3)
+        await session.merge(opt2_4)
+
+        # Question 3 (MEDIUM)
+        q3 = QuestionModel(
+            id="q-ml-03",
+            bank_id="qb-ml-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="MEDIUM",
+            text="Phương pháp nào được dùng để tránh hiện tượng Overfitting trong mô hình Deep Learning?",
+            explanation="Dropout và L2 Regularization giúp giảm bớt sự phụ thuộc quá mức vào các trọng số cụ thể.",
+            created_at="2026-07-25T12:15:00Z",
+        )
+        await session.merge(q3)
+        opt3_1 = QuestionOptionModel(
+            id="opt-q3-1",
+            question_id="q-ml-03",
+            option_text="Kỹ thuật Dropout & L2 Regularization",
+            is_correct=True,
+            order_index=0,
+        )
+        opt3_2 = QuestionOptionModel(
+            id="opt-q3-2",
+            question_id="q-ml-03",
+            option_text="Tăng tốc độ học (Learning Rate) quá lớn",
+            is_correct=False,
+            order_index=1,
+        )
+        opt3_3 = QuestionOptionModel(
+            id="opt-q3-3",
+            question_id="q-ml-03",
+            option_text="Xóa tập dữ liệu Validation",
+            is_correct=False,
+            order_index=2,
+        )
+        opt3_4 = QuestionOptionModel(
+            id="opt-q3-4",
+            question_id="q-ml-03",
+            option_text="Bỏ qua hàm kích hoạt (Activation Function)",
+            is_correct=False,
+            order_index=3,
+        )
+        await session.merge(opt3_1)
+        await session.merge(opt3_2)
+        await session.merge(opt3_3)
+        await session.merge(opt3_4)
+
+        # Question 4 (MEDIUM)
+        q4 = QuestionModel(
+            id="q-ml-04",
+            bank_id="qb-ml-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="MEDIUM",
+            text="Mạng Nơ-ron Nhân tạo (ANN) sử dụng thuật toán nào để cập nhật trọng số theo độ dốc đạo hàm?",
+            explanation="Backpropagation (Lan truyền ngược) tính toán gradient của hàm mất mát theo từng trọng số trong mạng.",
+            created_at="2026-07-25T12:20:00Z",
+        )
+        await session.merge(q4)
+        opt4_1 = QuestionOptionModel(
+            id="opt-q4-1",
+            question_id="q-ml-04",
+            option_text="Backpropagation (Lan truyền ngược)",
+            is_correct=True,
+            order_index=0,
+        )
+        opt4_2 = QuestionOptionModel(
+            id="opt-q4-2",
+            question_id="q-ml-04",
+            option_text="Forward Propagation",
+            is_correct=False,
+            order_index=1,
+        )
+        opt4_3 = QuestionOptionModel(
+            id="opt-q4-3",
+            question_id="q-ml-04",
+            option_text="K-Fold Cross Validation",
+            is_correct=False,
+            order_index=2,
+        )
+        opt4_4 = QuestionOptionModel(
+            id="opt-q4-4",
+            question_id="q-ml-04",
+            option_text="Principal Component Analysis",
+            is_correct=False,
+            order_index=3,
+        )
+        await session.merge(opt4_1)
+        await session.merge(opt4_2)
+        await session.merge(opt4_3)
+        await session.merge(opt4_4)
+
+        # Question 5 (HARD)
+        q5 = QuestionModel(
+            id="q-ml-05",
+            bank_id="qb-ml-01",
+            question_type="SINGLE_CHOICE",
+            difficulty="HARD",
+            text="Đánh giá hiệu năng mô hình Phân loại (Classification) với dữ liệu mất cân bằng (Imbalanced Data) nên ưu tiên chỉ số nào?",
+            explanation="F1-Score (dung hòa Precision & Recall) và AUC-ROC đánh giá chính xác hơn chỉ số Accuracy khi dữ liệu lệch nặng.",
+            created_at="2026-07-25T12:25:00Z",
+        )
+        await session.merge(q5)
+        opt5_1 = QuestionOptionModel(
+            id="opt-q5-1",
+            question_id="q-ml-05",
+            option_text="F1-Score & AUC-ROC",
+            is_correct=True,
+            order_index=0,
+        )
+        opt5_2 = QuestionOptionModel(
+            id="opt-q5-2",
+            question_id="q-ml-05",
+            option_text="Accuracy (Tỷ lệ chính xác tổng thể)",
+            is_correct=False,
+            order_index=1,
+        )
+        opt5_3 = QuestionOptionModel(
+            id="opt-q5-3",
+            question_id="q-ml-05",
+            option_text="Hệ số R-Squared",
+            is_correct=False,
+            order_index=2,
+        )
+        opt5_4 = QuestionOptionModel(
+            id="opt-q5-4",
+            question_id="q-ml-05",
+            option_text="Mean Absolute Error (MAE)",
+            is_correct=False,
+            order_index=3,
+        )
+        await session.merge(opt5_1)
+        await session.merge(opt5_2)
+        await session.merge(opt5_3)
+        await session.merge(opt5_4)
+
+        # Seed Quiz Matrix Models
+        qm_ml = QuizMatrixModel(
+            item_id="item-ml-quiz-1",
+            bank_id="qb-ml-01",
+            time_limit_minutes=30,
+            passing_threshold_percent=80.0,
+            easy_count=2,
+            medium_count=2,
+            hard_count=1,
+            shuffle_options=True,
+        )
+        qm_practice = QuizMatrixModel(
+            item_id="item-ml-practice-1",
+            bank_id="qb-ml-01",
+            time_limit_minutes=15,
+            passing_threshold_percent=60.0,
+            easy_count=2,
+            medium_count=1,
+            hard_count=0,
+            shuffle_options=True,
+        )
+        qm_ml2 = QuizMatrixModel(
+            item_id="item-ml-quiz-2",
+            bank_id="qb-ml-01",
+            time_limit_minutes=45,
+            passing_threshold_percent=80.0,
+            easy_count=2,
+            medium_count=2,
+            hard_count=1,
+            shuffle_options=True,
+        )
+        await session.merge(qm_ml)
+        await session.merge(qm_practice)
+        await session.merge(qm_ml2)
 
         await session.commit()
         logger.info("[SEED] Database seeding completed successfully!")

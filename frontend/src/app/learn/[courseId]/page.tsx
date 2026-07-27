@@ -33,6 +33,7 @@ export default function CoursePlayerPage() {
 
   // Video & In-Video Quiz State
   const videoRef = useRef<HTMLVideoElement>(null);
+  const maxTimeRef = useRef<number>(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [activeQuiz, setActiveQuiz] = useState<InVideoQuiz | null>(null);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -99,6 +100,19 @@ export default function CoursePlayerPage() {
     loadData();
   }, [courseId, router]);
 
+  // Reset in-video quiz state when switching learning items
+  const activeItemId = activeItem?.id;
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setCurrentTime(0);
+    maxTimeRef.current = 0;
+    setActiveQuiz(null);
+    setSelectedOption(null);
+    setQuizSubmitted(false);
+    setAnsweredQuizTimestamps(new Set());
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [activeItemId]);
+
   // Total course items count
   const totalCourseItems = course?.weekModules.reduce(
     (acc, wm) => acc + wm.lessons.reduce((lAcc, l) => lAcc + l.items.length, 0),
@@ -143,7 +157,13 @@ export default function CoursePlayerPage() {
   // Video timeupdate handler for In-Video Quiz interruption & Auto Progress Update at 80%
   const handleTimeUpdate = () => {
     if (!videoRef.current || !activeItem) return;
-    const time = Math.floor(videoRef.current.currentTime);
+
+    const video = videoRef.current;
+    if (video.currentTime > maxTimeRef.current) {
+      maxTimeRef.current = video.currentTime;
+    }
+
+    const time = Math.floor(video.currentTime);
     setCurrentTime(time);
 
     // Auto mark as completed if watched >= 80% of video duration
@@ -171,6 +191,11 @@ export default function CoursePlayerPage() {
         }
       }
     }
+  };
+
+  // Video seeking handler
+  const handleSeeking = () => {
+    if (!videoRef.current || !activeItem) return;
   };
 
   // Jump to video timestamp from transcript
@@ -424,6 +449,7 @@ export default function CoursePlayerPage() {
               quizSubmitted={quizSubmitted}
               completedItemIds={progress?.completedItemIds || []}
               onTimeUpdate={handleTimeUpdate}
+              onSeeking={handleSeeking}
               onSelectOption={setSelectedOption}
               onSubmitQuiz={handleQuizSubmit}
               onContinueVideo={handleContinueVideo}

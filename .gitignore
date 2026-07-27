@@ -37,3 +37,13 @@ yarn-error.log*
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Archive files
+*.zip
+
+# Unwanted local artifacts
+task.md
+backend/samples/
+backend/scorm-samples/
+scorm-samples/
+backend/%SystemDrive%/

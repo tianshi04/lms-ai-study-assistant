@@ -4,7 +4,8 @@ from contextlib import asynccontextmanager
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
-from starlette.routing import Mount
+from starlette.responses import Response, StreamingResponse
+from starlette.routing import Mount, Route
 
 from src.gen.assessment.v1.assessment_connect import AssessmentServiceASGIApplication
 from src.gen.catalog.v1.catalog_connect import CatalogServiceASGIApplication
@@ -109,6 +110,65 @@ forum_handler = ForumHandler(use_case=forum_usecase)
 forum_app = ForumServiceASGIApplication(forum_handler, interceptors=interceptors)
 
 
+async def proxy_media(request):
+    path = request.path_params["path"]
+    from src.shared.infrastructure.s3_storage import get_s3_storage_service
+
+    s3 = get_s3_storage_service()
+
+    if request.method == "OPTIONS":
+        return Response(
+            status_code=204,
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type, Range, Authorization",
+                "Access-Control-Expose-Headers": "Content-Range, Accept-Ranges, Content-Length",
+            },
+        )
+
+    s3_client_ctx = s3._get_client()
+    s3_client = await s3_client_ctx.__aenter__()
+
+    params = {"Bucket": s3.bucket_name, "Key": path}
+    range_header = request.headers.get("range")
+    if range_header:
+        params["Range"] = range_header
+
+    try:
+        s3_resp = await s3_client.get_object(**params)
+    except Exception as e:
+        await s3_client_ctx.__aexit__(None, None, None)
+        return Response(status_code=404, content=str(e))
+
+    headers = {}
+    if "ContentType" in s3_resp:
+        headers["Content-Type"] = s3_resp["ContentType"]
+    if "ContentLength" in s3_resp:
+        headers["Content-Length"] = str(s3_resp["ContentLength"])
+    if "ContentRange" in s3_resp:
+        headers["Content-Range"] = s3_resp["ContentRange"]
+        status_code = 206
+    else:
+        status_code = 200
+
+    headers["Accept-Ranges"] = "bytes"
+    headers["Access-Control-Allow-Origin"] = "*"
+
+    async def generate():
+        try:
+            body = s3_resp["Body"]
+            while True:
+                chunk = await body.read(256 * 1024)  # 256KB chunks
+                if not chunk:
+                    break
+                yield chunk
+        finally:
+            await s3_client_ctx.__aexit__(None, None, None)
+
+    return StreamingResponse(generate(), status_code=status_code, headers=headers)
+
+
 # 2. Register Routes & Middleware using Starlette
 routes = [
     Mount("/catalog.v1.CatalogService", app=catalog_app),
@@ -117,6 +177,11 @@ routes = [
     Mount("/certificate.v1.CertificateService", app=certificate_app),
     Mount("/assessment.v1.AssessmentService", app=assessment_app),
     Mount("/forum.v1.ForumService", app=forum_app),
+    Route(
+        "/coursera-assets/{path:path}",
+        endpoint=proxy_media,
+        methods=["GET", "HEAD", "OPTIONS"],
+    ),
 ]
 
 middleware = [

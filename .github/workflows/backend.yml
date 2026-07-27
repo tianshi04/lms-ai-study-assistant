@@ -27,20 +27,26 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up Buf CLI
-        uses: bufbuild/buf-setup-action@v1
+        uses: bufbuild/buf-action@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          setup_only: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
-          python-version: "3.13"
+          python-version-file: "backend/.python-version"
           enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Install Python dependencies
+        run: uv sync --frozen
+        working-directory: backend
 
       - name: Start Docker Compose Infrastructure
         run: make infra

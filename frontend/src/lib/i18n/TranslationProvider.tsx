@@ -65,16 +65,19 @@ export function useTranslation() {
 
   const { dictionary, locale, setLocale } = context;
 
-  // Simple nested key accessor, e.g. t('navbar.catalog')
-  const t = (path: string): string => {
+  // Simple nested key accessor, e.g. t('navbar.catalog', 'Default Text')
+  const t = (path: string, fallback?: string): string => {
     const keys = path.split(".");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let current: any = dictionary;
     for (const key of keys) {
-      if (current === undefined) return path;
+      if (current === undefined) return fallback !== undefined ? fallback : path;
       current = current[key];
     }
-    return (current as unknown as string) ?? path;
+    if (typeof current === "string" && current.length > 0) {
+      return current;
+    }
+    return fallback !== undefined ? fallback : path;
   };
 
   return { t, locale, setLocale };

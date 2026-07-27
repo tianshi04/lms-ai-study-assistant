@@ -1,7 +1,7 @@
 # Coursera LMS Platform (AI-Assisted Learning Assistant)
 
 [![Architecture](https://img.shields.io/badge/Architecture-Modular%20Monolith%20%2B%20DDD-blue)](https://github.com/tianshi04/lms-ai-study-assistant)
-[![Backend](https://img.shields.io/badge/Backend-Python%203.12%2B%20%7C%20FastAPI%20%7C%20ConnectRPC-green)](backend/)
+[![Backend](https://img.shields.io/badge/Backend-Python%203.13%2B%20%7C%20FastAPI%20%7C%20ConnectRPC-green)](backend/)
 [![Frontend](https://img.shields.io/badge/Frontend-Next.js%2016%20%7C%20React%2019%20%7C%20Tailwind%20v4-black)](frontend/)
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%2017%20pgvector-blueviolet)](backend/docker-compose.yml)
 [![Protocol](https://img.shields.io/badge/API-ConnectRPC%20%2F%20Protobuf-orange)](proto/)
@@ -83,7 +83,7 @@ Each backend module enforces strict DDD layer separation:
 ## 🛠 Technology Stack
 
 ### **Backend (Python)**
-- **Runtime:** Python 3.12+
+- **Runtime:** Python 3.13+
 - **API Protocol:** ConnectRPC (`@connectrpc/connect`) compiled via Protocol Buffers
 - **ORM & Database:** Async SQLAlchemy, Alembic for schema migrations
 - **Package Management:** [`uv`](https://github.com/astral-sh/uv) (fast Python package installer)
@@ -92,6 +92,7 @@ Each backend module enforces strict DDD layer separation:
 ### **Frontend (TypeScript)**
 - **Framework:** Next.js 16 (App Router) & React 19
 - **API Client:** Connect-ES v2.0 (`@connectrpc/connect-web` / `@bufbuild/protobuf`)
+- **AI Assistant:** CopilotKit v2 (`@copilotkit/react-core`, `@copilotkit/runtime`)
 - **Styling:** Tailwind CSS v4 & `next-themes` (Dark/Light mode)
 - **Package Manager:** `npm`
 
@@ -127,10 +128,11 @@ Each backend module enforces strict DDD layer separation:
 │   └── pyproject.toml        # Project dependencies (managed via uv)
 ├── frontend/                 # Next.js TypeScript frontend
 │   ├── src/
-│   │   ├── app/              # App router pages (/courses, /learn, /assessments, etc.)
+│   │   ├── app/              # App router pages (/courses, /learn, /my-courses, /certificates, /instructor, /admin, etc.)
 │   │   ├── components/       # Reusable UI component library
 │   │   └── gen/              # Auto-generated TypeScript stubs (DO NOT EDIT)
 │   └── package.json          # NPM package specification
+├── e2e/                      # Playwright End-to-End test suite
 ├── proto/                    # Central Protocol Buffer shared contracts
 │   ├── assessment/           # Assessment & Quiz RPC schemas
 │   ├── catalog/              # Catalog & Course RPC schemas
@@ -138,7 +140,8 @@ Each backend module enforces strict DDD layer separation:
 │   ├── forum/                # Discussion forum RPC schemas
 │   ├── identity/             # Identity & Financial Aid RPC schemas
 │   └── learning/             # Learning progress RPC schemas
-└── docs/                     # Architectural & Business specifications
+├── docs/                     # Architectural & Business specifications
+└── AGENTS.md                 # Agent rules & architectural conventions
 ```
 
 ---
@@ -147,10 +150,10 @@ Each backend module enforces strict DDD layer separation:
 
 | Phân hệ (Track) | Bounded Context | Backend Source (`backend/src/modules/`) | Frontend Route (`frontend/src/app/`) |
 | :--- | :--- | :--- | :--- |
-| **Catalog & Learning** | `catalog`, `learning` | `modules/catalog/`<br>`modules/learning/` | `/courses`<br>`/learn/[courseId]` |
-| **Assessments** | `assessment` | `modules/assessment/` | `/assessments`<br>`/peer-review` |
+| **Catalog & Learning** | `catalog`, `learning` | `modules/catalog/`<br>`modules/learning/` | `/courses`<br>`/learn/[courseId]`<br>`/my-courses` |
+| **Assessments & Authoring** | `assessment` | `modules/assessment/` | `/assessments`<br>`/peer-review`<br>`/instructor` |
 | **Discussion Forum** | `forum` | `modules/forum/` | `/forum` |
-| **Identity & Certificates**| `identity`, `certificate` | `modules/identity/`<br>`modules/certificate/` | `/auth`<br>`/financial-aid`<br>`/verify/[certId]` |
+| **Identity & Certificates**| `identity`, `certificate` | `modules/identity/`<br>`modules/certificate/` | `/auth`<br>`/financial-aid`<br>`/certificates`<br>`/verify/[certId]`<br>`/admin` |
 
 ---
 
@@ -161,7 +164,7 @@ Each backend module enforces strict DDD layer separation:
 Ensure you have the following installed on your machine:
 - **Docker Desktop** (with Docker Compose v2)
 - **Node.js 20+** and `npm`
-- **Python 3.12+**
+- **Python 3.13+**
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/) (`pip install uv` or `curl -sSf https://astral.sh/uv/install.sh | sh`)
 - [`buf` CLI](https://buf.build/docs/installation) *(optional, for compiling proto files locally)*
 

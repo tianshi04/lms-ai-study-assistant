@@ -32,17 +32,18 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Buf CLI
-        uses: bufbuild/buf-setup-action@v1
+        uses: bufbuild/buf-action@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          setup_only: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: "22"
           cache: 'npm'
           cache-dependency-path: |
             frontend/package-lock.json
@@ -52,7 +53,7 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
-          python-version: "3.13"
+          python-version-file: "backend/.python-version"
           enable-cache: true
 
       # 1. Prepare Infrastructure & Database
@@ -114,7 +115,7 @@ jobs:
       # 4. Save Test Artifacts & Reports
       - name: Upload Playwright Test Report Artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: playwright-e2e-report
           path: e2e/playwright-report/

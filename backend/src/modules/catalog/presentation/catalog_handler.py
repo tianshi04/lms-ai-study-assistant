@@ -1,3 +1,4 @@
+from typing import Any
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
@@ -18,6 +19,38 @@ from src.modules.catalog.domain.entities import (
     Category,
 )
 from src.shared.auth import CurrentUser, require_current_user
+
+
+def _parse_request_item_type(val: Any) -> int:
+    if isinstance(val, int):
+        return val
+    if isinstance(val, pb.ItemType):
+        return int(val)
+    if isinstance(val, str):
+        if val.isdigit():
+            return int(val)
+        mapping = {
+            "ITEM_TYPE_UNSPECIFIED": 0,
+            "UNSPECIFIED": 0,
+            "ITEM_TYPE_VIDEO": 1,
+            "VIDEO": 1,
+            "ITEM_TYPE_READING": 2,
+            "READING": 2,
+            "ITEM_TYPE_PRACTICE_QUIZ": 3,
+            "PRACTICE_QUIZ": 3,
+            "ITEM_TYPE_GRADED_QUIZ": 4,
+            "GRADED_QUIZ": 4,
+            "ITEM_TYPE_AUTO_GRADED_LAB": 5,
+            "AUTO_GRADED_LAB": 5,
+            "ITEM_TYPE_PEER_REVIEW": 6,
+            "PEER_REVIEW": 6,
+        }
+        if val in mapping:
+            return mapping[val]
+    try:
+        return int(val)
+    except (ValueError, TypeError):
+        return 0
 
 
 def _to_pb_item_type(type_enum: ItemType) -> pb.ItemType:
@@ -57,12 +90,18 @@ def _to_pb_learning_item(item: LearningItem) -> pb.LearningItem:
         estimated_minutes=item.estimated_minutes,
         video_url=item.video_url,
         vtt_subtitle_url=item.vtt_subtitle_url,
+        auto_transcribe=getattr(item, "auto_transcribe", False),
         interactive_transcripts=[
             _to_pb_transcript(t) for t in item.interactive_transcripts
         ],
         in_video_quizzes=[_to_pb_quiz(q) for q in item.in_video_quizzes],
         reading_markdown=item.reading_markdown,
         order_index=getattr(item, "order_index", 0),
+        starter_code=getattr(item, "starter_code", ""),
+        test_cases_json=getattr(item, "test_cases_json", ""),
+        language=getattr(item, "language", ""),
+        rubric_criteria_json=getattr(item, "rubric_criteria_json", ""),
+        quiz_matrix_id=getattr(item, "quiz_matrix_id", ""),
     )
 
 
@@ -283,17 +322,43 @@ class CatalogHandler(CatalogService):
         ],
     ) -> pb.CreateLearningItemResponse:
         user = self._verify_instructor_permission()
-        item = await self.use_case.create_learning_item(
-            course_id=request.course_id,
-            lesson_id=request.lesson_id,
-            title=request.title,
-            item_type=int(request.type),
-            estimated_minutes=request.estimated_minutes,
-            video_url=request.video_url,
-            reading_markdown=request.reading_markdown,
-            current_user=user,
-        )
-        return pb.CreateLearningItemResponse(item=_to_pb_learning_item(item))
+        if not request.title or not request.title.strip():
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Tên học liệu không được để trống"
+            )
+        if not request.lesson_id:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Mã bài học (lesson_id) không được để trống"
+            )
+
+        try:
+            item = await self.use_case.create_learning_item(
+                course_id=request.course_id,
+                lesson_id=request.lesson_id,
+                title=request.title.strip(),
+                item_type=_parse_request_item_type(request.type),
+                estimated_minutes=request.estimated_minutes or 10,
+                video_url=request.video_url or "",
+                vtt_subtitle_url=request.vtt_subtitle_url or "",
+                auto_transcribe=request.auto_transcribe,
+                in_video_quizzes=list(request.in_video_quizzes)
+                if request.in_video_quizzes
+                else [],
+                reading_markdown=request.reading_markdown or "",
+                starter_code=request.starter_code or "",
+                test_cases_json=request.test_cases_json or "",
+                language=request.language or "",
+                rubric_criteria_json=request.rubric_criteria_json or "",
+                quiz_matrix_id=request.quiz_matrix_id or "",
+                current_user=user,
+            )
+            return pb.CreateLearningItemResponse(item=_to_pb_learning_item(item))
+        except ConnectError:
+            raise
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+        except Exception as e:
+            raise ConnectError(Code.INTERNAL, f"Không thể tạo học liệu: {str(e)}")
 
     async def submit_course_review(
         self,
@@ -481,7 +546,14 @@ class CatalogHandler(CatalogService):
             estimated_minutes=request.estimated_minutes,
             video_url=request.video_url,
             reading_markdown=request.reading_markdown,
+            vtt_subtitle_url=request.vtt_subtitle_url,
+            auto_transcribe=request.auto_transcribe,
             in_video_quizzes=list(request.in_video_quizzes),
+            starter_code=request.starter_code,
+            test_cases_json=request.test_cases_json,
+            language=request.language,
+            rubric_criteria_json=request.rubric_criteria_json,
+            quiz_matrix_id=request.quiz_matrix_id,
             current_user=user,
         )
         if not item:
@@ -636,3 +708,32 @@ class CatalogHandler(CatalogService):
             current_user=user,
         )
         return pb.ReorderLearningItemsResponse(success=success)
+
+    async def generate_upload_url(
+        self,
+        request: pb.GenerateUploadUrlRequest,
+        ctx: RequestContext[pb.GenerateUploadUrlRequest, pb.GenerateUploadUrlResponse],
+    ) -> pb.GenerateUploadUrlResponse:
+        self._verify_instructor_permission()
+        upload_url, file_url, object_key = await self.use_case.generate_upload_url(
+            filename=request.filename,
+            content_type=request.content_type,
+            folder=request.folder or "videos",
+        )
+        return pb.GenerateUploadUrlResponse(
+            upload_url=upload_url, file_url=file_url, object_key=object_key
+        )
+
+    async def upload_media_file(
+        self,
+        request: pb.UploadMediaFileRequest,
+        ctx: RequestContext[pb.UploadMediaFileRequest, pb.UploadMediaFileResponse],
+    ) -> pb.UploadMediaFileResponse:
+        self._verify_instructor_permission()
+        file_url, object_key = await self.use_case.upload_media_file(
+            filename=request.filename,
+            content_type=request.content_type,
+            file_bytes=request.file_bytes,
+            folder=request.folder or "videos",
+        )
+        return pb.UploadMediaFileResponse(file_url=file_url, object_key=object_key)

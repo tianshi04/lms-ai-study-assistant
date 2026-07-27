@@ -50,6 +50,12 @@ class LearningItem(Entity):
         in_video_quizzes: list[InVideoQuiz] | None = None,
         reading_markdown: str = "",
         order_index: int = 0,
+        starter_code: str = "",
+        test_cases_json: str = "",
+        language: str = "",
+        rubric_criteria_json: str = "",
+        quiz_matrix_id: str = "",
+        auto_transcribe: bool = False,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -61,6 +67,12 @@ class LearningItem(Entity):
         self.in_video_quizzes = in_video_quizzes or []
         self.reading_markdown = reading_markdown
         self.order_index = order_index
+        self.starter_code = starter_code
+        self.test_cases_json = test_cases_json
+        self.language = language
+        self.rubric_criteria_json = rubric_criteria_json
+        self.quiz_matrix_id = quiz_matrix_id
+        self.auto_transcribe = auto_transcribe
 
 
 class Lesson(Entity):

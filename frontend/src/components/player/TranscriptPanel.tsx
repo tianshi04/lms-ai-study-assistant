@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
@@ -16,7 +17,25 @@ export function TranscriptPanel({
 }: TranscriptPanelProps) {
   const { t } = useTranslation();
 
-  if (!activeItem?.interactiveTranscripts || activeItem.interactiveTranscripts.length === 0) {
+  const transcripts = activeItem?.interactiveTranscripts || [];
+
+  const activeIndex = transcripts.findIndex(
+    (item, i) =>
+      currentTime >= item.timestampSeconds &&
+      (i === transcripts.length - 1 ||
+        currentTime < transcripts[i + 1].timestampSeconds)
+  );
+
+  useEffect(() => {
+    if (activeIndex !== -1) {
+      const el = document.getElementById(`transcript-item-${activeIndex}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+  }, [activeIndex]);
+
+  if (transcripts.length === 0) {
     return (
       <p className="text-xs text-slate-500 dark:text-slate-500 text-center py-6">
         {t("player.noTranscriptFound")}
@@ -26,15 +45,13 @@ export function TranscriptPanel({
 
   return (
     <div className="space-y-2 max-w-4xl mx-auto">
-      {activeItem.interactiveTranscripts.map((item, i) => {
-        const isActive =
-          currentTime >= item.timestampSeconds &&
-          (i === activeItem.interactiveTranscripts.length - 1 ||
-            currentTime < activeItem.interactiveTranscripts[i + 1].timestampSeconds);
+      {transcripts.map((item, i) => {
+        const isActive = i === activeIndex;
 
         return (
           <div
             key={i}
+            id={`transcript-item-${i}`}
             onClick={() => onSeekVideo(item.timestampSeconds)}
             className={`p-2.5 rounded-lg text-xs cursor-pointer transition-all flex items-start gap-4 ${
               isActive

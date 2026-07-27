@@ -1,3 +1,4 @@
+from typing import Any
 import pytest
 from src.modules.assessment.application.assessment_usecase import AssessmentUseCase
 from src.modules.assessment.domain.entities import (
@@ -117,6 +118,129 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
 
     async def get_grade_appeal(self, submission_id: str) -> GradeAppeal | None:
         return self.grade_appeals.get(submission_id)
+
+    async def create_question_bank(
+        self, course_id: str, title: str, category: str, description: str
+    ):
+        from src.modules.assessment.domain.entities import QuestionBank
+
+        return QuestionBank(
+            id="bank_test_1",
+            course_id=course_id,
+            title=title,
+            category=category,
+            description=description,
+        )
+
+    async def list_question_banks(self, course_id: str):
+        return []
+
+    async def add_question_to_bank(
+        self,
+        bank_id: str,
+        text: str,
+        question_type: str,
+        difficulty: str,
+        explanation: str,
+        options_data: list[dict],
+    ):
+        from src.modules.assessment.domain.entities import Question
+
+        return Question(
+            id="q_test_1",
+            bank_id=bank_id,
+            text=text,
+            question_type=question_type,
+            difficulty=difficulty,
+            explanation=explanation,
+        )
+
+    async def delete_question(self, question_id: str) -> bool:
+        return True
+
+    async def update_question(
+        self,
+        question_id: str,
+        text: str,
+        question_type: str,
+        difficulty: str,
+        explanation: str,
+        options_data: list[dict],
+    ):
+        from src.modules.assessment.domain.entities import Question, QuestionOption
+
+        opts = [
+            QuestionOption(
+                id=f"opt_{i}",
+                question_id=question_id,
+                option_text=opt["option_text"],
+                is_correct=opt["is_correct"],
+                order_index=i,
+            )
+            for i, opt in enumerate(options_data)
+        ]
+        return Question(
+            id=question_id,
+            bank_id="bank_test_1",
+            text=text,
+            question_type=question_type,
+            difficulty=difficulty,
+            explanation=explanation,
+            options=opts,
+        )
+
+    async def configure_quiz_matrix(
+        self,
+        item_id: str,
+        bank_id: str,
+        time_limit_minutes: int,
+        passing_threshold_percent: float,
+        easy_count: int,
+        medium_count: int,
+        hard_count: int,
+        shuffle_options: bool,
+    ):
+        from src.modules.assessment.domain.entities import QuizMatrix
+
+        return QuizMatrix(
+            item_id=item_id,
+            bank_id=bank_id,
+            time_limit_minutes=time_limit_minutes,
+            passing_threshold_percent=passing_threshold_percent,
+            easy_count=easy_count,
+            medium_count=medium_count,
+            hard_count=hard_count,
+            shuffle_options=shuffle_options,
+        )
+
+    async def get_quiz_matrix(self, item_id: str):
+        return None
+
+    async def get_questions_by_bank(self, bank_id: str):
+        from src.modules.assessment.domain.entities import Question, QuestionOption
+
+        return [
+            Question(
+                id=f"q_{i}",
+                bank_id=bank_id,
+                text=f"Question {i} text",
+                question_type="SINGLE_CHOICE",
+                difficulty="EASY" if i < 2 else ("MEDIUM" if i < 4 else "HARD"),
+                explanation="Explanation",
+                options=[
+                    QuestionOption(
+                        id=f"opt_{i}_{j}",
+                        question_id=f"q_{i}",
+                        option_text=f"Option {j}",
+                        is_correct=(j == 0),
+                        order_index=j,
+                    )
+                    for j in range(4)
+                ],
+                created_at="",
+            )
+            for i in range(5)
+        ]
 
 
 @pytest.mark.asyncio
@@ -388,3 +512,60 @@ async def test_quiz_question_pool_and_option_shuffling():
     )
     assert res["score_percent"] == 100.0
     assert res["passed"] is True
+
+
+@pytest.mark.asyncio
+async def test_update_and_delete_question():
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+
+    # Test update_question
+    updated_q = await usecase.update_question(
+        question_id="q_test_1",
+        text="Updated Question text?",
+        question_type="SINGLE_CHOICE",
+        difficulty="MEDIUM",
+        explanation="Simple explanation",
+        options_data=[
+            {"option_text": "Option A", "is_correct": True},
+            {"option_text": "Option B", "is_correct": False},
+        ],
+    )
+    assert updated_q.id == "q_test_1"
+    assert updated_q.text == "Updated Question text?"
+    assert updated_q.question_type == "SINGLE_CHOICE"
+    assert updated_q.difficulty == "MEDIUM"
+    assert updated_q.explanation == "Simple explanation"
+    assert len(updated_q.options) == 2
+    assert updated_q.options[0].option_text == "Option A"
+    assert updated_q.options[0].is_correct is True
+
+    # Test delete_question
+    success = await usecase.delete_question(question_id="q_test_1")
+    assert success is True
+
+
+@pytest.mark.asyncio
+async def test_quiz_submission_empty_question_pool(monkeypatch: pytest.MonkeyPatch):
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    user_id = "user-empty-pool"
+    item_id = "item-empty-1"
+
+    await usecase.submit_honor_code(user_id, item_id, True)
+
+    async def mock_empty_questions(
+        self: Any, repo_arg: Any, item_id_arg: str, seed: int = 42
+    ) -> list[dict[str, Any]]:
+        return []
+
+    monkeypatch.setattr(
+        usecase,
+        "generate_quiz_session_questions",
+        mock_empty_questions.__get__(usecase, AssessmentUseCase),
+    )
+
+    res = await usecase.submit_graded_quiz(user_id, item_id, [], session_seed=12345)
+    assert res["score_percent"] == 0.0
+    assert res["passed"] is False
+    assert any("rỗng" in exp or "empty" in exp for exp in res["answer_explanations"])

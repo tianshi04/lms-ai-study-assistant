@@ -52,6 +52,7 @@ export class CourseCatalogPage {
   async sortBy(sortValue: string) {
     const responsePromise = this.page.waitForResponse(response => response.url().includes('ListCourses'));
     await this.page.getByRole('combobox').click();
+    await this.page.waitForTimeout(300);
     const labelMap: Record<string, RegExp> = {
       '': /Mặc định|Default/i,
       'rating': /Đánh giá cao nhất|Highest Rating/i,

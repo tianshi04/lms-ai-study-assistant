@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { AuthNavbar } from "@/components/layout/AuthNavbar";
+import { AIChatbot } from "@/components/ai/AIChatbot";
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -20,6 +21,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col">
         {children}
       </div>
+      <AIChatbot />
     </div>
   );
 }

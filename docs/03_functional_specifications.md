@@ -13,7 +13,7 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
   * **Chính sách Phân quyền Declarative ở Tầng Contract (Protobuf Custom Options):** Toàn bộ các API ConnectRPC được gán nhãn chính sách bảo mật qua option `(auth.v1.policy)` trực tiếp trong hợp đồng `.proto`. `AuthPolicyRegistry` tự động quét descriptors khi khởi chạy server (Eager Pre-initialization) và phân lớp bảo mật 3 tầng (`BR_AUTH_001`): Tầng 1 (RPC Method Policy), Tầng 2 (ABAC Paid Access), Tầng 3 (Domain Resource Ownership).
 * **Quản lý Suất học Doanh nghiệp (Enterprise License):**
   * Tạo gói suất học cho đối tác (ví dụ: cấp 500 seats cho Trường Đại học X hoặc Công ty Y).
-  * Quản lý mã kích hoạt (Enterprise Key), kiểm tra trạng thái hoạt động (`is_active`) và theo dõi số lượng seat đã kích hoạt (`used_seats / total_seats`). Thao tác kích hoạt và thu hồi suất học bắt buộc thực hiện qua câu lệnh DB Atomic Update (`UPDATE enterprise_keys SET used_seats = used_seats + 1 ...`) để tránh Race Condition khi thao tác đồng thời (`BR_ACCESS_002`, `BR_ACCESS_003`).
+  * Quản lý mã kích hoạt (Enterprise Key), kiểm tra trạng thái hoạt động (`is_active`) và theo dõi số lượng seat đã kích hoạt (`used_seats / total_seats`). Thao tác kích hoạt và thu hồi suất học bắt buộc thực hiện qua câu lệnh DB Atomic Update (`UPDATE enterprise_keys SET used_seats = used_seats + 1 ...`) để tránh Race Condition khi thao tác đồng thời (`BR_ACCESS_002`, `BR_ACCESS_003`). Hỗ trợ xử lý kích hoạt lặp lại an toàn (Idempotent) và áp dụng ràng buộc tối đa 1 mã Enterprise active per tài khoản.
 * **Xét duyệt Hỗ trợ Tài chính (Financial Aid Review):** Super Admin duyệt hoặc từ chối các đơn xin học bổng (bài luận >= 150 từ). Nếu quá 15 ngày chưa có thao tác thủ công, hệ thống tự động chuyển trạng thái đơn sang `AUTO_APPROVED` (`BR_FAID_001`).
 * **Khóa/Kích hoạt tài khoản:** Tạm khóa tài khoản vi phạm điều khoản. Thu hồi tức thì phiên làm việc (Session) của tài khoản bị khóa.
 
@@ -66,10 +66,11 @@ flowchart TD
 ```
 
 ### 2.3. Phân hệ Đánh giá & Chấm điểm (Assessments & Rubric Builder)
-1. **Graded Quiz Builder:**
-   * **Ngân hàng câu hỏi (Question Bank):** Quản lý tập trung các câu hỏi trắc nghiệm (1 đáp án / Nhiều đáp án) theo chủ đề và độ khó (Dễ, Trung bình, Khó). Cấu hình số câu hỏi rút ngẫu nhiên $N$ từ Pool $M$ câu ($N \le M$) và bật tính năng xáo trộn đáp án (`BR_QUIZ_002`).
-   * **Timed Quiz Server-side:** Cấu hình thời gian giới hạn làm bài (ví dụ: 45 phút), đếm ngược đồng bộ từ Server và tự động nộp bài (Auto-submit) khi hết giờ (`BR_QUIZ_003`).
-   * Cấu hình điểm đạt (Passing Threshold, ví dụ: 80%) và Cooldown (chờ 8 tiếng nếu thi trượt 3 lần).
+1. **Graded Quiz & Question Bank Builder:**
+   * **Ngân hàng câu hỏi (Question Bank - `CreateQuestionBank`, `ListQuestionBanks`, `AddQuestionToBank`, `UpdateQuestion`, `DeleteQuestion`):** Quản lý tập trung các kho câu hỏi theo môn học và phân loại (`PRACTICE`, `MODULE_EXAM`, `FINAL_EXAM`). Hỗ trợ các dạng câu hỏi (`SINGLE_CHOICE`, `MULTIPLE_CHOICE`, `TRUE_FALSE`, `FILL_IN_BLANK`), độ khó (`EASY`, `MEDIUM`, `HARD`), nội dung Markdown và giải thích đáp án chi tiết.
+   * **Cấu hình Ma trận đề thi (Quiz Matrix - `ConfigureQuizMatrix`, `GetQuizMatrix`):** Thiết lập cấu hình rút đề thi động cho từng bài thi (`item_id`), bao gồm số lượng câu hỏi rút ngẫu nhiên theo từng tầng độ khó (`easy_count`, `medium_count`, `hard_count`), thời gian giới hạn làm bài (`time_limit_minutes`), ngưỡng điểm đạt tùy chỉnh (`passing_threshold_percent`), và bật/tắt xáo trộn đáp án (`shuffle_options`) (`BR_QUIZ_002`).
+   * **Phân quyền Quản lý:** Tất cả các thao tác tạo/sửa/xóa Ngân hàng câu hỏi và thiết lập Ma trận đề thi bắt buộc phải thông qua kiểm tra phân quyền Giảng viên (`INSTRUCTOR`), Trợ giảng (`TA`) hoặc Quản trị viên (`ADMIN`).
+   * **Timed Quiz Server-side (`StartGradedQuizSession`):** Khởi tạo phiên thi đếm ngược đồng bộ từ Server (`BR_QUIZ_003`), tự động cấp `session_seed` để phục vụ lấy mẫu đề thi và chấm điểm chuẩn xác.
 2. **Auto-Graded Lab Builder (Dành cho bài tập lập trình):**
    * Giảng viên tải lên bộ Test Cases và File mẫu (Starter Code).
    * Cấu hình môi trường chạy (Python, Node.js...) và giới hạn tài nguyên (Timeout, Memory Limit).

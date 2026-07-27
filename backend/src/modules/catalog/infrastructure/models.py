@@ -3,6 +3,7 @@ from sqlalchemy import (
     Enum as SQLEnum,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Text,
     UniqueConstraint,
@@ -145,6 +146,14 @@ class LearningItemModel(Base):
     order_index: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default="0"
     )
+    starter_code: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    test_cases_json: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    language: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    rubric_criteria_json: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    quiz_matrix_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    auto_transcribe: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
 
     lesson: Mapped["LessonModel"] = relationship("LessonModel", back_populates="items")
     interactive_transcripts: Mapped[list["InteractiveTranscriptModel"]] = relationship(
@@ -185,7 +194,9 @@ class InVideoQuizModel(Base):
     )
     timestamp_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
     question: Mapped[str] = mapped_column(Text, nullable=False)
-    options: Mapped[list[str]] = mapped_column(ARRAY(Text), nullable=False)
+    options: Mapped[list[str]] = mapped_column(
+        JSON().with_variant(ARRAY(Text), "postgresql"), nullable=False
+    )
     correct_option_index: Mapped[int] = mapped_column(Integer, nullable=False)
     explanation: Mapped[str] = mapped_column(Text, nullable=False, default="")
 
