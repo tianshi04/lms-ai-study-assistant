@@ -35,27 +35,59 @@ async def test_list_enrolled_courses():
     assert courses[0].progress_percent == 0.0
     assert courses[0].status == "NOT_STARTED"
 
-    # Mark 50% progress
-    await learning_uc.mark_item_complete(
-        user_id, course.id, "item_1", total_course_items=2
+    from unittest.mock import patch, AsyncMock
+    from src.modules.catalog.domain.entities import (
+        WeekModule,
+        Lesson,
+        LearningItem,
+        ItemType,
     )
 
-    courses = await learning_uc.list_enrolled_courses(user_id)
-    assert len(courses) == 1
-    assert courses[0].course_id == course.id
-    assert courses[0].course_title == "Learning Test Course"
-    assert courses[0].progress_percent == 50.0
-    assert courses[0].status == "IN_PROGRESS"
+    mock_course_with_items = course
+    mock_course_with_items.week_modules = [
+        WeekModule(
+            id="w1",
+            week_number=1,
+            title="W1",
+            lessons=[
+                Lesson(
+                    id="l1",
+                    title="L1",
+                    items=[
+                        LearningItem(id="item_1", title="i1", type=ItemType.VIDEO),
+                        LearningItem(id="item_2", title="i2", type=ItemType.VIDEO),
+                    ],
+                )
+            ],
+        )
+    ]
 
-    # Mark 100% progress
-    await learning_uc.mark_item_complete(
-        user_id, course.id, "item_2", total_course_items=2
-    )
+    with patch(
+        "src.modules.learning.application.learning_usecase.CatalogUseCase.get_course_detail",
+        new_callable=AsyncMock,
+    ) as mock_get:
+        mock_get.return_value = mock_course_with_items
+        # Mark 50% progress
+        await learning_uc.mark_item_complete(
+            user_id, course.id, "item_1", total_course_items=2
+        )
 
-    courses = await learning_uc.list_enrolled_courses(user_id)
-    assert len(courses) == 1
-    assert courses[0].progress_percent == 100.0
-    assert courses[0].status == "COMPLETED"
+        courses = await learning_uc.list_enrolled_courses(user_id)
+        assert len(courses) == 1
+        assert courses[0].course_id == course.id
+        assert courses[0].course_title == "Learning Test Course"
+        assert courses[0].progress_percent == 50.0
+        assert courses[0].status == "IN_PROGRESS"
+
+        # Mark 100% progress
+        await learning_uc.mark_item_complete(
+            user_id, course.id, "item_2", total_course_items=2
+        )
+
+        courses = await learning_uc.list_enrolled_courses(user_id)
+        assert len(courses) == 1
+        assert courses[0].progress_percent == 100.0
+        assert courses[0].status == "COMPLETED"
 
 
 @pytest.mark.asyncio

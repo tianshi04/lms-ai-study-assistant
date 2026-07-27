@@ -190,7 +190,12 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         return [_model_to_domain_note(m) for m in models]
 
     async def mark_item_complete(
-        self, user_id: str, course_id: str, item_id: str, total_course_items: int
+        self,
+        user_id: str,
+        course_id: str,
+        item_id: str,
+        total_course_items: int,
+        valid_item_ids: set[str] | None = None,
     ) -> tuple[bool, LearningProgress]:
         key = self._get_key(user_id, course_id)
         stmt = (
@@ -208,6 +213,10 @@ class SQLAlchemyLearningRepository(ILearningRepository):
 
         completed = set(model.completed_item_ids or [])
         completed.add(item_id)
+
+        if valid_item_ids is not None:
+            completed = completed.intersection(valid_item_ids)
+
         model.completed_item_ids = list(completed)
 
         total_items = max(1, total_course_items)

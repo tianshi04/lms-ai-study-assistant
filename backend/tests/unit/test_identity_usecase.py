@@ -492,3 +492,125 @@ async def test_revoke_enterprise_seat(mock_session_scope, mock_identity_repo):
     ok, msg = await usecase.revoke_enterprise_seat("u1")
     assert ok is False
     assert "chưa được gán" in msg
+
+
+@pytest.mark.asyncio
+async def test_assign_enterprise_seat_same_key(mock_session_scope, mock_identity_repo):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    mock_repo_instance = AsyncMock()
+    mock_identity_repo.return_value = mock_repo_instance
+    mock_user = User(
+        id="user_1",
+        email="test@test.com",
+        password_hash="hash",
+        full_name="Test",
+        role=UserRole.LEARNER,
+        enterprise_seat_key="VALID-KEY",
+    )
+    mock_repo_instance.get_by_id.return_value = mock_user
+
+    usecase = IdentityUseCase()
+    success, msg = await usecase.assign_enterprise_seat("user_1", "VALID-KEY")
+
+    assert success is True
+    assert msg == "Bạn đã được kích hoạt suất học từ đối tác này trước đó!"
+
+
+@pytest.mark.asyncio
+async def test_assign_enterprise_seat_different_key(
+    mock_session_scope, mock_identity_repo
+):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    mock_repo_instance = AsyncMock()
+    mock_identity_repo.return_value = mock_repo_instance
+    mock_user = User(
+        id="user_1",
+        email="test@test.com",
+        password_hash="hash",
+        full_name="Test",
+        role=UserRole.LEARNER,
+        enterprise_seat_key="OTHER-KEY",
+    )
+    mock_repo_instance.get_by_id.return_value = mock_user
+
+    usecase = IdentityUseCase()
+    success, msg = await usecase.assign_enterprise_seat("user_1", "VALID-KEY")
+
+    assert success is False
+    assert (
+        msg
+        == "Bạn đã có suất học Enterprise khác đang kích hoạt. Vui lòng liên hệ Admin để đổi mã."
+    )
+
+
+@pytest.mark.asyncio
+async def test_revoke_enterprise_seat_progress_guard(
+    mock_session_scope, mock_identity_repo
+):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    mock_repo_instance = AsyncMock()
+    mock_identity_repo.return_value = mock_repo_instance
+
+    from datetime import datetime, timezone
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    user = User(
+        id="u1",
+        email="test@test.com",
+        password_hash="hash",
+        full_name="Test",
+        role=UserRole.LEARNER,
+        enterprise_seat_key="KEY_1",
+        seat_assigned_at=now_iso,
+    )
+    mock_repo_instance.get_by_id.return_value = user
+
+    from src.modules.learning.domain.entities import LearningProgress
+
+    progress = LearningProgress(
+        user_id="u1", course_id="c1", overall_progress_percent=25.0
+    )
+
+    with patch(
+        "src.modules.identity.application.identity_usecase.SQLAlchemyLearningRepository"
+    ) as mock_learning_repo_class:
+        mock_learning_repo = mock_learning_repo_class.return_value
+        mock_learning_repo.get_progress = AsyncMock(return_value=progress)
+
+        usecase = IdentityUseCase()
+        ok, msg = await usecase.revoke_enterprise_seat("u1", course_id="c1")
+        assert ok is False
+        assert "tiến độ (>= 20% trong 30 ngày đầu)" in msg
+
+
+@pytest.mark.asyncio
+async def test_revoke_enterprise_seat_invalid_date(
+    mock_session_scope, mock_identity_repo
+):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    mock_repo_instance = AsyncMock()
+    mock_identity_repo.return_value = mock_repo_instance
+
+    user = User(
+        id="u1",
+        email="test@test.com",
+        password_hash="hash",
+        full_name="Test",
+        role=UserRole.LEARNER,
+        enterprise_seat_key="KEY_1",
+        seat_assigned_at="invalid-date",
+    )
+    mock_repo_instance.get_by_id.return_value = user
+
+    usecase = IdentityUseCase()
+    ok, msg = await usecase.revoke_enterprise_seat("u1", course_id="c1")
+    assert ok is True
+    assert "thu hồi" in msg

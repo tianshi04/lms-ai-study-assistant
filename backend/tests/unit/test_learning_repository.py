@@ -210,3 +210,108 @@ async def test_mark_item_complete_not_existing(repository, mock_session):
         assert progress.completed_item_ids == ["i1"]
         assert progress.overall_progress_percent == 100.0
         mock_session.commit.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_mark_item_complete_with_valid_item_ids(repository, mock_session):
+    mock_model = LearningProgressModel(
+        id="u1:c1",
+        user_id="u1",
+        course_id="c1",
+        overall_progress_percent=0.0,
+        completed_item_ids=["i1"],
+        weekly_deadlines=[],
+    )
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_model
+    mock_session.execute.return_value = mock_result
+
+    success, progress = await repository.mark_item_complete(
+        "u1", "c1", "invalid_i2", 2, valid_item_ids=["i1", "i3"]
+    )
+    assert success is True
+    # i1 is valid and was completed. invalid_i2 is ignored because it's not in valid_item_ids.
+    assert set(progress.completed_item_ids) == {"i1"}
+    assert progress.overall_progress_percent == 50.0
+
+
+@pytest.mark.asyncio
+async def test_list_user_progresses(repository, mock_session):
+    mock_model = LearningProgressModel(
+        id="u1:c1",
+        user_id="u1",
+        course_id="c1",
+        overall_progress_percent=25.0,
+        completed_item_ids=["i1"],
+        weekly_deadlines=[],
+    )
+    mock_result = MagicMock()
+    mock_result.scalars().all.return_value = [mock_model]
+    mock_session.execute.return_value = mock_result
+
+    res = await repository.list_user_progresses("u1")
+    assert len(res) == 1
+    assert res[0].course_id == "c1"
+    assert res[0].overall_progress_percent == 25.0
+
+
+@pytest.mark.asyncio
+async def test_list_enrolled_courses(repository, mock_session):
+    mock_model = LearningProgressModel(
+        id="u1:c1",
+        user_id="u1",
+        course_id="c1",
+        overall_progress_percent=25.0,
+        completed_item_ids=["i1"],
+        weekly_deadlines=[],
+    )
+    mock_result = MagicMock()
+    mock_result.scalars().all.return_value = [mock_model]
+    mock_session.execute.return_value = mock_result
+
+    res = await repository.list_enrolled_courses("u1")
+    assert len(res) == 1
+    assert res[0].course_id == "c1"
+    assert res[0].course_title == ""
+
+
+@pytest.mark.asyncio
+async def test_get_progress_no_week_modules(repository, mock_session):
+    mock_model = LearningProgressModel(
+        id="u1:c1",
+        user_id="u1",
+        course_id="c1",
+        overall_progress_percent=0.0,
+        completed_item_ids=[],
+        weekly_deadlines=[],
+    )
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = None
+    mock_result.scalar_one.return_value = mock_model
+    mock_session.execute.return_value = mock_result
+
+    res = await repository.get_progress("u1", "c1")
+    assert res.course_id == "c1"
+    assert res.user_id == "u1"
+
+
+@pytest.mark.asyncio
+async def test_reset_deadlines_progress_not_found(repository, mock_session):
+    mock_model = LearningProgressModel(
+        id="u1:c1",
+        user_id="u1",
+        course_id="c1",
+        overall_progress_percent=25.0,
+        completed_item_ids=["i1"],
+        weekly_deadlines=[],
+        last_reset_at=None,
+    )
+    with patch.object(repository, "get_progress", new_callable=AsyncMock) as _:
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_result.scalar_one.return_value = mock_model
+        mock_session.execute.side_effect = [mock_result, mock_result]
+
+        success, res = await repository.reset_deadlines("u1", "c1")
+        assert success is True
+        assert res.course_id == "c1"
