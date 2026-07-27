@@ -983,6 +983,14 @@ export default function InstructorCourseBuilderPage({
                                       <span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">
                                         READING
                                       </span>
+                                    ) : item.type === ItemType.AUTO_GRADED_LAB ? (
+                                      <span className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 font-bold text-[10px]">
+                                        LAB
+                                      </span>
+                                    ) : item.type === ItemType.PEER_REVIEW ? (
+                                      <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold text-[10px]">
+                                        PEER REVIEW
+                                      </span>
                                     ) : (
                                       <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-[10px]">
                                         QUIZ
