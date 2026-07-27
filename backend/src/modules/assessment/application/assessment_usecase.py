@@ -283,7 +283,13 @@ class AssessmentUseCase:
                 except ValueError:
                     pass
 
-            score_percent = round((correct_count / total_questions) * 100.0, 2)
+            if total_questions == 0:
+                score_percent = 0.0
+                explanations.append(
+                    "Kho câu hỏi rỗng hoặc chưa được cấu hình câu hỏi cho bài thi này."
+                )
+            else:
+                score_percent = round((correct_count / total_questions) * 100.0, 2)
 
             # BR_QUIZ_001: Highest Score Wins policy
             prev_submissions = await repo.get_quiz_submissions(user_id, item_id)

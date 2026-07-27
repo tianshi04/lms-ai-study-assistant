@@ -542,3 +542,26 @@ async def test_update_and_delete_question():
     # Test delete_question
     success = await usecase.delete_question(question_id="q_test_1")
     assert success is True
+
+
+@pytest.mark.asyncio
+async def test_quiz_submission_empty_question_pool():
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    user_id = "user-empty-pool"
+    item_id = "item-empty-1"
+
+    await usecase.submit_honor_code(user_id, item_id, True)
+
+    # Mock empty questions returned by pool
+    async def mock_empty_questions(*args, **kwargs):
+        return []
+
+    usecase.generate_quiz_session_questions = mock_empty_questions
+
+    res = await usecase.submit_graded_quiz(
+        user_id, item_id, [], session_seed=12345
+    )
+    assert res["score_percent"] == 0.0
+    assert res["passed"] is False
+    assert any("rỗng" in exp or "empty" in exp for exp in res["answer_explanations"])
