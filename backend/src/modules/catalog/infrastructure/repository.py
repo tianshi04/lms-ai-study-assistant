@@ -77,7 +77,6 @@ def _model_to_domain_course(model: CourseModel) -> Course:
                         ),
                         quiz_matrix_id=getattr(i_model, "quiz_matrix_id", ""),
                         auto_transcribe=getattr(i_model, "auto_transcribe", False),
-                        prohibit_seeking=getattr(i_model, "prohibit_seeking", False),
                     )
                 )
             lessons.append(
@@ -368,7 +367,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         reading_markdown: str,
         vtt_subtitle_url: str = "",
         auto_transcribe: bool = False,
-        prohibit_seeking: bool = False,
         in_video_quizzes: list | None = None,
         starter_code: str = "",
         test_cases_json: str = "",
@@ -430,7 +428,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             video_url=video_url or "",
             vtt_subtitle_url=vtt_subtitle_url or "",
             auto_transcribe=auto_transcribe,
-            prohibit_seeking=prohibit_seeking,
             reading_markdown=reading_markdown or "",
             starter_code=starter_code or "",
             test_cases_json=test_cases_json or "",
@@ -492,7 +489,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             video_url=video_url or "",
             vtt_subtitle_url=vtt_subtitle_url or "",
             auto_transcribe=auto_transcribe,
-            prohibit_seeking=prohibit_seeking,
             interactive_transcripts=[],
             in_video_quizzes=in_video_quizzes or [],
             reading_markdown=reading_markdown or "",
@@ -762,7 +758,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         reading_markdown: str,
         vtt_subtitle_url: str | None = None,
         auto_transcribe: bool | None = None,
-        prohibit_seeking: bool | None = None,
         in_video_quizzes: list | None = None,
         starter_code: str = "",
         test_cases_json: str = "",
@@ -796,8 +791,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             item.vtt_subtitle_url = vtt_subtitle_url
         if auto_transcribe is not None:
             item.auto_transcribe = auto_transcribe
-        if prohibit_seeking is not None:
-            item.prohibit_seeking = prohibit_seeking
         item.reading_markdown = reading_markdown
         item.starter_code = starter_code
         item.test_cases_json = test_cases_json
@@ -843,7 +836,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             video_url=item.video_url,
             vtt_subtitle_url=item.vtt_subtitle_url,
             auto_transcribe=item.auto_transcribe,
-            prohibit_seeking=item.prohibit_seeking,
             interactive_transcripts=[],
             in_video_quizzes=quizzes,
             reading_markdown=item.reading_markdown,

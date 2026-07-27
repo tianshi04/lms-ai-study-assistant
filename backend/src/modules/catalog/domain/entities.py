@@ -56,7 +56,6 @@ class LearningItem(Entity):
         rubric_criteria_json: str = "",
         quiz_matrix_id: str = "",
         auto_transcribe: bool = False,
-        prohibit_seeking: bool = False,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -74,7 +73,6 @@ class LearningItem(Entity):
         self.rubric_criteria_json = rubric_criteria_json
         self.quiz_matrix_id = quiz_matrix_id
         self.auto_transcribe = auto_transcribe
-        self.prohibit_seeking = prohibit_seeking
 
 
 class Lesson(Entity):

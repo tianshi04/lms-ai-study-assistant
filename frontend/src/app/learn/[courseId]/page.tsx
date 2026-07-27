@@ -162,16 +162,7 @@ export default function CoursePlayerPage() {
 
     const video = videoRef.current;
     if (video.currentTime > maxTimeRef.current) {
-      if (video.currentTime - maxTimeRef.current < 2.5) {
-        maxTimeRef.current = video.currentTime;
-      } else if (activeItem.prohibitSeeking) {
-        // Snap back to max watched time
-        video.currentTime = maxTimeRef.current;
-        toast.error("Bài học này đã được giảng viên thiết lập Cấm tua nhanh!");
-        return;
-      } else {
-        maxTimeRef.current = video.currentTime;
-      }
+      maxTimeRef.current = video.currentTime;
     }
 
     const time = Math.floor(video.currentTime);
@@ -204,23 +195,14 @@ export default function CoursePlayerPage() {
     }
   };
 
-  // Video seeking handler to prevent forward seeking immediately at browser event level
+  // Video seeking handler
   const handleSeeking = () => {
     if (!videoRef.current || !activeItem) return;
-    const video = videoRef.current;
-    if (activeItem.prohibitSeeking && video.currentTime > maxTimeRef.current + 1.0) {
-      video.currentTime = maxTimeRef.current;
-      toast.error("Bài học này đã được giảng viên thiết lập Cấm tua nhanh!");
-    }
   };
 
   // Jump to video timestamp from transcript
   const handleSeekVideo = (timestampSeconds: number) => {
     if (videoRef.current) {
-      if (activeItem?.prohibitSeeking && timestampSeconds > maxTimeRef.current + 1.0) {
-        toast.error("Bài học này đã được giảng viên thiết lập Cấm tua nhanh!");
-        return;
-      }
       videoRef.current.currentTime = timestampSeconds;
       videoRef.current.play();
     }

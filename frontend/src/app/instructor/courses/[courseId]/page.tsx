@@ -53,7 +53,6 @@ export default function InstructorCourseBuilderPage({
   const [videoUrl, setVideoUrl] = useState("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4");
   const [vttSubtitleUrl, setVttSubtitleUrl] = useState("");
   const [autoTranscribe, setAutoTranscribe] = useState(false);
-  const [prohibitSeeking, setProhibitSeeking] = useState(false);
   const [inVideoQuizzes, setInVideoQuizzes] = useState<InVideoQuizItem[]>([]);
   const [readingMarkdown, setReadingMarkdown] = useState("");
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
@@ -90,7 +89,6 @@ export default function InstructorCourseBuilderPage({
     videoUrl: string;
     vttSubtitleUrl: string;
     autoTranscribe: boolean;
-    prohibitSeeking: boolean;
     content: string;
     inVideoQuizzes: InVideoQuizItem[];
     starterCode: string;
@@ -251,7 +249,6 @@ export default function InstructorCourseBuilderPage({
         language: itemType === ItemType.AUTO_GRADED_LAB ? labLanguage : "",
         rubricCriteriaJson: itemType === ItemType.PEER_REVIEW ? peerRubricJson : "",
         quizMatrixId: (itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ) ? quizBankId : "",
-        prohibitSeeking: itemType === ItemType.VIDEO ? prohibitSeeking : false,
       });
 
       setShowItemModal(null);
@@ -259,7 +256,6 @@ export default function InstructorCourseBuilderPage({
       setVideoUrl("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4");
       setVttSubtitleUrl("");
       setAutoTranscribe(false);
-      setProhibitSeeking(false);
       setReadingMarkdown("");
       setInVideoQuizzes([]);
       toast.success(`Đã thêm Học liệu "${itemTitle}" vào bài học thành công!`);
@@ -342,7 +338,6 @@ export default function InstructorCourseBuilderPage({
         vttSubtitleUrl: editingItem.type === ItemType.VIDEO ? editingItem.vttSubtitleUrl : undefined,
         autoTranscribe: editingItem.type === ItemType.VIDEO ? editingItem.autoTranscribe : undefined,
         readingMarkdown: editingItem.type === ItemType.READING ? editingItem.content : undefined,
-        prohibitSeeking: editingItem.type === ItemType.VIDEO ? editingItem.prohibitSeeking : undefined,
         inVideoQuizzes: editingItem.type === ItemType.VIDEO ? editingItem.inVideoQuizzes.map(q => ({
           timestampSeconds: q.timestampSeconds,
           question: q.question,
@@ -1029,7 +1024,6 @@ export default function InstructorCourseBuilderPage({
                                             videoUrl: item.videoUrl || "",
                                             vttSubtitleUrl: item.vttSubtitleUrl || "",
                                             autoTranscribe: item.autoTranscribe || false,
-                                            prohibitSeeking: item.prohibitSeeking || false,
                                             content: item.readingMarkdown || "",
                                             inVideoQuizzes: item.inVideoQuizzes ? item.inVideoQuizzes.map(q => ({
                                               timestampSeconds: q.timestampSeconds,
@@ -1249,18 +1243,7 @@ export default function InstructorCourseBuilderPage({
                 label="Học liệu Video Bài giảng (Upload Tệp hoặc Đường dẫn)"
               />
 
-              <div className="flex items-center gap-2.5 p-3 rounded-xl bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-850/50">
-                <input
-                  type="checkbox"
-                  id="prohibitSeekingCheck"
-                  checked={prohibitSeeking}
-                  onChange={(e) => setProhibitSeeking(e.target.checked)}
-                  className="w-4 h-4 text-orange-600 rounded cursor-pointer"
-                />
-                <label htmlFor="prohibitSeekingCheck" className="text-xs font-bold text-orange-950 dark:text-orange-200 cursor-pointer">
-                  🚫 Cấm tua nhanh (Prohibit Seeking): Học viên bắt buộc phải xem tuần tự
-                </label>
-              </div>
+
               <InVideoQuizEditor
                 videoUrl={videoUrl}
                 quizzes={inVideoQuizzes}
@@ -1631,18 +1614,7 @@ export default function InstructorCourseBuilderPage({
                   label="Học liệu Video Bài giảng (Upload Tệp hoặc Đường dẫn)"
                 />
 
-                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-850/50">
-                  <input
-                    type="checkbox"
-                    id="editProhibitSeekingCheck"
-                    checked={editingItem.prohibitSeeking}
-                    onChange={(e) => setEditingItem({ ...editingItem, prohibitSeeking: e.target.checked })}
-                    className="w-4 h-4 text-orange-600 rounded cursor-pointer"
-                  />
-                  <label htmlFor="editProhibitSeekingCheck" className="text-xs font-bold text-orange-950 dark:text-orange-200 cursor-pointer">
-                    🚫 Cấm tua nhanh (Prohibit Seeking): Học viên bắt buộc phải xem tuần tự
-                  </label>
-                </div>
+
 
                 <InVideoQuizEditor
                   videoUrl={editingItem.videoUrl}

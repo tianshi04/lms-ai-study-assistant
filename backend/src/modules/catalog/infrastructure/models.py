@@ -154,9 +154,6 @@ class LearningItemModel(Base):
     auto_transcribe: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"
     )
-    prohibit_seeking: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False, server_default="false"
-    )
 
     lesson: Mapped["LessonModel"] = relationship("LessonModel", back_populates="items")
     interactive_transcripts: Mapped[list["InteractiveTranscriptModel"]] = relationship(
