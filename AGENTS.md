@@ -43,6 +43,11 @@ This file provides rules, architectural conventions, and workspace instructions 
   - **Never trust or extract `user_id` directly from Protobuf request payloads** for authenticated RPC operations.
   - All protected ConnectRPC service handlers **MUST** resolve the authenticated user strictly from context using `require_current_user()` (from `src.shared.auth`).
   - Request-level JWT token verification and `CurrentUser` context injection is handled centrally by `AuthInterceptor` (`src.shared.infrastructure.interceptors.AuthInterceptor`).
+- **Transport Exception Boundary Rule**:
+  - Application Use Cases in `application/` **MUST NOT** import or raise ConnectRPC transport exceptions directly (`connectrpc.errors.ConnectError` or `connectrpc.code.Code`).
+  - Application logic **MUST** raise standard Python or domain-level exceptions (e.g., `PermissionError`, `ValueError`).
+  - Mapping domain exceptions to ConnectRPC status codes is strictly the responsibility of presentation-layer service handlers in `presentation/`.
+
 
 ---
 
