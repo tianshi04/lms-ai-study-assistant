@@ -35,6 +35,7 @@ export default function CoursePlayerPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const maxTimeRef = useRef<number>(0);
   const isMarkingRef = useRef<boolean>(false);
+  const markedItemIdsRef = useRef<Set<string>>(new Set());
   const [currentTime, setCurrentTime] = useState(0);
   const [activeQuiz, setActiveQuiz] = useState<InVideoQuiz | null>(null);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -175,8 +176,10 @@ export default function CoursePlayerPage() {
     if (
       videoRef.current.duration > 0 &&
       videoRef.current.currentTime >= videoRef.current.duration * 0.8 &&
-      !progress?.completedItemIds.includes(activeItem.id)
+      !progress?.completedItemIds.includes(activeItem.id) &&
+      !markedItemIdsRef.current.has(activeItem.id)
     ) {
+      markedItemIdsRef.current.add(activeItem.id);
       handleMarkItemComplete(activeItem.id);
     }
 
