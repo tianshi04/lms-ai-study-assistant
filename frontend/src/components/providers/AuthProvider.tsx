@@ -11,7 +11,10 @@ export interface UserAuth {
 interface AuthContextType extends UserAuth {
   setAuth: (auth: UserAuth) => void;
   logout: () => void;
+  isInstructorOrAdmin: boolean;
+  isStaff: boolean;
 }
+
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -70,11 +73,27 @@ export function AuthProvider({
     window.location.href = "/auth/login";
   };
 
+  const roleStr = String(auth.userRole || "").toLowerCase();
+  const isInstructorOrAdmin =
+    auth.userRole === "2" ||
+    auth.userRole === "4" ||
+    auth.userRole === "5" ||
+    roleStr.includes("instructor") ||
+    roleStr.includes("admin");
+  const isStaff =
+    isInstructorOrAdmin ||
+    auth.userRole === "3" ||
+    roleStr.includes("ta") ||
+    roleStr.includes("teaching assistant");
+
   return (
-    <AuthContext.Provider value={{ ...auth, setAuth, logout }}>
+    <AuthContext.Provider
+      value={{ ...auth, setAuth, logout, isInstructorOrAdmin, isStaff }}
+    >
       {children}
     </AuthContext.Provider>
   );
+
 }
 
 export function useAuth() {

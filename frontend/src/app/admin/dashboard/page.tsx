@@ -1,24 +1,23 @@
 "use client";
 
-import { useState, useSyncExternalStore, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useReactTable, getCoreRowModel, getSortedRowModel, flexRender, createColumnHelper } from "@tanstack/react-table";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
 import { Modal } from "@/components/ui/Modal";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
-
-const emptySubscribe = () => () => {};
 
 const columnHelper = createColumnHelper<EnterpriseSeat>();
 
+
 export default function AdminEnterpriseDashboardPage() {
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false
-  );
+  const { userRole, isInstructorOrAdmin: isAdmin } = useAuth();
+
 
   const { data: seats = [], isLoading: loading, refetch: fetchEnterpriseSeats } = useEnterpriseSeatsQuery();
+
+
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -29,15 +28,12 @@ export default function AdminEnterpriseDashboardPage() {
   // Form States
   const [targetUserId, setTargetUserId] = useState("user-learner-demo");
   const [selectedSeatKey, setSelectedSeatKey] = useState("");
-  
+
   const [newPartnerName, setNewPartnerName] = useState("");
   const [newSeatKey, setNewSeatKey] = useState("");
 
-  // Authorization Check (Role 4: Super Admin, Role 5: Partner Admin)
-  const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
-  const isAdmin = userRole === "4" || userRole === "5";
-
   // Dynamic stat calculations
+
   const totalUsedSeats = seats.reduce((sum, s) => {
     const match = s.assignedUserId?.match(/^(\d+)\/(\d+)/);
     return sum + (match ? parseInt(match[1], 10) : 0);
@@ -203,7 +199,8 @@ export default function AdminEnterpriseDashboardPage() {
         </div>
 
         {/* Access Guard Notice */}
-        {isMounted && !isAdmin && (
+        {!isAdmin && (
+
           <div className="p-5 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs leading-relaxed flex items-center gap-3">
             <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
