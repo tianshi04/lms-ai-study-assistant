@@ -7,6 +7,9 @@ import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentW
 
 export default function AssessmentsPage() {
   const [activeAssessment, setActiveAssessment] = useState<"quiz" | "lab" | "peer">("quiz");
+  const [quizItemId, setQuizItemId] = useState("item-ml-quiz-1");
+  const [labItemId, setLabItemId] = useState("item-ml-lab-1");
+  const [peerItemId, setPeerItemId] = useState("item-ml-peer-1");
 
   return (
     <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-8 space-y-8">
@@ -69,17 +72,39 @@ export default function AssessmentsPage() {
             </button>
           </div>
         </div>
+        {/* Item ID Configuration */}
+        <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+          <label htmlFor="itemId" className="text-sm font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+            Current Item ID:
+          </label>
+          <input
+            id="itemId"
+            type="text"
+            className="flex-1 max-w-sm px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition-shadow"
+            value={
+              activeAssessment === "quiz" ? quizItemId :
+              activeAssessment === "lab" ? labItemId :
+              peerItemId
+            }
+            onChange={(e) => {
+              if (activeAssessment === "quiz") setQuizItemId(e.target.value);
+              if (activeAssessment === "lab") setLabItemId(e.target.value);
+              if (activeAssessment === "peer") setPeerItemId(e.target.value);
+            }}
+            placeholder="Enter Item ID..."
+          />
+        </div>
 
         {/* Selected Assessment Runner Component */}
         <div className="transition-all duration-300">
           {activeAssessment === "quiz" && (
-            <GradedQuizRunner itemId="item-ml-quiz-1" />
+            <GradedQuizRunner itemId={quizItemId} />
           )}
           {activeAssessment === "lab" && (
-            <AutoGradedLabRunner itemId="item-ml-lab-1" />
+            <AutoGradedLabRunner itemId={labItemId} />
           )}
           {activeAssessment === "peer" && (
-            <PeerAssignmentWorkspace itemId="item-ml-peer-1" />
+            <PeerAssignmentWorkspace itemId={peerItemId} />
           )}
         </div>
       </main>
