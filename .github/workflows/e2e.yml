@@ -53,8 +53,9 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
-          python-version-file: "backend/.python-version"
+          python-version: "3.13"
           enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
 
       # 1. Prepare Infrastructure & Database
       - name: Start PostgreSQL & MinIO Infrastructure
