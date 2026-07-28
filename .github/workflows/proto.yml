@@ -33,6 +33,7 @@ jobs:
           input: 'proto'
           lint: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          pr_comment: false
 
 #      - name: Check Breaking Changes against main branch
 #        uses: bufbuild/buf-breaking-action@v1

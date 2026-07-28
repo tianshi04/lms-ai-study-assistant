@@ -162,7 +162,7 @@ export default function ForumPage() {
   const openEditThreadModal = (thread: ForumThread) => {
     setEditingThread(thread);
     setEditThreadTitle(thread.title);
-    setEditThreadContent(thread.replies?.[0]?.content || "");
+    setEditThreadContent(thread.content);
   };
 
   const handleUpdateThread = async (e: React.FormEvent) => {

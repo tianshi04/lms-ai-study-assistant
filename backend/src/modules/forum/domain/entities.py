@@ -41,6 +41,7 @@ class ForumThreadEntity(Entity):
         course_id: str,
         item_id: str,
         title: str,
+        content: str,
         author_name: str,
         author_role: str,
         created_at: str = "",
@@ -56,6 +57,7 @@ class ForumThreadEntity(Entity):
         self.course_id = course_id
         self.item_id = item_id
         self.title = title
+        self.content = content
         self.author_name = author_name
         self.author_role = author_role
         self.created_at = created_at

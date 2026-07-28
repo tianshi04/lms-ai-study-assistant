@@ -21,6 +21,7 @@ class ForumThreadORM(Base):
         String(255), nullable=False, default="", index=True
     )
     title: Mapped[str] = mapped_column(String(500), nullable=False)
+    content: Mapped[str] = mapped_column(Text, nullable=False, default="")
     author_name: Mapped[str] = mapped_column(String(255), nullable=False)
     author_role: Mapped[str] = mapped_column(
         String(100), nullable=False, default="Student"
