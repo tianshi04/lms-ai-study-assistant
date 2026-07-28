@@ -67,7 +67,7 @@ This file provides rules, architectural conventions, and workspace instructions 
     - **Handlers / Presentation / Stubs (30% - 50%)**: Network stubs and ConnectRPC handlers (primarily verified via E2E / Black-box integration tests).
   - Code quality tests are located in `backend/tests/test_code_quality.py`. These tests execute `ruff` and `ty` checks during the test run to ensure style consistency.
 - **Frontend (TypeScript)**:
-  - **Linter**: We use **ESLint** for code quality. The generated `src/gen/` folder is globally ignored from ESLint.
+  - **Linter**: We use **ESLint** with `--max-warnings=0` enforced in CI. Unused variables trigger an error and MUST be cleaned up, or prefixed with an underscore (`_`) if required by signature specs.
   - **Type Checker & Compiler**: Built-in Next.js typescript compiler check during `npm run build`.
 - **End-to-End Testing (Playwright TS)**:
   - Full-system blackbox E2E tests reside in the root `/e2e` workspace following the Page Object Model (POM) architecture.
