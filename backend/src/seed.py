@@ -70,10 +70,9 @@ from src.modules.learning.infrastructure.models import (
     WeeklyDeadlineModel,
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
-)
+from src.shared.infrastructure.logging import setup_logging
+
+setup_logging()
 logger = logging.getLogger("seed")
 
 

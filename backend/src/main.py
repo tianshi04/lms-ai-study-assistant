@@ -25,15 +25,23 @@ from src.modules.identity.application.identity_usecase import IdentityUseCase
 from src.modules.identity.presentation.identity_handler import IdentityHandler
 from src.modules.learning.application.learning_usecase import LearningUseCase
 from src.modules.learning.presentation.learning_handler import LearningHandler
+import logging
+
 from src.shared.config import settings
 from src.shared.infrastructure.interceptors import AuthInterceptor, ErrorInterceptor
+from src.shared.infrastructure.logging import setup_logging
+from src.shared.infrastructure.middlewares import RequestIDMiddleware
+
+setup_logging()
+logger = logging.getLogger("main")
 
 
 async def run_auto_migrations() -> None:
     """Run Alembic upgrade head automatically on application startup (Dev mode only)."""
     if settings.ENV.lower() not in ("development", "dev"):
-        print(
-            f"[AUTO MIGRATION] Skipped auto-migration in '{settings.ENV}' environment mode."
+        logger.info(
+            "[AUTO MIGRATION] Skipped auto-migration in '%s' environment mode.",
+            settings.ENV,
         )
         return
 
@@ -47,11 +55,11 @@ async def run_auto_migrations() -> None:
             command.upgrade(alembic_cfg, "head")
 
         await asyncio.to_thread(_upgrade)
-        print(
+        logger.info(
             "[AUTO MIGRATION] Alembic migrations upgraded to head successfully (Dev mode)."
         )
     except Exception as e:
-        print(f"[AUTO MIGRATION] Warning during auto-migration: {e}")
+        logger.warning("[AUTO MIGRATION] Warning during auto-migration: %s", e)
 
 
 @asynccontextmanager
@@ -61,14 +69,14 @@ async def lifespan(app: Starlette):
         from src.shared.auth_policy import AuthPolicyRegistry
 
         AuthPolicyRegistry._initialize()
-        print("[STARTUP] Pre-initialized AuthPolicyRegistry successfully.")
+        logger.info("[STARTUP] Pre-initialized AuthPolicyRegistry successfully.")
 
         await run_auto_migrations()
         from src.seed import seed_database
 
         await seed_database(auto_mode=True)
     except Exception as e:
-        print(f"[STARTUP] Warning during startup: {e}")
+        logger.warning("[STARTUP] Warning during startup: %s", e)
     yield
 
 
@@ -185,6 +193,7 @@ routes = [
 ]
 
 middleware = [
+    Middleware(RequestIDMiddleware),
     Middleware(
         CORSMiddleware,
         allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -195,10 +204,17 @@ middleware = [
             "content-type",
             "authorization",
             "cookie",
+            "x-request-id",
         ],
-        expose_headers=["connect-error-info", "connect-protocol-version", "set-cookie"],
+        expose_headers=[
+            "connect-error-info",
+            "connect-protocol-version",
+            "set-cookie",
+            "x-request-id",
+        ],
         max_age=86400,
-    )
+    ),
 ]
+
 
 app = Starlette(routes=routes, middleware=middleware, lifespan=lifespan)

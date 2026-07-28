@@ -146,3 +146,14 @@ This file provides rules, architectural conventions, and workspace instructions 
   2. **Infrastructure Environment Config (`src/shared/config.py`)**: Infrastructure & deployment parameters (Database URLs, JWT secret keys, S3/MinIO credentials) managed via Pydantic `BaseSettings` and `.env`.
   3. **Dynamic System Settings (Database & Admin Console)**: Dynamic operational parameters (e.g. LLM temperature, default LLM model name) editable at runtime by Super Admins via the Admin Dashboard without requiring code redeployment.
 
+---
+
+## 9. Logging & Observability Conventions
+- **Centralized Logging Protocol**:
+  - **STRICT NO PRINT RULE**: Do NOT use raw `print()` statements in backend production code (`src/`, `alembic/`). All log messages and exceptions MUST be recorded using standard Python `logging` (`logger = logging.getLogger(__name__)`).
+  - **Centralized Logging Configuration**: Logging is initialized centrally via `setup_logging()` in `src.shared.infrastructure.logging`. It automatically switches between **Console Format** (Dev) and **Dynamic Structured JSON Format** (Prod) based on `settings.ENV`.
+- **Request Correlation & User Context**:
+  - All HTTP & ConnectRPC requests are automatically tracked with an `x-request-id` correlation ID header via `RequestIDMiddleware` (Pure ASGI Middleware in `main.py`).
+  - Asynchronous request and user contexts (`request_id`, `user_id`) are safely managed per asyncio task using `contextvars` via `src.shared.infrastructure.logging.context`.
+
+

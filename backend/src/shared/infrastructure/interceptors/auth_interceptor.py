@@ -6,6 +6,7 @@ from connectrpc.interceptor import UnaryInterceptor
 
 from src.shared.auth import CurrentUser, decode_token, set_current_user
 from src.shared.auth_policy import AuthPolicyRegistry
+from src.shared.infrastructure.logging import reset_user_id, set_user_id
 
 
 class AuthInterceptor(UnaryInterceptor):
@@ -89,8 +90,11 @@ class AuthInterceptor(UnaryInterceptor):
         AuthPolicyRegistry.authorize(method_path, current_user)
 
         set_current_user(current_user)
+        user_id_token = set_user_id(current_user.id) if current_user else None
 
         try:
             return await call_next(request, ctx)
         finally:
             set_current_user(None)
+            if user_id_token is not None:
+                reset_user_id(user_id_token)

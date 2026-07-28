@@ -1,5 +1,4 @@
 import asyncio
-from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import pool
@@ -14,14 +13,18 @@ import src.modules.identity.infrastructure.models  # noqa: F401
 import src.modules.learning.infrastructure.models  # noqa: F401
 from src.shared.config import settings
 from src.shared.infrastructure.database import Base
+from src.shared.infrastructure.logging import setup_logging
+
+# Initialize central logging configuration
+setup_logging()
 
 # This is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+
+# Config file for Python logging handled centrally via setup_logging()
+
 
 # Set database URL dynamically from Pydantic Settings
 config.set_main_option("sqlalchemy.url", settings.async_database_url)
