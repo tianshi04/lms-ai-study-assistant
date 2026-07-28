@@ -134,8 +134,8 @@ async def test_forum_update_permission_denied_for_other_user():
         author_user_id="user_owner",
     )
 
-    # Updating as a different non-staff user should raise ConnectError
-    with pytest.raises(ConnectError):
+    # Updating as a different non-staff user should raise PermissionError
+    with pytest.raises((PermissionError, ConnectError)):
         await use_case.update_thread(
             thread_id=thread.id,
             title="Hacked Title",

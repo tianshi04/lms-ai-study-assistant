@@ -187,13 +187,16 @@ class ForumHandler(ForumService):
             r in role
             for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
         )
-        thread = await self.use_case.update_thread(
-            thread_id=request.thread_id,
-            title=request.title,
-            content=request.content,
-            current_user_id=current_user.id,
-            is_staff=is_staff,
-        )
+        try:
+            thread = await self.use_case.update_thread(
+                thread_id=request.thread_id,
+                title=request.title,
+                content=request.content,
+                current_user_id=current_user.id,
+                is_staff=is_staff,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
         if not thread:
             raise ConnectError(
                 Code.NOT_FOUND, f"Bài viết {request.thread_id} không tồn tại."
@@ -211,12 +214,15 @@ class ForumHandler(ForumService):
             r in role
             for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
         )
-        success = await self.use_case.delete_thread(
-            thread_id=request.thread_id,
-            current_user_id=current_user.id,
-            is_staff=is_staff,
-            user=current_user,
-        )
+        try:
+            success = await self.use_case.delete_thread(
+                thread_id=request.thread_id,
+                current_user_id=current_user.id,
+                is_staff=is_staff,
+                user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
         return pb.DeleteThreadResponse(success=success)
 
     async def update_reply(
@@ -230,12 +236,15 @@ class ForumHandler(ForumService):
             r in role
             for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
         )
-        reply = await self.use_case.update_reply(
-            reply_id=request.reply_id,
-            content=request.content,
-            current_user_id=current_user.id,
-            is_staff=is_staff,
-        )
+        try:
+            reply = await self.use_case.update_reply(
+                reply_id=request.reply_id,
+                content=request.content,
+                current_user_id=current_user.id,
+                is_staff=is_staff,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
         if not reply:
             raise ConnectError(
                 Code.NOT_FOUND, f"Bình luận {request.reply_id} không tồn tại."
@@ -253,10 +262,13 @@ class ForumHandler(ForumService):
             r in role
             for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
         )
-        success = await self.use_case.delete_reply(
-            reply_id=request.reply_id,
-            current_user_id=current_user.id,
-            is_staff=is_staff,
-            user=current_user,
-        )
+        try:
+            success = await self.use_case.delete_reply(
+                reply_id=request.reply_id,
+                current_user_id=current_user.id,
+                is_staff=is_staff,
+                user=current_user,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
         return pb.DeleteReplyResponse(success=success)

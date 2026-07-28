@@ -149,12 +149,8 @@ class ForumUseCase:
             if not existing:
                 return None
             if existing.author_user_id and existing.author_user_id != current_user_id:
-                from connectrpc.code import Code
-                from connectrpc.errors import ConnectError
-
-                raise ConnectError(
-                    Code.PERMISSION_DENIED,
-                    "Chỉ tác giả mới có quyền chỉnh sửa bài viết này.",
+                raise PermissionError(
+                    "Chỉ tác giả mới có quyền chỉnh sửa bài viết này."
                 )
             return await repo.update_thread(
                 thread_id=thread_id,
@@ -184,12 +180,7 @@ class ForumUseCase:
                         session, existing.course_id, user
                     )
                 else:
-                    from connectrpc.code import Code
-                    from connectrpc.errors import ConnectError
-
-                    raise ConnectError(
-                        Code.PERMISSION_DENIED, "Bạn không có quyền xóa bài viết này."
-                    )
+                    raise PermissionError("Bạn không có quyền xóa bài viết này.")
             return await repo.delete_thread(thread_id)
 
     async def update_reply(
@@ -205,12 +196,8 @@ class ForumUseCase:
             if not existing:
                 return None
             if existing.author_user_id and existing.author_user_id != current_user_id:
-                from connectrpc.code import Code
-                from connectrpc.errors import ConnectError
-
-                raise ConnectError(
-                    Code.PERMISSION_DENIED,
-                    "Chỉ tác giả mới có quyền chỉnh sửa bình luận này.",
+                raise PermissionError(
+                    "Chỉ tác giả mới có quyền chỉnh sửa bình luận này."
                 )
             return await repo.update_reply(
                 reply_id=reply_id, content=content, edited_at=utc_now_str()
@@ -237,12 +224,7 @@ class ForumUseCase:
                     course_id = thread.course_id if thread else ""
                     await _verify_staff_course_moderation(session, course_id, user)
                 else:
-                    from connectrpc.code import Code
-                    from connectrpc.errors import ConnectError
-
-                    raise ConnectError(
-                        Code.PERMISSION_DENIED, "Bạn không có quyền xóa bình luận này."
-                    )
+                    raise PermissionError("Bạn không có quyền xóa bình luận này.")
             return await repo.delete_reply(reply_id)
 
 
@@ -261,12 +243,11 @@ async def _verify_staff_course_moderation(
         return
     if course_id:
         from src.modules.catalog.domain.repository import ICatalogRepository
+        from src.modules.catalog.infrastructure.repository import (
+            SQLAlchemyCatalogRepository,
+        )
 
-        catalog_repo_factory = __import__(
-            "src.modules.catalog.infrastructure.repository",
-            fromlist=["SQLAlchemyCatalogRepository"],
-        ).SQLAlchemyCatalogRepository
-        catalog_repo: ICatalogRepository = catalog_repo_factory(session)
+        catalog_repo: ICatalogRepository = SQLAlchemyCatalogRepository(session)
         course = await catalog_repo.get_course_detail(course_id)
         if course:
             from src.shared.permissions import enforce_course_ownership
