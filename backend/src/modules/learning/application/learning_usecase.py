@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any, Callable
 
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
@@ -92,9 +93,15 @@ class LearningUseCase:
             progresses = await repo.list_user_progresses(user_id)
 
         catalog_usecase = CatalogUseCase()
+        course_tasks = [
+            catalog_usecase.get_course_detail(p.course_id) for p in progresses
+        ]
+        courses = await asyncio.gather(*course_tasks)
+        course_map = {c.id: c for c in courses if c}
+
         summaries: list[EnrolledCourseSummary] = []
         for p in progresses:
-            course = await catalog_usecase.get_course_detail(p.course_id)
+            course = course_map.get(p.course_id)
             c_title = course.title if course else f"Khóa học #{p.course_id}"
             c_partner = course.partner_name if course else "Coursera Partner"
 

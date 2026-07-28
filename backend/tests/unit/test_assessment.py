@@ -265,7 +265,7 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     item_id = "item-quiz-1"
 
     # 1. Without Honor Code -> Should fail
-    res_no_honor = await usecase.submit_graded_quiz(user_id, item_id, [0, 1, 2, 0, 1])
+    res_no_honor = await usecase.submit_graded_quiz(user_id, item_id, [1, 3, 3, 2, 0])
     assert res_no_honor["passed"] is False
     assert "Honor Code" in res_no_honor["answer_explanations"][0]
 
@@ -273,7 +273,7 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     await usecase.submit_honor_code(user_id, item_id, True)
 
     # 3. Submit Perfect Score -> 100% Pass
-    res_pass = await usecase.submit_graded_quiz(user_id, item_id, [0, 1, 2, 0, 1])
+    res_pass = await usecase.submit_graded_quiz(user_id, item_id, [1, 3, 3, 2, 0])
     assert res_pass["score_percent"] == 100.0
     assert res_pass["passed"] is True
     assert res_pass["attempts_left"] == 3
