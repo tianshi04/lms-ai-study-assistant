@@ -5,7 +5,7 @@ import { CourseCard } from "@/components/course/CourseCard";
 import { CourseGridSkeleton } from "@/components/course/CourseGridSkeleton";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/Select";
 import { useCoursesQuery, useCategoriesQuery } from "@/lib/query_hooks";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 
 export function CourseCatalogClient() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,29 +29,27 @@ export function CourseCatalogClient() {
   const { data: subjects = [] } = useCategoriesQuery("SUBJECT");
   const { data: levels = [] } = useCategoriesQuery("LEVEL");
   const error = queryError ? queryError.message : null;
-  const { t } = useTranslation();
+  
 
   const getCategoryTranslation = (slug: string, fallback: string) => {
-    const camelSlug = slug.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-    const translated = t(`catalogFilter.${camelSlug}`);
-    return translated === `catalogFilter.${camelSlug}` ? fallback : translated;
+    return fallback;
   };
 
   return (
     <main className="w-full max-w-7xl mx-auto px-6 py-12 min-h-[65vh]">
-          <div className="mb-10 text-center md:text-left max-w-3xl">
+          <div className="mb-10 text-center md:text-left max-w-5xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-4">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
               </svg>
-              {t("common.badge")}
+              {"Coursera-Style Specializations & Courses"}
             </div>
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">
-              {t("catalog.title")}
+              {"Khám phá Khóa học & Lộ trình Học tập"}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
-              {t("catalog.subtitle")}
+              {"Học tập với bài giảng video tương tác, phụ đề cuộn thông minh, bài tập thực hành nâng cao và thảo luận cộng đồng."}
             </p>
           </div>
 
@@ -68,7 +66,7 @@ export function CourseCatalogClient() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t("catalog.searchPlaceholder")}
+                  placeholder={"Tìm kiếm khóa học theo tên hoặc từ khóa..."}
                   className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
                 />
                 {searchQuery && (
@@ -96,7 +94,7 @@ export function CourseCatalogClient() {
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    <span>{t("catalogFilter.clearFilters")}</span>
+                    <span>{"Xóa bộ lọc"}</span>
                   </button>
                 ) : null}
 
@@ -104,21 +102,21 @@ export function CourseCatalogClient() {
                 <div className="w-40 sm:w-44">
                   <Select value={sortBy} onValueChange={(val) => setSortBy((val as string) || "")}>
                     <SelectTrigger className="w-full h-9 text-xs">
-                      <SelectValue placeholder={t("catalogFilter.sortDefault")}>
+                      <SelectValue placeholder={"Mặc định"}>
                         {sortBy === "rating"
-                          ? t("catalogFilter.sortRating")
+                          ? "Đánh giá cao nhất"
                           : sortBy === "popular"
-                          ? t("catalogFilter.sortPopular")
+                          ? "Phổ biến nhất"
                           : sortBy === "newest"
-                          ? t("catalogFilter.sortNewest")
-                          : t("catalogFilter.sortDefault")}
+                          ? "Mới nhất"
+                          : "Mặc định"}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">{t("catalogFilter.sortDefault")}</SelectItem>
-                      <SelectItem value="rating">{t("catalogFilter.sortRating")}</SelectItem>
-                      <SelectItem value="popular">{t("catalogFilter.sortPopular")}</SelectItem>
-                      <SelectItem value="newest">{t("catalogFilter.sortNewest")}</SelectItem>
+                      <SelectItem value="">{"Mặc định"}</SelectItem>
+                      <SelectItem value="rating">{"Đánh giá cao nhất"}</SelectItem>
+                      <SelectItem value="popular">{"Phổ biến nhất"}</SelectItem>
+                      <SelectItem value="newest">{"Mới nhất"}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -130,7 +128,7 @@ export function CourseCatalogClient() {
               {/* Subject Chips */}
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider w-16 shrink-0 hidden md:inline-block">
-                  {t("catalogFilter.subjectHeader")}
+                  {"Chủ đề"}
                 </span>
                 <button
                   onClick={() => setSubject("")}
@@ -140,7 +138,7 @@ export function CourseCatalogClient() {
                       : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
-                  {t("catalogFilter.allSubjects")}
+                  {"Tất cả chủ đề"}
                 </button>
                 {subjects.map((s) => (
                   <button
@@ -160,7 +158,7 @@ export function CourseCatalogClient() {
               {/* Level Chips */}
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider w-16 shrink-0 hidden md:inline-block">
-                  {t("catalogFilter.levelHeader")}
+                  {"Cấp độ"}
                 </span>
                 <button
                   onClick={() => setLevel("")}
@@ -170,7 +168,7 @@ export function CourseCatalogClient() {
                       : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
-                  {t("catalogFilter.allLevels")}
+                  {"Tất cả cấp độ"}
                 </button>
                 {levels.map((l) => (
                   <button
@@ -195,7 +193,7 @@ export function CourseCatalogClient() {
         ) : error ? (
           <div className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 p-6 rounded-2xl text-center">
             <p className="font-semibold">{error}</p>
-            <p className="text-xs opacity-80 mt-2">{t("catalog.errorNetwork")}</p>
+            <p className="text-xs opacity-80 mt-2">{"Vui lòng kiểm tra kết nối mạng hoặc thử lại sau."}</p>
           </div>
         ) : courses.length === 0 ? (
           <div className="w-full min-h-[360px] flex flex-col items-center justify-center text-center p-8 bg-slate-50/50 dark:bg-slate-900/20 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
@@ -205,10 +203,10 @@ export function CourseCatalogClient() {
               </svg>
             </div>
             <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-1">
-              {t("catalog.noResultsTitle")}
+              {"Không tìm thấy khóa học phù hợp"}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
-              {t("catalog.noResultsDesc")}
+              {"Chúng tôi không tìm thấy kết quả nào khớp với từ khóa tìm kiếm của bạn. Vui lòng thử từ khóa khác."}
             </p>
             {(subject || level || searchQuery || sortBy) && (
               <button
@@ -223,7 +221,7 @@ export function CourseCatalogClient() {
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <span>{t("catalogFilter.clearFilters")}</span>
+                <span>{"Xóa bộ lọc"}</span>
               </button>
             )}
           </div>

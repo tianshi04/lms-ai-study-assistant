@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 
 export function NotFoundClient() {
-  const { t } = useTranslation();
+  
   const router = useRouter();
 
   return (
@@ -18,7 +18,7 @@ export function NotFoundClient() {
           {/* Badge */}
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider">
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-            <span>{t("notFound.badge")}</span>
+            <span>{"Lỗi 404 - Không tìm thấy trang"}</span>
           </div>
 
           {/* Graphical 404 Hero Illustration */}
@@ -50,10 +50,10 @@ export function NotFoundClient() {
           {/* Headings */}
           <div className="space-y-3 max-w-2xl mx-auto">
             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              {t("notFound.subtitle")}
+              {"Rất tiếc! Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển."}
             </h1>
             <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-              {t("notFound.description")}
+              {"Địa chỉ đường dẫn (URL) có thể đã bị thay đổi, bị xoá hoặc không khả dụng tạm thời. Hãy kiểm tra lại hoặc quay về trang chính."}
             </p>
           </div>
 
@@ -78,7 +78,7 @@ export function NotFoundClient() {
                     d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
                   />
                 </svg>
-                <span>{t("notFound.backHome")}</span>
+                <span>{"Về trang chủ"}</span>
               </Link>
 
               <Link
@@ -99,7 +99,7 @@ export function NotFoundClient() {
                     d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
                   />
                 </svg>
-                <span>{t("notFound.exploreCourses")}</span>
+                <span>{"Khám phá khóa học"}</span>
               </Link>
             </div>
 
@@ -123,7 +123,7 @@ export function NotFoundClient() {
                     d="M10 19l-7-7m0 0l7-7m-7 7h18"
                   />
                 </svg>
-                <span>{t("notFound.goBack")}</span>
+                <span>{"Quay lại"}</span>
               </button>
             </div>
           </div>
@@ -132,7 +132,7 @@ export function NotFoundClient() {
 
       {/* Simple Footer */}
       <footer className="relative z-10 py-6 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
-        <p>{t("home.footer")}</p>
+        <p>{"© 2026 Coursera LMS Platform. Nền tảng học tập trực tuyến hàng đầu."}</p>
       </footer>
     </div>
   );

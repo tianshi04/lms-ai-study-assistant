@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 
 interface TranscriptPanelProps {
   activeItem: LearningItem | null;
@@ -15,7 +15,7 @@ export function TranscriptPanel({
   currentTime,
   onSeekVideo,
 }: TranscriptPanelProps) {
-  const { t } = useTranslation();
+  
 
   const transcripts = activeItem?.interactiveTranscripts || [];
 
@@ -38,7 +38,7 @@ export function TranscriptPanel({
   if (transcripts.length === 0) {
     return (
       <p className="text-xs text-slate-500 dark:text-slate-500 text-center py-6">
-        {t("player.noTranscriptFound")}
+        {"Không tìm thấy dòng phụ đề khớp với từ khóa"}
       </p>
     );
   }

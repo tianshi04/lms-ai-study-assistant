@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 
 export default function VerifyPortalPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  
   const [certId, setCertId] = useState("");
 
   const handleSearch = (e: React.FormEvent) => {
@@ -28,10 +28,10 @@ export default function VerifyPortalPage() {
 
           <div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-              {t("verify.pageTitle")}
+              {"Xác minh & Tra cứu Chứng chỉ"}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto">
-              {t("verify.pageDesc")}
+              {"Nhập Mã chứng chỉ (Certificate ID) để tra cứu tính hợp lệ và chi tiết bằng cấp trực tuyến."}
             </p>
           </div>
 
@@ -40,7 +40,7 @@ export default function VerifyPortalPage() {
               type="text"
               value={certId}
               onChange={(e) => setCertId(e.target.value)}
-              placeholder={t("verify.searchPlaceholder")}
+              placeholder={"Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)..."}
               className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
               required
             />
@@ -48,7 +48,7 @@ export default function VerifyPortalPage() {
               type="submit"
               className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-500/20 transition-all cursor-pointer"
             >
-              {t("verify.searchBtn")}
+              {"Tra cứu Chứng chỉ"}
             </button>
           </form>
 
