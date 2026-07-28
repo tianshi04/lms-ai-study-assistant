@@ -154,12 +154,16 @@ class AssessmentHandler(AssessmentService):
         request: pb.SubmitGradeAppealRequest,
         ctx: RequestContext[pb.SubmitGradeAppealRequest, pb.SubmitGradeAppealResponse],
     ) -> pb.SubmitGradeAppealResponse:
+
         current_user = require_current_user()
-        success, status = await self.use_case.submit_grade_appeal(
-            user_id=current_user.id,
-            submission_id=request.submission_id,
-            appeal_reason=request.appeal_reason,
-        )
+        try:
+            success, status = await self.use_case.submit_grade_appeal(
+                user_id=current_user.id,
+                submission_id=request.submission_id,
+                appeal_reason=request.appeal_reason,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
         return pb.SubmitGradeAppealResponse(success=success, appeal_status=status)
 
     async def report_peer_review(
