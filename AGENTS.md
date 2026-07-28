@@ -126,3 +126,15 @@ This file provides rules, architectural conventions, and workspace instructions 
 ## 7. Documentation & Code Synchronization Rule
 - **Strict Code-Documentation Synchronization**: Whenever business logic, domain entities, RPC APIs, permission checks, workflow limits, or mathematical formulas are created, updated, or refactored in the codebase, the corresponding documentation in `docs/` **MUST** be updated in the same change to maintain 100% synchronization.
 - **Documentation Audit Requirement**: Agents and developers must verify that no new business rules or logic alterations are introduced into code without corresponding updates in `docs/`.
+
+---
+
+## 8. Domain Constants & Configuration Management Protocol
+- **Domain Constants Isolation**:
+  - All domain-specific business constants, thresholds, essay word limits, cooldown periods, attempt caps, and default evaluation rules **MUST** be centralized in `src/modules/<module_name>/domain/constants.py` (or `src/shared/domain/constants.py` for shared domain constants).
+  - **STRICT NO HARDCODING RULE**: Magic numbers and hardcoded business values (e.g. `150`, `80.0`, `15`, `3`, `8`) **MUST NOT** be embedded directly inside Domain Entities, Use Cases, Repositories, or Presentation Handlers.
+- **Three-Tier Configuration Hierarchy**:
+  1. **Domain Constants (`src/modules/<module>/domain/constants.py`)**: Pure business invariants (e.g. required peer reviews count, minimum essay word count) that do not vary across deployment environments.
+  2. **Infrastructure Environment Config (`src/shared/config.py`)**: Infrastructure & deployment parameters (Database URLs, JWT secret keys, S3/MinIO credentials) managed via Pydantic `BaseSettings` and `.env`.
+  3. **Dynamic System Settings (Database & Admin Console)**: Dynamic operational parameters (e.g. LLM temperature, default LLM model name) editable at runtime by Super Admins via the Admin Dashboard without requiring code redeployment.
+

@@ -2,6 +2,9 @@ from typing import Optional
 from sqlalchemy import Boolean, Enum as SQLEnum, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
+from src.modules.identity.domain.constants import (
+    DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS,
+)
 from src.modules.identity.domain.entities import UserRole
 from src.shared.infrastructure.database import Base
 
@@ -35,6 +38,8 @@ class EnterpriseLicenseModel(Base):
 
     key: Mapped[str] = mapped_column(String(128), primary_key=True)
     partner_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    total_seats: Mapped[int] = mapped_column(Integer, nullable=False, default=500)
+    total_seats: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS
+    )
     used_seats: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)

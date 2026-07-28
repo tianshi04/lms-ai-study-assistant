@@ -5,6 +5,10 @@ from connectrpc.request import RequestContext
 from src.gen.assessment.v1 import assessment_pb as pb
 from src.gen.assessment.v1.assessment_connect import AssessmentService
 from src.modules.assessment.application.assessment_usecase import AssessmentUseCase
+from src.modules.assessment.domain.constants import (
+    DEFAULT_PASSING_THRESHOLD_PERCENT,
+    MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
+)
 from src.modules.assessment.domain.entities import RubricCriteria
 from src.shared.auth import CurrentUser, require_current_user
 
@@ -468,10 +472,12 @@ class AssessmentHandler(AssessmentService):
         return pb.StartGradedQuizSessionResponse(
             session_id=res["session_id"],
             time_limit_minutes=res["duration_minutes"],
-            passing_threshold_percent=res.get("passing_threshold_percent", 80.0),
+            passing_threshold_percent=res.get(
+                "passing_threshold_percent", DEFAULT_PASSING_THRESHOLD_PERCENT
+            ),
             questions=pb_questions,
             start_time_iso=res["start_time_iso"],
             session_seed=res["session_seed"],
             cooldown_seconds_left=res.get("cooldown_seconds_left", 0),
-            attempts_left=res.get("attempts_left", 3),
+            attempts_left=res.get("attempts_left", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
         )

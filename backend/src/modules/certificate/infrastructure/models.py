@@ -3,6 +3,9 @@ from typing import Any, Optional
 from sqlalchemy import Boolean, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
+from src.modules.certificate.domain.constants import (
+    DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS,
+)
 from src.shared.infrastructure.database import Base
 
 
@@ -15,7 +18,7 @@ class FinancialAidModel(Base):
     essay_150_words: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="PENDING")
     review_deadline_days_left: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=15
+        Integer, nullable=False, default=DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS
     )
 
 

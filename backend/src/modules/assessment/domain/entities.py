@@ -1,5 +1,12 @@
 from dataclasses import dataclass
 from typing import Optional
+from src.modules.assessment.domain.constants import (
+    DEFAULT_PASSING_THRESHOLD_PERCENT,
+    DEFAULT_QUIZ_EASY_COUNT,
+    DEFAULT_QUIZ_HARD_COUNT,
+    DEFAULT_QUIZ_MEDIUM_COUNT,
+    DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
+)
 from src.shared.domain.base import Entity, ValueObject
 
 
@@ -211,9 +218,9 @@ class QuestionBank(Entity):
 class QuizMatrix(ValueObject):
     item_id: str
     bank_id: str
-    time_limit_minutes: int = 45
-    passing_threshold_percent: float = 80.0
-    easy_count: int = 4
-    medium_count: int = 4
-    hard_count: int = 2
+    time_limit_minutes: int = DEFAULT_QUIZ_TIME_LIMIT_MINUTES
+    passing_threshold_percent: float = DEFAULT_PASSING_THRESHOLD_PERCENT
+    easy_count: int = DEFAULT_QUIZ_EASY_COUNT
+    medium_count: int = DEFAULT_QUIZ_MEDIUM_COUNT
+    hard_count: int = DEFAULT_QUIZ_HARD_COUNT
     shuffle_options: bool = True

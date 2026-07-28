@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Sequence
 
+from src.modules.forum.domain.constants import DEFAULT_FORUM_AUTHOR_ROLE
 from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
 from src.modules.forum.domain.repository import IForumRepository
 from src.modules.forum.infrastructure.repository import ForumRepository
@@ -37,7 +38,7 @@ class ForumUseCase:
         content: str,
         author_user_id: str = "",
         author_name: str = "Learner",
-        author_role: str = "Student",
+        author_role: str = DEFAULT_FORUM_AUTHOR_ROLE,
     ) -> ForumThreadEntity:
         thread_id = str(uuid.uuid4())
         created_at = utc_now_str()
@@ -88,7 +89,7 @@ class ForumUseCase:
         content: str,
         author_user_id: str,
         author_name: str = "Learner",
-        author_role: str = "Student",
+        author_role: str = DEFAULT_FORUM_AUTHOR_ROLE,
     ) -> ForumReplyEntity:
         reply_id = str(uuid.uuid4())
         created_at = utc_now_str()

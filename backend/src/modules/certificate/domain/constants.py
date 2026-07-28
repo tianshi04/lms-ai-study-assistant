@@ -1,0 +1,5 @@
+"""Domain constants for the Certificate bounded context."""
+
+MIN_FINANCIAL_AID_ESSAY_WORDS: int = 150
+DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS: int = 15
+DEFAULT_CERTIFICATE_PASSING_THRESHOLD_PERCENT: float = 80.0

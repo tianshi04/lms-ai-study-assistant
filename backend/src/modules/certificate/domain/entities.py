@@ -3,7 +3,9 @@ from enum import StrEnum
 from typing import Any, Optional
 
 
-MIN_FINANCIAL_AID_ESSAY_WORDS = 150
+from src.modules.certificate.domain.constants import (
+    DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS,
+)
 
 
 class FinancialAidStatus(StrEnum):
@@ -24,7 +26,7 @@ class FinancialAidApplication:
     course_id: str
     essay_150_words: str
     status: FinancialAidStatus
-    review_deadline_days_left: int = 15
+    review_deadline_days_left: int = DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS
 
     def __post_init__(self) -> None:
         self.status = FinancialAidStatus(self.status)
@@ -41,7 +43,7 @@ class FinancialAidApplication:
         """Restarts a rejected application with the learner's revised essay."""
         self.essay_150_words = essay_150_words
         self.status = FinancialAidStatus.PENDING
-        self.review_deadline_days_left = 15
+        self.review_deadline_days_left = DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS
 
     def auto_approve_if_overdue(self) -> bool:
         if (

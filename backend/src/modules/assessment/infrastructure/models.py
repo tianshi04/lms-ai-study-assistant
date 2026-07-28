@@ -2,6 +2,13 @@ from typing import Any
 from sqlalchemy import ARRAY, Boolean, Float, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.modules.assessment.domain.constants import (
+    DEFAULT_PASSING_THRESHOLD_PERCENT,
+    DEFAULT_QUIZ_EASY_COUNT,
+    DEFAULT_QUIZ_HARD_COUNT,
+    DEFAULT_QUIZ_MEDIUM_COUNT,
+    DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
+)
 from src.shared.infrastructure.database import Base
 
 
@@ -169,11 +176,19 @@ class QuizMatrixModel(Base):
     bank_id: Mapped[str] = mapped_column(
         String(64), ForeignKey("question_banks.id"), nullable=False
     )
-    time_limit_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=45)
-    passing_threshold_percent: Mapped[float] = mapped_column(
-        Float, nullable=False, default=80.0
+    time_limit_minutes: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=DEFAULT_QUIZ_TIME_LIMIT_MINUTES
     )
-    easy_count: Mapped[int] = mapped_column(Integer, nullable=False, default=4)
-    medium_count: Mapped[int] = mapped_column(Integer, nullable=False, default=4)
-    hard_count: Mapped[int] = mapped_column(Integer, nullable=False, default=2)
+    passing_threshold_percent: Mapped[float] = mapped_column(
+        Float, nullable=False, default=DEFAULT_PASSING_THRESHOLD_PERCENT
+    )
+    easy_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=DEFAULT_QUIZ_EASY_COUNT
+    )
+    medium_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=DEFAULT_QUIZ_MEDIUM_COUNT
+    )
+    hard_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=DEFAULT_QUIZ_HARD_COUNT
+    )
     shuffle_options: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
