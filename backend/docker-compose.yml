@@ -66,6 +66,7 @@ services:
       - MINIO_BUCKET_NAME=coursera-assets
       - MINIO_SECURE=false
       - JWT_SECRET=${JWT_SECRET:-your_super_secret_jwt_key_coursera_2026_change_in_prod}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     ports:
       - "${BACKEND_PORT:-8000}:8000"
     depends_on:
@@ -73,6 +74,21 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+
+  # ------------------------------------------------------------------
+  # 4. HẠ TẦNG OBSERVABILITY: Jaeger All-In-One (OTel Collector & UI)
+  # ------------------------------------------------------------------
+  jaeger:
+    profiles: ["infra", "app", "all"]
+    image: jaegertracing/all-in-one:latest
+    container_name: coursera_jaeger
+    restart: always
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+      - "4318:4318" # OTLP HTTP receiver
+      - "16686:16686" # Jaeger Web UI
 
 
 volumes:

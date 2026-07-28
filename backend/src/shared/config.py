@@ -1,4 +1,6 @@
 from functools import lru_cache
+from typing import Optional
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -55,6 +57,12 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = Field(
         default=7,
         description="Refresh token expiration in days",
+    )
+
+    # 5. OpenTelemetry & Jaeger Observability
+    OTEL_EXPORTER_OTLP_ENDPOINT: Optional[str] = Field(
+        default=None,
+        description="OpenTelemetry OTLP Collector Endpoint (e.g. http://localhost:4317)",
     )
 
     @property

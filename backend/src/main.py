@@ -1,5 +1,7 @@
 import asyncio
 from contextlib import asynccontextmanager
+from typing import Any, cast
+
 
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
@@ -27,12 +29,17 @@ from src.modules.learning.application.learning_usecase import LearningUseCase
 from src.modules.learning.presentation.learning_handler import LearningHandler
 import logging
 
+from connectrpc_otel import OpenTelemetryInterceptor
+from opentelemetry.instrumentation.starlette import StarletteInstrumentor
+
 from src.shared.config import settings
 from src.shared.infrastructure.interceptors import AuthInterceptor, ErrorInterceptor
 from src.shared.infrastructure.logging import setup_logging
 from src.shared.infrastructure.middlewares import RequestIDMiddleware
+from src.shared.infrastructure.telemetry import setup_telemetry
 
 setup_logging()
+setup_telemetry()
 logger = logging.getLogger("main")
 
 
@@ -83,7 +90,9 @@ async def lifespan(app: Starlette):
 # 1. Dependency Injection (Bootstrapping Use Cases & Handlers)
 error_interceptor = ErrorInterceptor()
 auth_interceptor = AuthInterceptor()
-interceptors = [error_interceptor, auth_interceptor]
+otel_interceptor = OpenTelemetryInterceptor()
+interceptors = [error_interceptor, auth_interceptor, otel_interceptor]
+
 
 catalog_usecase = CatalogUseCase()
 catalog_handler = CatalogHandler(use_case=catalog_usecase)
@@ -178,19 +187,21 @@ async def proxy_media(request):
 
 
 # 2. Register Routes & Middleware using Starlette
+
 routes = [
-    Mount("/catalog.v1.CatalogService", app=catalog_app),
-    Mount("/learning.v1.LearningService", app=learning_app),
-    Mount("/identity.v1.IdentityService", app=identity_app),
-    Mount("/certificate.v1.CertificateService", app=certificate_app),
-    Mount("/assessment.v1.AssessmentService", app=assessment_app),
-    Mount("/forum.v1.ForumService", app=forum_app),
+    Mount("/catalog.v1.CatalogService", app=cast(Any, catalog_app)),
+    Mount("/learning.v1.LearningService", app=cast(Any, learning_app)),
+    Mount("/identity.v1.IdentityService", app=cast(Any, identity_app)),
+    Mount("/certificate.v1.CertificateService", app=cast(Any, certificate_app)),
+    Mount("/assessment.v1.AssessmentService", app=cast(Any, assessment_app)),
+    Mount("/forum.v1.ForumService", app=cast(Any, forum_app)),
     Route(
         "/coursera-assets/{path:path}",
         endpoint=proxy_media,
         methods=["GET", "HEAD", "OPTIONS"],
     ),
 ]
+
 
 middleware = [
     Middleware(RequestIDMiddleware),
@@ -218,3 +229,4 @@ middleware = [
 
 
 app = Starlette(routes=routes, middleware=middleware, lifespan=lifespan)
+StarletteInstrumentor().instrument_app(app)
