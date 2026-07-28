@@ -93,7 +93,9 @@ class LearningUseCase:
             progresses = await repo.list_user_progresses(user_id)
 
         catalog_usecase = CatalogUseCase()
-        course_tasks = [catalog_usecase.get_course_detail(p.course_id) for p in progresses]
+        course_tasks = [
+            catalog_usecase.get_course_detail(p.course_id) for p in progresses
+        ]
         courses = await asyncio.gather(*course_tasks)
         course_map = {c.id: c for c in courses if c}
 
