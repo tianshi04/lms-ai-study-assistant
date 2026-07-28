@@ -41,16 +41,21 @@ def verify_password(password: str, password_hash: str) -> bool:
     return hmac.compare_digest(new_hash, hash_hex)
 
 
+def _default_learning_repo_factory(session: Any) -> ILearningRepository:
+    from src.modules.learning.infrastructure.repository import (
+        SQLAlchemyLearningRepository,
+    )
+
+    return SQLAlchemyLearningRepository(session)
+
+
 class IdentityUseCase:
     def __init__(
         self,
         learning_repo_factory: Callable[[Any], ILearningRepository] | None = None,
     ) -> None:
-        self.learning_repo_factory = learning_repo_factory or (
-            lambda session: __import__(
-                "src.modules.learning.infrastructure.repository",
-                fromlist=["SQLAlchemyLearningRepository"],
-            ).SQLAlchemyLearningRepository(session)
+        self.learning_repo_factory = (
+            learning_repo_factory or _default_learning_repo_factory
         )
 
     async def login(

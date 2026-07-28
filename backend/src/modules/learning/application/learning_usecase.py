@@ -12,6 +12,14 @@ from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRep
 from src.shared.infrastructure.database import async_session_scope
 
 
+def _default_catalog_repo_factory(session: Any) -> ICatalogRepository:
+    from src.modules.catalog.infrastructure.repository import (
+        SQLAlchemyCatalogRepository,
+    )
+
+    return SQLAlchemyCatalogRepository(session)
+
+
 class LearningUseCase:
     """Application Use Case coordinator for Learning domain using Dependency Inversion (ILearningRepository interface)."""
 
@@ -23,11 +31,8 @@ class LearningUseCase:
         self.repo_factory = repo_factory or (
             lambda session: SQLAlchemyLearningRepository(session)
         )
-        self.catalog_repo_factory = catalog_repo_factory or (
-            lambda session: __import__(
-                "src.modules.catalog.infrastructure.repository",
-                fromlist=["SQLAlchemyCatalogRepository"],
-            ).SQLAlchemyCatalogRepository(session)
+        self.catalog_repo_factory = (
+            catalog_repo_factory or _default_catalog_repo_factory
         )
 
     async def get_progress(self, user_id: str, course_id: str) -> LearningProgress:
