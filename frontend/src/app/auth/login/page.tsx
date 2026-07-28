@@ -7,7 +7,7 @@ import { useForm } from "@tanstack/react-form";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { useToast } from "@/components/ui/Toast";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 import { useAuth } from "@/components/providers/AuthProvider";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +19,7 @@ function LoginFormContent() {
     rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
       ? rawRedirect
       : "/courses";
-  const { t } = useTranslation();
+  
   const toast = useToast();
   const { setAuth } = useAuth();
 
@@ -67,7 +67,7 @@ function LoginFormContent() {
           router.refresh();
         }
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : t("auth.loginFailed");
+        const msg = err instanceof Error ? err.message : "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
         toast.error(msg);
       } finally {
         setSubmitting(false);
@@ -79,9 +79,9 @@ function LoginFormContent() {
     <div className="w-full max-w-md">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t("auth.loginTitle")}</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{"Đăng nhập tài khoản"}</h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            {searchParams.get("redirect") ? t("auth.loginSubtitleRedirect") : t("auth.loginSubtitle")}
+            {searchParams.get("redirect") ? "Vui lòng đăng nhập để bắt đầu học bài giảng này" : "Chào mừng bạn quay trở lại với hệ thống học tập Coursera LMS"}
           </p>
         </div>
 
@@ -99,10 +99,10 @@ function LoginFormContent() {
             validators={{
               onChange: ({ value }) => {
                 if (!value.trim()) {
-                  return t("auth.fillAllFields");
+                  return "Vui lòng điền đầy đủ các thông tin bắt buộc.";
                 }
                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
-                  return t("auth.invalidEmail");
+                  return "Địa chỉ email không hợp lệ.";
                 }
                 return undefined;
               },
@@ -113,7 +113,7 @@ function LoginFormContent() {
               return (
                 <div className="space-y-1.5">
                   <label htmlFor={field.name} className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    {t("auth.emailLabel")}
+                    {"Địa chỉ Email"}
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
@@ -155,7 +155,7 @@ function LoginFormContent() {
             validators={{
               onChange: ({ value }) => {
                 if (!value) {
-                  return t("auth.passwordRequired");
+                  return "Vui lòng nhập mật khẩu.";
                 }
                 return undefined;
               },
@@ -167,7 +167,7 @@ function LoginFormContent() {
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center">
                     <label htmlFor={field.name} className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                      {t("auth.passwordLabel")}
+                      {"Mật khẩu"}
                     </label>
                   </div>
                   <div className="relative">
@@ -196,7 +196,7 @@ function LoginFormContent() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+                      aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
                       className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                     >
                       {showPassword ? (
@@ -237,10 +237,10 @@ function LoginFormContent() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                     </svg>
-                    <span>{t("auth.loggingIn")}</span>
+                    <span>{"Đang đăng nhập..."}</span>
                   </>
                 ) : (
-                  <span>{t("auth.loginBtn")}</span>
+                  <span>{"Đăng nhập ngay"}</span>
                 )}
               </button>
             )}
@@ -255,18 +255,18 @@ function LoginFormContent() {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                {t("auth.devAccountsTitle")}
+                {"Tài khoản Test sẵn (Dev Mode)"}
               </span>
-              <span className="text-[10px] font-mono text-slate-400">{t("auth.devPasswordHint")}</span>
+              <span className="text-[10px] font-mono text-slate-400">{"Mật khẩu: 123456"}</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {[
-                { label: t("auth.roleLearner"), email: "learner@coursera.ai", roleTag: "Role 1" },
-                { label: t("auth.roleInstructor"), email: "instructor@coursera.ai", roleTag: "Role 2" },
-                { label: t("auth.roleTA"), email: "ta@coursera.ai", roleTag: "Role 3" },
-                { label: t("auth.roleSuperAdmin"), email: "admin@coursera.ai", roleTag: "Role 4" },
-                { label: t("auth.rolePartnerAdmin"), email: "partner@coursera.ai", roleTag: "Role 5" },
+                { label: "Học viên (Learner)", email: "learner@coursera.ai", roleTag: "Role 1" },
+                { label: "Giảng viên (Instructor)", email: "instructor@coursera.ai", roleTag: "Role 2" },
+                { label: "Trợ giảng (TA)", email: "ta@coursera.ai", roleTag: "Role 3" },
+                { label: "Super Admin", email: "admin@coursera.ai", roleTag: "Role 4" },
+                { label: "Partner Admin", email: "partner@coursera.ai", roleTag: "Role 5" },
               ].map((acc) => (
                 <button
                   key={acc.email}
@@ -294,9 +294,9 @@ function LoginFormContent() {
 
         <div className="mt-6 text-center pt-4 border-t border-slate-200 dark:border-slate-800">
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            {t("auth.noAccountYet")}{" "}
+            {"Chưa có tài khoản?"}{" "}
             <Link href="/auth/register" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-              {t("auth.registerFreeNow")}
+              {"Đăng ký miễn phí"}
             </Link>
           </p>
         </div>
@@ -306,10 +306,10 @@ function LoginFormContent() {
 }
 
 export default function LoginPage() {
-  const { t } = useTranslation();
+  
   return (
     <main className="flex-1 flex items-center justify-center px-4 py-12">
-      <Suspense fallback={<div className="text-slate-500">{t("common.loading")}</div>}>
+      <Suspense fallback={<div className="text-slate-500">{"Đang tải..."}</div>}>
         <LoginFormContent />
       </Suspense>
     </main>
