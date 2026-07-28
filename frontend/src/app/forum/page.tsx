@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
+import { useEffect, useState, useCallback, useRef, useSyncExternalStore } from "react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import { ForumService, ForumThreadSchema, ForumReplySchema, type ForumThread, type ForumReply } from "@/gen/forum/v1/forum_pb";
@@ -85,33 +85,50 @@ export default function ForumPage() {
   }, [newCourseId]);
 
   // Fetch Forum Threads
-  const fetchThreads = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const client = getRpcClient(ForumService);
-      const res = await client.listThreads({
-        courseId: selectedCourseId,
-        itemId: "",
-      });
-      setThreads(res.threads);
-      const initialExpanded: Record<string, boolean> = {};
-      res.threads.forEach((th) => {
-        initialExpanded[th.id] = true;
-      });
-      setExpandedThreads((prev) => ({ ...initialExpanded, ...prev }));
-    } catch (err: unknown) {
-      console.error("Failed to load forum threads:", err);
-      const msg = err instanceof Error ? err.message : t("common.error");
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedCourseId, t]);
+  const fetchThreadsRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
-    fetchThreads();
-  }, [fetchThreads]);
+    let cancelled = false;
+
+    const doFetch = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const client = getRpcClient(ForumService);
+        const res = await client.listThreads({
+          courseId: selectedCourseId,
+          itemId: "",
+        });
+        if (!cancelled) {
+          setThreads(res.threads);
+          const initialExpanded: Record<string, boolean> = {};
+          res.threads.forEach((th) => {
+            initialExpanded[th.id] = true;
+          });
+          setExpandedThreads((prev) => ({ ...initialExpanded, ...prev }));
+        }
+      } catch (err: unknown) {
+        if (!cancelled) {
+          console.error("Failed to load forum threads:", err);
+          const msg = err instanceof Error ? err.message : t("common.error");
+          setError(msg);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchThreadsRef.current = doFetch;
+    doFetch();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCourseId, t]);
+
+  const fetchThreads = useCallback(() => fetchThreadsRef.current(), []);
 
   // Handle Create Thread
   const handleCreateThread = async (e: React.FormEvent) => {

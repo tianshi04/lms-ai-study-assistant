@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
+import { useEffect, useState, useCallback, useRef, useSyncExternalStore } from "react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import { ForumService, ForumThreadSchema, ForumReplySchema, type ForumThread, type ForumReply } from "@/gen/forum/v1/forum_pb";
@@ -56,26 +56,43 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
   const [editReplyContent, setEditReplyContent] = useState("");
   const [submittingEditReply, setSubmittingEditReply] = useState(false);
 
-  const fetchThreads = useCallback(async () => {
-    if (!courseId) return;
-    setLoading(true);
-    try {
-      const client = getRpcClient(ForumService);
-      const res = await client.listThreads({
-        courseId,
-        itemId: itemId || "",
-      });
-      setThreads(res.threads);
-    } catch (err) {
-      console.error("Failed to load forum tab threads:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [courseId, itemId]);
+  const fetchThreadsRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
-    fetchThreads();
-  }, [fetchThreads]);
+    if (!courseId) return;
+    let cancelled = false;
+
+    const doFetch = async () => {
+      setLoading(true);
+      try {
+        const client = getRpcClient(ForumService);
+        const res = await client.listThreads({
+          courseId,
+          itemId: itemId || "",
+        });
+        if (!cancelled) {
+          setThreads(res.threads);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Failed to load forum tab threads:", err);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchThreadsRef.current = doFetch;
+    doFetch();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId, itemId]);
+
+  const fetchThreads = useCallback(() => fetchThreadsRef.current(), []);
 
   const handleCreateThread = async (e: React.FormEvent) => {
     e.preventDefault();
