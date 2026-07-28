@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Sequence
@@ -12,6 +13,9 @@ from src.shared.infrastructure.database import async_session_scope
 
 def utc_now_str() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+logger = logging.getLogger(__name__)
 
 
 class ForumUseCase:
@@ -61,6 +65,12 @@ class ForumUseCase:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             created_thread = await repo.create_thread(thread_entity)
+            logger.info(
+                "User %s created forum thread %s in course %s",
+                author_user_id,
+                thread_id,
+                course_id,
+            )
 
             # If there is content, post it as the opening reply
             if content.strip():
@@ -111,7 +121,14 @@ class ForumUseCase:
 
         async with async_session_scope() as session:
             repo = self._get_repo(session)
-            return await repo.create_reply(reply_entity)
+            reply = await repo.create_reply(reply_entity)
+            logger.info(
+                "User %s posted reply %s to thread %s",
+                author_user_id,
+                reply_id,
+                thread_id,
+            )
+            return reply
 
     async def vote_post(
         self, post_id: str, user_id: str = "", is_upvote: bool = True
@@ -149,6 +166,12 @@ class ForumUseCase:
             if not existing:
                 return None
             if existing.author_user_id and existing.author_user_id != current_user_id:
+                logger.warning(
+                    "User %s attempted to update thread %s owned by %s",
+                    current_user_id,
+                    thread_id,
+                    existing.author_user_id,
+                )
                 raise PermissionError(
                     "Chỉ tác giả mới có quyền chỉnh sửa bài viết này."
                 )
@@ -180,6 +203,12 @@ class ForumUseCase:
                         session, existing.course_id, user
                     )
                 else:
+                    logger.warning(
+                        "User %s attempted to delete thread %s owned by %s",
+                        current_user_id,
+                        thread_id,
+                        existing.author_user_id,
+                    )
                     raise PermissionError("Bạn không có quyền xóa bài viết này.")
             return await repo.delete_thread(thread_id)
 
@@ -196,6 +225,12 @@ class ForumUseCase:
             if not existing:
                 return None
             if existing.author_user_id and existing.author_user_id != current_user_id:
+                logger.warning(
+                    "User %s attempted to update reply %s owned by %s",
+                    current_user_id,
+                    reply_id,
+                    existing.author_user_id,
+                )
                 raise PermissionError(
                     "Chỉ tác giả mới có quyền chỉnh sửa bình luận này."
                 )
@@ -224,6 +259,12 @@ class ForumUseCase:
                     course_id = thread.course_id if thread else ""
                     await _verify_staff_course_moderation(session, course_id, user)
                 else:
+                    logger.warning(
+                        "User %s attempted to delete reply %s owned by %s",
+                        current_user_id,
+                        reply_id,
+                        existing.author_user_id,
+                    )
                     raise PermissionError("Bạn không có quyền xóa bình luận này.")
             return await repo.delete_reply(reply_id)
 

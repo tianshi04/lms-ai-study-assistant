@@ -1,6 +1,7 @@
-from datetime import datetime, timedelta, timezone
+import logging
 import random
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Optional
 
 
@@ -35,6 +36,8 @@ from src.modules.assessment.infrastructure.sandbox_service import (
 )
 from src.shared.access_policy import require_paid_access
 from src.shared.infrastructure.database import async_session_scope
+
+logger = logging.getLogger(__name__)
 
 
 class AssessmentUseCase:
@@ -73,6 +76,12 @@ class AssessmentUseCase:
             "Academic Honor Code agreed successfully."
             if is_agreed
             else "Academic Honor Code rejected."
+        )
+        logger.info(
+            "User %s %s for item %s",
+            user_id,
+            "agreed to honor code" if is_agreed else "rejected honor code",
+            item_id,
         )
         return is_agreed, msg
 
@@ -219,6 +228,11 @@ class AssessmentUseCase:
             # 1. Verify Honor Code
             honor = await repo.get_honor_code(user_id, item_id)
             if not honor or not honor.is_agreed:
+                logger.warning(
+                    "User %s attempted to submit quiz %s without agreeing to honor code",
+                    user_id,
+                    item_id,
+                )
                 return {
                     "score_percent": 0.0,
                     "passed": False,
@@ -236,6 +250,11 @@ class AssessmentUseCase:
                 until_dt = datetime.fromisoformat(cooldown.cooldown_until)
                 if now < until_dt:
                     seconds_left = int((until_dt - now).total_seconds())
+                    logger.warning(
+                        "User %s attempted to submit quiz %s while in cooldown",
+                        user_id,
+                        item_id,
+                    )
                     return {
                         "score_percent": 0.0,
                         "passed": False,
@@ -357,6 +376,13 @@ class AssessmentUseCase:
             )
             await repo.save_quiz_cooldown(new_cooldown)
 
+            logger.info(
+                "User %s submitted quiz %s with score %s (Passed: %s)",
+                user_id,
+                item_id,
+                score_percent,
+                passed,
+            )
             return {
                 "score_percent": score_percent,
                 "passed": passed,
@@ -409,6 +435,13 @@ class AssessmentUseCase:
             repo = await self._get_repo(session)
             await repo.save_lab_submission(submission)
 
+        logger.info(
+            "User %s submitted lab %s with score %s (Passed: %s)",
+            user_id,
+            item_id,
+            result.score_percent,
+            result.passed,
+        )
         return {
             "score_percent": result.score_percent,
             "passed": result.passed,
@@ -435,6 +468,7 @@ class AssessmentUseCase:
             repo = await self._get_repo(session)
             await repo.save_peer_submission(submission)
 
+        logger.info("User %s submitted peer assignment for item %s", user_id, item_id)
         return (
             sub_id,
             f"Assignment submitted successfully. Please complete {REQUIRED_PEER_REVIEWS_COUNT} peer reviews to view your score.",
@@ -519,6 +553,13 @@ class AssessmentUseCase:
                 created_at=now_iso,
             )
             await repo.save_peer_review(review)
+            logger.info(
+                "User %s submitted peer review %s for submission %s with score %s",
+                reviewer_user_id,
+                review_id,
+                submission_id,
+                score_percent,
+            )
 
             # Update final_score on PeerAssignmentSubmission if not graded by staff
             sub = await repo.get_peer_submission(submission_id)
@@ -579,6 +620,11 @@ class AssessmentUseCase:
             repo = await self._get_repo(session)
             sub = await repo.get_peer_submission(submission_id)
             if sub and sub.user_id != user_id:
+                logger.warning(
+                    "User %s attempted to submit grade appeal for submission %s belonging to another user",
+                    user_id,
+                    submission_id,
+                )
                 raise PermissionError(
                     "Bạn chỉ có quyền gửi khiếu nại điểm đối với bài nộp của chính mình."
                 )

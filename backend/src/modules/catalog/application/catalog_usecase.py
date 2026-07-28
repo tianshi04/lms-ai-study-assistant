@@ -1,4 +1,5 @@
 import html
+import logging
 from typing import Any, Callable
 
 from src.modules.catalog.domain.constants import (
@@ -30,6 +31,9 @@ def _default_learning_repo_factory(session: Any) -> ILearningRepository:
     )
 
     return SQLAlchemyLearningRepository(session)
+
+
+logger = logging.getLogger(__name__)
 
 
 class CatalogUseCase:
@@ -107,7 +111,7 @@ class CatalogUseCase:
     ) -> Course:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            return await repo.create_course(
+            course = await repo.create_course(
                 title=title,
                 slug=slug,
                 description=description,
@@ -118,6 +122,12 @@ class CatalogUseCase:
                 level=level,
                 owner_id=owner_id,
             )
+            logger.info(
+                "Created course %s by owner %s",
+                course.id if hasattr(course, "id") else title,
+                owner_id,
+            )
+            return course
 
     async def update_course(
         self,
@@ -205,7 +215,7 @@ class CatalogUseCase:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             await self._verify_ownership(repo, course_id, current_user, "tạo học liệu")
-            return await repo.create_learning_item(
+            item = await repo.create_learning_item(
                 course_id=course_id,
                 lesson_id=lesson_id,
                 title=title,
@@ -222,6 +232,12 @@ class CatalogUseCase:
                 rubric_criteria_json=rubric_criteria_json,
                 quiz_matrix_id=quiz_matrix_id,
             )
+            logger.info(
+                "Created learning item %s in course %s",
+                item.id if hasattr(item, "id") else title,
+                course_id,
+            )
+            return item
 
     async def submit_course_review(
         self,
@@ -233,6 +249,11 @@ class CatalogUseCase:
         user_role: str = "",
     ):
         if rating_stars < MIN_RATING_STARS or rating_stars > MAX_RATING_STARS:
+            logger.warning(
+                "User %s attempted to submit review with invalid stars %s",
+                user_id,
+                rating_stars,
+            )
             raise ValueError(
                 f"Rating stars must be between {MIN_RATING_STARS} and {MAX_RATING_STARS}."
             )
@@ -240,6 +261,9 @@ class CatalogUseCase:
         # BR_REVIEW_003: Fail-fast char validation and safe Stored XSS sanitization
         trimmed_comment = comment_text.strip()
         if len(trimmed_comment) > MAX_REVIEW_COMMENT_LENGTH:
+            logger.warning(
+                "User %s attempted to submit review exceeding max length", user_id
+            )
             raise ValueError(
                 f"Văn bản nhận xét không được vượt quá {MAX_REVIEW_COMMENT_LENGTH} ký tự (BR_REVIEW_003)."
             )
@@ -259,6 +283,11 @@ class CatalogUseCase:
                 instructor_names and user_name in instructor_names
             )
             if is_instructor_role or is_instructor_id_or_name:
+                logger.warning(
+                    "Instructor %s attempted to submit review for own course %s",
+                    user_id,
+                    real_course_id,
+                )
                 raise ValueError(
                     "Giảng viên không được phép tự gửi đánh giá cho khóa học của mình (BR_REVIEW_004)."
                 )
@@ -271,6 +300,11 @@ class CatalogUseCase:
                 not progress
                 or progress.overall_progress_percent < MIN_PROGRESS_PERCENT_FOR_REVIEW
             ):
+                logger.warning(
+                    "User %s attempted to submit review for course %s without sufficient progress",
+                    user_id,
+                    real_course_id,
+                )
                 raise ValueError(
                     f"Chỉ học viên hoàn thành tối thiểu {int(MIN_PROGRESS_PERCENT_FOR_REVIEW)}% tiến độ khóa học mới có quyền gửi đánh giá (BR_REVIEW_001)."
                 )
@@ -279,7 +313,7 @@ class CatalogUseCase:
                 progress.overall_progress_percent >= VERIFIED_COMPLETER_PROGRESS_PERCENT
             )
 
-            return await repo.submit_course_review(
+            review = await repo.submit_course_review(
                 user_id=user_id,
                 user_name=user_name,
                 course_id=real_course_id,
@@ -287,6 +321,10 @@ class CatalogUseCase:
                 comment_text=clean_comment,
                 is_verified_completer=is_verified_completer,
             )
+            logger.info(
+                "User %s submitted review for course %s", user_id, real_course_id
+            )
+            return review
 
     async def list_course_reviews(
         self, course_id: str, page_size: int = 10, page_token: str = ""

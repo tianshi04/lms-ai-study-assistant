@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Any, Callable
 
 from src.modules.catalog.domain.repository import ICatalogRepository
@@ -10,6 +11,8 @@ from src.modules.learning.domain.entities import (
 from src.modules.learning.domain.repository import ILearningRepository
 from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 from src.shared.infrastructure.database import async_session_scope
+
+logger = logging.getLogger(__name__)
 
 
 def _default_catalog_repo_factory(session: Any) -> ICatalogRepository:
@@ -77,6 +80,9 @@ class LearningUseCase:
             course = await catalog_repo.get_course_detail(course_id)
 
         if not course:
+            logger.warning(
+                "Failed to mark item complete: Course %s not found", course_id
+            )
             return False, LearningProgress(
                 user_id=user_id, course_id=course_id, overall_progress_percent=0.0
             )
@@ -88,6 +94,11 @@ class LearningUseCase:
                     valid_item_ids.add(item.id)
 
         if item_id not in valid_item_ids:
+            logger.warning(
+                "Failed to mark item complete: Item %s not found in course %s",
+                item_id,
+                course_id,
+            )
             return False, LearningProgress(
                 user_id=user_id, course_id=course_id, overall_progress_percent=0.0
             )
@@ -96,9 +107,16 @@ class LearningUseCase:
 
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            return await repo.mark_item_complete(
+            result = await repo.mark_item_complete(
                 user_id, course_id, item_id, real_total_items, valid_item_ids
             )
+            logger.info(
+                "User %s marked item %s complete in course %s",
+                user_id,
+                item_id,
+                course_id,
+            )
+            return result
 
     async def list_enrolled_courses(self, user_id: str) -> list[EnrolledCourseSummary]:
         async with async_session_scope() as session:

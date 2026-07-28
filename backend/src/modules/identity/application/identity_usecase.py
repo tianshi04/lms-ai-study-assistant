@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import logging
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -19,6 +20,8 @@ from src.modules.identity.infrastructure.repository import IdentityRepository
 from src.modules.learning.domain.repository import ILearningRepository
 from src.shared.auth import create_access_token, create_refresh_token, decode_token
 from src.shared.infrastructure.database import async_session_scope
+
+logger = logging.getLogger(__name__)
 
 
 def hash_password(password: str, salt: Optional[bytes] = None) -> str:
@@ -66,11 +69,14 @@ class IdentityUseCase:
             repo = IdentityRepository(session)
             user = await repo.get_by_email(email)
             if not user:
+                logger.warning("Login failed for email %s: User not found", email)
                 return None, "", "", "Email hoặc mật khẩu không chính xác"
 
             if not verify_password(password, user.password_hash):
+                logger.warning("Login failed for email %s: Invalid password", email)
                 return None, "", "", "Email hoặc mật khẩu không chính xác"
 
+            logger.info("User %s successfully logged in", user.id)
             access_token = create_access_token(user.id, user.email, user.role.value)
             refresh_token = create_refresh_token(user.id)
             return user, access_token, refresh_token, ""
@@ -103,6 +109,7 @@ class IdentityUseCase:
             repo = IdentityRepository(session)
             existing = await repo.get_by_email(email)
             if existing:
+                logger.warning("Registration failed: Email %s already exists", email)
                 return None, "Email đằng ký đã tồn tại trên hệ thống"
 
             user_role = UserRole.LEARNER
@@ -125,6 +132,9 @@ class IdentityUseCase:
             )
 
             saved_user = await repo.save(user)
+            logger.info(
+                "Successfully registered new user %s with email %s", new_id, email
+            )
             return saved_user, ""
 
     async def get_user_profile(self, user_id: str) -> Optional[User]:
@@ -144,6 +154,11 @@ class IdentityUseCase:
             clean_key = enterprise_seat_key.strip()
 
             if user.enterprise_seat_key == clean_key:
+                logger.warning(
+                    "User %s attempted to assign already assigned seat %s",
+                    user_id,
+                    clean_key,
+                )
                 return True, "Bạn đã được kích hoạt suất học từ đối tác này trước đó!"
 
             if user.enterprise_seat_key and user.enterprise_seat_key != clean_key:
@@ -159,12 +174,22 @@ class IdentityUseCase:
             license_model = res.scalar_one_or_none()
 
             if not license_model or not license_model.is_active:
+                logger.warning(
+                    "Enterprise seat assignment failed for user %s: Key %s is invalid or inactive",
+                    user_id,
+                    clean_key,
+                )
                 return (
                     False,
                     f"Mã Enterprise Key '{clean_key}' không tồn tại hoặc đã bị vô hiệu hóa.",
                 )
 
             if license_model.used_seats >= license_model.total_seats:
+                logger.warning(
+                    "Enterprise seat assignment failed for user %s: Key %s exhausted",
+                    user_id,
+                    clean_key,
+                )
                 return (
                     False,
                     f"Mã Enterprise Key '{clean_key}' đã hết suất kích hoạt ({license_model.used_seats}/{license_model.total_seats} seats).",
@@ -183,6 +208,9 @@ class IdentityUseCase:
             user.enterprise_seat_key = clean_key
             user.seat_assigned_at = datetime.now(timezone.utc).isoformat()
             await repo.save(user)
+            logger.info(
+                "User %s successfully assigned enterprise seat %s", user_id, clean_key
+            )
             return (
                 True,
                 f"Kích hoạt thành công suất học từ đối tác {license_model.partner_name}!",
@@ -249,6 +277,7 @@ class IdentityUseCase:
 
             user.is_identity_verified = True
             await repo.save(user)
+            logger.info("User %s successfully verified identity", user_id)
             return True, "Xác minh danh tính sinh trắc học & CCCD thành công!"
 
     async def revoke_enterprise_seat(
@@ -288,6 +317,13 @@ class IdentityUseCase:
                     and progress.overall_progress_percent
                     >= ENTERPRISE_REVOCATION_MAX_PROGRESS_PERCENT
                 ):
+                    logger.warning(
+                        "Cannot revoke seat %s from user %s: Progress %s >= %s",
+                        user.enterprise_seat_key,
+                        user_id,
+                        progress.overall_progress_percent,
+                        ENTERPRISE_REVOCATION_MAX_PROGRESS_PERCENT,
+                    )
                     return (
                         False,
                         f"Không thể thu hồi: Học viên đã đạt {progress.overall_progress_percent}% tiến độ (>= {int(ENTERPRISE_REVOCATION_MAX_PROGRESS_PERCENT)}% trong {ENTERPRISE_REVOCATION_GRACE_PERIOD_DAYS} ngày đầu).",
@@ -303,4 +339,9 @@ class IdentityUseCase:
                 await repo.recycle_enterprise_seat(seat_key)
             await session.commit()
 
+            logger.info(
+                "Successfully revoked enterprise seat %s from user %s",
+                seat_key,
+                user_id,
+            )
             return True, f"Đã thu hồi suất học Enterprise Key '{seat_key}' thành công!"

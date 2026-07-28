@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
@@ -17,6 +18,8 @@ from src.modules.certificate.domain.repositories import ICertificateRepository
 from src.modules.certificate.infrastructure.repository import CertificateRepository
 from src.shared.infrastructure.database import async_session_scope
 
+logger = logging.getLogger(__name__)
+
 
 class CertificateUseCase:
     def __init__(self, repo: Optional[ICertificateRepository] = None) -> None:
@@ -30,6 +33,11 @@ class CertificateUseCase:
     ) -> tuple[Optional[FinancialAidApplication], str]:
         words = count_words(essay_150_words)
         if words < MIN_FINANCIAL_AID_ESSAY_WORDS:
+            logger.warning(
+                "User %s attempted to apply financial aid for course %s with short essay",
+                user_id,
+                course_id,
+            )
             return (
                 None,
                 f"Bài luận hỗ trợ tài chính chưa đủ độ dài tối thiểu (Hiện tại {words}/{MIN_FINANCIAL_AID_ESSAY_WORDS} từ). Vui lòng chia sẻ chi tiết hơn về hoàn cảnh và mục tiêu học tập.",
@@ -43,6 +51,11 @@ class CertificateUseCase:
                     return existing, ""
                 existing.resubmit(essay_150_words)
                 saved = await repo.save_financial_aid(existing)
+                logger.info(
+                    "User %s resubmitted financial aid for course %s",
+                    user_id,
+                    course_id,
+                )
                 return saved, ""
 
             app_id = f"faid_{uuid.uuid4().hex[:12]}"
@@ -56,6 +69,9 @@ class CertificateUseCase:
             )
 
             saved = await repo.save_financial_aid(application)
+            logger.info(
+                "User %s applied financial aid for course %s", user_id, course_id
+            )
             return saved, ""
 
     async def _check_auto_approve(
@@ -97,6 +113,11 @@ class CertificateUseCase:
 
             app.review(is_approved)
             updated_app = await repo.save_financial_aid(app)
+            logger.info(
+                "Financial aid %s was reviewed (Approved: %s)",
+                application_id,
+                is_approved,
+            )
             return updated_app, ""
 
     async def get_verified_certificate(
@@ -120,6 +141,12 @@ class CertificateUseCase:
                 user_id, real_course_id
             )
             if current_percent < 100.0:
+                logger.warning(
+                    "User %s failed to get certificate for course %s: Progress %s < 100",
+                    user_id,
+                    real_course_id,
+                    current_percent,
+                )
                 return (
                     None,
                     f"Chưa đủ điều kiện nhận chứng chỉ: Tiến độ khóa học phải đạt 100% (Hiện tại {current_percent}%).",
@@ -133,6 +160,12 @@ class CertificateUseCase:
                 user_id, real_course_id
             )
             if not is_eligible:
+                logger.warning(
+                    "User %s failed to get certificate for course %s: %s",
+                    user_id,
+                    real_course_id,
+                    err_msg,
+                )
                 return None, err_msg
 
             # BR_CERT_003: Check user identity & KYC status
@@ -140,6 +173,11 @@ class CertificateUseCase:
                 user_id
             )
             if not is_identity_verified:
+                logger.warning(
+                    "User %s failed to get certificate for course %s: Identity not verified",
+                    user_id,
+                    real_course_id,
+                )
                 return (
                     None,
                     "Chưa đủ điều kiện nhận chứng chỉ: Bạn cần hoàn tất quy trình Xác minh Danh tính (KYC sinh trắc học/CCCD) trước khi phát hành chứng chỉ lần đầu (BR_CERT_003).",
@@ -196,6 +234,12 @@ class CertificateUseCase:
             )
 
             saved_cert = await repo.save_certificate(cert)
+            logger.info(
+                "User %s received verified certificate %s for course %s",
+                user_id,
+                cert_id,
+                real_course_id,
+            )
             return saved_cert, ""
 
     async def revoke_certificate(
@@ -315,6 +359,12 @@ class CertificateUseCase:
                 specialization_id=specialization_id,
             )
             saved = await repo.save_certificate(spec_cert)
+            logger.info(
+                "User %s received specialization certificate %s for spec %s",
+                user_id,
+                cert_id,
+                specialization_id,
+            )
             return saved, ""
 
     async def list_my_certificates(self, user_id: str) -> list[VerifiedCertificate]:
