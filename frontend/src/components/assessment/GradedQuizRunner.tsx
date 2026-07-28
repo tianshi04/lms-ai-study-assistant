@@ -70,8 +70,8 @@ export function GradedQuizRunner({
           setTimeLimit(res.timeLimitMinutes || 45);
           setPassingThreshold(res.passingThresholdPercent || 80.0);
           setSelectedAnswers(new Array(res.questions?.length || 0).fill(-1));
-          if ((res as any).cooldownSecondsLeft) {
-            setCooldownCountdown((res as any).cooldownSecondsLeft);
+          if ((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft) {
+            setCooldownCountdown((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft!);
           }
         }
       } catch (err: unknown) {
