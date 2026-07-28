@@ -65,6 +65,7 @@ export class AssessmentPage {
   }
 
   async agreeHonorCode() {
+    await expect(this.confirmHonorButton.or(this.honorAgreedBadge)).toBeVisible({ timeout: 10000 });
     if (await this.confirmHonorButton.isVisible()) {
       await this.confirmHonorButton.click();
       await expect(this.honorCheckbox).toBeVisible({ timeout: 5000 });
