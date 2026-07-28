@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCourseDetailQuery, useCourseReviewsQuery } from "@/lib/query_hooks";
+import { useCourseDetailQuery, useCourseReviewsQuery, useMyCertificatesQuery } from "@/lib/query_hooks";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, ItemType } from "@/gen/catalog/v1/catalog_pb";
-import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { Modal } from "@/components/ui/Modal";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { useToast } from "@/components/ui/Toast";
@@ -25,8 +24,12 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   const { data: course, isLoading: loadingCourse, error: courseErr } = useCourseDetailQuery(courseId);
   const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(courseId);
 
-  const [hasCert, setHasCert] = useState(false);
-  const [certId, setCertId] = useState("");
+  const { data: myCertificates = [] } = useMyCertificatesQuery();
+  const matchingCert = course?.title
+    ? myCertificates.find((c) => c.courseTitle.toLowerCase() === course.title.toLowerCase())
+    : undefined;
+  const hasCert = !!matchingCert;
+  const certId = matchingCert?.certificateId || "";
 
   const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
@@ -69,24 +72,6 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
       setSubmittingReview(false);
     }
   };
-
-  useEffect(() => {
-    if (!courseId) return;
-
-    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-    if (!token) return;
-
-    const certClient = getRpcClient(CertificateService);
-    certClient
-      .getVerifiedCertificate({ courseId })
-      .then((res) => {
-        if (res.certificate?.certificateId) {
-          setHasCert(true);
-          setCertId(res.certificate.certificateId);
-        }
-      })
-      .catch(() => {});
-  }, [courseId]);
 
   const loading = loadingCourse && !course;
   const error = courseErr ? courseErr.message : null;

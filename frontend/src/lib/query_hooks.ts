@@ -349,4 +349,22 @@ export function useDeleteQuestionMutation(
   });
 }
 
+/**
+ * Custom TanStack Query hook for fetching and caching the user's verified certificates.
+ */
+export function useMyCertificatesQuery(options?: Partial<UseQueryOptions<VerifiedCertificate[], Error>>) {
+  return useQuery<VerifiedCertificate[], Error>({
+    queryKey: ["myCertificates"],
+    queryFn: async () => {
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      if (!token) return [];
+      const client = getRpcClient(CertificateService);
+      const res = await client.listMyCertificates({});
+      return res.certificates || [];
+    },
+    staleTime: 5 * 60 * 1000,
+    ...options,
+  });
+}
+
 
