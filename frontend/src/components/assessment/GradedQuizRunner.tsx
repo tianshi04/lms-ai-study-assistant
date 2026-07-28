@@ -70,6 +70,9 @@ export function GradedQuizRunner({
           setTimeLimit(res.timeLimitMinutes || 45);
           setPassingThreshold(res.passingThresholdPercent || 80.0);
           setSelectedAnswers(new Array(res.questions?.length || 0).fill(-1));
+          if (res.cooldownSecondsLeft) {
+            setCooldownCountdown(res.cooldownSecondsLeft);
+          }
         }
       } catch (err: unknown) {
         console.error("Failed to start graded quiz session:", err);

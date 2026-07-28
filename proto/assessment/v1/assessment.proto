@@ -319,4 +319,6 @@ message StartGradedQuizSessionResponse {
   repeated QuizSessionQuestion questions = 4;
   string start_time_iso = 5;
   int32 session_seed = 6;
+  int32 cooldown_seconds_left = 7;
+  int32 attempts_left = 8;
 }

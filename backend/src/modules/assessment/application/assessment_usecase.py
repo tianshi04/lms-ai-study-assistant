@@ -184,6 +184,21 @@ class AssessmentUseCase:
             now = datetime.now(timezone.utc)
             expires_at = now + timedelta(minutes=duration_minutes)
 
+            # Check Cooldown status
+            cooldown = await repo.get_quiz_cooldown(user_id, item_id)
+            cooldown_seconds_left = 0
+            attempts_left = 3
+            if cooldown:
+                if cooldown.cooldown_until:
+                    until_dt = datetime.fromisoformat(cooldown.cooldown_until)
+                    if now < until_dt:
+                        cooldown_seconds_left = int((until_dt - now).total_seconds())
+                        attempts_left = 0
+                    else:
+                        attempts_left = max(0, 3 - cooldown.failed_attempts_count)
+                else:
+                    attempts_left = max(0, 3 - cooldown.failed_attempts_count)
+
             # BR_QUIZ_002: Generate N-sampled and option-shuffled questions using unique user/attempt seed
             seed_val = abs(hash(f"{user_id}:{item_id}:{now.isoformat()[:16]}")) % (
                 2**31
@@ -200,6 +215,8 @@ class AssessmentUseCase:
                 "passing_threshold_percent": passing_threshold,
                 "session_seed": seed_val,
                 "questions": questions,
+                "cooldown_seconds_left": cooldown_seconds_left,
+                "attempts_left": attempts_left,
             }
 
     @require_paid_access()

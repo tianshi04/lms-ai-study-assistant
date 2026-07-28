@@ -305,6 +305,11 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     assert r4["cooldown_seconds_left"] > 0
     assert "cooldown period" in r4["answer_explanations"][0]
 
+    # Verify session start returns cooldown_seconds_left immediately
+    sess_cooldown = await usecase.start_graded_quiz_session(user_fail, item_id)
+    assert sess_cooldown["cooldown_seconds_left"] > 0
+    assert sess_cooldown["attempts_left"] == 0
+
 
 @pytest.mark.asyncio
 async def test_sandbox_auto_graded_lab():

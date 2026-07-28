@@ -472,4 +472,6 @@ class AssessmentHandler(AssessmentService):
             questions=pb_questions,
             start_time_iso=res["start_time_iso"],
             session_seed=res["session_seed"],
+            cooldown_seconds_left=res.get("cooldown_seconds_left", 0),
+            attempts_left=res.get("attempts_left", 3),
         )
