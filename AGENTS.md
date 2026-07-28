@@ -67,8 +67,8 @@ This file provides rules, architectural conventions, and workspace instructions 
     - **Handlers / Presentation / Stubs (30% - 50%)**: Network stubs and ConnectRPC handlers (primarily verified via E2E / Black-box integration tests).
   - Code quality tests are located in `backend/tests/test_code_quality.py`. These tests execute `ruff` and `ty` checks during the test run to ensure style consistency.
 - **Frontend (TypeScript)**:
-  - **Linter**: We use **ESLint** with `--max-warnings=0` enforced in CI. Unused variables trigger an error and MUST be cleaned up, or prefixed with an underscore (`_`) if required by signature specs.
-  - **Type Checker & Compiler**: Built-in Next.js typescript compiler check during `npm run build`.
+  - **Linter**: We use **ESLint** with `--max-warnings=0` enforced in CI. Execute `npm run lint` or auto-fix with `npm run lint:fix`. Unused variables trigger an error and MUST be cleaned up, or prefixed with an underscore (`_`) if required by signature specs.
+  - **Type Checker**: Fast standalone static type check via `tsc --noEmit` (`npm run type-check`). Complete build type checking via `npm run build`.
 - **End-to-End Testing (Playwright TS)**:
   - Full-system blackbox E2E tests reside in the root `/e2e` workspace following the Page Object Model (POM) architecture.
   - **Navigation Strategy Rule**:
@@ -112,7 +112,10 @@ This file provides rules, architectural conventions, and workspace instructions 
 ### Frontend (from `frontend/` directory):
 - `npm run gen` - Regenerate TypeScript stubs from root `proto/` directory.
 - `npm run dev` - Start Next.js development server (port 3000).
-- `npm run lint` - Run ESLint checks.
+- `npm run lint` - Run ESLint checks (`--max-warnings=0`).
+- `npm run lint:fix` - Run ESLint checks and automatically fix auto-fixable formatting/lint issues.
+- `npm run type-check` - Fast standalone TypeScript type-checking (`tsc --noEmit`).
+- `npm run check` - Comprehensive quality check combining type checking and linting.
 - `npm run build` - Compile and build Next.js application for production.
 
 ### E2E Testing (from `e2e/` directory):

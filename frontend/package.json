@@ -7,6 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
+    "lint:fix": "eslint . --fix --max-warnings=0",
+    "type-check": "tsc --noEmit",
+    "check": "npm run type-check && npm run lint",
     "gen": "buf generate ../proto --template buf.gen.yaml"
   },
   "dependencies": {
