@@ -578,16 +578,13 @@ async def test_revoke_enterprise_seat_progress_guard(
         user_id="u1", course_id="c1", overall_progress_percent=25.0
     )
 
-    with patch(
-        "src.modules.identity.application.identity_usecase.SQLAlchemyLearningRepository"
-    ) as mock_learning_repo_class:
-        mock_learning_repo = mock_learning_repo_class.return_value
-        mock_learning_repo.get_progress = AsyncMock(return_value=progress)
+    mock_learning_repo = AsyncMock()
+    mock_learning_repo.get_progress = AsyncMock(return_value=progress)
 
-        usecase = IdentityUseCase()
-        ok, msg = await usecase.revoke_enterprise_seat("u1", course_id="c1")
-        assert ok is False
-        assert "tiến độ (>= 20% trong 30 ngày đầu)" in msg
+    usecase = IdentityUseCase(learning_repo_factory=lambda s: mock_learning_repo)
+    ok, msg = await usecase.revoke_enterprise_seat("u1", course_id="c1")
+    assert ok is False
+    assert "tiến độ (>= 20% trong 30 ngày đầu)" in msg
 
 
 @pytest.mark.asyncio

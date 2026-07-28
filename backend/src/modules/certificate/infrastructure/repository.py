@@ -2,20 +2,7 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.modules.assessment.infrastructure.models import (
-    GradeAppealModel,
-    LabSubmissionModel,
-    PeerAssignmentSubmissionModel,
-    QuizSubmissionModel,
-)
 from src.modules.catalog.domain.entities import ItemType
-from src.modules.catalog.infrastructure.models import (
-    CourseModel,
-    LearningItemModel,
-    LessonModel,
-    SpecializationModel,
-    WeekModuleModel,
-)
 from src.modules.certificate.domain.constants import (
     DEFAULT_CERTIFICATE_PASSING_THRESHOLD_PERCENT,
 )
@@ -29,8 +16,6 @@ from src.modules.certificate.infrastructure.models import (
     CertificateModel,
     FinancialAidModel,
 )
-from src.modules.identity.infrastructure.models import UserModel
-from src.modules.learning.infrastructure.models import LearningProgressModel
 
 
 class CertificateRepository(ICertificateRepository):
@@ -228,13 +213,13 @@ class CertificateRepository(ICertificateRepository):
     async def get_course_details_by_id_or_slug(
         self, course_id_or_slug: str
     ) -> tuple[str, str, str, str]:
-        stmt = select(CourseModel).where(
-            (CourseModel.id == course_id_or_slug)
-            | (CourseModel.slug == course_id_or_slug)
-        )
-        res = await self._session.execute(stmt)
-        model = res.scalar_one_or_none()
-        if not model:
+        catalog_repo_factory = __import__(
+            "src.modules.catalog.infrastructure.repository",
+            fromlist=["SQLAlchemyCatalogRepository"],
+        ).SQLAlchemyCatalogRepository
+        catalog_repo = catalog_repo_factory(self._session)
+        course = await catalog_repo.get_course_detail(course_id_or_slug)
+        if not course:
             return (
                 course_id_or_slug,
                 "Specialization Course",
@@ -242,66 +227,91 @@ class CertificateRepository(ICertificateRepository):
                 "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
             )
         return (
-            model.id,
-            model.title,
-            model.partner_name or "DeepLearning.AI",
-            model.partner_logo_url
+            course.id,
+            course.title,
+            course.partner_name or "DeepLearning.AI",
+            course.partner_logo_url
             or "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
         )
 
     async def get_user_kyc_info(self, user_id: str) -> tuple[str, str, bool]:
-        stmt = select(UserModel).where(UserModel.id == user_id)
-        res = await self._session.execute(stmt)
-        user_model = res.scalar_one_or_none()
-        if not user_model:
+        identity_repo_factory = __import__(
+            "src.modules.identity.infrastructure.repository",
+            fromlist=["IdentityRepository"],
+        ).IdentityRepository
+        identity_repo = identity_repo_factory(self._session)
+        user_entity = await identity_repo.get_by_id(user_id)
+        if not user_entity:
             return "learner@coursera.ai", "Học viên Coursera", False
         return (
-            user_model.email or "learner@coursera.ai",
-            user_model.full_name or "Học viên Coursera",
-            getattr(user_model, "is_identity_verified", False),
+            user_entity.email or "learner@coursera.ai",
+            user_entity.full_name or "Học viên Coursera",
+            user_entity.is_identity_verified,
         )
 
     async def get_learning_progress_percent(
         self, user_id: str, course_id: str
     ) -> float:
-        progress_key = f"{user_id}:{course_id}"
-        stmt = select(LearningProgressModel.overall_progress_percent).where(
-            LearningProgressModel.id == progress_key
-        )
-        res = await self._session.execute(stmt)
-        val = res.scalar_one_or_none()
-        return float(val) if val is not None else 0.0
+        learning_repo_factory = __import__(
+            "src.modules.learning.infrastructure.repository",
+            fromlist=["SQLAlchemyLearningRepository"],
+        ).SQLAlchemyLearningRepository
+        learning_repo = learning_repo_factory(self._session)
+        progress = await learning_repo.get_progress(user_id, course_id)
+        return progress.overall_progress_percent if progress else 0.0
 
     async def check_graded_items_and_appeals_eligibility(
         self, user_id: str, course_id: str
     ) -> tuple[bool, str]:
+        assessment_models = __import__(
+            "src.modules.assessment.infrastructure.models",
+            fromlist=[
+                "GradeAppealModel",
+                "LabSubmissionModel",
+                "PeerAssignmentSubmissionModel",
+                "QuizSubmissionModel",
+            ],
+        )
+        catalog_models = __import__(
+            "src.modules.catalog.infrastructure.models",
+            fromlist=["LearningItemModel", "LessonModel", "WeekModuleModel"],
+        )
+
         graded_types = [
             ItemType.GRADED_QUIZ,
             ItemType.AUTO_GRADED_LAB,
             ItemType.PEER_REVIEW,
         ]
         req_stmt = (
-            select(LearningItemModel)
-            .join(LessonModel, LearningItemModel.lesson_id == LessonModel.id)
-            .join(WeekModuleModel, LessonModel.week_module_id == WeekModuleModel.id)
-            .where(WeekModuleModel.course_id == course_id)
-            .where(LearningItemModel.type.in_(graded_types))
+            select(catalog_models.LearningItemModel)
+            .join(
+                catalog_models.LessonModel,
+                catalog_models.LearningItemModel.lesson_id
+                == catalog_models.LessonModel.id,
+            )
+            .join(
+                catalog_models.WeekModuleModel,
+                catalog_models.LessonModel.week_module_id
+                == catalog_models.WeekModuleModel.id,
+            )
+            .where(catalog_models.WeekModuleModel.course_id == course_id)
+            .where(catalog_models.LearningItemModel.type.in_(graded_types))
         )
         req_res = await self._session.execute(req_stmt)
         required_items = req_res.scalars().all()
 
-        quiz_stmt = select(QuizSubmissionModel).where(
-            QuizSubmissionModel.user_id == user_id
+        quiz_stmt = select(assessment_models.QuizSubmissionModel).where(
+            assessment_models.QuizSubmissionModel.user_id == user_id
         )
         quiz_res = await self._session.execute(quiz_stmt)
 
-        lab_stmt = select(LabSubmissionModel).where(
-            LabSubmissionModel.user_id == user_id
+        lab_stmt = select(assessment_models.LabSubmissionModel).where(
+            assessment_models.LabSubmissionModel.user_id == user_id
         )
         lab_res = await self._session.execute(lab_stmt)
 
-        peer_stmt = select(PeerAssignmentSubmissionModel).where(
-            PeerAssignmentSubmissionModel.user_id == user_id
+        peer_stmt = select(assessment_models.PeerAssignmentSubmissionModel).where(
+            assessment_models.PeerAssignmentSubmissionModel.user_id == user_id
         )
         peer_res = await self._session.execute(peer_stmt)
 
@@ -335,9 +345,9 @@ class CertificateRepository(ICertificateRepository):
                     f"Chưa đủ điều kiện nhận chứng chỉ: Bài tập '{req_item.title}' chưa đạt điểm tối thiểu >= {int(DEFAULT_CERTIFICATE_PASSING_THRESHOLD_PERCENT)}% (Hiện tại {max_score}%).",
                 )
 
-        appeal_stmt = select(GradeAppealModel).where(
-            GradeAppealModel.user_id == user_id,
-            GradeAppealModel.status == "PENDING",
+        appeal_stmt = select(assessment_models.GradeAppealModel).where(
+            assessment_models.GradeAppealModel.user_id == user_id,
+            assessment_models.GradeAppealModel.status == "PENDING",
         )
         appeal_res = await self._session.execute(appeal_stmt)
         if appeal_res.scalar_one_or_none():
@@ -351,16 +361,17 @@ class CertificateRepository(ICertificateRepository):
     async def get_specialization_details(
         self, specialization_id: str
     ) -> tuple[Optional[str], Optional[str], Optional[str], list[str]]:
-        stmt = select(SpecializationModel).where(
-            SpecializationModel.id == specialization_id
-        )
-        res = await self._session.execute(stmt)
-        model = res.scalar_one_or_none()
-        if not model:
+        catalog_repo_factory = __import__(
+            "src.modules.catalog.infrastructure.repository",
+            fromlist=["SQLAlchemyCatalogRepository"],
+        ).SQLAlchemyCatalogRepository
+        catalog_repo = catalog_repo_factory(self._session)
+        spec = await catalog_repo.get_specialization(specialization_id)
+        if not spec:
             return None, None, None, []
         return (
-            model.title,
-            model.partner_name or "Partner",
-            model.partner_logo_url or "",
-            model.course_ids or [],
+            spec.title,
+            spec.partner_name or "Partner",
+            spec.partner_logo_url or "",
+            spec.course_ids or [],
         )

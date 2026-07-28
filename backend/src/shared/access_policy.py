@@ -7,8 +7,7 @@ from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 
 from src.modules.certificate.domain.entities import FinancialAidStatus
-from src.modules.certificate.infrastructure.repository import CertificateRepository
-from src.modules.identity.infrastructure.repository import IdentityRepository
+from src.modules.certificate.domain.repositories import ICertificateRepository
 from src.shared.auth import is_staff_role
 from src.shared.infrastructure.database import async_session_scope
 
@@ -25,7 +24,11 @@ class AccessPolicyService:
         if not user_id:
             return False, "Thiếu thông tin người dùng."
 
-        id_repo = IdentityRepository(session)
+        identity_repo_factory = __import__(
+            "src.modules.identity.infrastructure.repository",
+            fromlist=["IdentityRepository"],
+        ).IdentityRepository
+        id_repo = identity_repo_factory(session)
         user_entity = await id_repo.get_by_id(user_id)
         if not user_entity:
             return True, ""
@@ -43,7 +46,11 @@ class AccessPolicyService:
             return True, ""
 
         # 3. Approved / Auto-Approved Financial Aid context (BR_FAID_001)
-        cert_repo = CertificateRepository(session)
+        cert_repo_factory = __import__(
+            "src.modules.certificate.infrastructure.repository",
+            fromlist=["CertificateRepository"],
+        ).CertificateRepository
+        cert_repo: ICertificateRepository = cert_repo_factory(session)
         fa_apps = await cert_repo.list_financial_aids_by_user(user_id, course_id)
         for fa in fa_apps:
             if fa.status in (

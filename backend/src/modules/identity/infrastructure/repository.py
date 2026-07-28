@@ -53,6 +53,21 @@ class IdentityRepository:
         await self._session.flush()
         return self._to_entity(model)
 
+    async def recycle_enterprise_seat(self, seat_key: str) -> None:
+        if not seat_key:
+            return
+        from sqlalchemy import update
+        from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
+
+        await self._session.execute(
+            update(EnterpriseLicenseModel)
+            .where(
+                EnterpriseLicenseModel.key == seat_key,
+                EnterpriseLicenseModel.used_seats > 0,
+            )
+            .values(used_seats=EnterpriseLicenseModel.used_seats - 1)
+        )
+
     def _to_entity(self, model: UserModel) -> User:
         return User(
             id=model.id,

@@ -260,14 +260,14 @@ async def _verify_staff_course_moderation(
     ):
         return
     if course_id:
-        from sqlalchemy import select
-        from src.modules.catalog.infrastructure.models import CourseModel
+        from src.modules.catalog.domain.repository import ICatalogRepository
 
-        stmt = select(CourseModel).where(
-            (CourseModel.id == course_id) | (CourseModel.slug == course_id)
-        )
-        res = await session.execute(stmt)
-        course = res.scalar_one_or_none()
+        catalog_repo_factory = __import__(
+            "src.modules.catalog.infrastructure.repository",
+            fromlist=["SQLAlchemyCatalogRepository"],
+        ).SQLAlchemyCatalogRepository
+        catalog_repo: ICatalogRepository = catalog_repo_factory(session)
+        course = await catalog_repo.get_course_detail(course_id)
         if course:
             from src.shared.permissions import enforce_course_ownership
 

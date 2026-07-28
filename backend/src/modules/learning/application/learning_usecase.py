@@ -1,7 +1,7 @@
 import asyncio
 from typing import Any, Callable
 
-from src.modules.catalog.application.catalog_usecase import CatalogUseCase
+from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.learning.domain.entities import (
     EnrolledCourseSummary,
     LearningProgress,
@@ -18,9 +18,16 @@ class LearningUseCase:
     def __init__(
         self,
         repo_factory: Callable[[Any], ILearningRepository] | None = None,
+        catalog_repo_factory: Callable[[Any], ICatalogRepository] | None = None,
     ) -> None:
         self.repo_factory = repo_factory or (
             lambda session: SQLAlchemyLearningRepository(session)
+        )
+        self.catalog_repo_factory = catalog_repo_factory or (
+            lambda session: __import__(
+                "src.modules.catalog.infrastructure.repository",
+                fromlist=["SQLAlchemyCatalogRepository"],
+            ).SQLAlchemyCatalogRepository(session)
         )
 
     async def get_progress(self, user_id: str, course_id: str) -> LearningProgress:
@@ -60,8 +67,9 @@ class LearningUseCase:
         self, user_id: str, course_id: str, item_id: str, total_course_items: int
     ) -> tuple[bool, LearningProgress]:
 
-        catalog_usecase = CatalogUseCase()
-        course = await catalog_usecase.get_course_detail(course_id)
+        async with async_session_scope() as session:
+            catalog_repo = self.catalog_repo_factory(session)
+            course = await catalog_repo.get_course_detail(course_id)
 
         if not course:
             return False, LearningProgress(
@@ -91,12 +99,11 @@ class LearningUseCase:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             progresses = await repo.list_user_progresses(user_id)
-
-        catalog_usecase = CatalogUseCase()
-        course_tasks = [
-            catalog_usecase.get_course_detail(p.course_id) for p in progresses
-        ]
-        courses = await asyncio.gather(*course_tasks)
+            catalog_repo = self.catalog_repo_factory(session)
+            course_tasks = [
+                catalog_repo.get_course_detail(p.course_id) for p in progresses
+            ]
+            courses = await asyncio.gather(*course_tasks)
         course_map = {c.id: c for c in courses if c}
 
         summaries: list[EnrolledCourseSummary] = []

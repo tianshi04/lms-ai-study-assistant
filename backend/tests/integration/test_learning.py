@@ -63,7 +63,7 @@ async def test_list_enrolled_courses():
     ]
 
     with patch(
-        "src.modules.learning.application.learning_usecase.CatalogUseCase.get_course_detail",
+        "src.modules.catalog.infrastructure.repository.SQLAlchemyCatalogRepository.get_course_detail",
         new_callable=AsyncMock,
     ) as mock_get:
         mock_get.return_value = mock_course_with_items

@@ -17,7 +17,7 @@ from src.modules.catalog.domain.entities import (
 )
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
-from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
+from src.modules.learning.domain.repository import ILearningRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.s3_storage import get_s3_storage_service
@@ -30,9 +30,16 @@ class CatalogUseCase:
     def __init__(
         self,
         repo_factory: Callable[[Any], ICatalogRepository] | None = None,
+        learning_repo_factory: Callable[[Any], ILearningRepository] | None = None,
     ) -> None:
         self.repo_factory = repo_factory or (
             lambda session: SQLAlchemyCatalogRepository(session)
+        )
+        self.learning_repo_factory = learning_repo_factory or (
+            lambda session: __import__(
+                "src.modules.learning.infrastructure.repository",
+                fromlist=["SQLAlchemyLearningRepository"],
+            ).SQLAlchemyLearningRepository(session)
         )
 
     async def _verify_ownership(
@@ -252,7 +259,7 @@ class CatalogUseCase:
                 )
 
             # BR_REVIEW_001: Check if user completed at least 50% of the course via Learning domain
-            learning_repo = SQLAlchemyLearningRepository(session)
+            learning_repo = self.learning_repo_factory(session)
             progress = await learning_repo.get_progress(user_id, real_course_id)
 
             if (

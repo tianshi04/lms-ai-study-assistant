@@ -911,12 +911,19 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         real_id, _ = await self.get_course_id_by_slug_or_id(course_id)
         avg_rating, total_reviews = await self.get_course_rating_stats(real_id)
 
-        # Import LearningProgressModel dynamically to compute learner statistics
-        from src.modules.learning.infrastructure.models import LearningProgressModel
-        from src.modules.identity.infrastructure.models import UserModel
+        identity_repo_factory = __import__(
+            "src.modules.identity.infrastructure.repository",
+            fromlist=["IdentityRepository"],
+        ).IdentityRepository
 
-        stmt = select(LearningProgressModel).where(
-            LearningProgressModel.course_id == real_id
+        identity_repo = identity_repo_factory(self.session)
+
+        learning_progress_model = __import__(
+            "src.modules.learning.infrastructure.models",
+            fromlist=["LearningProgressModel"],
+        ).LearningProgressModel
+        stmt = select(learning_progress_model).where(
+            learning_progress_model.course_id == real_id
         )
         res = await self.session.execute(stmt)
         progresses = res.scalars().all()
@@ -927,17 +934,13 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         for p in progresses:
             sum_progress += p.overall_progress_percent
-            # Fetch user email/name if available
-            u_stmt = select(UserModel).where(UserModel.id == p.user_id)
-            u_res = await self.session.execute(u_stmt)
-            user_model = u_res.scalar_one_or_none()
-
+            user_entity = await identity_repo.get_by_id(p.user_id)
             u_name = (
-                user_model.email.split("@")[0]
-                if user_model and user_model.email
+                user_entity.email.split("@")[0]
+                if user_entity and user_entity.email
                 else f"Học viên #{p.user_id[:6]}"
             )
-            u_email = user_model.email if user_model else ""
+            u_email = user_entity.email if user_entity else ""
 
             students.append(
                 EnrolledStudent(

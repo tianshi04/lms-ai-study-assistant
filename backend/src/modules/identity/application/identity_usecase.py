@@ -3,7 +3,7 @@ import hmac
 import os
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Any, Callable, Optional
 
 from sqlalchemy import select, update
 
@@ -16,7 +16,7 @@ from src.modules.identity.domain.constants import (
 from src.modules.identity.domain.entities import User, UserRole
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
 from src.modules.identity.infrastructure.repository import IdentityRepository
-from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
+from src.modules.learning.domain.repository import ILearningRepository
 from src.shared.auth import create_access_token, create_refresh_token, decode_token
 from src.shared.infrastructure.database import async_session_scope
 
@@ -42,6 +42,17 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 class IdentityUseCase:
+    def __init__(
+        self,
+        learning_repo_factory: Callable[[Any], ILearningRepository] | None = None,
+    ) -> None:
+        self.learning_repo_factory = learning_repo_factory or (
+            lambda session: __import__(
+                "src.modules.learning.infrastructure.repository",
+                fromlist=["SQLAlchemyLearningRepository"],
+            ).SQLAlchemyLearningRepository(session)
+        )
+
     async def login(
         self, email: str, password: str
     ) -> tuple[Optional[User], str, str, str]:
@@ -265,7 +276,7 @@ class IdentityUseCase:
                 within_grace_period = False
 
             if within_grace_period and course_id:
-                learning_repo = SQLAlchemyLearningRepository(session)
+                learning_repo = self.learning_repo_factory(session)
                 progress = await learning_repo.get_progress(user_id, course_id)
                 if (
                     progress
@@ -283,14 +294,8 @@ class IdentityUseCase:
             await repo.save(user)
 
             # BR_ACCESS_003: Atomic DB update for recycling enterprise seats
-            await session.execute(
-                update(EnterpriseLicenseModel)
-                .where(
-                    EnterpriseLicenseModel.key == seat_key,
-                    EnterpriseLicenseModel.used_seats > 0,
-                )
-                .values(used_seats=EnterpriseLicenseModel.used_seats - 1)
-            )
+            if seat_key:
+                await repo.recycle_enterprise_seat(seat_key)
             await session.commit()
 
             return True, f"Đã thu hồi suất học Enterprise Key '{seat_key}' thành công!"
