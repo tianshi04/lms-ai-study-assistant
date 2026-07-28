@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef, useSyncExternalStore } from "
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import { ForumService, ForumThreadSchema, ForumReplySchema, type ForumThread, type ForumReply } from "@/gen/forum/v1/forum_pb";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 
 const emptySubscribe = () => () => {};
 
@@ -24,7 +24,7 @@ function formatRoleName(role: string): string {
 }
 
 export function ForumTab({ courseId, itemId }: ForumTabProps) {
-  const { t } = useTranslation();
+  
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState("");
@@ -142,7 +142,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
   };
 
   const handleDeleteThread = async (threadId: string) => {
-    if (!window.confirm(t("forum.confirmDeleteThread"))) return;
+    if (!window.confirm("Bạn có chắc chắn muốn xóa bài viết này không?")) return;
     try {
       const client = getRpcClient(ForumService);
       await client.deleteThread({ threadId });
@@ -193,7 +193,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
   };
 
   const handleDeleteReply = async (replyId: string) => {
-    if (!window.confirm(t("forum.confirmDeleteReply"))) return;
+    if (!window.confirm("Bạn có chắc chắn muốn xóa phản hồi này không?")) return;
     try {
       const client = getRpcClient(ForumService);
       await client.deleteReply({ replyId });
@@ -324,7 +324,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                       <span className="text-[10px] text-slate-400">({formatRoleName(thread.authorRole)})</span>
                       {thread.isEdited && (
                         <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium italic">
-                          {t("forum.edited")}
+                          {"(Đã chỉnh sửa)"}
                         </span>
                       )}
                       {isThreadAuthor && (
@@ -332,7 +332,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                           onClick={() => startEditThread(thread)}
                           className="text-[10px] font-semibold text-slate-400 hover:text-blue-500 cursor-pointer ml-1"
                         >
-                          {t("forum.edit")}
+                          {"Sửa"}
                         </button>
                       )}
                       {canDeleteThread && (
@@ -340,7 +340,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                           onClick={() => handleDeleteThread(thread.id)}
                           className="text-[10px] font-semibold text-slate-400 hover:text-red-500 cursor-pointer ml-1"
                         >
-                          {t("forum.delete")}
+                          {"Xóa"}
                         </button>
                       )}
                     </div>
@@ -365,14 +365,14 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                             onClick={() => setEditingThreadId(null)}
                             className="px-2 py-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded text-[11px]"
                           >
-                            {t("courseDetail.cancel")}
+                            {"Hủy"}
                           </button>
                           <button
                             onClick={() => handleUpdateThread(thread.id)}
                             disabled={submittingEditThread || !editThreadTitle.trim()}
                             className="px-2 py-1 bg-blue-600 text-white rounded text-[11px] font-semibold hover:bg-blue-500"
                           >
-                            {t("forum.saveChanges")}
+                            {"Lưu thay đổi"}
                           </button>
                         </div>
                       </div>
@@ -422,7 +422,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                               </span>
                               {reply.isEdited && (
                                 <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium italic">
-                                  {t("forum.edited")}
+                                  {"(Đã chỉnh sửa)"}
                                 </span>
                               )}
                               {isReplyAuthor && (
@@ -430,7 +430,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                                   onClick={() => startEditReply(reply)}
                                   className="text-[10px] font-semibold text-slate-400 hover:text-blue-500 cursor-pointer ml-1"
                                 >
-                                  {t("forum.edit")}
+                                  {"Sửa"}
                                 </button>
                               )}
                               {canDeleteReply && (
@@ -438,7 +438,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                                   onClick={() => handleDeleteReply(reply.id)}
                                   className="text-[10px] font-semibold text-slate-400 hover:text-red-500 cursor-pointer ml-1"
                                 >
-                                  {t("forum.delete")}
+                                  {"Xóa"}
                                 </button>
                               )}
                             </div>
@@ -472,14 +472,14 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                                   onClick={() => setEditingReplyId(null)}
                                   className="px-2 py-0.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded text-[10px]"
                                 >
-                                  {t("courseDetail.cancel")}
+                                  {"Hủy"}
                                 </button>
                                 <button
                                   onClick={() => handleUpdateReply(reply.id)}
                                   disabled={submittingEditReply || !editReplyContent.trim()}
                                   className="px-2 py-0.5 bg-blue-600 text-white rounded text-[10px] font-semibold hover:bg-blue-500"
                                 >
-                                  {t("forum.saveChanges")}
+                                  {"Lưu thay đổi"}
                                 </button>
                               </div>
                             </div>

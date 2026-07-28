@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { getAvatarDataUri } from "@/lib/avatar";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -15,7 +15,7 @@ import {
 
 export function UserDropdown() {
   const { userName, userEmail, userRole, logout: handleLogout } = useAuth();
-  const { t, locale, setLocale } = useTranslation();
+  const locale = "vi";
 
   const avatarSrc = useMemo(() => getAvatarDataUri(userEmail || "user"), [userEmail]);
 
@@ -84,7 +84,7 @@ export function UserDropdown() {
             <svg className="w-4.5 h-4.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-            <span>{t('navbar.profile') || 'Trang cá nhân'}</span>
+            <span>{"Trang cá nhân"}</span>
           </Link>
         </DropdownMenuItem>
 
@@ -93,7 +93,7 @@ export function UserDropdown() {
             <svg className="w-4.5 h-4.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
-            <span>{t('navbar.myCourses') || 'Khóa học của tôi'}</span>
+            <span>{"Khóa học của tôi"}</span>
           </Link>
         </DropdownMenuItem>
 
@@ -102,7 +102,7 @@ export function UserDropdown() {
             <svg className="w-4.5 h-4.5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
             </svg>
-            <span>{t('navbar.myCertificates') || 'Chứng chỉ của tôi'}</span>
+            <span>{"Chứng chỉ của tôi"}</span>
           </Link>
         </DropdownMenuItem>
 
@@ -112,7 +112,7 @@ export function UserDropdown() {
               <svg className="w-4.5 h-4.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              <span>{t('navbar.instructorPortal')}</span>
+              <span>{"Giảng Viên"}</span>
             </Link>
           </DropdownMenuItem>
         )}
@@ -130,53 +130,6 @@ export function UserDropdown() {
 
         <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
 
-        {/* Language — DropdownMenu */}
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center justify-between w-full px-3.5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60 rounded-xl transition-all cursor-pointer outline-none">
-            <span className="flex items-center gap-3">
-              <svg className="w-4.5 h-4.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18zM3.6 9h16.8M3.6 15h16.8M11.5 3a17 17 0 000 18M12.5 3a17 17 0 010 18" />
-              </svg>
-              <span>{locale === "vi" ? "Ngôn ngữ" : "Language"}</span>
-            </span>
-            <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">
-              <span>{locale === "vi" ? "Tiếng Việt" : "English"}</span>
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </span>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-44">
-            <DropdownMenuItem
-              onClick={() => setLocale("vi")}
-              className={`flex items-center justify-between px-3.5 py-2.5 text-sm font-medium cursor-pointer ${locale === "vi" ? "text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-500/10" : ""}`}
-            >
-              <span className="flex items-center gap-2.5">
-                <span className="text-base">🇻🇳</span>
-                <span>Tiếng Việt</span>
-              </span>
-              {locale === "vi" && (
-                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setLocale("en")}
-              className={`flex items-center justify-between px-3.5 py-2.5 text-sm font-medium cursor-pointer ${locale === "en" ? "text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-500/10" : ""}`}
-            >
-              <span className="flex items-center gap-2.5">
-                <span className="text-base">🇺🇸</span>
-                <span>English</span>
-              </span>
-              {locale === "en" && (
-                <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-              )}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
 
         <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
 
@@ -188,7 +141,7 @@ export function UserDropdown() {
             <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
-            <span>{t('navbar.logout')}</span>
+            <span>{"Thoát"}</span>
           </span>
         </DropdownMenuItem>
       </DropdownMenuContent>

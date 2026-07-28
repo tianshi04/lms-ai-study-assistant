@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 import { useAuth } from "@/components/providers/AuthProvider";
 import { UserDropdown } from "@/components/layout/UserDropdown";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 
 export function Navbar() {
   const { userName, userRole } = useAuth();
-  const { t } = useTranslation();
+  
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -55,21 +55,21 @@ export function Navbar() {
         {/* Navigation Links (Desktop) */}
         <nav className="hidden md:flex items-center gap-2 text-sm font-semibold">
           <Link href="/courses" className={getLinkClasses("/courses")}>
-            {t('navbar.catalog')}
+            {"Khóa học"}
           </Link>
           {userName && (
             <Link href="/my-courses" className={getLinkClasses("/my-courses")}>
-              {t('navbar.myCourses') || 'Khóa học của tôi'}
+              Khóa học của tôi
             </Link>
           )}
           <Link href="/forum" className={getLinkClasses("/forum")}>
-            {t('navbar.forum')}
+            {"Diễn đàn"}
           </Link>
 
           {/* Render Instructor Portal for authorized roles */}
           {isInstructorOrAdmin && (
             <Link href="/instructor/courses" className={`${getLinkClasses("/instructor")} flex items-center gap-1.5`}>
-              <span>{t('navbar.instructorPortal')}</span>
+              <span>{"Giảng Viên"}</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">Portal</span>
             </Link>
           )}
@@ -83,10 +83,10 @@ export function Navbar() {
           )}
 
           <Link href="/financial-aid?courseId=course-python-ai" className={getLinkClasses("/financial-aid")}>
-            {t('navbar.financialAid')}
+            {"Hỗ trợ tài chính"}
           </Link>
           <Link href="/verify" className={getLinkClasses("/verify")}>
-            {t('navbar.verifyCert')}
+            {"Xác minh chứng chỉ"}
           </Link>
         </nav>
 
@@ -102,13 +102,13 @@ export function Navbar() {
                 href="/auth/login"
                 className="text-xs font-semibold px-3.5 py-2 rounded-xl text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 hover:bg-blue-100 transition-colors"
               >
-                {t('navbar.login')}
+                {"Đăng nhập"}
               </Link>
               <Link
                 href="/auth/register"
                 className="text-xs font-semibold px-3.5 py-2 rounded-xl text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-500/20 transition-all"
               >
-                {t('navbar.register')}
+                {"Đăng ký"}
               </Link>
             </div>
           )}
@@ -141,7 +141,7 @@ export function Navbar() {
             onClick={() => setMobileMenuOpen(false)}
             className={getMobileLinkClasses("/courses")}
           >
-            {t('navbar.catalog')}
+            {"Khóa học"}
           </Link>
           {userName && (
             <Link
@@ -149,7 +149,7 @@ export function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className={getMobileLinkClasses("/my-courses")}
             >
-              {t('navbar.myCourses') || 'Khóa học của tôi'}
+              Khóa học của tôi
             </Link>
           )}
           <Link
@@ -157,7 +157,7 @@ export function Navbar() {
             onClick={() => setMobileMenuOpen(false)}
             className={getMobileLinkClasses("/forum")}
           >
-            {t('navbar.forum')}
+            {"Diễn đàn"}
           </Link>
           {isInstructorOrAdmin && (
             <Link
@@ -165,7 +165,7 @@ export function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className={`${getMobileLinkClasses("/instructor")} flex items-center justify-between`}
             >
-              <span>{t('navbar.instructorPortal')}</span>
+              <span>{"Giảng Viên"}</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">Portal</span>
             </Link>
           )}
@@ -184,14 +184,14 @@ export function Navbar() {
             onClick={() => setMobileMenuOpen(false)}
             className={getMobileLinkClasses("/financial-aid")}
           >
-            {t('navbar.financialAid')}
+            {"Hỗ trợ tài chính"}
           </Link>
           <Link
             href="/verify"
             onClick={() => setMobileMenuOpen(false)}
             className={getMobileLinkClasses("/verify")}
           >
-            {t('navbar.verifyCert')}
+            {"Xác minh chứng chỉ"}
           </Link>
         </div>
       )}

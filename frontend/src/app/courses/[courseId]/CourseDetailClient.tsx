@@ -10,7 +10,7 @@ import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { Modal } from "@/components/ui/Modal";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { useToast } from "@/components/ui/Toast";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 
 const emptySubscribe = () => () => {};
 
@@ -19,7 +19,7 @@ interface CourseDetailClientProps {
 }
 
 export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
-  const { t, locale } = useTranslation();
+  const locale = 'vi';
   const queryClient = useQueryClient();
 
   const { data: course, isLoading: loadingCourse, error: courseErr } = useCourseDetailQuery(courseId);
@@ -57,13 +57,13 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
       queryClient.invalidateQueries({ queryKey: ["courseDetail", course.id] });
       queryClient.invalidateQueries({ queryKey: ["courseReviews", course.id] });
 
-      toast.success(t("courseDetail.reviewSuccessTitle"), {
-        description: t("courseDetail.reviewSuccessDesc"),
+      toast.success("Đã gửi đánh giá thành công!", {
+        description: "Cảm ơn bạn đã phản hồi ý kiến cho khóa học.",
       });
       setIsReviewModalOpen(false);
     } catch (err: unknown) {
       console.error("Failed to submit review:", err);
-      const msg = err instanceof Error ? err.message : t("courseDetail.submitting");
+      const msg = err instanceof Error ? err.message : "Đang gửi...";
       toast.error(msg);
     } finally {
       setSubmittingReview(false);
@@ -135,13 +135,13 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl max-w-md shadow-sm">
-          <h2 className="text-xl font-bold text-red-500 dark:text-red-400 mb-2">{t("catalog.errorLoad")}</h2>
+          <h2 className="text-xl font-bold text-red-500 dark:text-red-400 mb-2">{"Không thể tải danh sách khóa học"}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{error || `Course "${courseId}" not found.`}</p>
           <Link
             href="/courses"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors"
           >
-            ← {t("player.backToCatalog")}
+            ← {"Trở lại Catalog"}
           </Link>
         </div>
       </div>
@@ -156,7 +156,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           <div className="lg:col-span-2">
             <div className="flex flex-wrap items-center gap-2 mb-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider">
-                {t("courseDetail.specializationCourse")}
+                {"Khóa học Chuyên sâu (Specialization)"}
               </div>
               {isInstructorOrAdmin && (
                 <Link
@@ -166,7 +166,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
-                  <span>{t("courseDetail.instructorBuilder")}</span>
+                  <span>{"Biên soạn Bài giảng (Instructor Builder)"}</span>
                 </Link>
               )}
               {hasCert && (
@@ -174,7 +174,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>{t("courseDetail.certReceived")}</span>
+                  <span>{"Đã Nhận Chứng Chỉ"}</span>
                 </div>
               )}
               {course.averageRating > 0 && (
@@ -182,7 +182,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   <svg className="w-4 h-4 text-amber-400 fill-amber-400" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
                   </svg>
-                  <span>{course.averageRating.toFixed(1)} ★ ({course.reviewCount} {t("courseDetail.reviewsCount")})</span>
+                  <span>{course.averageRating.toFixed(1)} ★ ({course.reviewCount} {"nhận xét"})</span>
                 </div>
               )}
             </div>
@@ -194,12 +194,12 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
             </p>
             <div className="flex flex-wrap items-center gap-6 text-sm text-slate-500 dark:text-slate-400">
               <div>
-                <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-semibold">{t("courseDetail.partnerPublisher")}</span>
+                <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-semibold">{"Đối tác phát hành"}</span>
                 <span className="font-semibold text-slate-900 dark:text-white">{course.partnerName}</span>
               </div>
               <div className="h-8 w-px bg-slate-200 dark:bg-slate-800" />
               <div>
-                <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-semibold">{t("courseDetail.instructorLabel")}</span>
+                <span className="block text-xs text-slate-400 dark:text-slate-500 uppercase font-semibold">{"Giảng viên"}</span>
                 <span className="font-semibold text-slate-900 dark:text-white">{course.instructorNames.join(", ")}</span>
               </div>
             </div>
@@ -209,10 +209,10 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-xl space-y-6">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-1 rounded-md">
-                {t("courseDetail.enrollmentOpen")}
+                {"Đang mở đăng ký"}
               </span>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-3">{t("courseDetail.freeEnrollment")}</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{t("courseDetail.freeEnrollmentDesc")}</p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-3">{"Miễn Phí Tham Gia"}</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{"Đã bao gồm bài giảng Video tương tác & Phụ đề cuộn"}</p>
             </div>
 
             {hasCert ? (
@@ -224,13 +224,13 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   <svg className="w-4 h-4 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>{t("courseDetail.viewCert")}</span>
+                  <span>{"Xem Chứng Chỉ"}</span>
                 </Link>
                 <Link
                   href={`/learn/${course.id}`}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold transition-all cursor-pointer"
                 >
-                  <span>{t("courseDetail.retakeCourse")}</span>
+                  <span>{"Vào Học Lại"}</span>
                 </Link>
               </div>
             ) : (
@@ -238,7 +238,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 href={`/learn/${course.id}`}
                 className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm transition-all shadow-lg shadow-blue-600/20 cursor-pointer"
               >
-                {t("courseDetail.enrollNow")}
+                {"Vào Học Ngay"}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
@@ -250,13 +250,13 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                {t("courseDetail.flexibleDeadlines")}
+                {"Hạn nộp linh hoạt (Flexible Deadlines)"}
               </li>
               <li className="flex items-center gap-2">
                 <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                {t("courseDetail.verifiedCertIncluded")}
+                {"Chứng chỉ Xác thực Đã đăng ký"}
               </li>
             </ul>
           </div>
@@ -265,11 +265,11 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
 
       {/* Course Syllabus Content */}
       <main className="max-w-7xl mx-auto px-6 py-12">
-        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-6">{t("courseDetail.syllabusTitle")}</h2>
+        <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-6">{"Nội Dung Chương Trình Học (Syllabus)"}</h2>
 
         {course.weekModules.length === 0 ? (
           <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/80 p-8 rounded-2xl text-center text-slate-500 dark:text-slate-400">
-            {t("courseDetail.updatingLectures")}
+            {"Khóa học đang trong quá trình cập nhật các bài giảng tuần tiếp theo."}
           </div>
         ) : (
           <div className="space-y-6">
@@ -277,10 +277,10 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <div key={week.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-3 py-1 rounded-full border border-blue-200 dark:border-blue-500/20">
-                    {t("courseDetail.weekLabel")} {week.weekNumber}
+                    {"Tuần"} {week.weekNumber}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {week.lessons.reduce((sum, l) => sum + l.items.length, 0)} {t("courseDetail.itemsCount")}
+                    {week.lessons.reduce((sum, l) => sum + l.items.length, 0)} {"Items bài học"}
                   </span>
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{week.title}</h3>
@@ -338,9 +338,9 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
         <div className="mt-16 border-t border-slate-200 dark:border-slate-800 pt-12">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
             <div>
-              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">{t("courseDetail.reviewsTitle")}</h2>
+              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">{"Đánh giá & Nhận xét từ Học viên"}</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                {t("courseDetail.reviewsSubtitle")}
+                {"Các nhận xét thực tế từ học viên đã tham gia khóa học này"}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -350,7 +350,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   <div>
                     <RatingStars rating={course.averageRating} size="md" />
                     <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
-                      {course.reviewCount} {t("courseDetail.reviewsCount")}
+                      {course.reviewCount} {"nhận xét"}
                     </span>
                   </div>
                 </div>
@@ -370,7 +370,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                 </svg>
-                <span>{t("courseDetail.writeReview")}</span>
+                <span>{"Viết / Sửa đánh giá"}</span>
               </button>
             </div>
           </div>
@@ -383,7 +383,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
             </div>
           ) : reviews.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-8 rounded-2xl text-center text-slate-500 dark:text-slate-400">
-              {t("courseDetail.noReviewsYet")}
+              {"Chưa có đánh giá nào cho khóa học này. Hãy là học viên đầu tiên hoàn thành và để lại nhận xét!"}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -400,7 +400,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                       <div>
                         <div className="flex items-center gap-2 mb-0.5">
                           <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                            {rev.userName || t("courseDetail.studentFallback")}
+                            {rev.userName || "Học viên LMS"}
                           </h4>
                           {rev.isVerifiedCompleter ? (
                             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
@@ -413,7 +413,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                           )}
                         </div>
                         <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                          {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString(locale === "vi" ? "vi-VN" : "en-US") : t("courseDetail.recent")}
+                          {rev.createdAt ? new Date(rev.createdAt).toLocaleDateString(locale === "vi" ? "vi-VN" : "en-US") : "Gần đây"}
                         </span>
                       </div>
                     </div>
@@ -440,13 +440,13 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
       <Modal
         isOpen={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}
-        title={t("courseDetail.submitReviewModalTitle")}
+        title={"Đánh giá khóa học"}
         className="max-w-md"
       >
         <form onSubmit={handleReviewSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
-              {t("courseDetail.selectRatingStars")}
+              {"Chọn số sao đánh giá:"}
             </label>
             <div className="flex items-center gap-1.5 justify-center py-2">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -482,7 +482,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
-                {t("courseDetail.commentLabel")}
+                {"Nội dung nhận xét:"}
               </label>
               <span className={`text-[10px] ${comment.length > 2000 ? "text-red-500 font-bold" : "text-slate-400"}`}>
                 {comment.length}/2000
@@ -493,7 +493,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               maxLength={2000}
-              placeholder={t("courseDetail.commentPlaceholder")}
+              placeholder={"Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng..."}
               className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
             />
           </div>
@@ -504,14 +504,14 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               onClick={() => setIsReviewModalOpen(false)}
               className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
             >
-              {t("courseDetail.cancel")}
+              {"Hủy"}
             </button>
             <button
               type="submit"
               disabled={submittingReview}
               className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
             >
-              {submittingReview ? t("courseDetail.submitting") : t("courseDetail.submitReview")}
+              {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
             </button>
           </div>
         </form>

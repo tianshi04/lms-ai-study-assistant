@@ -1,7 +1,7 @@
 "use client";
 
 import type { LearningProgress } from "@/gen/learning/v1/learning_pb";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 
 interface DeadlinesPanelProps {
   progress: LearningProgress | null;
@@ -9,12 +9,12 @@ interface DeadlinesPanelProps {
 }
 
 export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelProps) {
-  const { t } = useTranslation();
+  
 
   if (!progress) {
     return (
       <div className="text-center text-xs text-slate-500 py-6">
-        {t("common.loading")}
+        {"Đang tải..."}
       </div>
     );
   }
@@ -26,8 +26,8 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="font-bold text-sm text-slate-900 dark:text-white">{t("player.upcomingDeadlines")}</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{t("courseDetail.flexibleDeadlines")}</p>
+            <h4 className="font-bold text-sm text-slate-900 dark:text-white">{"Các mốc Deadline sắp tới"}</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{"Hạn nộp linh hoạt (Flexible Deadlines)"}</p>
           </div>
           {hasOverdue && (
             <button
@@ -53,7 +53,7 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
               }`}
             >
               <div>
-                <span className="font-bold block">{t("courseDetail.weekLabel")} {d.weekNumber}</span>
+                <span className="font-bold block">{"Tuần"} {d.weekNumber}</span>
                 <span className="text-[10px] opacity-80">{d.dueDate}</span>
               </div>
               <span

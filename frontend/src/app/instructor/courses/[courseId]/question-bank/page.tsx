@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { Modal, ConfirmDialog } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 import {
   useQuestionBanksQuery,
   useCreateQuestionBankMutation,
@@ -23,7 +23,7 @@ export default function QuestionBankPage({
   const resolvedParams = use(params);
   const courseId = resolvedParams.courseId;
   const toast = useToast();
-  const { t } = useTranslation();
+  
 
   // Queries & Mutations
   const { data: banks = [], isLoading, refetch } = useQuestionBanksQuery(courseId);
@@ -72,7 +72,7 @@ export default function QuestionBankPage({
         category: newBankCategory,
         description: newBankDesc,
       });
-      toast.success(t("instructorBuilder.toastBankCreated"));
+      toast.success("Tạo Kho Ngân hàng Đề thành công!");
       setShowCreateBankModal(false);
       setNewBankTitle("");
       setNewBankDesc("");
@@ -83,7 +83,7 @@ export default function QuestionBankPage({
       }
     } catch (err: unknown) {
       console.error(err);
-      toast.error(t("instructorBuilder.toastBankCreateFail"));
+      toast.error("Tạo Kho Ngân hàng Đề thất bại.");
     } finally {
       setCreatingBank(false);
     }
@@ -132,14 +132,14 @@ export default function QuestionBankPage({
     try {
       const res = await deleteQuestionMutation.mutateAsync({ questionId: deletingQuestionId });
       if (res.success) {
-        toast.success(t("instructorBuilder.toastQuestionDeleted"));
+        toast.success("Đã xóa câu hỏi thành công!");
         await refetch();
       } else {
-        toast.error(res.message || t("instructorBuilder.toastQuestionDeleteFail"));
+        toast.error(res.message || "Xóa câu hỏi thất bại.");
       }
     } catch (err: unknown) {
       console.error(err);
-      toast.error(t("instructorBuilder.toastQuestionDeleteFail"));
+      toast.error("Xóa câu hỏi thất bại.");
     } finally {
       setDeletingQuestionId(null);
     }
@@ -151,19 +151,19 @@ export default function QuestionBankPage({
 
     // Validations
     if (!qText.trim()) {
-      toast.error(t("instructorBuilder.validateQuestionText"));
+      toast.error("Vui lòng nhập nội dung câu hỏi.");
       return;
     }
     if (qOptions.length < 2) {
-      toast.error(t("instructorBuilder.validateOptionsCount"));
+      toast.error("Vui lòng thêm ít nhất 2 tùy chọn đáp án.");
       return;
     }
     if (qOptions.some((opt) => !opt.optionText.trim())) {
-      toast.error(t("instructorBuilder.validateOptionsText"));
+      toast.error("Nội dung tùy chọn không được để trống.");
       return;
     }
     if (qOptions.every((opt) => !opt.isCorrect)) {
-      toast.error(t("instructorBuilder.validateCorrectOption"));
+      toast.error("Vui lòng chọn ít nhất một đáp án đúng.");
       return;
     }
 
@@ -191,7 +191,7 @@ export default function QuestionBankPage({
           explanation: qExplanation,
           options: finalOptions,
         });
-        toast.success(t("instructorBuilder.toastQuestionUpdated"));
+        toast.success("Đã cập nhật câu hỏi thành công!");
       } else {
         await addQuestionMutation.mutateAsync({
           bankId: selectedBankId!,
@@ -201,7 +201,7 @@ export default function QuestionBankPage({
           explanation: qExplanation,
           options: finalOptions,
         });
-        toast.success(t("instructorBuilder.toastQuestionAdded"));
+        toast.success("Đã thêm câu hỏi vào Kho thành công!");
       }
 
       setShowAddQuestionModal(false);
@@ -218,7 +218,7 @@ export default function QuestionBankPage({
       await refetch();
     } catch (err: unknown) {
       console.error(err);
-      toast.error(editingQuestionId ? t("instructorBuilder.toastQuestionUpdateFail") : t("instructorBuilder.toastQuestionAddFail"));
+      toast.error(editingQuestionId ? "Cập nhật câu hỏi thất bại." : "Thêm câu hỏi thất bại.");
     } finally {
       setSubmittingQuestion(false);
     }
@@ -232,15 +232,15 @@ export default function QuestionBankPage({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             <Link href="/instructor/courses" className="hover:text-blue-600 dark:hover:text-blue-400">
-              {t("instructorBuilder.breadcrumbInstructor")}
+              {"Giảng viên"}
             </Link>
             <span>/</span>
             <Link href={`/instructor/courses/${courseId}`} className="hover:text-blue-600 dark:hover:text-blue-400">
-              {t("instructorBuilder.breadcrumbBuilder")}
+              {"Biên soạn bài học"}
             </Link>
             <span>/</span>
             <span className="font-semibold text-slate-800 dark:text-slate-200">
-              {t("instructorBuilder.questionBankPageTitle")}
+              {"Ngân hàng Câu hỏi & Đề thi"}
             </span>
           </div>
 
@@ -248,7 +248,7 @@ export default function QuestionBankPage({
             href={`/instructor/courses/${courseId}`}
             className="text-xs font-semibold px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
           >
-            {t("instructorBuilder.backBtn")}
+            {"Danh sách Khóa học"}
           </Link>
         </div>
 
@@ -259,10 +259,10 @@ export default function QuestionBankPage({
               Question Pool Engine
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-              {t("instructorBuilder.questionBankPageTitle")}
+              {"Ngân hàng Câu hỏi & Đề thi"}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              {t("instructorBuilder.questionBankPageSubtitle")}
+              {"Quản lý các kho đề thi và câu hỏi của khóa học. Thiết lập các bậc câu hỏi để rút ngẫu nhiên làm đề thi."}
             </p>
           </div>
           <button
@@ -272,14 +272,14 @@ export default function QuestionBankPage({
             <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
             </svg>
-            <span>{t("instructorBuilder.addQuestionBankBtn")}</span>
+            <span>{"Tạo Kho Ngân hàng Đề"}</span>
           </button>
         </div>
 
         {isLoading ? (
           <div className="py-20 text-center text-slate-500">
             <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <span>{t("instructorBuilder.loading")}</span>
+            <span>{"Đang tải cấu trúc bài giảng khóa học..."}</span>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -291,7 +291,7 @@ export default function QuestionBankPage({
 
               {banks.length === 0 ? (
                 <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 text-slate-500">
-                  <p className="text-sm font-semibold">{t("instructorBuilder.noQuestionBanks")}</p>
+                  <p className="text-sm font-semibold">{"Khóa học này chưa có Kho ngân hàng đề nào."}</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -375,7 +375,7 @@ export default function QuestionBankPage({
                         </p>
                       )}
                       <p className="text-xs font-bold text-blue-600 dark:text-blue-400 pt-1">
-                        {t("instructorBuilder.totalQuestionsLabel")} {selectedBank.questions?.length || 0}
+                        {"Tổng số câu hỏi:"} {selectedBank.questions?.length || 0}
                       </p>
                     </div>
 
@@ -397,7 +397,7 @@ export default function QuestionBankPage({
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
                       </svg>
-                      <span>{t("instructorBuilder.addQuestionBtn")}</span>
+                      <span>{"Thêm Câu hỏi vào Kho"}</span>
                     </button>
                   </div>
 
@@ -407,7 +407,7 @@ export default function QuestionBankPage({
                       <svg className="w-10 h-10 mx-auto text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <p className="text-sm font-semibold">{t("instructorBuilder.noQuestionsInBank")}</p>
+                      <p className="text-sm font-semibold">{"Kho đề này chưa có câu hỏi nào. Hãy thêm câu hỏi đầu tiên!"}</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -432,10 +432,10 @@ export default function QuestionBankPage({
                                     : "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400"
                                 }`}>
                                   {q.difficulty === "EASY"
-                                    ? t("instructorBuilder.difficultyEasy")
+                                    ? "Dễ (Easy)"
                                     : q.difficulty === "MEDIUM"
-                                    ? t("instructorBuilder.difficultyMedium")
-                                    : t("instructorBuilder.difficultyHard")}
+                                    ? "Trung bình (Medium)"
+                                    : "Khó (Hard)"}
                                 </span>
                                 <span className="text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded mr-2">
                                   {q.questionType}
@@ -445,7 +445,7 @@ export default function QuestionBankPage({
                                   <button
                                     onClick={() => handleOpenEditQuestionModal(q)}
                                     className="p-1 rounded text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                                    title={t("common.edit") || "Sửa"}
+                                    title="Sửa"
                                   >
                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-2.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -454,7 +454,7 @@ export default function QuestionBankPage({
                                   <button
                                     onClick={() => setDeletingQuestionId(q.id)}
                                     className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                                    title={t("common.delete") || "Xóa"}
+                                    title="Xoá"
                                   >
                                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -522,12 +522,12 @@ export default function QuestionBankPage({
       <Modal
         isOpen={showCreateBankModal}
         onClose={() => setShowCreateBankModal(false)}
-        title={t("instructorBuilder.createBankTitle")}
+        title={"Tạo Kho Ngân hàng Đề mới"}
       >
         <form onSubmit={handleCreateBank} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-              {t("instructorBuilder.bankTitleLabel")} *
+              {"Tên Kho Ngân hàng Đề"} *
             </label>
             <input
               type="text"
@@ -541,22 +541,22 @@ export default function QuestionBankPage({
 
           <div>
             <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-              {t("instructorBuilder.bankCategoryLabel")}
+              {"Phân loại Kho"}
             </label>
             <select
               value={newBankCategory}
               onChange={(e) => setNewBankCategory(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-hidden"
             >
-              <option value="PRACTICE">{t("instructorBuilder.categoryPractice")}</option>
-              <option value="MODULE_EXAM">{t("instructorBuilder.categoryModuleExam")}</option>
-              <option value="FINAL_EXAM">{t("instructorBuilder.categoryFinalExam")}</option>
+              <option value="PRACTICE">{"Luyện tập (PRACTICE)"}</option>
+              <option value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</option>
+              <option value="FINAL_EXAM">{"Bài thi Cuối khóa (FINAL_EXAM)"}</option>
             </select>
           </div>
 
           <div>
             <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-              {t("instructorBuilder.bankDescLabel")}
+              {"Mô tả"}
             </label>
             <textarea
               rows={3}
@@ -573,14 +573,14 @@ export default function QuestionBankPage({
               onClick={() => setShowCreateBankModal(false)}
               className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
-              {t("instructorBuilder.cancelBtn")}
+              {"Hủy"}
             </button>
             <button
               type="submit"
               disabled={creatingBank}
               className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs cursor-pointer"
             >
-              {creatingBank ? t("instructorBuilder.creatingBtn") : t("instructorBuilder.createBankSubmitBtn")}
+              {creatingBank ? "Đang tạo..." : "Xác nhận tạo Kho"}
             </button>
           </div>
         </form>
@@ -590,13 +590,13 @@ export default function QuestionBankPage({
       <Modal
         isOpen={showAddQuestionModal}
         onClose={() => setShowAddQuestionModal(false)}
-        title={editingQuestionId ? t("instructorBuilder.editQuestionTitle") : t("instructorBuilder.addQuestionTitle")}
+        title={editingQuestionId ? "Chỉnh sửa câu hỏi" : "Thêm Câu hỏi vào Kho"}
         size="lg"
       >
         <form onSubmit={handleAddQuestion} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
           <div>
             <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-              {t("instructorBuilder.questionTextLabel")} *
+              {"Nội dung câu hỏi (hỗ trợ Markdown)"} *
             </label>
             <textarea
               required
@@ -611,7 +611,7 @@ export default function QuestionBankPage({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                {t("instructorBuilder.questionTypeLabel")}
+                {"Dạng câu hỏi"}
               </label>
               <select
                 value={qType}
@@ -653,16 +653,16 @@ export default function QuestionBankPage({
 
             <div>
               <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                {t("instructorBuilder.questionDifficultyLabel")}
+                {"Bậc độ khó"}
               </label>
               <select
                 value={qDifficulty}
                 onChange={(e) => setQDifficulty(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-hidden"
               >
-                <option value="EASY">{t("instructorBuilder.difficultyEasy")}</option>
-                <option value="MEDIUM">{t("instructorBuilder.difficultyMedium")}</option>
-                <option value="HARD">{t("instructorBuilder.difficultyHard")}</option>
+                <option value="EASY">{"Dễ (Easy)"}</option>
+                <option value="MEDIUM">{"Trung bình (Medium)"}</option>
+                <option value="HARD">{"Khó (Hard)"}</option>
               </select>
             </div>
           </div>
@@ -671,7 +671,7 @@ export default function QuestionBankPage({
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                {t("instructorBuilder.questionOptionsLabel")} *
+                {"Danh sách các lựa chọn đáp án"} *
               </label>
               {qType !== "TRUE_FALSE" && (
                 <button
@@ -679,7 +679,7 @@ export default function QuestionBankPage({
                   onClick={handleAddOption}
                   className="px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold hover:bg-blue-100 transition-colors cursor-pointer"
                 >
-                  {t("instructorBuilder.addOptionRowBtn")}
+                  {"Thêm tùy chọn đáp án"}
                 </button>
               )}
             </div>
@@ -688,7 +688,7 @@ export default function QuestionBankPage({
               {qOptions.map((opt, idx) => (
                 <div key={idx} className="flex items-center gap-2.5">
                   {/* Correct Selector Badge */}
-                  <label className="flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700/60 bg-slate-100 dark:bg-slate-800 cursor-pointer" title={t("instructorBuilder.optionCorrectTooltip")}>
+                  <label className="flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700/60 bg-slate-100 dark:bg-slate-800 cursor-pointer" title={"Đánh dấu đây là đáp án đúng"}>
                     <input
                       type={qType === "MULTIPLE_CHOICE" ? "checkbox" : "radio"}
                       name="correct_option"
@@ -705,7 +705,7 @@ export default function QuestionBankPage({
                     value={opt.optionText}
                     onChange={(e) => handleOptionChange(idx, e.target.value)}
                     disabled={qType === "TRUE_FALSE"}
-                    placeholder={t("instructorBuilder.optionTextPlaceholder")}
+                    placeholder={"Nhập nội dung tùy chọn..."}
                     className="flex-1 px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
                   />
 
@@ -728,7 +728,7 @@ export default function QuestionBankPage({
 
           <div>
             <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-              {t("instructorBuilder.questionExplanationLabel")}
+              {"Giải thích chi tiết đáp án"}
             </label>
             <textarea
               rows={2}
@@ -745,7 +745,7 @@ export default function QuestionBankPage({
               onClick={() => setShowAddQuestionModal(false)}
               className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
             >
-              {t("instructorBuilder.cancelBtn")}
+              {"Hủy"}
             </button>
             <button
               type="submit"
@@ -753,10 +753,10 @@ export default function QuestionBankPage({
               className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs cursor-pointer"
             >
               {submittingQuestion
-                ? t("instructorBuilder.savingBtn")
+                ? "Đang lưu..."
                 : editingQuestionId
-                ? t("instructorBuilder.editQuestionSubmitBtn")
-                : t("instructorBuilder.addQuestionSubmitBtn")}
+                ? "Lưu thay đổi"
+                : "Lưu câu hỏi"}
             </button>
           </div>
         </form>
@@ -766,10 +766,10 @@ export default function QuestionBankPage({
         isOpen={deletingQuestionId !== null}
         onClose={() => setDeletingQuestionId(null)}
         onConfirm={handleDeleteQuestion}
-        title={t("instructorBuilder.confirmDeleteQuestionTitle")}
-        description={t("instructorBuilder.confirmDeleteQuestionDesc")}
-        confirmText={t("common.delete") || "Xóa"}
-        cancelText={t("instructorBuilder.cancelBtn")}
+        title={"Xác nhận xóa câu hỏi"}
+        description={"Bạn có chắc chắn muốn xóa câu hỏi này không? Thao tác này không thể hoàn tác."}
+        confirmText="Xoá"
+        cancelText="Hủy"
         variant="danger"
         isLoading={deleteQuestionMutation.isPending}
       />

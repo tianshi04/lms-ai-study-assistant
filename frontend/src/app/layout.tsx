@@ -3,11 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
-import { TranslationProvider } from "@/lib/i18n/TranslationProvider";
 import { ToastProvider } from "@/components/ui/Toast";
-import { getDictionary, detectLocale, Locale } from "@/lib/i18n/getDictionary";
 
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +32,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies();
-  const cookieLocale = cookieStore.get("NEXT_LOCALE")?.value as Locale | undefined;
 
   const rawUserName = cookieStore.get("user_name")?.value;
   const rawUserEmail = cookieStore.get("user_email")?.value;
@@ -46,19 +43,9 @@ export default async function RootLayout({
     userRole: userRole,
   };
 
-  let locale: Locale;
-  if (cookieLocale && (cookieLocale === "en" || cookieLocale === "vi")) {
-    locale = cookieLocale;
-  } else {
-    const headerList = await headers();
-    const acceptLanguage = headerList.get("accept-language");
-    locale = detectLocale(acceptLanguage);
-  }
-
-  const dictionary = getDictionary(locale);
   return (
     <html
-      lang={locale}
+      lang="vi"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
@@ -67,13 +54,11 @@ export default async function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <AuthProvider initialAuth={initialAuth}>
               <CopilotProvider>
-                <TranslationProvider initialLocale={locale} initialDictionary={dictionary}>
-                  <ToastProvider>
-                    <MainLayout>
-                      {children}
-                    </MainLayout>
-                  </ToastProvider>
-                </TranslationProvider>
+                <ToastProvider>
+                  <MainLayout>
+                    {children}
+                  </MainLayout>
+                </ToastProvider>
               </CopilotProvider>
             </AuthProvider>
           </ThemeProvider>
@@ -82,3 +67,4 @@ export default async function RootLayout({
     </html>
   );
 }
+

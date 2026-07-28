@@ -2,13 +2,13 @@
 
 import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 
 const emptySubscribe = () => () => {};
 
 export function ThemeToggle() {
   const { theme, setTheme, resolvedTheme } = useTheme();
-  const { t } = useTranslation();
+  
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -37,7 +37,7 @@ export function ThemeToggle() {
           : "bg-slate-200/90 border border-slate-300/80 hover:bg-slate-300/80"
       }`}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      title={isDark ? (t("common.themeLight") || "Sáng") : (t("common.themeDark") || "Tối")}
+      title={isDark ? ("Sáng") : ("Tối")}
     >
       {/* Background Track Icons */}
       <span className="absolute left-1.5 flex items-center justify-center pointer-events-none">
