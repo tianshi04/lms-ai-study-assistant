@@ -3,10 +3,13 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.modules.learning.domain.constants import (
+    DEFAULT_COHORT_EXTENSION_DAYS,
+    STREAK_WINDOW_SECONDS,
+)
 from src.modules.learning.domain.entities import (
     DeadlineStatus,
     EnrolledCourseSummary,
@@ -95,9 +98,10 @@ class SQLAlchemyLearningRepository(ILearningRepository):
                 past_date = (datetime.now(timezone.utc) - timedelta(days=3)).strftime(
                     "%Y-%m-%d"
                 )
-                future_date = (datetime.now(timezone.utc) + timedelta(days=7)).strftime(
-                    "%Y-%m-%d"
-                )
+                future_date = (
+                    datetime.now(timezone.utc)
+                    + timedelta(days=DEFAULT_COHORT_EXTENSION_DAYS)
+                ).strftime("%Y-%m-%d")
                 d1 = WeeklyDeadlineModel(
                     week_number=1, due_date=past_date, status=DeadlineStatus.OVERDUE
                 )
@@ -107,7 +111,7 @@ class SQLAlchemyLearningRepository(ILearningRepository):
                 model.weekly_deadlines.extend([d1, d2])
                 try:
                     await self.session.commit()
-                except IntegrityError:
+                except Exception:
                     await self.session.rollback()
                     res = await self.session.execute(stmt)
                     model = res.scalar_one()
@@ -137,16 +141,18 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         if model.last_reset_at:
             try:
                 last_dt = datetime.fromisoformat(model.last_reset_at)
-                if (now - last_dt).total_seconds() < 86400:
+                if (now - last_dt).total_seconds() < STREAK_WINDOW_SECONDS:
                     return False, _model_to_domain_progress(model)
             except ValueError:
                 pass
 
         total_weeks = max(1, len(model.weekly_deadlines))
         # BR_DEADLINE_001: Self-paced Course_End_Date is extended from current reset time to avoid clustered deadlines
-        course_end_date = now + timedelta(days=max(180, 7 * total_weeks + 30))
+        course_end_date = now + timedelta(
+            days=max(180, DEFAULT_COHORT_EXTENSION_DAYS * total_weeks + 30)
+        )
         for i, d in enumerate(model.weekly_deadlines, start=1):
-            natural_due = now + timedelta(days=7 * i)
+            natural_due = now + timedelta(days=DEFAULT_COHORT_EXTENSION_DAYS * i)
             d.due_date = min(natural_due, course_end_date).strftime("%Y-%m-%d")
             d.status = DeadlineStatus.ON_TRACK
 

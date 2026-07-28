@@ -1,10 +1,15 @@
-from dataclasses import dataclass
 import ast
 import asyncio
-import tempfile
+from dataclasses import dataclass
 import os
 import sys
+import tempfile
 from typing import Any
+
+from src.modules.assessment.domain.constants import (
+    DEFAULT_PASSING_THRESHOLD_PERCENT,
+    DEFAULT_SANDBOX_TIMEOUT_SECONDS,
+)
 
 FORBIDDEN_MODULES = {
     "os",
@@ -76,7 +81,11 @@ class PythonCodeSandboxExecutor:
     and timeout constraints.
     """
 
-    def __init__(self, timeout_seconds: float = 5.0, use_docker: bool = False) -> None:
+    def __init__(
+        self,
+        timeout_seconds: float = DEFAULT_SANDBOX_TIMEOUT_SECONDS,
+        use_docker: bool = False,
+    ) -> None:
         self.timeout_seconds = timeout_seconds
         self.use_docker = use_docker
 
@@ -202,7 +211,7 @@ except Exception as e:
         score_percent = (
             round((passed_count / total_count) * 100.0, 2) if total_count > 0 else 0.0
         )
-        is_passed = score_percent >= 80.0
+        is_passed = score_percent >= DEFAULT_PASSING_THRESHOLD_PERCENT
         logs = "\n".join(log_lines)
 
         return SandboxResult(

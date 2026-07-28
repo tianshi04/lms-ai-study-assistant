@@ -13,7 +13,7 @@ export class ForumPage {
     this.page = page;
     this.openModalButton = page.getByRole('button', { name: /^(Tạo chủ đề thảo luận mới|Tạo Thảo Luận Mới|Create New Discussion Thread|New Thread)$/i });
     this.modalTitleInput = page.locator('input[placeholder*="Loss Function"], input[placeholder*="Title"], input[placeholder*="Tiêu đề"]');
-    this.modalContentInput = page.locator('textarea[placeholder*="Mô tả"], textarea[placeholder*="Write"], textarea[placeholder*="Content"]').last();
+    this.modalContentInput = page.locator('textarea[placeholder*="Mô tả"], textarea[placeholder*="Write"], textarea[placeholder*="Content"], textarea[placeholder*="Nội dung thắc mắc"]').last();
     this.modalSubmitButton = page.getByRole('button', { name: /^(Đăng bài|Đăng Thảo Luận|Post Thread|Post)$/i });
     this.replyInput = page.locator('textarea[placeholder*="Nội dung thắc mắc"], textarea[placeholder*="Nhập câu trả lời"], textarea[placeholder*="Write"], input[placeholder*="Trả lời"]').first();
     this.submitReplyButton = page.getByRole('button', { name: /Đăng bài|Post Thread|Gửi Phản Hồi|Gửi|Reply/i }).first();

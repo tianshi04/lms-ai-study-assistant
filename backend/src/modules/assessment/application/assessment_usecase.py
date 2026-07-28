@@ -4,6 +4,15 @@ import uuid
 from typing import Any, Callable, Optional
 
 
+from src.modules.assessment.domain.constants import (
+    DEFAULT_PASSING_THRESHOLD_PERCENT,
+    DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
+    MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
+    OUTLIER_SCORE_DELTA_THRESHOLD,
+    PEER_REVIEW_COLD_START_HOURS,
+    QUIZ_COOLDOWN_HOURS,
+    REQUIRED_PEER_REVIEWS_COUNT,
+)
 from src.modules.assessment.domain.entities import (
     GradeAppeal,
     HonorCodeAgreement,
@@ -132,14 +141,21 @@ class AssessmentUseCase:
         return result
 
     async def start_graded_quiz_session(
-        self, user_id: str, item_id: str, duration_minutes: int = 45
+        self,
+        user_id: str,
+        item_id: str,
+        duration_minutes: int = DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             matrix = await repo.get_quiz_matrix(item_id)
             if matrix:
                 duration_minutes = matrix.time_limit_minutes
-            passing_threshold = matrix.passing_threshold_percent if matrix else 80.0
+            passing_threshold = (
+                matrix.passing_threshold_percent
+                if matrix
+                else DEFAULT_PASSING_THRESHOLD_PERCENT
+            )
 
             now = datetime.now(timezone.utc)
             expires_at = now + timedelta(minutes=duration_minutes)
@@ -147,7 +163,7 @@ class AssessmentUseCase:
             # Check Cooldown status
             cooldown = await repo.get_quiz_cooldown(user_id, item_id)
             cooldown_seconds_left = 0
-            attempts_left = 3
+            attempts_left = MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
             if cooldown:
                 if cooldown.cooldown_until:
                     until_dt = datetime.fromisoformat(cooldown.cooldown_until)
@@ -155,9 +171,17 @@ class AssessmentUseCase:
                         cooldown_seconds_left = int((until_dt - now).total_seconds())
                         attempts_left = 0
                     else:
-                        attempts_left = max(0, 3 - cooldown.failed_attempts_count)
+                        attempts_left = max(
+                            0,
+                            MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
+                            - cooldown.failed_attempts_count,
+                        )
                 else:
-                    attempts_left = max(0, 3 - cooldown.failed_attempts_count)
+                    attempts_left = max(
+                        0,
+                        MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
+                        - cooldown.failed_attempts_count,
+                    )
 
             # BR_QUIZ_002: Generate N-sampled and option-shuffled questions using unique user/attempt seed
             seed_val = abs(hash(f"{user_id}:{item_id}:{now.isoformat()[:16]}")) % (
@@ -186,7 +210,7 @@ class AssessmentUseCase:
         item_id: str,
         selected_option_indexes: list[int],
         start_time_iso: Optional[str] = None,
-        duration_minutes: int = 45,
+        duration_minutes: int = DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
         session_seed: Optional[int] = None,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
@@ -218,7 +242,7 @@ class AssessmentUseCase:
                         "attempts_left": 0,
                         "cooldown_seconds_left": seconds_left,
                         "answer_explanations": [
-                            f"Quiz is in 8-hour cooldown period. Please wait {seconds_left}s."
+                            f"Quiz is in {QUIZ_COOLDOWN_HOURS}-hour cooldown period. Please wait {seconds_left}s."
                         ],
                     }
 
@@ -273,7 +297,7 @@ class AssessmentUseCase:
             passing_threshold = (
                 matrix.passing_threshold_percent
                 if matrix and matrix.passing_threshold_percent > 0
-                else 80.0
+                else DEFAULT_PASSING_THRESHOLD_PERCENT
             )
 
             prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
@@ -285,7 +309,11 @@ class AssessmentUseCase:
 
             # 4. Handle Cooldown & Attempts tracking
             failed_count = cooldown.failed_attempts_count if cooldown else 0
-            attempts_left = 3 - failed_count - 1 if not passed else 3
+            attempts_left = (
+                MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN - failed_count - 1
+                if not passed
+                else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
+            )
 
             if passed:
                 failed_count = 0
@@ -293,11 +321,11 @@ class AssessmentUseCase:
                 seconds_left = 0
             else:
                 failed_count += 1
-                if failed_count >= 3:
-                    # Activate 8-hour Cooldown
-                    cooldown_until_dt = now + timedelta(hours=8)
+                if failed_count >= MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN:
+                    # Activate Cooldown
+                    cooldown_until_dt = now + timedelta(hours=QUIZ_COOLDOWN_HOURS)
                     cooldown_until_iso = cooldown_until_dt.isoformat()
-                    seconds_left = 28800
+                    seconds_left = int(QUIZ_COOLDOWN_HOURS * 3600)
                     attempts_left = 0
                 else:
                     cooldown_until_iso = None
@@ -409,7 +437,7 @@ class AssessmentUseCase:
 
         return (
             sub_id,
-            "Assignment submitted successfully. Please complete 3 peer reviews to view your score.",
+            f"Assignment submitted successfully. Please complete {REQUIRED_PEER_REVIEWS_COUNT} peer reviews to view your score.",
         )
 
     async def get_peer_reviews_to_grade(
@@ -421,7 +449,7 @@ class AssessmentUseCase:
                 item_id, exclude_user_id=user_id
             )
 
-        selected = submissions[:3]
+        selected = submissions[:REQUIRED_PEER_REVIEWS_COUNT]
         result: list[dict[str, Any]] = []
 
         default_rubric = [
@@ -476,7 +504,7 @@ class AssessmentUseCase:
                 prev_scores = [r.total_score for r in existing_reviews]
                 all_scores = prev_scores + [score_percent]
                 max_delta = max(all_scores) - min(all_scores)
-                if max_delta > 30.0:
+                if max_delta > OUTLIER_SCORE_DELTA_THRESHOLD:
                     is_outlier = True
 
             now_iso = datetime.now(timezone.utc).isoformat()
@@ -496,7 +524,7 @@ class AssessmentUseCase:
             sub = await repo.get_peer_submission(submission_id)
             if sub and not sub.graded_by_staff:
                 all_revs = await repo.get_peer_reviews_for_submission(submission_id)
-                if len(all_revs) >= 3:
+                if len(all_revs) >= REQUIRED_PEER_REVIEWS_COUNT:
                     avg_score = round(
                         sum(r.total_score for r in all_revs) / len(all_revs), 2
                     )
@@ -505,7 +533,7 @@ class AssessmentUseCase:
 
         msg = "Peer review graded successfully."
         if is_outlier:
-            msg += " (Outlier Flagged: Score variation exceeds 30%, TA notified)."
+            msg += f" (Outlier Flagged: Score variation exceeds {int(OUTLIER_SCORE_DELTA_THRESHOLD)}%, TA notified)."
         return True, msg
 
     async def regrade_peer_submission_by_staff(
@@ -567,7 +595,7 @@ class AssessmentUseCase:
     ) -> list[dict[str, Any]]:
         """Returns list of peer assignment submissions older than 48 hours (2 days) with fewer than 3 reviews and not yet graded by staff (BR_PEER_004 & BR_PEER_006)."""
         now = datetime.now(timezone.utc)
-        cold_start_threshold = now - timedelta(hours=48)
+        cold_start_threshold = now - timedelta(hours=PEER_REVIEW_COLD_START_HOURS)
 
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
@@ -582,7 +610,10 @@ class AssessmentUseCase:
                     sub_dt = now
 
                 reviews = await repo.get_peer_reviews_for_submission(s.id)
-                if len(reviews) < 3 and sub_dt <= cold_start_threshold:
+                if (
+                    len(reviews) < REQUIRED_PEER_REVIEWS_COUNT
+                    and sub_dt <= cold_start_threshold
+                ):
                     regrade_list.append(
                         {
                             "submission_id": s.id,

@@ -3,8 +3,11 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from src.modules.certificate.domain.entities import (
+from src.modules.certificate.domain.constants import (
+    DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS,
     MIN_FINANCIAL_AID_ESSAY_WORDS,
+)
+from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
     FinancialAidStatus,
     VerifiedCertificate,
@@ -29,7 +32,7 @@ class CertificateUseCase:
         if words < MIN_FINANCIAL_AID_ESSAY_WORDS:
             return (
                 None,
-                f"Bài luận hỗ trợ tài chính chưa đủ độ dài tối thiểu (Hiện tại {words}/150 từ). Vui lòng chia sẻ chi tiết hơn về hoàn cảnh và mục tiêu học tập.",
+                f"Bài luận hỗ trợ tài chính chưa đủ độ dài tối thiểu (Hiện tại {words}/{MIN_FINANCIAL_AID_ESSAY_WORDS} từ). Vui lòng chia sẻ chi tiết hơn về hoàn cảnh và mục tiêu học tập.",
             )
 
         async with async_session_scope() as session:
@@ -49,7 +52,7 @@ class CertificateUseCase:
                 course_id=course_id,
                 essay_150_words=essay_150_words,
                 status=FinancialAidStatus.PENDING,
-                review_deadline_days_left=15,
+                review_deadline_days_left=DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS,
             )
 
             saved = await repo.save_financial_aid(application)

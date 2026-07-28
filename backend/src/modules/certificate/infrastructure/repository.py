@@ -16,6 +16,9 @@ from src.modules.catalog.infrastructure.models import (
     SpecializationModel,
     WeekModuleModel,
 )
+from src.modules.certificate.domain.constants import (
+    DEFAULT_CERTIFICATE_PASSING_THRESHOLD_PERCENT,
+)
 from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
     FinancialAidStatus,
@@ -326,10 +329,10 @@ class CertificateRepository(ICertificateRepository):
                     False,
                     f"Chưa đủ điều kiện nhận chứng chỉ: Bạn chưa hoàn thành bài tập bắt buộc '{req_item.title}'.",
                 )
-            if max_score < 80.0:
+            if max_score < DEFAULT_CERTIFICATE_PASSING_THRESHOLD_PERCENT:
                 return (
                     False,
-                    f"Chưa đủ điều kiện nhận chứng chỉ: Bài tập '{req_item.title}' chưa đạt điểm tối thiểu >= 80% (Hiện tại {max_score}%).",
+                    f"Chưa đủ điều kiện nhận chứng chỉ: Bài tập '{req_item.title}' chưa đạt điểm tối thiểu >= {int(DEFAULT_CERTIFICATE_PASSING_THRESHOLD_PERCENT)}% (Hiện tại {max_score}%).",
                 )
 
         appeal_stmt = select(GradeAppealModel).where(

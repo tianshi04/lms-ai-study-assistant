@@ -1,12 +1,19 @@
 import html
 from typing import Any, Callable
 
+from src.modules.catalog.domain.constants import (
+    MAX_RATING_STARS,
+    MAX_REVIEW_COMMENT_LENGTH,
+    MIN_PROGRESS_PERCENT_FOR_REVIEW,
+    MIN_RATING_STARS,
+    VERIFIED_COMPLETER_PROGRESS_PERCENT,
+)
 from src.modules.catalog.domain.entities import (
+    Category,
     Course,
+    ItemType,
     Lesson,
     Specialization,
-    Category,
-    ItemType,
 )
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
@@ -213,14 +220,16 @@ class CatalogUseCase:
         comment_text: str,
         user_role: str = "",
     ):
-        if rating_stars < 1 or rating_stars > 5:
-            raise ValueError("Rating stars must be between 1 and 5.")
-
-        # BR_REVIEW_003: Fail-fast 2000 char validation and safe Stored XSS sanitization
-        trimmed_comment = comment_text.strip()
-        if len(trimmed_comment) > 2000:
+        if rating_stars < MIN_RATING_STARS or rating_stars > MAX_RATING_STARS:
             raise ValueError(
-                "Văn bản nhận xét không được vượt quá 2000 ký tự (BR_REVIEW_003)."
+                f"Rating stars must be between {MIN_RATING_STARS} and {MAX_RATING_STARS}."
+            )
+
+        # BR_REVIEW_003: Fail-fast char validation and safe Stored XSS sanitization
+        trimmed_comment = comment_text.strip()
+        if len(trimmed_comment) > MAX_REVIEW_COMMENT_LENGTH:
+            raise ValueError(
+                f"Văn bản nhận xét không được vượt quá {MAX_REVIEW_COMMENT_LENGTH} ký tự (BR_REVIEW_003)."
             )
         clean_comment = html.escape(trimmed_comment)
 
@@ -246,12 +255,17 @@ class CatalogUseCase:
             learning_repo = SQLAlchemyLearningRepository(session)
             progress = await learning_repo.get_progress(user_id, real_course_id)
 
-            if not progress or progress.overall_progress_percent < 50.0:
+            if (
+                not progress
+                or progress.overall_progress_percent < MIN_PROGRESS_PERCENT_FOR_REVIEW
+            ):
                 raise ValueError(
-                    "Chỉ học viên hoàn thành tối thiểu 50% tiến độ khóa học mới có quyền gửi đánh giá (BR_REVIEW_001)."
+                    f"Chỉ học viên hoàn thành tối thiểu {int(MIN_PROGRESS_PERCENT_FOR_REVIEW)}% tiến độ khóa học mới có quyền gửi đánh giá (BR_REVIEW_001)."
                 )
 
-            is_verified_completer = progress.overall_progress_percent >= 100.0
+            is_verified_completer = (
+                progress.overall_progress_percent >= VERIFIED_COMPLETER_PROGRESS_PERCENT
+            )
 
             return await repo.submit_course_review(
                 user_id=user_id,

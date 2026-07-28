@@ -3,14 +3,14 @@
 import { useState, useMemo } from "react";
 import { CopilotChat, useFrontendTool, useAgentContext } from "@copilotkit/react-core/v2";
 import { useRouter, usePathname } from "next/navigation";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 import { z } from "zod";
 
 export function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const { t } = useTranslation();
+  
 
   // Push current page path into global Agent Context on every navigation turn
   const routeContext = useMemo(
@@ -83,7 +83,7 @@ export function AIChatbot() {
                 />
               </svg>
               <h3 className="font-semibold text-sm tracking-wide">
-                {t("ai.title") || "AI Study Assistant"}
+                Trợ lý AI
               </h3>
             </div>
             <button
@@ -112,8 +112,8 @@ export function AIChatbot() {
             <CopilotChat
               labels={{
                 welcomeMessageText:
-                  t("ai.welcome") || "Hi! How can I help you today?",
-                chatInputPlaceholder: t("ai.placeholder") || "Ask AI assistant...",
+                  "Xin chào! Tôi có thể giúp gì cho bạn?",
+                chatInputPlaceholder: "Nhập câu hỏi cho AI...",
               }}
             />
           </div>
@@ -125,14 +125,14 @@ export function AIChatbot() {
         {/* Tooltip on hover */}
         {!isOpen && (
           <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none absolute right-16 bg-slate-900/90 dark:bg-slate-800/90 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-xl shadow-lg whitespace-nowrap">
-            {t("ai.title") || "Trợ lý AI"}
+            {"Trợ lý AI"}
           </span>
         )}
 
         <button
           onClick={() => setIsOpen((prev) => !prev)}
           className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white shadow-xl hover:shadow-2xl hover:scale-108 active:scale-95 transition-all duration-200 cursor-pointer flex items-center justify-center relative border border-white/20"
-          aria-label={t("ai.title") || "AI Assistant"}
+          aria-label={"Trợ lý AI"}
         >
           {isOpen ? (
             <svg

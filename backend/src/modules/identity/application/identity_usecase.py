@@ -7,6 +7,12 @@ from typing import Optional
 
 from sqlalchemy import select, update
 
+from src.modules.identity.domain.constants import (
+    DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS,
+    DEFAULT_PBKDF2_ITERATIONS,
+    ENTERPRISE_REVOCATION_GRACE_PERIOD_DAYS,
+    ENTERPRISE_REVOCATION_MAX_PROGRESS_PERCENT,
+)
 from src.modules.identity.domain.entities import User, UserRole
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
 from src.modules.identity.infrastructure.repository import IdentityRepository
@@ -18,7 +24,9 @@ from src.shared.infrastructure.database import async_session_scope
 def hash_password(password: str, salt: Optional[bytes] = None) -> str:
     if salt is None:
         salt = os.urandom(16)
-    hashed = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 100_000)
+    hashed = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), salt, DEFAULT_PBKDF2_ITERATIONS
+    )
     return f"{salt.hex()}:{hashed.hex()}"
 
 
@@ -28,7 +36,7 @@ def verify_password(password: str, password_hash: str) -> bool:
     salt_hex, hash_hex = password_hash.split(":", 1)
     salt = bytes.fromhex(salt_hex)
     new_hash = hashlib.pbkdf2_hmac(
-        "sha256", password.encode("utf-8"), salt, 100_000
+        "sha256", password.encode("utf-8"), salt, DEFAULT_PBKDF2_ITERATIONS
     ).hex()
     return hmac.compare_digest(new_hash, hash_hex)
 
@@ -197,7 +205,7 @@ class IdentityUseCase:
             lic = EnterpriseLicenseModel(
                 key=clean_key,
                 partner_name=partner_name or "Doanh nghiệp Đối tác",
-                total_seats=500,
+                total_seats=DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS,
                 used_seats=0,
                 is_active=True,
             )
@@ -207,7 +215,7 @@ class IdentityUseCase:
                 "id": clean_key,
                 "partner_name": partner_name,
                 "seat_key": clean_key,
-                "assigned_user_id": "0/500 seats",
+                "assigned_user_id": f"0/{DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS} seats",
                 "assigned_user_email": "Hoạt động",
                 "status": "ACTIVE",
                 "created_at": "2026",
@@ -248,19 +256,25 @@ class IdentityUseCase:
             if user.seat_assigned_at:
                 try:
                     assigned_dt = datetime.fromisoformat(user.seat_assigned_at)
-                    within_30_days = (now - assigned_dt) <= timedelta(days=30)
+                    within_grace_period = (now - assigned_dt) <= timedelta(
+                        days=ENTERPRISE_REVOCATION_GRACE_PERIOD_DAYS
+                    )
                 except (ValueError, TypeError):
-                    within_30_days = False
+                    within_grace_period = False
             else:
-                within_30_days = False
+                within_grace_period = False
 
-            if within_30_days and course_id:
+            if within_grace_period and course_id:
                 learning_repo = SQLAlchemyLearningRepository(session)
                 progress = await learning_repo.get_progress(user_id, course_id)
-                if progress and progress.overall_progress_percent >= 20.0:
+                if (
+                    progress
+                    and progress.overall_progress_percent
+                    >= ENTERPRISE_REVOCATION_MAX_PROGRESS_PERCENT
+                ):
                     return (
                         False,
-                        f"Không thể thu hồi: Học viên đã đạt {progress.overall_progress_percent}% tiến độ (>= 20% trong 30 ngày đầu).",
+                        f"Không thể thu hồi: Học viên đã đạt {progress.overall_progress_percent}% tiến độ (>= {int(ENTERPRISE_REVOCATION_MAX_PROGRESS_PERCENT)}% trong {ENTERPRISE_REVOCATION_GRACE_PERIOD_DAYS} ngày đầu).",
                     )
 
             seat_key = user.enterprise_seat_key
