@@ -88,9 +88,13 @@ jobs:
         run: npm run gen
         working-directory: frontend
 
-      - name: Start Frontend Development Server in Background
+      - name: Build Frontend Production App
+        run: npm run build
+        working-directory: frontend
+
+      - name: Start Frontend Server in Background
         run: |
-          npm run dev &
+          npm run start &
           # Wait for frontend server
           for i in {1..30}; do
             curl -s http://localhost:3000 && break || sleep 1
