@@ -47,6 +47,7 @@ class ForumUseCase:
             course_id=course_id,
             item_id=item_id,
             title=title,
+            content=content,
             author_name=author_name,
             author_role=author_role,
             created_at=created_at,

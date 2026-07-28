@@ -171,7 +171,7 @@ export default function ForumPage() {
   const openEditThreadModal = (thread: ForumThread) => {
     setEditingThread(thread);
     setEditThreadTitle(thread.title);
-    setEditThreadContent("");
+    setEditThreadContent(thread.content);
   };
 
   const handleUpdateThread = async (e: React.FormEvent) => {

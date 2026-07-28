@@ -52,6 +52,7 @@ def _to_pb_thread(thread: ForumThreadEntity) -> pb.ForumThread:
         course_id=thread.course_id,
         item_id=thread.item_id,
         title=thread.title,
+        content=thread.content,
         author_name=thread.author_name,
         author_role=_format_author_role(thread.author_role),
         created_at=thread.created_at,

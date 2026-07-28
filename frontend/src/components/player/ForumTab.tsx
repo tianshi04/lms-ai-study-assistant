@@ -122,7 +122,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
   const startEditThread = (thread: ForumThread) => {
     setEditingThreadId(thread.id);
     setEditThreadTitle(thread.title);
-    setEditThreadContent("");
+    setEditThreadContent(thread.content);
   };
 
   const handleUpdateThread = async (threadId: string) => {

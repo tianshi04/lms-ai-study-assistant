@@ -34,6 +34,7 @@ message ForumThread {
   bool is_edited = 12;
   string edited_at = 13;
   string author_user_id = 14;
+  string content = 15;
 }
 
 message ListThreadsRequest {

@@ -137,7 +137,7 @@ message Question {
   string id = 1;
   string bank_id = 2;
   string question_type = 3; // 'SINGLE_CHOICE', 'MULTIPLE_CHOICE', 'TRUE_FALSE', 'FILL_IN_BLANK'
-  string difficulty = 4;    // 'EASY', 'MEDIUM', 'HARD'
+  string difficulty = 4; // 'EASY', 'MEDIUM', 'HARD'
   string text = 5;
   string explanation = 6;
   repeated QuestionOption options = 7;

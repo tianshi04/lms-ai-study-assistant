@@ -45,6 +45,7 @@ class ForumRepository(IForumRepository):
             course_id=orm.course_id,
             item_id=orm.item_id,
             title=orm.title,
+            content=orm.content,
             author_name=orm.author_name,
             author_role=orm.author_role,
             created_at=orm.created_at,
@@ -109,6 +110,7 @@ class ForumRepository(IForumRepository):
             course_id=thread.course_id,
             item_id=thread.item_id,
             title=thread.title,
+            content=thread.content,
             author_name=thread.author_name,
             author_role=thread.author_role,
             author_user_id=thread.author_user_id,
@@ -135,6 +137,8 @@ class ForumRepository(IForumRepository):
             return None
         if title:
             orm.title = title
+        if content:
+            orm.content = content
         orm.is_edited = True
         orm.edited_at = edited_at
         await self.session.commit()
