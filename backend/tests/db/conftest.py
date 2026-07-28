@@ -1,15 +1,14 @@
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-
-from src.main import app
-from src.seed import seed_database
 import src.shared.infrastructure.database as db_module
 
 
 @pytest_asyncio.fixture(autouse=True)
 async def auto_rollback_db():
-    """Ensure every DB operation in integration tests runs inside a Savepoint transaction."""
+    """Ensure every DB operation in repository tests runs inside a Savepoint transaction
+
+    that is automatically rolled back after the test completes.
+    """
     engine = db_module.get_engine()
     connection = await engine.connect()
     transaction = await connection.begin()
@@ -32,15 +31,3 @@ async def auto_rollback_db():
             await transaction.rollback()
         await connection.close()
         await db_module.dispose_engine()
-
-
-@pytest_asyncio.fixture()
-async def client():
-    """
-    Tạo test client cho FastAPI app với ASGI transport.
-    """
-    await seed_database()
-    transport = ASGITransport(app=app)
-
-    async with AsyncClient(transport=transport, base_url="http://testserver") as ac:
-        yield ac
