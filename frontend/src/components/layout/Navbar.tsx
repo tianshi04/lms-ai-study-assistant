@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { UserDropdown } from "@/components/layout/UserDropdown";
+import { ThemeToggle } from "@/components/providers/ThemeToggle";
 
 export function Navbar() {
   const { userName, userRole } = useAuth();
@@ -91,6 +92,8 @@ export function Navbar() {
 
         {/* User Auth & Actions Section */}
         <div className="flex items-center gap-2">
+          <ThemeToggle />
+
           {userName ? (
             <UserDropdown />
           ) : (

@@ -1,118 +1,119 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/DropdownMenu";
+
+const emptySubscribe = () => () => {};
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const { t } = useTranslation();
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
-  const getThemeInfo = () => {
-    if (theme === "light") {
-      return {
-        label: t("common.themeLight"),
-        icon: (
-          <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
-        ),
-      };
-    }
-    if (theme === "dark") {
-      return {
-        label: t("common.themeDark"),
-        icon: (
-          <svg className="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-          </svg>
-        ),
-      };
-    }
-    return {
-      label: t("common.themeSystem"),
-      icon: (
-        <svg className="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-      ),
-    };
+  if (!mounted) {
+    return (
+      <div className="w-14 h-8 rounded-full bg-slate-200/80 dark:bg-slate-800/80 border border-slate-300/60 dark:border-slate-700/60 shrink-0" />
+    );
+  }
+
+  const isDark = (resolvedTheme || theme) === "dark";
+
+  const toggleTheme = () => {
+    setTheme(isDark ? "light" : "dark");
   };
 
-  const info = getThemeInfo();
-
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        className="h-9 px-2.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700/60 transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 text-xs font-semibold focus:outline-none"
-        aria-label="Select Theme"
-      >
-        {info.icon}
-        <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 select-none">
-          {info.label}
-        </span>
-        <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+    <button
+      type="button"
+      onClick={toggleTheme}
+      className={`relative inline-flex items-center h-8 w-14 rounded-full p-1 transition-colors duration-300 ease-in-out cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 shrink-0 shadow-inner ${
+        isDark
+          ? "bg-slate-800 border border-slate-700/80 hover:bg-slate-800/90"
+          : "bg-slate-200/90 border border-slate-300/80 hover:bg-slate-300/80"
+      }`}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      title={isDark ? (t("common.themeLight") || "Sáng") : (t("common.themeDark") || "Tối")}
+    >
+      {/* Background Track Icons */}
+      <span className="absolute left-1.5 flex items-center justify-center pointer-events-none">
+        <svg
+          className={`w-3.5 h-3.5 transition-opacity duration-200 ${
+            isDark ? "text-amber-500/50 opacity-100" : "opacity-0"
+          }`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+          />
         </svg>
-      </DropdownMenuTrigger>
+      </span>
 
-      <DropdownMenuContent>
-        <DropdownMenuItem
-          onClick={() => setTheme("light")}
-          className={theme === "light" ? "text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-500/10" : ""}
+      <span className="absolute right-1.5 flex items-center justify-center pointer-events-none">
+        <svg
+          className={`w-3.5 h-3.5 transition-opacity duration-200 ${
+            isDark ? "opacity-0" : "text-indigo-400/50 opacity-100"
+          }`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
         >
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <span>{t("common.themeLight")}</span>
-          </div>
-          {theme === "light" && (
-            <svg className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
-          )}
-        </DropdownMenuItem>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+          />
+        </svg>
+      </span>
 
-        <DropdownMenuItem
-          onClick={() => setTheme("dark")}
-          className={theme === "dark" ? "text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-500/10" : ""}
-        >
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
-            <span>{t("common.themeDark")}</span>
-          </div>
-          {theme === "dark" && (
-            <svg className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
-          )}
-        </DropdownMenuItem>
-
-        <DropdownMenuItem
-          onClick={() => setTheme("system")}
-          className={theme === "system" ? "text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-500/10" : ""}
-        >
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            <span>{t("common.themeSystem")}</span>
-          </div>
-          {theme === "system" && (
-            <svg className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
-          )}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      {/* Sliding Knob Thumb */}
+      <span
+        className={`pointer-events-none relative inline-flex items-center justify-center w-6 h-6 rounded-full transform transition-transform duration-300 ease-in-out shadow-md ${
+          isDark
+            ? "translate-x-6 bg-slate-900 text-indigo-400 ring-1 ring-white/10"
+            : "translate-x-0 bg-white text-amber-500 ring-1 ring-slate-900/5"
+        }`}
+      >
+        {isDark ? (
+          <svg
+            className="w-3.5 h-3.5 text-indigo-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+            />
+          </svg>
+        ) : (
+          <svg
+            className="w-3.5 h-3.5 text-amber-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+            />
+          </svg>
+        )}
+      </span>
+    </button>
   );
 }
