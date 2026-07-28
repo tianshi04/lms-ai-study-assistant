@@ -1,3 +1,4 @@
+import hashlib
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
@@ -155,8 +156,8 @@ class CertificateUseCase:
                 "id": f"https://coursera.org/verify/{cert_id}",
                 "recipient": {
                     "type": "email",
-                    "hashed": False,
-                    "identity": email,
+                    "hashed": True,
+                    "identity": f"sha256${hashlib.sha256(email.encode('utf-8')).hexdigest()}",
                 },
                 "issuedOn": datetime.now(timezone.utc).isoformat(),
                 "badge": {
