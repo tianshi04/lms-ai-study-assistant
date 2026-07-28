@@ -10,7 +10,7 @@ async def client():
     """
     Tạo test client cho FastAPI app với ASGI transport.
     """
-    await seed_database(reset=True)
+    await seed_database()
     transport = ASGITransport(app=app)
 
     async with AsyncClient(transport=transport, base_url="http://testserver") as ac:

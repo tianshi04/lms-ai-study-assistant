@@ -17,17 +17,11 @@ import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
 import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
-function getActiveUserId(): string {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("user_id") || "user_learner_demo";
-  }
-  return "user_learner_demo";
-}
-
 export default function CoursePlayerPage() {
   const params = useParams();
   const courseId = params?.courseId as string;
   const { t } = useTranslation();
+  const [userId, setUserId] = useState<string>("");
 
   const [course, setCourse] = useState<Course | null>(null);
   const [activeItem, setActiveItem] = useState<LearningItem | null>(null);
@@ -67,7 +61,13 @@ export default function CoursePlayerPage() {
       return;
     }
 
+    // Safely get userId after auth guard passes (will be set in loadData)
+    const storedUserId = localStorage.getItem("user_id");
+
     async function loadData() {
+      if (storedUserId) {
+        setUserId(storedUserId);
+      }
       try {
         const catalogClient = getRpcClient(CatalogService);
         const courseRes = await catalogClient.getCourseDetail({ idOrSlug: courseId });
@@ -451,7 +451,7 @@ export default function CoursePlayerPage() {
             <VideoPlayer
               videoRef={videoRef}
               activeItem={activeItem}
-              userId={getActiveUserId()}
+              userId={userId}
               activeQuiz={activeQuiz}
               selectedOption={selectedOption}
               quizSubmitted={quizSubmitted}

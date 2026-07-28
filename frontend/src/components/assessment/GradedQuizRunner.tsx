@@ -69,7 +69,7 @@ export function GradedQuizRunner({
           setStartTimeIso(res.startTimeIso);
           setTimeLimit(res.timeLimitMinutes || 45);
           setPassingThreshold(res.passingThresholdPercent || 80.0);
-          setSelectedAnswers(new Array(res.questions?.length || 0).fill(0));
+          setSelectedAnswers(new Array(res.questions?.length || 0).fill(-1));
         }
       } catch (err: unknown) {
         console.error("Failed to start graded quiz session:", err);
@@ -204,7 +204,10 @@ export function GradedQuizRunner({
         <div className="flex items-center gap-3">
           {isHonorAgreed ? (
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center gap-1 border border-emerald-200 dark:border-emerald-900/50">
-              ✓ Honor Code Agreed
+              <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Honor Code Agreed</span>
             </span>
           ) : (
             <button
@@ -337,9 +340,12 @@ export function GradedQuizRunner({
           <span>{submitError}</span>
           <button
             onClick={() => setSubmitError(null)}
-            className="text-rose-500 hover:text-rose-700 font-bold ml-2 text-sm"
+            className="text-rose-500 hover:text-rose-700 p-1 rounded-lg transition-colors ml-2"
+            aria-label="Close error message"
           >
-            ✕
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
       )}
@@ -355,7 +361,12 @@ export function GradedQuizRunner({
           disabled={isSubmitting || cooldownCountdown > 0}
           className="px-6 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-xs transition-all flex items-center gap-2"
         >
-          {isSubmitting ? "Grading Answers..." : "Submit Graded Quiz 🚀"}
+          <span>{isSubmitting ? "Grading Answers..." : "Submit Graded Quiz"}</span>
+          {!isSubmitting && (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3 21l18-9L3 3l3 9zm0 0h75" />
+            </svg>
+          )}
         </button>
       </div>
 
