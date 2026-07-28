@@ -2,8 +2,6 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 
 export default async function Home() {
-  const cookieStore = await cookies();
-  
   return (
     <div className="flex-1 flex flex-col justify-between w-full relative">
       {/* Background decoration */}
