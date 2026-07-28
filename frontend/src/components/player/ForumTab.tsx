@@ -74,28 +74,8 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
   }, [courseId, itemId]);
 
   useEffect(() => {
-    let isMounted = true;
-    if (!courseId) return;
-    const client = getRpcClient(ForumService);
-    client.listThreads({
-      courseId,
-      itemId: itemId || "",
-    }).then((res) => {
-      if (isMounted) {
-        setThreads(res.threads);
-        setLoading(false);
-      }
-    }).catch((err) => {
-      if (isMounted) {
-        console.error("Failed to load forum tab threads:", err);
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [courseId, itemId]);
+    fetchThreads();
+  }, [fetchThreads]);
 
   const handleCreateThread = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -110,34 +110,8 @@ export default function ForumPage() {
   }, [selectedCourseId, t]);
 
   useEffect(() => {
-    let isMounted = true;
-    const client = getRpcClient(ForumService);
-    client.listThreads({
-      courseId: selectedCourseId,
-      itemId: "",
-    }).then((res) => {
-      if (isMounted) {
-        setThreads(res.threads);
-        const initialExpanded: Record<string, boolean> = {};
-        res.threads.forEach((th) => {
-          initialExpanded[th.id] = true;
-        });
-        setExpandedThreads((prev) => ({ ...initialExpanded, ...prev }));
-        setLoading(false);
-      }
-    }).catch((err) => {
-      if (isMounted) {
-        console.error("Failed to load forum threads:", err);
-        const msg = err instanceof Error ? err.message : t("common.error");
-        setError(msg);
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedCourseId, t]);
+    fetchThreads();
+  }, [fetchThreads]);
 
   // Handle Create Thread
   const handleCreateThread = async (e: React.FormEvent) => {
