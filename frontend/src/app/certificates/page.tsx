@@ -3,7 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 import { getRpcClient } from "@/lib/connect_client";
 import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
 
@@ -14,7 +14,7 @@ export default function MyCertificatesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const { t } = useTranslation();
+  
 
   const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
@@ -39,7 +39,7 @@ export default function MyCertificatesPage() {
       } catch (err: unknown) {
         if (!isCancelled) {
           console.error("Failed to fetch user certificates:", err);
-          setError(err instanceof Error ? err.message : t("certificatesPage.errorFetch"));
+          setError(err instanceof Error ? err.message : "Lỗi tải chứng chỉ");
         }
       } finally {
         if (!isCancelled) {
@@ -53,7 +53,7 @@ export default function MyCertificatesPage() {
     return () => {
       isCancelled = true;
     };
-  }, [t, isMounted]);
+  }, [isMounted]);
 
   const filteredCertificates = certificates.filter((cert) => {
     if (!searchTerm.trim()) return true;
@@ -77,10 +77,10 @@ export default function MyCertificatesPage() {
             <span>Verified Credentials</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">
-            {t("certificatesPage.title")}
+            {"Chứng chỉ của tôi"}
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
-            {t("certificatesPage.subtitle")}
+            {"Quản lý các chứng chỉ bạn đã đạt được"}
           </p>
         </div>
 
@@ -92,7 +92,7 @@ export default function MyCertificatesPage() {
               </div>
               <div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                  {t("certificatesPage.totalCertificates")}
+                  {"Tổng số chứng chỉ"}
                 </p>
                 <p className="text-sm font-bold text-slate-900 dark:text-white">
                   {certificates.length} Verified
@@ -124,7 +124,7 @@ export default function MyCertificatesPage() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={t("certificatesPage.searchPlaceholder")}
+              placeholder={"Tìm kiếm chứng chỉ..."}
               className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm transition-all shadow-sm"
             />
           </div>
@@ -165,16 +165,16 @@ export default function MyCertificatesPage() {
             </svg>
           </div>
           <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-            {t("certificatesPage.noCertificatesTitle")}
+            {"Chưa có chứng chỉ nào"}
           </h3>
           <p className="text-slate-500 dark:text-slate-400 text-sm max-w-md mx-auto mb-8 leading-relaxed">
-            {t("certificatesPage.noCertificatesDesc")}
+            {"Bạn chưa đạt được chứng chỉ nào. Hãy hoàn thành khóa học để nhận chứng chỉ."}
           </p>
           <Link
             href="/courses"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-sm transition-all shadow-lg shadow-purple-600/20"
           >
-            <span>{t("certificatesPage.exploreCourses")}</span>
+            <span>{"Khám phá khóa học"}</span>
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
@@ -225,11 +225,11 @@ export default function MyCertificatesPage() {
                 {/* Details */}
                 <div className="space-y-2 text-xs text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800">
                   <div className="flex justify-between items-center">
-                    <span className="font-medium">{t("certificatesPage.issuedOn")}:</span>
+                    <span className="font-medium">{"Cấp ngày"}:</span>
                     <span className="font-semibold text-slate-700 dark:text-slate-300">{cert.issueDate}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="font-medium">{t("certificatesPage.certCode")}:</span>
+                    <span className="font-medium">{"Mã chứng chỉ"}:</span>
                     <span className="font-mono text-[11px] font-bold text-purple-600 dark:text-purple-400 truncate max-w-[150px]">
                       {cert.certificateId}
                     </span>
@@ -247,7 +247,7 @@ export default function MyCertificatesPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
-                  <span>{t("certificatesPage.viewCertificate")}</span>
+                  <span>{"Xem chứng chỉ"}</span>
                 </Link>
               </div>
             </div>

@@ -8,7 +8,7 @@ import { AssessmentService, type QuestionBank } from "@/gen/assessment/v1/assess
 
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 import { VideoUploadWidget } from "@/components/ui/VideoUploadWidget";
 import { InVideoQuizEditor, type InVideoQuizItem } from "@/components/ui/InVideoQuizEditor";
 
@@ -32,7 +32,7 @@ export default function InstructorCourseBuilderPage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
-  const { t } = useTranslation();
+  
 
   // Modals visibility
   const [showWeekModal, setShowWeekModal] = useState(false);
@@ -119,7 +119,7 @@ export default function InstructorCourseBuilderPage({
       setQuestionBanks(banksRes.banks || []);
     } catch (err: unknown) {
       console.error("Failed to load course details:", err);
-      const errMsg = err instanceof Error ? err.message : t("instructorBuilder.toastLoadFail");
+      const errMsg = err instanceof Error ? err.message : "Khóa học không tồn tại.";
       toast.error(errMsg);
     } finally {
       setLoading(false);
@@ -147,7 +147,7 @@ export default function InstructorCourseBuilderPage({
       } catch (err: unknown) {
         if (!ignore) {
           console.error("Failed to load course details:", err);
-          const errMsg = err instanceof Error ? err.message : t("instructorBuilder.toastLoadFail");
+          const errMsg = err instanceof Error ? err.message : "Khóa học không tồn tại.";
           toast.error(errMsg);
         }
       } finally {
@@ -185,7 +185,7 @@ export default function InstructorCourseBuilderPage({
       toast.success(`Đã thêm Tuần ${weekNumber} vào khóa học thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t("instructorBuilder.toastWeekAddFail");
+      const msg = err instanceof Error ? err.message : "Thêm Tuần học thất bại.";
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -212,7 +212,7 @@ export default function InstructorCourseBuilderPage({
       toast.success(`Đã thêm Bài học "${lessonTitle}" thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t("instructorBuilder.toastLessonAddFail");
+      const msg = err instanceof Error ? err.message : "Thêm Bài học thất bại.";
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -261,7 +261,7 @@ export default function InstructorCourseBuilderPage({
       toast.success(`Đã thêm Học liệu "${itemTitle}" vào bài học thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t("instructorBuilder.toastItemAddFail");
+      const msg = err instanceof Error ? err.message : "Thêm Học liệu thất bại.";
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -284,10 +284,10 @@ export default function InstructorCourseBuilderPage({
       });
 
       setEditingWeek(null);
-      toast.success(t("instructorBuilder.toastWeekUpdated"));
+      toast.success("Đã cập nhật thông tin Tuần học thành công!");
       await fetchCourseDetail();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t("instructorBuilder.toastWeekUpdateFail");
+      const msg = err instanceof Error ? err.message : "Cập nhật Tuần học thất bại.";
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -310,10 +310,10 @@ export default function InstructorCourseBuilderPage({
       });
 
       setEditingLesson(null);
-      toast.success(t("instructorBuilder.toastLessonUpdated"));
+      toast.success("Đã cập nhật Bài học thành công!");
       await fetchCourseDetail();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t("instructorBuilder.toastLessonUpdateFail");
+      const msg = err instanceof Error ? err.message : "Cập nhật Bài học thất bại.";
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -353,10 +353,10 @@ export default function InstructorCourseBuilderPage({
       });
 
       setEditingItem(null);
-      toast.success(t("instructorBuilder.toastItemUpdated"));
+      toast.success("Đã cập nhật nội dung Học liệu thành công!");
       await fetchCourseDetail();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t("instructorBuilder.toastItemUpdateFail");
+      const msg = err instanceof Error ? err.message : "Cập nhật Học liệu thất bại.";
       toast.error(msg);
     } finally {
       setSaving(false);
@@ -373,7 +373,7 @@ export default function InstructorCourseBuilderPage({
       toast.success(`Đã xóa Tuần học "${weekTitle}" thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t("instructorBuilder.toastWeekDeleteFail");
+      const msg = err instanceof Error ? err.message : "Xóa Tuần học thất bại.";
       toast.error(msg);
     }
   };
@@ -388,7 +388,7 @@ export default function InstructorCourseBuilderPage({
       toast.success(`Đã xóa Bài học "${lessonTitle}" thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t("instructorBuilder.toastLessonDeleteFail");
+      const msg = err instanceof Error ? err.message : "Xóa Bài học thất bại.";
       toast.error(msg);
     }
   };
@@ -403,7 +403,7 @@ export default function InstructorCourseBuilderPage({
       toast.success(`Đã xóa Học liệu "${itemTitle}" thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : t("instructorBuilder.toastItemDeleteFail");
+      const msg = err instanceof Error ? err.message : "Xóa Học liệu thất bại.";
       toast.error(msg);
     }
   };
@@ -428,7 +428,7 @@ export default function InstructorCourseBuilderPage({
         courseId,
         orderedWeekModuleIds: course.weekModules.map((w) => w.id),
       });
-      toast.success(t("instructorBuilder.toastWeekOrderSaved"));
+      toast.success("Đã cập nhật vị trí Tuần học thành công!");
     } catch (err: unknown) {
       console.error("Failed to save week order:", err);
       await fetchCourseDetail();
@@ -464,7 +464,7 @@ export default function InstructorCourseBuilderPage({
         weekModuleId: weekId,
         orderedLessonIds: week.lessons.map((l) => l.id),
       });
-      toast.success(t("instructorBuilder.toastLessonOrderSaved"));
+      toast.success("Đã cập nhật thứ tự Bài học thành công!");
     } catch (err: unknown) {
       console.error("Failed to save lesson order:", err);
       await fetchCourseDetail();
@@ -521,7 +521,7 @@ export default function InstructorCourseBuilderPage({
         lessonId,
         orderedItemIds: targetItems.map((i) => i.id),
       });
-      toast.success(t("instructorBuilder.toastItemOrderSaved"));
+      toast.success("Đã cập nhật thứ tự Học liệu thành công!");
     } catch (err: unknown) {
       console.error("Failed to save item order:", err);
       await fetchCourseDetail();
@@ -544,7 +544,7 @@ export default function InstructorCourseBuilderPage({
         <div className="flex-1 flex items-center justify-center py-24">
           <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm font-medium">{t("instructorBuilder.loading")}</span>
+            <span className="text-sm font-medium">{"Đang tải cấu trúc bài giảng khóa học..."}</span>
           </div>
         </div>
       </div>
@@ -559,10 +559,10 @@ export default function InstructorCourseBuilderPage({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
             <Link href="/instructor/courses" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-              {t("instructorBuilder.breadcrumbInstructor")}
+              {"Giảng viên"}
             </Link>
             <span>/</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">{t("instructorBuilder.breadcrumbBuilder")}</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">{"Biên soạn bài học"}</span>
           </div>
 
           <Link
@@ -572,7 +572,7 @@ export default function InstructorCourseBuilderPage({
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            <span>{t("instructorBuilder.backBtn")}</span>
+            <span>{"Danh sách Khóa học"}</span>
           </Link>
         </div>
 
@@ -596,7 +596,7 @@ export default function InstructorCourseBuilderPage({
                 <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                <span>{t("instructorBuilder.instructorLabel")} {course.instructorNames.join(", ")}</span>
+                <span>{"Giảng viên:"} {course.instructorNames.join(", ")}</span>
               </div>
             </div>
 
@@ -625,14 +625,14 @@ export default function InstructorCourseBuilderPage({
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
-                <span>{t("instructorBuilder.scormExportBtn")}</span>
+                <span>{"Xuất SCORM 1.2 ZIP"}</span>
               </button>
 
               <label className="px-3.5 py-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 text-xs font-bold hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
-                <span>{t("instructorBuilder.scormImportBtn")}</span>
+                <span>{"Import Gói SCORM"}</span>
                 <input
                   type="file"
                   accept=".zip"
@@ -668,7 +668,7 @@ export default function InstructorCourseBuilderPage({
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                 </svg>
-                <span>{t("instructorBuilder.questionBankMenuBtn")}</span>
+                <span>{"Ngân hàng Câu hỏi"}</span>
               </Link>
 
               <Link
@@ -678,7 +678,7 @@ export default function InstructorCourseBuilderPage({
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                <span>{t("instructorBuilder.analyticsBtn")}</span>
+                <span>{"Thống kê lớp học"}</span>
               </Link>
 
               <Link
@@ -688,7 +688,7 @@ export default function InstructorCourseBuilderPage({
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                 </svg>
-                <span>{t("instructorBuilder.announcementBtn")}</span>
+                <span>{"Đăng Thông báo"}</span>
               </Link>
 
               {isInstructorOrAdmin && (
@@ -699,7 +699,7 @@ export default function InstructorCourseBuilderPage({
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  <span>{t("instructorBuilder.addWeekBtn")}</span>
+                  <span>{"Thêm Tuần học"}</span>
                 </button>
               )}
             </div>
@@ -715,10 +715,10 @@ export default function InstructorCourseBuilderPage({
               <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
-              {t("instructorBuilder.syllabusTitle")}
+              {"Cấu trúc Chương trình bài giảng (Course Syllabus)"}
             </h2>
             <span className="text-xs font-semibold text-slate-500">
-              {t("instructorBuilder.totalWeeks")} {course?.weekModules?.length || 0}
+              {"Tổng số tuần:"} {course?.weekModules?.length || 0}
             </span>
           </div>
 
@@ -728,8 +728,8 @@ export default function InstructorCourseBuilderPage({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
               <div className="space-y-1">
-                <p className="text-base font-bold text-slate-700 dark:text-slate-300">{t("instructorBuilder.noWeeksTitle")}</p>
-                <p className="text-xs text-slate-500">{t("instructorBuilder.noWeeksDesc")}</p>
+                <p className="text-base font-bold text-slate-700 dark:text-slate-300">{"Khóa học này chưa có Tuần học nào"}</p>
+                <p className="text-xs text-slate-500">{"Hãy bấm nút \"Thêm Tuần học\" để khởi tạo mô-đun bài giảng đầu tiên."}</p>
               </div>
               {isInstructorOrAdmin && (
                 <button
@@ -739,7 +739,7 @@ export default function InstructorCourseBuilderPage({
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  <span>{t("instructorBuilder.createFirstWeekBtn")}</span>
+                  <span>{"Khởi tạo Tuần 1 ngay"}</span>
                 </button>
               )}
             </div>
@@ -779,13 +779,13 @@ export default function InstructorCourseBuilderPage({
                       <div className="flex items-center gap-2">
                         {isInstructorOrAdmin && (
                           <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg px-2 py-1 border border-slate-200 dark:border-slate-700">
-                            <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold cursor-grab active:cursor-grabbing select-none" title={t("instructorBuilder.dragWeek")}>
+                            <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold cursor-grab active:cursor-grabbing select-none" title={"Kéo thả Tuần học để sắp xếp"}>
                               ⋮⋮
                             </span>
                           </div>
                         )}
                         <span className="px-2.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 text-xs font-black uppercase">
-                          {t("instructorBuilder.weekLabel")} {week.weekNumber}
+                          {"Tuần"} {week.weekNumber}
                         </span>
                         <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
                           {week.title}
@@ -807,7 +807,7 @@ export default function InstructorCourseBuilderPage({
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
-                          <span>{t("instructorBuilder.editWeekBtn")}</span>
+                          <span>{"Sửa Tuần"}</span>
                         </button>
 
                         <button
@@ -817,7 +817,7 @@ export default function InstructorCourseBuilderPage({
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
-                          <span>{t("instructorBuilder.deleteWeekBtn")}</span>
+                          <span>{"Xóa Tuần"}</span>
                         </button>
 
                         <button
@@ -830,7 +830,7 @@ export default function InstructorCourseBuilderPage({
                           <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                           </svg>
-                          <span>{t("instructorBuilder.addLessonBtn")}</span>
+                          <span>{"Thêm Bài học"}</span>
                         </button>
                       </div>
                     )}
@@ -839,7 +839,7 @@ export default function InstructorCourseBuilderPage({
                   {/* Lessons List under this Week */}
                   {(!week.lessons || week.lessons.length === 0) ? (
                     <div className="py-6 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-4">
-                      <p className="text-xs text-slate-400">{t("instructorBuilder.noLessonsYet")} {week.weekNumber}</p>
+                      <p className="text-xs text-slate-400">{"Chưa có Bài học nào trong Tuần"} {week.weekNumber}</p>
                     </div>
                   ) : (
                     <div className="space-y-4 pl-2 sm:pl-4 border-l-2 border-slate-200 dark:border-slate-800">
@@ -877,7 +877,7 @@ export default function InstructorCourseBuilderPage({
                             <div className="flex items-center gap-2">
                               {isInstructorOrAdmin && (
                                 <div className="flex items-center bg-white dark:bg-slate-900 rounded-lg px-2 py-1 border border-slate-200 dark:border-slate-800">
-                                  <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold cursor-grab active:cursor-grabbing select-none" title={t("instructorBuilder.dragLesson")}>
+                                  <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold cursor-grab active:cursor-grabbing select-none" title={"Kéo thả Bài học để sắp xếp"}>
                                     ⋮⋮
                                   </span>
                                 </div>
@@ -889,7 +889,7 @@ export default function InstructorCourseBuilderPage({
                                 {lesson.title}
                               </span>
                               <span className="text-[10px] font-mono text-slate-400">
-                                ({lesson.estimatedMinutes} {t("instructorBuilder.minLabel")})
+                                ({lesson.estimatedMinutes} {"phút"})
                               </span>
                             </div>
 
@@ -902,7 +902,7 @@ export default function InstructorCourseBuilderPage({
                                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                   </svg>
-                                  <span>{t("instructorBuilder.editLessonBtn")}</span>
+                                  <span>{"Sửa Bài"}</span>
                                 </button>
 
                                 <button
@@ -912,7 +912,7 @@ export default function InstructorCourseBuilderPage({
                                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                   </svg>
-                                  <span>{t("instructorBuilder.deleteLessonBtn")}</span>
+                                  <span>{"Xóa Bài"}</span>
                                 </button>
 
                                 <button
@@ -926,7 +926,7 @@ export default function InstructorCourseBuilderPage({
                                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                                   </svg>
-                                  <span>{t("instructorBuilder.addItemBtn")}</span>
+                                  <span>{"Thêm Học liệu"}</span>
                                 </button>
                               </div>
                             )}
@@ -934,7 +934,7 @@ export default function InstructorCourseBuilderPage({
 
                           {/* Learning Items under this Lesson */}
                           {(!lesson.items || lesson.items.length === 0) ? (
-                            <p className="text-[11px] italic text-slate-400 pl-6">{t("instructorBuilder.noItemsYet")}</p>
+                            <p className="text-[11px] italic text-slate-400 pl-6">{"Chưa có nội dung video/bài đọc"}</p>
                           ) : (
                             <div className="space-y-2 pl-4">
                               {lesson.items.map((item, iIdx) => (
@@ -970,7 +970,7 @@ export default function InstructorCourseBuilderPage({
                                   <div className="flex items-center gap-2">
                                     {isInstructorOrAdmin && (
                                       <div className="flex items-center border-r border-slate-200 dark:border-slate-800 pr-2 mr-1">
-                                        <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-0.5 font-bold cursor-grab active:cursor-grabbing select-none" title={t("instructorBuilder.dragItem")}>
+                                        <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-0.5 font-bold cursor-grab active:cursor-grabbing select-none" title={"Kéo thả để xếp thứ tự"}>
                                           ⋮⋮
                                         </span>
                                       </div>
@@ -1003,14 +1003,14 @@ export default function InstructorCourseBuilderPage({
 
                                   <div className="flex items-center gap-2">
                                     <span className="text-[10px] text-slate-400 font-mono">
-                                      {item.estimatedMinutes} {t("instructorBuilder.minLabel")}
+                                      {item.estimatedMinutes} {"phút"}
                                     </span>
 
                                     <Link
                                       href={`/learn/${courseId}?itemId=${item.id}`}
                                       target="_blank"
                                       className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                      title={t("instructorBuilder.previewItemTooltip")}
+                                      title={"Xem trước nội dung trong Trình phát bài học"}
                                     >
                                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -1044,7 +1044,7 @@ export default function InstructorCourseBuilderPage({
                                             quizMatrixId: item.quizMatrixId || "",
                                           })}
                                           className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded transition-colors cursor-pointer"
-                                          title={t("instructorBuilder.editItemTooltip")}
+                                          title={"Sửa nội dung học liệu"}
                                         >
                                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -1053,7 +1053,7 @@ export default function InstructorCourseBuilderPage({
                                         <button
                                           onClick={() => handleDeleteItem(item.id, item.title)}
                                           className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded transition-colors cursor-pointer"
-                                          title={t("instructorBuilder.deleteItemTooltip")}
+                                          title={"Xóa học liệu"}
                                         >
                                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1082,12 +1082,12 @@ export default function InstructorCourseBuilderPage({
       <Modal
         isOpen={showWeekModal}
         onClose={() => setShowWeekModal(false)}
-        title={t("instructorBuilder.modalAddWeekTitle")}
+        title={"Thêm Tuần học Mới (Week Module)"}
         size="md"
       >
         <form onSubmit={handleCreateWeek} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldWeekNumber")}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Số Tuần học"}</label>
             <input
               type="number"
               min={1}
@@ -1099,24 +1099,24 @@ export default function InstructorCourseBuilderPage({
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldWeekTitle")}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Tiêu đề Tuần học"}</label>
             <input
               type="text"
               value={weekTitle}
               onChange={(e) => setWeekTitle(e.target.value)}
-              placeholder={t("instructorBuilder.fieldWeekTitlePlaceholder")}
+              placeholder={"Ví dụ: Week 1: Giới thiệu về Neural Networks"}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldWeekSummary")}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Mô tả tóm tắt"}</label>
             <textarea
               rows={3}
               value={weekSummary}
               onChange={(e) => setWeekSummary(e.target.value)}
-              placeholder={t("instructorBuilder.fieldWeekSummaryPlaceholder")}
+              placeholder={"Tóm tắt nội dung chính học viên sẽ thu hoạch được..."}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
             />
           </div>
@@ -1127,14 +1127,14 @@ export default function InstructorCourseBuilderPage({
               onClick={() => setShowWeekModal(false)}
               className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
             >
-              {t("instructorBuilder.cancelBtn")}
+              {"Hủy"}
             </button>
             <button
               type="submit"
               disabled={saving}
               className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
             >
-              {saving ? t("instructorBuilder.creatingBtn") : t("instructorBuilder.confirmAddWeekBtn")}
+              {saving ? "Đang tạo..." : "Xác nhận tạo Tuần học"}
             </button>
           </div>
         </form>
@@ -1144,24 +1144,24 @@ export default function InstructorCourseBuilderPage({
       <Modal
         isOpen={Boolean(showLessonModal)}
         onClose={() => setShowLessonModal(null)}
-        title={t("instructorBuilder.modalAddLessonTitle")}
+        title={"Thêm Bài học Mới (Lesson)"}
         size="md"
       >
         <form onSubmit={handleCreateLesson} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldLessonTitle")}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Tên Bài học"}</label>
             <input
               type="text"
               value={lessonTitle}
               onChange={(e) => setLessonTitle(e.target.value)}
-              placeholder={t("instructorBuilder.fieldLessonTitlePlaceholder")}
+              placeholder={"Ví dụ: Lesson 1: Activation Functions (ReLU, Sigmoid)"}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldDuration")}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Thời lượng ước tính (Phút)"}</label>
             <input
               type="number"
               min={1}
@@ -1178,14 +1178,14 @@ export default function InstructorCourseBuilderPage({
               onClick={() => setShowLessonModal(null)}
               className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
             >
-              {t("instructorBuilder.cancelBtn")}
+              {"Hủy"}
             </button>
             <button
               type="submit"
               disabled={saving}
               className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
             >
-              {saving ? t("instructorBuilder.creatingBtn") : t("instructorBuilder.confirmAddLessonBtn")}
+              {saving ? "Đang tạo..." : "Xác nhận tạo Bài học"}
             </button>
           </div>
         </form>
@@ -1195,40 +1195,40 @@ export default function InstructorCourseBuilderPage({
       <Modal
         isOpen={Boolean(showItemModal)}
         onClose={() => setShowItemModal(null)}
-        title={t("instructorBuilder.modalAddItemTitle")}
+        title={"Thêm Học liệu Mới (Learning Item)"}
         size="lg"
       >
         <form onSubmit={handleCreateItem} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldItemType")}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Loại Học liệu"}</label>
             <select
               value={itemType}
               onChange={(e) => setItemType(parseInt(e.target.value) as ItemType)}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
             >
-              <option value={ItemType.VIDEO}>{t("instructorBuilder.optionVideo")}</option>
-              <option value={ItemType.READING}>{t("instructorBuilder.optionReading")}</option>
-              <option value={ItemType.PRACTICE_QUIZ}>{t("instructorBuilder.optionPracticeQuiz")}</option>
-              <option value={ItemType.GRADED_QUIZ}>{t("instructorBuilder.optionGradedQuiz")}</option>
-              <option value={ItemType.AUTO_GRADED_LAB}>{t("instructorBuilder.optionLab")}</option>
-              <option value={ItemType.PEER_REVIEW}>{t("instructorBuilder.optionPeerReview")}</option>
+              <option value={ItemType.VIDEO}>{"VIDEO (Bài giảng Video)"}</option>
+              <option value={ItemType.READING}>{"READING (Bài đọc Markdown)"}</option>
+              <option value={ItemType.PRACTICE_QUIZ}>{"PRACTICE_QUIZ (Quiz Ôn luyện)"}</option>
+              <option value={ItemType.GRADED_QUIZ}>{"GRADED_QUIZ (Bài thi Tính điểm)"}</option>
+              <option value={ItemType.AUTO_GRADED_LAB}>{"AUTO_GRADED_LAB (Thực hành Code)"}</option>
+              <option value={ItemType.PEER_REVIEW}>{"PEER_REVIEW (Bài tập Chấm chéo)"}</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldItemTitle")}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Tên Học liệu"}</label>
             <input
               type="text"
               value={itemTitle}
               onChange={(e) => setItemTitle(e.target.value)}
-              placeholder={t("instructorBuilder.fieldItemTitlePlaceholder")}
+              placeholder={"Ví dụ: Video: Hướng dẫn cài đặt NumPy & PyTorch"}
               className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldDuration")}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Thời lượng ước tính (Phút)"}</label>
             <input
               type="number"
               min={1}
@@ -1260,7 +1260,7 @@ export default function InstructorCourseBuilderPage({
           {itemType === ItemType.READING && (
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">{t("instructorBuilder.fieldReadingContent")}</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">{"Nội dung Bài đọc (Markdown format)"}</label>
                 <button
                   type="button"
                   onClick={() => setShowMarkdownPreview(!showMarkdownPreview)}
@@ -1278,7 +1278,9 @@ export default function InstructorCourseBuilderPage({
                   rows={6}
                   value={readingMarkdown}
                   onChange={(e) => setReadingMarkdown(e.target.value)}
-                  placeholder={t("instructorBuilder.fieldReadingPlaceholder")}
+                  placeholder={`# Giới thiệu bài học
+
+Nội dung lý thuyết chi tiết...`}
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
                   required
                 />
@@ -1296,7 +1298,7 @@ export default function InstructorCourseBuilderPage({
                   onChange={(e) => setQuizBankId(e.target.value)}
                   className="w-full px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
                 >
-                  <option value="">{t("instructorBuilder.selectQuestionBankPlaceholder")}</option>
+                  <option value="">{"-- Chọn Kho Ngân hàng Đề --"}</option>
                   {questionBanks.map((bank) => (
                     <option key={bank.id} value={bank.id}>
                       {bank.title} ({bank.id})
@@ -1463,14 +1465,14 @@ export default function InstructorCourseBuilderPage({
               onClick={() => setShowItemModal(null)}
               className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
             >
-              {t("instructorBuilder.cancelBtn")}
+              {"Hủy"}
             </button>
             <button
               type="submit"
               disabled={saving}
               className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
             >
-              {saving ? t("instructorBuilder.creatingBtn") : t("instructorBuilder.confirmAddItemBtn")}
+              {saving ? "Đang tạo..." : "Xác nhận tạo Học liệu"}
             </button>
           </div>
         </form>
@@ -1480,13 +1482,13 @@ export default function InstructorCourseBuilderPage({
       <Modal
         isOpen={Boolean(editingWeek)}
         onClose={() => setEditingWeek(null)}
-        title={t("instructorBuilder.modalEditWeekTitle")}
+        title={"Chỉnh sửa Tuần học"}
         size="md"
       >
         {editingWeek && (
           <form onSubmit={handleUpdateWeek} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldWeekTitle")}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Tiêu đề Tuần học"}</label>
               <input
                 type="text"
                 value={editingWeek.title}
@@ -1497,7 +1499,7 @@ export default function InstructorCourseBuilderPage({
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldWeekSummary")}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Mô tả tóm tắt"}</label>
               <textarea
                 rows={3}
                 value={editingWeek.summary}
@@ -1512,14 +1514,14 @@ export default function InstructorCourseBuilderPage({
                 onClick={() => setEditingWeek(null)}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
               >
-                {t("instructorBuilder.cancelBtn")}
+                {"Hủy"}
               </button>
               <button
                 type="submit"
                 disabled={saving}
                 className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
               >
-                {saving ? t("instructorBuilder.savingBtn") : t("instructorBuilder.saveChangesBtn")}
+                {saving ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
             </div>
           </form>
@@ -1530,13 +1532,13 @@ export default function InstructorCourseBuilderPage({
       <Modal
         isOpen={Boolean(editingLesson)}
         onClose={() => setEditingLesson(null)}
-        title={t("instructorBuilder.modalEditLessonTitle")}
+        title={"Chỉnh sửa Bài học"}
         size="md"
       >
         {editingLesson && (
           <form onSubmit={handleUpdateLesson} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldLessonTitle")}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Tên Bài học"}</label>
               <input
                 type="text"
                 value={editingLesson.title}
@@ -1547,7 +1549,7 @@ export default function InstructorCourseBuilderPage({
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldDuration")}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Thời lượng ước tính (Phút)"}</label>
               <input
                 type="number"
                 min={1}
@@ -1564,14 +1566,14 @@ export default function InstructorCourseBuilderPage({
                 onClick={() => setEditingLesson(null)}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
               >
-                {t("instructorBuilder.cancelBtn")}
+                {"Hủy"}
               </button>
               <button
                 type="submit"
                 disabled={saving}
                 className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
               >
-                {saving ? t("instructorBuilder.savingBtn") : t("instructorBuilder.saveChangesBtn")}
+                {saving ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
             </div>
           </form>
@@ -1582,13 +1584,13 @@ export default function InstructorCourseBuilderPage({
       <Modal
         isOpen={Boolean(editingItem)}
         onClose={() => setEditingItem(null)}
-        title={t("instructorBuilder.modalEditItemTitle")}
+        title={"Chỉnh sửa Nội dung Học liệu"}
         size="lg"
       >
         {editingItem && (
           <form onSubmit={handleUpdateItem} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldItemTitle")}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Tên Học liệu"}</label>
               <input
                 type="text"
                 value={editingItem.title}
@@ -1599,7 +1601,7 @@ export default function InstructorCourseBuilderPage({
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldDuration")}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Thời lượng ước tính (Phút)"}</label>
               <input
                 type="number"
                 min={1}
@@ -1631,7 +1633,7 @@ export default function InstructorCourseBuilderPage({
 
             {editingItem.type === ItemType.READING && (
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{t("instructorBuilder.fieldReadingContent")}</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Nội dung Bài đọc (Markdown format)"}</label>
                 <textarea
                   rows={6}
                   value={editingItem.content}
@@ -1653,7 +1655,7 @@ export default function InstructorCourseBuilderPage({
                     onChange={(e) => setEditingItem({ ...editingItem, quizMatrixId: e.target.value })}
                     className="w-full px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
                   >
-                    <option value="">{t("instructorBuilder.selectQuestionBankPlaceholder")}</option>
+                    <option value="">{"-- Chọn Kho Ngân hàng Đề --"}</option>
                     {questionBanks.map((bank) => (
                       <option key={bank.id} value={bank.id}>
                         {bank.title} ({bank.id})
@@ -1776,14 +1778,14 @@ export default function InstructorCourseBuilderPage({
                 onClick={() => setEditingItem(null)}
                 className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
               >
-                {t("instructorBuilder.cancelBtn")}
+                {"Hủy"}
               </button>
               <button
                 type="submit"
                 disabled={saving}
                 className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
               >
-                {saving ? t("instructorBuilder.savingBtn") : t("instructorBuilder.saveChangesBtn")}
+                {saving ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
             </div>
           </form>
@@ -1794,7 +1796,7 @@ export default function InstructorCourseBuilderPage({
       <Modal
         isOpen={showScormReviewModal}
         onClose={() => setShowScormReviewModal(false)}
-        title={t("instructorBuilder.scormImportTitle")}
+        title={"SCORM Import & Review Workspace"}
         size="xl"
       >
         <div className="space-y-6">
@@ -1809,7 +1811,7 @@ export default function InstructorCourseBuilderPage({
               {scormPreviewCourse?.title || "SCORM Package Extracted Structure"}
             </h3>
             <p className="text-xs text-slate-600 dark:text-slate-400">
-              {t("instructorBuilder.scormReviewSubtitle")}
+              {"Bóc tách tự động gói SCORM thành các học liệu chuẩn Native"}
             </p>
           </div>
 
@@ -1848,7 +1850,7 @@ export default function InstructorCourseBuilderPage({
               onClick={() => setShowScormReviewModal(false)}
               className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
             >
-              {t("instructorBuilder.cancelBtn")}
+              {"Hủy"}
             </button>
             <button
               type="button"
@@ -1876,7 +1878,7 @@ export default function InstructorCourseBuilderPage({
                   <span>Đang Import...</span>
                 </>
               ) : (
-                <span>{t("instructorBuilder.scormConfirmImportBtn")}</span>
+                <span>{"Xác nhận Import vào Khóa học"}</span>
               )}
             </button>
           </div>

@@ -7,12 +7,12 @@ import { useForm } from "@tanstack/react-form";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, UserRole } from "@/gen/identity/v1/identity_pb";
 import { useToast } from "@/components/ui/Toast";
-import { useTranslation } from "@/lib/i18n/TranslationProvider";
+
 import { cn } from "@/lib/utils";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  
   const toast = useToast();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -37,13 +37,13 @@ export default function RegisterPage() {
         });
 
         if (res.user) {
-          toast.success(t("auth.registerSuccess"));
+          toast.success("Đăng ký thành công! Đang chuyển hướng đến trang đăng nhập...");
           setTimeout(() => {
             router.push("/auth/login");
           }, 1500);
         }
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : t("auth.registerFailed");
+        const msg = err instanceof Error ? err.message : "Đăng ký thất bại. Vui lòng thử lại.";
         toast.error(msg);
       } finally {
         setSubmitting(false);
@@ -56,9 +56,9 @@ export default function RegisterPage() {
         <div className="w-full max-w-md">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
             <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{t("auth.registerTitle")}</h1>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{"Đăng ký tài khoản"}</h1>
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                {t("auth.registerSubtitle")}
+                {"Bắt đầu hành trình học tập chuyên sâu ngay hôm nay"}
               </p>
             </div>
 
@@ -76,7 +76,7 @@ export default function RegisterPage() {
                 validators={{
                   onChange: ({ value }) => {
                     if (!value.trim()) {
-                      return t("auth.fullNameRequired");
+                      return "Vui lòng nhập họ và tên.";
                     }
                     return undefined;
                   },
@@ -87,7 +87,7 @@ export default function RegisterPage() {
                   return (
                     <div className="space-y-1.5">
                       <label htmlFor={field.name} className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                        {t("auth.fullNameLabel")}
+                        {"Họ và tên"}
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
@@ -102,7 +102,7 @@ export default function RegisterPage() {
                           value={field.state.value}
                           onBlur={field.handleBlur}
                           onChange={(e) => field.handleChange(e.target.value)}
-                          placeholder={t("auth.fullNamePlaceholder")}
+                          placeholder={"Nguyễn Văn A"}
                           autoComplete="name"
                           className={cn(
                             "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2",
@@ -129,10 +129,10 @@ export default function RegisterPage() {
                 validators={{
                   onChange: ({ value }) => {
                     if (!value.trim()) {
-                      return t("auth.fillAllFields");
+                      return "Vui lòng điền đầy đủ các thông tin bắt buộc.";
                     }
                     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) {
-                      return t("auth.invalidEmail");
+                      return "Địa chỉ email không hợp lệ.";
                     }
                     return undefined;
                   },
@@ -143,7 +143,7 @@ export default function RegisterPage() {
                   return (
                     <div className="space-y-1.5">
                       <label htmlFor={field.name} className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                        {t("auth.emailLabel")}
+                        {"Địa chỉ Email"}
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
@@ -185,10 +185,10 @@ export default function RegisterPage() {
                 validators={{
                   onChange: ({ value }) => {
                     if (!value) {
-                      return t("auth.passwordRequired");
+                      return "Vui lòng nhập mật khẩu.";
                     }
                     if (value.length < 6) {
-                      return t("auth.passwordTooShort");
+                      return "Mật khẩu phải chứa ít nhất 6 ký tự.";
                     }
                     return undefined;
                   },
@@ -199,7 +199,7 @@ export default function RegisterPage() {
                   return (
                     <div className="space-y-1.5">
                       <label htmlFor={field.name} className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                        {t("auth.passwordLabel")}
+                        {"Mật khẩu"}
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
@@ -227,7 +227,7 @@ export default function RegisterPage() {
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          aria-label={showPassword ? t("auth.hidePassword") : t("auth.showPassword")}
+                          aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
                           className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
                         >
                           {showPassword ? (
@@ -257,7 +257,7 @@ export default function RegisterPage() {
                 {(field) => (
                   <div className="space-y-1.5">
                     <label htmlFor={field.name} className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                      {t("auth.roleLabel")}
+                      {"Vai trò người dùng"}
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
@@ -272,9 +272,9 @@ export default function RegisterPage() {
                         onChange={(e) => field.handleChange(Number(e.target.value) as UserRole)}
                         className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm appearance-none cursor-pointer"
                       >
-                        <option value={UserRole.LEARNER}>{t("auth.roleLearner")}</option>
-                        <option value={UserRole.INSTRUCTOR}>{t("auth.roleInstructor")}</option>
-                        <option value={UserRole.TA}>{t("auth.roleTA")}</option>
+                        <option value={UserRole.LEARNER}>{"Học viên (Learner)"}</option>
+                        <option value={UserRole.INSTRUCTOR}>{"Giảng viên (Instructor)"}</option>
+                        <option value={UserRole.TA}>{"Trợ giảng (TA)"}</option>
                       </select>
                       <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -302,10 +302,10 @@ export default function RegisterPage() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg>
-                        <span>{t("auth.registering")}</span>
+                        <span>{"Đang tạo tài khoản..."}</span>
                       </>
                     ) : (
-                      <span>{t("auth.registerBtn")}</span>
+                      <span>{"Đăng ký ngay"}</span>
                     )}
                   </button>
                 )}
@@ -314,9 +314,9 @@ export default function RegisterPage() {
 
             <div className="mt-8 text-center pt-6 border-t border-slate-200 dark:border-slate-800">
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                {t("auth.existingAccount")}{" "}
+                {"Đã có tài khoản?"}{" "}
                 <Link href="/auth/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-                  {t("auth.loginHere")}
+                  {"Đăng nhập tại đây"}
                 </Link>
               </p>
             </div>
