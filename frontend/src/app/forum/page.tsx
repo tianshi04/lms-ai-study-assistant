@@ -110,6 +110,7 @@ export default function ForumPage() {
   }, [selectedCourseId, t]);
 
   useEffect(() => {
+    // eslint-disable-next-line
     fetchThreads();
   }, [fetchThreads]);
 
