@@ -24,6 +24,14 @@ from src.shared.infrastructure.s3_storage import get_s3_storage_service
 from src.shared.permissions import enforce_course_ownership
 
 
+def _default_learning_repo_factory(session: Any) -> ILearningRepository:
+    from src.modules.learning.infrastructure.repository import (
+        SQLAlchemyLearningRepository,
+    )
+
+    return SQLAlchemyLearningRepository(session)
+
+
 class CatalogUseCase:
     """Application Use Case coordinator for Catalog domain using Dependency Inversion (ICatalogRepository interface)."""
 
@@ -35,11 +43,8 @@ class CatalogUseCase:
         self.repo_factory = repo_factory or (
             lambda session: SQLAlchemyCatalogRepository(session)
         )
-        self.learning_repo_factory = learning_repo_factory or (
-            lambda session: __import__(
-                "src.modules.learning.infrastructure.repository",
-                fromlist=["SQLAlchemyLearningRepository"],
-            ).SQLAlchemyLearningRepository(session)
+        self.learning_repo_factory = (
+            learning_repo_factory or _default_learning_repo_factory
         )
 
     async def _verify_ownership(
@@ -101,7 +106,7 @@ class CatalogUseCase:
         owner_id: str = "",
     ) -> Course:
         async with async_session_scope() as session:
-            repo = SQLAlchemyCatalogRepository(session)
+            repo = self.repo_factory(session)
             return await repo.create_course(
                 title=title,
                 slug=slug,
@@ -127,7 +132,7 @@ class CatalogUseCase:
         current_user: CurrentUser | None = None,
     ) -> Course | None:
         async with async_session_scope() as session:
-            repo = SQLAlchemyCatalogRepository(session)
+            repo = self.repo_factory(session)
             await self._verify_ownership(
                 repo, course_id, current_user, "chỉnh sửa khóa học"
             )
@@ -151,7 +156,7 @@ class CatalogUseCase:
         current_user: CurrentUser | None = None,
     ):
         async with async_session_scope() as session:
-            repo = SQLAlchemyCatalogRepository(session)
+            repo = self.repo_factory(session)
             await self._verify_ownership(repo, course_id, current_user, "tạo tuần học")
             return await repo.create_week_module(
                 course_id=course_id,
@@ -169,7 +174,7 @@ class CatalogUseCase:
         current_user: CurrentUser | None = None,
     ):
         async with async_session_scope() as session:
-            repo = SQLAlchemyCatalogRepository(session)
+            repo = self.repo_factory(session)
             await self._verify_ownership(repo, course_id, current_user, "tạo bài học")
             return await repo.create_lesson(
                 course_id=course_id,
@@ -198,7 +203,7 @@ class CatalogUseCase:
         current_user: CurrentUser | None = None,
     ):
         async with async_session_scope() as session:
-            repo = SQLAlchemyCatalogRepository(session)
+            repo = self.repo_factory(session)
             await self._verify_ownership(repo, course_id, current_user, "tạo học liệu")
             return await repo.create_learning_item(
                 course_id=course_id,

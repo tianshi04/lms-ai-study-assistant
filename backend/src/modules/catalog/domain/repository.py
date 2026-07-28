@@ -52,7 +52,42 @@ class ICatalogRepository(ABC):
         instructor_names: list[str],
         subject: str = "",
         level: str = "",
+        owner_id: str = "",
     ) -> Course:
+        pass
+
+    @abstractmethod
+    async def update_course(
+        self,
+        course_id: str,
+        title: str,
+        description: str,
+        partner_name: str,
+        partner_logo_url: str,
+        instructor_names: list[str],
+        subject: str = "",
+        level: str = "",
+    ) -> Course | None:
+        pass
+
+    @abstractmethod
+    async def create_week_module(
+        self,
+        course_id: str,
+        week_number: int,
+        title: str,
+        summary: str,
+    ):
+        pass
+
+    @abstractmethod
+    async def create_lesson(
+        self,
+        course_id: str,
+        week_module_id: str,
+        title: str,
+        estimated_minutes: int,
+    ):
         pass
 
     @abstractmethod
