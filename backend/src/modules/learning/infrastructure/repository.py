@@ -37,6 +37,7 @@ def _model_to_domain_progress(model: LearningProgressModel) -> LearningProgress:
         overall_progress_percent=model.overall_progress_percent,
         completed_item_ids=model.completed_item_ids,
         weekly_deadlines=deadlines,
+        last_reset_at=model.last_reset_at,
     )
 
 
