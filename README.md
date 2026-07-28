@@ -1,7 +1,7 @@
 # Coursera LMS Platform (AI-Assisted Learning Assistant)
 
 [![Architecture](https://img.shields.io/badge/Architecture-Modular%20Monolith%20%2B%20DDD-blue)](https://github.com/tianshi04/lms-ai-study-assistant)
-[![Backend](https://img.shields.io/badge/Backend-Python%203.13%2B%20%7C%20FastAPI%20%7C%20ConnectRPC-green)](backend/)
+[![Backend](https://img.shields.io/badge/Backend-Python%203.13%2B%20%7C%20Starlette%20%7C%20ConnectRPC-green)](backend/)
 [![Frontend](https://img.shields.io/badge/Frontend-Next.js%2016%20%7C%20React%2019%20%7C%20Tailwind%20v4-black)](frontend/)
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%2017%20pgvector-blueviolet)](backend/docker-compose.yml)
 [![Protocol](https://img.shields.io/badge/API-ConnectRPC%20%2F%20Protobuf-orange)](proto/)

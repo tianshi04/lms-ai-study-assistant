@@ -37,7 +37,7 @@ async def auto_rollback_db():
 @pytest_asyncio.fixture()
 async def client():
     """
-    Tạo test client cho FastAPI app với ASGI transport.
+    Tạo test client cho Starlette app với ASGI transport.
     """
     await seed_database()
     transport = ASGITransport(app=app)
