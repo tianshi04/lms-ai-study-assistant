@@ -74,8 +74,7 @@ class AssessmentUseCase:
         # 1. Fetch Quiz Matrix
         matrix = await repo.get_quiz_matrix(item_id)
         if not matrix:
-            # Fallback mock pool if no matrix exists (e.g. default/demo)
-            return self._get_fallback_mock_questions(item_id, seed)
+            return []
 
         # 2. Fetch Questions in Bank
         bank_questions = await repo.get_questions_by_bank(matrix.bank_id)
@@ -130,45 +129,6 @@ class AssessmentUseCase:
                 }
             )
 
-        return result
-
-    def _get_fallback_mock_questions(
-        self, item_id: str, seed: int = 42
-    ) -> list[dict[str, Any]]:
-        rng = random.Random(seed)
-        question_pool: list[dict[str, Any]] = [
-            {
-                "question_id": f"q_{i + 1}",
-                "text": f"Câu hỏi {i + 1} của bài thi {item_id}: Chọn đáp án đúng.",
-                "options": [
-                    "Tùy chọn Đúng (Gốc 0)",
-                    "Tùy chọn Sai 1",
-                    "Tùy chọn Sai 2",
-                    "Tùy chọn Sai 3",
-                ],
-                "correct_option_index": 0,
-            }
-            for i in range(10)
-        ]
-        sampled = rng.sample(question_pool, min(5, len(question_pool)))
-        result: list[dict[str, Any]] = []
-        for q in sampled:
-            raw_options = q.get("options", [])
-            opts: list[str] = [str(x) for x in raw_options]
-            correct_idx = int(q.get("correct_option_index", 0))
-            correct_text = opts[correct_idx]
-            rng.shuffle(opts)
-            new_correct_idx = opts.index(correct_text)
-            result.append(
-                {
-                    "question_id": q["question_id"],
-                    "text": q["text"],
-                    "options": opts,
-                    "shuffled_correct_index": new_correct_idx,
-                    "question_type": "SINGLE_CHOICE",
-                    "difficulty": "EASY",
-                }
-            )
         return result
 
     async def start_graded_quiz_session(

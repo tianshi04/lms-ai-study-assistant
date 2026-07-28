@@ -26,6 +26,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         self.peer_submissions: list[PeerAssignmentSubmission] = []
         self.peer_reviews: list[PeerReview] = []
         self.grade_appeals: dict[str, GradeAppeal] = {}
+        self.matrices: dict[str, Any] = {}
 
     async def save_honor_code(self, agreement: HonorCodeAgreement) -> None:
         self.honor_codes[agreement.id] = agreement
@@ -202,7 +203,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
     ):
         from src.modules.assessment.domain.entities import QuizMatrix
 
-        return QuizMatrix(
+        matrix = QuizMatrix(
             item_id=item_id,
             bank_id=bank_id,
             time_limit_minutes=time_limit_minutes,
@@ -212,9 +213,24 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
             hard_count=hard_count,
             shuffle_options=shuffle_options,
         )
+        self.matrices[item_id] = matrix
+        return matrix
 
     async def get_quiz_matrix(self, item_id: str):
-        return None
+        if item_id in self.matrices:
+            return self.matrices[item_id]
+        from src.modules.assessment.domain.entities import QuizMatrix
+
+        return QuizMatrix(
+            item_id=item_id,
+            bank_id="bank_test_1",
+            time_limit_minutes=45,
+            passing_threshold_percent=80.0,
+            easy_count=3,
+            medium_count=2,
+            hard_count=0,
+            shuffle_options=True,
+        )
 
     async def get_questions_by_bank(self, bank_id: str):
         from src.modules.assessment.domain.entities import Question, QuestionOption
@@ -225,7 +241,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
                 bank_id=bank_id,
                 text=f"Question {i} text",
                 question_type="SINGLE_CHOICE",
-                difficulty="EASY" if i < 2 else ("MEDIUM" if i < 4 else "HARD"),
+                difficulty="EASY" if i < 3 else "MEDIUM",
                 explanation="Explanation",
                 options=[
                     QuestionOption(
@@ -264,8 +280,14 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     user_id = "user-test-quiz"
     item_id = "item-quiz-1"
 
+    correct_answers = [
+        q["shuffled_correct_index"]
+        for q in await usecase.generate_quiz_session_questions(repo, item_id, seed=42)
+    ]
+    wrong_answers = [(ans + 1) % 4 for ans in correct_answers]
+
     # 1. Without Honor Code -> Should fail
-    res_no_honor = await usecase.submit_graded_quiz(user_id, item_id, [1, 3, 3, 2, 0])
+    res_no_honor = await usecase.submit_graded_quiz(user_id, item_id, correct_answers)
     assert res_no_honor["passed"] is False
     assert "Honor Code" in res_no_honor["answer_explanations"][0]
 
@@ -273,7 +295,7 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     await usecase.submit_honor_code(user_id, item_id, True)
 
     # 3. Submit Perfect Score -> 100% Pass
-    res_pass = await usecase.submit_graded_quiz(user_id, item_id, [1, 3, 3, 2, 0])
+    res_pass = await usecase.submit_graded_quiz(user_id, item_id, correct_answers)
     assert res_pass["score_percent"] == 100.0
     assert res_pass["passed"] is True
     assert res_pass["attempts_left"] == 3
@@ -284,17 +306,17 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     await usecase.submit_honor_code(user_fail, item_id, True)
 
     # Attempt 1 (Fail)
-    r1 = await usecase.submit_graded_quiz(user_fail, item_id, [3, 3, 3, 3, 3])
+    r1 = await usecase.submit_graded_quiz(user_fail, item_id, wrong_answers)
     assert r1["passed"] is False
     assert r1["attempts_left"] == 2
 
     # Attempt 2 (Fail)
-    r2 = await usecase.submit_graded_quiz(user_fail, item_id, [3, 3, 3, 3, 3])
+    r2 = await usecase.submit_graded_quiz(user_fail, item_id, wrong_answers)
     assert r2["passed"] is False
     assert r2["attempts_left"] == 1
 
     # Attempt 3 (Fail) -> Cooldown activated
-    r3 = await usecase.submit_graded_quiz(user_fail, item_id, [3, 3, 3, 3, 3])
+    r3 = await usecase.submit_graded_quiz(user_fail, item_id, wrong_answers)
     assert r3["passed"] is False
     assert r3["attempts_left"] == 0
     assert r3["cooldown_seconds_left"] == 28800

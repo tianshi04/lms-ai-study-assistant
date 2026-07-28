@@ -643,10 +643,10 @@ export default function InstructorCourseBuilderPage({
                     try {
                       setScormImporting(true);
                       toast.info("Đang phân tích gói SCORM...");
-                      const mockKey = `scorm/uploads/${Date.now()}_${file.name}`;
+                      const scormKey = `scorm/uploads/${Date.now()}_${file.name}`;
                       const client = getRpcClient(CatalogService);
-                      const res = await client.parseScormPackage({ scormObjectKey: mockKey, targetCourseId: courseId });
-                      setScormObjectKey(mockKey);
+                      const res = await client.parseScormPackage({ scormObjectKey: scormKey, targetCourseId: courseId });
+                      setScormObjectKey(scormKey);
                       setScormPreviewCourse(res.coursePreview || null);
                       setScormIsSingleItem(res.isSingleItem);
                       setShowScormReviewModal(true);

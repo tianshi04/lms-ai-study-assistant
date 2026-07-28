@@ -53,9 +53,6 @@ class CatalogUseCase:
     ) -> tuple[list[Course], str]:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            seed_fn = getattr(repo, "seed_if_empty", None)
-            if callable(seed_fn):
-                await seed_fn()
             return await repo.list_courses(
                 page_size, page_token, search_query, subject, level, sort_by
             )
@@ -63,17 +60,11 @@ class CatalogUseCase:
     async def get_course_detail(self, course_id: str) -> Course | None:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            seed_fn = getattr(repo, "seed_if_empty", None)
-            if callable(seed_fn):
-                await seed_fn()
             return await repo.get_course_detail(course_id)
 
     async def get_lesson_detail(self, course_id: str, lesson_id: str) -> Lesson | None:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            seed_fn = getattr(repo, "seed_if_empty", None)
-            if callable(seed_fn):
-                await seed_fn()
             return await repo.get_lesson_detail(course_id, lesson_id)
 
     async def get_specialization(
@@ -81,9 +72,6 @@ class CatalogUseCase:
     ) -> tuple[Specialization | None, list[Course]]:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            seed_fn = getattr(repo, "seed_if_empty", None)
-            if callable(seed_fn):
-                await seed_fn()
             return await repo.get_specialization(specialization_id)
 
     async def create_course(

@@ -77,7 +77,6 @@ async def test_list_courses(mock_scope, catalog_usecase, mock_repo, mock_session
     courses, token = await catalog_usecase.list_courses(page_size=5, page_token="pt")
 
     mock_scope.assert_called_once()
-    mock_repo.seed_if_empty.assert_awaited_once()
     mock_repo.list_courses.assert_awaited_once_with(5, "pt", "", "", "", "")
     assert len(courses) == 1
     assert courses[0].id == "c1"
@@ -94,7 +93,6 @@ async def test_get_course_detail(mock_scope, catalog_usecase, mock_repo, mock_se
     course = await catalog_usecase.get_course_detail("c1")
 
     mock_scope.assert_called_once()
-    mock_repo.seed_if_empty.assert_awaited_once()
     mock_repo.get_course_detail.assert_awaited_once_with("c1")
     assert course is not None
     assert course.id == "c1"
@@ -110,7 +108,6 @@ async def test_get_lesson_detail(mock_scope, catalog_usecase, mock_repo, mock_se
     lesson = await catalog_usecase.get_lesson_detail("c1", "l1")
 
     mock_scope.assert_called_once()
-    mock_repo.seed_if_empty.assert_awaited_once()
     mock_repo.get_lesson_detail.assert_awaited_once_with("c1", "l1")
     assert lesson is not None
     assert lesson.id == "l1"
@@ -126,7 +123,6 @@ async def test_get_specialization(mock_scope, catalog_usecase, mock_repo, mock_s
     spec, courses = await catalog_usecase.get_specialization("s1")
 
     mock_scope.assert_called_once()
-    mock_repo.seed_if_empty.assert_awaited_once()
     mock_repo.get_specialization.assert_awaited_once_with("s1")
     assert spec is not None
     assert spec.id == "s1"
