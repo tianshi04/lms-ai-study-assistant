@@ -6,6 +6,7 @@ import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
 import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
 import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentWorkspace";
+import { useTranslation } from "@/lib/i18n/TranslationProvider";
 
 interface VideoPlayerProps {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -38,10 +39,12 @@ export function VideoPlayer({
   onContinueVideo,
   onMarkComplete,
 }: VideoPlayerProps) {
+  const { t } = useTranslation();
+
   if (!activeItem) {
     return (
       <div className="w-full h-full flex items-center justify-center text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900">
-        Chọn bài học từ danh sách bên trái để bắt đầu.
+        {t("player.selectLessonToStart")}
       </div>
     );
   }
@@ -86,7 +89,7 @@ export function VideoPlayer({
                 ),
               }}
             >
-              {activeItem.readingMarkdown || "*Không có nội dung bài đọc.*"}
+              {activeItem.readingMarkdown || t("player.noReadingContent")}
             </ReactMarkdown>
           </div>
 
@@ -104,7 +107,7 @@ export function VideoPlayer({
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              {isCompleted ? "Đã Hoàn Thành Bài Đọc" : "Đánh dấu Hoàn Thành Bài Đọc này"}
+              {isCompleted ? t("player.readingCompleted") : t("player.markReadingCompleted")}
             </button>
           </div>
         </div>
@@ -196,7 +199,7 @@ function getYouTubeEmbedUrl(url: string, autoTranscribe: boolean = false): strin
             <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
             </svg>
-            {isCompleted ? "Đã Xem Video (>=80%)" : "Đánh dấu Xem Xong Video"}
+            {isCompleted ? t("player.completed") : t("player.markCompleted")}
           </button>
         </div>
 
@@ -208,7 +211,7 @@ function getYouTubeEmbedUrl(url: string, autoTranscribe: boolean = false): strin
                 <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
                   In-Video Quiz ({activeQuiz.timestampSeconds}s)
                 </span>
-                <span className="text-[10px] text-slate-500 font-mono">Dừng video để kiểm tra</span>
+                <span className="text-[10px] text-slate-500 font-mono">{t("player.pauseToCheck")}</span>
               </div>
 
               <h3 className="text-base font-bold text-slate-900 dark:text-white">{activeQuiz.question}</h3>
@@ -250,7 +253,7 @@ function getYouTubeEmbedUrl(url: string, autoTranscribe: boolean = false): strin
 
               {quizSubmitted && (
                 <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1">
-                  <span className="font-bold text-blue-600 dark:text-blue-400">Giải thích: </span>
+                  <span className="font-bold text-blue-600 dark:text-blue-400">{t("player.explanation")}</span>
                   <span>{activeQuiz.explanation}</span>
                 </div>
               )}
@@ -262,14 +265,14 @@ function getYouTubeEmbedUrl(url: string, autoTranscribe: boolean = false): strin
                     disabled={selectedOption === null}
                     className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg transition-all"
                   >
-                    Kiểm Tra Đáp Án
+                    {t("player.checkAnswer")}
                   </button>
                 ) : (
                   <button
                     onClick={onContinueVideo}
                     className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition-all flex items-center gap-2"
                   >
-                    Tiếp Tục Xem Video
+                    {t("player.continueVideo")}
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
@@ -285,7 +288,7 @@ function getYouTubeEmbedUrl(url: string, autoTranscribe: boolean = false): strin
 
   return (
     <div className="w-full h-full flex items-center justify-center text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900">
-      Chọn bài học từ danh sách bên trái để bắt đầu.
+      {t("player.selectLessonToStart")}
     </div>
   );
 }

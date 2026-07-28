@@ -328,7 +328,7 @@ export default function CoursePlayerPage() {
         {/* Left Sidebar - Course Content Navigation Tree */}
         <aside className="w-80 bg-white/95 dark:bg-slate-900/95 border-r border-slate-200 dark:border-slate-800 overflow-y-auto flex-shrink-0 flex flex-col">
           <div className="p-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900 sticky top-0 z-10">
-            <h2 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">Chương trình bài học</h2>
+            <h2 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">{t("player.lessonSyllabus")}</h2>
           </div>
 
           <div className="p-4 space-y-6">
@@ -343,7 +343,7 @@ export default function CoursePlayerPage() {
               return course.weekModules.map((week) => (
                 <div key={week.id} className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-extrabold uppercase text-blue-600 dark:text-blue-400">Tuần {week.weekNumber}</span>
+                    <span className="text-xs font-extrabold uppercase text-blue-600 dark:text-blue-400">{t("player.week").replace("{week}", week.weekNumber.toString())}</span>
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">{week.title}</span>
                   </div>
 
@@ -367,8 +367,11 @@ export default function CoursePlayerPage() {
                               onClick={() => {
                                 if (!isUnlocked) {
                                   setLockNotice(
-                                    `Bài học "${item.title}" đang bị khóa. Bạn cần hoàn thành bài học "${prevItem?.title || "trước đó"}" trước.`
+                                    t("player.lessonLocked")
+                                      .replace("{title}", item.title)
+                                      .replace("{prevTitle}", prevItem?.title || "")
                                   );
+                                  setTimeout(() => setLockNotice(""), 4000);
                                   return;
                                 }
                                 setLockNotice("");
@@ -476,9 +479,9 @@ export default function CoursePlayerPage() {
                   }`}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
                   </svg>
-                  Interactive Transcript ({activeItem?.interactiveTranscripts.length || 0})
+                  {t("player.interactiveTranscript").replace("{count}", (activeItem?.interactiveTranscripts.length || 0).toString())}
                 </button>
                 <button
                   onClick={() => setActiveTab("forum")}
@@ -491,7 +494,7 @@ export default function CoursePlayerPage() {
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
                   </svg>
-                  Diễn đàn Bài học
+                  {t("player.tabForum")}
                 </button>
                 <button
                   onClick={() => setActiveTab("notes")}
@@ -504,7 +507,7 @@ export default function CoursePlayerPage() {
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                   </svg>
-                  Personal Notes ({notes.length})
+                  {t("player.personalNotesCount").replace("{count}", notes.length.toString())}
                 </button>
                 <button
                   onClick={() => setActiveTab("deadlines")}
@@ -517,7 +520,7 @@ export default function CoursePlayerPage() {
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Deadlines & Tiến độ
+                  {t("player.deadlinesAndProgress")}
                 </button>
               </div>
             </div>

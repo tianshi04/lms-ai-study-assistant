@@ -246,13 +246,13 @@ class AssessmentUseCase:
                     }
 
             # 3. Grade Quiz (BR_QUIZ_002: Dynamic shuffled options grading)
-            if session_seed is not None:
-                generated_qs = await self.generate_quiz_session_questions(
-                    repo, item_id, seed=session_seed
-                )
-                correct_answers = [q["shuffled_correct_index"] for q in generated_qs]
-            else:
-                correct_answers = [0, 1, 2, 0, 1]
+            if session_seed is None:
+                session_seed = 42
+            
+            generated_qs = await self.generate_quiz_session_questions(
+                repo, item_id, seed=session_seed
+            )
+            correct_answers = [q["shuffled_correct_index"] for q in generated_qs]
 
             total_questions = len(correct_answers)
             correct_count = 0
