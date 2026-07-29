@@ -54,8 +54,19 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
   * Khóa học (Course) -> Tuần học (Module / Week) -> Bài học (Lesson) -> Các dạng bài học thành phần (Learning Items).
 * **Quản lý Đơn vị Phát hành (Partner Branding):** Chọn đối tác phát hành (Partner Logo), hiển thị tên Giảng viên chính và danh sách Trợ giảng (TA).
 
+### 2.2. Quy trình Kiểm duyệt & Phê duyệt Phát hành Khóa học (Review to Submit & Launch Workflow)
+* **Quy trình 4 Bước Phát hành Khóa học (`BR_CATALOG_003`):**
+  1. **Pre-submit Self-Checklist (Giảng viên tự kiểm tra):** Khung công cụ Course Builder tự động quét kiểm tra 4 tiêu chí bắt buộc (Phụ đề VTT, Quiz Matrix không rỗng, Rubrics rõ ràng, có Giảng viên phụ trách).
+  2. **Gửi Yêu cầu Phê duyệt (`Submit for Launch`):** Giảng viên bấm nút *"Submit for Launch"*. Khóa học chuyển sang trạng thái `PENDING_REVIEW` và chuyển sang chế độ Chỉ đọc (Read-only).
+  3. **Màn hình Kiểm duyệt (Course Reviewer Portal):** Partner Admin hoặc Super Admin truy cập giao diện Reviewer Portal, trải nghiệm khóa học dưới chế độ Xem trước như Học viên (*Preview Mode*).
+  4. **Quyết định Phê duyệt / Từ chối (`Approve / Reject`):**
+     - *Phê duyệt (Approve):* Khóa học chuyển sang `PUBLISHED` và chính thức xuất hiện trên Trang Tìm kiếm Công khai toàn cầu (`/courses`).
+     - *Từ chối (Reject):* Reviewer ghi lại nhận xét/Feedback chỉnh sửa. Khóa học chuyển về `DRAFT` để Giảng viên hoàn thiện và nộp lại.
 
-### 2.2. Soạn thảo & Quản lý Học liệu đa dạng (Learning Items Builder & Management)
+
+
+### 2.3. Soạn thảo & Quản lý Học liệu đa dạng (Learning Items Builder & Management)
+
 * **Chỉnh sửa & Xóa Cấu trúc Bài giảng (Kiểm tra Ownership ở Tầng Application Use Case):**
   * Tất cả các thao tác chỉnh sửa/xóa cấu trúc bài giảng được kiểm tra quyền sở hữu (`owner_id`, `co_instructor_ids`) trực tiếp bên trong Application Use Cases (`CatalogUseCase._verify_ownership`) thông qua `enforce_course_ownership`, đảm bảo an toàn tuyệt đối chống tấn công IDOR:
   * **Tuần/Module học:** Cập nhật thông tin (`UpdateWeekModule`), Xóa tuần học (`DeleteWeekModule`), hoặc Kéo thả sắp xếp thứ tự Tuần (`ReorderWeekModules`).

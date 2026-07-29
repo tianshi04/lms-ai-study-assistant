@@ -90,6 +90,23 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 
 ---
 
+## 3. Quy tắc Quản lý Danh mục & Kiểm duyệt Khóa học (BR_CATALOG)
+
+* **BR_CATALOG_001 (Quản lý Quyền sở hữu & Phân công Giảng viên):**
+  * Khóa học phải được gán đúng Giảng viên chính (`owner_id`) và danh sách Giảng viên đồng giảng dạy (`co_instructor_ids`). Chỉ các tài khoản này hoặc Admin mới có quyền truy cập Course Builder để biên soạn học liệu.
+* **BR_CATALOG_002 (Tự động Phân giải Chữ ký Bảo chứng Khóa học):**
+  * Khi phát hành chứng chỉ cho khóa học, hệ thống tự động trích xuất Tên, Chức danh khoa học (`title`) và Ảnh chữ ký tay (`signature_image_url`) từ Hồ sơ Giảng viên phụ trách khóa học (`owner_id`) (`/instructor/profile`). Nếu chưa bổ sung, hệ thống fallback lấy Chữ ký mặc định của Partner Org (`BR_CERT_002`).
+* **BR_CATALOG_003 (Quy trình Nộp & Phê duyệt Phát hành Khóa học - Submit for Launch & Course Review Workflow):**
+  * *Pre-submit Self-Checklist (Tự đánh giá trước khi Nộp):* Giao diện Course Builder kiểm tra 4 tiêu chí bắt buộc: (1) 100% Video bài giảng có Phụ đề VTT, (2) Ma trận bài thi Graded Quiz không rỗng (`BR_QUIZ_002`), (3) Bài tập Peer Review có đủ bộ Tiêu chí Rubric (`BR_PEER_002`), và (4) Đã gán Giảng viên phụ trách chính (`owner_id`).
+  * *Chuyển trạng thái Nộp bài (`Submit for Launch`):* Khi Giảng viên bấm nút **"Submit for Launch"**, khóa học chuyển sang trạng thái **`PENDING_REVIEW`** và chuyển sang chế độ Chỉ đọc (Read-only Mode) để ngăn ngừa chỉnh sửa trong thời gian chờ duyệt.
+  * *Màn hình Kiểm duyệt (Course Reviewer Portal & Student Preview Mode):* Quản trị viên Đối tác (`PARTNER_ADMIN`) hoặc Super Admin vào màn hình Reviewer Portal, trải nghiệm khóa học dưới chế độ Xem trước như Học viên (*Preview Mode*).
+  * *Quyết định Phê duyệt hoặc Từ chối (Approve / Reject):*
+    * **Phê duyệt (`Approve`):** Khóa học chuyển sang trạng thái **`PUBLISHED`** và chính thức xuất hiện trên Trang Tìm kiếm Công khai toàn cầu (`/courses`).
+    * **Từ chối (`Reject`):** Reviewer nhập lý do/gợi ý chỉnh sửa (Feedback Log). Khóa học tự động chuyển về trạng thái **`DRAFT`** kèm nhật ký góp ý để Giảng viên hoàn thiện và nộp lại.
+
+
+---
+
 ## 3. Quy tắc Lịch học Linh hoạt & Đặt lại Hạn nộp (BR_SCHEDULE & BR_DEADLINE)
 
 * **BR_SCHEDULE_001 (Flexible Weekly Schedule & Khởi tạo Mặc định):**
