@@ -177,7 +177,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         title="Lecture: Introduction to Linear Regression & Cost Function",
         type=ItemType.VIDEO,
         estimated_minutes=12,
-        video_url=sample_url,
+        video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
         vtt_subtitle_url="",
     )
 
@@ -328,7 +328,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         title="Lecture: Sigmoid Function & Decision Boundaries",
         type=ItemType.VIDEO,
         estimated_minutes=18,
-        video_url=sample_url,
+        video_url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     )
     t5 = InteractiveTranscriptModel(
         timestamp_seconds=0,

@@ -7,7 +7,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course, type LearningItem, type InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { LearningService, type LearningProgress, type PersonalNote } from "@/gen/learning/v1/learning_pb";
 import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
-import { VideoPlayer } from "@/components/player/VideoPlayer";
+import { VideoPlayer, VideoPlayerRef } from "@/components/player/VideoPlayer";
 import { TranscriptPanel } from "@/components/player/TranscriptPanel";
 import { NotesPanel } from "@/components/player/NotesPanel";
 import { DeadlinesPanel } from "@/components/player/DeadlinesPanel";
@@ -32,7 +32,7 @@ export default function CoursePlayerPage() {
   const [certificateId, setCertificateId] = useState<string>("");
 
   // Video & In-Video Quiz State
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<VideoPlayerRef>(null);
   const maxTimeRef = useRef<number>(0);
   const isMarkingRef = useRef<boolean>(false);
   const markedItemIdsRef = useRef<Set<string>>(new Set());
@@ -41,6 +41,9 @@ export default function CoursePlayerPage() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [answeredQuizTimestamps, setAnsweredQuizTimestamps] = useState<Set<number>>(new Set());
+  
+  const prevTimeRef = useRef<number>(0);
+  const watchSecondsRef = useRef<number>(0);
 
   // Personal Note & Locking State
   const [highlightText, setHighlightText] = useState("");
@@ -108,6 +111,8 @@ export default function CoursePlayerPage() {
     /* eslint-disable react-hooks/set-state-in-effect */
     setCurrentTime(0);
     maxTimeRef.current = 0;
+    prevTimeRef.current = 0;
+    watchSecondsRef.current = 0;
     setActiveQuiz(null);
     setSelectedOption(null);
     setQuizSubmitted(false);
@@ -171,33 +176,54 @@ export default function CoursePlayerPage() {
 
     const time = Math.floor(video.currentTime);
     setCurrentTime(time);
+    
+    // Accumulate real watch time
+    const timeDiff = video.currentTime - prevTimeRef.current;
+    if (timeDiff > 0 && timeDiff <= 2.0) {
+      // Normal playback progression (not a seek)
+      watchSecondsRef.current += timeDiff;
+    }
 
-    // Auto mark as completed if watched >= 80% of video duration
+    // Check for missed In-Video Quiz in the playback/seek window
+    if (activeItem.inVideoQuizzes && activeItem.inVideoQuizzes.length > 0 && !activeQuiz) {
+      // Find the first unanswered quiz that was passed or landed on
+      const passedQuiz = activeItem.inVideoQuizzes.find((quiz) => {
+        if (answeredQuizTimestamps.has(quiz.timestampSeconds)) return false;
+        
+        // If normal playback or jump forward, check if we passed the quiz timestamp
+        if (video.currentTime > prevTimeRef.current) {
+           return quiz.timestampSeconds > prevTimeRef.current && quiz.timestampSeconds <= video.currentTime;
+        }
+        
+        // If we landed exactly on it or nearby
+        return Math.abs(video.currentTime - quiz.timestampSeconds) <= 1;
+      });
+
+      if (passedQuiz) {
+        // Force the video back to the quiz timestamp if we seeked past it
+        if (Math.abs(video.currentTime - passedQuiz.timestampSeconds) > 1) {
+           videoRef.current.setCurrentTime(passedQuiz.timestampSeconds);
+        }
+        videoRef.current.pause();
+        setActiveQuiz(passedQuiz);
+        setSelectedOption(null);
+        setQuizSubmitted(false);
+        prevTimeRef.current = passedQuiz.timestampSeconds;
+        return; // Stop processing for this tick to enforce quiz
+      }
+    }
+    
+    prevTimeRef.current = video.currentTime;
+
+    // Auto mark as completed if REAL watched time >= 80% of video duration
     if (
       videoRef.current.duration > 0 &&
-      videoRef.current.currentTime >= videoRef.current.duration * 0.8 &&
+      watchSecondsRef.current >= videoRef.current.duration * 0.8 &&
       !progress?.completedItemIds.includes(activeItem.id) &&
       !markedItemIdsRef.current.has(activeItem.id)
     ) {
       markedItemIdsRef.current.add(activeItem.id);
       handleMarkItemComplete(activeItem.id);
-    }
-
-    // Check for In-Video Quiz at current timestamp
-    if (activeItem.inVideoQuizzes && activeItem.inVideoQuizzes.length > 0) {
-      for (const quiz of activeItem.inVideoQuizzes) {
-        if (
-          Math.abs(time - quiz.timestampSeconds) <= 1 &&
-          !answeredQuizTimestamps.has(quiz.timestampSeconds) &&
-          !activeQuiz
-        ) {
-          videoRef.current.pause();
-          setActiveQuiz(quiz);
-          setSelectedOption(null);
-          setQuizSubmitted(false);
-          break;
-        }
-      }
     }
   };
 
@@ -209,7 +235,7 @@ export default function CoursePlayerPage() {
   // Jump to video timestamp from transcript
   const handleSeekVideo = (timestampSeconds: number) => {
     if (videoRef.current) {
-      videoRef.current.currentTime = timestampSeconds;
+      videoRef.current.setCurrentTime(timestampSeconds);
       videoRef.current.play();
     }
   };
@@ -452,7 +478,7 @@ export default function CoursePlayerPage() {
           {/* Top Video / Reading Media Viewer */}
           <div className="flex-1 bg-slate-100 dark:bg-black flex items-center justify-center relative overflow-hidden transition-colors duration-200">
             <VideoPlayer
-              videoRef={videoRef}
+              ref={videoRef}
               activeItem={activeItem}
               userId={userId}
               activeQuiz={activeQuiz}
