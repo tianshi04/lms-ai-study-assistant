@@ -94,7 +94,7 @@ class AuthPolicyRegistry:
             )
 
         if policy == options_pb.AuthPolicy.ADMIN:
-            if not user.is_staff():
+            if not user.is_admin():
                 raise ConnectError(
                     Code.PERMISSION_DENIED,
                     "Bạn không có quyền thực hiện thao tác quản trị này",

@@ -268,7 +268,7 @@ service AssessmentService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc RegradePeerSubmissionByStaff(RegradePeerSubmissionByStaffRequest) returns (RegradePeerSubmissionByStaffResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc CreateQuestionBank(CreateQuestionBankRequest) returns (CreateQuestionBankResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;

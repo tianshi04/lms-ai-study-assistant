@@ -132,7 +132,7 @@ service ForumService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc PinStaffAnswer(PinStaffAnswerRequest) returns (PinStaffAnswerResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc UpdateThread(UpdateThreadRequest) returns (UpdateThreadResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
