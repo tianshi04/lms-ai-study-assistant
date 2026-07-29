@@ -91,6 +91,9 @@ This file provides rules, architectural conventions, and workspace instructions 
   - **TanStack Query (`@tanstack/react-query`)**: For headless server state management, automatic caching, background revalidation, and deduplication of ConnectRPC API calls. Place reusable query/mutation hooks inside `frontend/src/lib/query_hooks.ts`.
   - **TanStack Table (`@tanstack/react-table`)**: For headless table state, sorting, filtering, and pagination in complex dashboards and data views.
   - **TanStack Form (`@tanstack/react-form`)**: For headless form validation and state management in multi-step or complex form interfaces.
+- **UI Component Reuse & Extension Protocol**:
+  - **Standard UI Flows**: Prefer auditing and reusing pre-built Design System components in `frontend/src/components/ui/` (e.g., buttons, form inputs, toasts, modals, cards, badges, dropdowns) for standard UI flows to maintain visual, behavioral, and accessibility consistency across the platform.
+  - **Specialized & Domain Features**: For features with specialized interaction or visual requirements (e.g., media player controls, interactive editors, canvas elements), developers and agents should extend existing components (via custom variants/props) or define new specialized domain components rather than creating ad-hoc inline UI elements.
 - **Primary Language (Vietnamese)**: The application exclusively uses **Vietnamese (`vi`)** for all UI elements, pages, components, modals, form labels, and user-facing notifications. All UI text must be written directly in Vietnamese.
 - API Client calls are made by importing service schemas from the generated stubs (e.g. `import { CatalogService } from "@/gen/catalog/v1/catalog_pb"`) and using the `@connectrpc/connect` client.
 
