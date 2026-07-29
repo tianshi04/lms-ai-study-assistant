@@ -33,6 +33,9 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies();
 
+  const themeCookie = cookieStore.get("theme")?.value;
+  const isDarkInitial = themeCookie === "dark";
+
   const token = cookieStore.get("access_token")?.value;
   const rawUserName = token ? cookieStore.get("user_name")?.value : null;
   const rawUserEmail = token ? cookieStore.get("user_email")?.value : null;
@@ -48,9 +51,9 @@ export default async function RootLayout({
     <html
       lang="vi"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      className={`${isDarkInitial ? "dark" : ""} ${geistSans.variable} ${geistMono.variable} antialiased`}
     >
-      <body className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors duration-200">
+      <body className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white">
         <QueryProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <AuthProvider initialAuth={initialAuth}>
