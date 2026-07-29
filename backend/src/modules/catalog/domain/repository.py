@@ -40,14 +40,6 @@ class ICatalogRepository(ABC):
         pass
 
     @abstractmethod
-    async def search_courses_autocomplete(
-        self,
-        search_query: str = "",
-        limit: int = 5,
-    ) -> list[Course]:
-        pass
-
-    @abstractmethod
     async def get_course_detail(self, course_id: str) -> Course | None:
         pass
 

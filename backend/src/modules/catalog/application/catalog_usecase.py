@@ -166,15 +166,6 @@ class CatalogUseCase:
                 status_filter=status_filter,
             )
 
-    async def search_courses_autocomplete(
-        self,
-        search_query: str = "",
-        limit: int = 5,
-    ) -> list[Course]:
-        async with async_session_scope() as session:
-            repo = self.repo_factory(session)
-            return await repo.search_courses_autocomplete(search_query, limit)
-
     async def get_course_detail(self, course_id: str) -> Course | None:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)

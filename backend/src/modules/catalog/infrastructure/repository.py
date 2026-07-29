@@ -245,46 +245,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         courses: list[Course] = [_model_to_domain_course(m) for m in models]
         return courses, ""
 
-    async def search_courses_autocomplete(
-        self,
-        search_query: str = "",
-        limit: int = 5,
-    ) -> list[Course]:
-        # Only select necessary fields, no eager loading of heavy nested relations
-        stmt = select(CourseModel)
-
-        if search_query:
-            pattern = f"%{search_query}%"
-            stmt = stmt.where(
-                CourseModel.title.ilike(pattern)
-                | CourseModel.description.ilike(pattern)
-            )
-
-        stmt = stmt.order_by(CourseModel.title.asc())
-        stmt = stmt.limit(limit)
-
-        res = await self.session.execute(stmt)
-        models = res.scalars().all()
-        courses: list[Course] = []
-        for m in models:
-            courses.append(
-                Course(
-                    id=m.id,
-                    title=m.title,
-                    slug=m.slug,
-                    description=m.description,
-                    partner_name=m.partner_name,
-                    partner_logo_url=m.partner_logo_url,
-                    instructor_names=m.instructor_names,
-                    week_modules=[],
-                    average_rating=m.average_rating,
-                    review_count=m.review_count,
-                    subject=m.subject,
-                    level=m.level,
-                )
-            )
-        return courses
-
     async def get_course_detail(self, course_id: str) -> Course | None:
         stmt = (
             select(CourseModel)

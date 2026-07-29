@@ -198,30 +198,3 @@ async def test_create_and_update_course_financial_aid_toggle(
         financial_aid_enabled=True,
     )
     assert updated.financial_aid_enabled is True
-
-
-@pytest.mark.asyncio
-@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
-async def test_search_courses_autocomplete(
-    mock_scope, catalog_usecase, mock_repo, mock_session
-):
-    mock_ctx = AsyncMock()
-    mock_ctx.__aenter__.return_value = mock_session
-    mock_scope.return_value = mock_ctx
-
-    mock_repo.search_courses_autocomplete.return_value = [
-        Course(
-            id="c1",
-            title="Course 1",
-            slug="c-1",
-        )
-    ]
-
-    courses = await catalog_usecase.search_courses_autocomplete(
-        search_query="test", limit=5
-    )
-
-    mock_scope.assert_called_once()
-    mock_repo.search_courses_autocomplete.assert_awaited_once_with("test", 5)
-    assert len(courses) == 1
-    assert courses[0].id == "c1"
