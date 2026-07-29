@@ -424,3 +424,14 @@ class CertificateRepository(ICertificateRepository):
         signature_image_url = owner_user.signature_image_url or fallback_signature_url
 
         return signer_name, signer_title, signature_image_url
+
+    async def is_financial_aid_enabled(self, course_id_or_slug: str) -> bool:
+        catalog_repo_factory = __import__(
+            "src.modules.catalog.infrastructure.repository",
+            fromlist=["SQLAlchemyCatalogRepository"],
+        ).SQLAlchemyCatalogRepository
+        catalog_repo = catalog_repo_factory(self._session)
+        course = await catalog_repo.get_course_detail(course_id_or_slug)
+        if not course:
+            return True
+        return course.financial_aid_enabled

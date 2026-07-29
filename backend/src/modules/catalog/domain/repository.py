@@ -53,6 +53,8 @@ class ICatalogRepository(ABC):
         subject: str = "",
         level: str = "",
         owner_id: str = "",
+        co_instructor_ids: list[str] | None = None,
+        financial_aid_enabled: bool = True,
     ) -> Course:
         pass
 
@@ -67,6 +69,7 @@ class ICatalogRepository(ABC):
         instructor_names: list[str],
         subject: str = "",
         level: str = "",
+        financial_aid_enabled: bool = True,
     ) -> Course | None:
         pass
 

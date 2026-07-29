@@ -35,6 +35,7 @@ export default function InstructorCoursesPage() {
   const [partnerName, setPartnerName] = useState("DeepLearning.AI");
   const [partnerLogoUrl, setPartnerLogoUrl] = useState("https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg");
   const [instructorNames, setInstructorNames] = useState("Andrew Ng, Giảng viên AI");
+  const [financialAidEnabled, setFinancialAidEnabled] = useState(true);
 
   useEffect(() => {
     let ignore = false;
@@ -79,6 +80,7 @@ export default function InstructorCoursesPage() {
     setPartnerName("DeepLearning.AI");
     setPartnerLogoUrl("https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg");
     setInstructorNames("Andrew Ng, Giảng viên AI");
+    setFinancialAidEnabled(true);
     setShowModal(true);
   };
 
@@ -94,6 +96,7 @@ export default function InstructorCoursesPage() {
     setPartnerName(course.partnerName);
     setPartnerLogoUrl(course.partnerLogoUrl);
     setInstructorNames(course.instructorNames.join(", "));
+    setFinancialAidEnabled(course.financialAidEnabled);
     setShowModal(true);
   };
 
@@ -121,6 +124,7 @@ export default function InstructorCoursesPage() {
           partnerName,
           partnerLogoUrl,
           instructorNames: instructors,
+          financialAidEnabled,
         });
 
         if (res.course) {
@@ -137,6 +141,7 @@ export default function InstructorCoursesPage() {
           partnerName,
           partnerLogoUrl,
           instructorNames: instructors,
+          financialAidEnabled,
         });
 
         if (res.course) {
@@ -257,7 +262,16 @@ export default function InstructorCoursesPage() {
                     <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
                       {course.partnerName}
                     </span>
-                    <span className="text-xs text-slate-400 font-mono">{course.weekModules.length} {"Tuần học"}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        course.financialAidEnabled
+                          ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
+                      }`}>
+                        {course.financialAidEnabled ? "FinAid: ON" : "FinAid: OFF"}
+                      </span>
+                      <span className="text-xs text-slate-400 font-mono">{course.weekModules.length} {"Tuần học"}</span>
+                    </div>
                   </div>
                   <Link href={`/instructor/courses/${course.id}`} className="block">
                     <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
@@ -436,6 +450,19 @@ export default function InstructorCoursesPage() {
                     onChange={(e) => setInstructorNames(e.target.value)}
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                </div>
+
+                <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                  <input
+                    type="checkbox"
+                    id="financialAidToggle"
+                    checked={financialAidEnabled}
+                    onChange={(e) => setFinancialAidEnabled(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                  />
+                  <label htmlFor="financialAidToggle" className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+                    {"Cho phép xin Hỗ trợ Tài chính (Financial Aid available)"}
+                  </label>
                 </div>
 
                 <div className="pt-4 flex justify-end gap-3 border-t border-slate-200 dark:border-slate-800">

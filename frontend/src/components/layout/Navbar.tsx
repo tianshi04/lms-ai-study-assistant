@@ -85,9 +85,6 @@ export function Navbar() {
             </Link>
           )}
 
-          <Link href="/financial-aid?courseId=course-python-ai" className={getLinkClasses("/financial-aid")}>
-            {"Hỗ trợ tài chính"}
-          </Link>
           <Link href="/verify" className={getLinkClasses("/verify")}>
             {"Xác minh chứng chỉ"}
           </Link>
@@ -189,13 +186,6 @@ export function Navbar() {
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">Enterprise</span>
             </Link>
           )}
-          <Link
-            href="/financial-aid?courseId=course-python-ai"
-            onClick={() => setMobileMenuOpen(false)}
-            className={getMobileLinkClasses("/financial-aid")}
-          >
-            {"Hỗ trợ tài chính"}
-          </Link>
           <Link
             href="/verify"
             onClick={() => setMobileMenuOpen(false)}

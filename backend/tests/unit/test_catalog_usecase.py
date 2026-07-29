@@ -153,3 +153,48 @@ async def test_without_repo_factory(mock_scope, mock_session):
         mock_repo_class.assert_called_once_with(mock_session)
         mock_repo_instance.list_courses.assert_awaited_once()
         assert courses == []
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+async def test_create_and_update_course_financial_aid_toggle(
+    mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    mock_repo.create_course.return_value = Course(
+        id="c2",
+        title="AI Course",
+        slug="ai-course",
+        financial_aid_enabled=False,
+    )
+    mock_repo.update_course.return_value = Course(
+        id="c2",
+        title="AI Course Updated",
+        slug="ai-course",
+        financial_aid_enabled=True,
+    )
+
+    created = await catalog_usecase.create_course(
+        title="AI Course",
+        slug="ai-course",
+        description="Desc",
+        partner_name="Partner",
+        partner_logo_url="",
+        instructor_names=["Instructor"],
+        financial_aid_enabled=False,
+    )
+    assert created.financial_aid_enabled is False
+
+    updated = await catalog_usecase.update_course(
+        course_id="c2",
+        title="AI Course Updated",
+        description="Desc",
+        partner_name="Partner",
+        partner_logo_url="",
+        instructor_names=["Instructor"],
+        financial_aid_enabled=True,
+    )
+    assert updated.financial_aid_enabled is True

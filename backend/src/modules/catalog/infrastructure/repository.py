@@ -113,6 +113,7 @@ def _model_to_domain_course(model: CourseModel) -> Course:
         level=model.level or "",
         owner_id=getattr(model, "owner_id", ""),
         co_instructor_ids=getattr(model, "co_instructor_ids", None) or [],
+        financial_aid_enabled=getattr(model, "financial_aid_enabled", True),
     )
 
 
@@ -259,6 +260,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         level: str = "",
         owner_id: str = "",
         co_instructor_ids: list[str] | None = None,
+        financial_aid_enabled: bool = True,
     ) -> Course:
         course_id = f"course-{slug}" if slug else f"course-{uuid.uuid4().hex[:8]}"
 
@@ -275,6 +277,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             level=level,
             owner_id=owner_id,
             co_instructor_ids=co_instructor_ids or [],
+            financial_aid_enabled=financial_aid_enabled,
         )
         self.session.add(model)
         await self.session.commit()
@@ -291,6 +294,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         instructor_names: list[str],
         subject: str = "",
         level: str = "",
+        financial_aid_enabled: bool = True,
     ) -> Course | None:
         stmt = select(CourseModel).where(CourseModel.id == course_id)
         res = await self.session.execute(stmt)
@@ -307,6 +311,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             model.partner_logo_url = partner_logo_url
         if instructor_names:
             model.instructor_names = instructor_names
+        model.financial_aid_enabled = financial_aid_enabled
 
         if subject and subject != "UNSPECIFIED":
             model.subject = subject

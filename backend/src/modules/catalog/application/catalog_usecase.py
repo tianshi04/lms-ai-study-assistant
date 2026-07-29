@@ -108,6 +108,7 @@ class CatalogUseCase:
         subject: str = "",
         level: str = "",
         owner_id: str = "",
+        financial_aid_enabled: bool = True,
     ) -> Course:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
@@ -121,6 +122,7 @@ class CatalogUseCase:
                 subject=subject,
                 level=level,
                 owner_id=owner_id,
+                financial_aid_enabled=financial_aid_enabled,
             )
             logger.info(
                 "Created course %s by owner %s",
@@ -139,6 +141,7 @@ class CatalogUseCase:
         instructor_names: list[str],
         subject: str = "",
         level: str = "",
+        financial_aid_enabled: bool = True,
         current_user: CurrentUser | None = None,
     ) -> Course | None:
         async with async_session_scope() as session:
@@ -155,6 +158,7 @@ class CatalogUseCase:
                 instructor_names=instructor_names,
                 subject=subject,
                 level=level,
+                financial_aid_enabled=financial_aid_enabled,
             )
 
     async def create_week_module(

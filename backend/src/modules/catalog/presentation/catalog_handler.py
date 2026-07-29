@@ -139,6 +139,7 @@ def _to_pb_course(course: Course) -> pb.Course:
         review_count=course.review_count,
         subject=course.subject,
         level=course.level,
+        financial_aid_enabled=getattr(course, "financial_aid_enabled", True),
     )
 
 
@@ -260,6 +261,7 @@ class CatalogHandler(CatalogService):
             subject=request.subject,
             level=request.level,
             owner_id=user.id,
+            financial_aid_enabled=request.financial_aid_enabled,
         )
         return pb.CreateCourseResponse(course=_to_pb_course(course))
 
@@ -278,6 +280,7 @@ class CatalogHandler(CatalogService):
             instructor_names=list(request.instructor_names),
             subject=request.subject,
             level=request.level,
+            financial_aid_enabled=request.financial_aid_enabled,
             current_user=user,
         )
         if not course:

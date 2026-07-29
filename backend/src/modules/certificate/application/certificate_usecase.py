@@ -1,4 +1,5 @@
 import hashlib
+import inspect
 import logging
 import uuid
 from datetime import datetime, timezone
@@ -45,6 +46,22 @@ class CertificateUseCase:
 
         async with async_session_scope() as session:
             repo = self._get_repo(session)
+
+            # BR_FAID_003: Check if course has financial_aid_enabled
+            if hasattr(repo, "is_financial_aid_enabled"):
+                res = repo.is_financial_aid_enabled(course_id)
+                is_enabled = await res if inspect.isawaitable(res) else bool(res)
+                if not is_enabled:
+                    logger.warning(
+                        "User %s attempted to apply financial aid for course %s where aid is disabled",
+                        user_id,
+                        course_id,
+                    )
+                    return (
+                        None,
+                        "Khóa học này đã bị tắt tính năng Hỗ trợ Tài chính (BR_FAID_003). Vui lòng đăng ký trực tiếp hoặc nâng cấp Paid Mode.",
+                    )
+
             existing = await repo.get_financial_aid(user_id, course_id)
             if existing:
                 if existing.prevents_resubmission:
@@ -88,6 +105,19 @@ class CertificateUseCase:
             repo = self._get_repo(session)
             app = await repo.get_financial_aid(user_id, course_id)
             return await self._check_auto_approve(app, repo)
+
+    async def list_my_financial_aids(
+        self, user_id: str
+    ) -> list[FinancialAidApplication]:
+        async with async_session_scope() as session:
+            repo = self._get_repo(session)
+            apps = await repo.list_financial_aids_by_user(user_id)
+            checked_apps = []
+            for a in apps:
+                checked = await self._check_auto_approve(a, repo)
+                if checked:
+                    checked_apps.append(checked)
+            return checked_apps
 
     async def list_financial_aid_applications(
         self, course_id: Optional[str] = None, status: Optional[str] = None

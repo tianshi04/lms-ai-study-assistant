@@ -146,6 +146,7 @@ class Course(Entity):
         level: str = "",
         owner_id: str = "",
         co_instructor_ids: list[str] | None = None,
+        financial_aid_enabled: bool = True,
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -161,6 +162,7 @@ class Course(Entity):
         self.level = level
         self.owner_id = owner_id
         self.co_instructor_ids = co_instructor_ids or []
+        self.financial_aid_enabled = financial_aid_enabled
 
 
 class Specialization(Entity):

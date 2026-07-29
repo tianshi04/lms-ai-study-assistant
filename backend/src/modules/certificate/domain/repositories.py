@@ -93,3 +93,7 @@ class ICertificateRepository(ABC):
         self, course_id_or_slug: str
     ) -> tuple[str, str, str]:
         pass
+
+    @abstractmethod
+    async def is_financial_aid_enabled(self, course_id_or_slug: str) -> bool:
+        pass

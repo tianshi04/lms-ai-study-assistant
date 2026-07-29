@@ -80,6 +80,7 @@ message Course {
   // Tags
   string subject = 11;
   string level = 12;
+  bool financial_aid_enabled = 13;
 }
 
 // Specialization messages
@@ -142,6 +143,7 @@ message CreateCourseRequest {
   repeated string instructor_names = 6;
   string subject = 7;
   string level = 8;
+  bool financial_aid_enabled = 9;
 }
 
 message CreateCourseResponse {
@@ -158,6 +160,7 @@ message UpdateCourseRequest {
   repeated string instructor_names = 7;
   string subject = 8;
   string level = 9;
+  bool financial_aid_enabled = 10;
 }
 
 message UpdateCourseResponse {

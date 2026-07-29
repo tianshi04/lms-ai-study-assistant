@@ -108,11 +108,20 @@ message ListMyCertificatesResponse {
   repeated VerifiedCertificate certificates = 1;
 }
 
+message ListMyFinancialAidsRequest {}
+
+message ListMyFinancialAidsResponse {
+  repeated FinancialAidApplication applications = 1;
+}
+
 service CertificateService {
   rpc ApplyFinancialAid(ApplyFinancialAidRequest) returns (ApplyFinancialAidResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc GetFinancialAidStatus(GetFinancialAidStatusRequest) returns (GetFinancialAidStatusResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListMyFinancialAids(ListMyFinancialAidsRequest) returns (ListMyFinancialAidsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ListFinancialAidApplications(ListFinancialAidApplicationsRequest) returns (ListFinancialAidApplicationsResponse) {

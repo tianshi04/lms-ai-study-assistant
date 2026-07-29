@@ -6,6 +6,7 @@ import { useCourseDetailQuery, useCourseReviewsQuery, useMyCertificatesQuery } f
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, ItemType } from "@/gen/catalog/v1/catalog_pb";
+import { CertificateService, type FinancialAidApplication } from "@/gen/certificate/v1/certificate_pb";
 import { Modal } from "@/components/ui/Modal";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { useToast } from "@/components/ui/Toast";
@@ -42,6 +43,61 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   const [comment, setComment] = useState<string>("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const toast = useToast();
+
+  // Financial Aid Modal States
+  const [isFinAidModalOpen, setIsFinAidModalOpen] = useState(false);
+  const [finAidEssay, setFinAidEssay] = useState("");
+  const [submittingFinAid, setSubmittingFinAid] = useState(false);
+  const [existingFinAidStatus, setExistingFinAidStatus] = useState<FinancialAidApplication | null>(null);
+  const [checkingFinAidStatus, setCheckingFinAidStatus] = useState(false);
+
+  const finAidWordCount = finAidEssay.trim() === "" ? 0 : finAidEssay.trim().split(/\s+/).length;
+  const isFinAidEnoughWords = finAidWordCount >= 150;
+
+  const handleOpenFinAidModal = async () => {
+    if (!course) return;
+    setCheckingFinAidStatus(true);
+    try {
+      const client = getRpcClient(CertificateService);
+      const res = await client.getFinancialAidStatus({ courseId: course.id });
+      setExistingFinAidStatus(res.application || null);
+    } catch (err) {
+      console.error("Check fin aid status error:", err);
+      setExistingFinAidStatus(null);
+    } finally {
+      setCheckingFinAidStatus(false);
+      setIsFinAidModalOpen(true);
+    }
+  };
+
+  const handleFinAidSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!course) return;
+    if (!isFinAidEnoughWords) {
+      toast.error(`Bài luận cần tối thiểu 150 từ (Hiện tại ${finAidWordCount}/150 từ).`);
+      return;
+    }
+
+    setSubmittingFinAid(true);
+    try {
+      const client = getRpcClient(CertificateService);
+      const res = await client.applyFinancialAid({
+        courseId: course.id,
+        essay150Words: finAidEssay,
+      });
+
+      if (res.application) {
+        toast.success("Đơn xin Hỗ trợ Tài chính đã được gửi thành công!");
+        setExistingFinAidStatus(res.application);
+        setFinAidEssay("");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Gửi đơn thất bại. Vui lòng thử lại.";
+      toast.error(msg);
+    } finally {
+      setSubmittingFinAid(false);
+    }
+  };
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,6 +299,24 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </svg>
                 {"Chứng chỉ Xác thực Đã đăng ký"}
               </li>
+              {course.financialAidEnabled && (
+                <li className="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                  <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <button
+                    type="button"
+                    onClick={handleOpenFinAidModal}
+                    disabled={checkingFinAidStatus}
+                    className="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0 text-xs disabled:opacity-50"
+                  >
+                    <span>{checkingFinAidStatus ? "Đang kiểm tra..." : "Financial Aid available"}</span>
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
         </div>
@@ -500,6 +574,152 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Financial Aid Modal */}
+      <Modal
+        isOpen={isFinAidModalOpen}
+        onClose={() => setIsFinAidModalOpen(false)}
+        title={`Đơn xin Hỗ trợ Tài chính - ${course?.title}`}
+        className="max-w-2xl"
+      >
+        {existingFinAidStatus ? (
+          <div className="space-y-6 pt-2">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+              <div>
+                <span className="text-xs font-mono font-semibold text-slate-500">Mã đơn: #{existingFinAidStatus.id}</span>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white mt-0.5">
+                  {course?.title}
+                </h3>
+              </div>
+
+              {existingFinAidStatus.status === "PENDING" && (
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  {"Đang xét duyệt"}
+                </span>
+              )}
+              {existingFinAidStatus.status === "APPROVED" && (
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {"Đã Phê Duyệt"}
+                </span>
+              )}
+              {existingFinAidStatus.status === "REJECTED" && (
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30 flex items-center gap-1.5">
+                  <svg className="w-4 h-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  {"Chưa được duyệt"}
+                </span>
+              )}
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-400 space-y-2">
+              <p>{"Bạn đã gửi đơn xin hỗ trợ tài chính cho khóa học này."}</p>
+              {existingFinAidStatus.status === "PENDING" && (
+                <p>{"Thời gian phản hồi dự kiến còn lại: "}<strong className="text-blue-600 dark:text-blue-400">{existingFinAidStatus.reviewDeadlineDaysLeft} ngày</strong>.</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">{"Bài luận đã gửi:"}</span>
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-wrap font-sans">
+                {existingFinAidStatus.essay150Words}
+              </div>
+            </div>
+
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setExistingFinAidStatus(null)}
+                className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                {"Nộp bài luận mới"}
+              </button>
+              <Link
+                href="/financial-aid"
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all flex items-center gap-1.5"
+              >
+                <span>{"Quản lý danh sách Đơn Hỗ trợ tài chính của tôi"}</span>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={handleFinAidSubmit} className="space-y-6 pt-2">
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  {"Bài luận giải trình hoàn cảnh & Mục tiêu (Tối thiểu 150 từ)"}
+                </label>
+                <span className={`text-xs font-bold font-mono px-2.5 py-1 rounded-md ${
+                  isFinAidEnoughWords 
+                    ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                }`}>
+                  {finAidWordCount} / 150 {"từ"}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                {"Hãy giải thích lý do bạn xin hỗ trợ tài chính, dự định học tập và việc hoàn thành khóa học này sẽ giúp ích thế nào cho sự nghiệp của bạn."}
+              </p>
+              <textarea
+                rows={8}
+                value={finAidEssay}
+                onChange={(e) => setFinAidEssay(e.target.value)}
+                placeholder={"Tôi xin nộp đơn xin hỗ trợ tài chính cho khóa học này vì..."}
+                className="w-full p-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm leading-relaxed"
+                required
+              />
+              <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 ${isFinAidEnoughWords ? "bg-emerald-500" : "bg-blue-600"}`}
+                  style={{ width: `${Math.min(100, (finAidWordCount / 150) * 100)}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-xs text-amber-800 dark:text-amber-300 space-y-1">
+              <p className="font-bold flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                {"Cam kết liêm chính học thuật:"}
+              </p>
+              <p>{"Tôi cam kết cung cấp thông tin trung thực về hoàn cảnh kinh tế và sẽ hoàn thành tất cả các bài kiểm tra của khóa học."}</p>
+            </div>
+
+            <div className="pt-4 flex items-center justify-between border-t border-slate-200 dark:border-slate-800">
+              <Link
+                href="/financial-aid"
+                className="text-xs font-semibold text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 underline"
+              >
+                {"Xem danh sách các đơn đã gửi →"}
+              </Link>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsFinAidModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  {"Hủy"}
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingFinAid || !isFinAidEnoughWords}
+                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
+                >
+                  {submittingFinAid ? "Đang gửi đơn..." : "Gửi đơn xin Hỗ trợ"}
+                </button>
+              </div>
+            </div>
+          </form>
+        )}
       </Modal>
     </>
   );

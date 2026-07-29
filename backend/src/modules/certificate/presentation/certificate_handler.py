@@ -81,6 +81,19 @@ class CertificateHandler(CertificateService):
             return pb.GetFinancialAidStatusResponse(application=None)
         return pb.GetFinancialAidStatusResponse(application=_to_pb_financial_aid(app))
 
+    async def list_my_financial_aids(
+        self,
+        request: pb.ListMyFinancialAidsRequest,
+        ctx: RequestContext[
+            pb.ListMyFinancialAidsRequest, pb.ListMyFinancialAidsResponse
+        ],
+    ) -> pb.ListMyFinancialAidsResponse:
+        current_user = require_current_user()
+        apps = await self._use_case.list_my_financial_aids(current_user.id)
+        return pb.ListMyFinancialAidsResponse(
+            applications=[_to_pb_financial_aid(a) for a in apps]
+        )
+
     async def list_financial_aid_applications(
         self,
         request: pb.ListFinancialAidApplicationsRequest,

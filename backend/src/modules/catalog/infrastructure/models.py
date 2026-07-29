@@ -71,6 +71,9 @@ class CourseModel(Base):
     review_count: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default="0"
     )
+    financial_aid_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
 
     week_modules: Mapped[list["WeekModuleModel"]] = relationship(
         "WeekModuleModel",
