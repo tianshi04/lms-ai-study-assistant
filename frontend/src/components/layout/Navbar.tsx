@@ -62,6 +62,9 @@ export function Navbar() {
               Khóa học của tôi
             </Link>
           )}
+          <Link href="/partners/stanford-online" className={getLinkClasses("/partners")}>
+            {"Đối tác"}
+          </Link>
           <Link href="/forum" className={getLinkClasses("/forum")}>
             {"Diễn đàn"}
           </Link>
@@ -152,6 +155,13 @@ export function Navbar() {
               Khóa học của tôi
             </Link>
           )}
+          <Link
+            href="/partners/stanford-online"
+            onClick={() => setMobileMenuOpen(false)}
+            className={getMobileLinkClasses("/partners")}
+          >
+            {"Đối tác phát hành"}
+          </Link>
           <Link
             href="/forum"
             onClick={() => setMobileMenuOpen(false)}

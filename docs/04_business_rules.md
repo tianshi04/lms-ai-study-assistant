@@ -115,10 +115,12 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 
 * **BR_CERT_001 (Điều kiện cấp Verified Certificate tự động):**
   * Tự động phát hành Verified Certificate khi: (1) `Progress = 100%` và (2) `Điểm các bài Graded Items >= 80%`.
-* **BR_CERT_002 (Xác thực Công khai, Truy vấn Dữ liệu Thật & Sinh QR Code Nội bộ In-Memory):**
+* **BR_CERT_002 (Mô hình Đa Chữ ký V2 Coursera-Style, Khối Chữ ký tay Điện tử & QR Code In-Memory):**
   * Mỗi chứng chỉ có mã duy nhất (dạng `CERT-XXXXXXXXXX`).
-  * Khi phát hành, hệ thống tự động khóa dữ liệu **Immutable Data Snapshot** từ `UserModel` và `CourseModel` để lưu cố định Tên học viên, Tên khóa học, Tên đối tác (Partner Name) và Logo đối tác (Partner Logo) tại thời điểm cấp. Mọi thay đổi tên trong User Profile về sau không làm thay đổi văn bản chứng chỉ cũ.
-  * Mã QR xác thực được sinh tự động trực tiếp dưới dạng thẻ SVG/Data URI in-memory (0 bytes storage, không phụ thuộc URL dịch vụ bên thứ ba) để hiển thị trên web và nhúng vào PDF.
+  - **Chữ ký theo Giảng viên Chuẩn Coursera (Multi-Signer V2 Model):** Khi phát hành chứng chỉ, hệ thống tự động khóa dữ liệu **Immutable Data Snapshot**: Tên học viên, Tên khóa học, Logo đối tác (`partner_logo_url`), cùng **Chữ ký tay điện tử (`signature_image_url`), Họ tên (`signer_name`) và Chức danh khoa học (`signer_title`) trích xuất trực tiếp từ Hồ sơ Giảng viên sở hữu khóa học (`owner_id`)** (Ví dụ: *GS. Andrew Ng - Founder, DeepLearning.AI & Adjunct Professor, Stanford University*).
+  * *Cơ chế Fallback:* Trường hợp Giảng viên phụ trách chưa bổ sung ảnh chữ ký cá nhân, hệ thống tự động sử dụng Chữ ký & Người ký mặc định của **Tổ chức Đối tác (Partner)**.
+  * *Hiển thị Trực quan trên Bằng (`/verify/[certId]`):* Giao diện chứng chỉ hiển thị song song 3 khối hình ảnh: (1) Logo Trường Đối tác, (2) Khối Chữ ký số & Ảnh chữ ký tay điện tử kèm Họ tên + Chức danh người bảo chứng, (3) Mã QR Code xác thực.
+  * Mã QR xác thực được sinh tự động trực tiếp dưới dạng thẻ SVG/Data URI in-memory (0 bytes storage) để hiển thị trên web và nhúng vào PDF.
 * **BR_CERT_003 (Quy trình Xác minh Danh tính KYC & Quy trình Re-issuance khi Đổi tên):**
   * Bắt buộc hoàn tất xác minh CCCD/Hộ chiếu và sinh trắc học webcam trước khi cấp chứng chỉ lần đầu.
   * *Quy trình Cấp lại Chứng chỉ khi Đổi tên (Re-issuance Workflow):* Nếu học viên cập nhật tên mới hợp pháp theo giấy tờ KYC, chứng chỉ cũ chuyển sang trạng thái `SUPERSEDED` (Đã được thay thế) kèm nhật ký lưu vết Audit Log, và hệ thống phát hành chứng chỉ phiên bản mới.
@@ -130,6 +132,22 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Tự động phát hành Verified Specialization Certificate khi học viên hoàn thành 100% tất cả các khóa học thành phần thuộc Chuỗi chuyên ngành đó.
 * **BR_BADGE_001 (Cấu trúc Chuẩn OpenBadges 2.0 JSON-LD):**
   * Tệp chứng chỉ nhúng siêu dữ liệu JSON-LD theo đúng chuẩn OpenBadges 2.0 chứa các trường: `@context: "https://w3id.org/openbadges/v2"`, `type: "BadgeClass"`, `id`, `name`, `description`, `image` (QR URL), `criteria` (`/courses/{course_id}`), và `issuer` (`name`, `url`).
+
+---
+
+## 5. Quy tắc Quản lý Bounded Context Đối tác (BR_PARTNER)
+
+* **BR_PARTNER_001 (Hồ sơ B2B Đối tác, RPC RotateKeyPair & Phân quyền Partner Admin Self-Service):**
+  * Bounded Context `PartnerModule` quản lý tập trung toàn bộ các Tổ chức/Trường Đại học Đối tác với 15 thuộc tính chuẩn hóa (`id`, `name`, `slug`, `description`, `logo_url`, `banner_url`, `website_url`, `allowed_domains`, `signature_image_url`, `signer_name`, `signer_title`, `public_key_pem`, `created_at`, `updated_at`, `historical_public_keys`).
+  * *Ràng buộc Tên miền (`allowed_domains`):* Mỗi Đối tác khai báo danh sách tên miền email ủy quyền (VD: `["@stanford.edu", "@cs.stanford.edu"]`). Được sử dụng để: (1) Tự động gán Suất học Enterprise Seat cho sinh viên (`BR_ACCESS_002`), và (2) Tự động phân giải `partner_id` khi Quản trị viên Đối tác (`PARTNER_ADMIN`) gọi RPC `RotatePartnerKeyPair` mà không cần truyền `partner_id` thủ công.
+  * *RPC RotatePartnerKeyPair & Bảo lưu Lịch sử Khóa:* Cho phép Partner Admin bấm xoay khóa ký số bất kỳ lúc nào. Khóa cũ tự động được chuyển vào mảng `historical_public_keys`, hệ thống khởi tạo khóa ECDSA P-256 mới và trả về duy nhất `public_key_pem`.
+  * *Tự quản lý Self-Service:* Quản trị viên Đối tác (`PARTNER_ADMIN`) có toàn quyền tự cập nhật thông tin thương hiệu (Logo, Banner), hồ sơ chữ ký đại diện, người ký và danh sách nhiều người ký (Multi-Signatories) của tổ chức mình thông qua API RPC `UpdatePartner`.
+* **BR_PARTNER_002 (Xác thực Ủy quyền Ký số & Xuất File Static `openbadges-issuer.json` cho Tên miền Đối tác):**
+  * *Cơ chế Tự động sinh Khóa (Auto-Generated Key Fallback):* Nếu Partner Admin không tự nhập `public_key_pem`, hệ thống tự động khởi tạo Cặp khóa ký số bất đối ứng ECDSA P-256 duy nhất (Private Key lưu an toàn trong Vault/HSM của Nền tảng, Public Key tự điền vào `public_key_pem`).
+  * *Xuất File Xác thực Tĩnh W3C (`openbadges-issuer.json`):* Nền tảng tự động sinh file JSON tĩnh chuẩn OpenBadges 2.0/3.0 chứa mảng đối tượng `publicKey` (`CryptographicKey` Object Array) bao gồm **Cả Khóa Mới hiện tại và Toàn bộ Khóa Lịch sử Cũ (`historical_public_keys`)**. Cung cấp nút tải xuống trong Admin Portal để Đối tác dán vào thư mục công khai `https://<domain>/.well-known/openbadges-issuer.json` trên tên miền chính thức của mình (VD: `stanford.edu`), làm bằng chứng kỹ thuật xác thực việc Trường ủy quyền ký số cho Nền tảng LMS mà không cần phải dựng máy chủ API phức tạp, đồng thời bảo toàn tính hợp lệ 100% cho tất cả các bằng cấp cũ đã phát hành trong quá khứ.
+
+
+
 
 ---
 

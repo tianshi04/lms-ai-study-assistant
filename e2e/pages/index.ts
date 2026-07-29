@@ -15,3 +15,6 @@ export { InstructorAnnouncementsPage } from './instructor-announcements.page';
 export { InstructorAnalyticsPage } from './instructor-analytics.page';
 export { AdminDashboardPage } from './admin-dashboard.page';
 export { QuestionBankPage } from './question-bank.page';
+export { PartnerAdminPage, PartnerSettingsPage, PartnerShowcasePage } from './partner-management.page';
+export { InstructorProfilePage } from './instructor-profile.page';
+

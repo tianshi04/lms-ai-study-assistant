@@ -37,6 +37,7 @@ export function useCourseReviewsQuery(courseId: string, options?: Partial<UseQue
 }
 
 import { IdentityService, type User, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
+import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
 import { LearningService, type LearningProgress, type PersonalNote } from "@/gen/learning/v1/learning_pb";
 import { AssessmentService, type QuizResult, type AutoGradedLabResult, type QuestionBank, type Question, type QuestionOption } from "@/gen/assessment/v1/assessment_pb";
 import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
@@ -366,5 +367,128 @@ export function useMyCertificatesQuery(options?: Partial<UseQueryOptions<Verifie
     ...options,
   });
 }
+
+// --- Partner Hooks ---
+
+export function usePartnersQuery(options?: Partial<UseQueryOptions<Partner[], Error>>) {
+  return useQuery<Partner[], Error>({
+    queryKey: ["partners"],
+    queryFn: async () => {
+      const client = getRpcClient(PartnerService);
+      const res = await client.listPartners({});
+      return res.partners || [];
+    },
+    ...options,
+  });
+}
+
+export function usePartnerDetailQuery(partnerId: string, options?: Partial<UseQueryOptions<Partner | null, Error>>) {
+  return useQuery<Partner | null, Error>({
+    queryKey: ["partnerDetail", partnerId],
+    queryFn: async () => {
+      if (!partnerId) return null;
+      const client = getRpcClient(PartnerService);
+      const res = await client.getPartner({ id: partnerId });
+      return res.partner ?? null;
+    },
+    enabled: !!partnerId,
+    ...options,
+  });
+}
+
+export interface CreatePartnerInput {
+  name: string;
+  slug: string;
+  description: string;
+  logoUrl: string;
+  bannerUrl: string;
+  websiteUrl: string;
+  allowedDomains: string[];
+  signatureImageUrl: string;
+  signerName: string;
+  signerTitle: string;
+  publicKeyPem: string;
+}
+
+export function useCreatePartnerMutation(
+  options?: Partial<UseMutationOptions<Partner | undefined, Error, CreatePartnerInput>>
+) {
+  return useMutation<Partner | undefined, Error, CreatePartnerInput>({
+    mutationFn: async (input) => {
+      const client = getRpcClient(PartnerService);
+      const res = await client.createPartner(input);
+      return res.partner;
+    },
+    ...options,
+  });
+}
+
+export interface UpdatePartnerInput {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  logoUrl: string;
+  bannerUrl: string;
+  websiteUrl: string;
+  allowedDomains: string[];
+  signatureImageUrl: string;
+  signerName: string;
+  signerTitle: string;
+  publicKeyPem: string;
+}
+
+export function useUpdatePartnerMutation(
+  options?: Partial<UseMutationOptions<Partner | undefined, Error, UpdatePartnerInput>>
+) {
+  return useMutation<Partner | undefined, Error, UpdatePartnerInput>({
+    mutationFn: async (input) => {
+      const client = getRpcClient(PartnerService);
+      const res = await client.updatePartner(input);
+      return res.partner;
+    },
+    ...options,
+  });
+}
+
+export function useDeletePartnerMutation(
+  options?: Partial<UseMutationOptions<boolean, Error, { id: string }>>
+) {
+  return useMutation<boolean, Error, { id: string }>({
+    mutationFn: async ({ id }) => {
+      const client = getRpcClient(PartnerService);
+      const res = await client.deletePartner({ id });
+      return res.success;
+    },
+    ...options,
+  });
+}
+
+export function useRotatePartnerKeyPairMutation(
+  options?: Partial<UseMutationOptions<string, Error, { partnerId: string }>>
+) {
+  return useMutation<string, Error, { partnerId: string }>({
+    mutationFn: async ({ partnerId }) => {
+      const client = getRpcClient(PartnerService);
+      const res = await client.rotatePartnerKeyPair({ partnerId });
+      return res.publicKeyPem;
+    },
+    ...options,
+  });
+}
+
+export function useUpdateInstructorProfileMutation(
+  options?: Partial<UseMutationOptions<User | undefined, Error, { title: string; signatureImageUrl: string }>>
+) {
+  return useMutation<User | undefined, Error, { title: string; signatureImageUrl: string }>({
+    mutationFn: async ({ title, signatureImageUrl }) => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.updateInstructorProfile({ title, signatureImageUrl });
+      return res.user;
+    },
+    ...options,
+  });
+}
+
 
 

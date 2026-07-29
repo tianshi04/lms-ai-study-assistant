@@ -73,7 +73,7 @@ export default defineConfig({
     // ─── Admin role ───────────────────────────────────────────────────────────
     {
       name: 'chromium-admin',
-      testMatch: ['**/admin.spec.ts'],
+      testMatch: ['**/admin.spec.ts', '**/partner.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: ADMIN_AUTH,

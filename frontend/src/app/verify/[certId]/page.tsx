@@ -164,7 +164,47 @@ export default function VerifyPage({ params }: VerifyPageProps) {
                     <span className="font-bold text-slate-700 dark:text-slate-300 font-mono">{cert.certificateId}</span>
                   </div>
                 </div>
+
+                {/* Official Signer & Handwritten Signature Section */}
+                {(cert.signerName || cert.signatureImageUrl) && (
+                  <div className="pt-6 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold block mb-0.5">
+                        {"Xác nhận bảo chứng bởi"}
+                      </span>
+                      <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                        {cert.partnerName}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      {cert.signatureImageUrl ? (
+                        <Image
+                          src={cert.signatureImageUrl}
+                          alt={cert.signerName || "Chữ ký người bảo chứng"}
+                          width={140}
+                          height={48}
+                          unoptimized
+                          className="h-12 w-auto object-contain ml-auto mb-1 dark:invert"
+                        />
+                      ) : (
+                        <div className="h-10 border-b border-slate-400 w-32 ml-auto mb-1 font-serif italic text-sm text-slate-600 flex items-end justify-end">
+                          {cert.signerName}
+                        </div>
+                      )}
+                      <p className="text-sm font-extrabold text-slate-900 dark:text-white">
+                        {cert.signerName}
+                      </p>
+                      {cert.signerTitle && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                          {cert.signerTitle}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
+
 
               {/* Bottom Verification Seal & QR Code */}
               <div className="mt-10 pt-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-6">
