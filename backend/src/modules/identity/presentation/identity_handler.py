@@ -52,6 +52,7 @@ def _to_pb_user(user: User) -> pb.User:
         enterprise_seat_key=user.enterprise_seat_key or "",
         signature_image_url=user.signature_image_url,
         title=user.title,
+        is_identity_verified=user.is_identity_verified,
     )
 
 
@@ -260,3 +261,16 @@ class IdentityHandler(IdentityService):
         if err or not user:
             raise ConnectError(Code.INVALID_ARGUMENT, err or "Cập nhật hồ sơ thất bại")
         return pb.UpdateInstructorProfileResponse(user=_to_pb_user(user))
+
+    async def verify_identity(
+        self,
+        request: pb.VerifyIdentityRequest,
+        ctx: RequestContext[pb.VerifyIdentityRequest, pb.VerifyIdentityResponse],
+    ) -> pb.VerifyIdentityResponse:
+        current_user = require_current_user()
+        target_user_id = request.user_id or current_user.id
+        success, msg = await self._use_case.verify_identity(
+            user_id=target_user_id,
+            id_card_number=request.id_card_number,
+        )
+        return pb.VerifyIdentityResponse(success=success, message=msg)

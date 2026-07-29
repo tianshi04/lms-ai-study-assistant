@@ -22,6 +22,7 @@ message User {
   string enterprise_seat_key = 6;
   string signature_image_url = 7;
   string title = 8;
+  bool is_identity_verified = 9;
 }
 
 message LoginRequest {
@@ -119,6 +120,16 @@ message UpdateInstructorProfileResponse {
   User user = 1;
 }
 
+message VerifyIdentityRequest {
+  string user_id = 1;
+  string id_card_number = 2;
+}
+
+message VerifyIdentityResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 service IdentityService {
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
@@ -146,5 +157,8 @@ service IdentityService {
   }
   rpc RevokeEnterpriseSeat(RevokeEnterpriseSeatRequest) returns (RevokeEnterpriseSeatResponse) {
     option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
+  rpc VerifyIdentity(VerifyIdentityRequest) returns (VerifyIdentityResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }
