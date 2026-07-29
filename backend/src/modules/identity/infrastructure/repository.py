@@ -38,6 +38,8 @@ class IdentityRepository:
                 seat_assigned_at=user.seat_assigned_at,
                 password_hash=user.password_hash,
                 is_identity_verified=user.is_identity_verified,
+                signature_image_url=user.signature_image_url,
+                title=user.title,
             )
             self._session.add(model)
         else:
@@ -49,6 +51,8 @@ class IdentityRepository:
             model.seat_assigned_at = user.seat_assigned_at
             model.password_hash = user.password_hash
             model.is_identity_verified = user.is_identity_verified
+            model.signature_image_url = user.signature_image_url
+            model.title = user.title
 
         await self._session.flush()
         return self._to_entity(model)
@@ -79,4 +83,6 @@ class IdentityRepository:
             seat_assigned_at=model.seat_assigned_at,
             password_hash=model.password_hash,
             is_identity_verified=model.is_identity_verified,
+            signature_image_url=model.signature_image_url,
+            title=model.title,
         )

@@ -612,3 +612,36 @@ async def test_revoke_enterprise_seat_invalid_date(
     ok, msg = await usecase.revoke_enterprise_seat("u1", course_id="c1")
     assert ok is True
     assert "thu hồi" in msg
+
+
+@pytest.mark.asyncio
+async def test_update_instructor_profile(mock_session_scope, mock_identity_repo):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    mock_repo_instance = AsyncMock()
+    mock_identity_repo.return_value = mock_repo_instance
+
+    user = User(
+        id="u1",
+        email="instructor@test.com",
+        full_name="Prof. Andrew Ng",
+        role=UserRole.INSTRUCTOR,
+        avatar_url="",
+        password_hash="",
+    )
+    mock_repo_instance.get_by_id.return_value = user
+    mock_repo_instance.save.side_effect = lambda u: u
+
+    usecase = IdentityUseCase()
+    updated_user, err = await usecase.update_instructor_profile(
+        "u1",
+        title="Professor of Computer Science",
+        signature_image_url="https://example.com/sig.png",
+    )
+
+    assert err == ""
+    assert updated_user is not None
+    assert updated_user.title == "Professor of Computer Science"
+    assert updated_user.signature_image_url == "https://example.com/sig.png"
+    mock_repo_instance.save.assert_called_once()

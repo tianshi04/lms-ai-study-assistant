@@ -23,3 +23,5 @@ class User:
     seat_assigned_at: Optional[str] = None
     password_hash: str = ""
     is_identity_verified: bool = False
+    signature_image_url: str = ""
+    title: str = ""

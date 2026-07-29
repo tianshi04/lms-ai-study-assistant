@@ -43,3 +43,8 @@ class CertificateModel(Base):
     is_revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     revoked_reason: Mapped[str] = mapped_column(Text, nullable=False, default="")
     specialization_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    signer_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    signer_title: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    signature_image_url: Mapped[str] = mapped_column(
+        String(512), nullable=False, default=""
+    )

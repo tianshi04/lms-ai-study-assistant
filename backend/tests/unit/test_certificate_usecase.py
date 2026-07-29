@@ -173,6 +173,9 @@ async def test_get_verified_certificate_new(
     mock_repo.get_user_kyc_info = AsyncMock(
         return_value=("alice@example.com", "Alice", True)
     )
+    mock_repo.get_course_signer_info = AsyncMock(
+        return_value=("Prof. Andrew Ng", "Instructor", "https://example.com/sig.png")
+    )
 
     def save_side_effect(c):
         return c
@@ -219,6 +222,13 @@ async def test_get_verified_certificate_new_defaults(
     )
     mock_repo.get_user_kyc_info = AsyncMock(
         return_value=("learner@coursera.ai", "Học viên Coursera", True)
+    )
+    mock_repo.get_course_signer_info = AsyncMock(
+        return_value=(
+            "DeepLearning.AI",
+            "DeepLearning.AI",
+            "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
+        )
     )
 
     def save_side_effect(c):
@@ -412,6 +422,9 @@ async def test_issue_specialization_certificate(
     mock_repo.get_certificate = AsyncMock(return_value=None)
     mock_repo.get_user_kyc_info = AsyncMock(
         return_value=("alice@example.com", "Alice", True)
+    )
+    mock_repo.get_course_signer_info = AsyncMock(
+        return_value=("DeepLearning.AI", "DeepLearning.AI", "logo.svg")
     )
     mock_repo.save_certificate = AsyncMock(side_effect=lambda c: c)
 

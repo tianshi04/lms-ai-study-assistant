@@ -87,3 +87,9 @@ class ICertificateRepository(ABC):
         self, specialization_id: str
     ) -> tuple[Optional[str], Optional[str], Optional[str], list[str]]:
         pass
+
+    @abstractmethod
+    async def get_course_signer_info(
+        self, course_id_or_slug: str
+    ) -> tuple[str, str, str]:
+        pass

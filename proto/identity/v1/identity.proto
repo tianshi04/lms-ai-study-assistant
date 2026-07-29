@@ -20,6 +20,8 @@ message User {
   UserRole role = 4;
   string avatar_url = 5;
   string enterprise_seat_key = 6;
+  string signature_image_url = 7;
+  string title = 8;
 }
 
 message LoginRequest {
@@ -108,6 +110,15 @@ message RevokeEnterpriseSeatResponse {
   string message = 2;
 }
 
+message UpdateInstructorProfileRequest {
+  string title = 1;
+  string signature_image_url = 2;
+}
+
+message UpdateInstructorProfileResponse {
+  User user = 1;
+}
+
 service IdentityService {
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
@@ -116,6 +127,9 @@ service IdentityService {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
   }
   rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UpdateInstructorProfile(UpdateInstructorProfileRequest) returns (UpdateInstructorProfileResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc AssignEnterpriseSeat(AssignEnterpriseSeatRequest) returns (AssignEnterpriseSeatResponse) {

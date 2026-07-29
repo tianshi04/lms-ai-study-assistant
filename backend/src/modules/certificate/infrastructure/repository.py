@@ -173,11 +173,17 @@ class CertificateRepository(ICertificateRepository):
                 is_revoked=cert.is_revoked,
                 revoked_reason=cert.revoked_reason,
                 specialization_id=cert.specialization_id,
+                signer_name=cert.signer_name,
+                signer_title=cert.signer_title,
+                signature_image_url=cert.signature_image_url,
             )
             self._session.add(model)
         else:
             model.is_revoked = cert.is_revoked
             model.revoked_reason = cert.revoked_reason
+            model.signer_name = cert.signer_name
+            model.signer_title = cert.signer_title
+            model.signature_image_url = cert.signature_image_url
 
         await self._session.flush()
         return cert
@@ -198,6 +204,9 @@ class CertificateRepository(ICertificateRepository):
             is_revoked=model.is_revoked,
             revoked_reason=model.revoked_reason,
             specialization_id=model.specialization_id,
+            signer_name=model.signer_name,
+            signer_title=model.signer_title,
+            signature_image_url=model.signature_image_url,
         )
 
     async def get_certificates_by_user(self, user_id: str) -> list[VerifiedCertificate]:
@@ -375,3 +384,43 @@ class CertificateRepository(ICertificateRepository):
             spec.partner_logo_url or "",
             spec.course_ids or [],
         )
+
+    async def get_course_signer_info(
+        self, course_id_or_slug: str
+    ) -> tuple[str, str, str]:
+        catalog_repo_factory = __import__(
+            "src.modules.catalog.infrastructure.repository",
+            fromlist=["SQLAlchemyCatalogRepository"],
+        ).SQLAlchemyCatalogRepository
+        catalog_repo = catalog_repo_factory(self._session)
+        course = await catalog_repo.get_course_detail(course_id_or_slug)
+
+        partner_name = (
+            course.partner_name
+            if (course and course.partner_name)
+            else "DeepLearning.AI"
+        )
+        fallback_signer_name = partner_name
+        fallback_signer_title = partner_name
+        fallback_signature_url = (
+            course.partner_logo_url if (course and course.partner_logo_url) else ""
+        )
+
+        if not course or not course.owner_id:
+            return fallback_signer_name, fallback_signer_title, fallback_signature_url
+
+        identity_repo_factory = __import__(
+            "src.modules.identity.infrastructure.repository",
+            fromlist=["IdentityRepository"],
+        ).IdentityRepository
+        identity_repo = identity_repo_factory(self._session)
+        owner_user = await identity_repo.get_by_id(course.owner_id)
+
+        if not owner_user:
+            return fallback_signer_name, fallback_signer_title, fallback_signature_url
+
+        signer_name = owner_user.full_name or fallback_signer_name
+        signer_title = owner_user.title or fallback_signer_title
+        signature_image_url = owner_user.signature_image_url or fallback_signature_url
+
+        return signer_name, signer_title, signature_image_url

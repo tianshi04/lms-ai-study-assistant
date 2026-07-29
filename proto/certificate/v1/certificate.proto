@@ -60,6 +60,9 @@ message VerifiedCertificate {
   string verification_url = 8;
   string qr_code_url = 9;
   string open_badges_json_ld = 10;
+  string signer_name = 11;
+  string signer_title = 12;
+  string signature_image_url = 13;
 }
 
 message GetVerifiedCertificateRequest {

@@ -41,6 +41,9 @@ def _to_pb_certificate(
         verification_url=cert.verification_url,
         qr_code_url=cert.qr_code_url,
         open_badges_json_ld=json.dumps(cert.open_badges_json_ld, ensure_ascii=False),
+        signer_name=cert.signer_name,
+        signer_title=cert.signer_title,
+        signature_image_url=cert.signature_image_url,
     )
 
 

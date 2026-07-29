@@ -78,3 +78,6 @@ class VerifiedCertificate:
     is_revoked: bool = False
     revoked_reason: str = ""
     specialization_id: Optional[str] = None
+    signer_name: str = ""
+    signer_title: str = ""
+    signature_image_url: str = ""

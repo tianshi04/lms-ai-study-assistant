@@ -31,6 +31,10 @@ class UserModel(Base):
     is_identity_verified: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
+    signature_image_url: Mapped[str] = mapped_column(
+        String(512), nullable=False, default=""
+    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False, default="")
 
 
 class EnterpriseLicenseModel(Base):

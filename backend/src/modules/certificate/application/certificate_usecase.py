@@ -219,6 +219,12 @@ class CertificateUseCase:
                 "verification": {"type": "hosted"},
             }
 
+            (
+                signer_name,
+                signer_title,
+                signature_image_url,
+            ) = await repo.get_course_signer_info(real_course_id)
+
             cert = VerifiedCertificate(
                 certificate_id=cert_id,
                 user_id=user_id,
@@ -231,6 +237,9 @@ class CertificateUseCase:
                 verification_url=verification_url,
                 qr_code_url=qr_code_url,
                 open_badges_json_ld=open_badges,
+                signer_name=signer_name,
+                signer_title=signer_title,
+                signature_image_url=signature_image_url,
             )
 
             saved_cert = await repo.save_certificate(cert)
@@ -344,6 +353,12 @@ class CertificateUseCase:
                 },
             }
 
+            (
+                signer_name,
+                signer_title,
+                signature_image_url,
+            ) = await repo.get_course_signer_info(specialization_id)
+
             spec_cert = VerifiedCertificate(
                 certificate_id=cert_id,
                 user_id=user_id,
@@ -357,6 +372,9 @@ class CertificateUseCase:
                 qr_code_url=qr_code_url,
                 open_badges_json_ld=open_badges,
                 specialization_id=specialization_id,
+                signer_name=signer_name,
+                signer_title=signer_title,
+                signature_image_url=signature_image_url,
             )
             saved = await repo.save_certificate(spec_cert)
             logger.info(

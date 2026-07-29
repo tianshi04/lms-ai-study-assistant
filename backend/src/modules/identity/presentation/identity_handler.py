@@ -50,6 +50,8 @@ def _to_pb_user(user: User) -> pb.User:
         role=_to_pb_user_role(user.role),
         avatar_url=user.avatar_url,
         enterprise_seat_key=user.enterprise_seat_key or "",
+        signature_image_url=user.signature_image_url,
+        title=user.title,
     )
 
 
@@ -241,3 +243,20 @@ class IdentityHandler(IdentityService):
             request.user_id, request.course_id
         )
         return pb.RevokeEnterpriseSeatResponse(success=success, message=msg)
+
+    async def update_instructor_profile(
+        self,
+        request: pb.UpdateInstructorProfileRequest,
+        ctx: RequestContext[
+            pb.UpdateInstructorProfileRequest, pb.UpdateInstructorProfileResponse
+        ],
+    ) -> pb.UpdateInstructorProfileResponse:
+        current_user = require_current_user()
+        user, err = await self._use_case.update_instructor_profile(
+            user_id=current_user.id,
+            title=request.title,
+            signature_image_url=request.signature_image_url,
+        )
+        if err or not user:
+            raise ConnectError(Code.INVALID_ARGUMENT, err or "Cập nhật hồ sơ thất bại")
+        return pb.UpdateInstructorProfileResponse(user=_to_pb_user(user))

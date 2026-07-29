@@ -345,3 +345,19 @@ class IdentityUseCase:
                 user_id,
             )
             return True, f"Đã thu hồi suất học Enterprise Key '{seat_key}' thành công!"
+
+    async def update_instructor_profile(
+        self, user_id: str, title: str, signature_image_url: str
+    ) -> tuple[Optional[User], str]:
+        """Updates instructor title and signature_image_url. Returns (user, error_message)."""
+        async with async_session_scope() as session:
+            repo = IdentityRepository(session)
+            user = await repo.get_by_id(user_id)
+            if not user:
+                return None, "Không tìm thấy người dùng"
+
+            user.title = title
+            user.signature_image_url = signature_image_url
+            saved_user = await repo.save(user)
+            logger.info("Updated instructor profile for user %s", user_id)
+            return saved_user, ""
