@@ -1,0 +1,1 @@
+"""Partner domain init."""

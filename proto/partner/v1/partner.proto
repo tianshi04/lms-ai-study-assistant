@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package partner.v1;
+
+import "auth/v1/options.proto";
+
+message Partner {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string description = 4;
+  string logo_url = 5;
+  string banner_url = 6;
+  string website_url = 7;
+  repeated string allowed_domains = 8;
+  string signature_image_url = 9;
+  string signer_name = 10;
+  string signer_title = 11;
+  string public_key_pem = 12;
+  string created_at = 13;
+  string updated_at = 14;
+  repeated string historical_public_keys = 15;
+}
+
+
+message CreatePartnerRequest {
+  string name = 1;
+  string slug = 2;
+  string description = 3;
+  string logo_url = 4;
+  string banner_url = 5;
+  string website_url = 6;
+  repeated string allowed_domains = 7;
+  string signature_image_url = 8;
+  string signer_name = 9;
+  string signer_title = 10;
+  string public_key_pem = 11;
+}
+
+message CreatePartnerResponse {
+  Partner partner = 1;
+}
+
+message UpdatePartnerRequest {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string description = 4;
+  string logo_url = 5;
+  string banner_url = 6;
+  string website_url = 7;
+  repeated string allowed_domains = 8;
+  string signature_image_url = 9;
+  string signer_name = 10;
+  string signer_title = 11;
+  string public_key_pem = 12;
+}
+
+message UpdatePartnerResponse {
+  Partner partner = 1;
+}
+
+message GetPartnerRequest {
+  string id = 1;
+}
+
+message GetPartnerResponse {
+  Partner partner = 1;
+}
+
+message ListPartnersRequest {}
+
+message ListPartnersResponse {
+  repeated Partner partners = 1;
+}
+
+message DeletePartnerRequest {
+  string id = 1;
+}
+
+message DeletePartnerResponse {
+  bool success = 1;
+}
+
+message RotatePartnerKeyPairRequest {
+  string partner_id = 1;
+}
+
+message RotatePartnerKeyPairResponse {
+  string public_key_pem = 1;
+}
+
+service PartnerService {
+  rpc CreatePartner(CreatePartnerRequest) returns (CreatePartnerResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
+  rpc UpdatePartner(UpdatePartnerRequest) returns (UpdatePartnerResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
+  rpc GetPartner(GetPartnerRequest) returns (GetPartnerResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc ListPartners(ListPartnersRequest) returns (ListPartnersResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc DeletePartner(DeletePartnerRequest) returns (DeletePartnerResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
+  rpc RotatePartnerKeyPair(RotatePartnerKeyPairRequest) returns (RotatePartnerKeyPairResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
+}
+

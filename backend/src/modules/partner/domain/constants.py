@@ -1,0 +1,4 @@
+"""Partner domain constants."""
+
+MAX_PARTNER_NAME_LENGTH = 255
+MAX_PARTNER_SLUG_LENGTH = 255

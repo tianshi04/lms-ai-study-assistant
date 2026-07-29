@@ -15,6 +15,7 @@ from src.gen.certificate.v1.certificate_connect import CertificateServiceASGIApp
 from src.gen.forum.v1.forum_connect import ForumServiceASGIApplication
 from src.gen.identity.v1.identity_connect import IdentityServiceASGIApplication
 from src.gen.learning.v1.learning_connect import LearningServiceASGIApplication
+from src.gen.partner.v1.partner_connect import PartnerServiceASGIApplication
 from src.modules.assessment.application.assessment_usecase import AssessmentUseCase
 from src.modules.assessment.presentation.assessment_handler import AssessmentHandler
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
@@ -27,6 +28,8 @@ from src.modules.identity.application.identity_usecase import IdentityUseCase
 from src.modules.identity.presentation.identity_handler import IdentityHandler
 from src.modules.learning.application.learning_usecase import LearningUseCase
 from src.modules.learning.presentation.learning_handler import LearningHandler
+from src.modules.partner.application.partner_usecase import PartnerUseCase
+from src.modules.partner.presentation.partner_handler import PartnerHandler
 import logging
 
 from connectrpc_otel import OpenTelemetryInterceptor
@@ -126,6 +129,10 @@ forum_usecase = ForumUseCase()
 forum_handler = ForumHandler(use_case=forum_usecase)
 forum_app = ForumServiceASGIApplication(forum_handler, interceptors=interceptors)
 
+partner_usecase = PartnerUseCase()
+partner_handler = PartnerHandler(use_case=partner_usecase)
+partner_app = PartnerServiceASGIApplication(partner_handler, interceptors=interceptors)
+
 
 async def proxy_media(request):
     path = request.path_params["path"]
@@ -195,6 +202,7 @@ routes = [
     Mount("/certificate.v1.CertificateService", app=cast(Any, certificate_app)),
     Mount("/assessment.v1.AssessmentService", app=cast(Any, assessment_app)),
     Mount("/forum.v1.ForumService", app=cast(Any, forum_app)),
+    Mount("/partner.v1.PartnerService", app=cast(Any, partner_app)),
     Route(
         "/coursera-assets/{path:path}",
         endpoint=proxy_media,

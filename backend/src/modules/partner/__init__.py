@@ -1,0 +1,1 @@
+"""Partner module init."""

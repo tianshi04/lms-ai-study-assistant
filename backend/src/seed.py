@@ -69,6 +69,7 @@ from src.modules.learning.infrastructure.models import (
     PersonalNoteModel,
     WeeklyDeadlineModel,
 )
+from src.modules.partner.infrastructure.models import PartnerModel
 
 from src.shared.infrastructure.logging import setup_logging
 
@@ -535,6 +536,59 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         for spec in specializations:
             await session.merge(spec)
 
+        # Seed Sample Partners
+        partner_stanford = PartnerModel(
+            id="partner-stanford",
+            name="Stanford Online",
+            slug="stanford-online",
+            description="Stanford Online offers lifelong learning opportunities from Stanford University.",
+            logo_url="https://upload.wikimedia.org/wikipedia/commons/4/4b/Stanford_Cardinal_logo.svg",
+            banner_url="https://images.unsplash.com/photo-1541339907198-e08756dedf3f",
+            website_url="https://online.stanford.edu",
+            allowed_domains=["stanford.edu", "online.stanford.edu"],
+            signature_image_url="https://example.com/signatures/stanford_dean.png",
+            signer_name="Prof. Jennifer Widom",
+            signer_title="Dean of Stanford Engineering",
+            public_key_pem="-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAstanford...\n-----END PUBLIC KEY-----",
+            created_at="2026-07-20T00:00:00Z",
+            updated_at="2026-07-20T00:00:00Z",
+        )
+        partner_dl = PartnerModel(
+            id="partner-deeplearning-ai",
+            name="DeepLearning.AI",
+            slug="deeplearning-ai",
+            description="Empowering people to build an AI-powered future through world-class education.",
+            logo_url="https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
+            banner_url="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe",
+            website_url="https://www.deeplearning.ai",
+            allowed_domains=["deeplearning.ai"],
+            signature_image_url="https://example.com/signatures/andrew_ng.png",
+            signer_name="Andrew Ng",
+            signer_title="Founder, DeepLearning.AI",
+            public_key_pem="-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAdeeplearning...\n-----END PUBLIC KEY-----",
+            created_at="2026-07-20T00:00:00Z",
+            updated_at="2026-07-20T00:00:00Z",
+        )
+        partner_gcp = PartnerModel(
+            id="partner-google-cloud",
+            name="Google Cloud",
+            slug="google-cloud",
+            description="Build your cloud skills with Google Cloud training and certifications.",
+            logo_url="https://upload.wikimedia.org/wikipedia/commons/5/51/Google_Cloud_logo.svg",
+            banner_url="https://images.unsplash.com/photo-1573164713988-8665fc963095",
+            website_url="https://cloud.google.com/training",
+            allowed_domains=["cloud.google.com", "google.com"],
+            signature_image_url="https://example.com/signatures/google_cloud_vp.png",
+            signer_name="Thomas Kurian",
+            signer_title="CEO, Google Cloud",
+            public_key_pem="-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgooglecloud...\n-----END PUBLIC KEY-----",
+            created_at="2026-07-20T00:00:00Z",
+            updated_at="2026-07-20T00:00:00Z",
+        )
+        await session.merge(partner_stanford)
+        await session.merge(partner_dl)
+        await session.merge(partner_gcp)
+
         # Seed Valid Enterprise Licenses
         lic1 = EnterpriseLicenseModel(
             key="ENT-DEMO-2026-X99",
@@ -605,6 +659,8 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=instructor@coursera.ai",
             enterprise_seat_key="",
             password_hash=default_pw_hash,
+            title="Founder, DeepLearning.AI & Adjunct Professor, Stanford University",
+            signature_image_url="https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
         )
 
         ta_user = UserModel(

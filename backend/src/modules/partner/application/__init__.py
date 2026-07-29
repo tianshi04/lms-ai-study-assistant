@@ -1,0 +1,1 @@
+"""Partner application init."""
