@@ -286,16 +286,36 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     ]
     wrong_answers = [(ans + 1) % 4 for ans in correct_answers]
 
+    # Start session for user_id
+    start_res = await usecase.start_graded_quiz_session(user_id, item_id)
+    token = start_res["session_token"]
+
     # 1. Without Honor Code -> Should fail
-    res_no_honor = await usecase.submit_graded_quiz(user_id, item_id, correct_answers)
+    res_no_honor = await usecase.submit_graded_quiz(
+        user_id, item_id, correct_answers, session_token=token
+    )
     assert res_no_honor["passed"] is False
     assert "Honor Code" in res_no_honor["answer_explanations"][0]
 
     # 2. Agree Honor Code
     await usecase.submit_honor_code(user_id, item_id, True)
 
+    # Start session again since previous submission might be counted as attempt if it wasn't honor code fail?
+    # Wait, honor code fail returns early. Token is still valid but let's generate a new one to be safe.
+    start_res2 = await usecase.start_graded_quiz_session(user_id, item_id)
+    token2 = start_res2["session_token"]
+
     # 3. Submit Perfect Score -> 100% Pass
-    res_pass = await usecase.submit_graded_quiz(user_id, item_id, correct_answers)
+    correct_answers2 = [
+        q["shuffled_correct_index"]
+        for q in await usecase.generate_quiz_session_questions(
+            repo, item_id, seed=start_res2["session_seed"]
+        )
+    ]
+    res_pass = await usecase.submit_graded_quiz(
+        user_id, item_id, correct_answers2, session_token=token2
+    )
+
     assert res_pass["score_percent"] == 100.0
     assert res_pass["passed"] is True
     assert res_pass["attempts_left"] == 3
@@ -306,23 +326,39 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     await usecase.submit_honor_code(user_fail, item_id, True)
 
     # Attempt 1 (Fail)
-    r1 = await usecase.submit_graded_quiz(user_fail, item_id, wrong_answers)
+    sr1 = await usecase.start_graded_quiz_session(user_fail, item_id)
+    r1 = await usecase.submit_graded_quiz(
+        user_fail, item_id, wrong_answers, session_token=sr1["session_token"]
+    )
     assert r1["passed"] is False
     assert r1["attempts_left"] == 2
 
     # Attempt 2 (Fail)
-    r2 = await usecase.submit_graded_quiz(user_fail, item_id, wrong_answers)
+    sr2 = await usecase.start_graded_quiz_session(user_fail, item_id)
+    r2 = await usecase.submit_graded_quiz(
+        user_fail, item_id, wrong_answers, session_token=sr2["session_token"]
+    )
     assert r2["passed"] is False
     assert r2["attempts_left"] == 1
 
     # Attempt 3 (Fail) -> Cooldown activated
-    r3 = await usecase.submit_graded_quiz(user_fail, item_id, wrong_answers)
+    sr3 = await usecase.start_graded_quiz_session(user_fail, item_id)
+    r3 = await usecase.submit_graded_quiz(
+        user_fail, item_id, wrong_answers, session_token=sr3["session_token"]
+    )
     assert r3["passed"] is False
     assert r3["attempts_left"] == 0
     assert r3["cooldown_seconds_left"] == 28800
 
     # Attempt 4 (Blocked by Cooldown)
-    r4 = await usecase.submit_graded_quiz(user_fail, item_id, [0, 1, 2, 0, 1])
+    # Start session will return empty token if cooldown is active
+    sr4 = await usecase.start_graded_quiz_session(user_fail, item_id)
+    assert sr4["cooldown_seconds_left"] > 0
+    # Submit without token will just say missing token or something, but let's pass a dummy token or the empty one
+    r4 = await usecase.submit_graded_quiz(
+        user_fail, item_id, [0, 1, 2, 0, 1], session_token=sr4.get("session_token", "")
+    )
+
     assert r4["passed"] is False
     assert r4["cooldown_seconds_left"] > 0
     assert "cooldown period" in r4["answer_explanations"][0]
@@ -438,15 +474,31 @@ async def test_quiz_session_timer_and_timeout():
     await usecase.submit_honor_code(user_id, item_id, True)
 
     # Expired start_time (60 minutes ago)
+    import jwt
+    from src.shared.config import settings
+    from src.shared.auth import JWT_ALGORITHM
+
     expired_start = (datetime.now(timezone.utc) - timedelta(minutes=60)).isoformat()
+
+    token_payload = {
+        "sub": user_id,
+        "item_id": item_id,
+        "seed": 12345,
+        "start_time": expired_start,
+        "duration_minutes": 45,
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+    }
+    timeout_token = jwt.encode(
+        token_payload, settings.JWT_SECRET, algorithm=JWT_ALGORITHM
+    )
+
     res_timeout = await usecase.submit_graded_quiz(
         user_id,
         item_id,
         [0, 1, 2, 0, 1],
-        start_time_iso=expired_start,
-        duration_minutes=45,
+        session_token=timeout_token,
     )
-    assert "Auto-submit on timeout" in res_timeout["answer_explanations"][0]
+    assert "Timeout/Bypass" in res_timeout["answer_explanations"][0]
 
 
 @pytest.mark.asyncio
@@ -500,7 +552,10 @@ async def test_audit_mode_access_blocking():
             await repo.save(user)
 
         # Attempt submitting graded quiz in audit mode -> Should be blocked
-        res = await usecase.submit_graded_quiz(audit_user_id, "item_quiz_audit", [0, 1])
+        res = await usecase.submit_graded_quiz(
+            audit_user_id, "item_quiz_audit", [0, 1], session_token="dummy"
+        )
+
         assert res["passed"] is False
         assert "Audit Mode" in res["answer_explanations"][0]
 
@@ -527,7 +582,6 @@ async def test_quiz_question_pool_and_option_shuffling():
     questions = session_info["questions"]
     assert len(questions) == 5  # Sampled 5 questions from pool
 
-    session_seed = session_info["session_seed"]
     shuffled_answers = [q["shuffled_correct_index"] for q in questions]
 
     # Agree Honor Code
@@ -535,8 +589,9 @@ async def test_quiz_question_pool_and_option_shuffling():
 
     # Submit answers matching shuffled indices -> Should pass 100%
     res = await usecase.submit_graded_quiz(
-        user_id, item_id, shuffled_answers, session_seed=session_seed
+        user_id, item_id, shuffled_answers, session_token=session_info["session_token"]
     )
+
     assert res["score_percent"] == 100.0
     assert res["passed"] is True
 
@@ -592,7 +647,11 @@ async def test_quiz_submission_empty_question_pool(monkeypatch: pytest.MonkeyPat
         mock_empty_questions.__get__(usecase, AssessmentUseCase),
     )
 
-    res = await usecase.submit_graded_quiz(user_id, item_id, [], session_seed=12345)
+    start_res = await usecase.start_graded_quiz_session(user_id, item_id)
+    res = await usecase.submit_graded_quiz(
+        user_id, item_id, [], session_token=start_res["session_token"]
+    )
+
     assert res["score_percent"] == 0.0
     assert res["passed"] is False
     assert any("rỗng" in exp or "empty" in exp for exp in res["answer_explanations"])

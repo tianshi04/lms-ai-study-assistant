@@ -1,4 +1,7 @@
 import logging
+import jwt
+from src.shared.auth import JWT_ALGORITHM
+from src.shared.config import settings
 import random
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -12,6 +15,7 @@ from src.modules.assessment.domain.constants import (
     OUTLIER_SCORE_DELTA_THRESHOLD,
     PEER_REVIEW_COLD_START_HOURS,
     QUIZ_COOLDOWN_HOURS,
+    QUIZ_SUBMISSION_GRACE_PERIOD_SECONDS,
     REQUIRED_PEER_REVIEWS_COUNT,
 )
 from src.modules.assessment.domain.entities import (
@@ -178,7 +182,18 @@ class AssessmentUseCase:
                     until_dt = datetime.fromisoformat(cooldown.cooldown_until)
                     if now < until_dt:
                         cooldown_seconds_left = int((until_dt - now).total_seconds())
-                        attempts_left = 0
+                        return {
+                            "session_id": f"qsess-{uuid.uuid4().hex[:8]}",
+                            "start_time_iso": now.isoformat(),
+                            "expires_at_iso": expires_at.isoformat(),
+                            "duration_minutes": duration_minutes,
+                            "passing_threshold_percent": passing_threshold,
+                            "session_seed": 0,
+                            "questions": [],
+                            "cooldown_seconds_left": cooldown_seconds_left,
+                            "attempts_left": 0,
+                            "session_token": "",
+                        }
                     else:
                         attempts_left = max(
                             0,
@@ -200,6 +215,19 @@ class AssessmentUseCase:
                 repo, item_id, seed=seed_val
             )
 
+            # Create session token
+            token_payload = {
+                "sub": user_id,
+                "item_id": item_id,
+                "seed": seed_val,
+                "start_time": now.isoformat(),
+                "duration_minutes": duration_minutes,
+                "exp": now + timedelta(minutes=duration_minutes) + timedelta(minutes=5),
+            }
+            session_token = jwt.encode(
+                token_payload, settings.JWT_SECRET, algorithm=JWT_ALGORITHM
+            )
+
             return {
                 "session_id": f"qsess-{uuid.uuid4().hex[:8]}",
                 "start_time_iso": now.isoformat(),
@@ -210,6 +238,7 @@ class AssessmentUseCase:
                 "questions": questions,
                 "cooldown_seconds_left": cooldown_seconds_left,
                 "attempts_left": attempts_left,
+                "session_token": session_token,
             }
 
     @require_paid_access()
@@ -218,9 +247,7 @@ class AssessmentUseCase:
         user_id: str,
         item_id: str,
         selected_option_indexes: list[int],
-        start_time_iso: Optional[str] = None,
-        duration_minutes: int = DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
-        session_seed: Optional[int] = None,
+        session_token: Optional[str] = None,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
@@ -265,10 +292,50 @@ class AssessmentUseCase:
                         ],
                     }
 
-            # 3. Grade Quiz (BR_QUIZ_002: Dynamic shuffled options grading)
-            if session_seed is None:
-                session_seed = 42
+            # 2.5 Decode JWT session_token
+            if not session_token:
+                return {
+                    "score_percent": 0.0,
+                    "passed": False,
+                    "attempts_left": 0,
+                    "cooldown_seconds_left": 0,
+                    "answer_explanations": [
+                        "Thiếu token phiên làm bài (Session Token)."
+                    ],
+                }
 
+            try:
+                payload = jwt.decode(
+                    session_token, settings.JWT_SECRET, algorithms=[JWT_ALGORITHM]
+                )
+                if payload.get("sub") != user_id or payload.get("item_id") != item_id:
+                    raise ValueError("Token không khớp với người dùng hoặc bài thi.")
+                session_seed = payload.get("seed", 42)
+                start_time_iso = payload.get("start_time")
+                duration_minutes = payload.get(
+                    "duration_minutes", DEFAULT_QUIZ_TIME_LIMIT_MINUTES
+                )
+            except jwt.ExpiredSignatureError:
+                return {
+                    "score_percent": 0.0,
+                    "passed": False,
+                    "attempts_left": 0,
+                    "cooldown_seconds_left": 0,
+                    "answer_explanations": [
+                        "Token phiên làm bài đã hết hạn tuyệt đối."
+                    ],
+                }
+            except Exception as e:
+                logger.error("Invalid session token for user %s: %s", user_id, e)
+                return {
+                    "score_percent": 0.0,
+                    "passed": False,
+                    "attempts_left": 0,
+                    "cooldown_seconds_left": 0,
+                    "answer_explanations": ["Token phiên làm bài không hợp lệ."],
+                }
+
+            # 3. Grade Quiz (BR_QUIZ_002: Dynamic shuffled options grading)
             generated_qs = await self.generate_quiz_session_questions(
                 repo, item_id, seed=session_seed
             )
@@ -295,10 +362,28 @@ class AssessmentUseCase:
             if start_time_iso:
                 try:
                     start_dt = datetime.fromisoformat(start_time_iso)
-                    if (now - start_dt).total_seconds() > duration_minutes * 60:
+                    elapsed_seconds = (now - start_dt).total_seconds()
+                    if elapsed_seconds > (
+                        duration_minutes * 60 + QUIZ_SUBMISSION_GRACE_PERIOD_SECONDS
+                    ):
+                        logger.warning(
+                            "User %s submitted quiz %s too late: %s > %s",
+                            user_id,
+                            item_id,
+                            elapsed_seconds,
+                            duration_minutes * 60,
+                        )
+
+                        # Note: we MUST record this as a failed submission so it increments the attempts count.
+                        # Wait, we can just set correct_count to 0 and let it proceed to save the attempt!
+                        correct_count = 0
+                        explanations = [
+                            f"Hết thời gian làm bài ({duration_minutes} phút). Máy chủ từ chối kết quả nộp trễ (Timeout/Bypass)."
+                        ]
+                    elif elapsed_seconds > duration_minutes * 60:
                         explanations.insert(
                             0,
-                            f"Hết thời gian làm bài ({duration_minutes} phút). Máy chủ tự động nộp bài và chấm điểm (Auto-submit on timeout).",
+                            f"Đã nộp bài tự động khi hết thời gian làm bài ({duration_minutes} phút).",
                         )
                 except ValueError:
                     pass
@@ -312,6 +397,7 @@ class AssessmentUseCase:
                 score_percent = round((correct_count / total_questions) * 100.0, 2)
 
             # BR_QUIZ_001: Highest Score Wins policy & Dynamic Quiz Matrix Threshold
+
             matrix = await repo.get_quiz_matrix(item_id)
             passing_threshold = (
                 matrix.passing_threshold_percent
