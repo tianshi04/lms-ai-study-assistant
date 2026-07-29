@@ -14,9 +14,9 @@ export interface ServerUserAuth {
 export async function getAuthServer(): Promise<ServerUserAuth> {
   const cookieStore = await cookies();
   const token = cookieStore.get("access_token")?.value || null;
-  const rawUserName = cookieStore.get("user_name")?.value;
-  const rawUserEmail = cookieStore.get("user_email")?.value;
-  const userRole = cookieStore.get("user_role")?.value || null;
+  const rawUserName = token ? cookieStore.get("user_name")?.value : undefined;
+  const rawUserEmail = token ? cookieStore.get("user_email")?.value : undefined;
+  const userRole = token ? (cookieStore.get("user_role")?.value || null) : null;
 
   let userName: string | null = null;
   if (rawUserName) {

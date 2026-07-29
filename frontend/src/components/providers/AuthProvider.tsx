@@ -27,14 +27,26 @@ export function AuthProvider({
 }) {
   const [auth, setAuthState] = useState<UserAuth>(() => {
     if (typeof window !== "undefined") {
+      const token = localStorage.getItem("access_token");
       const localName = localStorage.getItem("user_name");
       const localEmail = localStorage.getItem("user_email");
       const localRole = localStorage.getItem("user_role");
-      if (localName) {
+      if (token && localName) {
         return {
           userName: localName,
           userEmail: localEmail,
           userRole: localRole,
+        };
+      } else if (!token) {
+        localStorage.removeItem("user_name");
+        localStorage.removeItem("user_email");
+        localStorage.removeItem("user_role");
+        localStorage.removeItem("user_id");
+        localStorage.removeItem("refresh_token");
+        return {
+          userName: null,
+          userEmail: null,
+          userRole: null,
         };
       }
     }

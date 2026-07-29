@@ -33,9 +33,10 @@ export default async function RootLayout({
 }>) {
   const cookieStore = await cookies();
 
-  const rawUserName = cookieStore.get("user_name")?.value;
-  const rawUserEmail = cookieStore.get("user_email")?.value;
-  const userRole = cookieStore.get("user_role")?.value || null;
+  const token = cookieStore.get("access_token")?.value;
+  const rawUserName = token ? cookieStore.get("user_name")?.value : null;
+  const rawUserEmail = token ? cookieStore.get("user_email")?.value : null;
+  const userRole = token ? (cookieStore.get("user_role")?.value || null) : null;
 
   const initialAuth = {
     userName: rawUserName ? decodeURIComponent(rawUserName) : null,
