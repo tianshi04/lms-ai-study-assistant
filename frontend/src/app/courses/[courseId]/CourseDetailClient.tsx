@@ -2,7 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCourseDetailQuery, useCourseReviewsQuery, useMyCertificatesQuery } from "@/lib/query_hooks";
+import { useCourseDetailQuery, useCourseReviewsQuery, useMyCertificatesQuery, usePaymentAccessQuery } from "@/lib/query_hooks";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, ItemType } from "@/gen/catalog/v1/catalog_pb";
@@ -10,6 +10,7 @@ import { CertificateService, type FinancialAidApplication } from "@/gen/certific
 import { Modal } from "@/components/ui/Modal";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { useToast } from "@/components/ui/Toast";
+import { PaymentCheckoutModal } from "@/components/course/PaymentCheckoutModal";
 
 
 const emptySubscribe = () => () => {};
@@ -26,6 +27,8 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(courseId);
 
   const { data: myCertificates = [] } = useMyCertificatesQuery();
+  const { data: paymentAccess } = usePaymentAccessQuery(courseId);
+  const isPaidAccess = paymentAccess?.hasPaidAccess ?? false;
   const matchingCert = course?.title
     ? myCertificates.find((c) => c.courseTitle.toLowerCase() === course.title.toLowerCase())
     : undefined;
@@ -50,6 +53,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   const [submittingFinAid, setSubmittingFinAid] = useState(false);
   const [existingFinAidStatus, setExistingFinAidStatus] = useState<FinancialAidApplication | null>(null);
   const [checkingFinAidStatus, setCheckingFinAidStatus] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   const finAidWordCount = finAidEssay.trim() === "" ? 0 : finAidEssay.trim().split(/\s+/).length;
   const isFinAidEnoughWords = finAidWordCount >= 150;
@@ -249,11 +253,18 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           {/* Enrollment Card */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-xl space-y-6">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-1 rounded-md">
-                {"Đang mở đăng ký"}
-              </span>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-3">{"Miễn Phí Tham Gia"}</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{"Đã bao gồm bài giảng Video tương tác & Phụ đề cuộn"}</p>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+                {hasCert
+                  ? "Hoàn Thành Xuất Sắc"
+                  : isPaidAccess
+                  ? "Đã Mở Khóa Đầy Đủ (Paid Mode)"
+                  : "Miễn Phí Tham Gia"}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                {isPaidAccess
+                  ? "Toàn bộ bài kiểm tra Graded Quiz, bài Lab và Chứng chỉ đã sẵn sàng."
+                  : "Đã bao gồm bài giảng Video tương tác & Phụ đề cuộn"}
+              </p>
             </div>
 
             {hasCert ? (
@@ -274,16 +285,40 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   <span>{"Vào Học Lại"}</span>
                 </Link>
               </div>
+            ) : isPaidAccess ? (
+              <div className="space-y-3">
+                <Link
+                  href={`/learn/${course.id}`}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-sm transition-all shadow-lg shadow-indigo-600/20 cursor-pointer"
+                >
+                  <span>{"Vào Học Ngay (Paid Mode)"}</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </Link>
+              </div>
             ) : (
-              <Link
-                href={`/learn/${course.id}`}
-                className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm transition-all shadow-lg shadow-blue-600/20 cursor-pointer"
-              >
-                {"Vào Học Ngay"}
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </Link>
+              <div className="space-y-3">
+                <Link
+                  href={`/learn/${course.id}`}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-all shadow-lg shadow-blue-600/20 cursor-pointer"
+                >
+                  <span>{"Vào Học Ngay (Audit Mode)"}</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setIsPaymentModalOpen(true)}
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/50 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold text-sm transition-all cursor-pointer"
+                >
+                  <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span>{"Nâng Cấp Paid Mode / Coursera Plus"}</span>
+                </button>
+              </div>
             )}
 
             <ul className="space-y-3 text-xs text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-800/80 pt-4">
@@ -721,6 +756,13 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           </form>
         )}
       </Modal>
+
+      <PaymentCheckoutModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        courseId={course.id}
+        courseTitle={course.title}
+      />
     </>
   );
 }

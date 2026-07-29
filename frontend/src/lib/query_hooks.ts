@@ -42,6 +42,7 @@ import { LearningService, type LearningProgress, type PersonalNote } from "@/gen
 import { AssessmentService, type QuizResult, type AutoGradedLabResult, type QuestionBank, type Question, type QuestionOption } from "@/gen/assessment/v1/assessment_pb";
 import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
 import { ForumService, type ForumThread } from "@/gen/forum/v1/forum_pb";
+import { PaymentService, PlanType, type CoursePurchase, type UserSubscription } from "@/gen/payment/v1/payment_pb";
 
 export interface CourseFilters {
   searchQuery?: string;
@@ -485,6 +486,58 @@ export function useUpdateInstructorProfileMutation(
       const client = getRpcClient(IdentityService);
       const res = await client.updateInstructorProfile({ title, signatureImageUrl });
       return res.user;
+    },
+    ...options,
+  });
+}
+
+export function usePaymentAccessQuery(
+  courseId: string,
+  options?: Partial<UseQueryOptions<{ hasPaidAccess: boolean; accessReason: string }, Error>>
+) {
+  return useQuery<{ hasPaidAccess: boolean; accessReason: string }, Error>({
+    queryKey: ["paymentAccess", courseId],
+    queryFn: async () => {
+      const client = getRpcClient(PaymentService);
+      const res = await client.getUserPaymentAccess({ courseId });
+      return {
+        hasPaidAccess: res.hasPaidAccess,
+        accessReason: res.accessReason,
+      };
+    },
+    ...options,
+  });
+}
+
+export function usePurchaseCourseMutation(
+  options?: Partial<UseMutationOptions<{ success: boolean; message: string; purchase?: CoursePurchase }, Error, { courseId: string; paymentMethod?: string }>>
+) {
+  return useMutation<{ success: boolean; message: string; purchase?: CoursePurchase }, Error, { courseId: string; paymentMethod?: string }>({
+    mutationFn: async ({ courseId, paymentMethod }) => {
+      const client = getRpcClient(PaymentService);
+      const res = await client.purchaseCourse({ courseId, paymentMethod: paymentMethod || "MOCK" });
+      return {
+        success: res.success,
+        message: res.message,
+        purchase: res.purchase,
+      };
+    },
+    ...options,
+  });
+}
+
+export function useSubscribeCourseraPlusMutation(
+  options?: Partial<UseMutationOptions<{ success: boolean; message: string; subscription?: UserSubscription }, Error, { planType: PlanType; paymentMethod?: string }>>
+) {
+  return useMutation<{ success: boolean; message: string; subscription?: UserSubscription }, Error, { planType: PlanType; paymentMethod?: string }>({
+    mutationFn: async ({ planType, paymentMethod }) => {
+      const client = getRpcClient(PaymentService);
+      const res = await client.subscribeCourseraPlus({ planType, paymentMethod: paymentMethod || "MOCK" });
+      return {
+        success: res.success,
+        message: res.message,
+        subscription: res.subscription,
+      };
     },
     ...options,
   });

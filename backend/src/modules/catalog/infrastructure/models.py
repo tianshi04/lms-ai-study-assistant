@@ -74,6 +74,15 @@ class CourseModel(Base):
     financial_aid_enabled: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
     )
+    price: Mapped[float] = mapped_column(
+        Float, nullable=False, server_default="1190000.0"
+    )
+    currency: Mapped[str] = mapped_column(
+        String(8), nullable=False, server_default="VND"
+    )
+    is_plus_eligible: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
 
     week_modules: Mapped[list["WeekModuleModel"]] = relationship(
         "WeekModuleModel",

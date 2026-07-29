@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package payment.v1;
+
+import "auth/v1/options.proto";
+
+enum PlanType {
+  PLAN_TYPE_UNSPECIFIED = 0;
+  PLAN_TYPE_MONTHLY = 1;
+  PLAN_TYPE_YEARLY = 2;
+}
+
+enum PurchaseStatus {
+  PURCHASE_STATUS_UNSPECIFIED = 0;
+  PURCHASE_STATUS_PENDING = 1;
+  PURCHASE_STATUS_COMPLETED = 2;
+  PURCHASE_STATUS_FAILED = 3;
+  PURCHASE_STATUS_REFUNDED = 4;
+}
+
+enum SubscriptionStatus {
+  SUBSCRIPTION_STATUS_UNSPECIFIED = 0;
+  SUBSCRIPTION_STATUS_ACTIVE = 1;
+  SUBSCRIPTION_STATUS_EXPIRED = 2;
+  SUBSCRIPTION_STATUS_CANCELLED = 3;
+}
+
+message CoursePurchase {
+  string id = 1;
+  string user_id = 2;
+  string course_id = 3;
+  double amount = 4;
+  string currency = 5;
+  PurchaseStatus status = 6;
+  string payment_method = 7;
+  string created_at = 8;
+}
+
+message UserSubscription {
+  string id = 1;
+  string user_id = 2;
+  PlanType plan_type = 3;
+  SubscriptionStatus status = 4;
+  string starts_at = 5;
+  string expires_at = 6;
+  string created_at = 7;
+}
+
+message PurchaseCourseRequest {
+  string course_id = 1;
+  string payment_method = 2;
+}
+
+message PurchaseCourseResponse {
+  bool success = 1;
+  string message = 2;
+  CoursePurchase purchase = 3;
+}
+
+message SubscribeCourseraPlusRequest {
+  PlanType plan_type = 1;
+  string payment_method = 2;
+}
+
+message SubscribeCourseraPlusResponse {
+  bool success = 1;
+  string message = 2;
+  UserSubscription subscription = 3;
+}
+
+message GetUserPaymentAccessRequest {
+  string course_id = 1;
+}
+
+message GetUserPaymentAccessResponse {
+  bool has_paid_access = 1;
+  bool is_single_purchase = 2;
+  bool is_subscription_active = 3;
+  string access_reason = 4;
+  UserSubscription active_subscription = 5;
+}
+
+message ListUserPurchasesRequest {
+}
+
+message ListUserPurchasesResponse {
+  repeated CoursePurchase purchases = 1;
+}
+
+service PaymentService {
+  rpc PurchaseCourse(PurchaseCourseRequest) returns (PurchaseCourseResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc SubscribeCourseraPlus(SubscribeCourseraPlusRequest) returns (SubscribeCourseraPlusResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetUserPaymentAccess(GetUserPaymentAccessRequest) returns (GetUserPaymentAccessResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListUserPurchases(ListUserPurchasesRequest) returns (ListUserPurchasesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+}

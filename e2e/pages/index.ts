@@ -17,4 +17,5 @@ export { AdminDashboardPage } from './admin-dashboard.page';
 export { QuestionBankPage } from './question-bank.page';
 export { PartnerAdminPage, PartnerSettingsPage, PartnerShowcasePage } from './partner-management.page';
 export { InstructorProfilePage } from './instructor-profile.page';
+export { PaymentPage } from './payment.page';
 

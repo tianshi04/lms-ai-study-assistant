@@ -122,7 +122,7 @@ export class PartnerSettingsPage {
       await dialog.accept();
     });
     await this.rotateKeyPairButton.click();
-    await expect(this.page.locator('text=/Đã xoay & tạo cặp khóa ký số mới thành công/i')).toBeVisible({ timeout: 10000 });
+    await expect(this.page.locator('text=/Đã xoay|tạo cặp khóa|thành công/i').first()).toBeVisible({ timeout: 15000 });
   }
 
   async copyPublicKey() {

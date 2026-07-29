@@ -45,7 +45,22 @@ class AccessPolicyService:
         if user_entity.enterprise_seat_key and user_entity.enterprise_seat_key.strip():
             return True, ""
 
-        # 3. Approved / Auto-Approved Financial Aid context (BR_FAID_001)
+        # 3. Personal Paid Mode (BR_ACCESS_004 - Coursera Plus Subscription & Single Course Purchase)
+        payment_repo_factory = __import__(
+            "src.modules.payment.infrastructure.repository",
+            fromlist=["PaymentRepository"],
+        ).PaymentRepository
+        payment_repo = payment_repo_factory(session)
+        active_sub = await payment_repo.get_active_subscription(user_id)
+        if active_sub and active_sub.is_currently_active():
+            return True, ""
+
+        if course_id:
+            has_purchase = await payment_repo.has_active_purchase(user_id, course_id)
+            if has_purchase:
+                return True, ""
+
+        # 4. Approved / Auto-Approved Financial Aid context (BR_FAID_001)
         cert_repo_factory = __import__(
             "src.modules.certificate.infrastructure.repository",
             fromlist=["CertificateRepository"],
