@@ -31,7 +31,7 @@ class AccessPolicyService:
         id_repo = identity_repo_factory(session)
         user_entity = await id_repo.get_by_id(user_id)
         if not user_entity:
-            return True, ""
+            return False, "Tài khoản không tồn tại hoặc đã bị xóa."
 
         role_val = (
             user_entity.role.value
