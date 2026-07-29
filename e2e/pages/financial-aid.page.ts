@@ -11,7 +11,7 @@ export class FinancialAidPage {
     this.page = page;
     this.courseSelect = page.locator('select');
     this.essayTextarea = page.locator('textarea');
-    this.submitButton = page.getByRole('button', { name: /Gửi Đơn Xin Hỗ Trợ|Submit Financial Aid|Submit/i });
+    this.submitButton = page.getByRole('button', { name: /Gửi (đơn|Đơn) (Xin )?Hỗ [tT]rợ|Submit Financial Aid|Submit/i });
     this.successMessage = page.locator('text=/thành công|successfully/i');
   }
 
