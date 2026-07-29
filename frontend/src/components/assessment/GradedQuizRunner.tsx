@@ -118,7 +118,13 @@ export function GradedQuizRunner({
           setStartTimeIso(res.startTimeIso);
           setSessionToken(res.sessionToken || "");
           setTimeLimit(res.timeLimitMinutes || 45);
-          setTimeLeftSeconds((res.timeLimitMinutes || 45) * 60);
+          if (res.expiresAtIso) {
+            const expiresAtMs = new Date(res.expiresAtIso).getTime();
+            const nowMs = Date.now();
+            setTimeLeftSeconds(Math.max(0, Math.floor((expiresAtMs - nowMs) / 1000)));
+          } else {
+            setTimeLeftSeconds((res.timeLimitMinutes || 45) * 60);
+          }
           setPassingThreshold(res.passingThresholdPercent || 80.0);
           setSelectedAnswers(new Array(res.questions?.length || 0).fill(-1));
           if ((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft) {
