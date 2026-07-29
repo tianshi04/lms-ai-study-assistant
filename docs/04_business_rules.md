@@ -25,8 +25,11 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_ACCESS_001 (Phân quyền Audit Mode vs Paid Mode):**
   * *Audit Mode (Miễn phí):* Học viên được mở xem toàn bộ Video bài giảng, bài đọc (Reading) và làm các bài Practice Quiz. Tuy nhiên, hệ thống khóa quyền nộp bài thi Graded Quiz, bài tập Auto-Graded Lab, bài tập Peer Review và không được cấp Chứng chỉ.
   * *Paid Mode (Trả phí / Subscription):* Học viên có toàn bộ quyền làm các bài kiểm tra tính điểm, được bạn học chấm bài Peer Review và nhận Verified Certificate khi hoàn thành.
-* **BR_ACCESS_002 (Quy chế Enterprise License & Quản lý Seat):**
+* **BR_ACCESS_002 (Quy chế Enterprise License, Quản lý Seat & Phân loại Scope):**
   * Học viên tham gia khóa học qua mã Enterprise Key (do doanh nghiệp/trường học tài trợ) sẽ tự động hưởng toàn bộ quyền lợi của Paid Mode mà không cần thanh toán cá nhân.
+  * *Phạm vi Mở khóa (Scope Type):* Mã Enterprise Key hỗ trợ 2 cấp độ mở khóa (`scope_type`):
+    * `ALL_COURSES` (Mở khóa Toàn bộ): Mở khóa Paid Mode trên 100% các khóa học của nền tảng/đối tác.
+    * `CURATED_COURSES` (Danh mục Chỉ định): Gán danh sách mã khóa học cụ thể (`allowed_course_ids = [...]`). Học viên chỉ được mở Paid Mode khi tham gia các khóa học nằm trong danh sách chỉ định này. Khi học khóa ngoài danh sách, tài khoản tự động rớt về Audit Mode.
   * *Ràng buộc Seat:* Mã Enterprise Key phải ở trạng thái kích hoạt (`is_active = True`) và số lượng suất đã dùng chưa vượt quá hạn mức (`used_seats < total_seats`, mặc định 500 seats/key). Khi kích hoạt thành công, hệ thống tự động tăng `used_seats += 1` và gán `user.enterprise_seat_key`.
   * *Xử lý trùng lặp (Idempotent Activation):* Khi học viên kích hoạt lại đúng mã Enterprise Key đã sở hữu trước đó (`user.enterprise_seat_key == clean_key`), hệ thống phản hồi thành công và bảo lưu trạng thái hiện tại mà **không tăng số lượng `used_seats`** (tránh cạn kiệt suất học).
   * *Ràng buộc 1 mã duy nhất (Single Active Key):* Mỗi tài khoản học viên chỉ được phép có 1 mã Enterprise Key hoạt động tại một thời điểm (`user.enterprise_seat_key`). Trường hợp tài khoản đã có mã Enterprise khác đang kích hoạt, hệ thống sẽ từ chối và yêu cầu thu hồi (Revoke) mã cũ trước khi gán mã mới.
@@ -34,6 +37,9 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Partner Admin / Super Admin có quyền thu hồi suất học của nhân viên/sinh viên nếu tài khoản đó chưa đạt quá 20% tiến độ khóa học trong vòng 30 ngày kể từ ngày gán mã.
   * Khi thu hồi thành công, hệ thống tự động hủy mã gán trên người dùng cũ và thực hiện giảm bộ đếm bằng khóa giao dịch DB Atomic Update (`UPDATE enterprise_keys SET used_seats = used_seats - 1 WHERE id = :key_id AND used_seats > 0`) nhằm ngăn ngừa triệt để nguy cơ sai lệch dữ liệu do Race Condition khi thao tác đồng thời.
   * *Chuyển đổi trạng thái & Bảo lưu tiến độ:* Tài khoản bị thu hồi Suất học sẽ tự động chuyển về **Audit Mode (Miễn phí)**. Hệ thống **bảo lưu 100% tiến độ học tập (Completed Items) và Ghi chú cá nhân (Personal Notes)** của học viên. Nếu sau đó học viên tự nâng cấp Paid Mode hoặc được cấp đơn Financial Aid, toàn bộ tiến độ cũ sẽ được mở khóa lại trọn vẹn.
+* **BR_ACCESS_004 (Phân loại Trả phí Cá nhân - Mua lẻ vs Thuê bao Coursera Plus):**
+  * *Mua lẻ Khóa học (Single Purchase):* Học viên thanh toán cá nhân cho 1 khóa học sẽ được cấp quyền Paid Mode cố định cho riêng khóa học đó.
+  * *Gói Thuê bao (Coursera Plus Subscription):* Học viên đăng ký gói theo tháng/năm được tự động mở khóa Paid Mode trên toàn bộ danh mục khóa học khả dụng trong thời gian gói thuê bao còn hiệu lực.
 * **BR_FAID_001 (Quy trình nộp & xét duyệt Financial Aid):**
   * Học viên nộp đơn phải điền bài luận tối thiểu 150 từ giải trình lý do hoàn cảnh và kế hoạch áp dụng kiến thức.
   * *Hạn xét duyệt:* Super Admin có tối đa 15 ngày kể từ ngày nộp đơn (`review_deadline_days_left = 15`) để xem xét duyệt hoặc từ chối đơn tài chính của nền tảng.
@@ -41,6 +47,10 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_FAID_002 (Quy trình Nộp lại đơn khi bị Từ chối - Re-application):**
   * Nếu đơn xin Financial Aid bị từ chối (`REJECTED`), học viên được phép nộp lại bằng cách bổ sung/chỉnh sửa bài luận (>= 150 từ).
   * Khi học viên cập nhật bài luận, hệ thống tự động reset trạng thái đơn về `PENDING` và khôi phục hạn xét duyệt 15 ngày (`review_deadline_days_left = 15`).
+* **BR_FAID_003 (Cấu hình Bật/Tắt Hỗ trợ Tài chính cho từng Khóa học):**
+  * Mỗi khóa học sở hữu cờ cấu hình `financial_aid_enabled` (Mặc định `= True`).
+  * Giảng viên sở hữu khóa học (`owner_id`) hoặc Admin có quyền tắt cờ này đối với các khóa học đặc thù (khóa luyện thi chứng chỉ đắt tiền, bài lab tốn chi phí hạ tầng).
+  * Khi `financial_aid_enabled = False`: Trình phát & Trang thông tin khóa học ẩn hoàn toàn liên kết/nút *"Financial Aid available"*, và RPC `ApplyFinancialAid` ở Backend từ chối tiếp nhận đơn xin học bổng cho khóa học đó.
 
 ---
 

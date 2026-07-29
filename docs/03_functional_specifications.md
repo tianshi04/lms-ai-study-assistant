@@ -33,8 +33,12 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
   * Tiếng nhận các báo cáo từ học viên về nội dung bài giảng bị lỗi/phản cảm hoặc gian lận điểm số.
   * *Hành động:* Gửi email nhắc nhở Giảng viên, ẩn tạm thời bài học (chuyển về trạng thái Nháp) hoặc thu hồi chứng chỉ vi phạm.
 
-### 1.5. Quản lý B2B Đối tác Phát hành (Partner Organization Management)
+### 1.5. Quản lý B2B Đối tác Phát hành & Cấp phát Mã Enterprise License (Partner Organization Management)
 * **Khởi tạo & Cấu hình B2B Partner:** Super Admin khởi tạo hồ sơ Đối tác (`CreatePartner`), cấu hình Tên miền được ủy quyền (`allowed_domains`), Logo, Banner và thông tin chữ ký mặc định.
+* **Cấu hình Mã Suất học Enterprise Key & Phạm vi Mở khóa (Enterprise Key Scope Configuration):**
+  * Partner Admin / Super Admin quản lý tạo mã Enterprise Key (`CreateEnterpriseLicense`) với cấu hình hạn mức suất (`total_seats`) và Phạm vi mở khóa (`scope_type`):
+    * **`ALL_COURSES`**: Cho phép người sở hữu mã truy cập trọn vẹn Paid Mode ở 100% các khóa học trên hệ thống.
+    * **`CURATED_COURSES`**: Cho phép Partner Admin tích chọn danh mục các khóa học chỉ định (`allowed_course_ids = [...]`). Người sở hữu mã chỉ được hưởng Paid Mode khi tham gia đúng các khóa học thuộc danh mục này.
 * **RPC Services (`PartnerService`):** Đã mở đầy đủ 6 API RPC: `CreatePartner`, `UpdatePartner`, `GetPartner`, `ListPartners`, `DeletePartner`, `RotatePartnerKeyPair`.
 * **Phân quyền Self-Service cho Partner Admin:** Cho phép tài khoản `PARTNER_ADMIN` tự chỉnh sửa hồ sơ thương hiệu, ảnh chữ ký đại diện, người ký và public key của chính tổ chức mình qua `UpdatePartner`, cũng như chủ động gọi `RotatePartnerKeyPair` để sinh cặp khóa ECDSA P-256 mới và nhận về duy nhất `public_key_pem` (`BR_PARTNER_001`, `BR_PARTNER_002`).
 
@@ -49,7 +53,7 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 * **Quản lý Hồ sơ & Chữ ký tay Điện tử (Instructor Profile & Signature V2):** Giảng viên chủ động cập nhật Chức danh khoa học (`title` - VD: *Professor of Computer Science, Stanford University*) và tải lên ảnh Chữ ký tay điện tử (`signature_image_url`) thông qua RPC `UpdateInstructorProfile`. Chữ ký này sẽ được nhúng tự động lên các chứng chỉ Verified Certificate do giảng viên đó phụ trách (`BR_CERT_002`).
 * **Tạo Specialization (Chuỗi Chuyên ngành):** Nhóm nhiều khóa học liên quan theo một lộ trình nghề nghiệp (ví dụ: Chuyên ngành *Lập trình Python Nâng cao & AI* bao gồm 4 khóa học thành phần).
 * **Cấu trúc Khóa học & Quản lý Vòng đời (Course Hierarchy & Lifecycle):**
-  * **Tạo & Cập nhật Khóa học:** Giảng viên tạo mới (`CreateCourse`) hoặc cập nhật (`UpdateCourse`) Tên khóa học, Mô tả, Slug, Logo và Giảng viên phụ trách.
+  * **Tạo & Cập nhật Khóa học:** Giảng viên tạo mới (`CreateCourse`) hoặc cập nhật (`UpdateCourse`) Tên khóa học, Mô tả, Slug, Logo, Giảng viên phụ trách, và cờ cấu hình Hỗ trợ Tài chính (`financial_aid_enabled` - Bật/tắt xin học bổng theo từng khóa học).
   * **Xóa Khóa học (`DeleteCourse`):** Giảng viên/Admin có quyền xóa hoàn toàn khóa học và toàn bộ bài giảng phụ thuộc khỏi hệ thống khi khóa học bị hủy bỏ.
   * Khóa học (Course) -> Tuần học (Module / Week) -> Bài học (Lesson) -> Các dạng bài học thành phần (Learning Items).
 * **Quản lý Đơn vị Phát hành (Partner Branding):** Chọn đối tác phát hành (Partner Logo), hiển thị tên Giảng viên chính và danh sách Trợ giảng (TA).
