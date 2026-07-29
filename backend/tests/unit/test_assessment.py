@@ -8,6 +8,7 @@ from src.modules.assessment.domain.entities import (
     PeerAssignmentSubmission,
     PeerReview,
     QuizCooldown,
+    QuizActiveSession,
     QuizSubmission,
     RubricCriteria,
 )
@@ -27,6 +28,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         self.peer_reviews: list[PeerReview] = []
         self.grade_appeals: dict[str, GradeAppeal] = {}
         self.matrices: dict[str, Any] = {}
+        self.active_sessions: dict[str, QuizActiveSession] = {}
 
     async def save_honor_code(self, agreement: HonorCodeAgreement) -> None:
         self.honor_codes[agreement.id] = agreement
@@ -55,6 +57,19 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
 
     async def save_quiz_cooldown(self, cooldown: QuizCooldown) -> None:
         self.cooldowns[cooldown.id] = cooldown
+
+    async def get_quiz_active_session(
+        self, user_id: str, item_id: str
+    ) -> QuizActiveSession | None:
+        return self.active_sessions.get(f"{user_id}:{item_id}")
+
+    async def save_quiz_active_session(self, session: QuizActiveSession) -> None:
+        self.active_sessions[session.id] = session
+
+    async def delete_quiz_active_session(self, user_id: str, item_id: str) -> None:
+        session_id = f"{user_id}:{item_id}"
+        if session_id in self.active_sessions:
+            del self.active_sessions[session_id]
 
     async def save_lab_submission(self, submission: LabSubmission) -> None:
         self.lab_submissions.append(submission)
