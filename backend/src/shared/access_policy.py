@@ -41,9 +41,41 @@ class AccessPolicyService:
         if is_staff_role(role_val):
             return True, ""
 
-        # 2. Enterprise Seat Key attribute (BR_ACCESS_002)
+        # 2. Enterprise Seat Key attribute & Scope Filtering (BR_ACCESS_002)
         if user_entity.enterprise_seat_key and user_entity.enterprise_seat_key.strip():
-            return True, ""
+            clean_key = user_entity.enterprise_seat_key.strip().upper()
+            from sqlalchemy import select
+            from src.modules.identity.infrastructure.models import (
+                EnterpriseLicenseModel,
+            )
+            from src.modules.identity.domain.entities import (
+                EnterpriseLicense,
+                ScopeType,
+            )
+
+            stmt = select(EnterpriseLicenseModel).where(
+                EnterpriseLicenseModel.key == clean_key
+            )
+            lic_res = await session.execute(stmt)
+            lic_model = lic_res.scalar_one_or_none()
+
+            if lic_model and lic_model.is_active:
+                try:
+                    scope = ScopeType(lic_model.scope_type)
+                except ValueError:
+                    scope = ScopeType.ALL_COURSES
+
+                domain_lic = EnterpriseLicense(
+                    key=lic_model.key,
+                    partner_name=lic_model.partner_name,
+                    total_seats=lic_model.total_seats,
+                    used_seats=lic_model.used_seats,
+                    is_active=lic_model.is_active,
+                    scope_type=scope,
+                    allowed_course_ids=set(lic_model.allowed_course_ids or []),
+                )
+                if domain_lic.is_course_allowed(course_id):
+                    return True, ""
 
         # 3. Personal Paid Mode (BR_ACCESS_004 - Coursera Plus Subscription & Single Course Purchase)
         payment_repo_factory = __import__(

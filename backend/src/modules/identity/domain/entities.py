@@ -25,3 +25,33 @@ class User:
     is_identity_verified: bool = False
     signature_image_url: str = ""
     title: str = ""
+
+
+class ScopeType(str, Enum):
+    ALL_COURSES = "ALL_COURSES"
+    CURATED_COURSES = "CURATED_COURSES"
+
+
+@dataclass
+class EnterpriseLicense:
+    key: str
+    partner_name: str
+    total_seats: int
+    used_seats: int
+    is_active: bool
+    scope_type: ScopeType = ScopeType.ALL_COURSES
+    allowed_course_ids: Optional[set[str]] = None
+
+    def __post_init__(self):
+        if self.allowed_course_ids is None:
+            self.allowed_course_ids = set()
+
+    def is_course_allowed(self, course_id: str) -> bool:
+        """Domain invariant method to verify course eligibility (BR_ACCESS_002)."""
+        if not self.is_active:
+            return False
+        if self.scope_type == ScopeType.ALL_COURSES:
+            return True
+        if not self.allowed_course_ids:
+            return False
+        return course_id in self.allowed_course_ids

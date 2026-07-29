@@ -17,6 +17,47 @@ def test_hash_and_verify_password():
     assert verify_password(password, "invalidhash") is False
 
 
+def test_enterprise_license_scope_filtering_domain():
+    from src.modules.identity.domain.entities import EnterpriseLicense, ScopeType
+
+    # ALL_COURSES Scope
+    lic_all = EnterpriseLicense(
+        key="KEY-ALL",
+        partner_name="Partner A",
+        total_seats=100,
+        used_seats=5,
+        is_active=True,
+        scope_type=ScopeType.ALL_COURSES,
+    )
+    assert lic_all.is_course_allowed("course_python") is True
+    assert lic_all.is_course_allowed("course_react") is True
+
+    # CURATED_COURSES Scope
+    lic_curated = EnterpriseLicense(
+        key="KEY-CURATED",
+        partner_name="Partner B",
+        total_seats=50,
+        used_seats=10,
+        is_active=True,
+        scope_type=ScopeType.CURATED_COURSES,
+        allowed_course_ids={"course_python", "course_ai"},
+    )
+    assert lic_curated.is_course_allowed("course_python") is True
+    assert lic_curated.is_course_allowed("course_ai") is True
+    assert lic_curated.is_course_allowed("course_react") is False
+
+    # Inactive License
+    lic_inactive = EnterpriseLicense(
+        key="KEY-INACTIVE",
+        partner_name="Partner C",
+        total_seats=10,
+        used_seats=10,
+        is_active=False,
+        scope_type=ScopeType.ALL_COURSES,
+    )
+    assert lic_inactive.is_course_allowed("course_python") is False
+
+
 @pytest.fixture
 def mock_session_scope():
     with patch(

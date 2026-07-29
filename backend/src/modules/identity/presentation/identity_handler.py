@@ -193,6 +193,8 @@ class IdentityHandler(IdentityService):
                 assigned_user_email=item["assigned_user_email"],
                 status=item["status"],
                 created_at=item["created_at"],
+                scope_type=item.get("scope_type", "ALL_COURSES"),
+                allowed_course_ids=item.get("allowed_course_ids", []),
             )
             for item in items
         ]
@@ -213,7 +215,10 @@ class IdentityHandler(IdentityService):
                 "Chỉ Quản trị viên mới có quyền tạo Enterprise Seat key.",
             )
         item = await self._use_case.create_enterprise_seat(
-            request.partner_name, request.seat_key
+            partner_name=request.partner_name,
+            seat_key=request.seat_key,
+            scope_type=request.scope_type or "ALL_COURSES",
+            allowed_course_ids=list(request.allowed_course_ids),
         )
         pb_seat = pb.EnterpriseSeat(
             id=item["id"],
@@ -223,6 +228,8 @@ class IdentityHandler(IdentityService):
             assigned_user_email=item["assigned_user_email"],
             status=item["status"],
             created_at=item["created_at"],
+            scope_type=item.get("scope_type", "ALL_COURSES"),
+            allowed_course_ids=item.get("allowed_course_ids", []),
         )
         return pb.CreateEnterpriseSeatResponse(seat=pb_seat)
 

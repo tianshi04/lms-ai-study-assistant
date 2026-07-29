@@ -239,19 +239,35 @@ class IdentityUseCase:
                         else "Vô hiệu",
                         "status": "ACTIVE" if lic.is_active else "INACTIVE",
                         "created_at": "2026",
+                        "scope_type": getattr(lic, "scope_type", "ALL_COURSES"),
+                        "allowed_course_ids": getattr(lic, "allowed_course_ids", []),
                     }
                 )
             return result
 
-    async def create_enterprise_seat(self, partner_name: str, seat_key: str) -> dict:
+    async def create_enterprise_seat(
+        self,
+        partner_name: str,
+        seat_key: str,
+        scope_type: str = "ALL_COURSES",
+        allowed_course_ids: Optional[list[str]] = None,
+    ) -> dict:
         async with async_session_scope() as session:
             clean_key = seat_key.strip() or f"KEY-{uuid.uuid4().hex[:8].upper()}"
+            clean_scope = (
+                scope_type
+                if scope_type in ("ALL_COURSES", "CURATED_COURSES")
+                else "ALL_COURSES"
+            )
+            courses_list = allowed_course_ids or []
             lic = EnterpriseLicenseModel(
                 key=clean_key,
                 partner_name=partner_name or "Doanh nghiệp Đối tác",
                 total_seats=DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS,
                 used_seats=0,
                 is_active=True,
+                scope_type=clean_scope,
+                allowed_course_ids=courses_list,
             )
             session.add(lic)
             await session.commit()
@@ -263,6 +279,8 @@ class IdentityUseCase:
                 "assigned_user_email": "Hoạt động",
                 "status": "ACTIVE",
                 "created_at": "2026",
+                "scope_type": clean_scope,
+                "allowed_course_ids": courses_list,
             }
 
     async def verify_identity(

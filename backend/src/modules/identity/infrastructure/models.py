@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlalchemy import Boolean, Enum as SQLEnum, Integer, String, Text
+from sqlalchemy import ARRAY, Boolean, Enum as SQLEnum, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.modules.identity.domain.constants import (
@@ -47,3 +47,9 @@ class EnterpriseLicenseModel(Base):
     )
     used_seats: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    scope_type: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="ALL_COURSES", server_default="ALL_COURSES"
+    )
+    allowed_course_ids: Mapped[list[str]] = mapped_column(
+        ARRAY(String(64)), nullable=False, default=list, server_default="{}"
+    )
