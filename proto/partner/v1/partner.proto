@@ -22,7 +22,6 @@ message Partner {
   repeated string historical_public_keys = 15;
 }
 
-
 message CreatePartnerRequest {
   string name = 1;
   string slug = 2;
@@ -110,4 +109,3 @@ service PartnerService {
     option (auth.v1.policy) = AUTH_POLICY_ADMIN;
   }
 }
-
