@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { UserDropdown } from "@/components/layout/UserDropdown";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
+import { GlobalSearch } from "@/components/layout/GlobalSearch";
 
 export function Navbar() {
   const { userName, userRole } = useAuth();
@@ -89,6 +90,10 @@ export function Navbar() {
             {"Xác minh chứng chỉ"}
           </Link>
         </nav>
+        
+        <div className="hidden lg:flex flex-1 max-w-md mx-4">
+          <GlobalSearch />
+        </div>
 
         {/* User Auth & Actions Section */}
         <div className="flex items-center gap-2">

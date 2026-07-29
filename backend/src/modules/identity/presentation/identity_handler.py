@@ -281,3 +281,21 @@ class IdentityHandler(IdentityService):
             id_card_number=request.id_card_number,
         )
         return pb.VerifyIdentityResponse(success=success, message=msg)
+
+    async def update_user_profile(
+        self,
+        request: pb.UpdateUserProfileRequest,
+        ctx: RequestContext[
+            pb.UpdateUserProfileRequest, pb.UpdateUserProfileResponse
+        ],
+    ) -> pb.UpdateUserProfileResponse:
+        current_user = require_current_user()
+        user, err = await self._use_case.update_user_profile(
+            user_id=current_user.id,
+            full_name=request.full_name,
+            avatar_url=request.avatar_url,
+        )
+        if err or not user:
+            raise ConnectError(Code.INVALID_ARGUMENT, err or "Cập nhật hồ sơ cá nhân thất bại")
+        return pb.UpdateUserProfileResponse(user=_to_pb_user(user))
+

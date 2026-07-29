@@ -686,3 +686,59 @@ async def test_update_instructor_profile(mock_session_scope, mock_identity_repo)
     assert updated_user.title == "Professor of Computer Science"
     assert updated_user.signature_image_url == "https://example.com/sig.png"
     mock_repo_instance.save.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_update_user_profile_success(mock_session_scope, mock_identity_repo):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    mock_repo_instance = AsyncMock()
+    mock_identity_repo.return_value = mock_repo_instance
+
+    user = User(
+        id="u1",
+        email="learner@test.com",
+        full_name="Old Name",
+        role=UserRole.LEARNER,
+        avatar_url="old.png",
+        password_hash="",
+    )
+    mock_repo_instance.get_by_id.return_value = user
+    mock_repo_instance.save.side_effect = lambda u: u
+
+    usecase = IdentityUseCase()
+    updated_user, err = await usecase.update_user_profile(
+        "u1",
+        full_name="New Name",
+        avatar_url="new.png",
+    )
+
+    assert err == ""
+    assert updated_user is not None
+    assert updated_user.full_name == "New Name"
+    assert updated_user.avatar_url == "new.png"
+    mock_repo_instance.save.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_update_user_profile_not_found(mock_session_scope, mock_identity_repo):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    mock_repo_instance = AsyncMock()
+    mock_identity_repo.return_value = mock_repo_instance
+
+    mock_repo_instance.get_by_id.return_value = None
+
+    usecase = IdentityUseCase()
+    updated_user, err = await usecase.update_user_profile(
+        "u1",
+        full_name="New Name",
+        avatar_url="new.png",
+    )
+
+    assert updated_user is None
+    assert err == "Không tìm thấy người dùng"
+    mock_repo_instance.save.assert_not_called()
+

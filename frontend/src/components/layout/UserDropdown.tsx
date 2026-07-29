@@ -14,9 +14,9 @@ import {
 } from "@/components/ui/DropdownMenu";
 
 export function UserDropdown() {
-  const { userName, userEmail, userRole, logout: handleLogout } = useAuth();
+  const { userName, userEmail, userRole, userAvatar, logout: handleLogout } = useAuth();
 
-  const avatarSrc = useMemo(() => getAvatarDataUri(userEmail || "user"), [userEmail]);
+  const avatarSrc = useMemo(() => userAvatar || getAvatarDataUri(userEmail || "user"), [userEmail, userAvatar]);
 
   const displayUserName = useMemo(() => {
     if (!userName) return "";

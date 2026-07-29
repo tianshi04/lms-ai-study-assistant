@@ -40,11 +40,13 @@ export default async function RootLayout({
   const rawUserName = token ? cookieStore.get("user_name")?.value : null;
   const rawUserEmail = token ? cookieStore.get("user_email")?.value : null;
   const userRole = token ? (cookieStore.get("user_role")?.value || null) : null;
+  const rawUserAvatar = token ? cookieStore.get("user_avatar")?.value : null;
 
   const initialAuth = {
     userName: rawUserName ? decodeURIComponent(rawUserName) : null,
     userEmail: rawUserEmail ? decodeURIComponent(rawUserEmail) : null,
     userRole: userRole,
+    userAvatar: rawUserAvatar ? decodeURIComponent(rawUserAvatar) : null,
   };
 
   return (

@@ -125,6 +125,22 @@ message GetCourseDetailResponse {
   Course course = 1;
 }
 
+message SearchCoursesAutocompleteRequest {
+  string search_query = 1;
+  int32 limit = 2;
+}
+
+message CourseAutocompleteResult {
+  string id = 1;
+  string title = 2;
+  string partner_name = 3;
+  string partner_logo_url = 4;
+}
+
+message SearchCoursesAutocompleteResponse {
+  repeated CourseAutocompleteResult results = 1;
+}
+
 message GetLessonDetailRequest {
   string lesson_id = 1;
 }
@@ -454,6 +470,9 @@ service CatalogService {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
   }
   rpc ListCourses(ListCoursesRequest) returns (ListCoursesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc SearchCoursesAutocomplete(SearchCoursesAutocompleteRequest) returns (SearchCoursesAutocompleteResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
   }
   rpc GetCourseDetail(GetCourseDetailRequest) returns (GetCourseDetailResponse) {

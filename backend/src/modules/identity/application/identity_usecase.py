@@ -379,3 +379,20 @@ class IdentityUseCase:
             saved_user = await repo.save(user)
             logger.info("Updated instructor profile for user %s", user_id)
             return saved_user, ""
+
+    async def update_user_profile(
+        self, user_id: str, full_name: str, avatar_url: str
+    ) -> tuple[Optional[User], str]:
+        """Updates user's full_name and avatar_url. Returns (user, error_message)."""
+        async with async_session_scope() as session:
+            repo = IdentityRepository(session)
+            user = await repo.get_by_id(user_id)
+            if not user:
+                return None, "Không tìm thấy người dùng"
+
+            user.full_name = full_name
+            user.avatar_url = avatar_url
+            saved_user = await repo.save(user)
+            logger.info("Updated user profile for user %s", user_id)
+            return saved_user, ""
+

@@ -124,6 +124,15 @@ message UpdateInstructorProfileResponse {
   User user = 1;
 }
 
+message UpdateUserProfileRequest {
+  string full_name = 1;
+  string avatar_url = 2;
+}
+
+message UpdateUserProfileResponse {
+  User user = 1;
+}
+
 message VerifyIdentityRequest {
   string user_id = 1;
   string id_card_number = 2;
@@ -163,6 +172,9 @@ service IdentityService {
     option (auth.v1.policy) = AUTH_POLICY_ADMIN;
   }
   rpc VerifyIdentity(VerifyIdentityRequest) returns (VerifyIdentityResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UpdateUserProfileResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }
