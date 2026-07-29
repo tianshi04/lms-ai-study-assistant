@@ -80,8 +80,7 @@ message GetUserPaymentAccessResponse {
   UserSubscription active_subscription = 5;
 }
 
-message ListUserPurchasesRequest {
-}
+message ListUserPurchasesRequest {}
 
 message ListUserPurchasesResponse {
   repeated CoursePurchase purchases = 1;
