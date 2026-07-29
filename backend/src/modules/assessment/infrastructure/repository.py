@@ -171,20 +171,20 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             expires_at=model.expires_at,
         )
 
-    async def save_quiz_active_session(self, session_obj: QuizActiveSession) -> None:
-        model = await self.session.get(QuizActiveSessionModel, session_obj.id)
+    async def save_quiz_active_session(self, session: QuizActiveSession) -> None:
+        model = await self.session.get(QuizActiveSessionModel, session.id)
         if model:
-            model.session_token = session_obj.session_token
-            model.session_seed = session_obj.session_seed
-            model.expires_at = session_obj.expires_at
+            model.session_token = session.session_token
+            model.session_seed = session.session_seed
+            model.expires_at = session.expires_at
         else:
             model = QuizActiveSessionModel(
-                id=session_obj.id,
-                user_id=session_obj.user_id,
-                item_id=session_obj.item_id,
-                session_token=session_obj.session_token,
-                session_seed=session_obj.session_seed,
-                expires_at=session_obj.expires_at,
+                id=session.id,
+                user_id=session.user_id,
+                item_id=session.item_id,
+                session_token=session.session_token,
+                session_seed=session.session_seed,
+                expires_at=session.expires_at,
             )
             self.session.add(model)
         await self.session.commit()

@@ -1,6 +1,6 @@
 "use client";
 
-import { RefObject, forwardRef, useImperativeHandle, useRef, useEffect, useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import YouTube, { YouTubeEvent, YouTubePlayer } from "react-youtube";
 import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
@@ -353,3 +353,4 @@ function getYouTubeId(url: string): string | null {
     </div>
   );
 });
+VideoPlayer.displayName = "VideoPlayer";
