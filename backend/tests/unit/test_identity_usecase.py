@@ -741,4 +741,3 @@ async def test_update_user_profile_not_found(mock_session_scope, mock_identity_r
     assert updated_user is None
     assert err == "Không tìm thấy người dùng"
     mock_repo_instance.save.assert_not_called()
-

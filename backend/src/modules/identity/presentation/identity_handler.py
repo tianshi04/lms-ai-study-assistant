@@ -285,9 +285,7 @@ class IdentityHandler(IdentityService):
     async def update_user_profile(
         self,
         request: pb.UpdateUserProfileRequest,
-        ctx: RequestContext[
-            pb.UpdateUserProfileRequest, pb.UpdateUserProfileResponse
-        ],
+        ctx: RequestContext[pb.UpdateUserProfileRequest, pb.UpdateUserProfileResponse],
     ) -> pb.UpdateUserProfileResponse:
         current_user = require_current_user()
         user, err = await self._use_case.update_user_profile(
@@ -296,6 +294,7 @@ class IdentityHandler(IdentityService):
             avatar_url=request.avatar_url,
         )
         if err or not user:
-            raise ConnectError(Code.INVALID_ARGUMENT, err or "Cập nhật hồ sơ cá nhân thất bại")
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, err or "Cập nhật hồ sơ cá nhân thất bại"
+            )
         return pb.UpdateUserProfileResponse(user=_to_pb_user(user))
-
