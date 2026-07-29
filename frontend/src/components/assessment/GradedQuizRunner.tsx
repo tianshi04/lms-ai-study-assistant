@@ -113,12 +113,7 @@ export function GradedQuizRunner({
     setSelectedAnswers(updated);
   };
 
-  const handleSubmitQuiz = async () => {
-    if (!isHonorAgreed) {
-      setIsHonorModalOpen(true);
-      return;
-    }
-
+  const executeSubmit = async () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -157,6 +152,14 @@ export function GradedQuizRunner({
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSubmitQuiz = async () => {
+    if (!isHonorAgreed) {
+      setIsHonorModalOpen(true);
+      return;
+    }
+    await executeSubmit();
   };
 
   if (loading) {
@@ -380,6 +383,7 @@ export function GradedQuizRunner({
         onAgreed={() => {
           setIsHonorAgreed(true);
           setIsHonorModalOpen(false);
+          executeSubmit();
         }}
         onClose={() => setIsHonorModalOpen(false)}
       />
