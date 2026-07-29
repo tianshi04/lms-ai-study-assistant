@@ -48,7 +48,6 @@ def upgrade() -> None:
         sa.UniqueConstraint("slug"),
     )
 
-    op.drop_column("learning_items", "prohibit_seeking")
     op.add_column(
         "users",
         sa.Column(
@@ -94,15 +93,5 @@ def downgrade() -> None:
     op.drop_column("verified_certificates", "signer_name")
     op.drop_column("users", "title")
     op.drop_column("users", "signature_image_url")
-    op.add_column(
-        "learning_items",
-        sa.Column(
-            "prohibit_seeking",
-            sa.BOOLEAN(),
-            server_default=sa.text("false"),
-            autoincrement=False,
-            nullable=False,
-        ),
-    )
     op.drop_table("partners")
     # ### end Alembic commands ###
