@@ -2,6 +2,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 async def sync_trending_courses():
     """
     Background job to sync trending courses.
@@ -16,6 +17,7 @@ async def sync_trending_courses():
     # 2. Count frequencies
     # 3. ZADD to 'course:trending' in Redis
     logger.info("sync_trending_courses job completed successfully.")
+
 
 async def calculate_user_recommendations(user_id: int):
     """

@@ -278,6 +278,28 @@ class CatalogHandler(CatalogService):
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
 
+    async def search_courses_autocomplete(
+        self,
+        request: pb.SearchCoursesAutocompleteRequest,
+        ctx: RequestContext[
+            pb.SearchCoursesAutocompleteRequest, pb.SearchCoursesAutocompleteResponse
+        ],
+    ) -> pb.SearchCoursesAutocompleteResponse:
+        courses = await self.use_case.search_courses_autocomplete(
+            search_query=request.search_query,
+            limit=request.limit or 5,
+        )
+        return pb.SearchCoursesAutocompleteResponse(
+            results=[
+                pb.CourseAutocompleteResult(
+                    id=c.id,
+                    title=c.title,
+                    partner_name=c.partner_name,
+                    partner_logo_url=c.partner_logo_url,
+                )
+                for c in courses
+            ]
+        )
     async def get_course_detail(
         self,
         request: pb.GetCourseDetailRequest,

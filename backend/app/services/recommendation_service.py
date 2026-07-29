@@ -1,8 +1,9 @@
 import logging
-from typing import List, Dict
+from typing import List, Dict, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
+
 
 class RecommendationService:
     async def get_trending_courses(self) -> List[Dict]:
@@ -18,7 +19,9 @@ class RecommendationService:
             {"id": 3, "title": "PostgreSQL Performance", "trending_score": 70},
         ]
 
-    async def get_continue_learning(self, user_id: int, db: AsyncSession) -> List[Dict]:
+    async def get_continue_learning(
+        self, user_id: int, db: Optional[AsyncSession] = None
+    ) -> List[Dict]:
         """
         Get courses the user is currently learning (progress < 100).
         """
@@ -42,5 +45,6 @@ class RecommendationService:
         recommendations = []
         # 3. Cache the results
         return recommendations
+
 
 recommendation_service = RecommendationService()
