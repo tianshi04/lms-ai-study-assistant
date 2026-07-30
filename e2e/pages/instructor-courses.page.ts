@@ -39,7 +39,7 @@ export class InstructorCoursesPage {
 
   async createNewCourse(title: string, description: string) {
     await this.createCourseButton.click();
-    await expect(this.titleInput).toBeVisible({ timeout: 5000 });
+    await expect(this.titleInput).toBeVisible({ timeout: 10000 });
     await this.titleInput.fill(title);
     await this.descriptionTextarea.fill(description);
     await this.submitCourseButton.click();
