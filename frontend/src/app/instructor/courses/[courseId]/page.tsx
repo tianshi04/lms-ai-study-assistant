@@ -40,7 +40,6 @@ export default function InstructorCourseBuilderPage({
   const [showItemModal, setShowItemModal] = useState<string | null>(null); // lessonId
 
   // Form States
-  const [weekNumber, setWeekNumber] = useState(1);
   const [weekTitle, setWeekTitle] = useState("");
   const [weekSummary, setWeekSummary] = useState("");
 
@@ -116,9 +115,6 @@ export default function InstructorCourseBuilderPage({
       const res = await client.getCourseDetail({ idOrSlug: courseId });
       if (res.course) {
         setCourse(res.course);
-        // Default week number to next week
-        const nextWeekNum = (res.course.weekModules?.length || 0) + 1;
-        setWeekNumber(nextWeekNum);
       }
 
       // Fetch Question Banks
@@ -162,8 +158,6 @@ export default function InstructorCourseBuilderPage({
         const res = await client.getCourseDetail({ idOrSlug: courseId });
         if (!ignore && res.course) {
           setCourse(res.course);
-          const nextWeekNum = (res.course.weekModules?.length || 0) + 1;
-          setWeekNumber(nextWeekNum);
         }
 
         // Fetch Question Banks
@@ -202,7 +196,6 @@ export default function InstructorCourseBuilderPage({
       const client = getRpcClient(CatalogService);
       await client.createWeekModule({
         courseId,
-        weekNumber,
         title: weekTitle,
         summary: weekSummary,
       });
@@ -210,7 +203,7 @@ export default function InstructorCourseBuilderPage({
       setShowWeekModal(false);
       setWeekTitle("");
       setWeekSummary("");
-      toast.success(`Đã thêm Tuần ${weekNumber} vào khóa học thành công!`);
+      toast.success(`Đã thêm Tuần học mới vào khóa học thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Thêm Tuần học thất bại.";
@@ -1287,18 +1280,6 @@ export default function InstructorCourseBuilderPage({
         size="md"
       >
         <form onSubmit={handleCreateWeek} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Số Tuần học"}</label>
-            <input
-              type="number"
-              min={1}
-              value={weekNumber}
-              onChange={(e) => setWeekNumber(parseInt(e.target.value) || 1)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
-              required
-            />
-          </div>
-
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Tiêu đề Tuần học"}</label>
             <input

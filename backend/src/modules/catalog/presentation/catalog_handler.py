@@ -373,7 +373,6 @@ class CatalogHandler(CatalogService):
         user = self._verify_instructor_permission()
         wm = await self.use_case.create_week_module(
             course_id=request.course_id,
-            week_number=request.week_number,
             title=request.title,
             summary=request.summary,
             current_user=user,

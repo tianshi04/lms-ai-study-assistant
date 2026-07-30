@@ -95,7 +95,6 @@ class ICatalogRepository(ABC):
     async def create_week_module(
         self,
         course_id: str,
-        week_number: int,
         title: str,
         summary: str,
     ):

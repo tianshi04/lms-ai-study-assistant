@@ -252,7 +252,6 @@ class CatalogUseCase:
     async def create_week_module(
         self,
         course_id: str,
-        week_number: int,
         title: str,
         summary: str,
         current_user: CurrentUser | None = None,
@@ -262,7 +261,6 @@ class CatalogUseCase:
             await self._verify_ownership(repo, course_id, current_user, "tạo tuần học")
             return await repo.create_week_module(
                 course_id=course_id,
-                week_number=week_number,
                 title=title,
                 summary=summary,
             )
@@ -1074,7 +1072,6 @@ class CatalogUseCase:
                     for wm_dict in course_dict.get("weekModules", []):
                         wm = await repo.create_week_module(
                             course_id=course_id,
-                            week_number=wm_dict.get("weekNumber", 1),
                             title=wm_dict.get("title", ""),
                             summary=wm_dict.get("summary", ""),
                         )

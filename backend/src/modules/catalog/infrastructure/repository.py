@@ -415,12 +415,20 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         return await self.get_course_detail(course_id)
 
     async def create_week_module(
-        self, course_id: str, week_number: int, title: str, summary: str
+        self, course_id: str, title: str, summary: str
     ) -> WeekModule:
+        real_id, _ = await self.get_course_id_by_slug_or_id(course_id)
+        stmt = select(func.max(WeekModuleModel.week_number)).where(
+            WeekModuleModel.course_id == real_id
+        )
+        res = await self.session.execute(stmt)
+        max_week = res.scalar()
+        week_number = (max_week or 0) + 1
+
         wm_id = f"week-{week_number}-{uuid.uuid4().hex[:6]}"
         wm_model = WeekModuleModel(
             id=wm_id,
-            course_id=course_id,
+            course_id=real_id,
             week_number=week_number,
             title=title,
             summary=summary,
