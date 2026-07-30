@@ -6,6 +6,8 @@ from src.modules.assessment.domain.constants import (
     DEFAULT_QUIZ_HARD_COUNT,
     DEFAULT_QUIZ_MEDIUM_COUNT,
     DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
+    MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
+    QUIZ_COOLDOWN_HOURS,
 )
 from src.shared.domain.base import Entity, ValueObject
 
@@ -224,3 +226,5 @@ class QuizMatrix(ValueObject):
     medium_count: int = DEFAULT_QUIZ_MEDIUM_COUNT
     hard_count: int = DEFAULT_QUIZ_HARD_COUNT
     shuffle_options: bool = True
+    max_attempts: int = MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
+    cooldown_hours: int = QUIZ_COOLDOWN_HOURS

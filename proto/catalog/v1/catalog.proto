@@ -14,6 +14,14 @@ enum ItemType {
   ITEM_TYPE_PEER_REVIEW = 6;
 }
 
+enum CourseStatus {
+  COURSE_STATUS_UNSPECIFIED = 0;
+  COURSE_STATUS_DRAFT = 1;
+  COURSE_STATUS_PENDING_REVIEW = 2;
+  COURSE_STATUS_PUBLISHED = 3;
+  COURSE_STATUS_REJECTED = 4;
+}
+
 message InteractiveTranscript {
   int32 timestamp_seconds = 1;
   string text = 2;
@@ -43,9 +51,7 @@ message LearningItem {
   string language = 13;
   string rubric_criteria_json = 14;
   string quiz_matrix_id = 15;
-  string scorm_package_path = 16;
-  string scorm_entry_html = 17;
-  bool auto_transcribe = 18;
+  bool auto_transcribe = 16;
 }
 
 message Lesson {
@@ -81,6 +87,8 @@ message Course {
   string subject = 11;
   string level = 12;
   bool financial_aid_enabled = 13;
+  CourseStatus status = 14;
+  string rejection_reason = 15;
 }
 
 // Specialization messages
@@ -271,10 +279,8 @@ message CreateLearningItemRequest {
   string language = 11;
   string rubric_criteria_json = 12;
   string quiz_matrix_id = 13;
-  string scorm_package_path = 14;
-  string scorm_entry_html = 15;
-  string vtt_subtitle_url = 16;
-  bool auto_transcribe = 17;
+  string vtt_subtitle_url = 14;
+  bool auto_transcribe = 15;
 }
 
 message CreateLearningItemResponse {
@@ -297,10 +303,8 @@ message UpdateLearningItemRequest {
   string language = 12;
   string rubric_criteria_json = 13;
   string quiz_matrix_id = 14;
-  string scorm_package_path = 15;
-  string scorm_entry_html = 16;
-  string vtt_subtitle_url = 17;
-  bool auto_transcribe = 18;
+  string vtt_subtitle_url = 15;
+  bool auto_transcribe = 16;
 }
 
 message UpdateLearningItemResponse {
@@ -465,6 +469,41 @@ message ReorderLearningItemsResponse {
   bool success = 1;
 }
 
+message SubmitCourseForLaunchRequest {
+  string course_id = 1;
+}
+
+message SubmitCourseForLaunchResponse {
+  Course course = 1;
+}
+
+enum CourseReviewAction {
+  COURSE_REVIEW_ACTION_UNSPECIFIED = 0;
+  COURSE_REVIEW_ACTION_APPROVE = 1;
+  COURSE_REVIEW_ACTION_REJECT = 2;
+}
+
+message ReviewCourseRequest {
+  string course_id = 1;
+  CourseReviewAction action = 2;
+  string rejection_reason = 3;
+}
+
+message ReviewCourseResponse {
+  Course course = 1;
+}
+
+message ListInstructorCoursesRequest {
+  int32 page_size = 1;
+  string page_token = 2;
+  CourseStatus status_filter = 3;
+}
+
+message ListInstructorCoursesResponse {
+  repeated Course courses = 1;
+  string next_page_token = 2;
+}
+
 service CatalogService {
   rpc GetSpecialization(GetSpecializationRequest) returns (GetSpecializationResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
@@ -474,6 +513,9 @@ service CatalogService {
   }
   rpc SearchCoursesAutocomplete(SearchCoursesAutocompleteRequest) returns (SearchCoursesAutocompleteResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc ListInstructorCourses(ListInstructorCoursesRequest) returns (ListInstructorCoursesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc GetCourseDetail(GetCourseDetailRequest) returns (GetCourseDetailResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
@@ -488,6 +530,12 @@ service CatalogService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc DeleteCourse(DeleteCourseRequest) returns (DeleteCourseResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc SubmitCourseForLaunch(SubmitCourseForLaunchRequest) returns (SubmitCourseForLaunchResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ReviewCourse(ReviewCourseRequest) returns (ReviewCourseResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc CreateWeekModule(CreateWeekModuleRequest) returns (CreateWeekModuleResponse) {

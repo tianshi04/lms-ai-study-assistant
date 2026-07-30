@@ -7,7 +7,7 @@ import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentW
 
 export default function AssessmentsPage() {
   const [activeAssessment, setActiveAssessment] = useState<"quiz" | "lab" | "peer">("quiz");
-  const [quizItemId, setQuizItemId] = useState("item-ml-quiz-1");
+  const [quizItemId, setQuizItemId] = useState("item-ml-quiz-2");
   const [labItemId, setLabItemId] = useState("item-ml-lab-1");
   const [peerItemId, setPeerItemId] = useState("item-ml-peer-1");
 

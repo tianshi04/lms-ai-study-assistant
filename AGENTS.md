@@ -39,6 +39,11 @@ This file provides rules, architectural conventions, and workspace instructions 
 - The `src/gen/` folders are ignored in Git.
 - We use **Connect-ES v2.0** on the frontend (utilizing `protoc-gen-es` only, where both messages and service schemas are generated directly in `_pb.ts` files without a separate `_connect.ts` stub).
 - **Development Stage & Backward Compatibility**: Since the project is currently in active initial development, API definitions and code structures can be refactored or modified freely without preserving backward compatibility.
+- **Protobuf Modification Protocol (STRICT SEQUENTIAL RULE)**:
+  Whenever adding or modifying `.proto` files in `proto/`, agents MUST follow this exact sequence:
+  1. Run `make format-proto` to format Protobuf files and `make lint-proto` to verify linting rules.
+  2. Run `make gen` from root to regenerate Python and TypeScript stubs.
+  3. Implement / update the presentation layer service handlers in backend and client callers in frontend.
 - **Authentication & User Identity Resolution Rule**:
   - **Never trust or extract `user_id` directly from Protobuf request payloads** for authenticated RPC operations.
   - All protected ConnectRPC service handlers **MUST** resolve the authenticated user strictly from context using `require_current_user()` (from `src.shared.auth`).
@@ -47,6 +52,12 @@ This file provides rules, architectural conventions, and workspace instructions 
   - Application Use Cases in `application/` **MUST NOT** import or raise ConnectRPC transport exceptions directly (`connectrpc.errors.ConnectError` or `connectrpc.code.Code`).
   - Application logic **MUST** raise standard Python or domain-level exceptions (e.g., `PermissionError`, `ValueError`).
   - Mapping domain exceptions to ConnectRPC status codes is strictly the responsibility of presentation-layer service handlers in `presentation/`.
+- **Role-Based API Segregation & Bounded Context Protocol**:
+  - **STRICT NO-MONOLITHIC-QUERY RULE**: Never design monolithic query endpoints that accept caller-controlled role flags or mix conditional `if/else` checks to serve multiple distinct user roles on a single endpoint.
+  - **Role-Based RPC Segregation Boundaries**:
+    1. **Public / Consumer Context (Learners & Public Users)**: Public query RPCs (`AUTH_POLICY_PUBLIC`) MUST strictly enforce database query filters returning only published/active entities (`PUBLISHED`/`ACTIVE`). Never allow client-supplied flags to expose draft, unapproved, or internal data.
+    2. **Creator / Owner Context (Instructors & Authors)**: Resource owner management RPCs (`AUTH_POLICY_AUTHENTICATED`) MUST resolve identity strictly from JWT context (`require_current_user()`), scope database queries to `owner_id` or collaborator lists (`co_instructor_ids`), and return entities across all lifecycle states (`DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `REJECTED`).
+    3. **Operator / Admin Review Context (Admins & Reviewers)**: Administrative moderation & review RPCs MUST enforce staff/admin role boundaries and operate on dedicated review queue endpoints.
 
 
 ---
@@ -100,6 +111,12 @@ This file provides rules, architectural conventions, and workspace instructions 
 ---
 
 ## 6. Helper Commands Reference
+
+### Root (from project root directory):
+- `make format-proto` - Format all Protobuf files in-place (`buf format proto -w`).
+- `make check-proto` - Check Protobuf formatting without modifying files (`buf format proto -d --exit-code`).
+- `make lint-proto` - Lint Protobuf definitions for style conventions (`buf lint proto`).
+- `make gen` - Regenerate stubs for both backend (`backend/src/gen/`) and frontend (`frontend/src/gen/`).
 
 ### Backend (from `backend/` directory):
 - `make infra` - Start infrastructure containers (PostgreSQL pgvector & MinIO).

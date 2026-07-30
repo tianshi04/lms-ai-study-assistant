@@ -634,6 +634,8 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         medium_count: int,
         hard_count: int,
         shuffle_options: bool,
+        max_attempts: int,
+        cooldown_hours: int,
     ) -> QuizMatrix:
         stmt = select(QuizMatrixModel).where(QuizMatrixModel.item_id == item_id)
         res = await self.session.execute(stmt)
@@ -647,6 +649,8 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             existing.medium_count = medium_count
             existing.hard_count = hard_count
             existing.shuffle_options = shuffle_options
+            existing.max_attempts = max_attempts
+            existing.cooldown_hours = cooldown_hours
         else:
             existing = QuizMatrixModel(
                 item_id=item_id,
@@ -657,6 +661,8 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
                 medium_count=medium_count,
                 hard_count=hard_count,
                 shuffle_options=shuffle_options,
+                max_attempts=max_attempts,
+                cooldown_hours=cooldown_hours,
             )
             self.session.add(existing)
 
@@ -670,6 +676,8 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             medium_count=existing.medium_count,
             hard_count=existing.hard_count,
             shuffle_options=existing.shuffle_options,
+            max_attempts=existing.max_attempts,
+            cooldown_hours=existing.cooldown_hours,
         )
 
     async def get_quiz_matrix(self, item_id: str) -> Optional[QuizMatrix]:
@@ -687,6 +695,8 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             medium_count=m.medium_count,
             hard_count=m.hard_count,
             shuffle_options=m.shuffle_options,
+            max_attempts=m.max_attempts,
+            cooldown_hours=m.cooldown_hours,
         )
 
     async def get_questions_by_bank(self, bank_id: str) -> list[Question]:

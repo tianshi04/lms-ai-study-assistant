@@ -19,6 +19,7 @@ message SubmitGradedQuizRequest {
   repeated int32 selected_option_indexes = 2;
   int32 session_seed = 3;
   string start_time_iso = 4;
+  bool preview = 5;
 }
 
 message QuizResult {
@@ -27,6 +28,8 @@ message QuizResult {
   int32 attempts_left = 3;
   int32 cooldown_seconds_left = 4;
   repeated string answer_explanations = 5;
+  int32 max_attempts = 6;
+  int32 cooldown_hours = 7;
 }
 
 message SubmitGradedQuizResponse {
@@ -163,6 +166,8 @@ message QuizMatrix {
   int32 medium_count = 6;
   int32 hard_count = 7;
   bool shuffle_options = 8;
+  int32 max_attempts = 9;
+  int32 cooldown_hours = 10;
 }
 
 message CreateQuestionBankRequest {
@@ -206,6 +211,8 @@ message ConfigureQuizMatrixRequest {
   int32 medium_count = 6;
   int32 hard_count = 7;
   bool shuffle_options = 8;
+  int32 max_attempts = 9;
+  int32 cooldown_hours = 10;
 }
 
 message ConfigureQuizMatrixResponse {
@@ -298,6 +305,7 @@ service AssessmentService {
 
 message StartGradedQuizSessionRequest {
   string item_id = 1;
+  bool preview = 2;
 }
 
 message QuizSessionQuestionOption {
@@ -321,4 +329,6 @@ message StartGradedQuizSessionResponse {
   int32 session_seed = 6;
   int32 cooldown_seconds_left = 7;
   int32 attempts_left = 8;
+  int32 max_attempts = 9;
+  int32 cooldown_hours = 10;
 }

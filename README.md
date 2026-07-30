@@ -278,6 +278,20 @@ make infra-down
 
 ## 🛠 Helper Commands & Scripts
 
+### Root Commands (`Makefile`)
+
+Run these commands from the root directory:
+
+| Command | Description |
+| :--- | :--- |
+| `make help` | Display available root make commands |
+| `make format-proto` | Format all Protobuf files in `proto/` in-place (`buf format proto -w`) |
+| `make check-proto` | Check Protobuf formatting without modifying files (`buf format proto -d --exit-code`) |
+| `make lint-proto` | Lint Protobuf definitions for style conventions (`buf lint proto`) |
+| `make gen` | Generate API stubs for both backend (`backend/src/gen/`) and frontend (`frontend/src/gen/`) |
+
+---
+
 ### Backend Commands (`backend/Makefile`)
 
 Run these commands from the `backend/` directory:

@@ -26,50 +26,56 @@ export function AuthProvider({
   children: React.ReactNode;
   initialAuth: UserAuth;
 }) {
-  const [auth, setAuthState] = useState<UserAuth>(() => {
+  const [auth, setAuthState] = useState<UserAuth>(initialAuth);
+
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("access_token");
       const localName = localStorage.getItem("user_name");
       const localEmail = localStorage.getItem("user_email");
       const localRole = localStorage.getItem("user_role");
       const localAvatar = localStorage.getItem("user_avatar");
+
       if (token && localName) {
-        return {
-          userName: localName,
-          userEmail: localEmail,
-          userRole: localRole,
-          userAvatar: localAvatar,
-        };
-      } else if (!token) {
+        queueMicrotask(() => {
+          setAuthState({
+            userName: localName,
+            userEmail: localEmail,
+            userRole: localRole,
+            userAvatar: localAvatar,
+          });
+        });
+        document.cookie = `access_token=${encodeURIComponent(token)}; path=/; max-age=2592000`;
+        document.cookie = `user_name=${encodeURIComponent(localName)}; path=/; max-age=2592000`;
+        if (localEmail) document.cookie = `user_email=${encodeURIComponent(localEmail)}; path=/; max-age=2592000`;
+        if (localRole) document.cookie = `user_role=${localRole}; path=/; max-age=2592000`;
+        if (localAvatar) document.cookie = `user_avatar=${encodeURIComponent(localAvatar)}; path=/; max-age=2592000`;
+      } else if (!token && (initialAuth.userName || initialAuth.userEmail || initialAuth.userRole || initialAuth.userAvatar)) {
         localStorage.removeItem("user_name");
         localStorage.removeItem("user_email");
         localStorage.removeItem("user_role");
         localStorage.removeItem("user_id");
         localStorage.removeItem("refresh_token");
         localStorage.removeItem("user_avatar");
-        return {
-          userName: null,
-          userEmail: null,
-          userRole: null,
-          userAvatar: null,
-        };
+        queueMicrotask(() => {
+          setAuthState({
+            userName: null,
+            userEmail: null,
+            userRole: null,
+            userAvatar: null,
+          });
+        });
       }
     }
-    return initialAuth;
-  });
-
-  useEffect(() => {
-    if (auth.userName) {
-      document.cookie = `user_name=${encodeURIComponent(auth.userName)}; path=/; max-age=2592000`;
-      if (auth.userEmail) document.cookie = `user_email=${encodeURIComponent(auth.userEmail)}; path=/; max-age=2592000`;
-      if (auth.userRole) document.cookie = `user_role=${auth.userRole}; path=/; max-age=2592000`;
-      if (auth.userAvatar) document.cookie = `user_avatar=${encodeURIComponent(auth.userAvatar)}; path=/; max-age=2592000`;
-    }
-  }, [auth.userName, auth.userEmail, auth.userRole, auth.userAvatar]);
+  }, [initialAuth.userEmail, initialAuth.userName, initialAuth.userRole, initialAuth.userAvatar]);
 
   const setAuth = (newAuth: UserAuth) => {
     setAuthState(newAuth);
     if (newAuth.userName) {
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem("access_token");
+        if (token) document.cookie = `access_token=${encodeURIComponent(token)}; path=/; max-age=2592000`;
+      }
       document.cookie = `user_name=${encodeURIComponent(newAuth.userName)}; path=/; max-age=2592000`;
       if (newAuth.userEmail) document.cookie = `user_email=${encodeURIComponent(newAuth.userEmail)}; path=/; max-age=2592000`;
       if (newAuth.userRole) document.cookie = `user_role=${newAuth.userRole}; path=/; max-age=2592000`;

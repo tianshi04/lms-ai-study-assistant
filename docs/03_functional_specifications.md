@@ -44,6 +44,31 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 
 * **Xuất File Xác thực Tĩnh Tên miền (`openbadges-issuer.json`):** Hệ thống tự động sinh và cung cấp nút bấm tải file JSON tĩnh chuẩn OpenBadges 2.0 (`/partner/settings`) để Đối tác upload lên thư mục công khai `https://<domain>/.well-known/openbadges-issuer.json`, minh chứng quyền ủy quyền ký số mà không cần lập trình máy chủ (`BR_PARTNER_002`).
 
+### 1.6. Quy trình Đăng ký & Xét duyệt Giảng viên Cá nhân (Individual Instructor Application & Approval Workflow)
+* **Khái niệm & Luồng Nghiệp vụ:** Cá nhân có tài khoản `Learner` tự do có thể gửi Đơn xin nâng cấp vai trò Giảng viên mà không cần một Trường Đại học hoặc Doanh nghiệp nào add trước vào hệ thống.
+* **Cấu trúc Dữ liệu Đơn Đăng ký (`InstructorApplication`):**
+  * `id`: Chuỗi UUID định danh đơn.
+  * `user_id`: Định danh học viên nộp đơn.
+  * `full_name`, `email`: Thông tin cá nhân của người nộp.
+  * `title`: Chức danh khoa học / chuyên môn mong muốn hiển thị (VD: *Senior Data Scientist*).
+  * `bio`: Bài viết tiểu sử năng lực và kinh nghiệm giảng dạy.
+  * `linkedin_url`, `portfolio_url`: Đường dẫn trang cá nhân hoặc sản phẩm đã thực hiện.
+  * `cv_file_url`: File CV hồ sơ năng lực (.pdf).
+  * `sample_video_url`: Link video giảng thử demo (1-3 phút).
+  * `status`: Trạng thái đơn (`APPLICATION_STATUS_PENDING`, `APPLICATION_STATUS_APPROVED`, `APPLICATION_STATUS_REJECTED`).
+  * `rejection_reason`: Lý do từ chối nếu đơn bị Reject.
+  * `created_at`, `reviewed_at`: Thời gian nộp và thời gian xử lý.
+* **RPC Services (`IdentityService`):**
+  1. `SubmitInstructorApplication(SubmitInstructorApplicationRequest) returns (SubmitInstructorApplicationResponse)`:
+     * *Phân quyền:* `AUTH_POLICY_AUTHENTICATED` (Dành cho tài khoản `LEARNER`).
+     * *Chức năng:* Ghi nhận đơn đăng ký mới vào cơ sở dữ liệu ở trạng thái `PENDING`.
+  2. `ListInstructorApplications(ListInstructorApplicationsRequest) returns (ListInstructorApplicationsResponse)`:
+     * *Phân quyền:* `AUTH_POLICY_AUTHENTICATED` (Chỉ dành cho `SUPER_ADMIN`).
+     * *Chức năng:* Truy vấn danh sách các đơn đăng ký giảng viên cá nhân (hỗ trợ lọc theo `status`).
+  3. `ReviewInstructorApplication(ReviewInstructorApplicationRequest) returns (ReviewInstructorApplicationResponse)`:
+     * *Phân quyền:* `AUTH_POLICY_AUTHENTICATED` (Chỉ dành cho `SUPER_ADMIN`).
+     * *Chức năng:* Chấp thuận (`APPROVED`) hoặc từ chối (`REJECTED`) đơn. Khi `APPROVED`, hệ thống nguyên tử nâng `user.role = USER_ROLE_INSTRUCTOR` và gán tài khoản vào Partner mặc định toàn sàn **`Coursera Project Network`** (`partner_id = "partner_community"`) để cấp quyền tạo bài giảng.
+
 
 ---
 

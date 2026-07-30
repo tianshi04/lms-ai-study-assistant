@@ -12,7 +12,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src.modules.catalog.domain.entities import ItemType
+from src.modules.catalog.domain.entities import ItemType, CourseStatus
+from src.modules.identity.domain.constants import INTERNAL_SYSTEM_ORG_ID
 from src.shared.infrastructure.database import Base
 
 
@@ -45,6 +46,13 @@ class CourseModel(Base):
     __tablename__ = "courses"
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    organization_id: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        default=INTERNAL_SYSTEM_ORG_ID,
+        server_default=INTERNAL_SYSTEM_ORG_ID,
+        index=True,
+    )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     description: Mapped[str] = mapped_column(Text, nullable=False, default="")
@@ -82,6 +90,15 @@ class CourseModel(Base):
     )
     is_plus_eligible: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=True, server_default="true"
+    )
+    status: Mapped[CourseStatus] = mapped_column(
+        SQLEnum(CourseStatus),
+        nullable=False,
+        default=CourseStatus.DRAFT,
+        server_default="DRAFT",
+    )
+    rejection_reason: Mapped[str] = mapped_column(
+        Text, nullable=False, default="", server_default=""
     )
 
     week_modules: Mapped[list["WeekModuleModel"]] = relationship(

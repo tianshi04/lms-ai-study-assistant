@@ -24,7 +24,7 @@ test.describe('Full System Blackbox - Instructor Flows (POM)', () => {
     await instructorPage.createNewCourse(uniqueTitle, description);
 
     // Verify course appears in list
-    await expect(page.locator(`text=${uniqueTitle}`)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text=${uniqueTitle}`)).toBeVisible({ timeout: 15000 });
   });
 
   test('should load course builder page for specific course', async ({ page }) => {

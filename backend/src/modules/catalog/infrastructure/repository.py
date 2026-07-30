@@ -1,4 +1,5 @@
 import uuid
+from typing import Any
 from datetime import datetime, timezone
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -9,6 +10,7 @@ from src.modules.catalog.domain.entities import (
     Course,
     CourseAnnouncement,
     CourseReview,
+    CourseStatus,
     EnrolledStudent,
     InVideoQuiz,
     InstructorAnalytics,
@@ -32,6 +34,8 @@ from src.modules.catalog.infrastructure.models import (
     WeekModuleModel,
     CategoryModel,
 )
+from src.shared.auth import get_current_user
+from src.shared.infrastructure.scopes import apply_organization_scope
 
 
 def _model_to_domain_course(model: CourseModel) -> Course:
@@ -114,6 +118,8 @@ def _model_to_domain_course(model: CourseModel) -> Course:
         owner_id=getattr(model, "owner_id", ""),
         co_instructor_ids=getattr(model, "co_instructor_ids", None) or [],
         financial_aid_enabled=getattr(model, "financial_aid_enabled", True),
+        status=getattr(model, "status", CourseStatus.DRAFT) or CourseStatus.DRAFT,
+        rejection_reason=getattr(model, "rejection_reason", "") or "",
     )
 
 
@@ -143,6 +149,34 @@ def _model_to_domain_review(model: CourseReviewModel) -> CourseReview:
     )
 
 
+def _parse_status_filter(status_filter: Any) -> CourseStatus | None:
+    if not status_filter:
+        return None
+    if isinstance(status_filter, CourseStatus):
+        return status_filter if status_filter != CourseStatus.UNSPECIFIED else None
+    val = str(status_filter).strip()
+    if not val or val in (
+        "0",
+        "UNSPECIFIED",
+        "COURSE_STATUS_UNSPECIFIED",
+        "CourseStatus.UNSPECIFIED",
+    ):
+        return None
+    val = val.replace("COURSE_STATUS_", "").replace("CourseStatus.", "").upper()
+    int_map = {
+        "1": CourseStatus.DRAFT,
+        "2": CourseStatus.PENDING_REVIEW,
+        "3": CourseStatus.PUBLISHED,
+        "4": CourseStatus.REJECTED,
+    }
+    if val in int_map:
+        return int_map[val]
+    try:
+        return CourseStatus[val]
+    except KeyError:
+        return None
+
+
 class SQLAlchemyCatalogRepository(ICatalogRepository):
     """Async SQLAlchemy Database Repository implementing ICatalogRepository."""
 
@@ -157,6 +191,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         subject: str = "",
         level: str = "",
         sort_by: str = "",
+        status_filter: str | CourseStatus = "",
     ) -> tuple[list[Course], str]:
         stmt = select(CourseModel).options(
             selectinload(CourseModel.week_modules)
@@ -168,6 +203,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             .selectinload(LessonModel.items)
             .selectinload(LearningItemModel.in_video_quizzes),
         )
+
+        stmt = apply_organization_scope(stmt, CourseModel, get_current_user())
 
         if search_query:
             pattern = f"%{search_query}%"
@@ -181,6 +218,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         if level and level != "UNSPECIFIED":
             stmt = stmt.where(CourseModel.level == level)
+
+        parsed_status = _parse_status_filter(status_filter)
+        if parsed_status:
+            stmt = stmt.where(CourseModel.status == parsed_status)
 
         if sort_by == "rating":
             stmt = stmt.order_by(CourseModel.average_rating.desc())
@@ -198,6 +239,43 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         courses: list[Course] = []
         for m in models:
             courses.append(_model_to_domain_course(m))
+        return courses, ""
+
+    async def list_instructor_courses(
+        self,
+        instructor_id: str,
+        page_size: int = 50,
+        page_token: str = "",
+        status_filter: str | CourseStatus | None = None,
+    ) -> tuple[list[Course], str]:
+        from sqlalchemy import cast, String
+
+        stmt = select(CourseModel).options(
+            selectinload(CourseModel.week_modules)
+            .selectinload(WeekModuleModel.lessons)
+            .selectinload(LessonModel.items)
+            .selectinload(LearningItemModel.interactive_transcripts),
+            selectinload(CourseModel.week_modules)
+            .selectinload(WeekModuleModel.lessons)
+            .selectinload(LessonModel.items)
+            .selectinload(LearningItemModel.in_video_quizzes),
+        )
+
+        if instructor_id:
+            instructor_cond = (CourseModel.owner_id == instructor_id) | (
+                cast(CourseModel.co_instructor_ids, String).contains(instructor_id)
+            )
+            stmt = stmt.where(instructor_cond)
+
+        parsed_status = _parse_status_filter(status_filter)
+        if parsed_status:
+            stmt = stmt.where(CourseModel.status == parsed_status)
+
+        stmt = stmt.order_by(CourseModel.id.desc()).limit(page_size or 50)
+
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        courses: list[Course] = [_model_to_domain_course(m) for m in models]
         return courses, ""
 
     async def get_course_detail(self, course_id: str) -> Course | None:
@@ -278,6 +356,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             owner_id=owner_id,
             co_instructor_ids=co_instructor_ids or [],
             financial_aid_enabled=financial_aid_enabled,
+            status=CourseStatus.DRAFT,
+            rejection_reason="",
         )
         self.session.add(model)
         await self.session.commit()
@@ -318,6 +398,19 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         if level and level != "UNSPECIFIED":
             model.level = level
 
+        await self.session.commit()
+        return await self.get_course_detail(course_id)
+
+    async def update_course_status(
+        self, course_id: str, status: CourseStatus, rejection_reason: str = ""
+    ) -> Course | None:
+        stmt = select(CourseModel).where(CourseModel.id == course_id)
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return None
+        model.status = status
+        model.rejection_reason = rejection_reason
         await self.session.commit()
         return await self.get_course_detail(course_id)
 

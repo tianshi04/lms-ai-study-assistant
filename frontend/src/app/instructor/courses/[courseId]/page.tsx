@@ -3,7 +3,7 @@
 import { useEffect, useState, useSyncExternalStore, use } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService, ItemType, type Course, type LearningItem } from "@/gen/catalog/v1/catalog_pb";
+import { CatalogService, CourseStatus, ItemType, type Course, type LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { AssessmentService, type QuestionBank } from "@/gen/assessment/v1/assessment_pb";
 
 import { Modal } from "@/components/ui/Modal";
@@ -32,7 +32,7 @@ export default function InstructorCourseBuilderPage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
-  
+
 
   // Modals visibility
   const [showWeekModal, setShowWeekModal] = useState(false);
@@ -50,7 +50,7 @@ export default function InstructorCourseBuilderPage({
   const [itemTitle, setItemTitle] = useState("");
   const [itemType, setItemType] = useState<ItemType>(ItemType.VIDEO);
   const [itemMinutes, setItemMinutes] = useState(10);
-  const [videoUrl, setVideoUrl] = useState("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4");
+  const [videoUrl, setVideoUrl] = useState("");
   const [vttSubtitleUrl, setVttSubtitleUrl] = useState("");
   const [autoTranscribe, setAutoTranscribe] = useState(false);
   const [inVideoQuizzes, setInVideoQuizzes] = useState<InVideoQuizItem[]>([]);
@@ -59,7 +59,7 @@ export default function InstructorCourseBuilderPage({
 
   // Extended Native Fields (Lab, Quiz Matrix, Rubric)
   const [labLanguage, setLabLanguage] = useState("python");
-  const [labStarterCode, setLabStarterCode] = useState("# Starter code for lab\ndef solution():\n    pass\n");
+  const [labStarterCode, setLabStarterCode] = useState("# Starter code for lab\ndef solution(a, b):\n    pass\n");
   const [labTestCasesJson, setLabTestCasesJson] = useState('[\n  {"input": "1, 2", "expected": "3"}\n]');
   const [quizBankId, setQuizBankId] = useState("");
   const [quizTimeLimit, setQuizTimeLimit] = useState<string | number>("45");
@@ -67,13 +67,14 @@ export default function InstructorCourseBuilderPage({
   const [quizEasyCount, setQuizEasyCount] = useState<string | number>("4");
   const [quizMediumCount, setQuizMediumCount] = useState<string | number>("4");
   const [quizHardCount, setQuizHardCount] = useState<string | number>("2");
+  const [quizMaxAttempts, setQuizMaxAttempts] = useState<string | number>("3");
+  const [quizCooldownHours, setQuizCooldownHours] = useState<string | number>("8");
   const [peerRubricJson, setPeerRubricJson] = useState('[\n  {"title": "Clarity & Organization", "max_score": 10}\n]');
   const [questionBanks, setQuestionBanks] = useState<QuestionBank[]>([]);
 
   // SCORM Review Workspace State
   const [showScormReviewModal, setShowScormReviewModal] = useState(false);
   const [scormPreviewCourse, setScormPreviewCourse] = useState<Course | null>(null);
-  const [scormIsSingleItem, setScormIsSingleItem] = useState(false);
   const [scormObjectKey, setScormObjectKey] = useState("");
   const [scormImporting, setScormImporting] = useState(false);
 
@@ -95,6 +96,13 @@ export default function InstructorCourseBuilderPage({
     language: string;
     rubricCriteriaJson: string;
     quizMatrixId: string;
+    quizTimeLimit?: number | string;
+    quizPassingThreshold?: number | string;
+    quizEasyCount?: number | string;
+    quizMediumCount?: number | string;
+    quizHardCount?: number | string;
+    quizMaxAttempts?: number | string;
+    quizCooldownHours?: number | string;
   } | null>(null);
 
 
@@ -123,6 +131,26 @@ export default function InstructorCourseBuilderPage({
       toast.error(errMsg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const [submittingLaunch, setSubmittingLaunch] = useState(false);
+
+  const handleSubmitForLaunch = async () => {
+    if (!course) return;
+    setSubmittingLaunch(true);
+    try {
+      const client = getRpcClient(CatalogService);
+      const res = await client.submitCourseForLaunch({ courseId: course.id });
+      if (res.course) {
+        setCourse(res.course);
+      }
+      toast.success("Đã gửi yêu cầu phê duyệt khóa học thành công! Trạng thái hiện tại: PENDING_REVIEW.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Không thể gửi yêu cầu phê duyệt.";
+      toast.error(msg);
+    } finally {
+      setSubmittingLaunch(false);
     }
   };
 
@@ -227,7 +255,7 @@ export default function InstructorCourseBuilderPage({
 
     try {
       const client = getRpcClient(CatalogService);
-      await client.createLearningItem({
+      const res = await client.createLearningItem({
         courseId: course?.id || courseId,
         lessonId: showItemModal,
         title: itemTitle,
@@ -251,13 +279,42 @@ export default function InstructorCourseBuilderPage({
         quizMatrixId: (itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ) ? quizBankId : "",
       });
 
+      const createdItem = res.item;
+      if ((itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ) && quizBankId && createdItem) {
+        try {
+          const assessmentClient = getRpcClient(AssessmentService);
+          await assessmentClient.configureQuizMatrix({
+            itemId: createdItem.id,
+            bankId: quizBankId,
+            timeLimitMinutes: parseInt(String(quizTimeLimit)) || 45,
+            passingThresholdPercent: parseFloat(String(quizPassingThreshold)) || 80,
+            easyCount: parseInt(String(quizEasyCount)) || 0,
+            mediumCount: parseInt(String(quizMediumCount)) || 0,
+            hardCount: parseInt(String(quizHardCount)) || 0,
+            shuffleOptions: true,
+            maxAttempts: parseInt(String(quizMaxAttempts)) || 3,
+            cooldownHours: parseInt(String(quizCooldownHours)) || 8,
+          });
+        } catch (err) {
+          console.error("Failed to configure quiz matrix on creation:", err);
+        }
+      }
+
       setShowItemModal(null);
       setItemTitle("");
-      setVideoUrl("https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4");
+      setVideoUrl("");
       setVttSubtitleUrl("");
       setAutoTranscribe(false);
       setReadingMarkdown("");
       setInVideoQuizzes([]);
+      setQuizBankId("");
+      setQuizTimeLimit(45);
+      setQuizPassingThreshold(80);
+      setQuizEasyCount(4);
+      setQuizMediumCount(4);
+      setQuizHardCount(2);
+      setQuizMaxAttempts(3);
+      setQuizCooldownHours(8);
       toast.success(`Đã thêm Học liệu "${itemTitle}" vào bài học thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
@@ -351,6 +408,26 @@ export default function InstructorCourseBuilderPage({
         rubricCriteriaJson: editingItem.type === ItemType.PEER_REVIEW ? editingItem.rubricCriteriaJson : undefined,
         quizMatrixId: (editingItem.type === ItemType.PRACTICE_QUIZ || editingItem.type === ItemType.GRADED_QUIZ) ? editingItem.quizMatrixId : undefined,
       });
+
+      if ((editingItem.type === ItemType.PRACTICE_QUIZ || editingItem.type === ItemType.GRADED_QUIZ) && editingItem.quizMatrixId) {
+        try {
+          const assessmentClient = getRpcClient(AssessmentService);
+          await assessmentClient.configureQuizMatrix({
+            itemId: editingItem.id,
+            bankId: editingItem.quizMatrixId,
+            timeLimitMinutes: parseInt(String(editingItem.quizTimeLimit)) || 45,
+            passingThresholdPercent: parseFloat(String(editingItem.quizPassingThreshold)) || 80,
+            easyCount: parseInt(String(editingItem.quizEasyCount)) || 0,
+            mediumCount: parseInt(String(editingItem.quizMediumCount)) || 0,
+            hardCount: parseInt(String(editingItem.quizHardCount)) || 0,
+            shuffleOptions: true,
+            maxAttempts: parseInt(String(editingItem.quizMaxAttempts)) || 3,
+            cooldownHours: parseInt(String(editingItem.quizCooldownHours)) || 8,
+          });
+        } catch (err) {
+          console.error("Failed to configure quiz matrix on update:", err);
+        }
+      }
 
       setEditingItem(null);
       toast.success("Đã cập nhật nội dung Học liệu thành công!");
@@ -578,29 +655,90 @@ export default function InstructorCourseBuilderPage({
 
         {/* Course Header Banner */}
         {course && (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="space-y-2 max-w-3xl">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
-                  {course.partnerName}
-                </span>
-                <span className="text-xs font-mono text-slate-400">ID: {course.id}</span>
+          <>
+            {/* Status Alert Banners */}
+            {course.status === CourseStatus.PENDING_REVIEW && (
+              <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-800 dark:text-blue-200 text-sm flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping" />
+                  <span>
+                    <strong>{"Khóa học đang chờ kiểm duyệt (PENDING_REVIEW):"}</strong> {"Hệ thống đang chuyển sang chế độ Chỉ đọc (Read-only). Các thao tác chỉnh sửa sẽ tạm thời bị khóa trong thời gian Reviewer đánh giá."}
+                  </span>
+                </div>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                {course.title}
-              </h1>
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
-                {course.description}
-              </p>
-              <div className="text-xs font-medium text-slate-500 flex items-center gap-2 pt-1">
-                <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span>{"Giảng viên:"} {course.instructorNames.join(", ")}</span>
-              </div>
-            </div>
+            )}
 
-            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            {course.status === CourseStatus.REJECTED && (
+              <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-800 dark:text-rose-200 text-sm flex items-start gap-3">
+                <svg className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <h4 className="font-bold text-rose-900 dark:text-rose-100">{"Khóa học bị từ chối phê duyệt (REJECTED)"}</h4>
+                  <p className="text-xs mt-1 text-rose-700 dark:text-rose-300">
+                    {"Lý do góp ý từ Reviewer:"} <strong>{course.rejectionReason || "Cần bổ sung thêm thông tin học liệu."}</strong>
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">{"Vui lòng hoàn thiện học liệu theo yêu cầu và bấm 'Gửi Yêu Cầu Phê Duyệt' để nộp lại."}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="space-y-2 max-w-3xl">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
+                    {course.partnerName}
+                  </span>
+                  {course.status === CourseStatus.DRAFT && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
+                      {"Bản nháp (DRAFT)"}
+                    </span>
+                  )}
+                  {course.status === CourseStatus.PENDING_REVIEW && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 animate-pulse">
+                      {"Chờ kiểm duyệt (PENDING_REVIEW)"}
+                    </span>
+                  )}
+                  {course.status === CourseStatus.PUBLISHED && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                      {"Đã xuất bản (PUBLISHED)"}
+                    </span>
+                  )}
+                  {course.status === CourseStatus.REJECTED && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20">
+                      {"Từ chối (REJECTED)"}
+                    </span>
+                  )}
+                  <span className="text-xs font-mono text-slate-400">ID: {course.id}</span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  {course.title}
+                </h1>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
+                  {course.description}
+                </p>
+                <div className="text-xs font-medium text-slate-500 flex items-center gap-2 pt-1">
+                  <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>{"Giảng viên:"} {course.instructorNames.join(", ")}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                {(course.status === CourseStatus.DRAFT || course.status === CourseStatus.REJECTED) && (
+                  <button
+                    type="button"
+                    onClick={handleSubmitForLaunch}
+                    disabled={submittingLaunch}
+                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>{submittingLaunch ? "Đang nộp..." : "Submit for Launch (Gửi duyệt)"}</span>
+                  </button>
+                )}
               <button
                 type="button"
                 onClick={async () => {
@@ -642,13 +780,56 @@ export default function InstructorCourseBuilderPage({
                     if (!file) return;
                     try {
                       setScormImporting(true);
-                      toast.info("Đang phân tích gói SCORM...");
-                      const scormKey = `scorm/uploads/${Date.now()}_${file.name}`;
+                      toast.info("Đang tải gói SCORM lên hệ thống lưu trữ...");
                       const client = getRpcClient(CatalogService);
-                      const res = await client.parseScormPackage({ scormObjectKey: scormKey, targetCourseId: courseId });
-                      setScormObjectKey(scormKey);
-                      setScormPreviewCourse(res.coursePreview || null);
-                      setScormIsSingleItem(res.isSingleItem);
+                      
+                      const uploadRes = await client.generateUploadUrl({
+                        filename: file.name,
+                        contentType: "application/zip",
+                        folder: "scorm",
+                      });
+
+                      let uploadedKey = uploadRes.objectKey;
+                      let uploadSuccess = false;
+
+                      try {
+                        await new Promise<void>((resolve, reject) => {
+                          const xhr = new XMLHttpRequest();
+                          xhr.open("PUT", uploadRes.uploadUrl, true);
+                          xhr.setRequestHeader("Content-Type", "application/zip");
+                          xhr.timeout = 10000;
+                          xhr.ontimeout = () => reject(new Error("Timeout upload"));
+                          xhr.onload = () => {
+                            if (xhr.status >= 200 && xhr.status < 300) resolve();
+                            else reject(new Error(`Status ${xhr.status}`));
+                          };
+                          xhr.onerror = () => reject(new Error("Network error"));
+                          xhr.send(file);
+                        });
+                        uploadSuccess = true;
+                      } catch (err) {
+                        console.warn("Direct upload failed, fallback to byte upload:", err);
+                      }
+
+                      if (!uploadSuccess) {
+                        const arrayBuffer = await file.arrayBuffer();
+                        const byteRes = await client.uploadMediaFile({
+                          filename: file.name,
+                          contentType: "application/zip",
+                          fileBytes: new Uint8Array(arrayBuffer),
+                          folder: "scorm",
+                        });
+                        uploadedKey = byteRes.objectKey;
+                      }
+
+                      toast.info("Đang phân tích cấu trúc gói SCORM...");
+                      const parseRes = await client.parseScormPackage({
+                        scormObjectKey: uploadedKey,
+                        targetCourseId: courseId,
+                      });
+
+                      setScormObjectKey(uploadedKey);
+                      setScormPreviewCourse(parseRes.coursePreview || null);
                       setShowScormReviewModal(true);
                     } catch (err: unknown) {
                       const msg = err instanceof Error ? err.message : "Không thể phân tích gói SCORM.";
@@ -704,6 +885,7 @@ export default function InstructorCourseBuilderPage({
               )}
             </div>
           </div>
+        </>
         )}
 
 
@@ -1007,7 +1189,7 @@ export default function InstructorCourseBuilderPage({
                                     </span>
 
                                     <Link
-                                      href={`/learn/${courseId}?itemId=${item.id}`}
+                                      href={`/learn/${courseId}?itemId=${item.id}&preview=true`}
                                       target="_blank"
                                       className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                       title={"Xem trước nội dung trong Trình phát bài học"}
@@ -1021,28 +1203,47 @@ export default function InstructorCourseBuilderPage({
                                     {isInstructorOrAdmin && (
                                       <>
                                         <button
-                                          onClick={() => setEditingItem({
-                                            id: item.id,
-                                            title: item.title,
-                                            type: item.type,
-                                            estimatedMinutes: item.estimatedMinutes,
-                                            videoUrl: item.videoUrl || "",
-                                            vttSubtitleUrl: item.vttSubtitleUrl || "",
-                                            autoTranscribe: item.autoTranscribe || false,
-                                            content: item.readingMarkdown || "",
-                                            inVideoQuizzes: item.inVideoQuizzes ? item.inVideoQuizzes.map(q => ({
-                                              timestampSeconds: q.timestampSeconds,
-                                              question: q.question,
-                                              options: q.options ? Array.from(q.options) : [],
-                                              correctOptionIndex: q.correctOptionIndex,
-                                              explanation: q.explanation || ""
-                                            })) : [],
-                                            starterCode: item.starterCode || "",
-                                            testCasesJson: item.testCasesJson || "",
-                                            language: item.language || "",
-                                            rubricCriteriaJson: item.rubricCriteriaJson || "",
-                                            quizMatrixId: item.quizMatrixId || "",
-                                          })}
+                                          onClick={async () => {
+                                            let qMatrix = null;
+                                            if (item.type === ItemType.PRACTICE_QUIZ || item.type === ItemType.GRADED_QUIZ) {
+                                              try {
+                                                const assessmentClient = getRpcClient(AssessmentService);
+                                                const matrixRes = await assessmentClient.getQuizMatrix({ itemId: item.id });
+                                                qMatrix = matrixRes.matrix;
+                                              } catch (err) {
+                                                console.warn("Failed to load quiz matrix:", err);
+                                              }
+                                            }
+                                            setEditingItem({
+                                              id: item.id,
+                                              title: item.title,
+                                              type: item.type,
+                                              estimatedMinutes: item.estimatedMinutes,
+                                              videoUrl: item.videoUrl || "",
+                                              vttSubtitleUrl: item.vttSubtitleUrl || "",
+                                              autoTranscribe: item.autoTranscribe || false,
+                                              content: item.readingMarkdown || "",
+                                              inVideoQuizzes: item.inVideoQuizzes ? item.inVideoQuizzes.map(q => ({
+                                                timestampSeconds: q.timestampSeconds,
+                                                question: q.question,
+                                                options: q.options ? Array.from(q.options) : [],
+                                                correctOptionIndex: q.correctOptionIndex,
+                                                explanation: q.explanation || ""
+                                              })) : [],
+                                              starterCode: item.starterCode || "",
+                                              testCasesJson: item.testCasesJson || "",
+                                              language: item.language || "",
+                                              rubricCriteriaJson: item.rubricCriteriaJson || "",
+                                              quizMatrixId: item.quizMatrixId || "",
+                                              quizTimeLimit: qMatrix?.timeLimitMinutes ?? 45,
+                                              quizPassingThreshold: qMatrix?.passingThresholdPercent ?? 80,
+                                              quizEasyCount: qMatrix ? qMatrix.easyCount : 4,
+                                              quizMediumCount: qMatrix ? qMatrix.mediumCount : 4,
+                                              quizHardCount: qMatrix ? qMatrix.hardCount : 2,
+                                              quizMaxAttempts: qMatrix?.maxAttempts ?? 3,
+                                              quizCooldownHours: qMatrix?.cooldownHours ?? 8,
+                                            });
+                                          }}
                                           className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded transition-colors cursor-pointer"
                                           title={"Sửa nội dung học liệu"}
                                         >
@@ -1306,9 +1507,9 @@ Nội dung lý thuyết chi tiết...`}
                   ))}
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Thời gian đếm ngược (Phút)</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Thời gian (Phút)</label>
                   <input
                     type="number"
                     min={1}
@@ -1327,7 +1528,7 @@ Nội dung lý thuyết chi tiết...`}
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Điểm đỗ tối thiểu (%)</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Điểm đỗ (%)</label>
                   <input
                     type="number"
                     min={0}
@@ -1340,6 +1541,44 @@ Nội dung lý thuyết chi tiết...`}
                       } else {
                         const num = parseFloat(val);
                         setQuizPassingThreshold(isNaN(num) ? "" : Math.min(100, Math.max(0, num)));
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Số lượt làm tối đa</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={quizMaxAttempts}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        setQuizMaxAttempts("");
+                      } else {
+                        const num = parseInt(val);
+                        setQuizMaxAttempts(isNaN(num) ? "" : Math.max(1, num));
+                      }
+                    }}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Thời gian chờ (Giờ)</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={168}
+                    value={quizCooldownHours}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "") {
+                        setQuizCooldownHours("");
+                      } else {
+                        const num = parseInt(val);
+                        setQuizCooldownHours(isNaN(num) ? "" : Math.max(0, num));
                       }
                     }}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
@@ -1663,25 +1902,76 @@ Nội dung lý thuyết chi tiết...`}
                     ))}
                   </select>
                 </div>
-                {/* Visual configurations to match creation UI */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">Thời gian đếm ngược (Phút)</label>
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">Thời gian (Phút)</label>
                     <input
                       type="number"
                       min={1}
                       max={1440}
-                      defaultValue={45}
+                      value={editingItem.quizTimeLimit ?? 45}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const num = parseInt(val);
+                        setEditingItem({
+                          ...editingItem,
+                          quizTimeLimit: isNaN(num) ? "" : Math.min(1440, Math.max(1, num))
+                        });
+                      }}
                       className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">Điểm đỗ tối thiểu (%)</label>
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">Điểm đỗ (%)</label>
                     <input
                       type="number"
                       min={0}
                       max={100}
-                      defaultValue={80}
+                      value={editingItem.quizPassingThreshold ?? 80}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const num = parseFloat(val);
+                        setEditingItem({
+                          ...editingItem,
+                          quizPassingThreshold: isNaN(num) ? "" : Math.min(100, Math.max(0, num))
+                        });
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">Lượt làm tối đa</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={editingItem.quizMaxAttempts ?? 3}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const num = parseInt(val);
+                        setEditingItem({
+                          ...editingItem,
+                          quizMaxAttempts: isNaN(num) ? "" : Math.max(1, num)
+                        });
+                      }}
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">Chờ cooldown (Giờ)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={168}
+                      value={editingItem.quizCooldownHours ?? 8}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const num = parseInt(val);
+                        setEditingItem({
+                          ...editingItem,
+                          quizCooldownHours: isNaN(num) ? "" : Math.max(0, num)
+                        });
+                      }}
                       className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
                     />
                   </div>
@@ -1693,7 +1983,15 @@ Nội dung lý thuyết chi tiết...`}
                       type="number"
                       min={0}
                       max={200}
-                      defaultValue={4}
+                      value={editingItem.quizEasyCount ?? 4}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const num = parseInt(val);
+                        setEditingItem({
+                          ...editingItem,
+                          quizEasyCount: isNaN(num) ? "" : Math.min(200, Math.max(0, num))
+                        });
+                      }}
                       className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                     />
                   </div>
@@ -1703,7 +2001,15 @@ Nội dung lý thuyết chi tiết...`}
                       type="number"
                       min={0}
                       max={200}
-                      defaultValue={4}
+                      value={editingItem.quizMediumCount ?? 4}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const num = parseInt(val);
+                        setEditingItem({
+                          ...editingItem,
+                          quizMediumCount: isNaN(num) ? "" : Math.min(200, Math.max(0, num))
+                        });
+                      }}
                       className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                     />
                   </div>
@@ -1713,7 +2019,15 @@ Nội dung lý thuyết chi tiết...`}
                       type="number"
                       min={0}
                       max={200}
-                      defaultValue={2}
+                      value={editingItem.quizHardCount ?? 2}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const num = parseInt(val);
+                        setEditingItem({
+                          ...editingItem,
+                          quizHardCount: isNaN(num) ? "" : Math.min(200, Math.max(0, num))
+                        });
+                      }}
                       className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                     />
                   </div>
@@ -1796,52 +2110,56 @@ Nội dung lý thuyết chi tiết...`}
       <Modal
         isOpen={showScormReviewModal}
         onClose={() => setShowScormReviewModal(false)}
-        title={"SCORM Import & Review Workspace"}
+        title="Import Khóa học Native (Level 1)"
         size="xl"
       >
         <div className="space-y-6">
-          <div className="bg-indigo-50 dark:bg-indigo-500/10 p-4 rounded-2xl border border-indigo-200 dark:border-indigo-500/20 space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-600 text-white">
-                {scormIsSingleItem ? "Single Item Mode" : "Full Course Mode"}
-              </span>
-              <span className="text-xs font-mono text-slate-500">{scormObjectKey}</span>
-            </div>
-            <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
-              {scormPreviewCourse?.title || "SCORM Package Extracted Structure"}
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              {"Bóc tách tự động gói SCORM thành các học liệu chuẩn Native"}
-            </p>
-          </div>
-
-          <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2">
-            {scormPreviewCourse?.weekModules?.map((wm, wIdx) => (
-              <div key={wm.id || wIdx} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
-                <div className="font-bold text-sm text-slate-800 dark:text-slate-200">
-                  Tuần {wm.weekNumber}: {wm.title}
-                </div>
-                <div className="space-y-2 pl-4 border-l-2 border-indigo-400">
-                  {wm.lessons?.map((l, lIdx) => (
-                    <div key={l.id || lIdx} className="space-y-1">
-                      <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                        📖 {l.title} ({l.estimatedMinutes} min)
-                      </div>
-                      <div className="space-y-1 pl-3">
-                        {l.items?.map((item, iIdx) => (
-                          <div key={item.id || iIdx} className="text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
-                            <span>📄 {item.title}</span>
-                            <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
-                              {ItemType[item.type] || "READING"}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+          {/* LEVEL 1: NATIVE COURSE */}
+          <div className="space-y-4">
+            <div className="bg-emerald-50 dark:bg-emerald-500/10 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white">
+                  Full Fidelity Native
+                </span>
+                <span className="text-[10px] font-mono text-slate-500">Level 1 Support</span>
               </div>
-            ))}
+              <h4 className="text-sm font-bold text-emerald-800 dark:text-emerald-400">
+                {"Phát hiện khóa học Native OpenLMS"}
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                {"Hệ thống sẽ tiến hành nhập và khôi phục toàn bộ cấu trúc Tuần/Bài học/Học liệu và toàn bộ cài đặt nguyên bản vào khóa học hiện tại."}
+              </p>
+            </div>
+
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Cấu trúc khóa học sẽ được khôi phục:</div>
+            <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2">
+              {scormPreviewCourse?.weekModules?.map((wm, wIdx) => (
+                <div key={wm.id || wIdx} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                  <div className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                    Tuần {wm.weekNumber}: {wm.title}
+                  </div>
+                  <div className="space-y-2 pl-4 border-l-2 border-indigo-400">
+                    {wm.lessons?.map((l, lIdx) => (
+                      <div key={l.id || lIdx} className="space-y-1">
+                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          📖 {l.title} ({l.estimatedMinutes} min)
+                        </div>
+                        <div className="space-y-1 pl-3">
+                          {l.items?.map((item, iIdx) => (
+                            <div key={item.id || iIdx} className="text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
+                              <span>📄 {item.title}</span>
+                              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                {ItemType[item.type] || "SCORM"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
@@ -1858,8 +2176,11 @@ Nội dung lý thuyết chi tiết...`}
                 try {
                   setScormImporting(true);
                   const client = getRpcClient(CatalogService);
-                  await client.importCourseFromScorm({ scormObjectKey, courseId });
-                  toast.success("Đã bóc tách & lưu nội dung SCORM vào khóa học thành công!");
+                  await client.importCourseFromScorm({
+                    scormObjectKey,
+                    courseId,
+                  });
+                  toast.success("Đã import dữ liệu SCORM vào khóa học thành công!");
                   setShowScormReviewModal(false);
                   await fetchCourseDetail();
                 } catch (err: unknown) {
@@ -1870,7 +2191,7 @@ Nội dung lý thuyết chi tiết...`}
                 }
               }}
               disabled={scormImporting}
-              className="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+              className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-md transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
             >
               {scormImporting ? (
                 <>
@@ -1878,7 +2199,7 @@ Nội dung lý thuyết chi tiết...`}
                   <span>Đang Import...</span>
                 </>
               ) : (
-                <span>{"Xác nhận Import vào Khóa học"}</span>
+                <span>{"Xác nhận Import"}</span>
               )}
             </button>
           </div>

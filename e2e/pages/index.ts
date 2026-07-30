@@ -19,3 +19,8 @@ export { PartnerAdminPage, PartnerSettingsPage, PartnerShowcasePage } from './pa
 export { InstructorProfilePage } from './instructor-profile.page';
 export { ProfilePage } from './profile.page';
 export { PaymentPage } from './payment.page';
+export { BecomeAnInstructorPage } from './become-an-instructor.page';
+export { AdminApplicationsPage } from './admin-applications.page';
+
+
+
