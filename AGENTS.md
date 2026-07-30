@@ -39,6 +39,11 @@ This file provides rules, architectural conventions, and workspace instructions 
 - The `src/gen/` folders are ignored in Git.
 - We use **Connect-ES v2.0** on the frontend (utilizing `protoc-gen-es` only, where both messages and service schemas are generated directly in `_pb.ts` files without a separate `_connect.ts` stub).
 - **Development Stage & Backward Compatibility**: Since the project is currently in active initial development, API definitions and code structures can be refactored or modified freely without preserving backward compatibility.
+- **Protobuf Modification Protocol (STRICT SEQUENTIAL RULE)**:
+  Whenever adding or modifying `.proto` files in `proto/`, agents MUST follow this exact sequence:
+  1. Run `make format-proto` to format Protobuf files and `make lint-proto` to verify linting rules.
+  2. Run `make gen` from root to regenerate Python and TypeScript stubs.
+  3. Implement / update the presentation layer service handlers in backend and client callers in frontend.
 - **Authentication & User Identity Resolution Rule**:
   - **Never trust or extract `user_id` directly from Protobuf request payloads** for authenticated RPC operations.
   - All protected ConnectRPC service handlers **MUST** resolve the authenticated user strictly from context using `require_current_user()` (from `src.shared.auth`).
@@ -106,6 +111,12 @@ This file provides rules, architectural conventions, and workspace instructions 
 ---
 
 ## 6. Helper Commands Reference
+
+### Root (from project root directory):
+- `make format-proto` - Format all Protobuf files in-place (`buf format proto -w`).
+- `make check-proto` - Check Protobuf formatting without modifying files (`buf format proto -d --exit-code`).
+- `make lint-proto` - Lint Protobuf definitions for style conventions (`buf lint proto`).
+- `make gen` - Regenerate stubs for both backend (`backend/src/gen/`) and frontend (`frontend/src/gen/`).
 
 ### Backend (from `backend/` directory):
 - `make infra` - Start infrastructure containers (PostgreSQL pgvector & MinIO).

@@ -32,8 +32,8 @@ jobs:
         with:
           input: 'proto'
           lint: true
-          # Disable formatting check temporarily during initial active development.
-          format: false
+          # Enforce formatting check on Protobuf files.
+          format: true
           # Disable breaking change checks during initial active development; re-enable when moving to production.
           breaking: false
           github_token: ${{ secrets.GITHUB_TOKEN }}

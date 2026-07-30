@@ -235,5 +235,3 @@ service IdentityService {
     option (auth.v1.policy) = AUTH_POLICY_ADMIN;
   }
 }
-
-
