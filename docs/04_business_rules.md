@@ -22,6 +22,13 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_AUTH_003 (Thuật toán Mã hóa Mật khẩu & Auto-Avatar):**
   * Mật khẩu người dùng được băm bằng PBKDF2-HMAC-SHA256 với 100,000 vòng lặp (iterations) và muối ngẫu nhiên 16 bytes, lưu dạng `salt_hex:hash_hex`. Việc xác thực mật khẩu sử dụng `hmac.compare_digest` để chống tấn công đo thời gian (Timing Attack).
   * Khi người dùng đăng ký mới, hệ thống tự động sinh ảnh đại diện mặc định qua API DiceBear: `https://api.dicebear.com/7.x/avataaars/svg?seed={email}`.
+* **BR_AUTH_005 (Quy tắc Xét duyệt Quyền Giảng viên Cá nhân & Gán Partner Chuẩn Coursera):**
+  * *BR_AUTH_005.1 (Không cấp trực tiếp vai trò Giảng viên):* API Đăng ký công khai (`Register`) tuyệt đối không cấp trực tiếp vai trò `INSTRUCTOR`. Cá nhân muốn trở thành Giảng viên phải nộp Đơn đăng ký (`SubmitInstructorApplication`) để Super Admin thẩm định.
+  * *BR_AUTH_005.2 (Ràng buộc Đơn trùng lặp):* Mỗi tài khoản `LEARNER` chỉ được giữ tối đa **01 đơn đăng ký** ở trạng thái `PENDING_REVIEW`. Nếu bị Reject, người dùng phải đợi 14 ngày hoặc cập nhật lại thông tin mới được nộp đơn mới.
+  * *BR_AUTH_005.3 (Tự động Gán Partner Mặc định toàn sàn):* Ngay khi Super Admin phê duyệt (`APPROVED`) đơn đăng ký thông qua RPC `ReviewInstructorApplication`:
+    * Hệ thống cập nhật vai trò tài khoản thành `user.role = USER_ROLE_INSTRUCTOR`.
+    * Hệ thống tự động liên kết tài khoản này vào Partner Mặc định toàn sàn **`Coursera Project Network`** (`partner_id = "partner_community"`) với trạng thái thành viên `ACTIVE`.
+    * Nhờ đó, giảng viên cá nhân thỏa mãn 100% ràng buộc kiến trúc (`partner_id` NOT NULL trên bảng `courses`) và có đầy đủ quyền lựa chọn Partner này khi soạn thảo bài giảng trong Course Builder.
 * **BR_ACCESS_001 (Phân quyền Audit Mode vs Paid Mode):**
   * *Audit Mode (Miễn phí):* Học viên được mở xem toàn bộ Video bài giảng, bài đọc (Reading) và làm các bài Practice Quiz. Tuy nhiên, hệ thống khóa quyền nộp bài thi Graded Quiz, bài tập Auto-Graded Lab, bài tập Peer Review và không được cấp Chứng chỉ.
   * *Paid Mode (Trả phí / Subscription):* Học viên có toàn bộ quyền làm các bài kiểm tra tính điểm, được bạn học chấm bài Peer Review và nhận Verified Certificate khi hoàn thành.
@@ -212,8 +219,10 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 
 ## 8. Quy tắc Quản lý Khóa học của Giảng viên (BR_INSTRUCTOR)
 
-* **BR_INSTRUCTOR_001 (Phân quyền Vai trò & Quyền sở hữu Khóa học - Course Ownership):**
+* **BR_INSTRUCTOR_001 (Phân quyền Vai trò, Liên kết Đa Tổ chức & Quyền sở hữu Khóa học - Course Ownership & Partner Scoping):**
   * Chỉ các tài khoản có vai trò `INSTRUCTOR`, `TA`, `SUPER_ADMIN` hoặc `PARTNER_ADMIN` mới có quyền gọi các RPC quản lý khóa học.
+  * *Liên kết Đa Tổ chức (Instructor Multi-Tenant Affiliation):* Một Giảng viên có thể thuộc/liên kết với nhiều Tổ chức/Trường học khác nhau (`user_id <-> partner_id` N-N). Giảng viên có quyền đại diện phát hành các khóa học cho từng Tổ chức mà mình có vai trò thành viên hợp lệ (`ACTIVE`).
+  * *Ràng buộc Khóa học Bắt buộc thuộc Partner (`partner_id` NOT NULL):* 100% khóa học trên hệ thống BẮT BUỘC phải gắn với 1 Partner Organization đại diện bảo chứng. Không tồn tại khóa học mồ côi (`partner_id = NULL`). Khi tạo khóa học (`CreateCourse`), Giảng viên chỉ được chọn `partner_id` trong danh sách các Partner mà mình được cấp quyền. Với Giảng viên cá nhân tự do, hệ thống tự động gán `partner_id` mặc định là **`Coursera Project Network`** (`partner_id = "partner_community"`).
   * *Ràng buộc Quyền sở hữu (Course Ownership):* Mỗi khóa học được gắn với một Chủ sở hữu chính (`owner_id`) và danh sách Giảng viên đồng phụ trách (`co_instructor_ids`). Giảng viên chỉ có quyền chỉnh sửa (`UpdateCourse`), quản lý bài giảng (`CreateWeekModule`, `UpdateLesson`, v.v.) hoặc xóa (`DeleteCourse`) đối với khóa học do mình sở hữu hoặc phụ trách.
   * *Quyền Admin toàn quyền:* `SUPER_ADMIN` và `PARTNER_ADMIN` giữ quyền ghi đè toàn hệ thống trên mọi khóa học.
 * **BR_INSTRUCTOR_002 (Cơ chế Delete Cascade Dữ liệu Phụ thuộc):**
