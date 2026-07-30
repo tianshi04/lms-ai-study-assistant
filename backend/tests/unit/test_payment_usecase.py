@@ -2,7 +2,7 @@
 
 import pytest
 from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from src.modules.payment.application.payment_usecase import PaymentUseCase
 from src.modules.payment.domain.entities import (
@@ -57,7 +57,7 @@ async def test_purchase_course_success(mock_scope):
     mock_scope.return_value = mock_ctx
 
     # Mock DB query result
-    mock_res = AsyncMock()
+    mock_res = MagicMock()
     mock_res.scalar_one_or_none.return_value = None
     mock_session.execute.return_value = mock_res
 
@@ -87,7 +87,7 @@ async def test_purchase_course_already_purchased(mock_scope):
     mock_scope.return_value = mock_ctx
 
     # Mock DB query result
-    mock_res = AsyncMock()
+    mock_res = MagicMock()
     mock_res.scalar_one_or_none.return_value = None
     mock_session.execute.return_value = mock_res
 
