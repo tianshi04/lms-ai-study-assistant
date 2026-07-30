@@ -85,12 +85,64 @@ class AssessmentUseCase:
         )
         return is_agreed, msg
 
+    async def _get_quiz_matrix_or_fallback(
+        self, repo: AssessmentRepositoryInterface, item_id: str
+    ) -> Optional[QuizMatrix]:
+        matrix = await repo.get_quiz_matrix(item_id)
+        if matrix:
+            return matrix
+
+        session = getattr(repo, "session", None)
+        if session is None:
+            return None
+
+        try:
+            catalog_models = __import__(
+                "src.modules.catalog.infrastructure.models",
+                fromlist=["LearningItemModel"],
+            )
+            from sqlalchemy import select
+
+            stmt = select(catalog_models.LearningItemModel).where(
+                catalog_models.LearningItemModel.id == item_id
+            )
+            res = await session.execute(stmt)
+            item_model = res.scalar_one_or_none()
+            if item_model and item_model.quiz_matrix_id:
+                bank_questions = await repo.get_questions_by_bank(
+                    item_model.quiz_matrix_id
+                )
+                easy_cnt = len([q for q in bank_questions if q.difficulty == "EASY"])
+                med_cnt = len([q for q in bank_questions if q.difficulty == "MEDIUM"])
+                hard_cnt = len([q for q in bank_questions if q.difficulty == "HARD"])
+
+                return QuizMatrix(
+                    item_id=item_id,
+                    bank_id=item_model.quiz_matrix_id,
+                    time_limit_minutes=item_model.estimated_minutes
+                    or DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
+                    passing_threshold_percent=DEFAULT_PASSING_THRESHOLD_PERCENT,
+                    easy_count=easy_cnt,
+                    medium_count=med_cnt,
+                    hard_count=hard_cnt,
+                    shuffle_options=True,
+                    max_attempts=MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
+                    cooldown_hours=QUIZ_COOLDOWN_HOURS,
+                )
+        except Exception as e:
+            logger.warning("Failed to get fallback quiz matrix for %s: %s", item_id, e)
+        return None
+
     async def generate_quiz_session_questions(
-        self, repo: AssessmentRepositoryInterface, item_id: str, seed: int = 42
+        self,
+        repo: AssessmentRepositoryInterface,
+        item_id: str,
+        seed: int,
     ) -> list[dict[str, Any]]:
         """Enforces BR_QUIZ_002: Samples N questions from a Pool of M and shuffles options reproducibly."""
         # 1. Fetch Quiz Matrix
-        matrix = await repo.get_quiz_matrix(item_id)
+        matrix = await self._get_quiz_matrix_or_fallback(repo, item_id)
+
         if not matrix:
             return []
 
@@ -111,6 +163,8 @@ class AssessmentUseCase:
         sampled_hard = rng.sample(hard_qs, min(matrix.hard_count, len(hard_qs)))
 
         sampled = sampled_easy + sampled_medium + sampled_hard
+        if matrix.shuffle_options:
+            rng.shuffle(sampled)
 
         # 5. Format and optionally shuffle options
         result: list[dict[str, Any]] = []
@@ -154,10 +208,11 @@ class AssessmentUseCase:
         user_id: str,
         item_id: str,
         duration_minutes: int = DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
+        preview: bool = False,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
-            matrix = await repo.get_quiz_matrix(item_id)
+            matrix = await self._get_quiz_matrix_or_fallback(repo, item_id)
             if matrix:
                 duration_minutes = matrix.time_limit_minutes
             passing_threshold = (
@@ -169,28 +224,48 @@ class AssessmentUseCase:
             now = datetime.now(timezone.utc)
             expires_at = now + timedelta(minutes=duration_minutes)
 
+            # Check if user has already passed this quiz
+            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
+            has_passed = any(sub.passed for sub in prev_submissions)
+            if has_passed and not preview:
+                raise ValueError("Bạn đã vượt qua bài thi này và đạt điểm yêu cầu.")
+
+            max_attempts = (
+                matrix.max_attempts if matrix else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
+            )
             # Check Cooldown status
             cooldown = await repo.get_quiz_cooldown(user_id, item_id)
             cooldown_seconds_left = 0
-            attempts_left = MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
-            if cooldown:
+            attempts_left = max_attempts
+            if cooldown and not preview:
                 if cooldown.cooldown_until:
                     until_dt = datetime.fromisoformat(cooldown.cooldown_until)
                     if now < until_dt:
                         cooldown_seconds_left = int((until_dt - now).total_seconds())
                         attempts_left = 0
+                        hours = cooldown_seconds_left // 3600
+                        minutes = (cooldown_seconds_left % 3600) // 60
+                        time_str = (
+                            f"{hours} giờ {minutes} phút"
+                            if hours > 0
+                            else f"{minutes} phút"
+                        )
+                        raise ValueError(
+                            f"Bạn đã dùng hết số lượt làm bài. Vui lòng quay lại sau {time_str}."
+                        )
                     else:
                         attempts_left = max(
                             0,
-                            MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
-                            - cooldown.failed_attempts_count,
+                            max_attempts - cooldown.failed_attempts_count,
                         )
                 else:
                     attempts_left = max(
                         0,
-                        MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
-                        - cooldown.failed_attempts_count,
+                        max_attempts - cooldown.failed_attempts_count,
                     )
+
+            if attempts_left <= 0:
+                raise ValueError("Bạn đã hết lượt làm bài thi này.")
 
             # BR_QUIZ_002: Generate N-sampled and option-shuffled questions using unique user/attempt seed
             seed_val = abs(hash(f"{user_id}:{item_id}:{now.isoformat()[:16]}")) % (
@@ -210,6 +285,10 @@ class AssessmentUseCase:
                 "questions": questions,
                 "cooldown_seconds_left": cooldown_seconds_left,
                 "attempts_left": attempts_left,
+                "max_attempts": max_attempts,
+                "cooldown_hours": matrix.cooldown_hours
+                if matrix
+                else QUIZ_COOLDOWN_HOURS,
             }
 
     @require_paid_access()
@@ -221,13 +300,29 @@ class AssessmentUseCase:
         start_time_iso: Optional[str] = None,
         duration_minutes: int = DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
         session_seed: Optional[int] = None,
+        preview: bool = False,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
 
+            # 0. Fetch Quiz Matrix to get dynamic settings
+            matrix = await self._get_quiz_matrix_or_fallback(repo, item_id)
+            max_attempts = (
+                matrix.max_attempts if matrix else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
+            )
+            cooldown_hours = matrix.cooldown_hours if matrix else QUIZ_COOLDOWN_HOURS
+            duration_minutes = (
+                matrix.time_limit_minutes if matrix else DEFAULT_QUIZ_TIME_LIMIT_MINUTES
+            )
+            passing_threshold = (
+                matrix.passing_threshold_percent
+                if matrix and matrix.passing_threshold_percent > 0
+                else DEFAULT_PASSING_THRESHOLD_PERCENT
+            )
+
             # 1. Verify Honor Code
             honor = await repo.get_honor_code(user_id, item_id)
-            if not honor or not honor.is_agreed:
+            if (not honor or not honor.is_agreed) and not preview:
                 logger.warning(
                     "User %s attempted to submit quiz %s without agreeing to honor code",
                     user_id,
@@ -239,14 +334,16 @@ class AssessmentUseCase:
                     "attempts_left": 0,
                     "cooldown_seconds_left": 0,
                     "answer_explanations": [
-                        "Academic Honor Code must be agreed before taking quiz."
+                        "Bạn phải xác nhận Cam kết Trung thực trước khi thực hiện bài thi."
                     ],
+                    "max_attempts": max_attempts,
+                    "cooldown_hours": cooldown_hours,
                 }
 
             # 2. Check Cooldown timer
             now = datetime.now(timezone.utc)
             cooldown = await repo.get_quiz_cooldown(user_id, item_id)
-            if cooldown and cooldown.cooldown_until:
+            if cooldown and cooldown.cooldown_until and not preview:
                 until_dt = datetime.fromisoformat(cooldown.cooldown_until)
                 if now < until_dt:
                     seconds_left = int((until_dt - now).total_seconds())
@@ -261,8 +358,10 @@ class AssessmentUseCase:
                         "attempts_left": 0,
                         "cooldown_seconds_left": seconds_left,
                         "answer_explanations": [
-                            f"Quiz is in {QUIZ_COOLDOWN_HOURS}-hour cooldown period. Please wait {seconds_left}s."
+                            f"Bài thi đang trong thời gian giãn cách {cooldown_hours} giờ. Vui lòng đợi {seconds_left} giây."
                         ],
+                        "max_attempts": max_attempts,
+                        "cooldown_hours": cooldown_hours,
                     }
 
             # 3. Grade Quiz (BR_QUIZ_002: Dynamic shuffled options grading)
@@ -286,10 +385,10 @@ class AssessmentUseCase:
                 )
                 if user_ans == corr:
                     correct_count += 1
-                    explanations.append(f"Q{idx + 1}: Correct!")
+                    explanations.append(f"Câu {idx + 1}: Đúng!")
                 else:
                     explanations.append(
-                        f"Q{idx + 1}: Incorrect. Selected option {user_ans}, expected option {corr}."
+                        f"Câu {idx + 1}: Chưa chính xác. Bạn đã chọn đáp án {chr(65 + user_ans) if user_ans >= 0 else 'Chưa chọn'}, đáp án đúng là {chr(65 + corr)}."
                     )
 
             if start_time_iso:
@@ -298,7 +397,7 @@ class AssessmentUseCase:
                     if (now - start_dt).total_seconds() > duration_minutes * 60:
                         explanations.insert(
                             0,
-                            f"Hết thời gian làm bài ({duration_minutes} phút). Máy chủ tự động nộp bài và chấm điểm (Auto-submit on timeout).",
+                            f"Hết thời gian làm bài ({duration_minutes} phút). Hệ thống tự động nộp bài và chấm điểm.",
                         )
                 except ValueError:
                     pass
@@ -311,14 +410,6 @@ class AssessmentUseCase:
             else:
                 score_percent = round((correct_count / total_questions) * 100.0, 2)
 
-            # BR_QUIZ_001: Highest Score Wins policy & Dynamic Quiz Matrix Threshold
-            matrix = await repo.get_quiz_matrix(item_id)
-            passing_threshold = (
-                matrix.passing_threshold_percent
-                if matrix and matrix.passing_threshold_percent > 0
-                else DEFAULT_PASSING_THRESHOLD_PERCENT
-            )
-
             prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
             all_scores = [sub.score_percent for sub in prev_submissions] + [
                 score_percent
@@ -329,9 +420,7 @@ class AssessmentUseCase:
             # 4. Handle Cooldown & Attempts tracking
             failed_count = cooldown.failed_attempts_count if cooldown else 0
             attempts_left = (
-                MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN - failed_count - 1
-                if not passed
-                else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
+                max_attempts - failed_count - 1 if not passed else max_attempts
             )
 
             if passed:
@@ -340,78 +429,147 @@ class AssessmentUseCase:
                 seconds_left = 0
             else:
                 failed_count += 1
-                if failed_count >= MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN:
+                if failed_count >= max_attempts:
                     # Activate Cooldown
-                    cooldown_until_dt = now + timedelta(hours=QUIZ_COOLDOWN_HOURS)
+                    cooldown_until_dt = now + timedelta(hours=cooldown_hours)
                     cooldown_until_iso = cooldown_until_dt.isoformat()
-                    seconds_left = int(QUIZ_COOLDOWN_HOURS * 3600)
+                    seconds_left = int(cooldown_hours * 3600)
                     attempts_left = 0
                 else:
                     cooldown_until_iso = None
                     seconds_left = 0
 
-            # Save submission
-            submission_id = f"sub-{uuid.uuid4().hex[:8]}"
-            attempt_number = len(prev_submissions) + 1
+            # Save submission (only if not preview)
+            if not preview:
+                submission_id = f"sub-{uuid.uuid4().hex[:8]}"
+                attempt_number = len(prev_submissions) + 1
 
-            submission = QuizSubmission(
-                id=submission_id,
-                user_id=user_id,
-                item_id=item_id,
-                selected_option_indexes=selected_option_indexes,
-                score_percent=score_percent,
-                passed=score_percent >= passing_threshold,
-                attempt_number=attempt_number,
-                created_at=now.isoformat(),
-            )
-            await repo.save_quiz_submission(submission)
+                submission = QuizSubmission(
+                    id=submission_id,
+                    user_id=user_id,
+                    item_id=item_id,
+                    selected_option_indexes=selected_option_indexes,
+                    score_percent=score_percent,
+                    passed=score_percent >= passing_threshold,
+                    attempt_number=attempt_number,
+                    created_at=now.isoformat(),
+                )
+                await repo.save_quiz_submission(submission)
 
-            # Update Cooldown entity
-            new_cooldown = QuizCooldown(
-                user_id=user_id,
-                item_id=item_id,
-                failed_attempts_count=failed_count,
-                last_attempt_at=now.isoformat(),
-                cooldown_until=cooldown_until_iso,
-            )
-            await repo.save_quiz_cooldown(new_cooldown)
+                # Update Cooldown entity
+                new_cooldown = QuizCooldown(
+                    user_id=user_id,
+                    item_id=item_id,
+                    failed_attempts_count=failed_count,
+                    last_attempt_at=now.isoformat(),
+                    cooldown_until=cooldown_until_iso,
+                )
+                await repo.save_quiz_cooldown(new_cooldown)
 
             logger.info(
-                "User %s submitted quiz %s with score %s (Passed: %s)",
+                "User %s submitted quiz %s with score %s (Passed: %s) [Preview: %s]",
                 user_id,
                 item_id,
                 score_percent,
                 passed,
+                preview,
             )
             return {
                 "score_percent": score_percent,
                 "passed": passed,
-                "attempts_left": max(0, attempts_left),
-                "cooldown_seconds_left": seconds_left,
+                "attempts_left": max_attempts if preview else max(0, attempts_left),
+                "cooldown_seconds_left": 0 if preview else seconds_left,
                 "answer_explanations": explanations,
+                "max_attempts": max_attempts,
+                "cooldown_hours": cooldown_hours,
             }
 
     @require_paid_access()
     async def submit_auto_graded_lab(
         self, user_id: str, item_id: str, source_code: str, language: str
     ) -> dict[str, Any]:
-        test_cases = [
-            {
-                "input": "solution([1, 2, 3])",
-                "expected_output": "6",
-                "assertion_code": "assert solution([1, 2, 3]) == 6",
-            },
-            {
-                "input": "solution([-1, 1])",
-                "expected_output": "0",
-                "assertion_code": "assert solution([-1, 1]) == 0",
-            },
-            {
-                "input": "solution([])",
-                "expected_output": "0",
-                "assertion_code": "assert solution([]) == 0",
-            },
-        ]
+        # 1. Fetch test cases from database
+        test_cases = []
+        async with async_session_scope() as session:
+            try:
+                catalog_models = __import__(
+                    "src.modules.catalog.infrastructure.models",
+                    fromlist=["LearningItemModel"],
+                )
+                from sqlalchemy import select
+
+                stmt = select(catalog_models.LearningItemModel.test_cases_json).where(
+                    catalog_models.LearningItemModel.id == item_id
+                )
+                res = await session.execute(stmt)
+                test_cases_json = res.scalar_one_or_none()
+                if test_cases_json:
+                    import json
+
+                    test_cases = json.loads(test_cases_json)
+            except Exception as e:
+                logger.warning(
+                    "Could not load database test cases for lab %s: %s. Using fallback.",
+                    item_id,
+                    e,
+                )
+
+        # 2. Fallback to default python test cases if none configured in the database
+        if not test_cases:
+            test_cases = [
+                {
+                    "input": "solution([1, 2, 3])",
+                    "expected_output": "6",
+                    "assertion_code": "assert solution([1, 2, 3]) == 6",
+                },
+                {
+                    "input": "solution([-1, 1])",
+                    "expected_output": "0",
+                    "assertion_code": "assert solution([-1, 1]) == 0",
+                },
+                {
+                    "input": "solution([])",
+                    "expected_output": "0",
+                    "assertion_code": "assert solution([]) == 0",
+                },
+            ]
+        else:
+            # 3. Dynamic test case assertion generation for database-configured test cases
+            import ast
+
+            func_name = "solution"
+            try:
+                tree = ast.parse(source_code)
+                for node in ast.walk(tree):
+                    if isinstance(node, ast.FunctionDef):
+                        func_name = node.name
+                        break
+            except Exception:
+                pass
+
+            for tc in test_cases:
+                # Ensure each test case has an assertion_code
+                if "assertion_code" not in tc:
+                    input_args = tc.get("input", "")
+                    expected_val = tc.get("expected_output") or tc.get(
+                        "expected", "None"
+                    )
+
+                    if isinstance(expected_val, str):
+                        try:
+                            ast.literal_eval(expected_val)
+                            valid_expr = expected_val
+                        except Exception:
+                            valid_expr = repr(expected_val)
+                    else:
+                        valid_expr = repr(expected_val)
+
+                    if f"{func_name}(" in input_args:
+                        tc["assertion_code"] = f"assert {input_args} == {valid_expr}"
+                    else:
+                        tc["assertion_code"] = (
+                            f"assert {func_name}({input_args}) == {valid_expr}"
+                        )
 
         result = await self.sandbox_executor.execute_python(source_code, test_cases)
         now_iso = datetime.now(timezone.utc).isoformat()
@@ -745,6 +903,8 @@ class AssessmentUseCase:
         medium_count: int,
         hard_count: int,
         shuffle_options: bool,
+        max_attempts: int,
+        cooldown_hours: int,
     ) -> QuizMatrix:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
@@ -757,6 +917,8 @@ class AssessmentUseCase:
                 medium_count=medium_count,
                 hard_count=hard_count,
                 shuffle_options=shuffle_options,
+                max_attempts=max_attempts,
+                cooldown_hours=cooldown_hours,
             )
 
     async def get_quiz_matrix(self, item_id: str) -> Optional[QuizMatrix]:

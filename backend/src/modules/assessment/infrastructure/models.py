@@ -8,6 +8,8 @@ from src.modules.assessment.domain.constants import (
     DEFAULT_QUIZ_HARD_COUNT,
     DEFAULT_QUIZ_MEDIUM_COUNT,
     DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
+    MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
+    QUIZ_COOLDOWN_HOURS,
 )
 from src.shared.infrastructure.database import Base
 
@@ -192,3 +194,31 @@ class QuizMatrixModel(Base):
         Integer, nullable=False, default=DEFAULT_QUIZ_HARD_COUNT
     )
     shuffle_options: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    max_attempts: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
+        server_default=str(MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
+    )
+    cooldown_hours: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=QUIZ_COOLDOWN_HOURS,
+        server_default=str(QUIZ_COOLDOWN_HOURS),
+    )
+
+
+class QuizSessionModel(Base):
+    """Stores the immutable question order and answer key for one quiz attempt."""
+
+    __tablename__ = "quiz_sessions"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    questions_json: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False)
+    started_at: Mapped[str] = mapped_column(String(64), nullable=False)
+    expires_at: Mapped[str] = mapped_column(String(64), nullable=False)
+    time_limit_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
+    passing_threshold_percent: Mapped[float] = mapped_column(Float, nullable=False)
+    submitted_at: Mapped[str | None] = mapped_column(String(64), nullable=True)

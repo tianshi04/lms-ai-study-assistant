@@ -12,6 +12,7 @@ enum ItemType {
   ITEM_TYPE_GRADED_QUIZ = 4;
   ITEM_TYPE_AUTO_GRADED_LAB = 5;
   ITEM_TYPE_PEER_REVIEW = 6;
+  ITEM_TYPE_SCORM_PACKAGE = 7;
 }
 
 enum CourseStatus {

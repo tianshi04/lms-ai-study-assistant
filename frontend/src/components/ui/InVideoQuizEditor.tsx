@@ -174,7 +174,7 @@ export function InVideoQuizEditor({
       </div>
 
       {/* Single Video Preview Player */}
-      {videoUrl && (
+      {videoUrl ? (
         <div className="space-y-2">
           <div className="aspect-video w-full rounded-xl overflow-hidden bg-black relative shadow-md">
             {isYouTubeUrl(videoUrl) ? (
@@ -208,6 +208,14 @@ export function InVideoQuizEditor({
               </button>
             </div>
           )}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl bg-white dark:bg-slate-900/60 text-slate-400 text-xs shadow-2xs">
+          <svg className="w-10 h-10 mb-2 text-slate-300 dark:text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 00-2 2z" />
+          </svg>
+          <span className="font-semibold text-slate-600 dark:text-slate-400">Chưa có video được chọn</span>
+          <span className="text-[10px] text-slate-400 mt-1 font-medium text-center">Vui lòng nhập đường dẫn URL hoặc upload video ở trên để bắt đầu cấu hình In-Video Quiz.</span>
         </div>
       )}
 

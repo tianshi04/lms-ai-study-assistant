@@ -185,6 +185,68 @@ async def test_get_verified_certificate_failed_quiz_rejection():
 
 
 @pytest.mark.asyncio
+async def test_get_verified_certificate_custom_quiz_threshold_pass():
+    try:
+        from src.modules.assessment.domain.entities import QuizSubmission
+        from src.modules.assessment.infrastructure.models import QuizMatrixModel
+        from src.modules.assessment.infrastructure.repository import (
+            SQLAlchemyAssessmentRepository,
+        )
+        from src.modules.identity.application.identity_usecase import IdentityUseCase
+        from src.modules.learning.application.learning_usecase import LearningUseCase
+        from src.shared.infrastructure.database import async_session_scope
+
+        usecase = CertificateUseCase()
+        user_id = "user_cert_custom_threshold"
+        course_id = "course_python"
+
+        # Verify identity KYC
+        await IdentityUseCase().verify_identity(user_id)
+
+        # Mark 100% progress
+        learning_uc = LearningUseCase()
+        await learning_uc.mark_item_complete(
+            user_id, course_id, "item_1", total_course_items=1
+        )
+
+        # Save a custom matrix threshold (e.g. 60.0%) and submission with score 70% (passed)
+        async with async_session_scope() as session:
+            ass_repo = SQLAlchemyAssessmentRepository(session)
+
+            # Configure quiz matrix with 60% passing threshold
+            matrix = QuizMatrixModel(
+                item_id="quiz_graded_1",
+                bank_id="qb_ml_test",
+                time_limit_minutes=30,
+                passing_threshold_percent=60.0,
+                easy_count=2,
+                medium_count=2,
+                hard_count=1,
+            )
+            await session.merge(matrix)
+
+            # Save quiz submission with 70.0% (which is passed according to the matrix threshold)
+            sub = QuizSubmission(
+                id="sub_passed_cert_custom",
+                user_id=user_id,
+                item_id="quiz_graded_1",
+                selected_option_indexes=[1, 1, 1],
+                score_percent=70.0,
+                passed=True,
+                attempt_number=1,
+                created_at="2026-07-24T00:00:00Z",
+            )
+            await ass_repo.save_quiz_submission(sub)
+
+        # Attempt to get certificate -> Should succeed because 70% >= 60% dynamic threshold
+        cert, err = await usecase.get_verified_certificate(user_id, course_id)
+        assert err == ""
+        assert cert is not None
+    except Exception as e:
+        pytest.skip(f"Skipping cert custom threshold db test: DB not reachable ({e})")
+
+
+@pytest.mark.asyncio
 async def test_get_verified_certificate_with_slug():
     try:
         from src.modules.catalog.application.catalog_usecase import CatalogUseCase

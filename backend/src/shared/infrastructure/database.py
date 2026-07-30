@@ -35,6 +35,7 @@ def get_engine() -> AsyncEngine:
             get_database_url(),
             echo=False,
             pool_pre_ping=True,
+            connect_args={"ssl": False},
         )
     return _engine
 

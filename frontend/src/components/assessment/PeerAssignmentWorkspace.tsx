@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/Toast";
 
 interface PeerAssignmentWorkspaceProps {
   itemId: string;
+  title?: string;
   userId?: string;
 }
 
@@ -26,6 +27,7 @@ interface PeerItem {
 
 export function PeerAssignmentWorkspace({
   itemId,
+  title,
   userId,
 }: PeerAssignmentWorkspaceProps) {
   const effectiveUserId = userId || (typeof window !== "undefined" ? localStorage.getItem("user_id") || "user-demo-1" : "user-demo-1");
@@ -185,7 +187,7 @@ export function PeerAssignmentWorkspace({
             PEER REVIEW ASSIGNMENT
           </span>
           <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1">
-            Machine Learning Capstone Project &amp; Peer Grading
+            {title || "Bài tập nộp chấm chéo"}
           </h2>
         </div>
 

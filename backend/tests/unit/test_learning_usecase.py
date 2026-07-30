@@ -8,7 +8,10 @@ from src.modules.catalog.domain.entities import (
     LearningItem,
     ItemType,
 )
-from src.modules.learning.domain.entities import LearningProgress, PersonalNote
+from src.modules.learning.domain.entities import (
+    LearningProgress,
+    PersonalNote,
+)
 
 
 @pytest.fixture

@@ -818,3 +818,71 @@ class CatalogHandler(CatalogService):
             folder=request.folder or "videos",
         )
         return pb.UploadMediaFileResponse(file_url=file_url, object_key=object_key)
+
+    async def export_course_to_scorm(
+        self,
+        request: pb.ExportCourseToScormRequest,
+        ctx: RequestContext[
+            pb.ExportCourseToScormRequest, pb.ExportCourseToScormResponse
+        ],
+    ) -> pb.ExportCourseToScormResponse:
+        user = self._verify_instructor_permission()
+        download_url, object_key = await self.use_case.export_course_to_scorm(
+            course_id=request.course_id,
+            current_user=user,
+        )
+        return pb.ExportCourseToScormResponse(
+            download_url=download_url, object_key=object_key
+        )
+
+    async def parse_scorm_package(
+        self,
+        request: pb.ParseScormPackageRequest,
+        ctx: RequestContext[pb.ParseScormPackageRequest, pb.ParseScormPackageResponse],
+    ) -> pb.ParseScormPackageResponse:
+        self._verify_instructor_permission()
+        (
+            course_preview,
+            is_single_item,
+            single_item_preview,
+        ) = await self.use_case.parse_scorm_package(
+            scorm_object_key=request.scorm_object_key,
+            target_course_id=request.target_course_id,
+        )
+
+        # We need to map Course and LearningItem entities to protobuf messages
+        # Let's write a helper mapping or just call pb messages constructor
+        # Since _map_course_to_pb is already helper inside catalog_handler, let's check if it exists!
+        # Yes, catalog_handler.py usually has a mapper. Let's see if we have mapper methods.
+        # Let's inspect.
+        pb_course = _to_pb_course(course_preview) if course_preview else None
+        pb_item = (
+            _to_pb_learning_item(single_item_preview) if single_item_preview else None
+        )
+
+        return pb.ParseScormPackageResponse(
+            course_preview=pb_course,
+            is_single_item=is_single_item,
+            single_item_preview=pb_item,
+        )
+
+    async def import_course_from_scorm(
+        self,
+        request: pb.ImportCourseFromScormRequest,
+        ctx: RequestContext[
+            pb.ImportCourseFromScormRequest, pb.ImportCourseFromScormResponse
+        ],
+    ) -> pb.ImportCourseFromScormResponse:
+        user = self._verify_instructor_permission()
+        course_res, item_res = await self.use_case.import_course_from_scorm(
+            scorm_object_key=request.scorm_object_key,
+            course_id=request.course_id,
+            current_user=user,
+        )
+        pb_course = _to_pb_course(course_res) if course_res else None
+        pb_item = _to_pb_learning_item(item_res) if item_res else None
+
+        return pb.ImportCourseFromScormResponse(
+            course=pb_course,
+            imported_item=pb_item,
+        )

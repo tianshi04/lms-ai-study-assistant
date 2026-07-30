@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest identifier="OpenLMS_SCORM_Export" version="1.2"
+          xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2"
+          xmlns:adlcp="http://www.adlnet.org/xsd/adlcp_rootv1p2"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://www.imsproject.org/xsd/imscp_rootv1p1p2 imscp_v1p1.xsd
+                              http://www.adlnet.org/xsd/adlcp_rootv1p2 adlcp_rootv1p2.xsd">
+  <metadata>
+    <schema>ADL SCORM</schema>
+    <schemaversion>1.2</schemaversion>
+  </metadata>
+  <organizations default="openlms_org">
+    <organization identifier="openlms_org">
+      <title>Khóa học OpenLMS</title>
+      <item identifier="sco_item" identifierref="sco_resource">
+        <title>Nội dung khóa học</title>
+      </item>
+    </organization>
+  </organizations>
+  <resources>
+    <resource identifier="sco_resource" type="webcontent" adlcp:scormtype="sco" href="index.html">
+      <file href="index.html"/>
+      <file href="scorm_api_wrapper.js"/>
+      <file href="content/player.js"/>
+      <file href="content/course_data.json"/>
+    </resource>
+  </resources>
+</manifest>

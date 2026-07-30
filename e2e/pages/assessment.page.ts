@@ -28,13 +28,13 @@ export class AssessmentPage {
   constructor(page: Page) {
     this.page = page;
 
-    this.quizTab = page.getByRole('button', { name: /Graded Quiz \(80% Pass\)/i });
+    this.quizTab = page.getByRole('button', { name: /Graded Quiz/i });
     this.labTab = page.getByRole('button', { name: /Auto-Graded Lab/i });
     this.peerTab = page.getByRole('button', { name: /Peer Review & Appeal/i });
 
-    this.confirmHonorButton = page.getByRole('button', { name: /Confirm Honor Code/i });
-    this.honorAgreedBadge = page.locator('text=/Honor Code Agreed/i');
-    this.submitQuizButton = page.getByRole('button', { name: /Submit Graded Quiz/i });
+    this.confirmHonorButton = page.getByRole('button', { name: /Confirm Honor Code|Xác nhận Cam kết Trung thực/i });
+    this.honorAgreedBadge = page.locator('text=/Honor Code Agreed|Đã xác nhận Cam kết Trung thực/i');
+    this.submitQuizButton = page.getByRole('button', { name: /Submit Graded Quiz|Nộp bài thi/i });
     this.honorCheckbox = page.locator('input[type="checkbox"]');
     this.agreeAndContinueButton = page.getByRole('button', { name: /I Agree & Continue/i });
 

@@ -30,7 +30,7 @@ test.describe('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () 
     await assessmentPage.submitQuiz();
 
     // Result panel showing score should appear
-    await expect(page.locator('text=/Score:|Required: 80%/i').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=/Score:|Điểm số:|Required:/i').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('should execute auto-graded lab in sandbox and show test case results', async ({ page }) => {

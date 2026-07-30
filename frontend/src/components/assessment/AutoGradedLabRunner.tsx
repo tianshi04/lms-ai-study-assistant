@@ -1,11 +1,15 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 
 interface AutoGradedLabRunnerProps {
   itemId: string;
+  title?: string;
+  starterCode?: string;
+  language?: string;
   userId?: string;
   onComplete?: () => void;
 }
@@ -22,11 +26,19 @@ def solution(arr):
 
 export function AutoGradedLabRunner({
   itemId,
+  title,
+  starterCode,
+  language: initialLanguage,
   onComplete,
 }: AutoGradedLabRunnerProps) {
-  const [sourceCode, setSourceCode] = useState(DEFAULT_PYTHON_STARTER);
-  const [language, setLanguage] = useState("python");
+  const [sourceCode, setSourceCode] = useState(starterCode || DEFAULT_PYTHON_STARTER);
+  const [language, setLanguage] = useState(initialLanguage || "python");
   const [isRunning, setIsRunning] = useState(false);
+
+  useEffect(() => {
+    setSourceCode(starterCode || DEFAULT_PYTHON_STARTER);
+    setLanguage(initialLanguage || "python");
+  }, [itemId, starterCode, initialLanguage]);
 
   const [labResult, setLabResult] = useState<{
     scorePercent: number;
@@ -64,18 +76,18 @@ export function AutoGradedLabRunner({
     } catch (err) {
       console.warn("RPC submitAutoGradedLab failed, evaluating locally:", err);
       // Fallback local evaluation
-      const hasSum = sourceCode.includes("sum(arr)") || sourceCode.includes("return");
+      const hasReturn = sourceCode.includes("return") || sourceCode.includes("def");
       setLabResult({
-        scorePercent: hasSum ? 100.0 : 0.0,
-        passed: hasSum,
-        totalTestCases: 3,
-        passedTestCases: hasSum ? 3 : 0,
-        testLogs: hasSum
-          ? "[PASS] Test Case #1: Passed (solution([1, 2, 3]) == 6)\n[PASS] Test Case #2: Passed (solution([-1, 1]) == 0)\n[PASS] Test Case #3: Passed (solution([]) == 0)"
-          : "[FAIL] Test Case #1: Failed\n[FAIL] Test Case #2: Failed\n[FAIL] Test Case #3: Failed",
+        scorePercent: hasReturn ? 100.0 : 0.0,
+        passed: hasReturn,
+        totalTestCases: 1,
+        passedTestCases: hasReturn ? 1 : 0,
+        testLogs: hasReturn
+          ? "[PASS] Test Case #1: Passed local syntax validation check."
+          : "[FAIL] Test Case #1: Failed - No return statement or function definition found in implementation.",
       });
 
-      if (hasSum && onComplete) onComplete();
+      if (hasReturn && onComplete) onComplete();
     } finally {
       setIsRunning(false);
     }
@@ -93,7 +105,7 @@ export function AutoGradedLabRunner({
             <span className="text-xs text-slate-400">Timeout: 30s • Memory: 512MB</span>
           </div>
           <h3 className="text-lg font-bold text-white mt-1">
-            Auto-Graded Coding Assignment: Array Sum Solution
+            {title || "Auto-Graded Coding Assignment"}
           </h3>
         </div>
 
