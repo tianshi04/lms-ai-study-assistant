@@ -48,7 +48,7 @@ Trong **mỗi Tổ chức cụ thể**, người dùng sẽ đảm nhận 1 tron
 
 | Vai trò | Tên Tiếng Việt | Trách nhiệm Nghiệp vụ Chính |
 | :--- | :--- | :--- |
-| **Organization Admin** | Quản trị viên Tổ chức | • Quản lý thành viên, mời/xóa và phân quyền trong Tổ chức.<br>• Mua, phân bổ và thu hồi Suất học Enterprise Seat cho sinh viên/nhân viên.<br>• Quản lý thông tin thương hiệu (Logo, Banner), chữ ký bảo chứng đại diện cho Tổ chức.<br>• Phê duyệt và quản lý danh mục khóa học của Tổ chức. |
+| **Organization Admin** | Quản trị viên Tổ chức | • Quản lý thành viên, mời/xóa và phân quyền trong nội bộ Tổ chức.<br>• Mua, phân bổ và thu hồi Suất học Enterprise Seat cho sinh viên/nhân viên của Tổ chức.<br>• Quản lý thông tin thương hiệu (Logo, Banner), chữ ký bảo chứng đại diện cho Tổ chức.<br>• Phê duyệt và quản lý danh mục khóa học của Tổ chức.<br>*(Lưu ý: Thẩm quyền chỉ áp dụng trong phạm vi Tổ chức sở hữu. Tuyệt đối không có quyền can thiệp/phê duyệt người dùng hoặc tài nguyên thuộc Tổ chức khác hay đơn cá nhân toàn sàn như đơn Giảng viên cá nhân tự do do Super Admin thẩm định).* |
 | **Organization Instructor** | Giảng viên Tổ chức | • Biên soạn cấu trúc bài giảng, phụ đề VTT, bài đọc và ma trận đề thi Quiz.<br>• Thiết lập tiêu chí chấm điểm tự luận / bài tập dự án (Rubric Criteria).<br>• Phân công giảng viên đồng phụ trách (`co_instructors`) và xuất bản khóa học.<br>• Xem thống kê tiến độ, điểm số của sinh viên thuộc các khóa học mình dạy. |
 | **Teaching Assistant (TA)** | Trợ giảng | • Chấm bài tự luận, giải quyết các đơn phúc khảo bài tập của sinh viên (`TA Regrade Override`).<br>• Quản lý và trả lời thắc mắc trên Diễn đàn thảo luận (Discussion Forum).<br>• Gán cờ câu trả lời chính thức (`is_staff_answer`) để đính lên đầu bài thảo luận. |
 

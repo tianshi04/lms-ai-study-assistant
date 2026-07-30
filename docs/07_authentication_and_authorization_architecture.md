@@ -154,4 +154,15 @@ Loại bỏ hoàn toàn khái niệm vai trò quản trị viên đối tác ở
 3. **[BR-MIGRATION-03] Chuẩn hóa Phân quyền 3 Vai trò Tầng Tổ chức**:
    * Áp dụng thống nhất mô hình 3 vai trò cấp Tổ chức trên toàn hệ thống: **Quản trị viên Tổ chức (`Organization Admin`)**, **Giảng viên Tổ chức (`Organization Instructor`)**, và **Trợ giảng Tổ chức (`Teaching Assistant`)**.
 
+---
+
+## 7. Ranh giới Thẩm quyền Xét duyệt (Single-Tenant Authorization Scope Boundary)
+
+* **Phân định Rõ ràng giữa Super Admin & Organization Admin**:
+  * 👑 **Super Admin (Platform Admin)**: Sở hữu thẩm quyền toàn sàn (Platform-wide Authority). Thực hiện thẩm định và phê duyệt các yêu cầu/đơn đăng ký toàn hệ thống (VD: Đơn đăng ký Giảng viên cá nhân `SubmitInstructorApplication`, Đơn Hỗ trợ Tài chính `FinancialAidApplication`, Khởi tạo Partner B2B mới).
+  * 🏢 **Organization Admin (Tenant Owner)**: Sở hữu thẩm quyền trong phạm vi tổ chức (Tenant-scoped Authority). **Chỉ được phép xem, duyệt đơn gia nhập, phân bổ Suất học Enterprise hoặc phê duyệt khóa học của người dùng/tài nguyên thuộc ĐÚNG Tổ chức mà mình quản lý (`current_user.organization_id == target.organization_id`)**.
+* **Nguyên tắc Cách ly Tuyệt đối (Cross-Tenant Non-Interference Rule)**:
+  * Organization Admin của Tổ chức A **TUYỆT ĐỐI KHÔNG CÓ QUYỀN** xem, can thiệp hoặc phê duyệt đơn đăng ký của người dùng thuộc Tổ chức B hoặc người dùng tự do ngoài phạm vi tổ chức của mình.
+
+
 

@@ -37,6 +37,10 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
     * Hệ thống cập nhật vai trò tài khoản thành `user.role = USER_ROLE_INSTRUCTOR`.
     * Hệ thống tự động liên kết tài khoản này vào Partner Mặc định toàn sàn **`Coursera Project Network`** (`partner_id = "partner_community"`) với trạng thái thành viên `ACTIVE`.
     * Nhờ đó, giảng viên cá nhân thỏa mãn 100% ràng buộc kiến trúc (`partner_id` NOT NULL trên bảng `courses`) và có đầy đủ quyền lựa chọn Partner này khi soạn thảo bài giảng trong Course Builder.
+* **BR_AUTH_006 (Ranh giới Phân quyền Đơn Tổ chức của Organization Admin - Single-Tenant Authorization Boundary):**
+  * **Thẩm quyền Hạn định theo Tổ chức (Tenant-Scoped Authority):** Quản trị viên Tổ chức (`Organization Admin`) chỉ có thẩm quyền quản lý thành viên, xét duyệt đơn gia nhập nội bộ, phân bổ Suất học Enterprise Seat, phê duyệt khóa học hoặc xem báo cáo **nguyên tử trong phạm vi Tổ chức của mình** (`current_user.organization_id == target.organization_id`).
+  * **Ranh giới Bất khả Xâm phạm (Cross-Tenant & Platform Boundary):** Quản trị viên Tổ chức **TUYỆT ĐỐI KHÔNG CÓ QUYỀN** xem, thẩm định hoặc phê duyệt các yêu cầu/đơn đăng ký của người dùng thuộc Tổ chức khác hoặc người dùng cá nhân tự do ngoài phạm vi tổ chức của mình.
+  * **Phân định Duyệt Đơn Giảng viên Cá nhân:** Các đơn xin cấp quyền Giảng viên cá nhân toàn sàn (`SubmitInstructorApplication`) thuộc thẩm quyền thẩm định độc quyền của **Super Admin (Ban Quản trị Nền tảng)** để gán vào `Coursera Project Network` (`partner_community`). Organization Admin của các tổ chức B2B khác không có quyền can thiệp hay duyệt các đơn này.
 * **BR_ACCESS_001 (Phân quyền Audit Mode vs Paid Mode):**
   * *Audit Mode (Miễn phí):* Học viên được mở xem toàn bộ Video bài giảng, bài đọc (Reading) và làm các bài Practice Quiz. Tuy nhiên, hệ thống khóa quyền nộp bài thi Graded Quiz, bài tập Auto-Graded Lab, bài tập Peer Review và không được cấp Chứng chỉ.
   * *Paid Mode (Trả phí / Subscription):* Học viên có toàn bộ quyền làm các bài kiểm tra tính điểm, được bạn học chấm bài Peer Review và nhận Verified Certificate khi hoàn thành.
