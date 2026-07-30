@@ -97,39 +97,6 @@ message ListMyEnrolledCoursesResponse {
   repeated EnrolledCourseSummary courses = 1;
 }
 
-message ScormTracking {
-  string id = 1;
-  string user_id = 2;
-  string item_id = 3;
-  string cmi_core_lesson_status = 4;
-  float cmi_core_score_raw = 5;
-  string cmi_core_lesson_location = 6;
-  string cmi_suspend_data = 7;
-  string updated_at = 8;
-  string cmi_core_session_time = 9;
-}
-
-message SaveScormTrackingRequest {
-  string item_id = 1;
-  string cmi_core_lesson_status = 2;
-  float cmi_core_score_raw = 3;
-  string cmi_core_lesson_location = 4;
-  string cmi_suspend_data = 5;
-  string cmi_core_session_time = 6;
-}
-
-message SaveScormTrackingResponse {
-  ScormTracking tracking = 1;
-}
-
-message GetScormTrackingRequest {
-  string item_id = 1;
-}
-
-message GetScormTrackingResponse {
-  ScormTracking tracking = 1;
-}
-
 service LearningService {
   rpc GetProgress(GetProgressRequest) returns (GetProgressResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
@@ -147,12 +114,6 @@ service LearningService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ListMyEnrolledCourses(ListMyEnrolledCoursesRequest) returns (ListMyEnrolledCoursesResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
-  }
-  rpc SaveScormTracking(SaveScormTrackingRequest) returns (SaveScormTrackingResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
-  }
-  rpc GetScormTracking(GetScormTrackingRequest) returns (GetScormTrackingResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }

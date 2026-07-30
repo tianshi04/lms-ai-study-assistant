@@ -1,7 +1,7 @@
 """add quiz session snapshots
 
 Revision ID: 3b52b619e02b
-Revises: e0b151c2d43e
+Revises: d510ee603d61
 Create Date: 2026-07-28 10:58:09.140745
 
 """
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "3b52b619e02b"
-down_revision: Union[str, Sequence[str], None] = "b5a4c266f68e"
+down_revision: Union[str, Sequence[str], None] = "d510ee603d61"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

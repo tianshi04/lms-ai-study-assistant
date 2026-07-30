@@ -75,9 +75,6 @@ export default function InstructorCourseBuilderPage({
   // SCORM Review Workspace State
   const [showScormReviewModal, setShowScormReviewModal] = useState(false);
   const [scormPreviewCourse, setScormPreviewCourse] = useState<Course | null>(null);
-  const [scormIsSingleItem, setScormIsSingleItem] = useState(false);
-  const [scormSingleItemPreview, setScormSingleItemPreview] = useState<LearningItem | null>(null);
-  const [scormTargetLessonId, setScormTargetLessonId] = useState("");
   const [scormObjectKey, setScormObjectKey] = useState("");
   const [scormImporting, setScormImporting] = useState(false);
 
@@ -833,15 +830,6 @@ export default function InstructorCourseBuilderPage({
 
                       setScormObjectKey(uploadedKey);
                       setScormPreviewCourse(parseRes.coursePreview || null);
-                      setScormIsSingleItem(parseRes.isSingleItem);
-                      setScormSingleItemPreview(parseRes.singleItemPreview || null);
-
-                      if (parseRes.isSingleItem) {
-                        // Pre-select first lesson id
-                        const firstLessonId = course?.weekModules?.[0]?.lessons?.[0]?.id || "";
-                        setScormTargetLessonId(firstLessonId);
-                      }
-
                       setShowScormReviewModal(true);
                     } catch (err: unknown) {
                       const msg = err instanceof Error ? err.message : "Không thể phân tích gói SCORM.";
@@ -2122,108 +2110,57 @@ Nội dung lý thuyết chi tiết...`}
       <Modal
         isOpen={showScormReviewModal}
         onClose={() => setShowScormReviewModal(false)}
-        title={scormIsSingleItem ? "Import Gói SCORM Chuẩn (Level 2)" : "Import Khóa học Native (Level 1)"}
+        title="Import Khóa học Native (Level 1)"
         size="xl"
       >
         <div className="space-y-6">
-          {scormIsSingleItem ? (
-            // LEVEL 2: STANDARD SCORM PACKAGE
-            <div className="space-y-4">
-              <div className="bg-amber-50 dark:bg-amber-500/10 p-4 rounded-2xl border border-amber-200 dark:border-amber-500/20 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-600 text-white">
-                    Standard SCORM 1.2
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-500">Level 2 Support</span>
-                </div>
-                <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400">
-                  {"Phát hiện gói SCORM chuẩn từ hệ thống khác"}
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {"Hệ thống không thể khôi phục đầy đủ cấu trúc chương trình học của gói SCORM này dưới dạng chỉnh sửa được. Thay vào đó, toàn bộ gói sẽ được import dưới dạng một Học liệu SCORM chạy trong iframe."}
-                </p>
+          {/* LEVEL 1: NATIVE COURSE */}
+          <div className="space-y-4">
+            <div className="bg-emerald-50 dark:bg-emerald-500/10 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white">
+                  Full Fidelity Native
+                </span>
+                <span className="text-[10px] font-mono text-slate-500">Level 1 Support</span>
               </div>
-
-              <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
-                <div className="text-xs font-bold text-slate-500 uppercase">Thông tin Học liệu SCORM dự kiến:</div>
-                <div className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                  📂 {scormSingleItemPreview?.title || "Gói bài giảng SCORM"}
-                </div>
-                <div className="text-xs text-slate-500 font-mono">
-                  Đường dẫn chạy chính: {scormSingleItemPreview?.scormEntryHtml || "index.html"}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
-                  {"Chọn Bài học đích để chèn Học liệu SCORM này:"}
-                </label>
-                <select
-                  value={scormTargetLessonId}
-                  onChange={(e) => setScormTargetLessonId(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold"
-                  required
-                >
-                  <option value="">{"-- Chọn Bài học trong khóa --"}</option>
-                  {course?.weekModules?.map((wm) => 
-                    wm.lessons?.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {`Tuần ${wm.weekNumber} > Bài học: ${l.title}`}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </div>
+              <h4 className="text-sm font-bold text-emerald-800 dark:text-emerald-400">
+                {"Phát hiện khóa học Native OpenLMS"}
+              </h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                {"Hệ thống sẽ tiến hành nhập và khôi phục toàn bộ cấu trúc Tuần/Bài học/Học liệu và toàn bộ cài đặt nguyên bản vào khóa học hiện tại."}
+              </p>
             </div>
-          ) : (
-            // LEVEL 1: NATIVE COURSE
-            <div className="space-y-4">
-              <div className="bg-emerald-50 dark:bg-emerald-500/10 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-500/20 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white">
-                    Full Fidelity Native
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-500">Level 1 Support</span>
-                </div>
-                <h4 className="text-sm font-bold text-emerald-800 dark:text-emerald-400">
-                  {"Phát hiện khóa học Native OpenLMS"}
-                </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {"Hệ thống sẽ tiến hành nhập và khôi phục toàn bộ cấu trúc Tuần/Bài học/Học liệu và toàn bộ cài đặt nguyên bản vào khóa học hiện tại."}
-                </p>
-              </div>
 
-              <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Cấu trúc khóa học sẽ được khôi phục:</div>
-              <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2">
-                {scormPreviewCourse?.weekModules?.map((wm, wIdx) => (
-                  <div key={wm.id || wIdx} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
-                    <div className="font-bold text-sm text-slate-800 dark:text-slate-200">
-                      Tuần {wm.weekNumber}: {wm.title}
-                    </div>
-                    <div className="space-y-2 pl-4 border-l-2 border-indigo-400">
-                      {wm.lessons?.map((l, lIdx) => (
-                        <div key={l.id || lIdx} className="space-y-1">
-                          <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                            📖 {l.title} ({l.estimatedMinutes} min)
-                          </div>
-                          <div className="space-y-1 pl-3">
-                            {l.items?.map((item, iIdx) => (
-                              <div key={item.id || iIdx} className="text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
-                                <span>📄 {item.title}</span>
-                                <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
-                                  {ItemType[item.type] || "SCORM"}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Cấu trúc khóa học sẽ được khôi phục:</div>
+            <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2">
+              {scormPreviewCourse?.weekModules?.map((wm, wIdx) => (
+                <div key={wm.id || wIdx} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                  <div className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                    Tuần {wm.weekNumber}: {wm.title}
                   </div>
-                ))}
-              </div>
+                  <div className="space-y-2 pl-4 border-l-2 border-indigo-400">
+                    {wm.lessons?.map((l, lIdx) => (
+                      <div key={l.id || lIdx} className="space-y-1">
+                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                          📖 {l.title} ({l.estimatedMinutes} min)
+                        </div>
+                        <div className="space-y-1 pl-3">
+                          {l.items?.map((item, iIdx) => (
+                            <div key={item.id || iIdx} className="text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
+                              <span>📄 {item.title}</span>
+                              <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
+                                {ItemType[item.type] || "SCORM"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
 
           <div className="flex justify-end gap-3 pt-2">
             <button
@@ -2236,17 +2173,12 @@ Nội dung lý thuyết chi tiết...`}
             <button
               type="button"
               onClick={async () => {
-                if (scormIsSingleItem && !scormTargetLessonId) {
-                  toast.error("Vui lòng chọn bài học đích để chèn học liệu SCORM.");
-                  return;
-                }
                 try {
                   setScormImporting(true);
                   const client = getRpcClient(CatalogService);
                   await client.importCourseFromScorm({
                     scormObjectKey,
                     courseId,
-                    targetLessonId: scormIsSingleItem ? scormTargetLessonId : undefined,
                   });
                   toast.success("Đã import dữ liệu SCORM vào khóa học thành công!");
                   setShowScormReviewModal(false);
