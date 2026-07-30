@@ -1,6 +1,8 @@
 from starlette.responses import JSONResponse
 from starlette.requests import Request
-from src.modules.recommendation.application.recommendation_service import recommendation_service
+from src.modules.recommendation.application.recommendation_service import (
+    recommendation_service,
+)
 
 
 async def get_trending_courses(request: Request) -> JSONResponse:
