@@ -75,6 +75,23 @@ class QuizCooldown(Entity):
         self.cooldown_until = cooldown_until
 
 
+class QuizActiveSession(Entity):
+    def __init__(
+        self,
+        user_id: str,
+        item_id: str,
+        session_token: str,
+        session_seed: int,
+        expires_at: str,
+    ) -> None:
+        super().__init__(id=f"{user_id}:{item_id}")
+        self.user_id = user_id
+        self.item_id = item_id
+        self.session_token = session_token
+        self.session_seed = session_seed
+        self.expires_at = expires_at
+
+
 class LabSubmission(Entity):
     def __init__(
         self,

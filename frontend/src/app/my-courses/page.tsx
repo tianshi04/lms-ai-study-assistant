@@ -22,7 +22,7 @@ export default function MyCoursesPage() {
   useEffect(() => {
     if (!isMounted) return;
 
-    const token = localStorage.getItem("access_token");
+    const token = localStorage.getItem("user_id");
     if (!token) {
       window.location.href = "/auth/login?redirect=/my-courses";
       return;

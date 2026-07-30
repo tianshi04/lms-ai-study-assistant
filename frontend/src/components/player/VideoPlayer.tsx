@@ -1,15 +1,23 @@
 "use client";
 
-import { RefObject } from "react";
+import { forwardRef, useImperativeHandle, useRef, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import YouTube, { YouTubeEvent, YouTubePlayer } from "react-youtube";
 import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
 import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
 import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentWorkspace";
 
 
+export interface VideoPlayerRef {
+  currentTime: number;
+  duration: number;
+  pause: () => void;
+  play: () => void;
+  setCurrentTime: (time: number) => void;
+}
+
 interface VideoPlayerProps {
-  videoRef: RefObject<HTMLVideoElement | null>;
   activeItem: LearningItem | null;
   userId?: string;
   activeQuiz: InVideoQuiz | null;
@@ -25,8 +33,7 @@ interface VideoPlayerProps {
   isPreviewMode?: boolean;
 }
 
-export function VideoPlayer({
-  videoRef,
+export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   activeItem,
   userId,
   activeQuiz,
@@ -40,8 +47,46 @@ export function VideoPlayer({
   onContinueVideo,
   onMarkComplete,
   isPreviewMode = false,
-}: VideoPlayerProps) {
-  
+}: VideoPlayerProps, ref) => {
+  const internalVideoRef = useRef<HTMLVideoElement>(null);
+  const internalYoutubePlayerRef = useRef<YouTubePlayer | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    get currentTime() {
+      if (internalVideoRef.current) return internalVideoRef.current.currentTime;
+      if (internalYoutubePlayerRef.current) return internalYoutubePlayerRef.current.getCurrentTime() || 0;
+      return 0;
+    },
+    get duration() {
+      if (internalVideoRef.current) return internalVideoRef.current.duration;
+      if (internalYoutubePlayerRef.current) return internalYoutubePlayerRef.current.getDuration() || 0;
+      return 0;
+    },
+    pause() {
+      if (internalVideoRef.current) internalVideoRef.current.pause();
+      if (internalYoutubePlayerRef.current) internalYoutubePlayerRef.current.pauseVideo();
+    },
+    play() {
+      if (internalVideoRef.current) internalVideoRef.current.play();
+      if (internalYoutubePlayerRef.current) internalYoutubePlayerRef.current.playVideo();
+    },
+    setCurrentTime(time: number) {
+      if (internalVideoRef.current) internalVideoRef.current.currentTime = time;
+      if (internalYoutubePlayerRef.current) internalYoutubePlayerRef.current.seekTo(time, true);
+    }
+  }));
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        onTimeUpdate();
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying, onTimeUpdate]);
+
 
   if (!activeItem) {
     return (
@@ -168,35 +213,48 @@ export function VideoPlayer({
     );
   }
 
-
-
-
-function getYouTubeEmbedUrl(url: string, autoTranscribe: boolean = false): string | null {
+function getYouTubeId(url: string): string | null {
   if (!url) return null;
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
   const match = url.match(regExp);
-  const ccParam = autoTranscribe ? "&cc_load_policy=1" : "";
-  return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?enablejsapi=1${ccParam}` : null;
+  return match && match[2].length === 11 ? match[2] : null;
 }
 
   // 5. Video Item Default Fallback
   if (activeItem.type === 1 && activeItem.videoUrl) {
-    const youtubeEmbedUrl = getYouTubeEmbedUrl(activeItem.videoUrl, activeItem.autoTranscribe);
+    const youtubeId = getYouTubeId(activeItem.videoUrl);
 
     return (
       <div className="w-full h-full relative flex items-center justify-center bg-slate-100 dark:bg-black transition-colors duration-200">
-        {youtubeEmbedUrl ? (
-          <iframe
+        {youtubeId ? (
+          <YouTube
             key={activeItem.id}
-            src={youtubeEmbedUrl}
-            className="w-full h-full border-0 rounded-lg shadow-2xl"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
+            videoId={youtubeId}
+            className="w-full h-full border-0 rounded-lg shadow-2xl [&>iframe]:w-full [&>iframe]:h-full"
+            opts={{
+              width: "100%",
+              height: "100%",
+              playerVars: {
+                autoplay: 0,
+                cc_load_policy: activeItem.autoTranscribe ? 1 : 0,
+              },
+            }}
+            onReady={(e: YouTubeEvent) => {
+              internalYoutubePlayerRef.current = e.target;
+            }}
+            onStateChange={(e: YouTubeEvent) => {
+              if (e.data === YouTube.PlayerState.PLAYING) {
+                setIsPlaying(true);
+              } else {
+                setIsPlaying(false);
+              }
+            }}
+            onEnd={() => onMarkComplete?.(activeItem.id)}
           />
         ) : (
           <video
             key={activeItem.id}
-            ref={videoRef}
+            ref={internalVideoRef}
             src={activeItem.videoUrl}
             controls
             onTimeUpdate={onTimeUpdate}
@@ -327,4 +385,5 @@ function getYouTubeEmbedUrl(url: string, autoTranscribe: boolean = false): strin
       {"Chọn bài học từ danh sách bên trái để bắt đầu."}
     </div>
   );
-}
+});
+VideoPlayer.displayName = "VideoPlayer";

@@ -19,7 +19,8 @@ message SubmitGradedQuizRequest {
   repeated int32 selected_option_indexes = 2;
   int32 session_seed = 3;
   string start_time_iso = 4;
-  bool preview = 5;
+  string session_token = 5;
+  bool preview = 6;
 }
 
 message QuizResult {
@@ -329,6 +330,8 @@ message StartGradedQuizSessionResponse {
   int32 session_seed = 6;
   int32 cooldown_seconds_left = 7;
   int32 attempts_left = 8;
-  int32 max_attempts = 9;
-  int32 cooldown_hours = 10;
+  string session_token = 9;
+  string expires_at_iso = 10;
+  int32 max_attempts = 11;
+  int32 cooldown_hours = 12;
 }

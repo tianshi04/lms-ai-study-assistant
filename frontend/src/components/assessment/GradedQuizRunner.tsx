@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { HonorCodeModal } from "./HonorCodeModal";
@@ -42,7 +42,9 @@ export function GradedQuizRunner({
   const [questions, setQuestions] = useState<QuizSessionQuestion[]>([]);
   const [sessionSeed, setSessionSeed] = useState<number>(0);
   const [startTimeIso, setStartTimeIso] = useState<string>("");
+  const [sessionToken, setSessionToken] = useState<string>("");
   const [timeLimit, setTimeLimit] = useState<number>(45);
+  const [timeLeftSeconds, setTimeLeftSeconds] = useState<number | null>(null);
   const [passingThreshold, setPassingThreshold] = useState<number>(80);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +61,7 @@ export function GradedQuizRunner({
   } | null>(null);
 
   const [cooldownCountdown, setCooldownCountdown] = useState<number>(0);
+  const autoSubmitTriggeredRef = useRef(false);
 
   // Keep isHonorAgreed updated when in preview mode
   /* eslint-disable react-hooks/set-state-in-effect */
@@ -82,7 +85,9 @@ export function GradedQuizRunner({
           setQuestions(res.questions || []);
           setSessionSeed(res.sessionSeed);
           setStartTimeIso(res.startTimeIso);
+          setSessionToken(res.sessionToken || "");
           setTimeLimit(res.timeLimitMinutes || 45);
+          setTimeLeftSeconds((res.timeLimitMinutes || 45) * 60);
           setPassingThreshold(res.passingThresholdPercent || 80.0);
           setMaxAttempts(res.maxAttempts || 3);
           setCooldownHours(res.cooldownHours || 8);
@@ -109,27 +114,6 @@ export function GradedQuizRunner({
     };
   }, [itemId, isPreviewMode]);
 
-  useEffect(() => {
-    if (cooldownCountdown <= 0) return;
-    const interval = setInterval(() => {
-      setCooldownCountdown((prev) => Math.max(0, prev - 1));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [cooldownCountdown]);
-
-  const formatCooldown = (seconds: number) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  };
-
-  const handleOptionSelect = (qIdx: number, optIdx: number) => {
-    const updated = [...selectedAnswers];
-    updated[qIdx] = optIdx;
-    setSelectedAnswers(updated);
-  };
-
   const handleResetPreview = async () => {
     setQuizResult(null);
     setSubmitError(null);
@@ -155,7 +139,7 @@ export function GradedQuizRunner({
     }
   };
 
-  const executeSubmit = async () => {
+  const executeSubmit = useCallback(async () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -166,6 +150,7 @@ export function GradedQuizRunner({
         selectedOptionIndexes: selectedAnswers,
         sessionSeed,
         startTimeIso,
+        sessionToken,
         preview: isPreviewMode,
       });
 
@@ -201,14 +186,56 @@ export function GradedQuizRunner({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [itemId, selectedAnswers, sessionSeed, startTimeIso, sessionToken, onComplete, isPreviewMode]);
 
-  const handleSubmitQuiz = async () => {
-    if (!isHonorAgreed && !isPreviewMode) {
+  const handleSubmitQuiz = useCallback(async (isAutoSubmit: boolean = false) => {
+    if (!isHonorAgreed && !isAutoSubmit && !isPreviewMode) {
       setIsHonorModalOpen(true);
       return;
     }
     await executeSubmit();
+  }, [isHonorAgreed, executeSubmit, isPreviewMode]);
+
+  useEffect(() => {
+    if (timeLeftSeconds === null || timeLeftSeconds <= 0 || isSubmitting || quizResult || cooldownCountdown > 0) return;
+    autoSubmitTriggeredRef.current = false;
+    
+    const interval = setInterval(() => {
+      setTimeLeftSeconds(prev => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          clearInterval(interval);
+          if (!autoSubmitTriggeredRef.current) {
+            autoSubmitTriggeredRef.current = true;
+            queueMicrotask(() => handleSubmitQuiz(true));
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timeLeftSeconds, isSubmitting, quizResult, cooldownCountdown, handleSubmitQuiz]);
+
+  useEffect(() => {
+    if (cooldownCountdown <= 0) return;
+    const interval = setInterval(() => {
+      setCooldownCountdown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [cooldownCountdown]);
+
+  const formatCooldown = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
+  const handleOptionSelect = (qIdx: number, optIdx: number) => {
+    const updated = [...selectedAnswers];
+    updated[qIdx] = optIdx;
+    setSelectedAnswers(updated);
   };
 
   if (loading) {
@@ -286,6 +313,22 @@ export function GradedQuizRunner({
           </h2>
         </div>
 
+        {timeLeftSeconds !== null && cooldownCountdown === 0 && !quizResult && (
+          <div className={`px-4 py-2 rounded-xl border flex items-center gap-2 font-mono font-bold text-lg shadow-sm transition-colors ${
+            timeLeftSeconds <= 60 
+              ? "bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800 animate-pulse" 
+              : "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800/50 dark:text-slate-200 dark:border-slate-700"
+          }`}>
+            <svg className="w-5 h-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>
+              {Math.floor(timeLeftSeconds / 60).toString().padStart(2, '0')}:
+              {(timeLeftSeconds % 60).toString().padStart(2, '0')}
+            </span>
+          </div>
+        )}
+
         <div className="flex items-center gap-3">
           {isPreviewMode ? (
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-900/55">
@@ -348,7 +391,7 @@ export function GradedQuizRunner({
                 return (
                   <button
                     key={optIdx}
-                    disabled={cooldownCountdown > 0 && !isPreviewMode}
+                    disabled={(cooldownCountdown > 0 && !isPreviewMode) || (timeLeftSeconds !== null && timeLeftSeconds <= 0)}
                     onClick={() => handleOptionSelect(qIdx, optIdx)}
                     className={`p-3.5 rounded-xl text-xs text-left font-medium transition-all border flex items-center gap-2.5 ${
                       isSelected
@@ -455,8 +498,8 @@ export function GradedQuizRunner({
             </button>
           )}
           <button
-            onClick={handleSubmitQuiz}
-            disabled={isSubmitting || (cooldownCountdown > 0 && !isPreviewMode)}
+            onClick={() => handleSubmitQuiz()}
+            disabled={isSubmitting || (cooldownCountdown > 0 && !isPreviewMode) || (timeLeftSeconds !== null && timeLeftSeconds <= 0)}
             className="px-6 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-xs transition-all flex items-center gap-2"
           >
             <span>{isSubmitting ? "Đang chấm điểm..." : "Nộp bài thi"}</span>
@@ -467,6 +510,7 @@ export function GradedQuizRunner({
             )}
           </button>
         </div>
+
       </div>
 
       <HonorCodeModal

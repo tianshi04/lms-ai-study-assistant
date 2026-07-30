@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from src.modules.certificate.application.certificate_usecase import (
     CertificateUseCase,
     count_words,
@@ -160,6 +160,10 @@ async def test_get_verified_certificate_new(
 ):
     mock_session = AsyncMock()
     mock_session_scope.return_value.__aenter__.return_value = mock_session
+    # Mock session.execute() for direct SQLAlchemy queries (graded items check)
+    mock_execute_result = MagicMock()
+    mock_execute_result.scalars.return_value.all.return_value = []
+    mock_session.execute = AsyncMock(return_value=mock_execute_result)
     mock_repo = mock_repo_class.return_value
 
     mock_repo.get_course_details_by_id_or_slug = AsyncMock(
@@ -205,6 +209,10 @@ async def test_get_verified_certificate_new_defaults(
 ):
     mock_session = AsyncMock()
     mock_session_scope.return_value.__aenter__.return_value = mock_session
+    # Mock session.execute() for direct SQLAlchemy queries (graded items check)
+    mock_execute_result = MagicMock()
+    mock_execute_result.scalars.return_value.all.return_value = []
+    mock_session.execute = AsyncMock(return_value=mock_execute_result)
     mock_repo = mock_repo_class.return_value
 
     mock_repo.get_course_details_by_id_or_slug = AsyncMock(

@@ -41,10 +41,12 @@ class AuthInterceptor(UnaryInterceptor):
             or {}
         )
         auth_header = ""
+        cookie_header = ""
         if hasattr(metadata, "get"):
             auth_header = metadata.get("authorization", "") or metadata.get(
                 "Authorization", ""
             )
+            cookie_header = metadata.get("cookie", "") or metadata.get("Cookie", "")
 
         # Extract organization header if provided
         active_org_id = ""
@@ -56,8 +58,7 @@ class AuthInterceptor(UnaryInterceptor):
             )
 
         current_user = None
-        token = None
-
+        token = ""
         if auth_header:
             raw_header = str(auth_header).strip()
             token = (
@@ -65,20 +66,14 @@ class AuthInterceptor(UnaryInterceptor):
                 if raw_header.lower().startswith("bearer ")
                 else raw_header
             )
-        else:
-            cookie_header = ""
-            if hasattr(metadata, "get"):
-                cookie_header = metadata.get("cookie", "") or metadata.get("Cookie", "")
-            if cookie_header:
-                from http.cookies import SimpleCookie
-
-                try:
-                    cookie = SimpleCookie()
-                    cookie.load(str(cookie_header))
-                    if "access_token" in cookie:
-                        token = cookie["access_token"].value
-                except Exception:
-                    pass
+        elif cookie_header:
+            # Parse access_token=... from cookie string
+            cookies = dict(
+                item.split("=")
+                for item in str(cookie_header).split("; ")
+                if "=" in item
+            )
+            token = cookies.get("access_token", "")
 
         if token:
             payload = decode_token(token)
@@ -97,11 +92,13 @@ class AuthInterceptor(UnaryInterceptor):
                     Code.UNAUTHENTICATED, "Token xác thực không hợp lệ hoặc đã hết hạn"
                 )
         elif not is_public:
-            raise ConnectError(Code.UNAUTHENTICATED, "Thiếu header Authorization")
+            raise ConnectError(
+                Code.UNAUTHENTICATED,
+                "Thiếu token xác thực (Không tìm thấy Header hoặc Cookie)",
+            )
 
         # Validate authorization policy (e.g. ADMIN role check)
         AuthPolicyRegistry.authorize(method_path, current_user)
-
         set_current_user(current_user)
         user_id_token = set_user_id(current_user.id) if current_user else None
 

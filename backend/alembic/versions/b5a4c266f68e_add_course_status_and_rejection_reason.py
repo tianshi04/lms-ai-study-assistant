@@ -1,7 +1,7 @@
 """add_course_status_and_rejection_reason
 
 Revision ID: b5a4c266f68e
-Revises: e0b151c2d43e
+Revises: 5181a248800b
 Create Date: 2026-07-29 22:08:13.842394
 
 """
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "b5a4c266f68e"
-down_revision: Union[str, Sequence[str], None] = "e0b151c2d43e"
+down_revision: Union[str, Sequence[str], None] = "5181a248800b"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

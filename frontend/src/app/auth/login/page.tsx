@@ -4,12 +4,12 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
-import { getRpcClient } from "@/lib/connect_client";
-import { IdentityService } from "@/gen/identity/v1/identity_pb";
+
 import { useToast } from "@/components/ui/Toast";
 
 import { useAuth } from "@/components/providers/AuthProvider";
 import { cn } from "@/lib/utils";
+
 
 function LoginFormContent() {
   const router = useRouter();
@@ -34,33 +34,30 @@ function LoginFormContent() {
     onSubmit: async ({ value }) => {
       setSubmitting(true);
       try {
-        const client = getRpcClient(IdentityService);
-        const res = await client.login({
-          email: value.email.trim(),
-          password: value.password,
+        const apiRes = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: value.email.trim(), password: value.password }),
         });
+        
+        const data = await apiRes.json();
+        
+        if (!apiRes.ok) {
+          throw new Error(data.error || "Đăng nhập thất bại.");
+        }
 
-        if (res.accessToken && res.user) {
-          localStorage.setItem("access_token", res.accessToken);
-          if (res.refreshToken) {
-            localStorage.setItem("refresh_token", res.refreshToken);
-          }
-          localStorage.setItem("user_id", res.user.id);
-          localStorage.setItem("user_email", res.user.email);
-          localStorage.setItem("user_name", res.user.fullName);
-          localStorage.setItem("user_role", String(res.user.role));
-
-          // Set cookies for SSR hydration
-          document.cookie = `user_name=${encodeURIComponent(res.user.fullName)}; path=/; max-age=2592000; Secure; SameSite=Lax`;
-          document.cookie = `user_email=${encodeURIComponent(res.user.email)}; path=/; max-age=2592000; Secure; SameSite=Lax`;
-          document.cookie = `user_role=${res.user.role}; path=/; max-age=2592000; Secure; SameSite=Lax`;
-          document.cookie = `access_token=${res.accessToken}; path=/; max-age=2592000; Secure; SameSite=Lax`;
-
+        if (data.success && data.user) {
+          // No longer storing tokens in localStorage! They are in HttpOnly cookies.
+          localStorage.setItem("user_id", data.user.id);
+          localStorage.setItem("user_email", data.user.email);
+          localStorage.setItem("user_name", data.user.fullName);
+          localStorage.setItem("user_role", String(data.user.role));
+          
           // Update React Auth Provider state so UI (Navbar, Profile) updates immediately
           setAuth({
-            userName: res.user.fullName,
-            userEmail: res.user.email,
-            userRole: String(res.user.role),
+            userName: data.user.fullName,
+            userEmail: data.user.email,
+            userRole: String(data.user.role),
           });
 
           router.push(redirectTarget);

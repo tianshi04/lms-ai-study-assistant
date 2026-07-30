@@ -452,7 +452,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <button
                 type="button"
                 onClick={() => {
-                  const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+                  const token = typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
                   if (!token) {
                     window.location.href = `/auth/login?redirect=/courses/${courseId}`;
                     return;

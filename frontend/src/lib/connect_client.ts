@@ -1,67 +1,43 @@
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { createClient, Client, Interceptor, ConnectError, Code } from "@connectrpc/connect";
 import type { DescService } from "@bufbuild/protobuf";
-import { IdentityService } from "@/gen/identity/v1/identity_pb";
+
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 let isRefreshing = false;
-let refreshPromise: Promise<string | null> | null = null;
+let refreshPromise: Promise<boolean> | null = null;
 
-async function doSilentRefreshToken(): Promise<string | null> {
-  if (typeof window === "undefined") return null;
-  const refreshToken = localStorage.getItem("refresh_token");
-  if (!refreshToken) return null;
+async function doSilentRefreshToken(): Promise<boolean> {
+  if (typeof window === "undefined") return false;
 
   try {
-    // Create direct un-intercepted client for refresh call to prevent infinite loop
-    const rawTransport = createConnectTransport({
-      baseUrl: API_BASE_URL,
-      fetch: (input, init) => fetch(input, { ...init, credentials: "include" }),
-    });
-    const client = createClient(IdentityService, rawTransport);
-    const res = await client.refreshToken({ refreshToken });
-
-    if (res.accessToken) {
-      localStorage.setItem("access_token", res.accessToken);
-      document.cookie = `access_token=${res.accessToken}; path=/; max-age=2592000; SameSite=Lax`;
-      if (res.refreshToken) {
-        localStorage.setItem("refresh_token", res.refreshToken);
-      }
-      return res.accessToken;
+    const res = await fetch("/api/auth/refresh", { method: "POST" });
+    if (res.ok) {
+      return true;
     }
   } catch (err) {
     console.warn("Silent token refresh failed:", err);
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("user_email");
-    localStorage.removeItem("user_name");
-    localStorage.removeItem("user_role");
-    document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "user_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   }
-  return null;
+  
+  // If refresh fails, clear user metadata and redirect to login
+  localStorage.removeItem("user_id");
+  localStorage.removeItem("user_email");
+  localStorage.removeItem("user_name");
+  localStorage.removeItem("user_role");
+  return false;
 }
 
 /**
- * ConnectRPC Interceptor for automatic Bearer Authorization injection & Silent Token Refresh.
+ * ConnectRPC Interceptor for Silent Token Refresh.
+ * Note: Authorization header is no longer manually attached here because 
+ * HttpOnly cookies are automatically sent by the browser.
  */
 const authInterceptor: Interceptor = (next) => async (req) => {
-  // 1. Attach Authorization: Bearer <access_token> header if available
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      req.header.set("Authorization", `Bearer ${token}`);
-    }
-  }
-
   try {
     return await next(req);
   } catch (err) {
-    // 2. Catch Unauthenticated (401) errors and attempt silent auto-refresh
+    // Catch Unauthenticated (401) errors and attempt silent auto-refresh via Next.js API
     if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
       if (req.service.typeName === "identity.v1.IdentityService" && req.method.name === "RefreshToken") {
         throw err;
@@ -75,10 +51,9 @@ const authInterceptor: Interceptor = (next) => async (req) => {
         });
       }
 
-      const newToken = await refreshPromise;
-      if (newToken) {
-        // Retry the failed request transparently with new Access Token
-        req.header.set("Authorization", `Bearer ${newToken}`);
+      const success = await refreshPromise;
+      if (success) {
+        // Retry the failed request. The browser will automatically send the new HttpOnly cookies.
         return await next(req);
       }
     }
@@ -91,8 +66,12 @@ const authInterceptor: Interceptor = (next) => async (req) => {
  */
 export const transport = createConnectTransport({
   baseUrl: API_BASE_URL,
-  fetch: (input, init) => fetch(input, { ...init, credentials: "include" }),
   interceptors: [authInterceptor],
+  fetch: (input, init) => {
+    const options = init || {};
+    options.credentials = "include"; // Send HttpOnly cookies cross-origin
+    return fetch(input, options);
+  }
 });
 
 /**

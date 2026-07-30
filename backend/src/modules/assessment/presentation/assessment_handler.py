@@ -41,6 +41,7 @@ class AssessmentHandler(AssessmentService):
                 user_id=current_user.id,
                 item_id=request.item_id,
                 selected_option_indexes=list(request.selected_option_indexes),
+                session_token=request.session_token or None,
                 session_seed=request.session_seed or None,
                 start_time_iso=request.start_time_iso or None,
                 preview=request.preview,
@@ -49,7 +50,6 @@ class AssessmentHandler(AssessmentService):
             raise ConnectError(Code.FAILED_PRECONDITION, str(e))
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
-
         quiz_result = pb.QuizResult(
             score_percent=res["score_percent"],
             passed=res["passed"],
@@ -505,6 +505,7 @@ class AssessmentHandler(AssessmentService):
             session_seed=res["session_seed"],
             cooldown_seconds_left=res.get("cooldown_seconds_left", 0),
             attempts_left=res.get("attempts_left", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
+            session_token=res.get("session_token", ""),
             max_attempts=res.get("max_attempts", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
             cooldown_hours=res.get("cooldown_hours", 8),
         )

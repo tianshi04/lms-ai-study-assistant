@@ -52,6 +52,17 @@ class QuizCooldownModel(Base):
     cooldown_until: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
 
+class QuizActiveSessionModel(Base):
+    __tablename__ = "quiz_active_sessions"
+
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)  # user_id:item_id
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    session_token: Mapped[str] = mapped_column(Text, nullable=False)
+    session_seed: Mapped[int] = mapped_column(Integer, nullable=False)
+    expires_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
 class LabSubmissionModel(Base):
     __tablename__ = "lab_submissions"
 

@@ -368,7 +368,7 @@ export function useMyCertificatesQuery(options?: Partial<UseQueryOptions<Verifie
   return useQuery<VerifiedCertificate[], Error>({
     queryKey: ["myCertificates"],
     queryFn: async () => {
-      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      const token = typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
       if (!token) return [];
       const client = getRpcClient(CertificateService);
       const res = await client.listMyCertificates({});

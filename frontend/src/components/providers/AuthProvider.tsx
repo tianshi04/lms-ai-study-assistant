@@ -29,12 +29,11 @@ export function AuthProvider({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const token = localStorage.getItem("access_token");
       const localName = localStorage.getItem("user_name");
       const localEmail = localStorage.getItem("user_email");
       const localRole = localStorage.getItem("user_role");
 
-      if (token && localName) {
+      if (localName) {
         queueMicrotask(() => {
           setAuthState({
             userName: localName,
@@ -42,16 +41,11 @@ export function AuthProvider({
             userRole: localRole,
           });
         });
-        document.cookie = `access_token=${encodeURIComponent(token)}; path=/; max-age=2592000`;
-        document.cookie = `user_name=${encodeURIComponent(localName)}; path=/; max-age=2592000`;
-        if (localEmail) document.cookie = `user_email=${encodeURIComponent(localEmail)}; path=/; max-age=2592000`;
-        if (localRole) document.cookie = `user_role=${localRole}; path=/; max-age=2592000`;
-      } else if (!token && (initialAuth.userName || initialAuth.userEmail || initialAuth.userRole)) {
+      } else if (initialAuth.userName || initialAuth.userEmail || initialAuth.userRole) {
         localStorage.removeItem("user_name");
         localStorage.removeItem("user_email");
         localStorage.removeItem("user_role");
         localStorage.removeItem("user_id");
-        localStorage.removeItem("refresh_token");
         queueMicrotask(() => {
           setAuthState({
             userName: null,
@@ -65,30 +59,21 @@ export function AuthProvider({
 
   const setAuth = (newAuth: UserAuth) => {
     setAuthState(newAuth);
-    if (newAuth.userName) {
-      if (typeof window !== "undefined") {
-        const token = localStorage.getItem("access_token");
-        if (token) document.cookie = `access_token=${encodeURIComponent(token)}; path=/; max-age=2592000`;
-      }
-      document.cookie = `user_name=${encodeURIComponent(newAuth.userName)}; path=/; max-age=2592000`;
-      if (newAuth.userEmail) document.cookie = `user_email=${encodeURIComponent(newAuth.userEmail)}; path=/; max-age=2592000`;
-      if (newAuth.userRole) document.cookie = `user_role=${newAuth.userRole}; path=/; max-age=2592000`;
-    } else {
-      document.cookie = "user_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      document.cookie = "user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      document.cookie = "user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    }
+    // Note: We don't need to sync to cookies here because the Next.js API
+    // manages the HttpOnly tokens. The frontend just stores metadata in localStorage.
   };
 
-  const logout = () => {
+  const logout = async () => {
     localStorage.clear();
-    document.cookie = "user_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     setAuthState({ userName: null, userEmail: null, userRole: null });
-    window.location.href = "/auth/login";
+    if (typeof window !== "undefined") {
+      try {
+        await fetch("/api/auth/logout", { method: "POST" });
+      } catch (err) {
+        console.error("Logout API failed", err);
+      }
+      window.location.href = "/auth/login";
+    }
   };
 
   const roleStr = String(auth.userRole || "").toLowerCase();
