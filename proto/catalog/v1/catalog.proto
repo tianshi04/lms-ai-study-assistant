@@ -51,7 +51,7 @@ message LearningItem {
   string language = 13;
   string rubric_criteria_json = 14;
   string quiz_matrix_id = 15;
-  bool auto_transcribe = 18;
+  bool auto_transcribe = 16;
 }
 
 message Lesson {
@@ -263,8 +263,8 @@ message CreateLearningItemRequest {
   string language = 11;
   string rubric_criteria_json = 12;
   string quiz_matrix_id = 13;
-  string vtt_subtitle_url = 16;
-  bool auto_transcribe = 17;
+  string vtt_subtitle_url = 14;
+  bool auto_transcribe = 15;
 }
 
 message CreateLearningItemResponse {
@@ -287,8 +287,8 @@ message UpdateLearningItemRequest {
   string language = 12;
   string rubric_criteria_json = 13;
   string quiz_matrix_id = 14;
-  string vtt_subtitle_url = 17;
-  bool auto_transcribe = 18;
+  string vtt_subtitle_url = 15;
+  bool auto_transcribe = 16;
 }
 
 message UpdateLearningItemResponse {
