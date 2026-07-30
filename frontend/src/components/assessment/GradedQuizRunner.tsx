@@ -57,15 +57,7 @@ export function GradedQuizRunner({
   const [cooldownCountdown, setCooldownCountdown] = useState<number>(0);
   const autoSubmitTriggeredRef = useRef(false);
 
-  const handleSubmitQuiz = useCallback(async (isAutoSubmit: boolean = false) => {
-    if (!isHonorAgreed && !isAutoSubmit) {
-      setIsHonorModalOpen(true);
-      return;
-    }
-    await executeSubmit();
-  }, [isHonorAgreed]);
-
-  const executeSubmit = async () => {
+  const executeSubmit = useCallback(async (isAutoSubmit: boolean = false) => {
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -105,7 +97,15 @@ export function GradedQuizRunner({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [itemId, selectedAnswers, sessionSeed, startTimeIso, sessionToken, onComplete]);
+
+  const handleSubmitQuiz = useCallback(async (isAutoSubmit: boolean = false) => {
+    if (!isHonorAgreed && !isAutoSubmit) {
+      setIsHonorModalOpen(true);
+      return;
+    }
+    await executeSubmit(isAutoSubmit);
+  }, [isHonorAgreed, executeSubmit]);
 
   useEffect(() => {
     let ignore = false;
