@@ -4,6 +4,7 @@ import {
   CourseBuilderPage,
   InstructorAnnouncementsPage,
   InstructorAnalyticsPage,
+  NewCoursePage,
 } from '../pages';
 
 test.describe('Full System Blackbox - Instructor Flows (POM)', () => {
@@ -11,6 +12,16 @@ test.describe('Full System Blackbox - Instructor Flows (POM)', () => {
     const instructorPage = new InstructorCoursesPage(page);
     await instructorPage.goto();
     await instructorPage.verifyPageLoaded();
+  });
+
+  test('should load new course drafting page and render partner scoping options', async ({ page }) => {
+    const newCoursePage = new NewCoursePage(page);
+    await newCoursePage.goto();
+    await newCoursePage.verifyPageLoaded();
+
+    await expect(newCoursePage.partnerSelect).toBeVisible();
+    await expect(newCoursePage.titleInput).toBeVisible();
+    await expect(newCoursePage.liveBadgePreview).toBeVisible();
   });
 
   test('should allow creating a new course via modal', async ({ page }) => {
