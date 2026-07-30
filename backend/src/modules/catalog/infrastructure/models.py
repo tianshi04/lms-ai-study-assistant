@@ -13,6 +13,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.catalog.domain.entities import ItemType, CourseStatus
+from src.modules.identity.domain.constants import INTERNAL_SYSTEM_ORG_ID
 from src.shared.infrastructure.database import Base
 
 
@@ -45,6 +46,13 @@ class CourseModel(Base):
     __tablename__ = "courses"
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    organization_id: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        default=INTERNAL_SYSTEM_ORG_ID,
+        server_default=INTERNAL_SYSTEM_ORG_ID,
+        index=True,
+    )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     description: Mapped[str] = mapped_column(Text, nullable=False, default="")

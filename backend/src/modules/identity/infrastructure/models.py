@@ -1,11 +1,19 @@
 from typing import Optional
-from sqlalchemy import ARRAY, Boolean, Enum as SQLEnum, Integer, String, Text
+from sqlalchemy import (
+    ARRAY,
+    Boolean,
+    Enum as SQLEnum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.modules.identity.domain.constants import (
     DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS,
 )
-from src.modules.identity.domain.entities import UserRole
+from src.modules.identity.domain.entities import UserRole, SystemRole
 from src.shared.infrastructure.database import Base
 
 
@@ -22,6 +30,12 @@ class UserModel(Base):
         nullable=False,
         default=UserRole.LEARNER,
     )
+    system_role: Mapped[SystemRole] = mapped_column(
+        SQLEnum(SystemRole, native_enum=False),
+        nullable=False,
+        default=SystemRole.USER,
+        server_default="USER",
+    )
     avatar_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
     enterprise_seat_key: Mapped[Optional[str]] = mapped_column(
         String(128), nullable=True
@@ -35,6 +49,66 @@ class UserModel(Base):
         String(512), nullable=False, default=""
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+
+
+class OrganizationModel(Base):
+    __tablename__ = "organizations"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    slug: Mapped[str] = mapped_column(
+        String(255), nullable=False, unique=True, index=True
+    )
+    avatar_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+
+
+class OrganizationRoleModel(Base):
+    __tablename__ = "organization_roles"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    organization_id: Mapped[Optional[str]] = mapped_column(
+        String(64),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    parent_role_id: Mapped[Optional[str]] = mapped_column(
+        String(64),
+        ForeignKey("organization_roles.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    permissions: Mapped[list[str]] = mapped_column(
+        ARRAY(String(100)), nullable=False, default=list, server_default="{}"
+    )
+
+
+class OrganizationMemberModel(Base):
+    __tablename__ = "organization_members"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    organization_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    role_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("organization_roles.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="ACTIVE", server_default="ACTIVE"
+    )
+    joined_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
 
 
 class EnterpriseLicenseModel(Base):

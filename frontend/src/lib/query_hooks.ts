@@ -1,4 +1,4 @@
-import { useQuery, useMutation, keepPreviousData, type UseQueryOptions, type UseMutationOptions } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData, type UseQueryOptions, type UseMutationOptions } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type Course, type Category, type CourseReview } from "@/gen/catalog/v1/catalog_pb";
 
@@ -94,6 +94,7 @@ export function useCategoriesQuery(typeFilter?: string, options?: Partial<UseQue
 export function useCreateCategoryMutation(
   options?: Partial<UseMutationOptions<Category | undefined, Error, { name: string; type: string }>>
 ) {
+  const queryClient = useQueryClient();
   return useMutation<Category | undefined, Error, { name: string; type: string }>({
     mutationFn: async ({ name, type }) => {
       const client = getRpcClient(CatalogService);
@@ -101,12 +102,17 @@ export function useCreateCategoryMutation(
       return res.category;
     },
     ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
   });
 }
 
 export function useDeleteCategoryMutation(
   options?: Partial<UseMutationOptions<boolean, Error, { id: string }>>
 ) {
+  const queryClient = useQueryClient();
   return useMutation<boolean, Error, { id: string }>({
     mutationFn: async ({ id }) => {
       const client = getRpcClient(CatalogService);
@@ -114,6 +120,10 @@ export function useDeleteCategoryMutation(
       return res.success;
     },
     ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
   });
 }
 
@@ -414,6 +424,7 @@ export interface CreatePartnerInput {
 export function useCreatePartnerMutation(
   options?: Partial<UseMutationOptions<Partner | undefined, Error, CreatePartnerInput>>
 ) {
+  const queryClient = useQueryClient();
   return useMutation<Partner | undefined, Error, CreatePartnerInput>({
     mutationFn: async (input) => {
       const client = getRpcClient(PartnerService);
@@ -421,6 +432,10 @@ export function useCreatePartnerMutation(
       return res.partner;
     },
     ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["partners"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
   });
 }
 
@@ -442,6 +457,7 @@ export interface UpdatePartnerInput {
 export function useUpdatePartnerMutation(
   options?: Partial<UseMutationOptions<Partner | undefined, Error, UpdatePartnerInput>>
 ) {
+  const queryClient = useQueryClient();
   return useMutation<Partner | undefined, Error, UpdatePartnerInput>({
     mutationFn: async (input) => {
       const client = getRpcClient(PartnerService);
@@ -449,12 +465,17 @@ export function useUpdatePartnerMutation(
       return res.partner;
     },
     ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["partners"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
   });
 }
 
 export function useDeletePartnerMutation(
   options?: Partial<UseMutationOptions<boolean, Error, { id: string }>>
 ) {
+  const queryClient = useQueryClient();
   return useMutation<boolean, Error, { id: string }>({
     mutationFn: async ({ id }) => {
       const client = getRpcClient(PartnerService);
@@ -462,6 +483,10 @@ export function useDeletePartnerMutation(
       return res.success;
     },
     ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["partners"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
   });
 }
 

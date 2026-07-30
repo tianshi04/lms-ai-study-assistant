@@ -33,3 +33,16 @@ def test_entity_equality():
     assert entity1 != entity3
     assert hash(entity1) == hash(entity2)
     assert hash(entity1) != hash(entity3)
+
+
+def test_role_helpers_exact_match():
+    from src.shared.auth import is_admin_role, is_staff_role
+
+    assert is_admin_role("ADMIN") is True
+    assert is_admin_role("SUPER_ADMIN") is True
+    assert is_admin_role("NON_ADMIN") is False
+    assert is_admin_role("READONLY_ADMIN") is False
+
+    assert is_staff_role("INSTRUCTOR") is True
+    assert is_staff_role("TA") is True
+    assert is_staff_role("DATA_ANALYST") is False

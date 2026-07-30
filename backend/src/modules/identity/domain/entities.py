@@ -3,6 +3,11 @@ from enum import Enum
 from typing import Optional
 
 
+class SystemRole(str, Enum):
+    SUPER_ADMIN = "SUPER_ADMIN"
+    USER = "USER"
+
+
 class UserRole(str, Enum):
     UNSPECIFIED = "USER_ROLE_UNSPECIFIED"
     LEARNER = "USER_ROLE_LEARNER"
@@ -13,11 +18,44 @@ class UserRole(str, Enum):
 
 
 @dataclass
+class Organization:
+    id: str
+    name: str
+    slug: str
+    avatar_url: str = ""
+    created_at: str = ""
+
+
+@dataclass
+class OrganizationRole:
+    id: str
+    name: str
+    organization_id: Optional[str] = None  # None for system default roles
+    parent_role_id: Optional[str] = None
+    permissions: Optional[set[str]] = None
+
+    def __post_init__(self):
+        if self.permissions is None:
+            self.permissions = set()
+
+
+@dataclass
+class OrganizationMember:
+    id: str
+    user_id: str
+    organization_id: str
+    role_id: str
+    status: str = "ACTIVE"
+    joined_at: str = ""
+
+
+@dataclass
 class User:
     id: str
     email: str
     full_name: str
     role: UserRole
+    system_role: SystemRole = SystemRole.USER
     avatar_url: str = ""
     enterprise_seat_key: Optional[str] = None
     seat_assigned_at: Optional[str] = None

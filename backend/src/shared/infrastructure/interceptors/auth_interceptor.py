@@ -46,6 +46,15 @@ class AuthInterceptor(UnaryInterceptor):
                 "Authorization", ""
             )
 
+        # Extract organization header if provided
+        active_org_id = ""
+        if hasattr(metadata, "get"):
+            active_org_id = (
+                metadata.get("x-organization-id", "")
+                or metadata.get("X-Organization-Id", "")
+                or metadata.get("x-org-id", "")
+            )
+
         current_user = None
         token = None
 
@@ -74,10 +83,14 @@ class AuthInterceptor(UnaryInterceptor):
         if token:
             payload = decode_token(token)
             if payload and payload.get("type") == "access" and payload.get("sub"):
+                token_org_id = payload.get("active_org_id")
+                effective_org_id = active_org_id or token_org_id or None
                 current_user = CurrentUser(
                     id=payload.get("sub", ""),
                     email=payload.get("email", ""),
                     role=payload.get("role", "LEARNER"),
+                    system_role=payload.get("system_role", "USER"),
+                    active_org_id=effective_org_id,
                 )
             elif not is_public:
                 raise ConnectError(

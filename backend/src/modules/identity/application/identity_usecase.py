@@ -195,8 +195,8 @@ class IdentityUseCase:
                     f"Mã Enterprise Key '{clean_key}' đã hết suất kích hoạt ({license_model.used_seats}/{license_model.total_seats} seats).",
                 )
 
-            # BR_ACCESS_002: Atomic DB update for activating enterprise seat
-            await session.execute(
+            # BR_ACCESS_002: Atomic DB update for activating enterprise seat with concurrency check
+            result = await session.execute(
                 update(EnterpriseLicenseModel)
                 .where(
                     EnterpriseLicenseModel.key == clean_key,
@@ -205,6 +205,17 @@ class IdentityUseCase:
                 )
                 .values(used_seats=EnterpriseLicenseModel.used_seats + 1)
             )
+            if getattr(result, "rowcount", 0) == 0:
+                logger.warning(
+                    "Race condition detected during seat assignment for user %s: Key %s exhausted",
+                    user_id,
+                    clean_key,
+                )
+                return (
+                    False,
+                    f"Mã Enterprise Key '{clean_key}' đã hết suất kích hoạt.",
+                )
+
             user.enterprise_seat_key = clean_key
             user.seat_assigned_at = datetime.now(timezone.utc).isoformat()
             await repo.save(user)

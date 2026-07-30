@@ -10,12 +10,15 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * **Khai báo Phân quyền Declarative ở Tầng Contract (Protobuf Custom Options):**
     * Tất cả các phương thức RPC trong file `.proto` được gán nhãn khai báo cấp độ bảo mật qua Protobuf Custom Option `(auth.v1.policy) = ...` (Option `50001` trên `google.protobuf.MethodOptions`, với enum `AuthPolicy`: `PUBLIC = 1`, `AUTHENTICATED = 2`, `ADMIN = 3`, `INTERNAL = 4`).
     * Lớp `AuthPolicyRegistry` tự động quét Protobuf Descriptors khi ứng dụng ASGI khởi chạy (Eager Pre-initialization), xây dựng bảng ánh xạ $O(1)$ phục vụ cho `AuthInterceptor`.
-  * **Kiến trúc Phân quyền Phân lớp 3 Tầng (3-Layer Authorization Architecture):**
-    * **Tầng 1 (API Method Policy - Endpoint Level):** Do `AuthInterceptor` & `AuthPolicyRegistry` đảm nhiệm. Tự động kiểm tra JWT Bearer Token đối với các API `AUTHENTICATED` hoặc `ADMIN`, inject `CurrentUser` vào Request Context. Với API `PUBLIC` (như Login, Register, RefreshToken, ListCourses, GetCourseDetail, VerifyCertificatePublic), request được phép đi qua không cần Bearer Token.
-    * **Tầng 2 (ABAC & Business Access Policy Level):** Do `AccessPolicyService` & Decorator `@require_paid_access` đảm nhiệm. Thực thi quy chế Paid Mode vs Audit Mode (`BR_ACCESS_001`), Enterprise Seats (`BR_ACCESS_002`), Financial Aid (`BR_FAID_001`). Khi tài khoản ở Audit Mode cố tình gọi RPC chấm điểm hoặc nhận chứng chỉ, hệ thống từ chối bằng `ConnectError(Code.PERMISSION_DENIED, err)` chuẩn ConnectRPC protocol.
-    * **Tầng 3 (Domain Resource & Ownership Level):** Do các Application Use Cases (ví dụ `CatalogUseCase._verify_ownership`) đảm nhiệm. Kiểm tra quyền sở hữu đối tượng domain (`owner_id`, `co_instructor_ids`) thông qua helper `enforce_course_ownership` để ngăn ngừa tấn công IDOR / Unauthorized Resource Access.
-  * **Quản lý Vai trò Tập trung (Centralized Role Helpers):**
-    * Đưa hằng số `ADMIN_ROLES`, `STAFF_ROLES` và các phương thức `user.is_admin()`, `user.is_staff()`, `is_admin_role()`, `is_staff_role()` tập trung vào `src/shared/auth.py`, loại bỏ hoàn toàn các câu lệnh so sánh chuỗi vai trò rải rác.
+  * **Cơ chế Truyền Ngữ cảnh Đa Tổ chức (Multi-Org Header `x-organization-id`):**
+    * Client đính kèm Header `x-organization-id: <org_id>` trong Metadata của các API Request. `AuthInterceptor` trích xuất Header này làm Nguồn chính (Primary), fallback về claim `active_org_id` trong JWT Access Token.
+    * Giải quyết triệt để vấn đề xung đột ngữ cảnh khi người dùng mở nhiều tab trình duyệt thuộc nhiều Tổ chức khác nhau (Chi tiết tại [07_authentication_and_authorization_architecture.md](07_authentication_and_authorization_architecture.md)).
+  * **Kiến trúc Phân quyền Phân lớp 3 Tầng (Hybrid PBAC & SQL Scope Pushdown):**
+    * **Tầng 1 (API Method Policy & Multi-Org Context):** Do `AuthInterceptor` & `AuthPolicyRegistry` đảm nhiệm. Tự động kiểm tra JWT Bearer Token, trích xuất Header `x-organization-id`, inject `CurrentUserContext` vào Request Context.
+    * **Tầng 2 (SQL Scope Pushdown & ABAC Level):** Sử dụng hàm `apply_organization_scope()` đẩy trực tiếp điều kiện lọc SQL `WHERE organization_id = :active_org_id OR organization_id = 'partner_community'` xuống PostgreSQL cho các query danh sách. Các decorator như `@require_paid_access` thực thi quy chế Paid Mode vs Audit Mode (`BR_ACCESS_001`).
+    * **Tầng 3 (Domain Resource & Ownership Level):** Do các Application Use Cases (như `CatalogUseCase._verify_ownership`) và `CurrentUserContext.require_permission()` đảm nhiệm. Kiểm tra quyền sở hữu đối tượng domain (`owner_id`, `co_instructor_ids`) hoặc permission granular.
+  * **Quản lý Vai trò & Quyền Hạn Tập trung (Centralized Role & Permission Context):**
+    * Đưa hằng số `ADMIN_ROLES`, `STAFF_ROLES` và `CurrentUserContext` (`has_permission()`, `require_permission()`, `require_org_context()`) tập trung vào `src/shared/auth.py`, loại bỏ hoàn toàn các câu lệnh so sánh chuỗi vai trò rải rác.
 * **BR_AUTH_002 (Cơ chế Refresh Token Rotation):**
   * Khi `access_token` hết hạn, client gọi RPC `RefreshToken` truyền `refresh_token` hợp lệ (yêu cầu payload claim `type == "refresh"` và tồn tại `user_id` sở hữu trong DB).
   * Hệ thống hủy cặp token cũ và phát hành mới đồng thời cả `access_token` và `refresh_token`.

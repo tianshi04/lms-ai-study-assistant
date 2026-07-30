@@ -43,11 +43,3 @@
     * Dòng nhãn giảng viên: *Taught by [Họ tên Giảng viên]* kèm Chức danh và Avatar cá nhân.
 * **Màn hình/Giao diện liên quan:** Giao diện Soạn thảo Khóa học mới tại đường dẫn `/instructor/courses/new`.
 
----
-
-## 4. Nghiệp vụ Khởi tạo Partner Mặc định toàn sàn (`Coursera Project Network`)
-
-* **Tác nhân:** Hệ thống (Backend Engine / Database Seed).
-* **Mô tả Nghiệp vụ:**
-  * Khởi tạo và duy trì bản ghi Partner Mặc định toàn sàn **`Coursera Project Network`** (`id = "partner_community"`) trong CSDL.
-  * Đảm bảo Partner này sẵn sàng làm đơn vị bảo chứng và ký số chứng chỉ xác minh (OpenBadges) cho tất cả các bài giảng do Giảng viên cá nhân tự do xuất bản.

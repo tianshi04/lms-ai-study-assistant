@@ -138,3 +138,55 @@ async def test_auth_interceptor_admin_endpoint_allows_admin() -> None:
     res = await interceptor.intercept_unary(call_next, "dummy_req", ctx)
     assert res == "success"
     assert called is True
+
+
+@pytest.mark.asyncio
+async def test_auth_interceptor_organization_header_populates_active_org_id() -> None:
+    clear_current_user()
+    token = create_access_token(
+        user_id="user_org_member", email="member@example.com", role="USER_ROLE_LEARNER"
+    )
+    interceptor = AuthInterceptor()
+    ctx = MockCtx(
+        path="/learning.v1.LearningService/GetProgress",
+        invocation_metadata={
+            "authorization": f"Bearer {token}",
+            "x-organization-id": "org_school_a",
+        },
+    )
+
+    captured_user: CurrentUser | None = None
+
+    async def call_next(req: Any, c: Any) -> str:
+        nonlocal captured_user
+        captured_user = require_current_user()
+        return "success"
+
+    res = await interceptor.intercept_unary(call_next, "dummy_req", ctx)
+    assert res == "success"
+    assert captured_user is not None
+    assert captured_user.active_org_id == "org_school_a"
+    assert captured_user.require_org_context() == "org_school_a"
+
+
+def test_current_user_context_pbac_permissions() -> None:
+    user = CurrentUser(
+        id="usr_1",
+        email="test@example.com",
+        role="LEARNER",
+        system_role="USER",
+        active_org_id="org_1",
+        permissions={"course:create", "course:read"},
+    )
+    assert user.has_permission("course:create") is True
+    assert user.has_permission("course:delete") is False
+    with pytest.raises(PermissionError):
+        user.require_permission("course:delete")
+
+    # System admin has all permissions
+    admin_user = CurrentUser(
+        id="usr_admin",
+        email="admin@example.com",
+        system_role="SUPER_ADMIN",
+    )
+    assert admin_user.has_permission("anything") is True

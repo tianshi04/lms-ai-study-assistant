@@ -1,4 +1,5 @@
 import uuid
+from typing import Any
 from datetime import datetime, timezone
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
@@ -33,6 +34,8 @@ from src.modules.catalog.infrastructure.models import (
     WeekModuleModel,
     CategoryModel,
 )
+from src.shared.auth import get_current_user
+from src.shared.infrastructure.scopes import apply_organization_scope
 
 
 def _model_to_domain_course(model: CourseModel) -> Course:
@@ -146,6 +149,34 @@ def _model_to_domain_review(model: CourseReviewModel) -> CourseReview:
     )
 
 
+def _parse_status_filter(status_filter: Any) -> CourseStatus | None:
+    if not status_filter:
+        return None
+    if isinstance(status_filter, CourseStatus):
+        return status_filter if status_filter != CourseStatus.UNSPECIFIED else None
+    val = str(status_filter).strip()
+    if not val or val in (
+        "0",
+        "UNSPECIFIED",
+        "COURSE_STATUS_UNSPECIFIED",
+        "CourseStatus.UNSPECIFIED",
+    ):
+        return None
+    val = val.replace("COURSE_STATUS_", "").replace("CourseStatus.", "").upper()
+    int_map = {
+        "1": CourseStatus.DRAFT,
+        "2": CourseStatus.PENDING_REVIEW,
+        "3": CourseStatus.PUBLISHED,
+        "4": CourseStatus.REJECTED,
+    }
+    if val in int_map:
+        return int_map[val]
+    try:
+        return CourseStatus[val]
+    except KeyError:
+        return None
+
+
 class SQLAlchemyCatalogRepository(ICatalogRepository):
     """Async SQLAlchemy Database Repository implementing ICatalogRepository."""
 
@@ -173,6 +204,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             .selectinload(LearningItemModel.in_video_quizzes),
         )
 
+        stmt = apply_organization_scope(stmt, CourseModel, get_current_user())
+
         if search_query:
             pattern = f"%{search_query}%"
             stmt = stmt.where(
@@ -186,14 +219,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         if level and level != "UNSPECIFIED":
             stmt = stmt.where(CourseModel.level == level)
 
-        if (
-            status_filter
-            and str(status_filter) != "UNSPECIFIED"
-            and str(status_filter) != "COURSE_STATUS_UNSPECIFIED"
-        ):
-            # Normalize enum string
-            status_val = str(status_filter).replace("COURSE_STATUS_", "")
-            stmt = stmt.where(CourseModel.status == status_val)
+        parsed_status = _parse_status_filter(status_filter)
+        if parsed_status:
+            stmt = stmt.where(CourseModel.status == parsed_status)
 
         if sort_by == "rating":
             stmt = stmt.order_by(CourseModel.average_rating.desc())
@@ -222,7 +250,16 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
     ) -> tuple[list[Course], str]:
         from sqlalchemy import cast, String
 
-        stmt = select(CourseModel)
+        stmt = select(CourseModel).options(
+            selectinload(CourseModel.week_modules)
+            .selectinload(WeekModuleModel.lessons)
+            .selectinload(LessonModel.items)
+            .selectinload(LearningItemModel.interactive_transcripts),
+            selectinload(CourseModel.week_modules)
+            .selectinload(WeekModuleModel.lessons)
+            .selectinload(LessonModel.items)
+            .selectinload(LearningItemModel.in_video_quizzes),
+        )
 
         if instructor_id:
             instructor_cond = (CourseModel.owner_id == instructor_id) | (
@@ -230,13 +267,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             )
             stmt = stmt.where(instructor_cond)
 
-        if (
-            status_filter
-            and str(status_filter) != "UNSPECIFIED"
-            and str(status_filter) != "COURSE_STATUS_UNSPECIFIED"
-        ):
-            status_val = str(status_filter).replace("COURSE_STATUS_", "")
-            stmt = stmt.where(CourseModel.status == status_val)
+        parsed_status = _parse_status_filter(status_filter)
+        if parsed_status:
+            stmt = stmt.where(CourseModel.status == parsed_status)
 
         stmt = stmt.order_by(CourseModel.id.desc()).limit(page_size or 50)
 

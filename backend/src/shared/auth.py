@@ -1,5 +1,5 @@
 from contextvars import ContextVar
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 import jwt
@@ -33,43 +33,73 @@ def is_admin_role(role: str | None) -> bool:
     """Returns True if the role string represents an administrative role."""
     if not role:
         return False
-    role_upper = str(role).upper()
-    return any(r in role_upper for r in ADMIN_ROLES)
+    role_upper = str(role).upper().strip()
+    return role_upper in ADMIN_ROLES
 
 
 def is_staff_role(role: str | None) -> bool:
     """Returns True if the role string represents a staff or admin role."""
     if not role:
         return False
-    role_upper = str(role).upper()
-    return any(r in role_upper for r in STAFF_ROLES)
+    role_upper = str(role).upper().strip()
+    return role_upper in STAFF_ROLES
 
 
 @dataclass
-class CurrentUser:
+class CurrentUserContext:
+    """Rich security context supporting PBAC and Multi-Org active context."""
+
     id: str
     email: str = ""
-    role: str = ""
+    role: str = ""  # Legacy global role for backward compatibility
+    system_role: str = "USER"  # SUPER_ADMIN | USER
+    active_org_id: Optional[str] = None
+    org_role: Optional[str] = None
+    permissions: set[str] = field(default_factory=set)
 
     def is_admin(self) -> bool:
-        """Returns True if current user is an admin."""
-        return is_admin_role(self.role)
+        return self.is_system_admin() or is_admin_role(self.role)
 
     def is_staff(self) -> bool:
-        """Returns True if current user is a staff member (Admin, Instructor, or TA)."""
-        return is_staff_role(self.role)
+        return self.is_system_admin() or is_staff_role(self.role)
+
+    def is_system_admin(self) -> bool:
+        return self.system_role.upper() == "SUPER_ADMIN" or self.role in (
+            "SUPER_ADMIN",
+            "USER_ROLE_SUPER_ADMIN",
+        )
+
+    def has_permission(self, permission: str) -> bool:
+        if self.is_system_admin():
+            return True
+        return permission in self.permissions
+
+    def require_permission(self, permission: str) -> None:
+        if not self.has_permission(permission):
+            raise PermissionError(
+                f"Yêu cầu quyền '{permission}' để thực hiện thao tác này"
+            )
+
+    def require_org_context(self) -> str:
+        if not self.active_org_id:
+            raise ValueError("Vui lòng chọn Tổ chức để thực hiện thao tác này")
+        return self.active_org_id
 
 
-_current_user_ctx: ContextVar[Optional[CurrentUser]] = ContextVar(
+# Alias for backward compatibility across existing handlers
+CurrentUser = CurrentUserContext
+
+
+_current_user_ctx: ContextVar[Optional[CurrentUserContext]] = ContextVar(
     "current_user", default=None
 )
 
 
-def set_current_user(user: Optional[CurrentUser]) -> None:
+def set_current_user(user: Optional[CurrentUserContext]) -> None:
     _current_user_ctx.set(user)
 
 
-def get_current_user() -> Optional[CurrentUser]:
+def get_current_user() -> Optional[CurrentUserContext]:
     return _current_user_ctx.get()
 
 
@@ -77,7 +107,7 @@ def clear_current_user() -> None:
     _current_user_ctx.set(None)
 
 
-def require_current_user() -> CurrentUser:
+def require_current_user() -> CurrentUserContext:
     user = _current_user_ctx.get()
     if not user or not user.id:
         raise ConnectError(
@@ -86,16 +116,25 @@ def require_current_user() -> CurrentUser:
     return user
 
 
-def create_access_token(user_id: str, email: str, role: str) -> str:
+def create_access_token(
+    user_id: str,
+    email: str,
+    role: str,
+    active_org_id: Optional[str] = None,
+    system_role: str = "USER",
+) -> str:
     now = datetime.now(timezone.utc)
     payload: dict[str, Any] = {
         "sub": user_id,
         "email": email,
         "role": role,
+        "system_role": system_role,
         "type": "access",
         "iat": now,
         "exp": now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     }
+    if active_org_id:
+        payload["active_org_id"] = active_org_id
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
