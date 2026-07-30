@@ -51,7 +51,6 @@ def _to_pb_user_role(role: UserRole) -> pb.UserRole:
         UserRole.INSTRUCTOR: pb.UserRole.INSTRUCTOR,
         UserRole.TA: pb.UserRole.TA,
         UserRole.SUPER_ADMIN: pb.UserRole.SUPER_ADMIN,
-        UserRole.PARTNER_ADMIN: pb.UserRole.PARTNER_ADMIN,
     }
     return mapping.get(role, pb.UserRole.UNSPECIFIED)
 
@@ -63,13 +62,11 @@ def _pb_role_to_domain_str(role_val: Any) -> str:
         pb.UserRole.INSTRUCTOR: "USER_ROLE_INSTRUCTOR",
         pb.UserRole.TA: "USER_ROLE_TA",
         pb.UserRole.SUPER_ADMIN: "USER_ROLE_SUPER_ADMIN",
-        pb.UserRole.PARTNER_ADMIN: "USER_ROLE_PARTNER_ADMIN",
         0: "USER_ROLE_UNSPECIFIED",
         1: "USER_ROLE_LEARNER",
         2: "USER_ROLE_INSTRUCTOR",
         3: "USER_ROLE_TA",
         4: "USER_ROLE_SUPER_ADMIN",
-        5: "USER_ROLE_PARTNER_ADMIN",
     }
     if role_val not in mapping:
         raise ConnectError(Code.INVALID_ARGUMENT, f"Vai trò '{role_val}' không hợp lệ")
@@ -167,11 +164,7 @@ class IdentityHandler(IdentityService):
         current_user = require_current_user()
         target_user_id = request.user_id or current_user.id
         if target_user_id != current_user.id:
-            role_str = str(current_user.role).upper()
-            is_staff_or_admin = any(
-                r in role_str for r in ("ADMIN", "SUPER", "PARTNER", "INSTRUCTOR", "TA")
-            )
-            if not is_staff_or_admin:
+            if not current_user.is_staff():
                 raise ConnectError(
                     Code.PERMISSION_DENIED,
                     "Bạn không có quyền xem hồ sơ cá nhân của người dùng khác.",
@@ -191,9 +184,7 @@ class IdentityHandler(IdentityService):
         current_user = require_current_user()
         target_user_id = request.user_id or current_user.id
         if target_user_id != current_user.id:
-            role_str = str(current_user.role).upper()
-            is_admin = any(r in role_str for r in ("ADMIN", "SUPER", "PARTNER"))
-            if not is_admin:
+            if not current_user.is_admin():
                 raise ConnectError(
                     Code.PERMISSION_DENIED,
                     "Bạn không có quyền gán suất Enterprise Seat cho người dùng khác.",
@@ -211,8 +202,7 @@ class IdentityHandler(IdentityService):
         ],
     ) -> pb.ListEnterpriseSeatsResponse:
         current_user = require_current_user()
-        role_str = str(current_user.role).upper()
-        if not any(r in role_str for r in ("ADMIN", "SUPER", "PARTNER")):
+        if not current_user.is_admin():
             raise ConnectError(
                 Code.PERMISSION_DENIED,
                 "Chỉ Quản trị viên mới có quyền xem danh sách Enterprise Seats.",
@@ -242,8 +232,7 @@ class IdentityHandler(IdentityService):
         ],
     ) -> pb.CreateEnterpriseSeatResponse:
         current_user = require_current_user()
-        role_str = str(current_user.role).upper()
-        if not any(r in role_str for r in ("ADMIN", "SUPER", "PARTNER")):
+        if not current_user.is_admin():
             raise ConnectError(
                 Code.PERMISSION_DENIED,
                 "Chỉ Quản trị viên mới có quyền tạo Enterprise Seat key.",
@@ -275,8 +264,7 @@ class IdentityHandler(IdentityService):
         ],
     ) -> pb.RevokeEnterpriseSeatResponse:
         current_user = require_current_user()
-        role_str = str(current_user.role).upper()
-        if not any(r in role_str for r in ("ADMIN", "SUPER", "PARTNER")):
+        if not current_user.is_admin():
             raise ConnectError(
                 Code.PERMISSION_DENIED,
                 "Chỉ Quản trị viên mới có quyền thu hồi Enterprise Seat.",
@@ -362,8 +350,7 @@ class IdentityHandler(IdentityService):
         ],
     ) -> pb.ListInstructorApplicationsResponse:
         current_user = require_current_user()
-        role_str = str(current_user.role).upper()
-        if not any(r in role_str for r in ("ADMIN", "SUPER")):
+        if not current_user.is_admin():
             raise ConnectError(
                 Code.PERMISSION_DENIED,
                 "Chỉ Quản trị viên hệ thống mới có quyền xem danh sách đơn thẩm định.",
@@ -382,8 +369,7 @@ class IdentityHandler(IdentityService):
         ],
     ) -> pb.ReviewInstructorApplicationResponse:
         current_user = require_current_user()
-        role_str = str(current_user.role).upper()
-        if not any(r in role_str for r in ("ADMIN", "SUPER")):
+        if not current_user.is_admin():
             raise ConnectError(
                 Code.PERMISSION_DENIED,
                 "Chỉ Quản trị viên hệ thống mới có quyền duyệt đơn Giảng viên.",

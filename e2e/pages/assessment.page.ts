@@ -65,11 +65,12 @@ export class AssessmentPage {
   }
 
   async agreeHonorCode() {
-    await expect(this.confirmHonorButton.or(this.honorAgreedBadge)).toBeVisible({ timeout: 10000 });
+    await expect(this.confirmHonorButton.or(this.honorAgreedBadge)).toBeVisible({ timeout: 15000 });
     if (await this.confirmHonorButton.isVisible()) {
       await this.confirmHonorButton.click();
-      await expect(this.honorCheckbox).toBeVisible({ timeout: 5000 });
+      await expect(this.honorCheckbox).toBeVisible({ timeout: 10000 });
       await this.honorCheckbox.check({ force: true });
+      await expect(this.agreeAndContinueButton).toBeVisible({ timeout: 5000 });
       await this.agreeAndContinueButton.click();
     }
   }

@@ -1,6 +1,6 @@
 # 06. BUSINESS INITIALIZATION & ONBOARDING OPERATIONS BLUEPRINT
 
-Tài liệu này quy định **Toàn bộ Quy trình Vận hành Nghiệp vụ (Pure Business Workflows Blueprint)** của hệ thống **Coursera-style LMS**, hướng dẫn chi tiết cách các Tác nhân Nghiệp vụ (Super Admin, Partner Admin, Giảng viên, Học viên, Nhà tuyển dụng) phối hợp đưa hệ thống từ khi khởi tạo tổ chức đối tác đến khi phát hành chứng chỉ xác minh.
+Tài liệu này quy định **Toàn bộ Quy trình Vận hành Nghiệp vụ (Pure Business Workflows Blueprint)** của hệ thống **Coursera-style LMS**, hướng dẫn chi tiết cách các Tác nhân Nghiệp vụ (Super Admin, Organization Admin, Giảng viên, Học viên, Nhà tuyển dụng) phối hợp đưa hệ thống từ khi khởi tạo tổ chức đối tác đến khi phát hành chứng chỉ xác minh.
 
 ---
 

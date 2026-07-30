@@ -10,7 +10,7 @@ def enforce_course_ownership(
     user: CurrentUser,
     action_name: str = "quản lý khóa học",
 ) -> None:
-    """Enforces that current user is super admin/partner admin or the owner/co-instructor of the course."""
+    """Enforces that current user is super admin/organization admin or the owner/co-instructor of the course."""
     if not user or not user.id:
         raise ConnectError(
             Code.UNAUTHENTICATED, "Vui lòng đăng nhập để thực hiện thao tác này"

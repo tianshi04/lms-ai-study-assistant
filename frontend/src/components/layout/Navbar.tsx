@@ -14,8 +14,8 @@ export function Navbar() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Check if role is INSTRUCTOR (2), SUPER_ADMIN (4), or PARTNER_ADMIN (5)
-  const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
+  // Check if role is INSTRUCTOR (2) or SUPER_ADMIN (4)
+  const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "USER_ROLE_INSTRUCTOR" || userRole === "USER_ROLE_SUPER_ADMIN";
 
   const isActive = (path: string) => {
     if (path === '/') return pathname === '/';

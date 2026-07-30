@@ -21,7 +21,7 @@ Tài liệu này tổng hợp các User Stories (câu chuyện người dùng) c
 | **US_09** | Học viên | Diễn đàn trao đổi học thuật theo bài học | Sẵn sàng |
 | **US_10** | Học viên | Bài kiểm tra năng lực và Chấm điểm chéo | Sẵn sàng |
 | **US_11** | Học viên | Chứng chỉ xác minh và Huy hiệu năng lực | Sẵn sàng |
-| **US_12** | Partner Admin | Thương hiệu đối tác và Suất học tổ chức | Sẵn sàng |
+| **US_12** | Organization Admin | Thương hiệu đối tác và Suất học tổ chức | Sẵn sàng |
 | **US_13** | Học viên | Đánh giá và Phản hồi chất lượng khóa học | Sẵn sàng |
 | **US_14** | Học viên | Nộp đơn đăng ký làm Giảng viên cá nhân | Sẵn sàng |
 

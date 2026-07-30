@@ -30,8 +30,6 @@ function extractRoleFromToken(token?: string): number | null {
       TA: 3,
       USER_ROLE_SUPER_ADMIN: 4,
       SUPER_ADMIN: 4,
-      USER_ROLE_PARTNER_ADMIN: 5,
-      PARTNER_ADMIN: 5,
     };
     if (typeof payload.role === "number") return payload.role;
     if (typeof payload.role === "string") {
@@ -58,7 +56,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 2. Check Instructor Routes (Role 2: Instructor, Role 3: TA, Role 4: Super Admin, Role 5: Partner Admin)
+  // 2. Check Instructor Routes (Role 2: Instructor, Role 3: TA, Role 4: Super Admin)
   const isInstructorRoute = INSTRUCTOR_ROUTES.some((route) => pathname.startsWith(route));
   if (isInstructorRoute) {
     if (!token) {
@@ -66,13 +64,13 @@ export function proxy(request: NextRequest) {
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    const isAllowed = role !== null && [2, 3, 4, 5].includes(role);
+    const isAllowed = role !== null && [2, 3, 4].includes(role);
     if (!isAllowed) {
       return NextResponse.redirect(new URL("/courses", request.url));
     }
   }
 
-  // 3. Check Admin Routes (Role 4: Super Admin, Role 5: Partner Admin)
+  // 3. Check Admin Routes (Role 4: Super Admin)
   const isAdminRoute = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
   if (isAdminRoute) {
     if (!token) {
@@ -80,7 +78,7 @@ export function proxy(request: NextRequest) {
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    const isAllowed = role !== null && [4, 5].includes(role);
+    const isAllowed = role !== null && [4].includes(role);
     if (!isAllowed) {
       return NextResponse.redirect(new URL("/courses", request.url));
     }

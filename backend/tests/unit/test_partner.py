@@ -242,10 +242,14 @@ async def test_usecase_rotate_key_pair_auto_resolve_domain():
     mock_repo.update.side_effect = lambda p: p
 
     usecase = PartnerUseCase(repo=mock_repo)
-    partner_admin = CurrentUser(
-        id="p_admin1", email="alice@stanford.edu", role="PARTNER_ADMIN"
+    org_admin = CurrentUser(
+        id="p_admin1",
+        email="alice@stanford.edu",
+        role="INSTRUCTOR",
+        active_org_id="partner_stanford",
+        org_role="Organization Admin",
     )
 
-    new_pem = await usecase.rotate_key_pair("", current_user=partner_admin)
+    new_pem = await usecase.rotate_key_pair("", current_user=org_admin)
     assert new_pem.startswith("-----BEGIN PUBLIC KEY-----")
     mock_repo.update.assert_called_once()
