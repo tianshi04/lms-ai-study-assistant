@@ -3,11 +3,26 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
+import { CatalogService, CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
 
 
 const emptySubscribe = () => () => {};
+
+function getStatusBadge(status: CourseStatus) {
+  switch (status) {
+    case CourseStatus.DRAFT:
+      return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">Bản nháp</span>;
+    case CourseStatus.PENDING_REVIEW:
+      return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 animate-pulse">Chờ kiểm duyệt</span>;
+    case CourseStatus.PUBLISHED:
+      return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">Đã xuất bản</span>;
+    case CourseStatus.REJECTED:
+      return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20">Từ chối</span>;
+    default:
+      return <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">Đã xuất bản</span>;
+  }
+}
 
 export default function InstructorCoursesPage() {
   const isMounted = useSyncExternalStore(
@@ -42,7 +57,7 @@ export default function InstructorCoursesPage() {
     async function loadData() {
       try {
         const client = getRpcClient(CatalogService);
-        const res = await client.listCourses({ pageSize: 50 });
+        const res = await client.listInstructorCourses({ pageSize: 50 });
         if (!ignore) {
           setCourses(res.courses);
           setLoading(false);
@@ -61,7 +76,7 @@ export default function InstructorCoursesPage() {
   const refreshCourses = async () => {
     try {
       const client = getRpcClient(CatalogService);
-      const res = await client.listCourses({ pageSize: 50 });
+      const res = await client.listInstructorCourses({ pageSize: 50 });
       setCourses(res.courses);
     } catch (err) {
       console.error("Failed to refresh instructor courses:", err);
@@ -263,6 +278,7 @@ export default function InstructorCoursesPage() {
                       {course.partnerName}
                     </span>
                     <div className="flex items-center gap-2">
+                      {getStatusBadge(course.status)}
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                         course.financialAidEnabled
                           ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20"

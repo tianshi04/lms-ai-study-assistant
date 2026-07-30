@@ -12,6 +12,7 @@ from src.modules.catalog.domain.constants import (
 from src.modules.catalog.domain.entities import (
     Category,
     Course,
+    CourseStatus,
     ItemType,
     Lesson,
     Specialization,
@@ -57,6 +58,7 @@ class CatalogUseCase:
         course_id: str,
         user: CurrentUser | None,
         action_name: str = "quản lý khóa học",
+        allow_read_only_pending: bool = False,
     ) -> None:
         if user and course_id:
             course = await repo.get_course_detail(course_id)
@@ -64,6 +66,67 @@ class CatalogUseCase:
                 enforce_course_ownership(
                     course.owner_id, course.co_instructor_ids, user, action_name
                 )
+                if (
+                    not allow_read_only_pending
+                    and course.status == CourseStatus.PENDING_REVIEW
+                    and user.role not in ("SUPER_ADMIN", "PARTNER_ADMIN")
+                ):
+                    raise PermissionError(
+                        "Khóa học đang ở trạng thái chờ kiểm duyệt (PENDING_REVIEW) và ở chế độ Chỉ đọc. Không thể chỉnh sửa."
+                    )
+
+    async def submit_course_for_launch(
+        self, course_id: str, current_user: CurrentUser | None = None
+    ) -> Course:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_ownership(
+                repo,
+                course_id,
+                current_user,
+                "nộp khóa học phê duyệt",
+                allow_read_only_pending=True,
+            )
+            course = await repo.get_course_detail(course_id)
+            if not course:
+                raise ValueError("Không tìm thấy khóa học.")
+
+            course.submit_for_launch()
+            updated = await repo.update_course_status(
+                course.id, course.status, course.rejection_reason
+            )
+            return updated if updated else course
+
+    async def review_course(
+        self,
+        course_id: str,
+        action: Any,
+        rejection_reason: str = "",
+        current_user: CurrentUser | None = None,
+    ) -> Course:
+        if current_user and current_user.role not in ("SUPER_ADMIN", "PARTNER_ADMIN"):
+            raise PermissionError(
+                "Chỉ Quản trị viên đối tác hoặc Super Admin mới có quyền phê duyệt/từ chối khóa học."
+            )
+
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            course = await repo.get_course_detail(course_id)
+            if not course:
+                raise ValueError("Không tìm thấy khóa học.")
+
+            action_str = str(action).upper()
+            if action_str in ("APPROVE", "COURSE_REVIEW_ACTION_APPROVE", "1"):
+                course.approve()
+            elif action_str in ("REJECT", "COURSE_REVIEW_ACTION_REJECT", "2"):
+                course.reject(rejection_reason)
+            else:
+                raise ValueError("Hành động kiểm duyệt không hợp lệ.")
+
+            updated = await repo.update_course_status(
+                course.id, course.status, course.rejection_reason
+            )
+            return updated if updated else course
 
     async def list_courses(
         self,
@@ -73,11 +136,34 @@ class CatalogUseCase:
         subject: str = "",
         level: str = "",
         sort_by: str = "",
+        status_filter: Any = "",
     ) -> tuple[list[Course], str]:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
             return await repo.list_courses(
-                page_size, page_token, search_query, subject, level, sort_by
+                page_size,
+                page_token,
+                search_query,
+                subject,
+                level,
+                sort_by,
+                status_filter,
+            )
+
+    async def list_instructor_courses(
+        self,
+        instructor_id: str,
+        page_size: int = 50,
+        page_token: str = "",
+        status_filter: str | CourseStatus | None = None,
+    ) -> tuple[list[Course], str]:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            return await repo.list_instructor_courses(
+                instructor_id=instructor_id,
+                page_size=page_size,
+                page_token=page_token,
+                status_filter=status_filter,
             )
 
     async def get_course_detail(self, course_id: str) -> Course | None:
