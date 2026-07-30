@@ -36,7 +36,7 @@ export function useCourseReviewsQuery(courseId: string, options?: Partial<UseQue
   });
 }
 
-import { IdentityService, type User, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
+import { IdentityService, type User, type EnterpriseSeat, type InstructorApplication } from "@/gen/identity/v1/identity_pb";
 import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
 import { LearningService, type LearningProgress, type PersonalNote } from "@/gen/learning/v1/learning_pb";
 import { AssessmentService, type QuizResult, type AutoGradedLabResult, type QuestionBank, type Question, type QuestionOption } from "@/gen/assessment/v1/assessment_pb";
@@ -513,6 +513,113 @@ export function useUpdateInstructorProfileMutation(
       return res.user;
     },
     ...options,
+  });
+}
+
+export function useSubmitInstructorApplicationMutation(
+  options?: Partial<
+    UseMutationOptions<
+      void,
+      Error,
+      {
+        title: string;
+        bio: string;
+        linkedinUrl?: string;
+        cvUrl?: string;
+        demoVideoUrl?: string;
+      }
+    >
+  >
+) {
+  const queryClient = useQueryClient();
+  return useMutation<
+    void,
+    Error,
+    {
+      title: string;
+      bio: string;
+      linkedinUrl?: string;
+      cvUrl?: string;
+      demoVideoUrl?: string;
+    }
+  >({
+    mutationFn: async ({ title, bio, linkedinUrl, cvUrl, demoVideoUrl }) => {
+      const client = getRpcClient(IdentityService);
+      await client.submitInstructorApplication({
+        title,
+        bio,
+        linkedinUrl: linkedinUrl || "",
+        cvUrl: cvUrl || "",
+        demoVideoUrl: demoVideoUrl || "",
+      });
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["myInstructorApplication"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
+export function useMyInstructorApplicationQuery(
+  options?: Partial<UseQueryOptions<InstructorApplication | undefined, Error>>
+) {
+  return useQuery<InstructorApplication | undefined, Error>({
+    queryKey: ["myInstructorApplication"],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.getMyInstructorApplication({});
+      return res.application;
+    },
+    ...options,
+  });
+}
+
+export function useListInstructorApplicationsQuery(
+  statusFilter: string = "",
+  options?: Partial<UseQueryOptions<InstructorApplication[], Error>>
+) {
+  return useQuery<InstructorApplication[], Error>({
+    queryKey: ["instructorApplications", statusFilter],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.listInstructorApplications({ statusFilter });
+      return res.applications || [];
+    },
+    ...options,
+  });
+}
+
+export function useReviewInstructorApplicationMutation(
+  options?: Partial<
+    UseMutationOptions<
+      InstructorApplication | undefined,
+      Error,
+      { applicationId: string; approve: boolean; rejectionReason?: string }
+    >
+  >
+) {
+  const queryClient = useQueryClient();
+  return useMutation<
+    InstructorApplication | undefined,
+    Error,
+    { applicationId: string; approve: boolean; rejectionReason?: string }
+  >({
+    mutationFn: async ({ applicationId, approve, rejectionReason }) => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.reviewInstructorApplication({
+        applicationId,
+        approve,
+        rejectionReason: rejectionReason || "",
+      });
+      return res.application;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["instructorApplications"] });
+      queryClient.invalidateQueries({ queryKey: ["myInstructorApplication"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
   });
 }
 

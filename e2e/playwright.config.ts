@@ -51,7 +51,7 @@ export default defineConfig({
     // ─── Learner role ─────────────────────────────────────────────────────────
     {
       name: 'chromium-learner',
-      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts', '**/certificate.spec.ts'],
+      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts', '**/certificate.spec.ts', '**/instructor-application.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: LEARNER_AUTH,
@@ -73,7 +73,7 @@ export default defineConfig({
     // ─── Admin role ───────────────────────────────────────────────────────────
     {
       name: 'chromium-admin',
-      testMatch: ['**/admin.spec.ts', '**/partner.spec.ts'],
+      testMatch: ['**/admin.spec.ts', '**/partner.spec.ts', '**/admin-applications.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: ADMIN_AUTH,
@@ -84,7 +84,7 @@ export default defineConfig({
     // ─── Cross-browser (learner & public flows) ────────────────────────────────
     {
       name: 'firefox',
-      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts', '**/certificate.spec.ts'],
+      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts', '**/certificate.spec.ts', '**/instructor-application.spec.ts'],
       use: {
         ...devices['Desktop Firefox'],
         storageState: LEARNER_AUTH,
@@ -93,7 +93,7 @@ export default defineConfig({
     },
     {
       name: 'webkit',
-      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts', '**/certificate.spec.ts'],
+      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts', '**/certificate.spec.ts', '**/instructor-application.spec.ts'],
       use: {
         ...devices['Desktop Safari'],
         storageState: LEARNER_AUTH,
@@ -102,7 +102,7 @@ export default defineConfig({
     },
     {
       name: 'Mobile Chrome',
-      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts', '**/certificate.spec.ts'],
+      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts', '**/certificate.spec.ts', '**/instructor-application.spec.ts'],
       use: {
         ...devices['Pixel 5'],
         storageState: LEARNER_AUTH,

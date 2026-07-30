@@ -69,6 +69,13 @@ export function Navbar() {
             {"Diễn đàn"}
           </Link>
 
+          {/* Render Become Instructor link for learners */}
+          {!isInstructorOrAdmin && (
+            <Link href="/become-an-instructor" className={getLinkClasses("/become-an-instructor")}>
+              {"Trở thành Giảng viên"}
+            </Link>
+          )}
+
           {/* Render Instructor Portal for authorized roles */}
           {isInstructorOrAdmin && (
             <Link href="/instructor/courses" className={`${getLinkClasses("/instructor")} flex items-center gap-1.5`}>
@@ -150,6 +157,15 @@ export function Navbar() {
               className={getMobileLinkClasses("/my-courses")}
             >
               Khóa học của tôi
+            </Link>
+          )}
+          {!isInstructorOrAdmin && (
+            <Link
+              href="/become-an-instructor"
+              onClick={() => setMobileMenuOpen(false)}
+              className={getMobileLinkClasses("/become-an-instructor")}
+            >
+              {"Trở thành Giảng viên"}
             </Link>
           )}
           <Link

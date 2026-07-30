@@ -134,6 +134,63 @@ message VerifyIdentityResponse {
   string message = 2;
 }
 
+enum InstructorApplicationStatus {
+  INSTRUCTOR_APPLICATION_STATUS_UNSPECIFIED = 0;
+  INSTRUCTOR_APPLICATION_STATUS_PENDING_REVIEW = 1;
+  INSTRUCTOR_APPLICATION_STATUS_APPROVED = 2;
+  INSTRUCTOR_APPLICATION_STATUS_REJECTED = 3;
+}
+
+message InstructorApplication {
+  string id = 1;
+  string user_id = 2;
+  string title = 3;
+  string bio = 4;
+  string linkedin_url = 5;
+  string cv_url = 6;
+  string demo_video_url = 7;
+  InstructorApplicationStatus status = 8;
+  string rejection_reason = 9;
+  string created_at = 10;
+  string reviewed_at = 11;
+}
+
+message SubmitInstructorApplicationRequest {
+  string title = 1;
+  string bio = 2;
+  string linkedin_url = 3;
+  string cv_url = 4;
+  string demo_video_url = 5;
+}
+
+message SubmitInstructorApplicationResponse {
+  InstructorApplication application = 1;
+}
+
+message GetMyInstructorApplicationRequest {}
+
+message GetMyInstructorApplicationResponse {
+  InstructorApplication application = 1;
+}
+
+message ListInstructorApplicationsRequest {
+  string status_filter = 1;
+}
+
+message ListInstructorApplicationsResponse {
+  repeated InstructorApplication applications = 1;
+}
+
+message ReviewInstructorApplicationRequest {
+  string application_id = 1;
+  bool approve = 2;
+  string rejection_reason = 3;
+}
+
+message ReviewInstructorApplicationResponse {
+  InstructorApplication application = 1;
+}
+
 service IdentityService {
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
@@ -165,4 +222,18 @@ service IdentityService {
   rpc VerifyIdentity(VerifyIdentityRequest) returns (VerifyIdentityResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc SubmitInstructorApplication(SubmitInstructorApplicationRequest) returns (SubmitInstructorApplicationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetMyInstructorApplication(GetMyInstructorApplicationRequest) returns (GetMyInstructorApplicationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListInstructorApplications(ListInstructorApplicationsRequest) returns (ListInstructorApplicationsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
+  rpc ReviewInstructorApplication(ReviewInstructorApplicationRequest) returns (ReviewInstructorApplicationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+  }
 }
+
+

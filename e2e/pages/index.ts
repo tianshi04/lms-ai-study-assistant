@@ -18,4 +18,8 @@ export { QuestionBankPage } from './question-bank.page';
 export { PartnerAdminPage, PartnerSettingsPage, PartnerShowcasePage } from './partner-management.page';
 export { InstructorProfilePage } from './instructor-profile.page';
 export { PaymentPage } from './payment.page';
+export { BecomeAnInstructorPage } from './become-an-instructor.page';
+export { AdminApplicationsPage } from './admin-applications.page';
+
+
 

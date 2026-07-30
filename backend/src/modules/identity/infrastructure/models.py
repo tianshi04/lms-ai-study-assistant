@@ -127,3 +127,30 @@ class EnterpriseLicenseModel(Base):
     allowed_course_ids: Mapped[list[str]] = mapped_column(
         ARRAY(String(64)), nullable=False, default=list, server_default="{}"
     )
+
+
+class InstructorApplicationModel(Base):
+    __tablename__ = "instructor_applications"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    bio: Mapped[str] = mapped_column(Text, nullable=False)
+    linkedin_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    cv_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    demo_video_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
+    status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="PENDING_REVIEW",
+        server_default="PENDING_REVIEW",
+        index=True,
+    )
+    rejection_reason: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    reviewed_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")

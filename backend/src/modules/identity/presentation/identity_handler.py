@@ -7,9 +7,41 @@ from connectrpc.request import RequestContext
 from src.gen.identity.v1 import identity_pb as pb
 from src.gen.identity.v1.identity_connect import IdentityService
 from src.modules.identity.application.identity_usecase import IdentityUseCase
-from src.modules.identity.domain.entities import User, UserRole
+from src.modules.identity.domain.entities import (
+    User,
+    UserRole,
+    InstructorApplication,
+    ApplicationStatus,
+)
 from src.shared.auth import require_current_user
 from src.shared.config import settings
+
+
+def _to_pb_application_status(
+    status: ApplicationStatus,
+) -> pb.InstructorApplicationStatus:
+    mapping = {
+        ApplicationStatus.PENDING_REVIEW: pb.InstructorApplicationStatus.PENDING_REVIEW,
+        ApplicationStatus.APPROVED: pb.InstructorApplicationStatus.APPROVED,
+        ApplicationStatus.REJECTED: pb.InstructorApplicationStatus.REJECTED,
+    }
+    return mapping.get(status, pb.InstructorApplicationStatus.UNSPECIFIED)
+
+
+def _to_pb_application(app: InstructorApplication) -> pb.InstructorApplication:
+    return pb.InstructorApplication(
+        id=app.id,
+        user_id=app.user_id,
+        title=app.title,
+        bio=app.bio,
+        linkedin_url=app.linkedin_url,
+        cv_url=app.cv_url,
+        demo_video_url=app.demo_video_url,
+        status=_to_pb_application_status(app.status),
+        rejection_reason=app.rejection_reason,
+        created_at=app.created_at,
+        reviewed_at=app.reviewed_at,
+    )
 
 
 def _to_pb_user_role(role: UserRole) -> pb.UserRole:
@@ -281,3 +313,87 @@ class IdentityHandler(IdentityService):
             id_card_number=request.id_card_number,
         )
         return pb.VerifyIdentityResponse(success=success, message=msg)
+
+    async def submit_instructor_application(
+        self,
+        request: pb.SubmitInstructorApplicationRequest,
+        ctx: RequestContext[
+            pb.SubmitInstructorApplicationRequest,
+            pb.SubmitInstructorApplicationResponse,
+        ],
+    ) -> pb.SubmitInstructorApplicationResponse:
+        current_user = require_current_user()
+        try:
+            app = await self._use_case.submit_instructor_application(
+                user_id=current_user.id,
+                title=request.title,
+                bio=request.bio,
+                linkedin_url=request.linkedin_url,
+                cv_url=request.cv_url,
+                demo_video_url=request.demo_video_url,
+            )
+            return pb.SubmitInstructorApplicationResponse(
+                application=_to_pb_application(app)
+            )
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
+    async def get_my_instructor_application(
+        self,
+        request: pb.GetMyInstructorApplicationRequest,
+        ctx: RequestContext[
+            pb.GetMyInstructorApplicationRequest,
+            pb.GetMyInstructorApplicationResponse,
+        ],
+    ) -> pb.GetMyInstructorApplicationResponse:
+        current_user = require_current_user()
+        app = await self._use_case.get_my_instructor_application(current_user.id)
+        pb_app = _to_pb_application(app) if app else None
+        return pb.GetMyInstructorApplicationResponse(application=pb_app)
+
+    async def list_instructor_applications(
+        self,
+        request: pb.ListInstructorApplicationsRequest,
+        ctx: RequestContext[
+            pb.ListInstructorApplicationsRequest,
+            pb.ListInstructorApplicationsResponse,
+        ],
+    ) -> pb.ListInstructorApplicationsResponse:
+        current_user = require_current_user()
+        role_str = str(current_user.role).upper()
+        if not any(r in role_str for r in ("ADMIN", "SUPER")):
+            raise ConnectError(
+                Code.PERMISSION_DENIED,
+                "Chỉ Quản trị viên hệ thống mới có quyền xem danh sách đơn thẩm định.",
+            )
+        apps = await self._use_case.list_instructor_applications(request.status_filter)
+        return pb.ListInstructorApplicationsResponse(
+            applications=[_to_pb_application(a) for a in apps]
+        )
+
+    async def review_instructor_application(
+        self,
+        request: pb.ReviewInstructorApplicationRequest,
+        ctx: RequestContext[
+            pb.ReviewInstructorApplicationRequest,
+            pb.ReviewInstructorApplicationResponse,
+        ],
+    ) -> pb.ReviewInstructorApplicationResponse:
+        current_user = require_current_user()
+        role_str = str(current_user.role).upper()
+        if not any(r in role_str for r in ("ADMIN", "SUPER")):
+            raise ConnectError(
+                Code.PERMISSION_DENIED,
+                "Chỉ Quản trị viên hệ thống mới có quyền duyệt đơn Giảng viên.",
+            )
+        try:
+            app = await self._use_case.review_instructor_application(
+                application_id=request.application_id,
+                approve=request.approve,
+                rejection_reason=request.rejection_reason,
+            )
+            return pb.ReviewInstructorApplicationResponse(
+                application=_to_pb_application(app)
+            )
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))

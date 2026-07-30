@@ -7,12 +7,15 @@ from src.modules.identity.domain.entities import (
     UserRole,
     SystemRole,
     Organization,
+    InstructorApplication,
+    ApplicationStatus,
 )
 from src.modules.identity.infrastructure.models import (
     UserModel,
     OrganizationModel,
     OrganizationRoleModel,
     OrganizationMemberModel,
+    InstructorApplicationModel,
 )
 
 
@@ -222,3 +225,89 @@ class OrganizationRepository:
             current_role = parent_role
 
         return role_name, permissions
+
+
+class InstructorApplicationRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def get_by_id(self, application_id: str) -> Optional[InstructorApplication]:
+        stmt = select(InstructorApplicationModel).where(
+            InstructorApplicationModel.id == application_id
+        )
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
+
+    async def get_latest_by_user_id(
+        self, user_id: str
+    ) -> Optional[InstructorApplication]:
+        stmt = (
+            select(InstructorApplicationModel)
+            .where(InstructorApplicationModel.user_id == user_id)
+            .order_by(InstructorApplicationModel.created_at.desc())
+        )
+        result = await self._session.execute(stmt)
+        model = result.scalars().first()
+        return self._to_entity(model) if model else None
+
+    async def list_applications(
+        self, status_filter: str = ""
+    ) -> list[InstructorApplication]:
+        stmt = select(InstructorApplicationModel)
+        if status_filter:
+            stmt = stmt.where(InstructorApplicationModel.status == status_filter)
+        stmt = stmt.order_by(InstructorApplicationModel.created_at.desc())
+        result = await self._session.execute(stmt)
+        models = result.scalars().all()
+        return [self._to_entity(m) for m in models]
+
+    async def save(self, application: InstructorApplication) -> InstructorApplication:
+        stmt = select(InstructorApplicationModel).where(
+            InstructorApplicationModel.id == application.id
+        )
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+
+        if not model:
+            model = InstructorApplicationModel(
+                id=application.id,
+                user_id=application.user_id,
+                title=application.title,
+                bio=application.bio,
+                linkedin_url=application.linkedin_url,
+                cv_url=application.cv_url,
+                demo_video_url=application.demo_video_url,
+                status=application.status.value,
+                rejection_reason=application.rejection_reason,
+                created_at=application.created_at,
+                reviewed_at=application.reviewed_at,
+            )
+            self._session.add(model)
+        else:
+            model.title = application.title
+            model.bio = application.bio
+            model.linkedin_url = application.linkedin_url
+            model.cv_url = application.cv_url
+            model.demo_video_url = application.demo_video_url
+            model.status = application.status.value
+            model.rejection_reason = application.rejection_reason
+            model.reviewed_at = application.reviewed_at
+
+        await self._session.flush()
+        return self._to_entity(model)
+
+    def _to_entity(self, model: InstructorApplicationModel) -> InstructorApplication:
+        return InstructorApplication(
+            id=model.id,
+            user_id=model.user_id,
+            title=model.title,
+            bio=model.bio,
+            linkedin_url=model.linkedin_url,
+            cv_url=model.cv_url,
+            demo_video_url=model.demo_video_url,
+            status=ApplicationStatus(model.status),
+            rejection_reason=model.rejection_reason,
+            created_at=model.created_at,
+            reviewed_at=model.reviewed_at,
+        )

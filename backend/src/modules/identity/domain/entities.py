@@ -17,6 +17,27 @@ class UserRole(str, Enum):
     PARTNER_ADMIN = "USER_ROLE_PARTNER_ADMIN"
 
 
+class ApplicationStatus(str, Enum):
+    PENDING_REVIEW = "PENDING_REVIEW"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
+@dataclass
+class InstructorApplication:
+    id: str
+    user_id: str
+    title: str
+    bio: str
+    linkedin_url: str
+    cv_url: str
+    demo_video_url: str
+    status: ApplicationStatus = ApplicationStatus.PENDING_REVIEW
+    rejection_reason: str = ""
+    created_at: str = ""
+    reviewed_at: str = ""
+
+
 @dataclass
 class Organization:
     id: str

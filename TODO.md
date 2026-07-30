@@ -6,18 +6,7 @@
 
 ---
 
-## 1. Nghiệp vụ Cá nhân Nộp đơn xin cấp quyền Giảng viên (Individual Instructor Application)
-
-* **Tác nhân:** Học viên (`Learner` / Cá nhân tự do).
-* **Mô tả Nghiệp vụ:** 
-  * Học viên có tài khoản cá nhân có thể gửi Đơn xin nâng cấp vai trò thành Giảng viên (`INSTRUCTOR`) mà không cần phải qua một Trường Đại học hoặc Doanh nghiệp nào thêm trước vào hệ thống.
-  * Form đăng ký yêu cầu cung cấp: Chức danh khoa học/chuyên môn mong muốn hiển thị (`title`), Bài viết tiểu sử năng lực (`bio`), Đường dẫn LinkedIn/Portfolio, File CV hồ sơ năng lực (.pdf) và Link video giảng thử demo.
-  * Đơn sau khi nộp ghi nhận trạng thái **Chờ thẩm định (`PENDING_REVIEW`)**.
-* **Màn hình/Giao diện liên quan:** Giao diện đăng ký tại đường dẫn `/become-an-instructor`.
-
----
-
-## 2. Nghiệp vụ Thẩm định & Duyệt Đơn Giảng viên Cá nhân (Super Admin Review & Promotion)
+## 1. Nghiệp vụ Thẩm định & Duyệt Đơn Giảng viên Cá nhân (Super Admin Review & Promotion)
 
 * **Tác nhân:** Super Admin (Ban Quản trị Nền tảng).
 * **Mô tả Nghiệp vụ:**
@@ -31,7 +20,7 @@
 
 ---
 
-## 3. Nghiệp vụ Khóa học Bắt buộc thuộc Partner & Giảng viên Cá nhân (`Coursera Project Network`)
+## 2. Nghiệp vụ Khóa học Bắt buộc thuộc Partner & Giảng viên Cá nhân (`Coursera Project Network`)
 
 * **Tác nhân:** Giảng viên (`INSTRUCTOR`).
 * **Mô tả Nghiệp vụ:**
@@ -42,4 +31,5 @@
     * Dòng nhãn bảo chứng: *Offered by Coursera Project Network*.
     * Dòng nhãn giảng viên: *Taught by [Họ tên Giảng viên]* kèm Chức danh và Avatar cá nhân.
 * **Màn hình/Giao diện liên quan:** Giao diện Soạn thảo Khóa học mới tại đường dẫn `/instructor/courses/new`.
+
 
