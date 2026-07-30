@@ -38,7 +38,9 @@ This file provides rules, architectural conventions, and workspace instructions 
 - **Never modify code inside generated folders manually.** Always update the `.proto` files and run the generation scripts.
 - The `src/gen/` folders are ignored in Git.
 - We use **Connect-ES v2.0** on the frontend (utilizing `protoc-gen-es` only, where both messages and service schemas are generated directly in `_pb.ts` files without a separate `_connect.ts` stub).
-- **Development Stage & Backward Compatibility**: Since the project is currently in active initial development, API definitions and code structures can be refactored or modified freely without preserving backward compatibility.
+- **Development Stage & Zero-Legacy Refactoring Protocol**:
+  - Since the project is currently in active initial development, all design changes, API contracts, and code structures **MUST BE REFACTORED AGGRESSIVELY AND COMPLETELY** without preserving backward compatibility.
+  - **NO BACKWARD COMPATIBILITY & NO FALLBACK DEBT**: Never retain redundant parameters, optional fallback arguments, legacy branching logic, or unused data fields under the guise of "fallback" or "backward compatibility". Whenever a workflow or data field is automated or eliminated, completely erase all footprints of the legacy design across all architectural layers (Protobuf schemas, presentation handlers, application use cases, domain interfaces, and infrastructure implementations) to ensure a 100% minimal and pristine codebase.
 - **Protobuf Modification Protocol (STRICT SEQUENTIAL RULE)**:
   Whenever adding or modifying `.proto` files in `proto/`, agents MUST follow this exact sequence:
   1. Run `make format-proto` to format Protobuf files and `make lint-proto` to verify linting rules.
