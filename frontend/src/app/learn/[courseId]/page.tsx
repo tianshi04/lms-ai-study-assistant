@@ -20,11 +20,11 @@ import { CourseCompletionModal } from "@/components/course/CourseCompletionModal
 function CoursePlayerContent() {
   const params = useParams();
   const courseId = params?.courseId as string;
-  
+
   const searchParams = useSearchParams();
   const previewItemId = searchParams?.get("itemId") || null;
   const isPreviewMode = searchParams?.get("preview") === "true";
-  
+
   const [userId, setUserId] = useState<string>("");
 
   const [course, setCourse] = useState<Course | null>(null);
@@ -210,7 +210,7 @@ function CoursePlayerContent() {
     }
 
     const time = Math.floor(video.currentTime);
-    setCurrentTime(time);
+    setCurrentTime(video.currentTime);
 
     // Auto mark as completed if watched >= 80% of video duration
     if (
@@ -443,13 +443,12 @@ function CoursePlayerContent() {
                                   setActiveItem(item);
                                   setActiveQuiz(null);
                                 }}
-                                className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all ${
-                                  isActive
+                                className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all ${isActive
                                     ? "bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-500/30"
                                     : !isUnlocked
-                                    ? "opacity-50 hover:bg-transparent cursor-not-allowed text-slate-400 dark:text-slate-600"
-                                    : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
-                                }`}
+                                      ? "opacity-50 hover:bg-transparent cursor-not-allowed text-slate-400 dark:text-slate-600"
+                                      : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
+                                  }`}
                               >
                                 <span className="truncate flex items-center gap-2">
                                   {isDone ? (
@@ -522,6 +521,7 @@ function CoursePlayerContent() {
               selectedOption={selectedOption}
               quizSubmitted={quizSubmitted}
               completedItemIds={progress?.completedItemIds || []}
+              currentTime={currentTime}
               onTimeUpdate={handleTimeUpdate}
               onSeeking={handleSeeking}
               onSelectOption={setSelectedOption}
@@ -533,18 +533,17 @@ function CoursePlayerContent() {
           </div>
 
           {/* Bottom Tabs Section */}
-          {(!isPreviewMode || (activeItem?.interactiveTranscripts && activeItem.interactiveTranscripts.length > 0)) && (
+          {(!isPreviewMode || (activeItem?.interactiveTranscripts && activeItem.interactiveTranscripts.length > 0) || activeItem?.vttSubtitleUrl) && (
             <div className="h-64 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0">
               {/* Tab Header Bar */}
               <div className="h-11 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between bg-slate-50 dark:bg-slate-900/90">
                 <div className="flex items-center gap-6">
                   <button
                     onClick={() => setActiveTab("transcript")}
-                    className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
-                      activeTab === "transcript"
+                    className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${activeTab === "transcript"
                         ? "text-blue-600 dark:text-blue-400 border-blue-500"
                         : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
-                    }`}
+                      }`}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
@@ -556,11 +555,10 @@ function CoursePlayerContent() {
                     <>
                       <button
                         onClick={() => setActiveTab("forum")}
-                        className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
-                          activeTab === "forum"
+                        className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${activeTab === "forum"
                             ? "text-blue-600 dark:text-blue-400 border-blue-500"
                             : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
-                        }`}
+                          }`}
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
@@ -569,11 +567,10 @@ function CoursePlayerContent() {
                       </button>
                       <button
                         onClick={() => setActiveTab("notes")}
-                        className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
-                          activeTab === "notes"
+                        className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${activeTab === "notes"
                             ? "text-blue-600 dark:text-blue-400 border-blue-500"
                             : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
-                        }`}
+                          }`}
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -582,11 +579,10 @@ function CoursePlayerContent() {
                       </button>
                       <button
                         onClick={() => setActiveTab("deadlines")}
-                        className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
-                          activeTab === "deadlines"
+                        className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${activeTab === "deadlines"
                             ? "text-blue-600 dark:text-blue-400 border-blue-500"
                             : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
-                        }`}
+                          }`}
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
