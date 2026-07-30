@@ -51,7 +51,7 @@ class CurrentUserContext:
 
     id: str
     email: str = ""
-    role: str = ""  # Legacy global role for backward compatibility
+    role: str = ""
     system_role: str = "USER"  # SUPER_ADMIN | USER
     active_org_id: Optional[str] = None
     org_role: Optional[str] = None
@@ -86,7 +86,6 @@ class CurrentUserContext:
         return self.active_org_id
 
 
-# Alias for backward compatibility across existing handlers
 CurrentUser = CurrentUserContext
 
 
