@@ -23,6 +23,7 @@ Tài liệu này tổng hợp các User Stories (câu chuyện người dùng) c
 | **US_11** | Học viên | Chứng chỉ xác minh và Huy hiệu năng lực | Sẵn sàng |
 | **US_12** | Partner Admin | Thương hiệu đối tác và Suất học tổ chức | Sẵn sàng |
 | **US_13** | Học viên | Đánh giá và Phản hồi chất lượng khóa học | Sẵn sàng |
+| **US_14** | Học viên | Nộp đơn đăng ký làm Giảng viên cá nhân | Sẵn sàng |
 
 ---
 
@@ -127,6 +128,17 @@ Tài liệu này tổng hợp các User Stories (câu chuyện người dùng) c
 * **Tiêu chí nghiệm thu:**
   * *AC 1:* Học viên hoàn thành 100% khóa học và đạt điểm Pass sẽ được hiển thị Course Completion Modal mừng hoàn thành kèm form chọn 1-5 sao và nhập văn bản nhận xét.
   * *AC 2:* Đánh giá của học viên được cập nhật công khai vào điểm CSAT trung bình của khóa học và hiển thị trên trang chi tiết khóa học.
+
+#### US_14: Nộp đơn đăng ký làm Giảng viên cá nhân
+* **Mô tả Story (Problem Space):**
+  * **Là một** Học viên (Learner / Cá nhân tự do),
+  * **Tôi muốn** nộp Đơn đăng ký kèm thông tin chuyên môn, CV và bài giảng mẫu để Ban Quản trị phê duyệt nâng vai trò lên Giảng viên (`INSTRUCTOR`),
+  * **Để** tôi có thể khởi tạo và xuất bản các khóa học/bài giảng cá nhân trên nền tảng dưới nhãn bảo chứng `Coursera Project Network` mà không cần phải qua một Trường Đại học hay Doanh nghiệp đối tác nào thêm trước vào hệ thống.
+* **Tiêu chí nghiệm thu:**
+  * *AC 1:* Học viên có thể truy cập trang `/become-an-instructor`, điền Chức danh khoa học (`title`), Bio tiểu sử, liên kết LinkedIn/Portfolio, link file CV và link video bài giảng mẫu để gửi đơn.
+  * *AC 2:* Đơn đăng ký ghi nhận trạng thái `PENDING_REVIEW` và hiển thị màn hình thông báo chờ Ban Quản trị thẩm định.
+  * *AC 3:* Khi Super Admin phê duyệt (Approve), tài khoản được nâng vai trò thành `USER_ROLE_INSTRUCTOR` và tự động liên kết với Partner mặc định toàn sàn `Coursera Project Network` (`partner_id = "partner_community"`) để cấp quyền khởi tạo khóa học trong Course Builder.
+  * *AC 4:* Nếu đơn bị từ chối (Reject), hệ thống gửi thông báo kèm lý do từ chối và cho phép học viên cập nhật lại hồ sơ sau 14 ngày.
 
 ---
 

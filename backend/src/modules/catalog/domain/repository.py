@@ -5,6 +5,7 @@ from src.modules.catalog.domain.entities import (
     Course,
     CourseAnnouncement,
     CourseReview,
+    CourseStatus,
     InstructorAnalytics,
     ItemType,
     Lesson,
@@ -24,6 +25,17 @@ class ICatalogRepository(ABC):
         subject: str = "",
         level: str = "",
         sort_by: str = "",
+        status_filter: str | CourseStatus = "",
+    ) -> tuple[list[Course], str]:
+        pass
+
+    @abstractmethod
+    async def list_instructor_courses(
+        self,
+        instructor_id: str,
+        page_size: int = 50,
+        page_token: str = "",
+        status_filter: str | CourseStatus | None = None,
     ) -> tuple[list[Course], str]:
         pass
 
@@ -70,6 +82,12 @@ class ICatalogRepository(ABC):
         subject: str = "",
         level: str = "",
         financial_aid_enabled: bool = True,
+    ) -> Course | None:
+        pass
+
+    @abstractmethod
+    async def update_course_status(
+        self, course_id: str, status: CourseStatus, rejection_reason: str = ""
     ) -> Course | None:
         pass
 

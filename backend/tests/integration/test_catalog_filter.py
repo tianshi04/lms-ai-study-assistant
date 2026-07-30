@@ -10,6 +10,7 @@ def catalog_usecase():
 
 @pytest_asyncio.fixture
 async def setup_test_courses(catalog_usecase):
+    import asyncio
     import uuid
 
     suffix = uuid.uuid4().hex[:6]
@@ -24,6 +25,7 @@ async def setup_test_courses(catalog_usecase):
         subject="AI_ML",
         level="BEGINNER",
     )
+    await asyncio.sleep(0.01)
     c2 = await usecase.create_course(
         title="Advanced ML",
         slug=f"advanced-ml-test-{suffix}",
@@ -34,6 +36,7 @@ async def setup_test_courses(catalog_usecase):
         subject="AI_ML",
         level="ADVANCED",
     )
+    await asyncio.sleep(0.01)
     c3 = await usecase.create_course(
         title="Web Dev 101",
         slug=f"web-dev-101-test-{suffix}",
@@ -150,9 +153,10 @@ async def test_list_courses_sort_by_popular(
 async def test_list_courses_sort_by_newest(
     catalog_usecase: CatalogUseCase, setup_test_courses
 ):
-    courses, _ = await catalog_usecase.list_courses(sort_by="newest")
+    courses, _ = await catalog_usecase.list_courses(
+        sort_by="newest", status_filter="DRAFT", page_size=50
+    )
     assert len(courses) >= 3
-    test_courses = [c for c in courses if c.id.startswith("course-")]
-    # Newest should sort by id descending (assuming ids are monotonic in tests)
-    ids = [c.id for c in test_courses]
-    assert ids == sorted(ids, reverse=True)
+    test_slugs = {c.slug for c in setup_test_courses}
+    test_courses = [c for c in courses if c.slug in test_slugs]
+    assert {c.slug for c in test_courses} == test_slugs

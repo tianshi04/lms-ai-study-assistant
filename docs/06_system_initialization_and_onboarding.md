@@ -61,14 +61,15 @@ Giai đoạn này đảm bảo chất lượng chuyên môn bài giảng và s�
 
 | Bước | Vai trò Nghiệp vụ (Actor) | Thao tác Nghiệp vụ | Dữ liệu Đầu vào (Business Input) | Kết quả Nghiệp vụ (Business Outcome) |
 | :---: | :--- | :--- | :--- | :--- |
-| **2.1** | Giảng viên | Cấu hình Hồ sơ & Chữ ký tay | Đăng nhập `/instructor/profile`, điền Chức danh khoa học (*GS. Andrew Ng - Adjunct Professor*) & Upload nét ký tay PNG. | Mẫu chữ ký tay điện tử sẵn sàng để nhúng lên chứng chỉ sau này (`BR_CERT_002`). |
-| **2.2** | Giảng viên / Partner Admin | Khởi tạo Khóa học | Nhập Tiêu đề khóa học, Tóm tắt nội dung, Lĩnh vực chuyên ngành (Category/Subject). | Khóa học tạo lập thành công ở trạng thái Bản Nháp (`DRAFT`). |
-| **2.3** | Giảng viên | Biên soạn Học liệu Chi tiết | Đăng tải Video bài giảng, Phụ đề (.vtt), Bài đọc, Ma trận Đề thi (Quiz Matrix) & Rubric Chấm chéo. | Đầy đủ nội dung giảng dạy và công cụ đánh giá năng lực học viên. |
+| **2.1a** | Học viên (Learner) | Nộp Đơn đăng ký Giảng viên cá nhân | Đăng nhập `/become-an-instructor`, điền Chức danh, Bio, Link LinkedIn, File CV (.pdf) & Link Video giảng demo. | Đơn xin cấp quyền được khởi tạo ở trạng thái `PENDING_REVIEW`. |
+| **2.1b** | Super Admin | Kiểm duyệt & Thẩm định Hồ sơ | Xem xét năng lực trên Admin Portal (`/admin/applications`) và chọn Phê duyệt (**Approve**). | Tài khoản chuyển vai trò `USER_ROLE_INSTRUCTOR`, hệ thống tự động gán vào Partner Mặc định **`Coursera Project Network`** (`partner_id = "partner_community"`). |
+| **2.1c** | Giảng viên | Cấu hình Hồ sơ & Chữ ký tay | Đăng nhập `/instructor/profile`, điền Chức danh khoa học (*GS. Andrew Ng - Senior AI Expert*) & Upload nét ký tay PNG. | Mẫu chữ ký tay điện tử sẵn sàng để nhúng lên chứng chỉ sau này (`BR_CERT_002`). |
+| **2.2** | Giảng viên | Xây dựng Cấu trúc Học tập | Tạo Tuần học (Week 1, Week 2), đăng Video kèm Phụ đề VTT, soạn Bài đọc và Ma trận Quiz. | Khung chương trình bài giảng hoàn thiện dưới dạng Bản nháp (Draft). |
+| **2.3** | Giảng viên | Cấu hình Rubric & Peer Review | Nhập tiêu chí chấm điểm tự luận/dự án (Rubric Criteria) và số lượng bài chấm bắt buộc ($N=3$). | Bộ bài tập thực hành & chấm chéo sẵn sàng vận hành. |
 | **2.4** | Partner Admin | Phân công Giảng viên phụ trách | Gán Giảng viên chính (`owner_id`) và Giảng viên đồng giảng dạy (`co_instructor_ids`). | Xác định tư cách Giảng viên đứng tên đại diện trên Chứng chỉ (`BR_CATALOG_001`). |
 | **2.5** | Giảng viên | Gửi Yêu cầu Phê duyệt (`Submit for Launch`) | Bấm nút *"Submit for Launch"* (Pre-submit checklist PASS). | Khóa học chuyển sang trạng thái **`PENDING_REVIEW`** và tạm khóa quyền chỉnh sửa (Read-only `BR_CATALOG_003`). |
 | **2.6** | Partner Admin / Reviewer | Màn hình Kiểm duyệt (*Course Reviewer Portal*) | Xem trước dưới chế độ Học viên (*Student Preview Mode*). | Đánh giá chất lượng thực tế video, phụ đề VTT, bài thi thi thử và bài tập dự án. |
 | **2.7** | Partner Admin / Reviewer | Phê duyệt hoặc Từ chối (*Approve / Reject*) | Bấm *"Approve & Publish"* hoặc *"Reject"* kèm Feedback lý do. | Nếu Approve: Khóa học chuyển sang **`PUBLISHED`** mở bán công khai. Nếu Reject: Khóa học về **`DRAFT`** kèm góp ý để Giảng viên sửa lại. |
-
 
 ---
 

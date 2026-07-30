@@ -3,7 +3,7 @@
 import { useEffect, useState, useSyncExternalStore, use } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService, ItemType, type Course, type LearningItem } from "@/gen/catalog/v1/catalog_pb";
+import { CatalogService, CourseStatus, ItemType, type Course, type LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { AssessmentService, type QuestionBank } from "@/gen/assessment/v1/assessment_pb";
 
 import { Modal } from "@/components/ui/Modal";
@@ -123,6 +123,26 @@ export default function InstructorCourseBuilderPage({
       toast.error(errMsg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const [submittingLaunch, setSubmittingLaunch] = useState(false);
+
+  const handleSubmitForLaunch = async () => {
+    if (!course) return;
+    setSubmittingLaunch(true);
+    try {
+      const client = getRpcClient(CatalogService);
+      const res = await client.submitCourseForLaunch({ courseId: course.id });
+      if (res.course) {
+        setCourse(res.course);
+      }
+      toast.success("Đã gửi yêu cầu phê duyệt khóa học thành công! Trạng thái hiện tại: PENDING_REVIEW.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Không thể gửi yêu cầu phê duyệt.";
+      toast.error(msg);
+    } finally {
+      setSubmittingLaunch(false);
     }
   };
 
@@ -578,29 +598,90 @@ export default function InstructorCourseBuilderPage({
 
         {/* Course Header Banner */}
         {course && (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="space-y-2 max-w-3xl">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
-                  {course.partnerName}
-                </span>
-                <span className="text-xs font-mono text-slate-400">ID: {course.id}</span>
+          <>
+            {/* Status Alert Banners */}
+            {course.status === CourseStatus.PENDING_REVIEW && (
+              <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-800 dark:text-blue-200 text-sm flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping" />
+                  <span>
+                    <strong>{"Khóa học đang chờ kiểm duyệt (PENDING_REVIEW):"}</strong> {"Hệ thống đang chuyển sang chế độ Chỉ đọc (Read-only). Các thao tác chỉnh sửa sẽ tạm thời bị khóa trong thời gian Reviewer đánh giá."}
+                  </span>
+                </div>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                {course.title}
-              </h1>
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
-                {course.description}
-              </p>
-              <div className="text-xs font-medium text-slate-500 flex items-center gap-2 pt-1">
-                <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span>{"Giảng viên:"} {course.instructorNames.join(", ")}</span>
-              </div>
-            </div>
+            )}
 
-            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            {course.status === CourseStatus.REJECTED && (
+              <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-800 dark:text-rose-200 text-sm flex items-start gap-3">
+                <svg className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <h4 className="font-bold text-rose-900 dark:text-rose-100">{"Khóa học bị từ chối phê duyệt (REJECTED)"}</h4>
+                  <p className="text-xs mt-1 text-rose-700 dark:text-rose-300">
+                    {"Lý do góp ý từ Reviewer:"} <strong>{course.rejectionReason || "Cần bổ sung thêm thông tin học liệu."}</strong>
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">{"Vui lòng hoàn thiện học liệu theo yêu cầu và bấm 'Gửi Yêu Cầu Phê Duyệt' để nộp lại."}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div className="space-y-2 max-w-3xl">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
+                    {course.partnerName}
+                  </span>
+                  {course.status === CourseStatus.DRAFT && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
+                      {"Bản nháp (DRAFT)"}
+                    </span>
+                  )}
+                  {course.status === CourseStatus.PENDING_REVIEW && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 animate-pulse">
+                      {"Chờ kiểm duyệt (PENDING_REVIEW)"}
+                    </span>
+                  )}
+                  {course.status === CourseStatus.PUBLISHED && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                      {"Đã xuất bản (PUBLISHED)"}
+                    </span>
+                  )}
+                  {course.status === CourseStatus.REJECTED && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20">
+                      {"Từ chối (REJECTED)"}
+                    </span>
+                  )}
+                  <span className="text-xs font-mono text-slate-400">ID: {course.id}</span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  {course.title}
+                </h1>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
+                  {course.description}
+                </p>
+                <div className="text-xs font-medium text-slate-500 flex items-center gap-2 pt-1">
+                  <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>{"Giảng viên:"} {course.instructorNames.join(", ")}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                {(course.status === CourseStatus.DRAFT || course.status === CourseStatus.REJECTED) && (
+                  <button
+                    type="button"
+                    onClick={handleSubmitForLaunch}
+                    disabled={submittingLaunch}
+                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>{submittingLaunch ? "Đang nộp..." : "Submit for Launch (Gửi duyệt)"}</span>
+                  </button>
+                )}
               <button
                 type="button"
                 onClick={async () => {
@@ -704,6 +785,7 @@ export default function InstructorCourseBuilderPage({
               )}
             </div>
           </div>
+        </>
         )}
 
 

@@ -153,6 +153,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         owner_id="user_instructor_01",
         subject="cat-subj-ds",
         level="cat-lvl-int",
+        status="PUBLISHED",
     )
 
     # Week 1
@@ -364,6 +365,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         owner_id="user_instructor_02",
         subject="cat-subj-it",
         level="cat-lvl-beg",
+        status="PUBLISHED",
     )
 
     week_web1 = WeekModuleModel(
@@ -449,6 +451,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         owner_id="user_instructor_01",
         subject="cat-subj-cs",
         level="cat-lvl-adv",
+        status="PUBLISHED",
     )
     week_dl1 = WeekModuleModel(
         id="week-1-dl",

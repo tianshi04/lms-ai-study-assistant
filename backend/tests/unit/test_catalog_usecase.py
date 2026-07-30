@@ -77,7 +77,7 @@ async def test_list_courses(mock_scope, catalog_usecase, mock_repo, mock_session
     courses, token = await catalog_usecase.list_courses(page_size=5, page_token="pt")
 
     mock_scope.assert_called_once()
-    mock_repo.list_courses.assert_awaited_once_with(5, "pt", "", "", "", "")
+    mock_repo.list_courses.assert_awaited_once_with(5, "pt", "", "", "", "", "")
     assert len(courses) == 1
     assert courses[0].id == "c1"
     assert token == "token"

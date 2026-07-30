@@ -34,6 +34,7 @@ async def test_handler_list_courses():
         subject="AI_ML",
         level="BEGINNER",
         sort_by="newest",
+        status_filter=pb.CourseStatus.PUBLISHED,
     )
 
 
@@ -53,5 +54,38 @@ async def test_handler_list_courses_unspecified():
 
     assert response is not None
     usecase_mock.list_courses.assert_called_once_with(
-        page_size=10, page_token="", search_query="", subject="", level="", sort_by=""
+        page_size=10,
+        page_token="",
+        search_query="",
+        subject="",
+        level="",
+        sort_by="",
+        status_filter=pb.CourseStatus.PUBLISHED,
     )
+
+
+@pytest.mark.asyncio
+async def test_handler_list_instructor_courses():
+    from src.shared.auth import CurrentUser, set_current_user
+
+    usecase_mock = AsyncMock()
+    usecase_mock.list_instructor_courses.return_value = ([], "")
+
+    handler = CatalogHandler(usecase_mock)
+    request = pb.ListInstructorCoursesRequest(page_size=50)
+    context_mock = MagicMock()
+
+    set_current_user(
+        CurrentUser(id="inst-123", email="inst@test.com", role="INSTRUCTOR")
+    )
+    try:
+        response = await handler.list_instructor_courses(request, context_mock)
+        assert response is not None
+        usecase_mock.list_instructor_courses.assert_called_once_with(
+            instructor_id="inst-123",
+            page_size=50,
+            page_token="",
+            status_filter=None,
+        )
+    finally:
+        set_current_user(None)

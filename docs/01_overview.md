@@ -16,6 +16,7 @@ Hệ thống được vận hành và tương tác bởi 4 vai trò cốt lõi:
    * Cấu hình kỹ thuật các dịch vụ ngoài (Cloud Storage) và quản lý danh sách Báo cáo vi phạm (Abuse Reporting Queue).
 
 2. **Giảng viên & Trợ giảng (Instructor & Teaching Assistant - TA):**
+   * **Cá nhân tự do nộp đơn xin cấp quyền (Individual Instructor Application):** Người dùng có tài khoản `Learner` bình thường có thể nộp Đơn đăng ký Giảng viên (`SubmitInstructorApplication`) kèm Bio, CV và bài giảng demo. Sau khi Super Admin kiểm duyệt và Phê duyệt (Approve), tài khoản được nâng lên vai trò `INSTRUCTOR` và tự động gán vào Partner mặc định toàn sàn **`Coursera Project Network`** mà không cần qua một Trường/Tập đoàn nào add trước.
    * Xây dựng cấu trúc học tập chuẩn Coursera: Specialization (Chuyên ngành) -> Course (Khóa học) -> Module / Week (Tuần học) -> Lesson -> Learning Items.
    * Đăng tải học liệu đa dạng: Video bài giảng kèm Phụ đề (.vtt), Interactive Transcript, Bài đọc (Reading), Quiz ôn luyện (Practice Quiz), và In-Video Quiz (câu hỏi ngắt ngang video).
    * Cấu hình bài thi tính điểm (Graded Quiz), bài tập lập trình tự động chấm (Auto-Graded Lab), và bài tập nộp dự án (Peer-Graded Assignment) kèm Bộ tiêu chí chấm điểm (Rubric).

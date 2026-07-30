@@ -57,13 +57,15 @@ export function GradedQuizRunner({
   const [cooldownCountdown, setCooldownCountdown] = useState<number>(0);
   const autoSubmitTriggeredRef = useRef(false);
 
-  // Fetch quiz session questions on load
   const handleSubmitQuiz = useCallback(async (isAutoSubmit: boolean = false) => {
     if (!isHonorAgreed && !isAutoSubmit) {
       setIsHonorModalOpen(true);
       return;
     }
+    await executeSubmit();
+  }, [isHonorAgreed]);
 
+  const executeSubmit = async () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -103,7 +105,8 @@ export function GradedQuizRunner({
     } finally {
       setIsSubmitting(false);
     }
-  }, [itemId, selectedAnswers, sessionSeed, startTimeIso, sessionToken, isHonorAgreed, onComplete]);
+  };
+
   useEffect(() => {
     let ignore = false;
     async function loadQuiz() {
@@ -191,7 +194,6 @@ export function GradedQuizRunner({
     updated[qIdx] = optIdx;
     setSelectedAnswers(updated);
   };
-
 
 
   if (loading) {
@@ -431,6 +433,7 @@ export function GradedQuizRunner({
         onAgreed={() => {
           setIsHonorAgreed(true);
           setIsHonorModalOpen(false);
+          executeSubmit();
         }}
         onClose={() => setIsHonorModalOpen(false)}
       />

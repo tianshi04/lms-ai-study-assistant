@@ -13,6 +13,14 @@ class ItemType(str, Enum):
     PEER_REVIEW = "PEER_REVIEW"
 
 
+class CourseStatus(str, Enum):
+    UNSPECIFIED = "UNSPECIFIED"
+    DRAFT = "DRAFT"
+    PENDING_REVIEW = "PENDING_REVIEW"
+    PUBLISHED = "PUBLISHED"
+    REJECTED = "REJECTED"
+
+
 @dataclass(frozen=True)
 class Category(ValueObject):
     id: str
@@ -147,6 +155,8 @@ class Course(Entity):
         owner_id: str = "",
         co_instructor_ids: list[str] | None = None,
         financial_aid_enabled: bool = True,
+        status: CourseStatus = CourseStatus.DRAFT,
+        rejection_reason: str = "",
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -163,6 +173,52 @@ class Course(Entity):
         self.owner_id = owner_id
         self.co_instructor_ids = co_instructor_ids or []
         self.financial_aid_enabled = financial_aid_enabled
+        self.status = status
+        self.rejection_reason = rejection_reason
+
+    def check_pre_submit_checklist(self) -> list[str]:
+        """Validates BR_CATALOG_003 pre-submit 4 criteria."""
+        errors: list[str] = []
+        if not self.owner_id:
+            errors.append(
+                "Khóa học chưa được gán Giảng viên phụ trách chính (owner_id)."
+            )
+
+        # Collect all items across week_modules -> lessons
+        items: list[LearningItem] = []
+        for week in self.week_modules:
+            for lesson in week.lessons:
+                items.extend(lesson.items)
+
+        for item in items:
+            if item.type == ItemType.VIDEO and not item.vtt_subtitle_url:
+                errors.append(f"Bài video '{item.title}' chưa có tệp phụ đề VTT.")
+            elif item.type == ItemType.GRADED_QUIZ and not item.quiz_matrix_id:
+                errors.append(
+                    f"Bài trắc nghiệm tính điểm '{item.title}' chưa chọn Ma trận đề thi."
+                )
+            elif item.type == ItemType.PEER_REVIEW and not item.rubric_criteria_json:
+                errors.append(
+                    f"Bài tập chấm chéo '{item.title}' chưa được thiết lập bộ Tiêu chí Rubric."
+                )
+
+        return errors
+
+    def submit_for_launch(self) -> None:
+        checklist_errors = self.check_pre_submit_checklist()
+        if checklist_errors:
+            raise ValueError("; ".join(checklist_errors))
+        self.status = CourseStatus.PENDING_REVIEW
+
+    def approve(self) -> None:
+        self.status = CourseStatus.PUBLISHED
+        self.rejection_reason = ""
+
+    def reject(self, reason: str) -> None:
+        if not reason.strip():
+            raise ValueError("Lý do từ chối không được để trống.")
+        self.status = CourseStatus.REJECTED
+        self.rejection_reason = reason.strip()
 
 
 class Specialization(Entity):

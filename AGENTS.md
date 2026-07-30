@@ -47,6 +47,12 @@ This file provides rules, architectural conventions, and workspace instructions 
   - Application Use Cases in `application/` **MUST NOT** import or raise ConnectRPC transport exceptions directly (`connectrpc.errors.ConnectError` or `connectrpc.code.Code`).
   - Application logic **MUST** raise standard Python or domain-level exceptions (e.g., `PermissionError`, `ValueError`).
   - Mapping domain exceptions to ConnectRPC status codes is strictly the responsibility of presentation-layer service handlers in `presentation/`.
+- **Role-Based API Segregation & Bounded Context Protocol**:
+  - **STRICT NO-MONOLITHIC-QUERY RULE**: Never design monolithic query endpoints that accept caller-controlled role flags or mix conditional `if/else` checks to serve multiple distinct user roles on a single endpoint.
+  - **Role-Based RPC Segregation Boundaries**:
+    1. **Public / Consumer Context (Learners & Public Users)**: Public query RPCs (`AUTH_POLICY_PUBLIC`) MUST strictly enforce database query filters returning only published/active entities (`PUBLISHED`/`ACTIVE`). Never allow client-supplied flags to expose draft, unapproved, or internal data.
+    2. **Creator / Owner Context (Instructors & Authors)**: Resource owner management RPCs (`AUTH_POLICY_AUTHENTICATED`) MUST resolve identity strictly from JWT context (`require_current_user()`), scope database queries to `owner_id` or collaborator lists (`co_instructor_ids`), and return entities across all lifecycle states (`DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `REJECTED`).
+    3. **Operator / Admin Review Context (Admins & Reviewers)**: Administrative moderation & review RPCs MUST enforce staff/admin role boundaries and operate on dedicated review queue endpoints.
 
 
 ---

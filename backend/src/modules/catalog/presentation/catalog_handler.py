@@ -125,6 +125,17 @@ def _to_pb_week_module(week: WeekModule) -> pb.WeekModule:
     )
 
 
+def _to_pb_course_status(status_enum: Any) -> pb.CourseStatus:
+    status_str = str(status_enum).upper()
+    mapping = {
+        "DRAFT": pb.CourseStatus.DRAFT,
+        "PENDING_REVIEW": pb.CourseStatus.PENDING_REVIEW,
+        "PUBLISHED": pb.CourseStatus.PUBLISHED,
+        "REJECTED": pb.CourseStatus.REJECTED,
+    }
+    return mapping.get(status_str, pb.CourseStatus.PUBLISHED)
+
+
 def _to_pb_course(course: Course) -> pb.Course:
     return pb.Course(
         id=course.id,
@@ -140,6 +151,8 @@ def _to_pb_course(course: Course) -> pb.Course:
         subject=course.subject,
         level=course.level,
         financial_aid_enabled=getattr(course, "financial_aid_enabled", True),
+        status=_to_pb_course_status(getattr(course, "status", "PUBLISHED")),
+        rejection_reason=getattr(course, "rejection_reason", "") or "",
     )
 
 
@@ -194,11 +207,76 @@ class CatalogHandler(CatalogService):
             subject=request.subject,
             level=request.level,
             sort_by=request.sort_by,
+            status_filter=pb.CourseStatus.PUBLISHED,
         )
         return pb.ListCoursesResponse(
             courses=[_to_pb_course(c) for c in courses],
             next_page_token=next_token,
         )
+
+    async def list_instructor_courses(
+        self,
+        request: pb.ListInstructorCoursesRequest,
+        ctx: RequestContext[
+            pb.ListInstructorCoursesRequest, pb.ListInstructorCoursesResponse
+        ],
+    ) -> pb.ListInstructorCoursesResponse:
+        current_user = require_current_user()
+        status_filter = request.status_filter
+        if not status_filter or status_filter == pb.CourseStatus.UNSPECIFIED:
+            status_filter_val = None
+        else:
+            status_filter_val = str(status_filter)
+
+        instructor_id = "" if current_user.is_admin() else current_user.id
+
+        courses, next_token = await self.use_case.list_instructor_courses(
+            instructor_id=instructor_id,
+            page_size=request.page_size,
+            page_token=request.page_token,
+            status_filter=status_filter_val,
+        )
+        return pb.ListInstructorCoursesResponse(
+            courses=[_to_pb_course(c) for c in courses],
+            next_page_token=next_token,
+        )
+
+    async def submit_course_for_launch(
+        self,
+        request: pb.SubmitCourseForLaunchRequest,
+        ctx: RequestContext[
+            pb.SubmitCourseForLaunchRequest, pb.SubmitCourseForLaunchResponse
+        ],
+    ) -> pb.SubmitCourseForLaunchResponse:
+        user = self._verify_instructor_permission()
+        try:
+            course = await self.use_case.submit_course_for_launch(
+                course_id=request.course_id, current_user=user
+            )
+            return pb.SubmitCourseForLaunchResponse(course=_to_pb_course(course))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+
+    async def review_course(
+        self,
+        request: pb.ReviewCourseRequest,
+        ctx: RequestContext[pb.ReviewCourseRequest, pb.ReviewCourseResponse],
+    ) -> pb.ReviewCourseResponse:
+        user = require_current_user()
+        try:
+            course = await self.use_case.review_course(
+                course_id=request.course_id,
+                action=request.action,
+                rejection_reason=request.rejection_reason,
+                current_user=user,
+            )
+            return pb.ReviewCourseResponse(course=_to_pb_course(course))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
 
     async def get_course_detail(
         self,
