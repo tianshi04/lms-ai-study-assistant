@@ -1,3 +1,4 @@
+import uuid
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
@@ -61,15 +62,16 @@ async def test_usecase_create_partner_success():
 
     usecase = PartnerUseCase(repo=mock_repo)
     admin = CurrentUser(id="admin1", role="SUPER_ADMIN")
+    test_slug = f"stanford-test-{uuid.uuid4().hex[:6]}"
 
     res = await usecase.create_partner(
-        name="Stanford",
-        slug="stanford-online",
+        name="Stanford Test Partner",
+        slug=test_slug,
         description="Stanford Univ",
         current_user=admin,
     )
-    assert res.name == "Stanford"
-    assert res.slug == "stanford-online"
+    assert res.name == "Stanford Test Partner"
+    assert res.slug == test_slug
     mock_repo.create.assert_called_once()
 
 

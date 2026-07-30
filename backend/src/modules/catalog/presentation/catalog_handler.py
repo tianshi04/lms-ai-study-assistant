@@ -153,6 +153,8 @@ def _to_pb_course(course: Course) -> pb.Course:
         financial_aid_enabled=getattr(course, "financial_aid_enabled", True),
         status=_to_pb_course_status(getattr(course, "status", "PUBLISHED")),
         rejection_reason=getattr(course, "rejection_reason", "") or "",
+        organization_id=getattr(course, "organization_id", "partner_community")
+        or "partner_community",
     )
 
 
@@ -340,6 +342,7 @@ class CatalogHandler(CatalogService):
             level=request.level,
             owner_id=user.id,
             financial_aid_enabled=request.financial_aid_enabled,
+            organization_id=request.organization_id,
         )
         return pb.CreateCourseResponse(course=_to_pb_course(course))
 

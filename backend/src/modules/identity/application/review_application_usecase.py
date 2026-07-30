@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
-
+from typing import Optional
+from src.modules.identity.domain.constants import INTERNAL_SYSTEM_ORG_ID
 from src.modules.identity.domain.entities import (
     ApplicationStatus,
     InstructorApplication,
@@ -8,6 +9,7 @@ from src.modules.identity.domain.entities import (
 from src.modules.identity.infrastructure.repository import (
     IdentityRepository,
     InstructorApplicationRepository,
+    OrganizationRepository,
 )
 
 
@@ -16,9 +18,11 @@ class ReviewInstructorApplicationUseCase:
         self,
         application_repo: InstructorApplicationRepository,
         identity_repo: IdentityRepository,
+        org_repo: Optional[OrganizationRepository] = None,
     ) -> None:
         self._application_repo = application_repo
         self._identity_repo = identity_repo
+        self._org_repo = org_repo
 
     async def execute(
         self,
@@ -47,6 +51,15 @@ class ReviewInstructorApplicationUseCase:
                 if application.title and not applicant.title:
                     applicant.title = application.title
                 await self._identity_repo.save(applicant)
+
+            # Auto-link applicant to system default organization
+            if self._org_repo:
+                await self._org_repo.add_member(
+                    user_id=application.user_id,
+                    org_id=INTERNAL_SYSTEM_ORG_ID,
+                    role_id="role_org_instructor",
+                    status="ACTIVE",
+                )
         else:
             application.status = ApplicationStatus.REJECTED
             application.rejection_reason = (

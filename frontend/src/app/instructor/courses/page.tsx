@@ -223,15 +223,15 @@ export default function InstructorCoursesPage() {
               <span>{"Duyệt Financial Aid"}</span>
             </Link>
 
-            <button
-              onClick={handleOpenCreateModal}
-              className="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            <Link
+              href="/instructor/courses/new"
+              className="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               <span>{"Soạn Khóa Học Mới"}</span>
-            </button>
+            </Link>
           </div>
         </div>
 

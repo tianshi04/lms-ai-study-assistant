@@ -197,6 +197,7 @@ class CatalogUseCase:
         level: str = "",
         owner_id: str = "",
         financial_aid_enabled: bool = True,
+        organization_id: str = "partner_community",
     ) -> Course:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
@@ -211,6 +212,7 @@ class CatalogUseCase:
                 level=level,
                 owner_id=owner_id,
                 financial_aid_enabled=financial_aid_enabled,
+                organization_id=organization_id or "partner_community",
             )
             logger.info(
                 "Created course %s by owner %s",

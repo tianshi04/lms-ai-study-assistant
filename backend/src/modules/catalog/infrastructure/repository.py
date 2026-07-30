@@ -117,9 +117,10 @@ def _model_to_domain_course(model: CourseModel) -> Course:
         level=model.level or "",
         owner_id=getattr(model, "owner_id", ""),
         co_instructor_ids=getattr(model, "co_instructor_ids", None) or [],
-        financial_aid_enabled=getattr(model, "financial_aid_enabled", True),
         status=getattr(model, "status", CourseStatus.DRAFT) or CourseStatus.DRAFT,
         rejection_reason=getattr(model, "rejection_reason", "") or "",
+        organization_id=getattr(model, "organization_id", "partner_community")
+        or "partner_community",
     )
 
 
@@ -339,22 +340,45 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         owner_id: str = "",
         co_instructor_ids: list[str] | None = None,
         financial_aid_enabled: bool = True,
+        organization_id: str = "partner_community",
     ) -> Course:
         course_id = f"course-{slug}" if slug else f"course-{uuid.uuid4().hex[:8]}"
+        clean_org_id = (
+            organization_id.strip()
+            if organization_id and organization_id.strip()
+            else "partner_community"
+        )
+
+        final_partner_name = partner_name.strip() if partner_name else ""
+        final_partner_logo = partner_logo_url.strip() if partner_logo_url else ""
+
+        if not final_partner_name:
+            from src.modules.identity.infrastructure.models import OrganizationModel
+
+            stmt = select(OrganizationModel).where(OrganizationModel.id == clean_org_id)
+            res = await self.session.execute(stmt)
+            org_row = res.scalar_one_or_none()
+            if org_row:
+                final_partner_name = org_row.name
+                if not final_partner_logo:
+                    final_partner_logo = org_row.avatar_url
+            else:
+                final_partner_name = "Coursera Project Network"
 
         model = CourseModel(
             id=course_id,
             title=title,
             slug=slug or course_id,
             description=description,
-            partner_name=partner_name or "",
-            partner_logo_url=partner_logo_url or "",
+            partner_name=final_partner_name,
+            partner_logo_url=final_partner_logo,
             instructor_names=instructor_names or [],
             subject=subject,
             level=level,
             owner_id=owner_id,
             co_instructor_ids=co_instructor_ids or [],
             financial_aid_enabled=financial_aid_enabled,
+            organization_id=clean_org_id,
             status=CourseStatus.DRAFT,
             rejection_reason="",
         )

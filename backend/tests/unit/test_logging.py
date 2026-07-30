@@ -23,7 +23,6 @@ from src.shared.infrastructure.logging.context import (
 from src.shared.infrastructure.middlewares import RequestIDMiddleware
 
 
-
 def test_logging_contextvars_isolation():
     token_req = set_request_id("req-123")
     token_user = set_user_id("user-456")
@@ -108,7 +107,9 @@ async def test_request_id_middleware():
         middleware=[Middleware(RequestIDMiddleware)],
     )
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as client:
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
         # 1. Custom x-request-id
         resp = await client.get("/", headers={"x-request-id": "custom-id-007"})
         assert resp.status_code == 200
@@ -120,5 +121,3 @@ async def test_request_id_middleware():
         assert resp_auto.status_code == 200
         assert "x-request-id" in resp_auto.headers
         assert resp_auto.json()["request_id"] == resp_auto.headers["x-request-id"]
-
-
