@@ -198,3 +198,261 @@ async def test_create_and_update_course_financial_aid_toggle(
         financial_aid_enabled=True,
     )
     assert updated.financial_aid_enabled is True
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+async def test_export_course_to_scorm(
+    mock_s3_service, mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    from src.modules.catalog.domain.entities import (
+        Course,
+        WeekModule,
+        Lesson,
+        LearningItem,
+        ItemType,
+    )
+
+    # 1. Setup mock storage service
+    from unittest.mock import MagicMock
+
+    mock_s3 = MagicMock()
+    mock_s3.endpoint_url = "http://localhost:9000"
+    mock_s3.bucket_name = "lms-bucket"
+    mock_s3._to_public_url.return_value = "http://public-url/file.zip"
+    mock_s3.ensure_bucket_exists = AsyncMock()
+    mock_s3.upload_file = AsyncMock()
+    mock_s3.generate_presigned_download_url = AsyncMock(
+        return_value="http://public-url/file.zip"
+    )
+    mock_s3_service.return_value = mock_s3
+
+    # 2. Setup mock scope & session
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    mock_result = AsyncMock()
+    mock_result.fetchall.return_value = []
+    mock_session.execute.return_value = mock_result
+
+    # 3. Setup mock course with modules, lessons, items
+    item_video = LearningItem(
+        id="item-video",
+        title="Video Item",
+        type=ItemType.VIDEO,
+        video_url="http://test.com/video.mp4",
+    )
+    lesson = Lesson(id="l1", title="Lesson 1", items=[item_video])
+    wm = WeekModule(id="wm1", week_number=1, title="Week 1", lessons=[lesson])
+
+    mock_repo.get_course_detail.return_value = Course(
+        id="c1",
+        title="Course 1",
+        slug="c-1",
+        description="Desc",
+        partner_name="Partner",
+        partner_logo_url="http://logo.png",
+        instructor_names=["Instr 1"],
+        week_modules=[wm],
+        owner_id="instructor-id",
+    )
+
+    # 4. Patch ownership verification to bypass
+    with patch.object(catalog_usecase, "_verify_ownership", AsyncMock()):
+        # 5. Call export
+        download_url, object_key = await catalog_usecase.export_course_to_scorm(
+            course_id="c1", current_user=None
+        )
+
+    # 6. Assertions
+    assert download_url == "http://public-url/file.zip"
+    assert "scorm/exports/" in object_key
+    mock_s3.upload_file.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+async def test_parse_scorm_package_native(mock_s3_service, catalog_usecase):
+    import zipfile
+    import io
+    import json
+
+    # Create mock zip with openlms-course.json
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as z:
+        course_data = {
+            "exporter": "OpenLMS",
+            "course": {"id": "c1", "title": "Restored Course", "weekModules": []},
+        }
+        z.writestr("openlms-course.json", json.dumps(course_data))
+
+    mock_s3 = AsyncMock()
+    mock_s3.download_file.return_value = zip_buffer.getvalue()
+    mock_s3_service.return_value = mock_s3
+
+    course_preview, is_single, item_preview = await catalog_usecase.parse_scorm_package(
+        scorm_object_key="some-key", target_course_id="target-id"
+    )
+
+    assert course_preview is not None
+    assert course_preview.title == "Restored Course"
+    assert is_single is False
+    assert item_preview is None
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+async def test_parse_scorm_package_standard(mock_s3_service, catalog_usecase):
+    import zipfile
+    import io
+
+    # Create mock zip with imsmanifest.xml
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as z:
+        manifest_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<manifest identifier="standard_scorm" version="1.2" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2">
+  <organizations>
+    <organization>
+      <title>Standard SCORM Title</title>
+    </organization>
+  </organizations>
+  <resources>
+    <resource identifier="r1" href="index_lms.html" />
+  </resources>
+</manifest>"""
+        z.writestr("imsmanifest.xml", manifest_xml)
+
+    mock_s3 = AsyncMock()
+    mock_s3.download_file.return_value = zip_buffer.getvalue()
+    mock_s3_service.return_value = mock_s3
+
+    with pytest.raises(ValueError) as exc:
+        await catalog_usecase.parse_scorm_package(
+            scorm_object_key="some-key", target_course_id="target-id"
+        )
+    assert "Level 2" in str(exc.value)
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+async def test_import_course_from_scorm_native(
+    mock_s3_service, mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    import zipfile
+    import io
+    import json
+
+    # Create mock zip with openlms-course.json
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as z:
+        course_data = {
+            "exporter": "OpenLMS",
+            "course": {
+                "id": "c1",
+                "title": "Restored Course",
+                "weekModules": [
+                    {
+                        "id": "w1",
+                        "weekNumber": 1,
+                        "title": "Week 1",
+                        "summary": "Summary 1",
+                        "lessons": [
+                            {
+                                "id": "l1",
+                                "title": "Lesson 1",
+                                "estimatedMinutes": 15,
+                                "items": [
+                                    {
+                                        "id": "i1",
+                                        "title": "Item 1",
+                                        "type": 1,
+                                        "estimatedMinutes": 10,
+                                        "videoUrl": "http://youtube.com/v1",
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ],
+            },
+        }
+        z.writestr("openlms-course.json", json.dumps(course_data))
+
+    mock_s3 = AsyncMock()
+    mock_s3.download_file.return_value = zip_buffer.getvalue()
+    mock_s3_service.return_value = mock_s3
+
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    # Setup repo mocks
+    mock_repo.get_course_detail.return_value = Course(
+        id="c1",
+        title="Original",
+        slug="orig",
+        description="",
+        partner_name="",
+        partner_logo_url="",
+        instructor_names=[],
+        week_modules=[],
+    )
+    mock_repo.create_week_module.return_value = AsyncMock(id="w1_new")
+    mock_repo.create_lesson.return_value = AsyncMock(id="l1_new")
+
+    course, item = await catalog_usecase.import_course_from_scorm(
+        scorm_object_key="some-key", course_id="c1", current_user=None
+    )
+
+    assert course is not None
+    assert item is None
+    mock_repo.create_week_module.assert_called_once()
+    mock_repo.create_lesson.assert_called_once()
+    mock_repo.create_learning_item.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+@patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
+async def test_import_course_from_scorm_standard(
+    mock_s3_service, mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    import zipfile
+    import io
+
+    # Create mock zip with imsmanifest.xml
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as z:
+        manifest_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<manifest identifier="standard_scorm" version="1.2" xmlns="http://www.imsproject.org/xsd/imscp_rootv1p1p2">
+  <organizations>
+    <organization>
+      <title>Standard SCORM Title</title>
+    </organization>
+  </organizations>
+  <resources>
+    <resource identifier="r1" href="index_lms.html" />
+  </resources>
+</manifest>"""
+        z.writestr("imsmanifest.xml", manifest_xml)
+        z.writestr("index_lms.html", "<html></html>")
+
+    mock_s3 = AsyncMock()
+    mock_s3.download_file.return_value = zip_buffer.getvalue()
+    mock_s3.endpoint_url = "http://localhost:9000"
+    mock_s3.bucket_name = "lms-media"
+    mock_s3._to_public_url = lambda url: url
+    mock_s3_service.return_value = mock_s3
+
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    with pytest.raises(ValueError) as exc:
+        await catalog_usecase.import_course_from_scorm(
+            scorm_object_key="some-key", course_id="c1", current_user=None
+        )
+    assert "Level 2" in str(exc.value)

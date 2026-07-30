@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCORM Player - OpenLMS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="scorm_api_wrapper.js"></script>
+  <style>
+    /* Custom scrollbar for sleeker UI */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.05);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.2);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0,0,0,0.3);
+    }
+  </style>
+</head>
+<body class="h-full bg-slate-900 text-slate-100 font-sans flex overflow-hidden">
+
+  <!-- Sidebar -->
+  <aside class="w-80 bg-slate-950 border-r border-slate-800 flex flex-col flex-shrink-0">
+    <div class="p-6 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
+      <div id="partner-logo" class="mb-3 hidden">
+        <img id="logo-img" src="" alt="Logo Partner" class="h-8 object-contain">
+      </div>
+      <h1 id="course-title" class="text-lg font-extrabold tracking-tight text-white leading-snug">Đang tải khóa học...</h1>
+      <p id="course-partner" class="text-[11px] text-slate-400 font-medium mt-1"></p>
+    </div>
+    
+    <div id="outline-container" class="flex-1 overflow-y-auto p-4 space-y-4">
+      <!-- Dynamic list of weeks/lessons/items will be loaded here -->
+    </div>
+  </aside>
+
+  <!-- Main Work Area -->
+  <main class="flex-1 flex flex-col bg-slate-900 relative overflow-hidden">
+    <!-- Header -->
+    <header class="h-16 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-950/40">
+      <div class="flex items-center gap-3">
+        <span id="active-item-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-400 border border-blue-500/20">VIDEO</span>
+        <h2 id="active-item-title" class="text-sm font-bold text-white">Chọn bài học để bắt đầu</h2>
+      </div>
+      <div class="flex items-center gap-4">
+        <span id="completion-status" class="text-xs text-slate-400 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-slate-600 inline-block"></span> Chưa hoàn thành
+        </span>
+      </div>
+    </header>
+
+    <!-- Content Workspace -->
+    <div id="content-pane" class="flex-1 overflow-y-auto p-8 relative flex items-center justify-center">
+      <div class="text-center space-y-3 text-slate-500 max-w-md">
+        <svg class="w-12 h-12 mx-auto stroke-current" fill="none" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+        <p class="text-sm">Hãy chọn một học liệu từ danh sách bài học bên trái để hiển thị nội dung.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="content/player.js"></script>
+</body>
+</html>

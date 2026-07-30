@@ -36,19 +36,28 @@ class AssessmentHandler(AssessmentService):
         ctx: RequestContext[pb.SubmitGradedQuizRequest, pb.SubmitGradedQuizResponse],
     ) -> pb.SubmitGradedQuizResponse:
         current_user = require_current_user()
-        res = await self.use_case.submit_graded_quiz(
-            user_id=current_user.id,
-            item_id=request.item_id,
-            selected_option_indexes=list(request.selected_option_indexes),
-            session_seed=request.session_seed or None,
-            start_time_iso=request.start_time_iso or None,
-        )
+        try:
+            res = await self.use_case.submit_graded_quiz(
+                user_id=current_user.id,
+                item_id=request.item_id,
+                selected_option_indexes=list(request.selected_option_indexes),
+                session_seed=request.session_seed or None,
+                start_time_iso=request.start_time_iso or None,
+                preview=request.preview,
+            )
+        except ValueError as e:
+            raise ConnectError(Code.FAILED_PRECONDITION, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+
         quiz_result = pb.QuizResult(
             score_percent=res["score_percent"],
             passed=res["passed"],
             attempts_left=res["attempts_left"],
             cooldown_seconds_left=res["cooldown_seconds_left"],
             answer_explanations=res["answer_explanations"],
+            max_attempts=res.get("max_attempts", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
+            cooldown_hours=res.get("cooldown_hours", 8),
         )
         return pb.SubmitGradedQuizResponse(result=quiz_result)
 
@@ -349,6 +358,8 @@ class AssessmentHandler(AssessmentService):
             medium_count=request.medium_count,
             hard_count=request.hard_count,
             shuffle_options=request.shuffle_options,
+            max_attempts=request.max_attempts,
+            cooldown_hours=request.cooldown_hours,
         )
         return pb.ConfigureQuizMatrixResponse(
             matrix=pb.QuizMatrix(
@@ -360,6 +371,8 @@ class AssessmentHandler(AssessmentService):
                 medium_count=matrix.medium_count,
                 hard_count=matrix.hard_count,
                 shuffle_options=matrix.shuffle_options,
+                max_attempts=matrix.max_attempts,
+                cooldown_hours=matrix.cooldown_hours,
             )
         )
 
@@ -384,6 +397,8 @@ class AssessmentHandler(AssessmentService):
                 medium_count=matrix.medium_count,
                 hard_count=matrix.hard_count,
                 shuffle_options=matrix.shuffle_options,
+                max_attempts=matrix.max_attempts,
+                cooldown_hours=matrix.cooldown_hours,
             )
         )
 
@@ -450,10 +465,16 @@ class AssessmentHandler(AssessmentService):
         ],
     ) -> pb.StartGradedQuizSessionResponse:
         current_user = require_current_user()
-        res = await self.use_case.start_graded_quiz_session(
-            user_id=current_user.id,
-            item_id=request.item_id,
-        )
+        try:
+            res = await self.use_case.start_graded_quiz_session(
+                user_id=current_user.id,
+                item_id=request.item_id,
+                preview=request.preview,
+            )
+        except ValueError as e:
+            raise ConnectError(Code.FAILED_PRECONDITION, str(e))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
 
         pb_questions = []
         for q in res["questions"]:
@@ -484,4 +505,6 @@ class AssessmentHandler(AssessmentService):
             session_seed=res["session_seed"],
             cooldown_seconds_left=res.get("cooldown_seconds_left", 0),
             attempts_left=res.get("attempts_left", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
+            max_attempts=res.get("max_attempts", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
+            cooldown_hours=res.get("cooldown_hours", 8),
         )

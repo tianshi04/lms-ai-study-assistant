@@ -2,6 +2,7 @@
 
 import pytest
 from datetime import datetime, timedelta, timezone
+from unittest.mock import AsyncMock, patch
 
 from src.modules.payment.application.payment_usecase import PaymentUseCase
 from src.modules.payment.domain.entities import (
@@ -48,7 +49,18 @@ class InMemoryPaymentRepository(IPaymentRepository):
 
 
 @pytest.mark.asyncio
-async def test_purchase_course_success():
+@patch("src.modules.payment.application.payment_usecase.async_session_scope")
+async def test_purchase_course_success(mock_scope):
+    mock_session = AsyncMock()
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    # Mock DB query result
+    mock_res = AsyncMock()
+    mock_res.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_res
+
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 
@@ -67,7 +79,18 @@ async def test_purchase_course_success():
 
 
 @pytest.mark.asyncio
-async def test_purchase_course_already_purchased():
+@patch("src.modules.payment.application.payment_usecase.async_session_scope")
+async def test_purchase_course_already_purchased(mock_scope):
+    mock_session = AsyncMock()
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    # Mock DB query result
+    mock_res = AsyncMock()
+    mock_res.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_res
+
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 
@@ -82,7 +105,13 @@ async def test_purchase_course_already_purchased():
 
 
 @pytest.mark.asyncio
-async def test_subscribe_coursera_plus_monthly():
+@patch("src.modules.payment.application.payment_usecase.async_session_scope")
+async def test_subscribe_coursera_plus_monthly(mock_scope):
+    mock_session = AsyncMock()
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 
@@ -104,7 +133,13 @@ async def test_subscribe_coursera_plus_monthly():
 
 
 @pytest.mark.asyncio
-async def test_subscribe_coursera_plus_yearly():
+@patch("src.modules.payment.application.payment_usecase.async_session_scope")
+async def test_subscribe_coursera_plus_yearly(mock_scope):
+    mock_session = AsyncMock()
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 

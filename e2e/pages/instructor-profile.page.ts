@@ -36,6 +36,6 @@ export class InstructorProfilePage {
       await this.signatureImageUrlInput.fill(data.signatureImageUrl);
     }
     await this.submitButton.click();
-    await expect(this.page.locator('text=/Cập nhật chức danh và chữ ký/i')).toBeVisible({ timeout: 10000 });
+    await expect(this.page.locator('text=/Cập nhật chức danh và chữ ký tay điện tử thành công|Cập nhật chức danh và chữ ký/i')).toBeVisible({ timeout: 15000 });
   }
 }

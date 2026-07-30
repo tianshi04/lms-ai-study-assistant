@@ -150,6 +150,8 @@ class AssessmentRepositoryInterface(ABC):
         medium_count: int,
         hard_count: int,
         shuffle_options: bool,
+        max_attempts: int,
+        cooldown_hours: int,
     ) -> QuizMatrix:
         pass
 

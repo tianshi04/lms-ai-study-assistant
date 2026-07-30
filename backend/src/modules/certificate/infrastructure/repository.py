@@ -279,6 +279,7 @@ class CertificateRepository(ICertificateRepository):
                 "LabSubmissionModel",
                 "PeerAssignmentSubmissionModel",
                 "QuizSubmissionModel",
+                "QuizMatrixModel",
             ],
         )
         catalog_models = __import__(
@@ -341,6 +342,19 @@ class CertificateRepository(ICertificateRepository):
                 getattr(s, "final_score", 0.0) or 0.0,
             )
 
+        # Fetch configured quiz matrices to obtain dynamically configured passing thresholds
+        quiz_ids = [
+            item.id for item in required_items if item.type == ItemType.GRADED_QUIZ
+        ]
+        quiz_thresholds = {}
+        if quiz_ids:
+            qm_stmt = select(assessment_models.QuizMatrixModel).where(
+                assessment_models.QuizMatrixModel.item_id.in_(quiz_ids)
+            )
+            qm_res = await self._session.execute(qm_stmt)
+            for qm in qm_res.scalars().all():
+                quiz_thresholds[qm.item_id] = qm.passing_threshold_percent
+
         for req_item in required_items:
             max_score = item_max_scores.get(req_item.id)
             if max_score is None:
@@ -348,10 +362,18 @@ class CertificateRepository(ICertificateRepository):
                     False,
                     f"Chưa đủ điều kiện nhận chứng chỉ: Bạn chưa hoàn thành bài tập bắt buộc '{req_item.title}'.",
                 )
-            if max_score < DEFAULT_CERTIFICATE_PASSING_THRESHOLD_PERCENT:
+
+            # Determine threshold
+            threshold = DEFAULT_CERTIFICATE_PASSING_THRESHOLD_PERCENT
+            if req_item.type == ItemType.GRADED_QUIZ:
+                threshold = quiz_thresholds.get(
+                    req_item.id, DEFAULT_CERTIFICATE_PASSING_THRESHOLD_PERCENT
+                )
+
+            if max_score < threshold:
                 return (
                     False,
-                    f"Chưa đủ điều kiện nhận chứng chỉ: Bài tập '{req_item.title}' chưa đạt điểm tối thiểu >= {int(DEFAULT_CERTIFICATE_PASSING_THRESHOLD_PERCENT)}% (Hiện tại {max_score}%).",
+                    f"Chưa đủ điều kiện nhận chứng chỉ: Bài tập '{req_item.title}' chưa đạt điểm tối thiểu >= {int(threshold)}% (Hiện tại {max_score}%).",
                 )
 
         appeal_stmt = select(assessment_models.GradeAppealModel).where(

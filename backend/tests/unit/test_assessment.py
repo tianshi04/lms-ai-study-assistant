@@ -200,6 +200,8 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         medium_count: int,
         hard_count: int,
         shuffle_options: bool,
+        max_attempts: int = 3,
+        cooldown_hours: int = 8,
     ):
         from src.modules.assessment.domain.entities import QuizMatrix
 
@@ -212,6 +214,8 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
             medium_count=medium_count,
             hard_count=hard_count,
             shuffle_options=shuffle_options,
+            max_attempts=max_attempts,
+            cooldown_hours=cooldown_hours,
         )
         self.matrices[item_id] = matrix
         return matrix
@@ -289,7 +293,7 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     # 1. Without Honor Code -> Should fail
     res_no_honor = await usecase.submit_graded_quiz(user_id, item_id, correct_answers)
     assert res_no_honor["passed"] is False
-    assert "Honor Code" in res_no_honor["answer_explanations"][0]
+    assert "Cam kết Trung thực" in res_no_honor["answer_explanations"][0]
 
     # 2. Agree Honor Code
     await usecase.submit_honor_code(user_id, item_id, True)
@@ -325,12 +329,17 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     r4 = await usecase.submit_graded_quiz(user_fail, item_id, [0, 1, 2, 0, 1])
     assert r4["passed"] is False
     assert r4["cooldown_seconds_left"] > 0
-    assert "cooldown period" in r4["answer_explanations"][0]
+    assert "giãn cách" in r4["answer_explanations"][0]
 
-    # Verify session start returns cooldown_seconds_left immediately
-    sess_cooldown = await usecase.start_graded_quiz_session(user_fail, item_id)
-    assert sess_cooldown["cooldown_seconds_left"] > 0
-    assert sess_cooldown["attempts_left"] == 0
+    # Verify session start is blocked by Cooldown immediately
+    with pytest.raises(ValueError) as exc_info:
+        await usecase.start_graded_quiz_session(user_fail, item_id)
+    assert "quay lại sau" in str(exc_info.value)
+
+    # Verify session start is blocked because user has already passed
+    with pytest.raises(ValueError) as exc_info_pass:
+        await usecase.start_graded_quiz_session(user_id, item_id)
+    assert "vượt qua bài thi này" in str(exc_info_pass.value)
 
 
 @pytest.mark.asyncio
@@ -446,7 +455,7 @@ async def test_quiz_session_timer_and_timeout():
         start_time_iso=expired_start,
         duration_minutes=45,
     )
-    assert "Auto-submit on timeout" in res_timeout["answer_explanations"][0]
+    assert "tự động nộp bài" in res_timeout["answer_explanations"][0]
 
 
 @pytest.mark.asyncio
@@ -596,3 +605,32 @@ async def test_quiz_submission_empty_question_pool(monkeypatch: pytest.MonkeyPat
     assert res["score_percent"] == 0.0
     assert res["passed"] is False
     assert any("rỗng" in exp or "empty" in exp for exp in res["answer_explanations"])
+
+
+@pytest.mark.asyncio
+async def test_graded_quiz_preview_mode():
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    user_id = "instructor-test"
+    item_id = "item-quiz-1"
+
+    # Start session in preview mode
+    sess = await usecase.start_graded_quiz_session(user_id, item_id, preview=True)
+    assert sess["session_seed"] > 0
+    assert len(sess["questions"]) > 0
+
+    # Submit quiz in preview mode without agreeing to honor code
+    res = await usecase.submit_graded_quiz(
+        user_id,
+        item_id,
+        [0, 1, 2, 0, 1],
+        session_seed=sess["session_seed"],
+        preview=True,
+    )
+    assert res["passed"] is not None
+    # Verify that in preview mode, no submission is stored in repository
+    assert len(repo.quiz_submissions) == 0
+    # Verify cooldown seconds is 0 in preview mode
+    assert res["cooldown_seconds_left"] == 0
+    # Verify attempts_left is max_attempts
+    assert res["attempts_left"] == res["max_attempts"]
