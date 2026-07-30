@@ -457,7 +457,9 @@ class CatalogHandler(CatalogService):
 
         try:
             user_display_name = (
-                current_user.email.split("@")[0] if current_user.email else "Học viên"
+                current_user.email.split("@")[0]
+                if current_user.email
+                else current_user.id
             )
             review = await self.use_case.submit_course_review(
                 user_id=current_user.id,
@@ -667,7 +669,7 @@ class CatalogHandler(CatalogService):
         ],
     ) -> pb.CreateCourseAnnouncementResponse:
         user = self._verify_instructor_permission()
-        author_name = user.email.split("@")[0] if user.email else "Giảng viên"
+        author_name = user.email.split("@")[0] if user.email else user.id
         ann = await self.use_case.create_course_announcement(
             course_id=request.course_id,
             author_id=user.id,

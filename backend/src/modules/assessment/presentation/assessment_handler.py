@@ -69,11 +69,15 @@ class AssessmentHandler(AssessmentService):
         ],
     ) -> pb.SubmitAutoGradedLabResponse:
         current_user = require_current_user()
+        if not request.language:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Vui lòng chỉ định ngôn ngữ lập trình"
+            )
         res = await self.use_case.submit_auto_graded_lab(
             user_id=current_user.id,
             item_id=request.item_id,
             source_code=request.source_code,
-            language=request.language or "python",
+            language=request.language,
         )
         lab_result = pb.AutoGradedLabResult(
             score_percent=res["score_percent"],

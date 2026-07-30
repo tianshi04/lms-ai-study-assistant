@@ -85,7 +85,7 @@ class AssessmentUseCase:
         )
         return is_agreed, msg
 
-    async def _get_quiz_matrix_or_fallback(
+    async def _get_quiz_matrix(
         self, repo: AssessmentRepositoryInterface, item_id: str
     ) -> Optional[QuizMatrix]:
         return await repo.get_quiz_matrix(item_id)
@@ -98,7 +98,7 @@ class AssessmentUseCase:
     ) -> list[dict[str, Any]]:
         """Enforces BR_QUIZ_002: Samples N questions from a Pool of M and shuffles options reproducibly."""
         # 1. Fetch Quiz Matrix
-        matrix = await self._get_quiz_matrix_or_fallback(repo, item_id)
+        matrix = await self._get_quiz_matrix(repo, item_id)
 
         if not matrix:
             return []
@@ -169,7 +169,7 @@ class AssessmentUseCase:
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
-            matrix = await self._get_quiz_matrix_or_fallback(repo, item_id)
+            matrix = await self._get_quiz_matrix(repo, item_id)
             if matrix:
                 duration_minutes = matrix.time_limit_minutes
             passing_threshold = (
@@ -263,7 +263,7 @@ class AssessmentUseCase:
             repo = await self._get_repo(session)
 
             # 0. Fetch Quiz Matrix to get dynamic settings
-            matrix = await self._get_quiz_matrix_or_fallback(repo, item_id)
+            matrix = await self._get_quiz_matrix(repo, item_id)
             max_attempts = (
                 matrix.max_attempts if matrix else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
             )

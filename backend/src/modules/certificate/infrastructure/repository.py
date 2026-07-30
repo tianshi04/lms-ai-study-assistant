@@ -231,16 +231,15 @@ class CertificateRepository(ICertificateRepository):
         if not course:
             return (
                 course_id_or_slug,
-                "Specialization Course",
-                "DeepLearning.AI",
-                "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
+                "",
+                "",
+                "",
             )
         return (
             course.id,
             course.title,
-            course.partner_name or "DeepLearning.AI",
-            course.partner_logo_url
-            or "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
+            course.partner_name,
+            course.partner_logo_url,
         )
 
     async def get_user_kyc_info(self, user_id: str) -> tuple[str, str, bool]:
@@ -251,10 +250,10 @@ class CertificateRepository(ICertificateRepository):
         identity_repo = identity_repo_factory(self._session)
         user_entity = await identity_repo.get_by_id(user_id)
         if not user_entity:
-            return "learner@coursera.ai", "Học viên Coursera", False
+            return "", "", False
         return (
-            user_entity.email or "learner@coursera.ai",
-            user_entity.full_name or "Học viên Coursera",
+            user_entity.email,
+            user_entity.full_name or user_entity.email or user_id,
             user_entity.is_identity_verified,
         )
 
@@ -402,7 +401,7 @@ class CertificateRepository(ICertificateRepository):
             return None, None, None, []
         return (
             spec.title,
-            spec.partner_name or "Partner",
+            spec.partner_name,
             spec.partner_logo_url or "",
             spec.course_ids or [],
         )
@@ -417,11 +416,7 @@ class CertificateRepository(ICertificateRepository):
         catalog_repo = catalog_repo_factory(self._session)
         course = await catalog_repo.get_course_detail(course_id_or_slug)
 
-        partner_name = (
-            course.partner_name
-            if (course and course.partner_name)
-            else "DeepLearning.AI"
-        )
+        partner_name = course.partner_name if (course and course.partner_name) else ""
         fallback_signer_name = partner_name
         fallback_signer_title = partner_name
         fallback_signature_url = (
