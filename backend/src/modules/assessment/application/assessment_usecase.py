@@ -85,53 +85,10 @@ class AssessmentUseCase:
         )
         return is_agreed, msg
 
-    async def _get_quiz_matrix_or_fallback(
+    async def _get_quiz_matrix(
         self, repo: AssessmentRepositoryInterface, item_id: str
     ) -> Optional[QuizMatrix]:
-        matrix = await repo.get_quiz_matrix(item_id)
-        if matrix:
-            return matrix
-
-        session = getattr(repo, "session", None)
-        if session is None:
-            return None
-
-        try:
-            catalog_models = __import__(
-                "src.modules.catalog.infrastructure.models",
-                fromlist=["LearningItemModel"],
-            )
-            from sqlalchemy import select
-
-            stmt = select(catalog_models.LearningItemModel).where(
-                catalog_models.LearningItemModel.id == item_id
-            )
-            res = await session.execute(stmt)
-            item_model = res.scalar_one_or_none()
-            if item_model and item_model.quiz_matrix_id:
-                bank_questions = await repo.get_questions_by_bank(
-                    item_model.quiz_matrix_id
-                )
-                easy_cnt = len([q for q in bank_questions if q.difficulty == "EASY"])
-                med_cnt = len([q for q in bank_questions if q.difficulty == "MEDIUM"])
-                hard_cnt = len([q for q in bank_questions if q.difficulty == "HARD"])
-
-                return QuizMatrix(
-                    item_id=item_id,
-                    bank_id=item_model.quiz_matrix_id,
-                    time_limit_minutes=item_model.estimated_minutes
-                    or DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
-                    passing_threshold_percent=DEFAULT_PASSING_THRESHOLD_PERCENT,
-                    easy_count=easy_cnt,
-                    medium_count=med_cnt,
-                    hard_count=hard_cnt,
-                    shuffle_options=True,
-                    max_attempts=MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
-                    cooldown_hours=QUIZ_COOLDOWN_HOURS,
-                )
-        except Exception as e:
-            logger.warning("Failed to get fallback quiz matrix for %s: %s", item_id, e)
-        return None
+        return await repo.get_quiz_matrix(item_id)
 
     async def generate_quiz_session_questions(
         self,
@@ -141,7 +98,7 @@ class AssessmentUseCase:
     ) -> list[dict[str, Any]]:
         """Enforces BR_QUIZ_002: Samples N questions from a Pool of M and shuffles options reproducibly."""
         # 1. Fetch Quiz Matrix
-        matrix = await self._get_quiz_matrix_or_fallback(repo, item_id)
+        matrix = await self._get_quiz_matrix(repo, item_id)
 
         if not matrix:
             return []
@@ -212,7 +169,7 @@ class AssessmentUseCase:
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
-            matrix = await self._get_quiz_matrix_or_fallback(repo, item_id)
+            matrix = await self._get_quiz_matrix(repo, item_id)
             if matrix:
                 duration_minutes = matrix.time_limit_minutes
             passing_threshold = (
@@ -306,7 +263,7 @@ class AssessmentUseCase:
             repo = await self._get_repo(session)
 
             # 0. Fetch Quiz Matrix to get dynamic settings
-            matrix = await self._get_quiz_matrix_or_fallback(repo, item_id)
+            matrix = await self._get_quiz_matrix(repo, item_id)
             max_attempts = (
                 matrix.max_attempts if matrix else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
             )
@@ -486,90 +443,78 @@ class AssessmentUseCase:
 
     @require_paid_access()
     async def submit_auto_graded_lab(
-        self, user_id: str, item_id: str, source_code: str, language: str
+        self,
+        user_id: str,
+        item_id: str,
+        source_code: str,
+        language: str,
+        test_cases: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
-        # 1. Fetch test cases from database
-        test_cases = []
-        async with async_session_scope() as session:
-            try:
-                catalog_models = __import__(
-                    "src.modules.catalog.infrastructure.models",
-                    fromlist=["LearningItemModel"],
-                )
-                from sqlalchemy import select
-
-                stmt = select(catalog_models.LearningItemModel.test_cases_json).where(
-                    catalog_models.LearningItemModel.id == item_id
-                )
-                res = await session.execute(stmt)
-                test_cases_json = res.scalar_one_or_none()
-                if test_cases_json:
-                    import json
-
-                    test_cases = json.loads(test_cases_json)
-            except Exception as e:
-                logger.warning(
-                    "Could not load database test cases for lab %s: %s. Using fallback.",
-                    item_id,
-                    e,
-                )
-
-        # 2. Fallback to default python test cases if none configured in the database
+        # 1. Fetch test cases from database if not provided
+        test_cases = list(test_cases) if test_cases else []
         if not test_cases:
-            test_cases = [
-                {
-                    "input": "solution([1, 2, 3])",
-                    "expected_output": "6",
-                    "assertion_code": "assert solution([1, 2, 3]) == 6",
-                },
-                {
-                    "input": "solution([-1, 1])",
-                    "expected_output": "0",
-                    "assertion_code": "assert solution([-1, 1]) == 0",
-                },
-                {
-                    "input": "solution([])",
-                    "expected_output": "0",
-                    "assertion_code": "assert solution([]) == 0",
-                },
-            ]
-        else:
-            # 3. Dynamic test case assertion generation for database-configured test cases
-            import ast
+            async with async_session_scope() as session:
+                try:
+                    catalog_models = __import__(
+                        "src.modules.catalog.infrastructure.models",
+                        fromlist=["LearningItemModel"],
+                    )
+                    from sqlalchemy import select
 
-            func_name = "solution"
-            try:
-                tree = ast.parse(source_code)
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.FunctionDef):
-                        func_name = node.name
-                        break
-            except Exception:
-                pass
+                    stmt = select(
+                        catalog_models.LearningItemModel.test_cases_json
+                    ).where(catalog_models.LearningItemModel.id == item_id)
+                    res = await session.execute(stmt)
+                    test_cases_json = res.scalar_one_or_none()
+                    if test_cases_json:
+                        import json
 
-            for tc in test_cases:
-                # Ensure each test case has an assertion_code
-                if "assertion_code" not in tc:
-                    input_args = tc.get("input", "")
-                    expected_val = tc.get("expected_output") or tc.get(
-                        "expected", "None"
+                        test_cases = json.loads(test_cases_json)
+                except Exception as e:
+                    logger.warning(
+                        "Could not load database test cases for lab %s: %s.",
+                        item_id,
+                        e,
                     )
 
-                    if isinstance(expected_val, str):
-                        try:
-                            ast.literal_eval(expected_val)
-                            valid_expr = expected_val
-                        except Exception:
-                            valid_expr = repr(expected_val)
-                    else:
-                        valid_expr = repr(expected_val)
+        # 2. Require test cases configured in the database
+        if not test_cases:
+            raise ValueError("Bài tập lập trình chưa được cấu hình bộ test case.")
 
-                    if f"{func_name}(" in input_args:
-                        tc["assertion_code"] = f"assert {input_args} == {valid_expr}"
-                    else:
-                        tc["assertion_code"] = (
-                            f"assert {func_name}({input_args}) == {valid_expr}"
-                        )
+        # 3. Dynamic test case assertion generation for database-configured test cases
+        import ast
+
+        func_name = "solution"
+        try:
+            tree = ast.parse(source_code)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.FunctionDef):
+                    func_name = node.name
+                    break
+        except Exception:
+            pass
+
+        for tc in test_cases:
+            # Ensure each test case has an assertion_code
+            if "assertion_code" not in tc:
+                input_args = tc.get("input", "")
+                expected_val = tc.get("expected_output") or tc.get("expected", "None")
+
+                if isinstance(expected_val, str):
+                    try:
+                        ast.literal_eval(expected_val)
+                        valid_expr = expected_val
+                    except Exception:
+                        valid_expr = repr(expected_val)
+                else:
+                    valid_expr = repr(expected_val)
+
+                if f"{func_name}(" in input_args:
+                    tc["assertion_code"] = f"assert {input_args} == {valid_expr}"
+                else:
+                    tc["assertion_code"] = (
+                        f"assert {func_name}({input_args}) == {valid_expr}"
+                    )
 
         result = await self.sandbox_executor.execute_python(source_code, test_cases)
         now_iso = datetime.now(timezone.utc).isoformat()
@@ -688,7 +633,9 @@ class AssessmentUseCase:
             resolved_item_id = item_id
             if not resolved_item_id:
                 sub = await repo.get_peer_submission(submission_id)
-                resolved_item_id = sub.item_id if sub else "item-peer-1"
+                if not sub:
+                    raise ValueError(f"Bài nộp {submission_id} không tồn tại.")
+                resolved_item_id = sub.item_id
 
             existing_reviews = await repo.get_peer_reviews_for_submission(submission_id)
             is_outlier = False

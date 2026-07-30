@@ -347,10 +347,9 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             title=title,
             slug=slug or course_id,
             description=description,
-            partner_name=partner_name or "Coursera AI Partner",
-            partner_logo_url=partner_logo_url
-            or "https://upload.wikimedia.org/wikipedia/commons/e/e1/DeepLearning.AI_logo.svg",
-            instructor_names=instructor_names or ["Giảng viên AI"],
+            partner_name=partner_name or "",
+            partner_logo_url=partner_logo_url or "",
+            instructor_names=instructor_names or [],
             subject=subject,
             level=level,
             owner_id=owner_id,
@@ -415,12 +414,20 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         return await self.get_course_detail(course_id)
 
     async def create_week_module(
-        self, course_id: str, week_number: int, title: str, summary: str
+        self, course_id: str, title: str, summary: str
     ) -> WeekModule:
+        real_id, _ = await self.get_course_id_by_slug_or_id(course_id)
+        stmt = select(func.max(WeekModuleModel.week_number)).where(
+            WeekModuleModel.course_id == real_id
+        )
+        res = await self.session.execute(stmt)
+        max_week = res.scalar()
+        week_number = (max_week or 0) + 1
+
         wm_id = f"week-{week_number}-{uuid.uuid4().hex[:6]}"
         wm_model = WeekModuleModel(
             id=wm_id,
-            course_id=course_id,
+            course_id=real_id,
             week_number=week_number,
             title=title,
             summary=summary,
@@ -638,7 +645,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         model = CourseReviewModel(
             id=review_id,
             user_id=user_id,
-            user_name=user_name or "Học viên LMS",
+            user_name=user_name or user_id,
             course_id=course_id,
             rating_stars=rating_stars,
             comment_text=comment_text,

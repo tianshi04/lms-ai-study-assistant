@@ -95,7 +95,7 @@ class ForumHandler(ForumService):
 
         current_user = require_current_user()
         author_name = (
-            current_user.email.split("@")[0] if current_user.email else "Learner"
+            current_user.email.split("@")[0] if current_user.email else current_user.id
         )
 
         thread = await self.use_case.create_thread(
@@ -121,7 +121,7 @@ class ForumHandler(ForumService):
 
         current_user = require_current_user()
         author_name = (
-            current_user.email.split("@")[0] if current_user.email else "Learner"
+            current_user.email.split("@")[0] if current_user.email else current_user.id
         )
 
         reply = await self.use_case.post_reply(

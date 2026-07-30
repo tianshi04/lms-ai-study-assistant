@@ -71,7 +71,9 @@ def _pb_role_to_domain_str(role_val: Any) -> str:
         4: "USER_ROLE_SUPER_ADMIN",
         5: "USER_ROLE_PARTNER_ADMIN",
     }
-    return mapping.get(role_val, "USER_ROLE_LEARNER")
+    if role_val not in mapping:
+        raise ConnectError(Code.INVALID_ARGUMENT, f"Vai trò '{role_val}' không hợp lệ")
+    return mapping[role_val]
 
 
 def _to_pb_user(user: User) -> pb.User:

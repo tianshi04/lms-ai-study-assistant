@@ -185,9 +185,8 @@ message DeleteCourseResponse {
 
 message CreateWeekModuleRequest {
   string course_id = 1;
-  int32 week_number = 2;
-  string title = 3;
-  string summary = 4;
+  string title = 2;
+  string summary = 3;
 }
 
 message CreateWeekModuleResponse {
