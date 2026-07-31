@@ -10,10 +10,7 @@ export const TabsList = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <BaseTabs.List
     ref={ref}
-    className={cn(
-      "flex border-b border-slate-200 dark:border-slate-800 gap-6",
-      className
-    )}
+    className={cn("flex border-b border-slate-200 dark:border-slate-800 gap-6", className)}
     {...props}
   />
 ));
@@ -27,7 +24,7 @@ export const TabsTrigger = React.forwardRef<
     ref={ref}
     className={cn(
       "pb-3 text-sm font-semibold transition-colors border-b-2 -mb-px flex items-center gap-2 cursor-pointer border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 data-[selected]:border-[#0056D2] data-[selected]:text-[#0056D2] dark:data-[selected]:text-blue-400 focus:outline-none",
-      className
+      className,
     )}
     {...props}
   />
@@ -38,11 +35,7 @@ export const TabsContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentPropsWithoutRef<typeof BaseTabs.Panel>
 >(({ className, ...props }, ref) => (
-  <BaseTabs.Panel
-    ref={ref}
-    className={cn("pt-4 focus:outline-none", className)}
-    {...props}
-  />
+  <BaseTabs.Panel ref={ref} className={cn("pt-4 focus:outline-none", className)} {...props} />
 ));
 TabsContent.displayName = "TabsContent";
 
@@ -74,7 +67,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
                     "text-xs px-2 py-0.5 rounded-full font-medium transition-colors",
                     isActive
                       ? "bg-blue-100 text-[#0056D2] dark:bg-blue-900/60 dark:text-blue-200"
-                      : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                      : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
                   )}
                 >
                   {tab.count}

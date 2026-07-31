@@ -6,7 +6,10 @@ import {
   useListInstructorApplicationsQuery,
   useReviewInstructorApplicationMutation,
 } from "@/lib/query_hooks";
-import { InstructorApplicationStatus, type InstructorApplication } from "@/gen/identity/v1/identity_pb";
+import {
+  InstructorApplicationStatus,
+  type InstructorApplication,
+} from "@/gen/identity/v1/identity_pb";
 
 export default function AdminInstructorApplicationsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -14,7 +17,11 @@ export default function AdminInstructorApplicationsPage() {
   const [rejectionReason, setRejectionReason] = useState<string>("");
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string>("");
 
-  const { data: applications = [], isLoading, refetch } = useListInstructorApplicationsQuery(statusFilter);
+  const {
+    data: applications = [],
+    isLoading,
+    refetch,
+  } = useListInstructorApplicationsQuery(statusFilter);
 
   const reviewMutation = useReviewInstructorApplicationMutation({
     onSuccess: (updatedApp, variables) => {
@@ -23,14 +30,16 @@ export default function AdminInstructorApplicationsPage() {
       setActionSuccessMsg(
         variables.approve
           ? "Đã phê duyệt đơn và nâng tài khoản thành Giảng viên thành công!"
-          : "Đã từ chối đơn đăng ký thành công."
+          : "Đã từ chối đơn đăng ký thành công.",
       );
       refetch();
     },
   });
 
   const handleApprove = (appId: string) => {
-    if (confirm("Bạn có chắc chắn muốn phê duyệt đơn này và nâng quyền tài khoản thành Giảng viên?")) {
+    if (
+      confirm("Bạn có chắc chắn muốn phê duyệt đơn này và nâng quyền tài khoản thành Giảng viên?")
+    ) {
       reviewMutation.mutate({ applicationId: appId, approve: true });
     }
   };
@@ -54,9 +63,13 @@ export default function AdminInstructorApplicationsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
-              <Link href="/admin/dashboard" className="hover:underline">Admin Portal</Link>
+              <Link href="/admin/dashboard" className="hover:underline">
+                Admin Portal
+              </Link>
               <span>/</span>
-              <span className="font-semibold text-slate-700 dark:text-slate-200">Đơn Giảng viên</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-200">
+                Đơn Giảng viên
+              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Quản Lý Thẩm Định Đơn Giảng Viên
@@ -76,7 +89,10 @@ export default function AdminInstructorApplicationsPage() {
         {actionSuccessMsg && (
           <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-sm font-bold flex items-center justify-between">
             <span>{actionSuccessMsg}</span>
-            <button onClick={() => setActionSuccessMsg("")} className="text-emerald-600 dark:text-emerald-400 hover:opacity-75">
+            <button
+              onClick={() => setActionSuccessMsg("")}
+              className="text-emerald-600 dark:text-emerald-400 hover:opacity-75"
+            >
               ✕
             </button>
           </div>
@@ -108,16 +124,25 @@ export default function AdminInstructorApplicationsPage() {
         {isLoading ? (
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="inline-block animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mb-3" />
-            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Đang tải danh sách đơn thẩm định...</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+              Đang tải danh sách đơn thẩm định...
+            </p>
           </div>
         ) : applications.length === 0 ? (
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
             <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 text-slate-400 rounded-2xl flex items-center justify-center mx-auto">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Không có đơn đăng ký nào</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              Không có đơn đăng ký nào
+            </h3>
             <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm mx-auto">
               Hiện tại chưa có đơn xin cấp quyền Giảng viên cá nhân nào phù hợp với bộ lọc đã chọn.
             </p>
@@ -137,11 +162,16 @@ export default function AdminInstructorApplicationsPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
                     <div>
                       <div className="flex items-center gap-3">
-                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">{app.title}</h2>
+                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                          {app.title}
+                        </h2>
                         <span className="text-xs text-slate-400 font-mono">({app.userId})</span>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                        Ngày nộp: {app.createdAt ? new Date(app.createdAt).toLocaleString("vi-VN") : "Gần đây"}
+                        Ngày nộp:{" "}
+                        {app.createdAt
+                          ? new Date(app.createdAt).toLocaleString("vi-VN")
+                          : "Gần đây"}
                       </p>
                     </div>
 
@@ -197,8 +227,18 @@ export default function AdminInstructorApplicationsPage() {
                           rel="noreferrer"
                           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-semibold hover:bg-slate-200 transition-colors"
                         >
-                          <svg className="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          <svg
+                            className="w-4 h-4 text-rose-500"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                            />
                           </svg>
                           <span>Xem Hồ sơ CV (.pdf)</span>
                         </a>
@@ -210,9 +250,24 @@ export default function AdminInstructorApplicationsPage() {
                           rel="noreferrer"
                           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 text-xs font-semibold hover:bg-red-100 transition-colors"
                         >
-                          <svg className="w-4 h-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          <svg
+                            className="w-4 h-4 text-red-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
                           </svg>
                           <span>Xem Video Giảng Thử Demo</span>
                         </a>
@@ -276,8 +331,18 @@ export default function AdminInstructorApplicationsPage() {
                             disabled={reviewMutation.isPending}
                             className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-500/25 transition-all flex items-center gap-2"
                           >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
                             <span>Phê Duyệt & Nâng Role Giảng Viên</span>
                           </button>

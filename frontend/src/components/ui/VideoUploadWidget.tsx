@@ -42,7 +42,7 @@ export function VideoUploadWidget({
 
     try {
       const client = getRpcClient(CatalogService);
-      
+
       const res = await client.generateUploadUrl({
         filename: file.name,
         contentType: file.type || "video/mp4",
@@ -61,7 +61,8 @@ export function VideoUploadWidget({
           // Timeout: if Docker port forwarding is broken (common on WSL2/Windows),
           // the presigned PUT will hang forever. Auto-abort after 8s to trigger fallback.
           xhr.timeout = 8000;
-          xhr.ontimeout = () => reject(new Error("Presigned PUT timed out (MinIO port unreachable)"));
+          xhr.ontimeout = () =>
+            reject(new Error("Presigned PUT timed out (MinIO port unreachable)"));
 
           xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) {
@@ -178,12 +179,18 @@ export function VideoUploadWidget({
 
             <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3 border border-blue-200 dark:border-blue-500/20 shadow-xs">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
               </svg>
             </div>
 
             <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
-              Kéo & thả tệp Video/Phụ đề vào đây hoặc <span className="text-blue-600 dark:text-blue-400 underline">bấm để chọn tệp</span>
+              Kéo & thả tệp Video/Phụ đề vào đây hoặc{" "}
+              <span className="text-blue-600 dark:text-blue-400 underline">bấm để chọn tệp</span>
             </p>
             <p className="text-[11px] text-slate-400 mt-1 font-mono">
               Hỗ trợ tệp MP4, WebM, MOV, VTT (Max 500MB)

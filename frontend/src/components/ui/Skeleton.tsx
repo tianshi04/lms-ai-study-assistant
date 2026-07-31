@@ -10,6 +10,6 @@ export const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
       className={cn("animate-pulse rounded-md bg-slate-200 dark:bg-slate-700/60", className)}
       {...props}
     />
-  )
+  ),
 );
 Skeleton.displayName = "Skeleton";

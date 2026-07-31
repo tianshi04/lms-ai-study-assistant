@@ -1,4 +1,5 @@
 from typing import Optional
+import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,6 +8,7 @@ from src.modules.identity.domain.entities import (
     UserRole,
     SystemRole,
     Organization,
+    OrganizationMember,
     InstructorApplication,
     ApplicationStatus,
 )
@@ -225,6 +227,50 @@ class OrganizationRepository:
             current_role = parent_role
 
         return role_name, permissions
+
+    async def add_member(
+        self,
+        user_id: str,
+        org_id: str,
+        role_id: str = "role_org_instructor",
+        status: str = "ACTIVE",
+    ) -> OrganizationMember:
+        stmt = select(OrganizationMemberModel).where(
+            OrganizationMemberModel.user_id == user_id,
+            OrganizationMemberModel.organization_id == org_id,
+        )
+        result = await self._session.execute(stmt)
+        existing = result.scalar_one_or_none()
+
+        if existing:
+            existing.status = status
+            existing.role_id = role_id
+            await self._session.flush()
+            return OrganizationMember(
+                id=existing.id,
+                user_id=existing.user_id,
+                organization_id=existing.organization_id,
+                role_id=existing.role_id,
+                status=existing.status,
+            )
+
+        member_id = f"member_{uuid.uuid4().hex[:12]}"
+        model = OrganizationMemberModel(
+            id=member_id,
+            user_id=user_id,
+            organization_id=org_id,
+            role_id=role_id,
+            status=status,
+        )
+        self._session.add(model)
+        await self._session.flush()
+        return OrganizationMember(
+            id=model.id,
+            user_id=model.user_id,
+            organization_id=model.organization_id,
+            role_id=model.role_id,
+            status=model.status,
+        )
 
 
 class InstructorApplicationRepository:

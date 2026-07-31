@@ -3,7 +3,13 @@
 import { useEffect, useState, useSyncExternalStore, use } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService, CourseStatus, ItemType, type Course, type LearningItem } from "@/gen/catalog/v1/catalog_pb";
+import {
+  CatalogService,
+  CourseStatus,
+  ItemType,
+  type Course,
+  type LearningItem,
+} from "@/gen/catalog/v1/catalog_pb";
 import { AssessmentService, type QuestionBank } from "@/gen/assessment/v1/assessment_pb";
 
 import { Modal } from "@/components/ui/Modal";
@@ -12,7 +18,7 @@ import { useToast } from "@/components/ui/Toast";
 import { VideoUploadWidget } from "@/components/ui/VideoUploadWidget";
 import { InVideoQuizEditor, type InVideoQuizItem } from "@/components/ui/InVideoQuizEditor";
 
-const emptySubscribe = () => () => { };
+const emptySubscribe = () => () => {};
 
 export default function InstructorCourseBuilderPage({
   params,
@@ -25,14 +31,13 @@ export default function InstructorCourseBuilderPage({
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
 
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
-
 
   // Modals visibility
   const [showWeekModal, setShowWeekModal] = useState(false);
@@ -58,8 +63,12 @@ export default function InstructorCourseBuilderPage({
 
   // Extended Native Fields (Lab, Quiz Matrix, Rubric)
   const [labLanguage, setLabLanguage] = useState("python");
-  const [labStarterCode, setLabStarterCode] = useState("# Starter code for lab\ndef solution(a, b):\n    pass\n");
-  const [labTestCasesJson, setLabTestCasesJson] = useState('[\n  {"input": "1, 2", "expected": "3"}\n]');
+  const [labStarterCode, setLabStarterCode] = useState(
+    "# Starter code for lab\ndef solution(a, b):\n    pass\n",
+  );
+  const [labTestCasesJson, setLabTestCasesJson] = useState(
+    '[\n  {"input": "1, 2", "expected": "3"}\n]',
+  );
   const [quizBankId, setQuizBankId] = useState("");
   const [quizTimeLimit, setQuizTimeLimit] = useState<string | number>("45");
   const [quizPassingThreshold, setQuizPassingThreshold] = useState<string | number>("80");
@@ -68,7 +77,9 @@ export default function InstructorCourseBuilderPage({
   const [quizHardCount, setQuizHardCount] = useState<string | number>("2");
   const [quizMaxAttempts, setQuizMaxAttempts] = useState<string | number>("3");
   const [quizCooldownHours, setQuizCooldownHours] = useState<string | number>("8");
-  const [peerRubricJson, setPeerRubricJson] = useState('[\n  {"title": "Clarity & Organization", "max_score": 10}\n]');
+  const [peerRubricJson, setPeerRubricJson] = useState(
+    '[\n  {"title": "Clarity & Organization", "max_score": 10}\n]',
+  );
   const [questionBanks, setQuestionBanks] = useState<QuestionBank[]>([]);
 
   // SCORM Review Workspace State
@@ -78,8 +89,16 @@ export default function InstructorCourseBuilderPage({
   const [scormImporting, setScormImporting] = useState(false);
 
   // Edit Modals State
-  const [editingWeek, setEditingWeek] = useState<{ id: string; title: string; summary: string } | null>(null);
-  const [editingLesson, setEditingLesson] = useState<{ id: string; title: string; estimatedMinutes: number } | null>(null);
+  const [editingWeek, setEditingWeek] = useState<{
+    id: string;
+    title: string;
+    summary: string;
+  } | null>(null);
+  const [editingLesson, setEditingLesson] = useState<{
+    id: string;
+    title: string;
+    estimatedMinutes: number;
+  } | null>(null);
   const [editingItem, setEditingItem] = useState<{
     id: string;
     title: string;
@@ -104,9 +123,9 @@ export default function InstructorCourseBuilderPage({
     quizCooldownHours?: number | string;
   } | null>(null);
 
-
   // Authorization Check
-  const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
+  const userRole =
+    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
   const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
 
   const fetchCourseDetail = async () => {
@@ -141,7 +160,9 @@ export default function InstructorCourseBuilderPage({
       if (res.course) {
         setCourse(res.course);
       }
-      toast.success("Đã gửi yêu cầu phê duyệt khóa học thành công! Trạng thái hiện tại: PENDING_REVIEW.");
+      toast.success(
+        "Đã gửi yêu cầu phê duyệt khóa học thành công! Trạng thái hiện tại: PENDING_REVIEW.",
+      );
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Không thể gửi yêu cầu phê duyệt.";
       toast.error(msg);
@@ -257,23 +278,33 @@ export default function InstructorCourseBuilderPage({
         videoUrl: itemType === ItemType.VIDEO ? videoUrl : "",
         vttSubtitleUrl: itemType === ItemType.VIDEO ? vttSubtitleUrl : "",
         autoTranscribe: itemType === ItemType.VIDEO ? autoTranscribe : false,
-        inVideoQuizzes: itemType === ItemType.VIDEO ? inVideoQuizzes.map(q => ({
-          timestampSeconds: q.timestampSeconds,
-          question: q.question,
-          options: q.options,
-          correctOptionIndex: q.correctOptionIndex,
-          explanation: q.explanation,
-        })) : [],
+        inVideoQuizzes:
+          itemType === ItemType.VIDEO
+            ? inVideoQuizzes.map((q) => ({
+                timestampSeconds: q.timestampSeconds,
+                question: q.question,
+                options: q.options,
+                correctOptionIndex: q.correctOptionIndex,
+                explanation: q.explanation,
+              }))
+            : [],
         readingMarkdown: itemType === ItemType.READING ? readingMarkdown : "",
         starterCode: itemType === ItemType.AUTO_GRADED_LAB ? labStarterCode : "",
         testCasesJson: itemType === ItemType.AUTO_GRADED_LAB ? labTestCasesJson : "",
         language: itemType === ItemType.AUTO_GRADED_LAB ? labLanguage : "",
         rubricCriteriaJson: itemType === ItemType.PEER_REVIEW ? peerRubricJson : "",
-        quizMatrixId: (itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ) ? quizBankId : "",
+        quizMatrixId:
+          itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ
+            ? quizBankId
+            : "",
       });
 
       const createdItem = res.item;
-      if ((itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ) && quizBankId && createdItem) {
+      if (
+        (itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ) &&
+        quizBankId &&
+        createdItem
+      ) {
         try {
           const assessmentClient = getRpcClient(AssessmentService);
           await assessmentClient.configureQuizMatrix({
@@ -385,24 +416,39 @@ export default function InstructorCourseBuilderPage({
         type: editingItem.type,
         estimatedMinutes: editingItem.estimatedMinutes,
         videoUrl: editingItem.type === ItemType.VIDEO ? editingItem.videoUrl : undefined,
-        vttSubtitleUrl: editingItem.type === ItemType.VIDEO ? editingItem.vttSubtitleUrl : undefined,
-        autoTranscribe: editingItem.type === ItemType.VIDEO ? editingItem.autoTranscribe : undefined,
+        vttSubtitleUrl:
+          editingItem.type === ItemType.VIDEO ? editingItem.vttSubtitleUrl : undefined,
+        autoTranscribe:
+          editingItem.type === ItemType.VIDEO ? editingItem.autoTranscribe : undefined,
         readingMarkdown: editingItem.type === ItemType.READING ? editingItem.content : undefined,
-        inVideoQuizzes: editingItem.type === ItemType.VIDEO ? editingItem.inVideoQuizzes.map(q => ({
-          timestampSeconds: q.timestampSeconds,
-          question: q.question,
-          options: q.options,
-          correctOptionIndex: q.correctOptionIndex,
-          explanation: q.explanation,
-        })) : undefined,
-        starterCode: editingItem.type === ItemType.AUTO_GRADED_LAB ? editingItem.starterCode : undefined,
-        testCasesJson: editingItem.type === ItemType.AUTO_GRADED_LAB ? editingItem.testCasesJson : undefined,
+        inVideoQuizzes:
+          editingItem.type === ItemType.VIDEO
+            ? editingItem.inVideoQuizzes.map((q) => ({
+                timestampSeconds: q.timestampSeconds,
+                question: q.question,
+                options: q.options,
+                correctOptionIndex: q.correctOptionIndex,
+                explanation: q.explanation,
+              }))
+            : undefined,
+        starterCode:
+          editingItem.type === ItemType.AUTO_GRADED_LAB ? editingItem.starterCode : undefined,
+        testCasesJson:
+          editingItem.type === ItemType.AUTO_GRADED_LAB ? editingItem.testCasesJson : undefined,
         language: editingItem.type === ItemType.AUTO_GRADED_LAB ? editingItem.language : undefined,
-        rubricCriteriaJson: editingItem.type === ItemType.PEER_REVIEW ? editingItem.rubricCriteriaJson : undefined,
-        quizMatrixId: (editingItem.type === ItemType.PRACTICE_QUIZ || editingItem.type === ItemType.GRADED_QUIZ) ? editingItem.quizMatrixId : undefined,
+        rubricCriteriaJson:
+          editingItem.type === ItemType.PEER_REVIEW ? editingItem.rubricCriteriaJson : undefined,
+        quizMatrixId:
+          editingItem.type === ItemType.PRACTICE_QUIZ || editingItem.type === ItemType.GRADED_QUIZ
+            ? editingItem.quizMatrixId
+            : undefined,
       });
 
-      if ((editingItem.type === ItemType.PRACTICE_QUIZ || editingItem.type === ItemType.GRADED_QUIZ) && editingItem.quizMatrixId) {
+      if (
+        (editingItem.type === ItemType.PRACTICE_QUIZ ||
+          editingItem.type === ItemType.GRADED_QUIZ) &&
+        editingItem.quizMatrixId
+      ) {
         try {
           const assessmentClient = getRpcClient(AssessmentService);
           await assessmentClient.configureQuizMatrix({
@@ -434,7 +480,11 @@ export default function InstructorCourseBuilderPage({
   };
 
   const handleDeleteWeek = async (weekId: string, weekTitle: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa Tuần học "${weekTitle}"? Thao tác này sẽ xóa tất cả bài học bên trong.`)) {
+    if (
+      !confirm(
+        `Bạn có chắc chắn muốn xóa Tuần học "${weekTitle}"? Thao tác này sẽ xóa tất cả bài học bên trong.`,
+      )
+    ) {
       return;
     }
     try {
@@ -483,7 +533,8 @@ export default function InstructorCourseBuilderPage({
   const handleLiveReorderWeeks = (fromIndex: number, toIndex: number) => {
     if (!course || !course.weekModules || fromIndex === toIndex) return;
     const weeks = [...course.weekModules];
-    if (fromIndex < 0 || fromIndex >= weeks.length || toIndex < 0 || toIndex >= weeks.length) return;
+    if (fromIndex < 0 || fromIndex >= weeks.length || toIndex < 0 || toIndex >= weeks.length)
+      return;
 
     const [moved] = weeks.splice(fromIndex, 1);
     weeks.splice(toIndex, 0, moved);
@@ -511,14 +562,13 @@ export default function InstructorCourseBuilderPage({
     if (!week || !week.lessons) return;
 
     const lessons = [...week.lessons];
-    if (fromIndex < 0 || fromIndex >= lessons.length || toIndex < 0 || toIndex >= lessons.length) return;
+    if (fromIndex < 0 || fromIndex >= lessons.length || toIndex < 0 || toIndex >= lessons.length)
+      return;
 
     const [moved] = lessons.splice(fromIndex, 1);
     lessons.splice(toIndex, 0, moved);
 
-    const updatedWeeks = course.weekModules.map((w) =>
-      w.id === weekId ? { ...w, lessons } : w
-    );
+    const updatedWeeks = course.weekModules.map((w) => (w.id === weekId ? { ...w, lessons } : w));
     setCourse({ ...course, weekModules: updatedWeeks });
   };
 
@@ -556,7 +606,13 @@ export default function InstructorCourseBuilderPage({
       }
     }
 
-    if (fromIndex < 0 || fromIndex >= targetItems.length || toIndex < 0 || toIndex >= targetItems.length) return;
+    if (
+      fromIndex < 0 ||
+      fromIndex >= targetItems.length ||
+      toIndex < 0 ||
+      toIndex >= targetItems.length
+    )
+      return;
 
     const [moved] = targetItems.splice(fromIndex, 1);
     targetItems.splice(toIndex, 0, moved);
@@ -565,9 +621,7 @@ export default function InstructorCourseBuilderPage({
       if (w.id !== targetWeekId) return w;
       return {
         ...w,
-        lessons: w.lessons?.map((l) =>
-          l.id === lessonId ? { ...l, items: targetItems } : l
-        ),
+        lessons: w.lessons?.map((l) => (l.id === lessonId ? { ...l, items: targetItems } : l)),
       };
     });
     setCourse({ ...course, weekModules: updatedWeeks });
@@ -607,7 +661,6 @@ export default function InstructorCourseBuilderPage({
     currentIndex: number;
   } | null>(null);
 
-
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-center items-center py-24">
@@ -623,16 +676,20 @@ export default function InstructorCourseBuilderPage({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
-
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Breadcrumb & Return Nav */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <Link href="/instructor/courses" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            <Link
+              href="/instructor/courses"
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
               {"Giảng viên"}
             </Link>
             <span>/</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">{"Biên soạn bài học"}</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">
+              {"Biên soạn bài học"}
+            </span>
           </div>
 
           <Link
@@ -640,7 +697,12 @@ export default function InstructorCourseBuilderPage({
             className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
             <span>{"Danh sách Khóa học"}</span>
           </Link>
@@ -655,7 +717,10 @@ export default function InstructorCourseBuilderPage({
                 <div className="flex items-center gap-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping" />
                   <span>
-                    <strong>{"Khóa học đang chờ kiểm duyệt (PENDING_REVIEW):"}</strong> {"Hệ thống đang chuyển sang chế độ Chỉ đọc (Read-only). Các thao tác chỉnh sửa sẽ tạm thời bị khóa trong thời gian Reviewer đánh giá."}
+                    <strong>{"Khóa học đang chờ kiểm duyệt (PENDING_REVIEW):"}</strong>{" "}
+                    {
+                      "Hệ thống đang chuyển sang chế độ Chỉ đọc (Read-only). Các thao tác chỉnh sửa sẽ tạm thời bị khóa trong thời gian Reviewer đánh giá."
+                    }
                   </span>
                 </div>
               </div>
@@ -663,15 +728,34 @@ export default function InstructorCourseBuilderPage({
 
             {course.status === CourseStatus.REJECTED && (
               <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-800 dark:text-rose-200 text-sm flex items-start gap-3">
-                <svg className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 <div>
-                  <h4 className="font-bold text-rose-900 dark:text-rose-100">{"Khóa học bị từ chối phê duyệt (REJECTED)"}</h4>
+                  <h4 className="font-bold text-rose-900 dark:text-rose-100">
+                    {"Khóa học bị từ chối phê duyệt (REJECTED)"}
+                  </h4>
                   <p className="text-xs mt-1 text-rose-700 dark:text-rose-300">
-                    {"Lý do góp ý từ Reviewer:"} <strong>{course.rejectionReason || "Cần bổ sung thêm thông tin học liệu."}</strong>
+                    {"Lý do góp ý từ Reviewer:"}{" "}
+                    <strong>
+                      {course.rejectionReason || "Cần bổ sung thêm thông tin học liệu."}
+                    </strong>
                   </p>
-                  <p className="text-xs text-slate-500 mt-1">{"Vui lòng hoàn thiện học liệu theo yêu cầu và bấm 'Gửi Yêu Cầu Phê Duyệt' để nộp lại."}</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {
+                      "Vui lòng hoàn thiện học liệu theo yêu cầu và bấm 'Gửi Yêu Cầu Phê Duyệt' để nộp lại."
+                    }
+                  </p>
                 </div>
               </div>
             )}
@@ -711,15 +795,28 @@ export default function InstructorCourseBuilderPage({
                   {course.description}
                 </p>
                 <div className="text-xs font-medium text-slate-500 flex items-center gap-2 pt-1">
-                  <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  <svg
+                    className="w-4 h-4 text-slate-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
                   </svg>
-                  <span>{"Giảng viên:"} {course.instructorNames.join(", ")}</span>
+                  <span>
+                    {"Giảng viên:"} {course.instructorNames.join(", ")}
+                  </span>
                 </div>
               </div>
 
               <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                {(course.status === CourseStatus.DRAFT || course.status === CourseStatus.REJECTED) && (
+                {(course.status === CourseStatus.DRAFT ||
+                  course.status === CourseStatus.REJECTED) && (
                   <button
                     type="button"
                     onClick={handleSubmitForLaunch}
@@ -727,9 +824,16 @@ export default function InstructorCourseBuilderPage({
                     className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
-                    <span>{submittingLaunch ? "Đang nộp..." : "Submit for Launch (Gửi duyệt)"}</span>
+                    <span>
+                      {submittingLaunch ? "Đang nộp..." : "Submit for Launch (Gửi duyệt)"}
+                    </span>
                   </button>
                 )}
                 <button
@@ -754,14 +858,24 @@ export default function InstructorCourseBuilderPage({
                   className="px-3.5 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 text-xs font-bold hover:bg-amber-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                    />
                   </svg>
                   <span>{"Xuất SCORM 1.2 ZIP"}</span>
                 </button>
 
                 <label className="px-3.5 py-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 text-xs font-bold hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                    />
                   </svg>
                   <span>{"Import Gói SCORM"}</span>
                   <input
@@ -825,7 +939,8 @@ export default function InstructorCourseBuilderPage({
                         setScormPreviewCourse(parseRes.coursePreview || null);
                         setShowScormReviewModal(true);
                       } catch (err: unknown) {
-                        const msg = err instanceof Error ? err.message : "Không thể phân tích gói SCORM.";
+                        const msg =
+                          err instanceof Error ? err.message : "Không thể phân tích gói SCORM.";
                         toast.error(msg);
                       } finally {
                         setScormImporting(false);
@@ -840,7 +955,12 @@ export default function InstructorCourseBuilderPage({
                   className="px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-xs font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-1.5"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                    />
                   </svg>
                   <span>{"Ngân hàng Câu hỏi"}</span>
                 </Link>
@@ -850,7 +970,12 @@ export default function InstructorCourseBuilderPage({
                   className="px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-xs font-bold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-1.5"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
                   </svg>
                   <span>{"Thống kê lớp học"}</span>
                 </Link>
@@ -860,7 +985,12 @@ export default function InstructorCourseBuilderPage({
                   className="px-4 py-2.5 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 text-xs font-bold hover:bg-purple-100 transition-colors flex items-center justify-center gap-1.5"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                    />
                   </svg>
                   <span>{"Đăng Thông báo"}</span>
                 </Link>
@@ -871,7 +1001,12 @@ export default function InstructorCourseBuilderPage({
                     className="w-full sm:w-auto px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
                   >
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
                     </svg>
                     <span>{"Thêm Tuần học"}</span>
                   </button>
@@ -881,14 +1016,22 @@ export default function InstructorCourseBuilderPage({
           </>
         )}
 
-
-
         {/* Course Syllabus Tree Builder View */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-              <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              <svg
+                className="w-5 h-5 text-blue-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                />
               </svg>
               {"Cấu trúc Chương trình bài giảng (Course Syllabus)"}
             </h2>
@@ -897,14 +1040,28 @@ export default function InstructorCourseBuilderPage({
             </span>
           </div>
 
-          {(!course?.weekModules || course.weekModules.length === 0) ? (
+          {!course?.weekModules || course.weekModules.length === 0 ? (
             <div className="py-16 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 space-y-4">
-              <svg className="w-12 h-12 mx-auto text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              <svg
+                className="w-12 h-12 mx-auto text-slate-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                />
               </svg>
               <div className="space-y-1">
-                <p className="text-base font-bold text-slate-700 dark:text-slate-300">{"Khóa học này chưa có Tuần học nào"}</p>
-                <p className="text-xs text-slate-500">{"Hãy bấm nút \"Thêm Tuần học\" để khởi tạo mô-đun bài giảng đầu tiên."}</p>
+                <p className="text-base font-bold text-slate-700 dark:text-slate-300">
+                  {"Khóa học này chưa có Tuần học nào"}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {'Hãy bấm nút "Thêm Tuần học" để khởi tạo mô-đun bài giảng đầu tiên.'}
+                </p>
               </div>
               {isInstructorOrAdmin && (
                 <button
@@ -912,7 +1069,12 @@ export default function InstructorCourseBuilderPage({
                   className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition-all inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4v16m8-8H4"
+                    />
                   </svg>
                   <span>{"Khởi tạo Tuần 1 ngay"}</span>
                 </button>
@@ -926,11 +1088,20 @@ export default function InstructorCourseBuilderPage({
                   draggable={isInstructorOrAdmin}
                   onDragStart={(e) => {
                     e.dataTransfer.effectAllowed = "move";
-                    setActiveDrag({ type: "week", id: week.id, startIndex: wIdx, currentIndex: wIdx });
+                    setActiveDrag({
+                      type: "week",
+                      id: week.id,
+                      startIndex: wIdx,
+                      currentIndex: wIdx,
+                    });
                   }}
                   onDragEnter={(e) => {
                     e.preventDefault();
-                    if (activeDrag && activeDrag.type === "week" && activeDrag.currentIndex !== wIdx) {
+                    if (
+                      activeDrag &&
+                      activeDrag.type === "week" &&
+                      activeDrag.currentIndex !== wIdx
+                    ) {
                       handleLiveReorderWeeks(activeDrag.currentIndex, wIdx);
                       setActiveDrag({ ...activeDrag, currentIndex: wIdx });
                     }
@@ -943,10 +1114,11 @@ export default function InstructorCourseBuilderPage({
                     }
                     setActiveDrag(null);
                   }}
-                  className={`bg-white dark:bg-slate-900 rounded-3xl border ${activeDrag?.type === "week" && activeDrag.id === week.id
-                    ? "border-blue-500 ring-2 ring-blue-500/50 shadow-xl opacity-100 scale-[1.01]"
-                    : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
-                    } p-6 shadow-sm space-y-4`}
+                  className={`bg-white dark:bg-slate-900 rounded-3xl border ${
+                    activeDrag?.type === "week" && activeDrag.id === week.id
+                      ? "border-blue-500 ring-2 ring-blue-500/50 shadow-xl opacity-100 scale-[1.01]"
+                      : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                  } p-6 shadow-sm space-y-4`}
                 >
                   {/* Week Module Header */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -954,7 +1126,10 @@ export default function InstructorCourseBuilderPage({
                       <div className="flex items-center gap-2">
                         {isInstructorOrAdmin && (
                           <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg px-2 py-1 border border-slate-200 dark:border-slate-700">
-                            <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold cursor-grab active:cursor-grabbing select-none" title={"Kéo thả Tuần học để sắp xếp"}>
+                            <span
+                              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold cursor-grab active:cursor-grabbing select-none"
+                              title={"Kéo thả Tuần học để sắp xếp"}
+                            >
                               ⋮⋮
                             </span>
                           </div>
@@ -967,20 +1142,34 @@ export default function InstructorCourseBuilderPage({
                         </h3>
                       </div>
                       {week.summary && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {week.summary}
-                        </p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{week.summary}</p>
                       )}
                     </div>
 
                     {isInstructorOrAdmin && (
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => setEditingWeek({ id: week.id, title: week.title, summary: week.summary })}
+                          onClick={() =>
+                            setEditingWeek({
+                              id: week.id,
+                              title: week.title,
+                              summary: week.summary,
+                            })
+                          }
                           className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-semibold hover:bg-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
                         >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
                           </svg>
                           <span>{"Sửa Tuần"}</span>
                         </button>
@@ -989,8 +1178,18 @@ export default function InstructorCourseBuilderPage({
                           onClick={() => handleDeleteWeek(week.id, week.title)}
                           className="px-2.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:bg-rose-400 border border-rose-200 dark:border-rose-500/20 text-xs font-semibold hover:bg-rose-100 transition-colors flex items-center gap-1 cursor-pointer"
                         >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
                           </svg>
                           <span>{"Xóa Tuần"}</span>
                         </button>
@@ -1002,8 +1201,18 @@ export default function InstructorCourseBuilderPage({
                           }}
                           className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
                         >
-                          <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          <svg
+                            className="w-4 h-4 text-blue-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
                           </svg>
                           <span>{"Thêm Bài học"}</span>
                         </button>
@@ -1012,9 +1221,11 @@ export default function InstructorCourseBuilderPage({
                   </div>
 
                   {/* Lessons List under this Week */}
-                  {(!week.lessons || week.lessons.length === 0) ? (
+                  {!week.lessons || week.lessons.length === 0 ? (
                     <div className="py-6 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-4">
-                      <p className="text-xs text-slate-400">{"Chưa có Bài học nào trong Tuần"} {week.weekNumber}</p>
+                      <p className="text-xs text-slate-400">
+                        {"Chưa có Bài học nào trong Tuần"} {week.weekNumber}
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-4 pl-2 sm:pl-4 border-l-2 border-slate-200 dark:border-slate-800">
@@ -1025,12 +1236,23 @@ export default function InstructorCourseBuilderPage({
                           onDragStart={(e) => {
                             e.stopPropagation();
                             e.dataTransfer.effectAllowed = "move";
-                            setActiveDrag({ type: "lesson", id: lesson.id, containerId: week.id, startIndex: lIdx, currentIndex: lIdx });
+                            setActiveDrag({
+                              type: "lesson",
+                              id: lesson.id,
+                              containerId: week.id,
+                              startIndex: lIdx,
+                              currentIndex: lIdx,
+                            });
                           }}
                           onDragEnter={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            if (activeDrag && activeDrag.type === "lesson" && activeDrag.containerId === week.id && activeDrag.currentIndex !== lIdx) {
+                            if (
+                              activeDrag &&
+                              activeDrag.type === "lesson" &&
+                              activeDrag.containerId === week.id &&
+                              activeDrag.currentIndex !== lIdx
+                            ) {
                               handleLiveReorderLessons(week.id, activeDrag.currentIndex, lIdx);
                               setActiveDrag({ ...activeDrag, currentIndex: lIdx });
                             }
@@ -1038,27 +1260,45 @@ export default function InstructorCourseBuilderPage({
                           onDragOver={(e) => e.preventDefault()}
                           onDragEnd={async (e) => {
                             e.stopPropagation();
-                            if (activeDrag && activeDrag.currentIndex !== activeDrag.startIndex && activeDrag.containerId) {
+                            if (
+                              activeDrag &&
+                              activeDrag.currentIndex !== activeDrag.startIndex &&
+                              activeDrag.containerId
+                            ) {
                               await handleSaveLessonOrder(activeDrag.containerId);
                             }
                             setActiveDrag(null);
                           }}
-                          className={`bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-4 border ${activeDrag?.type === "lesson" && activeDrag.id === lesson.id
-                            ? "border-indigo-500 ring-2 ring-indigo-500/50 shadow-xl opacity-100 scale-[1.01]"
-                            : "border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700"
-                            } space-y-3`}
+                          className={`bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-4 border ${
+                            activeDrag?.type === "lesson" && activeDrag.id === lesson.id
+                              ? "border-indigo-500 ring-2 ring-indigo-500/50 shadow-xl opacity-100 scale-[1.01]"
+                              : "border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700"
+                          } space-y-3`}
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
                               {isInstructorOrAdmin && (
                                 <div className="flex items-center bg-white dark:bg-slate-900 rounded-lg px-2 py-1 border border-slate-200 dark:border-slate-800">
-                                  <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold cursor-grab active:cursor-grabbing select-none" title={"Kéo thả Bài học để sắp xếp"}>
+                                  <span
+                                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold cursor-grab active:cursor-grabbing select-none"
+                                    title={"Kéo thả Bài học để sắp xếp"}
+                                  >
                                     ⋮⋮
                                   </span>
                                 </div>
                               )}
-                              <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              <svg
+                                className="w-4 h-4 text-indigo-500"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                />
                               </svg>
                               <span className="font-bold text-sm text-slate-800 dark:text-slate-200">
                                 {lesson.title}
@@ -1071,11 +1311,27 @@ export default function InstructorCourseBuilderPage({
                             {isInstructorOrAdmin && (
                               <div className="flex items-center gap-1.5">
                                 <button
-                                  onClick={() => setEditingLesson({ id: lesson.id, title: lesson.title, estimatedMinutes: lesson.estimatedMinutes })}
+                                  onClick={() =>
+                                    setEditingLesson({
+                                      id: lesson.id,
+                                      title: lesson.title,
+                                      estimatedMinutes: lesson.estimatedMinutes,
+                                    })
+                                  }
                                   className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-semibold hover:bg-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
                                 >
-                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                    />
                                   </svg>
                                   <span>{"Sửa Bài"}</span>
                                 </button>
@@ -1084,8 +1340,18 @@ export default function InstructorCourseBuilderPage({
                                   onClick={() => handleDeleteLesson(lesson.id, lesson.title)}
                                   className="px-2 py-1 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[11px] font-semibold hover:bg-rose-100 transition-colors flex items-center gap-1 cursor-pointer"
                                 >
-                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
                                   </svg>
                                   <span>{"Xóa Bài"}</span>
                                 </button>
@@ -1098,8 +1364,18 @@ export default function InstructorCourseBuilderPage({
                                   }}
                                   className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-bold hover:bg-blue-100 transition-colors flex items-center gap-1 cursor-pointer"
                                 >
-                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                  <svg
+                                    className="w-3.5 h-3.5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M12 4v16m8-8H4"
+                                    />
                                   </svg>
                                   <span>{"Thêm Học liệu"}</span>
                                 </button>
@@ -1108,8 +1384,10 @@ export default function InstructorCourseBuilderPage({
                           </div>
 
                           {/* Learning Items under this Lesson */}
-                          {(!lesson.items || lesson.items.length === 0) ? (
-                            <p className="text-[11px] italic text-slate-400 pl-6">{"Chưa có nội dung video/bài đọc"}</p>
+                          {!lesson.items || lesson.items.length === 0 ? (
+                            <p className="text-[11px] italic text-slate-400 pl-6">
+                              {"Chưa có nội dung video/bài đọc"}
+                            </p>
                           ) : (
                             <div className="space-y-2 pl-4">
                               {lesson.items.map((item, iIdx) => (
@@ -1119,33 +1397,56 @@ export default function InstructorCourseBuilderPage({
                                   onDragStart={(e) => {
                                     e.stopPropagation();
                                     e.dataTransfer.effectAllowed = "move";
-                                    setActiveDrag({ type: "item", id: item.id, containerId: lesson.id, startIndex: iIdx, currentIndex: iIdx });
+                                    setActiveDrag({
+                                      type: "item",
+                                      id: item.id,
+                                      containerId: lesson.id,
+                                      startIndex: iIdx,
+                                      currentIndex: iIdx,
+                                    });
                                   }}
                                   onDragEnter={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    if (activeDrag && activeDrag.type === "item" && activeDrag.containerId === lesson.id && activeDrag.currentIndex !== iIdx) {
-                                      handleLiveReorderItems(lesson.id, activeDrag.currentIndex, iIdx);
+                                    if (
+                                      activeDrag &&
+                                      activeDrag.type === "item" &&
+                                      activeDrag.containerId === lesson.id &&
+                                      activeDrag.currentIndex !== iIdx
+                                    ) {
+                                      handleLiveReorderItems(
+                                        lesson.id,
+                                        activeDrag.currentIndex,
+                                        iIdx,
+                                      );
                                       setActiveDrag({ ...activeDrag, currentIndex: iIdx });
                                     }
                                   }}
                                   onDragOver={(e) => e.preventDefault()}
                                   onDragEnd={async (e) => {
                                     e.stopPropagation();
-                                    if (activeDrag && activeDrag.currentIndex !== activeDrag.startIndex && activeDrag.containerId) {
+                                    if (
+                                      activeDrag &&
+                                      activeDrag.currentIndex !== activeDrag.startIndex &&
+                                      activeDrag.containerId
+                                    ) {
                                       await handleSaveItemOrder(activeDrag.containerId);
                                     }
                                     setActiveDrag(null);
                                   }}
-                                  className={`flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border ${activeDrag?.type === "item" && activeDrag.id === item.id
-                                    ? "border-blue-500 ring-2 ring-blue-500/50 shadow-xl opacity-100 scale-[1.01]"
-                                    : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
-                                    } text-xs shadow-2xs cursor-grab active:cursor-grabbing`}
+                                  className={`flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border ${
+                                    activeDrag?.type === "item" && activeDrag.id === item.id
+                                      ? "border-blue-500 ring-2 ring-blue-500/50 shadow-xl opacity-100 scale-[1.01]"
+                                      : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                                  } text-xs shadow-2xs cursor-grab active:cursor-grabbing`}
                                 >
                                   <div className="flex items-center gap-2">
                                     {isInstructorOrAdmin && (
                                       <div className="flex items-center border-r border-slate-200 dark:border-slate-800 pr-2 mr-1">
-                                        <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-0.5 font-bold cursor-grab active:cursor-grabbing select-none" title={"Kéo thả để xếp thứ tự"}>
+                                        <span
+                                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-0.5 font-bold cursor-grab active:cursor-grabbing select-none"
+                                          title={"Kéo thả để xếp thứ tự"}
+                                        >
                                           ⋮⋮
                                         </span>
                                       </div>
@@ -1187,9 +1488,24 @@ export default function InstructorCourseBuilderPage({
                                       className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                                       title={"Xem trước nội dung trong Trình phát bài học"}
                                     >
-                                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                      <svg
+                                        className="w-3.5 h-3.5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                        />
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                        />
                                       </svg>
                                     </Link>
 
@@ -1198,10 +1514,17 @@ export default function InstructorCourseBuilderPage({
                                         <button
                                           onClick={async () => {
                                             let qMatrix = null;
-                                            if (item.type === ItemType.PRACTICE_QUIZ || item.type === ItemType.GRADED_QUIZ) {
+                                            if (
+                                              item.type === ItemType.PRACTICE_QUIZ ||
+                                              item.type === ItemType.GRADED_QUIZ
+                                            ) {
                                               try {
-                                                const assessmentClient = getRpcClient(AssessmentService);
-                                                const matrixRes = await assessmentClient.getQuizMatrix({ itemId: item.id });
+                                                const assessmentClient =
+                                                  getRpcClient(AssessmentService);
+                                                const matrixRes =
+                                                  await assessmentClient.getQuizMatrix({
+                                                    itemId: item.id,
+                                                  });
                                                 qMatrix = matrixRes.matrix;
                                               } catch (err) {
                                                 console.warn("Failed to load quiz matrix:", err);
@@ -1216,20 +1539,23 @@ export default function InstructorCourseBuilderPage({
                                               vttSubtitleUrl: item.vttSubtitleUrl || "",
                                               autoTranscribe: item.autoTranscribe || false,
                                               content: item.readingMarkdown || "",
-                                              inVideoQuizzes: item.inVideoQuizzes ? item.inVideoQuizzes.map(q => ({
-                                                timestampSeconds: q.timestampSeconds,
-                                                question: q.question,
-                                                options: q.options ? Array.from(q.options) : [],
-                                                correctOptionIndex: q.correctOptionIndex,
-                                                explanation: q.explanation || ""
-                                              })) : [],
+                                              inVideoQuizzes: item.inVideoQuizzes
+                                                ? item.inVideoQuizzes.map((q) => ({
+                                                    timestampSeconds: q.timestampSeconds,
+                                                    question: q.question,
+                                                    options: q.options ? Array.from(q.options) : [],
+                                                    correctOptionIndex: q.correctOptionIndex,
+                                                    explanation: q.explanation || "",
+                                                  }))
+                                                : [],
                                               starterCode: item.starterCode || "",
                                               testCasesJson: item.testCasesJson || "",
                                               language: item.language || "",
                                               rubricCriteriaJson: item.rubricCriteriaJson || "",
                                               quizMatrixId: item.quizMatrixId || "",
                                               quizTimeLimit: qMatrix?.timeLimitMinutes ?? 45,
-                                              quizPassingThreshold: qMatrix?.passingThresholdPercent ?? 80,
+                                              quizPassingThreshold:
+                                                qMatrix?.passingThresholdPercent ?? 80,
                                               quizEasyCount: qMatrix ? qMatrix.easyCount : 4,
                                               quizMediumCount: qMatrix ? qMatrix.mediumCount : 4,
                                               quizHardCount: qMatrix ? qMatrix.hardCount : 2,
@@ -1240,8 +1566,18 @@ export default function InstructorCourseBuilderPage({
                                           className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded transition-colors cursor-pointer"
                                           title={"Sửa nội dung học liệu"}
                                         >
-                                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                          <svg
+                                            className="w-3.5 h-3.5"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                            />
                                           </svg>
                                         </button>
                                         <button
@@ -1249,8 +1585,18 @@ export default function InstructorCourseBuilderPage({
                                           className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded transition-colors cursor-pointer"
                                           title={"Xóa học liệu"}
                                         >
-                                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                          <svg
+                                            className="w-3.5 h-3.5"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                            />
                                           </svg>
                                         </button>
                                       </>
@@ -1265,7 +1611,6 @@ export default function InstructorCourseBuilderPage({
                     </div>
                   )}
                 </div>
-
               ))}
             </div>
           )}
@@ -1281,7 +1626,9 @@ export default function InstructorCourseBuilderPage({
       >
         <form onSubmit={handleCreateWeek} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Tiêu đề Tuần học"}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              {"Tiêu đề Tuần học"}
+            </label>
             <input
               type="text"
               value={weekTitle}
@@ -1293,7 +1640,9 @@ export default function InstructorCourseBuilderPage({
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Mô tả tóm tắt"}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              {"Mô tả tóm tắt"}
+            </label>
             <textarea
               rows={3}
               value={weekSummary}
@@ -1331,7 +1680,9 @@ export default function InstructorCourseBuilderPage({
       >
         <form onSubmit={handleCreateLesson} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Tên Bài học"}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              {"Tên Bài học"}
+            </label>
             <input
               type="text"
               value={lessonTitle}
@@ -1343,7 +1694,9 @@ export default function InstructorCourseBuilderPage({
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Thời lượng ước tính (Phút)"}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              {"Thời lượng ước tính (Phút)"}
+            </label>
             <input
               type="number"
               min={1}
@@ -1382,7 +1735,9 @@ export default function InstructorCourseBuilderPage({
       >
         <form onSubmit={handleCreateItem} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Loại Học liệu"}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              {"Loại Học liệu"}
+            </label>
             <select
               value={itemType}
               onChange={(e) => setItemType(parseInt(e.target.value) as ItemType)}
@@ -1398,7 +1753,9 @@ export default function InstructorCourseBuilderPage({
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Tên Học liệu"}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              {"Tên Học liệu"}
+            </label>
             <input
               type="text"
               value={itemTitle}
@@ -1410,7 +1767,9 @@ export default function InstructorCourseBuilderPage({
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Thời lượng ước tính (Phút)"}</label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              {"Thời lượng ước tính (Phút)"}
+            </label>
             <input
               type="number"
               min={1}
@@ -1450,7 +1809,9 @@ export default function InstructorCourseBuilderPage({
           {itemType === ItemType.READING && (
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">{"Nội dung Bài đọc (Markdown format)"}</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                  {"Nội dung Bài đọc (Markdown format)"}
+                </label>
                 <button
                   type="button"
                   onClick={() => setShowMarkdownPreview(!showMarkdownPreview)}
@@ -1461,7 +1822,9 @@ export default function InstructorCourseBuilderPage({
               </div>
               {showMarkdownPreview ? (
                 <div className="p-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 prose dark:prose-invert max-w-none text-sm min-h-[140px]">
-                  {readingMarkdown || <span className="text-slate-400 italic">Chưa có nội dung xem trước...</span>}
+                  {readingMarkdown || (
+                    <span className="text-slate-400 italic">Chưa có nội dung xem trước...</span>
+                  )}
                 </div>
               ) : (
                 <textarea
@@ -1480,9 +1843,13 @@ Nội dung lý thuyết chi tiết...`}
 
           {(itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ) && (
             <div className="space-y-3 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-              <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Cấu hình Ma trận Đề thi (Quiz Matrix)</div>
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Cấu hình Ma trận Đề thi (Quiz Matrix)
+              </div>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Mã Kho Ngân hàng Đề (Question Bank ID)</label>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                  Mã Kho Ngân hàng Đề (Question Bank ID)
+                </label>
                 <select
                   value={quizBankId}
                   onChange={(e) => setQuizBankId(e.target.value)}
@@ -1498,7 +1865,9 @@ Nội dung lý thuyết chi tiết...`}
               </div>
               <div className="grid grid-cols-4 gap-3">
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Thời gian (Phút)</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                    Thời gian (Phút)
+                  </label>
                   <input
                     type="number"
                     min={1}
@@ -1517,7 +1886,9 @@ Nội dung lý thuyết chi tiết...`}
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Điểm đỗ (%)</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                    Điểm đỗ (%)
+                  </label>
                   <input
                     type="number"
                     min={0}
@@ -1536,7 +1907,9 @@ Nội dung lý thuyết chi tiết...`}
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Số lượt làm tối đa</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                    Số lượt làm tối đa
+                  </label>
                   <input
                     type="number"
                     min={1}
@@ -1555,7 +1928,9 @@ Nội dung lý thuyết chi tiết...`}
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Thời gian chờ (Giờ)</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                    Thời gian chờ (Giờ)
+                  </label>
                   <input
                     type="number"
                     min={0}
@@ -1576,7 +1951,9 @@ Nội dung lý thuyết chi tiết...`}
               </div>
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu Dễ (40%)</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">
+                    Số câu Dễ (40%)
+                  </label>
                   <input
                     type="number"
                     min={0}
@@ -1595,7 +1972,9 @@ Nội dung lý thuyết chi tiết...`}
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu TB (40%)</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">
+                    Số câu TB (40%)
+                  </label>
                   <input
                     type="number"
                     min={0}
@@ -1614,7 +1993,9 @@ Nội dung lý thuyết chi tiết...`}
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu Khó (20%)</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 mb-1">
+                    Số câu Khó (20%)
+                  </label>
                   <input
                     type="number"
                     min={0}
@@ -1638,9 +2019,13 @@ Nội dung lý thuyết chi tiết...`}
 
           {itemType === ItemType.AUTO_GRADED_LAB && (
             <div className="space-y-3 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-              <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Cấu hình Docker Sandbox Lab</div>
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Cấu hình Docker Sandbox Lab
+              </div>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Ngôn ngữ Lập trình</label>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                  Ngôn ngữ Lập trình
+                </label>
                 <select
                   value={labLanguage}
                   onChange={(e) => setLabLanguage(e.target.value)}
@@ -1652,7 +2037,9 @@ Nội dung lý thuyết chi tiết...`}
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Mã mẫu ban đầu (Starter Code)</label>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                  Mã mẫu ban đầu (Starter Code)
+                </label>
                 <textarea
                   rows={3}
                   value={labStarterCode}
@@ -1661,7 +2048,9 @@ Nội dung lý thuyết chi tiết...`}
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Bộ Test Cases (JSON format)</label>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                  Bộ Test Cases (JSON format)
+                </label>
                 <textarea
                   rows={3}
                   value={labTestCasesJson}
@@ -1674,9 +2063,13 @@ Nội dung lý thuyết chi tiết...`}
 
           {itemType === ItemType.PEER_REVIEW && (
             <div className="space-y-3 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-              <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Cấu hình Bảng tiêu chí Rubric Chấm chéo</div>
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Cấu hình Bảng tiêu chí Rubric Chấm chéo
+              </div>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-500 mb-1">Bảng tiêu chí Rubric (JSON Format)</label>
+                <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                  Bảng tiêu chí Rubric (JSON Format)
+                </label>
                 <textarea
                   rows={4}
                   value={peerRubricJson}
@@ -1716,7 +2109,9 @@ Nội dung lý thuyết chi tiết...`}
         {editingWeek && (
           <form onSubmit={handleUpdateWeek} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Tiêu đề Tuần học"}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                {"Tiêu đề Tuần học"}
+              </label>
               <input
                 type="text"
                 value={editingWeek.title}
@@ -1727,7 +2122,9 @@ Nội dung lý thuyết chi tiết...`}
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Mô tả tóm tắt"}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                {"Mô tả tóm tắt"}
+              </label>
               <textarea
                 rows={3}
                 value={editingWeek.summary}
@@ -1766,7 +2163,9 @@ Nội dung lý thuyết chi tiết...`}
         {editingLesson && (
           <form onSubmit={handleUpdateLesson} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Tên Bài học"}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                {"Tên Bài học"}
+              </label>
               <input
                 type="text"
                 value={editingLesson.title}
@@ -1777,12 +2176,19 @@ Nội dung lý thuyết chi tiết...`}
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Thời lượng ước tính (Phút)"}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                {"Thời lượng ước tính (Phút)"}
+              </label>
               <input
                 type="number"
                 min={1}
                 value={editingLesson.estimatedMinutes}
-                onChange={(e) => setEditingLesson({ ...editingLesson, estimatedMinutes: parseInt(e.target.value) || 15 })}
+                onChange={(e) =>
+                  setEditingLesson({
+                    ...editingLesson,
+                    estimatedMinutes: parseInt(e.target.value) || 15,
+                  })
+                }
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
                 required
               />
@@ -1818,7 +2224,9 @@ Nội dung lý thuyết chi tiết...`}
         {editingItem && (
           <form onSubmit={handleUpdateItem} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Tên Học liệu"}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                {"Tên Học liệu"}
+              </label>
               <input
                 type="text"
                 value={editingItem.title}
@@ -1829,12 +2237,19 @@ Nội dung lý thuyết chi tiết...`}
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Thời lượng ước tính (Phút)"}</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                {"Thời lượng ước tính (Phút)"}
+              </label>
               <input
                 type="number"
                 min={1}
                 value={editingItem.estimatedMinutes}
-                onChange={(e) => setEditingItem({ ...editingItem, estimatedMinutes: parseInt(e.target.value) || 10 })}
+                onChange={(e) =>
+                  setEditingItem({
+                    ...editingItem,
+                    estimatedMinutes: parseInt(e.target.value) || 10,
+                  })
+                }
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
                 required
               />
@@ -1861,14 +2276,18 @@ Nội dung lý thuyết chi tiết...`}
                 <InVideoQuizEditor
                   videoUrl={editingItem.videoUrl}
                   quizzes={editingItem.inVideoQuizzes || []}
-                  onChange={(quizzes) => setEditingItem({ ...editingItem, inVideoQuizzes: quizzes })}
+                  onChange={(quizzes) =>
+                    setEditingItem({ ...editingItem, inVideoQuizzes: quizzes })
+                  }
                 />
               </div>
             )}
 
             {editingItem.type === ItemType.READING && (
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Nội dung Bài đọc (Markdown format)"}</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  {"Nội dung Bài đọc (Markdown format)"}
+                </label>
                 <textarea
                   rows={6}
                   value={editingItem.content}
@@ -1880,14 +2299,21 @@ Nội dung lý thuyết chi tiết...`}
               </div>
             )}
 
-            {(editingItem.type === ItemType.PRACTICE_QUIZ || editingItem.type === ItemType.GRADED_QUIZ) && (
+            {(editingItem.type === ItemType.PRACTICE_QUIZ ||
+              editingItem.type === ItemType.GRADED_QUIZ) && (
               <div className="space-y-3 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Cấu hình Ma trận Đề thi (Quiz Matrix)</div>
+                <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Cấu hình Ma trận Đề thi (Quiz Matrix)
+                </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Mã Kho Ngân hàng Đề (Question Bank ID)</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                    Mã Kho Ngân hàng Đề (Question Bank ID)
+                  </label>
                   <select
                     value={editingItem.quizMatrixId}
-                    onChange={(e) => setEditingItem({ ...editingItem, quizMatrixId: e.target.value })}
+                    onChange={(e) =>
+                      setEditingItem({ ...editingItem, quizMatrixId: e.target.value })
+                    }
                     className="w-full px-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
                   >
                     <option value="">{"-- Chọn Kho Ngân hàng Đề --"}</option>
@@ -1900,7 +2326,9 @@ Nội dung lý thuyết chi tiết...`}
                 </div>
                 <div className="grid grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">Thời gian (Phút)</label>
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                      Thời gian (Phút)
+                    </label>
                     <input
                       type="number"
                       min={1}
@@ -1911,14 +2339,16 @@ Nội dung lý thuyết chi tiết...`}
                         const num = parseInt(val);
                         setEditingItem({
                           ...editingItem,
-                          quizTimeLimit: isNaN(num) ? "" : Math.min(1440, Math.max(1, num))
+                          quizTimeLimit: isNaN(num) ? "" : Math.min(1440, Math.max(1, num)),
                         });
                       }}
                       className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">Điểm đỗ (%)</label>
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                      Điểm đỗ (%)
+                    </label>
                     <input
                       type="number"
                       min={0}
@@ -1929,14 +2359,16 @@ Nội dung lý thuyết chi tiết...`}
                         const num = parseFloat(val);
                         setEditingItem({
                           ...editingItem,
-                          quizPassingThreshold: isNaN(num) ? "" : Math.min(100, Math.max(0, num))
+                          quizPassingThreshold: isNaN(num) ? "" : Math.min(100, Math.max(0, num)),
                         });
                       }}
                       className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">Lượt làm tối đa</label>
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                      Lượt làm tối đa
+                    </label>
                     <input
                       type="number"
                       min={1}
@@ -1947,14 +2379,16 @@ Nội dung lý thuyết chi tiết...`}
                         const num = parseInt(val);
                         setEditingItem({
                           ...editingItem,
-                          quizMaxAttempts: isNaN(num) ? "" : Math.max(1, num)
+                          quizMaxAttempts: isNaN(num) ? "" : Math.max(1, num),
                         });
                       }}
                       className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">Chờ cooldown (Giờ)</label>
+                    <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                      Chờ cooldown (Giờ)
+                    </label>
                     <input
                       type="number"
                       min={0}
@@ -1965,7 +2399,7 @@ Nội dung lý thuyết chi tiết...`}
                         const num = parseInt(val);
                         setEditingItem({
                           ...editingItem,
-                          quizCooldownHours: isNaN(num) ? "" : Math.max(0, num)
+                          quizCooldownHours: isNaN(num) ? "" : Math.max(0, num),
                         });
                       }}
                       className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-semibold"
@@ -1974,7 +2408,9 @@ Nội dung lý thuyết chi tiết...`}
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu Dễ (40%)</label>
+                    <label className="block text-[10px] font-semibold text-slate-500 mb-1">
+                      Số câu Dễ (40%)
+                    </label>
                     <input
                       type="number"
                       min={0}
@@ -1985,14 +2421,16 @@ Nội dung lý thuyết chi tiết...`}
                         const num = parseInt(val);
                         setEditingItem({
                           ...editingItem,
-                          quizEasyCount: isNaN(num) ? "" : Math.min(200, Math.max(0, num))
+                          quizEasyCount: isNaN(num) ? "" : Math.min(200, Math.max(0, num)),
                         });
                       }}
                       className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu TB (40%)</label>
+                    <label className="block text-[10px] font-semibold text-slate-500 mb-1">
+                      Số câu TB (40%)
+                    </label>
                     <input
                       type="number"
                       min={0}
@@ -2003,14 +2441,16 @@ Nội dung lý thuyết chi tiết...`}
                         const num = parseInt(val);
                         setEditingItem({
                           ...editingItem,
-                          quizMediumCount: isNaN(num) ? "" : Math.min(200, Math.max(0, num))
+                          quizMediumCount: isNaN(num) ? "" : Math.min(200, Math.max(0, num)),
                         });
                       }}
                       className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-slate-500 mb-1">Số câu Khó (20%)</label>
+                    <label className="block text-[10px] font-semibold text-slate-500 mb-1">
+                      Số câu Khó (20%)
+                    </label>
                     <input
                       type="number"
                       min={0}
@@ -2021,7 +2461,7 @@ Nội dung lý thuyết chi tiết...`}
                         const num = parseInt(val);
                         setEditingItem({
                           ...editingItem,
-                          quizHardCount: isNaN(num) ? "" : Math.min(200, Math.max(0, num))
+                          quizHardCount: isNaN(num) ? "" : Math.min(200, Math.max(0, num)),
                         });
                       }}
                       className="w-full px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
@@ -2033,9 +2473,13 @@ Nội dung lý thuyết chi tiết...`}
 
             {editingItem.type === ItemType.AUTO_GRADED_LAB && (
               <div className="space-y-3 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Cấu hình Docker Sandbox Lab</div>
+                <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Cấu hình Docker Sandbox Lab
+                </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Ngôn ngữ Lập trình</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                    Ngôn ngữ Lập trình
+                  </label>
                   <select
                     value={editingItem.language}
                     onChange={(e) => setEditingItem({ ...editingItem, language: e.target.value })}
@@ -2047,20 +2491,28 @@ Nội dung lý thuyết chi tiết...`}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Mã mẫu ban đầu (Starter Code)</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                    Mã mẫu ban đầu (Starter Code)
+                  </label>
                   <textarea
                     rows={3}
                     value={editingItem.starterCode}
-                    onChange={(e) => setEditingItem({ ...editingItem, starterCode: e.target.value })}
+                    onChange={(e) =>
+                      setEditingItem({ ...editingItem, starterCode: e.target.value })
+                    }
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
                   />
                 </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Bộ Test Cases (JSON format)</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                    Bộ Test Cases (JSON format)
+                  </label>
                   <textarea
                     rows={3}
                     value={editingItem.testCasesJson}
-                    onChange={(e) => setEditingItem({ ...editingItem, testCasesJson: e.target.value })}
+                    onChange={(e) =>
+                      setEditingItem({ ...editingItem, testCasesJson: e.target.value })
+                    }
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
                   />
                 </div>
@@ -2069,13 +2521,19 @@ Nội dung lý thuyết chi tiết...`}
 
             {editingItem.type === ItemType.PEER_REVIEW && (
               <div className="space-y-3 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Cấu hình Bảng tiêu chí Rubric Chấm chéo</div>
+                <div className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                  Cấu hình Bảng tiêu chí Rubric Chấm chéo
+                </div>
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">Bảng tiêu chí Rubric (JSON Format)</label>
+                  <label className="block text-[11px] font-semibold text-slate-500 mb-1">
+                    Bảng tiêu chí Rubric (JSON Format)
+                  </label>
                   <textarea
                     rows={4}
                     value={editingItem.rubricCriteriaJson}
-                    onChange={(e) => setEditingItem({ ...editingItem, rubricCriteriaJson: e.target.value })}
+                    onChange={(e) =>
+                      setEditingItem({ ...editingItem, rubricCriteriaJson: e.target.value })
+                    }
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
                   />
                 </div>
@@ -2123,14 +2581,21 @@ Nội dung lý thuyết chi tiết...`}
                 {"Phát hiện khóa học Native OpenLMS"}
               </h4>
               <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                {"Hệ thống sẽ tiến hành nhập và khôi phục toàn bộ cấu trúc Tuần/Bài học/Học liệu và toàn bộ cài đặt nguyên bản vào khóa học hiện tại."}
+                {
+                  "Hệ thống sẽ tiến hành nhập và khôi phục toàn bộ cấu trúc Tuần/Bài học/Học liệu và toàn bộ cài đặt nguyên bản vào khóa học hiện tại."
+                }
               </p>
             </div>
 
-            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Cấu trúc khóa học sẽ được khôi phục:</div>
+            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Cấu trúc khóa học sẽ được khôi phục:
+            </div>
             <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2">
               {scormPreviewCourse?.weekModules?.map((wm, wIdx) => (
-                <div key={wm.id || wIdx} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                <div
+                  key={wm.id || wIdx}
+                  className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3"
+                >
                   <div className="font-bold text-sm text-slate-800 dark:text-slate-200">
                     Tuần {wm.weekNumber}: {wm.title}
                   </div>
@@ -2142,7 +2607,10 @@ Nội dung lý thuyết chi tiết...`}
                         </div>
                         <div className="space-y-1 pl-3">
                           {l.items?.map((item, iIdx) => (
-                            <div key={item.id || iIdx} className="text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800">
+                            <div
+                              key={item.id || iIdx}
+                              className="text-xs text-slate-600 dark:text-slate-400 flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800"
+                            >
                               <span>📄 {item.title}</span>
                               <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">
                                 {ItemType[item.type] || "SCORM"}
@@ -2201,7 +2669,6 @@ Nội dung lý thuyết chi tiết...`}
           </div>
         </div>
       </Modal>
-
     </div>
   );
 }

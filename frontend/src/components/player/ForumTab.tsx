@@ -3,10 +3,14 @@
 import { useEffect, useState, useCallback, useRef, useSyncExternalStore } from "react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
-import { ForumService, ForumThreadSchema, ForumReplySchema, type ForumThread, type ForumReply } from "@/gen/forum/v1/forum_pb";
+import {
+  ForumService,
+  ForumThreadSchema,
+  ForumReplySchema,
+  type ForumThread,
+  type ForumReply,
+} from "@/gen/forum/v1/forum_pb";
 import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
-
-
 
 const emptySubscribe = () => () => {};
 
@@ -20,13 +24,13 @@ function formatRoleName(role: string): string {
   const r = role.toUpperCase();
   if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Learner";
   if (r.includes("INSTRUCTOR") || r === "2") return "Instructor";
-  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "3") return "Teaching Assistant";
-  if (r.includes("SUPER_ADMIN") || r.includes("PARTNER_ADMIN") || r.includes("ADMIN")) return "Admin";
+  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "3")
+    return "Teaching Assistant";
+  if (r.includes("SUPER_ADMIN") || r.includes("ORG_ADMIN") || r.includes("ADMIN")) return "Admin";
   return role;
 }
 
 export function ForumTab({ courseId, itemId }: ForumTabProps) {
-  
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState("");
@@ -36,12 +40,14 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
-  const currentUserId = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
-  const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") || "" : "";
-  const isStaffOrAdmin = ["2", "3", "4", "5", "INSTRUCTOR", "TA", "ADMIN", "SUPER_ADMIN"].some((r) =>
-    userRole.toUpperCase().includes(r)
+  const currentUserId =
+    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
+  const userRole =
+    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") || "" : "";
+  const isStaffOrAdmin = ["2", "3", "4", "5", "INSTRUCTOR", "TA", "ADMIN", "SUPER_ADMIN"].some(
+    (r) => userRole.toUpperCase().includes(r),
   );
 
   // Thread Edit State
@@ -230,7 +236,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
           return r;
         });
         return create(ForumThreadSchema, { ...t, replies: updatedReplies });
-      })
+      }),
     );
 
     try {
@@ -249,7 +255,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
             return r;
           });
           return create(ForumThreadSchema, { ...t, replies: updatedReplies });
-        })
+        }),
       );
     } catch (err) {
       console.error("Error voting:", err);
@@ -269,7 +275,10 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
   return (
     <div className="space-y-4">
       {/* Create New Quick Question Form */}
-      <form onSubmit={handleCreateThread} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 space-y-2">
+      <form
+        onSubmit={handleCreateThread}
+        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 space-y-2"
+      >
         <input
           type="text"
           value={newTitle}
@@ -310,20 +319,31 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
             const isEditingThisThread = editingThreadId === thread.id;
 
             return (
-              <div key={thread.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs space-y-2">
+              <div
+                key={thread.id}
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs space-y-2"
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
                       {thread.isStaffPinned && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-500/20">
-                          <svg className="w-3 h-3 text-amber-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 24 24">
+                          <svg
+                            className="w-3 h-3 text-amber-600 dark:text-amber-400"
+                            fill="currentColor"
+                            viewBox="0 0 24 24"
+                          >
                             <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5v6l1 1 1-1v-6h5v-2l-2-2z" />
                           </svg>
                           Staff Pinned
                         </span>
                       )}
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">{thread.authorName}</span>
-                      <span className="text-[10px] text-slate-400">({formatRoleName(thread.authorRole)})</span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">
+                        {thread.authorName}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        ({formatRoleName(thread.authorRole)})
+                      </span>
                       {thread.isEdited && (
                         <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium italic">
                           {"(Đã chỉnh sửa)"}
@@ -379,7 +399,9 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                         </div>
                       </div>
                     ) : (
-                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">{thread.title}</h4>
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                        {thread.title}
+                      </h4>
                     )}
                   </div>
 
@@ -392,7 +414,11 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                     }`}
                     title={thread.isUpvotedByMe ? "Đã Upvote (Bấm để Hủy)" : "Upvote"}
                   >
-                    <svg className={`w-3 h-3 ${thread.isUpvotedByMe ? "text-white" : "text-blue-500"}`} fill="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      className={`w-3 h-3 ${thread.isUpvotedByMe ? "text-white" : "text-blue-500"}`}
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path d="M12 4l-8 8h5v8h6v-8h5z" />
                     </svg>
                     <span>{thread.upvoteCount}</span>
@@ -422,13 +448,14 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                   </div>
                 )}
 
-
                 {/* Inline Reply Input */}
                 <div className="flex gap-2 items-center pt-1">
                   <input
                     type="text"
                     value={replyInputs[thread.id] || ""}
-                    onChange={(e) => setReplyInputs((prev) => ({ ...prev, [thread.id]: e.target.value }))}
+                    onChange={(e) =>
+                      setReplyInputs((prev) => ({ ...prev, [thread.id]: e.target.value }))
+                    }
                     placeholder="Trả lời..."
                     className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none"
                   />

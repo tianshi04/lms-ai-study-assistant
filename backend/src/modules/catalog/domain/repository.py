@@ -67,6 +67,7 @@ class ICatalogRepository(ABC):
         owner_id: str = "",
         co_instructor_ids: list[str] | None = None,
         financial_aid_enabled: bool = True,
+        organization_id: str = "partner_community",
     ) -> Course:
         pass
 

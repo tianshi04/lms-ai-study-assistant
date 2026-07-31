@@ -3,7 +3,8 @@ import { createClient, Client, Interceptor } from "@connectrpc/connect";
 import type { DescService } from "@bufbuild/protobuf";
 import { cookies } from "next/headers";
 
-const API_BASE_URL = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL =
+  process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 /**
  * Server-side ConnectRPC Interceptor to inject Authorization Bearer token from cookies.
@@ -24,7 +25,7 @@ const serverAuthInterceptor: Interceptor = (next) => async (req) => {
 /**
  * Factory function to obtain a typed ConnectRPC client configured for Server Components (RSC).
  * Automatically attaches Authorization header from cookies.
- * 
+ *
  * @example
  * import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
  * const catalogClient = await getRpcServerClient(CatalogService);

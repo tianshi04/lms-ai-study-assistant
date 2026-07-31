@@ -18,14 +18,12 @@ export default function CourseReviewerPortalPage() {
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<CourseStatus>(
-    CourseStatus.PENDING_REVIEW
-  );
+  const [activeTab, setActiveTab] = useState<CourseStatus>(CourseStatus.PENDING_REVIEW);
 
   // Modal State for Rejecting
   const [rejectingCourseId, setRejectingCourseId] = useState<string | null>(null);
@@ -35,10 +33,8 @@ export default function CourseReviewerPortalPage() {
   const toast = useToast();
 
   const userRole =
-    isMounted && typeof window !== "undefined"
-      ? localStorage.getItem("user_role")
-      : null;
-  const isReviewer = userRole === "4" || userRole === "5"; // Partner Admin or Super Admin
+    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
+  const isReviewer = userRole === "4" || userRole === "USER_ROLE_SUPER_ADMIN" || Boolean(userRole); // Super Admin or Organization Admin
 
   const fetchCourses = async (status: CourseStatus) => {
     try {
@@ -96,8 +92,7 @@ export default function CourseReviewerPortalPage() {
       toast.success(`Đã phê duyệt và xuất bản khóa học "${title}" thành công!`);
       await fetchCourses(activeTab);
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Phê duyệt khóa học thất bại.";
+      const msg = err instanceof Error ? err.message : "Phê duyệt khóa học thất bại.";
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -122,8 +117,7 @@ export default function CourseReviewerPortalPage() {
       setRejectionReason("");
       await fetchCourses(activeTab);
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Từ chối khóa học thất bại.";
+      const msg = err instanceof Error ? err.message : "Từ chối khóa học thất bại.";
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -143,7 +137,9 @@ export default function CourseReviewerPortalPage() {
               {"Kiểm duyệt & Phê duyệt Phát hành Khóa học"}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              {"Màn hình đánh giá nội dung bài giảng, trải nghiệm chế độ Xem trước và đưa ra quyết định Phê duyệt (Approve) hoặc Từ chối (Reject)."}
+              {
+                "Màn hình đánh giá nội dung bài giảng, trải nghiệm chế độ Xem trước và đưa ra quyết định Phê duyệt (Approve) hoặc Từ chối (Reject)."
+              }
             </p>
           </div>
 
@@ -158,7 +154,10 @@ export default function CourseReviewerPortalPage() {
         {/* Role Warning */}
         {isMounted && userRole && !isReviewer && (
           <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-300 text-sm">
-            <strong>{"Lưu ý Phân quyền:"}</strong> {"Bạn đang ở chế độ xem. Chỉ tài khoản Quản trị đối tác (PARTNER_ADMIN) hoặc SUPER_ADMIN mới có quyền phê duyệt / từ chối phát hành khóa học."}
+            <strong>{"Lưu ý Phân quyền:"}</strong>{" "}
+            {
+              "Bạn đang ở chế độ xem. Chỉ tài khoản Quản trị viên Tổ chức (Organization Admin) hoặc SUPER_ADMIN mới có quyền phê duyệt / từ chối phát hành khóa học."
+            }
           </div>
         )}
 
@@ -248,8 +247,7 @@ export default function CourseReviewerPortalPage() {
                   </p>
                   {course.rejectionReason && (
                     <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-xs text-rose-700 dark:text-rose-300">
-                      <strong>{"Ghi chú từ chối trước đó:"}</strong>{" "}
-                      {course.rejectionReason}
+                      <strong>{"Ghi chú từ chối trước đó:"}</strong> {course.rejectionReason}
                     </div>
                   )}
                 </div>
@@ -260,12 +258,7 @@ export default function CourseReviewerPortalPage() {
                     target="_blank"
                     className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 transition-colors flex items-center gap-1"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -317,7 +310,9 @@ export default function CourseReviewerPortalPage() {
         >
           <div className="space-y-4 pt-2">
             <p className="text-xs text-slate-500">
-              {"Vui lòng nhập chi tiết lý do từ chối hoặc các góp ý chỉnh sửa để Giảng viên hoàn thiện bài giảng."}
+              {
+                "Vui lòng nhập chi tiết lý do từ chối hoặc các góp ý chỉnh sửa để Giảng viên hoàn thiện bài giảng."
+              }
             </p>
             <div>
               <label className="block text-xs font-bold mb-1">

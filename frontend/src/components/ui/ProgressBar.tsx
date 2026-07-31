@@ -17,7 +17,8 @@ export const progressBarVariants = cva("h-full transition-all duration-300 ease-
 });
 
 export interface ProgressBarProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "color">,
+  extends
+    Omit<React.HTMLAttributes<HTMLDivElement>, "color">,
     VariantProps<typeof progressBarVariants> {
   progress: number; // 0 to 100
   showLabel?: boolean;
@@ -43,6 +44,6 @@ export const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 ProgressBar.displayName = "ProgressBar";

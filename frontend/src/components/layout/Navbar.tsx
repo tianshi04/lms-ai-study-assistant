@@ -10,15 +10,19 @@ import { ThemeToggle } from "@/components/providers/ThemeToggle";
 
 export function Navbar() {
   const { userName, userRole } = useAuth();
-  
+
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Check if role is INSTRUCTOR (2), SUPER_ADMIN (4), or PARTNER_ADMIN (5)
-  const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
+  // Check if role is INSTRUCTOR (2) or SUPER_ADMIN (4)
+  const isInstructorOrAdmin =
+    userRole === "2" ||
+    userRole === "4" ||
+    userRole === "USER_ROLE_INSTRUCTOR" ||
+    userRole === "USER_ROLE_SUPER_ADMIN";
 
   const isActive = (path: string) => {
-    if (path === '/') return pathname === '/';
+    if (path === "/") return pathname === "/";
     return pathname?.startsWith(path);
   };
 
@@ -48,7 +52,9 @@ export function Navbar() {
             <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
               Coursera AI
             </span>
-            <span className="text-xs block text-slate-500 dark:text-slate-400 font-medium">LMS Platform</span>
+            <span className="text-xs block text-slate-500 dark:text-slate-400 font-medium">
+              LMS Platform
+            </span>
           </div>
         </Link>
 
@@ -78,17 +84,27 @@ export function Navbar() {
 
           {/* Render Instructor Portal for authorized roles */}
           {isInstructorOrAdmin && (
-            <Link href="/instructor/courses" className={`${getLinkClasses("/instructor")} flex items-center gap-1.5`}>
+            <Link
+              href="/instructor/courses"
+              className={`${getLinkClasses("/instructor")} flex items-center gap-1.5`}
+            >
               <span>{"Giảng Viên"}</span>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">Portal</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
+                Portal
+              </span>
             </Link>
           )}
 
           {/* Render Admin Enterprise Dashboard Link */}
           {(userRole === "4" || userRole === "5" || isInstructorOrAdmin) && (
-            <Link href="/admin/dashboard" className={`${getLinkClasses("/admin")} flex items-center gap-1.5`}>
+            <Link
+              href="/admin/dashboard"
+              className={`${getLinkClasses("/admin")} flex items-center gap-1.5`}
+            >
               <span>Admin</span>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">Enterprise</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">
+                Enterprise
+              </span>
             </Link>
           )}
 
@@ -129,11 +145,21 @@ export function Navbar() {
           >
             {mobileMenuOpen ? (
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             ) : (
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             )}
           </button>
@@ -189,7 +215,9 @@ export function Navbar() {
               className={`${getMobileLinkClasses("/instructor")} flex items-center justify-between`}
             >
               <span>{"Giảng Viên"}</span>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">Portal</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
+                Portal
+              </span>
             </Link>
           )}
           {(userRole === "4" || userRole === "5" || isInstructorOrAdmin) && (
@@ -199,7 +227,9 @@ export function Navbar() {
               className={`${getMobileLinkClasses("/admin")} flex items-center justify-between`}
             >
               <span>Admin</span>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">Enterprise</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">
+                Enterprise
+              </span>
             </Link>
           )}
           <Link
@@ -214,4 +244,3 @@ export function Navbar() {
     </header>
   );
 }
-

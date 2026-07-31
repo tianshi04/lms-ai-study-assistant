@@ -18,7 +18,9 @@ export async function generateMetadata({
     if (res.course) {
       return {
         title: `${res.course.title} | LMS AI Study Assistant`,
-        description: res.course.description || "Tham gia khóa học chất lượng cao trên hệ thống đào tạo LMS AI.",
+        description:
+          res.course.description ||
+          "Tham gia khóa học chất lượng cao trên hệ thống đào tạo LMS AI.",
         openGraph: {
           title: res.course.title,
           description: res.course.description || "Khóa học AI & Khoa học Dữ liệu chất lượng cao.",

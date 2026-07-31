@@ -274,13 +274,7 @@ async def _verify_staff_course_moderation(
 ) -> None:
     if not user:
         return
-    user_role = (user.role or "").upper()
-    if user_role in (
-        "USER_ROLE_SUPER_ADMIN",
-        "USER_ROLE_PARTNER_ADMIN",
-        "SUPER_ADMIN",
-        "ADMIN",
-    ):
+    if user.is_admin():
         return
     if course_id:
         from src.modules.catalog.domain.repository import ICatalogRepository

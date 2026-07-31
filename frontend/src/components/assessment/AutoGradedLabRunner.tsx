@@ -149,13 +149,18 @@ export function AutoGradedLabRunner({
         <div className="lg:col-span-5 flex flex-col space-y-2">
           <div className="flex items-center justify-between px-2 text-xs text-slate-400 font-mono">
             <span>Sandbox Output Console</span>
-            <span>{labResult ? `${labResult.passedTestCases}/${labResult.totalTestCases} Passed` : "Ready"}</span>
+            <span>
+              {labResult
+                ? `${labResult.passedTestCases}/${labResult.totalTestCases} Passed`
+                : "Ready"}
+            </span>
           </div>
 
           <div className="flex-1 p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 min-h-[280px] overflow-y-auto space-y-3">
             {!labResult && !isRunning && (
               <p className="text-slate-500 italic">
-                Press &quot;Run &amp; Submit Code&quot; to execute tests against your implementation in the Sandbox container.
+                Press &quot;Run &amp; Submit Code&quot; to execute tests against your implementation
+                in the Sandbox container.
               </p>
             )}
 
@@ -178,15 +183,31 @@ export function AutoGradedLabRunner({
                   <span className="font-bold flex items-center gap-1.5">
                     {labResult.passed ? (
                       <>
-                        <svg className="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <svg
+                          className="w-4 h-4 text-emerald-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2.5}
+                        >
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                         PASSED
                       </>
                     ) : (
                       <>
-                        <svg className="w-4 h-4 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        <svg
+                          className="w-4 h-4 text-rose-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2.5}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
                         </svg>
                         FAILED
                       </>

@@ -15,7 +15,6 @@ interface AuthContextType extends UserAuth {
   isStaff: boolean;
 }
 
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({
@@ -44,9 +43,13 @@ export function AuthProvider({
         });
         document.cookie = `access_token=${encodeURIComponent(token)}; path=/; max-age=2592000`;
         document.cookie = `user_name=${encodeURIComponent(localName)}; path=/; max-age=2592000`;
-        if (localEmail) document.cookie = `user_email=${encodeURIComponent(localEmail)}; path=/; max-age=2592000`;
+        if (localEmail)
+          document.cookie = `user_email=${encodeURIComponent(localEmail)}; path=/; max-age=2592000`;
         if (localRole) document.cookie = `user_role=${localRole}; path=/; max-age=2592000`;
-      } else if (!token && (initialAuth.userName || initialAuth.userEmail || initialAuth.userRole)) {
+      } else if (
+        !token &&
+        (initialAuth.userName || initialAuth.userEmail || initialAuth.userRole)
+      ) {
         localStorage.removeItem("user_name");
         localStorage.removeItem("user_email");
         localStorage.removeItem("user_role");
@@ -68,11 +71,14 @@ export function AuthProvider({
     if (newAuth.userName) {
       if (typeof window !== "undefined") {
         const token = localStorage.getItem("access_token");
-        if (token) document.cookie = `access_token=${encodeURIComponent(token)}; path=/; max-age=2592000`;
+        if (token)
+          document.cookie = `access_token=${encodeURIComponent(token)}; path=/; max-age=2592000`;
       }
       document.cookie = `user_name=${encodeURIComponent(newAuth.userName)}; path=/; max-age=2592000`;
-      if (newAuth.userEmail) document.cookie = `user_email=${encodeURIComponent(newAuth.userEmail)}; path=/; max-age=2592000`;
-      if (newAuth.userRole) document.cookie = `user_role=${newAuth.userRole}; path=/; max-age=2592000`;
+      if (newAuth.userEmail)
+        document.cookie = `user_email=${encodeURIComponent(newAuth.userEmail)}; path=/; max-age=2592000`;
+      if (newAuth.userRole)
+        document.cookie = `user_role=${newAuth.userRole}; path=/; max-age=2592000`;
     } else {
       document.cookie = "user_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       document.cookie = "user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
@@ -105,13 +111,10 @@ export function AuthProvider({
     roleStr.includes("teaching assistant");
 
   return (
-    <AuthContext.Provider
-      value={{ ...auth, setAuth, logout, isInstructorOrAdmin, isStaff }}
-    >
+    <AuthContext.Provider value={{ ...auth, setAuth, logout, isInstructorOrAdmin, isStaff }}>
       {children}
     </AuthContext.Provider>
   );
-
 }
 
 export function useAuth() {
