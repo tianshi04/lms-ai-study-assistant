@@ -40,6 +40,7 @@ export function GradedQuizRunner({
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [isHonorAgreed, setIsHonorAgreed] = useState(isPreviewMode);
   const [isHonorModalOpen, setIsHonorModalOpen] = useState(false);
+  const [pendingSubmit, setPendingSubmit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Dynamic quiz session state
@@ -239,6 +240,7 @@ export function GradedQuizRunner({
 
   const handleSubmitQuiz = async () => {
     if (!isHonorAgreed && !isPreviewMode) {
+      setPendingSubmit(true);
       setIsHonorModalOpen(true);
       return;
     }
@@ -384,7 +386,10 @@ export function GradedQuizRunner({
             </span>
           ) : (
             <button
-              onClick={() => setIsHonorModalOpen(true)}
+              onClick={() => {
+                setPendingSubmit(false);
+                setIsHonorModalOpen(true);
+              }}
               className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-xs flex items-center gap-1.5"
             >
               <span>Xác nhận Cam kết Trung thực</span>
@@ -628,9 +633,15 @@ export function GradedQuizRunner({
         onAgreed={() => {
           setIsHonorAgreed(true);
           setIsHonorModalOpen(false);
-          executeSubmit();
+          if (pendingSubmit) {
+            executeSubmit();
+            setPendingSubmit(false);
+          }
         }}
-        onClose={() => setIsHonorModalOpen(false)}
+        onClose={() => {
+          setIsHonorModalOpen(false);
+          setPendingSubmit(false);
+        }}
       />
     </div>
   );
