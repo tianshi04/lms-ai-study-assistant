@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { HonorCodeModal } from "./HonorCodeModal";
@@ -162,7 +162,41 @@ export function GradedQuizRunner({
     }
   };
 
-  const executeSubmit = async () => {
+  const handleRetryQuiz = useCallback(async () => {
+    setQuizResult(null);
+    setSelectedAnswers([]);
+    setSubmitError(null);
+    setLoading(true);
+    setError(null);
+    autoSubmitTriggeredRef.current = false;
+
+    try {
+      const client = getRpcClient(AssessmentService);
+      const res = await client.startGradedQuizSession({ itemId, preview: isPreviewMode });
+      setQuestions(res.questions || []);
+      setSessionSeed(res.sessionSeed);
+      setStartTimeIso(res.startTimeIso);
+      setSessionToken(res.sessionToken || "");
+      setTimeLimit(res.timeLimitMinutes || 45);
+      setTimeLeftSeconds((res.timeLimitMinutes || 45) * 60);
+      setPassingThreshold(res.passingThresholdPercent || 80.0);
+      setMaxAttempts(res.maxAttempts || 3);
+      setCooldownHours(res.cooldownHours || 8);
+      setSelectedAnswers(Array.from({ length: res.questions?.length || 0 }, () => -1));
+      if ((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft) {
+        setCooldownCountdown((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft!);
+      } else {
+        setCooldownCountdown(0);
+      }
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "Không thể khởi động lại bài thi.";
+      setError(errMsg);
+    } finally {
+      setLoading(false);
+    }
+  }, [itemId, isPreviewMode]);
+
+  const executeSubmit = useCallback(async () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -208,7 +242,7 @@ export function GradedQuizRunner({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [itemId, selectedAnswers, sessionSeed, startTimeIso, isPreviewMode, onComplete]);
 
   const handleSubmitQuiz = async () => {
     if (!isHonorAgreed && !isPreviewMode) {
@@ -555,28 +589,46 @@ export function GradedQuizRunner({
               Làm lại bài thi (Reset)
             </button>
           )}
-          <button
-            onClick={handleSubmitQuiz}
-            disabled={isSubmitting || (cooldownCountdown > 0 && !isPreviewMode)}
-            className="px-6 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-xs transition-all flex items-center gap-2"
-          >
-            <span aria-live="polite">{isSubmitting ? "Đang chấm điểm…" : "Nộp bài thi"}</span>
-            {!isSubmitting && (
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 12L3 21l18-9L3 3l3 9zm0 0h75"
-                />
+          {!isPreviewMode && quizResult && quizResult.attemptsLeft > 0 && cooldownCountdown <= 0 && (
+            <button
+              onClick={handleRetryQuiz}
+              disabled={loading}
+              className="px-5 py-2.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300 dark:hover:bg-blue-900/60 rounded-xl transition-all flex items-center gap-2"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-            )}
-          </button>
+              Làm lại bài thi ({quizResult.attemptsLeft} lượt)
+            </button>
+          )}
+          {!quizResult && (
+            <button
+              onClick={() => handleSubmitQuiz()}
+              disabled={
+                isSubmitting ||
+                (cooldownCountdown > 0 && !isPreviewMode) ||
+                (timeLeftSeconds !== null && timeLeftSeconds <= 0)
+              }
+              className="px-6 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-xs transition-all flex items-center gap-2"
+            >
+              <span>{isSubmitting ? "Đang chấm điểm..." : "Nộp bài thi"}</span>
+              {!isSubmitting && (
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 12L3 21l18-9L3 3l3 9zm0 0h75"
+                  />
+                </svg>
+              )}
+            </button>
+          )}
         </div>
       </div>
 

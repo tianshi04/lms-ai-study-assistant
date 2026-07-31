@@ -14,6 +14,7 @@ from src.modules.assessment.domain.entities import (
     Question,
     QuestionBank,
     QuestionOption,
+    QuizActiveSession,
     QuizCooldown,
     QuizMatrix,
     QuizSubmission,
@@ -149,6 +150,53 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             )
             self.session.add(model)
         await self.session.commit()
+
+    async def get_quiz_active_session(
+        self, user_id: str, item_id: str
+    ) -> Optional[QuizActiveSession]:
+        stmt = select(QuizActiveSessionModel).where(
+            QuizActiveSessionModel.user_id == user_id,
+            QuizActiveSessionModel.item_id == item_id,
+        )
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return None
+        return QuizActiveSession(
+            user_id=model.user_id,
+            item_id=model.item_id,
+            session_token=model.session_token,
+            session_seed=model.session_seed,
+            expires_at=model.expires_at,
+        )
+
+    async def save_quiz_active_session(self, session: QuizActiveSession) -> None:
+        from sqlalchemy.dialects.postgresql import insert
+        stmt = insert(QuizActiveSessionModel).values(
+            id=session.id,
+            user_id=session.user_id,
+            item_id=session.item_id,
+            session_token=session.session_token,
+            session_seed=session.session_seed,
+            expires_at=session.expires_at,
+        )
+        stmt = stmt.on_conflict_do_update(
+            index_elements=['id'],
+            set_={
+                'session_token': stmt.excluded.session_token,
+                'session_seed': stmt.excluded.session_seed,
+                'expires_at': stmt.excluded.expires_at,
+            }
+        )
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+    async def delete_quiz_active_session(self, user_id: str, item_id: str) -> None:
+        session_id = f"{user_id}:{item_id}"
+        model = await self.session.get(QuizActiveSessionModel, session_id)
+        if model:
+            await self.session.delete(model)
+            await self.session.commit()
 
     async def save_lab_submission(self, submission: LabSubmission) -> None:
         model = LabSubmissionModel(
