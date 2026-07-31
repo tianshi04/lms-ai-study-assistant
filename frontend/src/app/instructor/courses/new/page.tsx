@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useSyncExternalStore } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getRpcClient } from "@/lib/connect_client";
@@ -198,10 +199,12 @@ export default function NewCoursePage() {
 
           {/* Taught by Instructor */}
           <div className="pt-4 border-t border-white/10 flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={userAvatar}
               alt={userName}
+              width={40}
+              height={40}
+              unoptimized
               className="w-10 h-10 rounded-full border border-white/20 bg-slate-800 object-cover"
             />
             <div>
