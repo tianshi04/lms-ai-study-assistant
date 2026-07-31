@@ -61,6 +61,8 @@ export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
     return (
       <div
         ref={ref}
+        role="img"
+        aria-label={name}
         className={cn(
           avatarVariants({ size: selectedSize }),
           "bg-gradient-to-tr from-blue-600 to-indigo-600 font-bold text-white flex items-center justify-center shadow-sm",

@@ -36,7 +36,14 @@ export const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
             <span>{Math.round(normalizedProgress)}%</span>
           </div>
         )}
-        <div className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+        <div
+          role="progressbar"
+          aria-valuenow={Math.round(normalizedProgress)}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Tiến độ học tập"
+          className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden"
+        >
           <div
             className={cn(progressBarVariants({ color }))}
             style={{ width: `${normalizedProgress}%` }}

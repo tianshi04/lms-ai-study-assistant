@@ -83,9 +83,9 @@ export function AIChatbot() {
             <button
               onClick={() => setIsOpen(false)}
               className="p-1 rounded-lg hover:bg-white/20 transition-colors text-white/90 hover:text-white cursor-pointer"
-              aria-label="Close"
+              aria-label="Đóng"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
