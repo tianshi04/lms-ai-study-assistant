@@ -805,6 +805,14 @@ class AssessmentUseCase:
             f"Assignment submitted successfully. Please complete {REQUIRED_PEER_REVIEWS_COUNT} peer reviews to view your score.",
         )
 
+    @require_paid_access()
+    async def get_peer_assignment_submission(
+        self, user_id: str, item_id: str
+    ) -> Optional[PeerAssignmentSubmission]:
+        async with async_session_scope() as session:
+            repo = await self._get_repo(session)
+            return await repo.get_user_peer_submission(user_id, item_id)
+
     async def get_peer_reviews_to_grade(
         self, user_id: str, item_id: str
     ) -> list[dict[str, Any]]:

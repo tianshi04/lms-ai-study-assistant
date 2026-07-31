@@ -104,6 +104,26 @@ class AssessmentHandler(AssessmentService):
         )
         return pb.SubmitPeerAssignmentResponse(submission_id=sub_id, status_message=msg)
 
+    async def get_peer_assignment_submission(
+        self,
+        request: pb.GetPeerAssignmentSubmissionRequest,
+        ctx: RequestContext[
+            pb.GetPeerAssignmentSubmissionRequest, pb.GetPeerAssignmentSubmissionResponse
+        ],
+    ) -> pb.GetPeerAssignmentSubmissionResponse:
+        current_user = require_current_user()
+        submission = await self.use_case.get_peer_assignment_submission(
+            user_id=current_user.id, item_id=request.item_id
+        )
+        if not submission:
+            return pb.GetPeerAssignmentSubmissionResponse(has_submitted=False)
+        return pb.GetPeerAssignmentSubmissionResponse(
+            has_submitted=True,
+            submission_id=submission.id,
+            submission_url=submission.submission_url,
+            text_content=submission.text_content,
+        )
+
     async def get_peer_reviews_to_grade(
         self,
         request: pb.GetPeerReviewsToGradeRequest,

@@ -31,30 +31,28 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
       ? localStorage.getItem("user_id") || "user-demo-1"
       : "user-demo-1");
 
-  const [hasSubmitted, setHasSubmitted] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem(`peer_submitted_${itemId}_${effectiveUserId}`) === "true";
-    }
-    return false;
-  });
+  const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<"submit" | "grade" | "appeal">("submit");
+  const [submitStatus, setSubmitStatus] = useState<string>("");
 
-  const [activeTab, setActiveTab] = useState<"submit" | "grade" | "appeal">(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(`peer_submitted_${itemId}_${effectiveUserId}`);
-      if (saved === "true") return "grade";
-    }
-    return "submit";
-  });
-
-  const [submitStatus, setSubmitStatus] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(`peer_submitted_${itemId}_${effectiveUserId}`);
-      if (saved === "true") {
-        return "Assignment submitted successfully. Please grade 3 peer submissions to unlock your final score.";
+  useEffect(() => {
+    const fetchSubmission = async () => {
+      try {
+        const client = getRpcClient(AssessmentService);
+        const res = await client.getPeerAssignmentSubmission({ itemId });
+        if (res.hasSubmitted) {
+          setHasSubmitted(true);
+          setSubmissionUrl(res.submissionUrl);
+          setTextContent(res.textContent);
+          setActiveTab("grade");
+          setSubmitStatus("Assignment submitted successfully. Please grade peer submissions.");
+        }
+      } catch (err) {
+        console.error("Failed to fetch peer submission:", err);
       }
-    }
-    return "";
-  });
+    };
+    fetchSubmission();
+  }, [itemId]);
   const [submissionUrl, setSubmissionUrl] = useState(
     "https://github.com/learner/supervised-ml-capstone",
   );
@@ -130,6 +128,10 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
   const [lockNotice, setLockNotice] = useState("");
 
   const handleSubmitAssignment = async () => {
+    if (!submissionUrl.trim() || !textContent.trim()) {
+      toast.error("Vui lòng điền đầy đủ link bài làm và mô tả.");
+      return;
+    }
     setIsSubmitting(true);
     try {
       const client = getRpcClient(AssessmentService);
@@ -139,26 +141,14 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
         textContent,
       });
 
-      if (typeof window !== "undefined") {
-        localStorage.setItem(`peer_submitted_${itemId}_${effectiveUserId}`, "true");
-      }
       setHasSubmitted(true);
       setLockNotice("");
       setSubmitStatus(res.statusMessage || "Assignment submitted successfully!");
       toast.success("Assignment submitted successfully!");
       setActiveTab("grade");
-    } catch (err) {
-      console.warn("RPC submitPeerAssignment failed, using fallback:", err);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(`peer_submitted_${itemId}_${effectiveUserId}`, "true");
-      }
-      setHasSubmitted(true);
-      setLockNotice("");
-      setSubmitStatus(
-        "Assignment submitted successfully. Please grade 3 peer submissions to unlock your final score.",
-      );
-      toast.success("Assignment submitted successfully!");
-      setActiveTab("grade");
+    } catch (err: any) {
+      console.warn("RPC submitPeerAssignment failed:", err);
+      toast.error(err.message || "Lỗi khi nộp bài. Vui lòng thử lại.");
     } finally {
       setIsSubmitting(false);
     }

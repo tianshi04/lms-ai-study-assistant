@@ -57,30 +57,8 @@ export default function ProfilePage() {
     }
   };
 
-  const [verifyingIdentity, setVerifyingIdentity] = useState(false);
-
-  const handleVerifyIdentity = async () => {
-    if (!user) return;
-    setVerifyingIdentity(true);
-    try {
-      const client = getRpcClient(IdentityService);
-      const res = await client.verifyIdentity({
-        userId: user.id,
-        idCardNumber: "012345678999",
-      });
-      if (res.success) {
-        toast.success(res.message || "Giả lập xác minh danh tính KYC thành công!");
-        queryClient.invalidateQueries({ queryKey: ["userProfile", userId] });
-      } else {
-        toast.error(res.message || "Xác minh thất bại.");
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Lỗi khi xác minh danh tính.";
-      toast.error(msg);
-    } finally {
-      setVerifyingIdentity(false);
-    }
-  };
+  // 3. User Identity Verification (KYC)
+  // Tính năng KYC thực tế sẽ được phát triển sau.
 
   if (loading) {
     return (
@@ -189,13 +167,12 @@ export default function ProfilePage() {
                 </Button>
               ) : (
                 <Button
-                  onClick={handleVerifyIdentity}
-                  isLoading={verifyingIdentity}
-                  variant="primary"
+                  disabled
+                  variant="outline"
                   size="sm"
-                  className="bg-emerald-600 hover:bg-emerald-500 border-none shadow-md shadow-emerald-500/20"
+                  className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 cursor-default"
                 >
-                  Giả lập Xác minh KYC (Mock Verification)
+                  Chưa xác minh
                 </Button>
               )}
             </div>

@@ -66,6 +66,17 @@ message SubmitPeerAssignmentResponse {
   string status_message = 2;
 }
 
+message GetPeerAssignmentSubmissionRequest {
+  string item_id = 1;
+}
+
+message GetPeerAssignmentSubmissionResponse {
+  bool has_submitted = 1;
+  string submission_id = 2;
+  string submission_url = 3;
+  string text_content = 4;
+}
+
 message GetPeerReviewsToGradeRequest {
   string item_id = 1;
 }
@@ -261,6 +272,9 @@ service AssessmentService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc SubmitPeerAssignment(SubmitPeerAssignmentRequest) returns (SubmitPeerAssignmentResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetPeerAssignmentSubmission(GetPeerAssignmentSubmissionRequest) returns (GetPeerAssignmentSubmissionResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc GetPeerReviewsToGrade(GetPeerReviewsToGradeRequest) returns (GetPeerReviewsToGradeResponse) {
