@@ -210,11 +210,7 @@ class ForumHandler(ForumService):
                 Code.INVALID_ARGUMENT, "Nội dung không được vượt quá 10000 ký tự"
             )
         current_user = require_current_user()
-        role = current_user.role.lower()
-        is_staff = any(
-            r in role
-            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
-        )
+        is_staff = current_user.is_staff()
         try:
             thread = await self.use_case.update_thread(
                 thread_id=request.thread_id,
@@ -238,11 +234,7 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.DeleteThreadRequest, pb.DeleteThreadResponse],
     ) -> pb.DeleteThreadResponse:
         current_user = require_current_user()
-        role = current_user.role.lower()
-        is_staff = any(
-            r in role
-            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
-        )
+        is_staff = current_user.is_staff()
         try:
             success = await self.use_case.delete_thread(
                 thread_id=request.thread_id,
@@ -268,11 +260,7 @@ class ForumHandler(ForumService):
                 Code.INVALID_ARGUMENT, "Nội dung không được vượt quá 10000 ký tự"
             )
         current_user = require_current_user()
-        role = current_user.role.lower()
-        is_staff = any(
-            r in role
-            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
-        )
+        is_staff = current_user.is_staff()
         try:
             reply = await self.use_case.update_reply(
                 reply_id=request.reply_id,
@@ -295,11 +283,7 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.DeleteReplyRequest, pb.DeleteReplyResponse],
     ) -> pb.DeleteReplyResponse:
         current_user = require_current_user()
-        role = current_user.role.lower()
-        is_staff = any(
-            r in role
-            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
-        )
+        is_staff = current_user.is_staff()
         try:
             success = await self.use_case.delete_reply(
                 reply_id=request.reply_id,

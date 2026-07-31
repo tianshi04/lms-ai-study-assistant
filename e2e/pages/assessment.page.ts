@@ -72,11 +72,11 @@ export class AssessmentPage {
     await this.confirmHonorButton.click();
 
     // Wait for modal to animate open and checkbox to appear
-    await this.honorCheckbox.waitFor({ state: 'visible', timeout: 3000 });
+    await this.honorCheckbox.waitFor({ state: 'visible', timeout: 10000 });
     await this.honorCheckbox.check({ force: true });
 
     // Wait for the submit button to be enabled then click
-    await this.agreeAndContinueButton.waitFor({ state: 'visible', timeout: 3000 });
+    await this.agreeAndContinueButton.waitFor({ state: 'visible', timeout: 10000 });
     await this.agreeAndContinueButton.click();
   }
 

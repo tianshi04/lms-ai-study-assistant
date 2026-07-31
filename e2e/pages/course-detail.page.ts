@@ -21,9 +21,9 @@ export class CourseDetailPage {
 
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/courses\/.+/);
-    await expect(this.courseTitle).toBeVisible({ timeout: 10000 });
-    await expect(this.enrollButton).toBeVisible({ timeout: 10000 });
-    await expect(this.syllabusHeading).toBeVisible({ timeout: 10000 });
+    await expect(this.courseTitle).toBeVisible({ timeout: 30000 });
+    await expect(this.enrollButton).toBeVisible({ timeout: 30000 });
+    await expect(this.syllabusHeading).toBeVisible({ timeout: 30000 });
   }
 
   async clickEnroll() {

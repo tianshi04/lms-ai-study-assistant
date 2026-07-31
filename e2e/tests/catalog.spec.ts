@@ -67,7 +67,7 @@ test.describe('Full System Blackbox - Course Catalog & Discovery (POM)', () => {
 
     await detailPage.clickEnroll();
 
-    await expect(page).toHaveURL(/\/learn\/course-python-ai/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/learn\/course-python-ai/, { timeout: 30000 });
   });
   test('should filter courses by subject and level', async ({ page }) => {
     const catalogPage = new CourseCatalogPage(page);

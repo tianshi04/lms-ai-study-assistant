@@ -1,0 +1,901 @@
+Run Blackbox Playwright E2E Tests	Set up job	﻿2026-07-31T09:14:41.5627206Z Current runner version: '2.336.0'
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5654256Z ##[group]Runner Image Provisioner
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5655531Z Hosted Compute Agent
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5656525Z Version: 20260707.563
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5657432Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5658635Z Build Date: 2026-07-07T19:33:50Z
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5659391Z Worker ID: {d030b769-f60e-49f5-be21-ec3660b14255}
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5660178Z Azure Region: eastus2
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5660793Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5662291Z ##[group]Operating System
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5663049Z Ubuntu
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5663600Z 24.04.4
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5664116Z LTS
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5664720Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5665288Z ##[group]Runner Image
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5666237Z Image: ubuntu-24.04
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5666846Z Version: 20260720.247.2
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5667931Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260720.247/images/ubuntu/Ubuntu2404-Readme.md
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5669743Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260720.247
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5670795Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5672018Z ##[group]GITHUB_TOKEN Permissions
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5674234Z Contents: read
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5674867Z Metadata: read
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5675481Z Packages: read
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5676440Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5678531Z Secret source: Actions
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.5679925Z Prepare workflow directory
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.6005042Z Prepare all required actions
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.6053229Z Getting action download info
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:41.8488909Z Download action repository 'actions/checkout@v7' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:42.0898837Z Download action repository 'bufbuild/buf-action@v1' (SHA:8c6a16e16f12ba20b6470afa9c2ba9b5ba8c97c3)
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:42.2613637Z Download action repository 'pnpm/action-setup@v4' (SHA:b906affcce14559ad1aafd4ab0e942779e9f58b1)
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:42.4702886Z Download action repository 'actions/setup-node@v7' (SHA:820762786026740c76f36085b0efc47a31fe5020)
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:42.6908713Z Download action repository 'astral-sh/setup-uv@v9.0.0' (SHA:c771a70e6277c0a99b617c7a806ffedaca235ff9)
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:42.9231842Z Download action repository 'actions/cache@v4' (SHA:0057852bfaa89a56745cba8c7296529d2fc39830)
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:43.0822482Z Download action repository 'actions/upload-artifact@v6' (SHA:b7c566a772e6b6bfb58ed0dc250532a479d7789f)
+Run Blackbox Playwright E2E Tests	Set up job	2026-07-31T09:14:43.7158103Z Complete job name: Run Blackbox Playwright E2E Tests
+Run Blackbox Playwright E2E Tests	Checkout repository	﻿2026-07-31T09:14:43.7953592Z ##[group]Run actions/checkout@v7
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7954256Z with:
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7954596Z   repository: tianshi04/lms-ai-study-assistant
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7957867Z   token: ***
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7958163Z   ssh-strict: true
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7958450Z   ssh-user: git
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7958744Z   persist-credentials: true
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7959074Z   clean: true
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7959371Z   sparse-checkout-cone-mode: true
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7959725Z   fetch-depth: 1
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7959989Z   fetch-tags: false
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7960273Z   show-progress: true
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7960576Z   lfs: false
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7960830Z   submodules: false
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7961110Z   set-safe-directory: true
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7961435Z   allow-unsafe-pr-checkout: false
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.7962043Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.8968728Z Syncing repository: tianshi04/lms-ai-study-assistant
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.8971108Z ##[group]Getting Git version info
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.8971913Z Working directory is '/home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant'
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.8973068Z [command]/usr/bin/git version
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9039021Z git version 2.54.0
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9060043Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9071434Z Temporarily overriding HOME='/home/runner/work/_temp/b3b3372f-30cb-4479-9fd4-7f1bf548175c' before making global git config changes
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9072915Z Adding repository directory to the temporary git global config as a safe directory
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9077535Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9142969Z Deleting the contents of '/home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant'
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9144679Z ##[group]Determining repository object format
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9146149Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9146986Z ##[group]Initializing the repository
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9147929Z [command]/usr/bin/git init /home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9221294Z hint: Using 'master' as the name for the initial branch. This default branch name
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9222640Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9224263Z hint: to use in all of your new repositories, which will suppress this warning,
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9225346Z hint: call:
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9226525Z hint:
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9227181Z hint: 	git config --global init.defaultBranch <name>
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9227809Z hint:
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9228393Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9229348Z hint: 'development'. The just-created branch can be renamed via this command:
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9230085Z hint:
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9230544Z hint: 	git branch -m <name>
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9231014Z hint:
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9231636Z hint: Disable this message with "git config set advice.defaultBranchName false"
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9232912Z Initialized empty Git repository in /home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant/.git/
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9236967Z [command]/usr/bin/git remote add origin https://github.com/tianshi04/lms-ai-study-assistant
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9285650Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9286703Z ##[group]Disabling automatic garbage collection
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9288309Z [command]/usr/bin/git config --local gc.auto 0
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9322263Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9323183Z ##[group]Setting up auth
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9323936Z Removing SSH command configuration
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9328553Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9367293Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9685481Z Removing HTTP extra header
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9692939Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9749271Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:43.9995065Z Removing includeIf entries pointing to credentials config files
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.0002034Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.0039276Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.0280775Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-b7a18b1c-4494-4897-a5ad-973ca3f2ecb6.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.0323291Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant/.git.path /home/runner/work/_temp/git-credentials-b7a18b1c-4494-4897-a5ad-973ca3f2ecb6.config
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.0358885Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-b7a18b1c-4494-4897-a5ad-973ca3f2ecb6.config
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.0399689Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-b7a18b1c-4494-4897-a5ad-973ca3f2ecb6.config
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.0435600Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-b7a18b1c-4494-4897-a5ad-973ca3f2ecb6.config
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.0468318Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.0468851Z ##[group]Fetching the repository
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.0474921Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +345593a96d62c3972c820a63976f13be85ffc30c:refs/remotes/pull/37/merge
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.4911187Z From https://github.com/tianshi04/lms-ai-study-assistant
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.4912223Z  * [new ref]         345593a96d62c3972c820a63976f13be85ffc30c -> pull/37/merge
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.4944481Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.4945371Z ##[group]Determining the checkout info
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.4946601Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.4951714Z [command]/usr/bin/git sparse-checkout disable
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5001896Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5035977Z ##[group]Checking out the ref
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5040259Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/37/merge
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5467744Z Note: switching to 'refs/remotes/pull/37/merge'.
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5468559Z 
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5468905Z You are in 'detached HEAD' state. You can look around, make experimental
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5469730Z changes and commit them, and you can discard any commits you make in this
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5470523Z state without impacting any branches by switching back to a branch.
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5470982Z 
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5471297Z If you want to create a new branch to retain commits you create, you may
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5472013Z do so (now or later) by using -c with the switch command. Example:
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5472430Z 
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5472613Z   git switch -c <new-branch-name>
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5472893Z 
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5473063Z Or undo this operation with:
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5473298Z 
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5473444Z   git switch -
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5473593Z 
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5473848Z Turn off this advice by setting config variable advice.detachedHead to false
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5474154Z 
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5474523Z HEAD is now at 345593a Merge 794f5612538fc3c5f79e1c3f4506cae6dc746b59 into 6c1d02890c0f41a92ba8580182fa05b0db54f3b7
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5477358Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5526819Z [command]/usr/bin/git log -1 --format=%H
+Run Blackbox Playwright E2E Tests	Checkout repository	2026-07-31T09:14:44.5557546Z 345593a96d62c3972c820a63976f13be85ffc30c
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	﻿2026-07-31T09:14:44.5896885Z ##[group]Run bufbuild/buf-action@v1
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5897229Z with:
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5897440Z   setup_only: true
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5900146Z   github_token: ***
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5900416Z   domain: buf.build
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5900650Z   github_actor: ntphong2104
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5900899Z   pr_comment: true
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5901146Z   exclude_imports: false
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5901380Z   lint: true
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5901584Z   format: true
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5901789Z   breaking: true
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5902016Z   breaking_against_registry: false
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5902279Z   push: false
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5902493Z   push_disable_create: false
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5902734Z   archive: false
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.5902946Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.9377886Z Using the latest release of buf: 1.72.0
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:44.9401063Z Downloading buf (1.72.0)
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:45.4437774Z Setup buf (1.72.0) at /opt/hostedtoolcache/buf/1.72.0/x64
+Run Blackbox Playwright E2E Tests	Set up Buf CLI	2026-07-31T09:14:45.4442242Z Setup only, skipping steps
+Run Blackbox Playwright E2E Tests	Install pnpm	﻿2026-07-31T09:14:45.4632546Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:45.4634063Z ##[group]Run pnpm/action-setup@v4
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:45.4634337Z with:
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:45.4634540Z   version: 11
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:45.4634753Z   dest: ~/setup-pnpm
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:45.4634980Z   run_install: null
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:45.4635189Z   cache: false
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:45.4635412Z   cache_dependency_path: pnpm-lock.yaml
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:45.4635910Z   package_json_file: package.json
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:45.4636205Z   standalone: false
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:45.4636422Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:45.6051030Z ##[group]Running self-installer...
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:45.9893317Z (node:2277) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:45.9894820Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:46.1381626Z Progress: resolved 1, reused 0, downloaded 0, added 0
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:46.1468519Z Packages: +1
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:46.1469410Z +
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:46.6256885Z Progress: resolved 1, reused 0, downloaded 1, added 1, done
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:47.0685162Z 
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:47.0686213Z dependencies:
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:47.0687112Z + pnpm 11.18.0
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:47.0687593Z 
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:47.1776184Z Done in 1.3s
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:47.2006498Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Install pnpm	2026-07-31T09:14:47.2007150Z Installation Completed!
+Run Blackbox Playwright E2E Tests	Set up Node.js	﻿2026-07-31T09:14:47.2168225Z ##[group]Run actions/setup-node@v7
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.2168523Z with:
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.2168757Z   node-version: 22
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.2168984Z   cache: pnpm
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.2169310Z   cache-dependency-path: frontend/pnpm-lock.yaml
+Run Blackbox Playwright E2E Tests	Set up Node.js	e2e/pnpm-lock.yaml
+Run Blackbox Playwright E2E Tests	Set up Node.js	
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.2169729Z   check-latest: false
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.2172275Z   token: ***
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.2172509Z   package-manager-cache: true
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.2172763Z env:
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.2173029Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.2173377Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.3443051Z Found in cache @ /opt/hostedtoolcache/node/22.23.1/x64
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.3445505Z ##[group]Environment details
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.7023269Z node: v22.23.1
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.7023611Z npm: 10.9.8
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.7023822Z yarn: 1.22.22
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.7024418Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:47.7044888Z [command]/home/runner/setup-pnpm/node_modules/.bin/pnpm store path --silent
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:48.2821358Z /home/runner/setup-pnpm/node_modules/.bin/store/v11
+Run Blackbox Playwright E2E Tests	Set up Node.js	2026-07-31T09:14:48.3823185Z pnpm cache is not found
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	﻿2026-07-31T09:14:48.3993810Z ##[group]Run astral-sh/setup-uv@v9.0.0
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.3994108Z with:
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.3994303Z   version: latest
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.3994524Z   python-version: 3.13
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.3994747Z   enable-cache: true
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.3994990Z   cache-dependency-glob: backend/uv.lock
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.3995283Z   activate-environment: false
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.3995532Z   no-project: false
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.3996120Z   working-directory: /home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.3998894Z   github-token: ***
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.3999113Z   restore-cache: true
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.3999335Z   save-cache: true
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.3999547Z   prune-cache: false
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.3999766Z   cache-python: false
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.4000001Z   ignore-nothing-to-cache: false
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.4000270Z   ignore-empty-workdir: false
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.4000540Z   download-from-astral-mirror: true
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.4000814Z   add-problem-matchers: true
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.4001096Z   quiet: false
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.4001309Z   resolution-strategy: highest
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.4001548Z env:
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.4001791Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.4002102Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.5675088Z Fetching manifest data from https://raw.githubusercontent.com/astral-sh/versions/main/v1/uv.ndjson ...
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.6379302Z Downloading uv from "https://releases.astral.sh/github/uv/releases/download/0.12.0/uv-x86_64-unknown-linux-gnu.tar.gz" ...
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:48.8278180Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/78125193-9435-44f4-b689-d0c7f94de6ec -f /home/runner/work/_temp/9746bf19-5d4e-4363-a382-ec23b058d9b9
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.2782242Z Added /home/runner/.local/bin to the path
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.2786284Z Added /opt/hostedtoolcache/uv/0.12.0/x86_64 to the path
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.2788236Z Set UV_PYTHON_INSTALL_DIR to /home/runner/work/_temp/uv-python-dir
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.2789115Z Added /home/runner/work/_temp/uv-python-dir to the path
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.2789656Z Set UV_PYTHON to 3.13
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.2796538Z Set UV_CACHE_DIR to /home/runner/work/_temp/setup-uv-cache
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.2797030Z Successfully installed uv version 0.12.0
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.2798573Z Searching files using cache dependency glob: /home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant/backend/uv.lock
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.2836969Z /home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant/backend/uv.lock
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.2861675Z Found 1 files to hash.
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.2929767Z Trying to restore cache from GitHub Actions cache with key: setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.13-679e0b5cfc46527a9c9dba1f35ade7fcf3d1b01578744f2c48119a0a4a8a06cd
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.3551547Z Cache hit for: setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.13-679e0b5cfc46527a9c9dba1f35ade7fcf3d1b01578744f2c48119a0a4a8a06cd
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.7307544Z Received 70088087 of 70088087 (100.0%), 193.7 MBs/sec
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.7308302Z Cache Size: ~67 MB (70088087 B)
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:49.7443041Z [command]/usr/bin/tar -xf /home/runner/work/_temp/5970bc6a-1cd9-4eb4-8a3a-0ec74f32e526/cache.tzst -P -C /home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant --use-compress-program unzstd
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:50.2173127Z Cache restored successfully
+Run Blackbox Playwright E2E Tests	Set up uv for Python Backend	2026-07-31T09:14:50.2213070Z cache restored from GitHub Actions cache with key: setup-uv-2-x86_64-unknown-linux-gnu-ubuntu-24.04-3.13-679e0b5cfc46527a9c9dba1f35ade7fcf3d1b01578744f2c48119a0a4a8a06cd
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	﻿2026-07-31T09:14:50.3355386Z ##[group]Run make infra
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:50.3356179Z ^[[36;1mmake infra^[[0m
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:50.3412861Z shell: /usr/bin/bash -e {0}
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:50.3413149Z env:
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:50.3413439Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:50.3413862Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:50.3414223Z   UV_PYTHON: 3.13
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:50.3414486Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:50.3414800Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:50.3530059Z docker compose --profile infra up -d --wait
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:50.6851813Z  postgres Pulling 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:50.6852402Z  jaeger Pulling 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:50.6854097Z  minio Pulling 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0594830Z  b83ce1c86227 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0595473Z  f94d28849fa3 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0596229Z  81260b173076 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0596931Z  f9c0805c25ee Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0597377Z  1008deaf6ec4 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0597918Z  71e9fc939447 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0598344Z  c1bc68842c41 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0598848Z  0288b5a0d7e7 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0599319Z  34013573f278 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0599709Z  71e9fc939447 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0600060Z  c1bc68842c41 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0600430Z  0288b5a0d7e7 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0600774Z  34013573f278 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0601121Z  f9c0805c25ee Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0601463Z  1008deaf6ec4 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0601848Z  597c6c618d36 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0602274Z  66b530b96af1 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0602693Z  bd954af37158 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0603130Z  c24c7d6fccfc Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0603890Z  efd4a51d19b6 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0604326Z  43aa7ba523fa Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0604750Z  d0cc8bc931fc Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0605105Z  865e39758064 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0605389Z  181f8d726f3d Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0605677Z  d3ae9dd6950d Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0606411Z  48e52dde8b5e Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0606767Z  751d9ab5ce96 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0607074Z  385c0fae381f Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0607353Z  05627e956ac8 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0607628Z  ecc329c18a28 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0607901Z  41b71941effc Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0608150Z  43aa7ba523fa Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0608391Z  c24c7d6fccfc Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0608618Z  d0cc8bc931fc Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0608904Z  efd4a51d19b6 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0609271Z  597c6c618d36 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0609629Z  865e39758064 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0609984Z  66b530b96af1 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0610335Z  181f8d726f3d Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0610691Z  d3ae9dd6950d Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0611042Z  48e52dde8b5e Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0611402Z  ecc329c18a28 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0611750Z  751d9ab5ce96 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0612117Z  41b71941effc Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0612458Z  385c0fae381f Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0612803Z  05627e956ac8 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0613163Z  bd954af37158 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0697162Z  2d35ebdb57d9 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0698769Z  1b88e4b47f1c Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0699331Z  bb428e799734 Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0699890Z  e52dc8c18e3f Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0700464Z  7dbec0deab4e Pulling fs layer 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0700988Z  2d35ebdb57d9 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0701605Z  1b88e4b47f1c Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0702260Z  bb428e799734 Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0702842Z  e52dc8c18e3f Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.0703413Z  7dbec0deab4e Waiting 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.1050073Z  81260b173076 Downloading [=>                                                 ]  3.476kB/122.7kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.1051712Z  f94d28849fa3 Downloading [>                                                  ]   32.1kB/1.637MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.1099758Z  b83ce1c86227 Downloading [>                                                  ]  81.26kB/7.241MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.1127775Z  81260b173076 Downloading [==================================================>]  122.7kB/122.7kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.1128542Z  81260b173076 Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.1129021Z  81260b173076 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.1433234Z  f94d28849fa3 Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.1433763Z  f94d28849fa3 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.1708017Z  b83ce1c86227 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.1721558Z  b83ce1c86227 Extracting [>                                                  ]   98.3kB/7.241MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.1787354Z  f9c0805c25ee Downloading [>                                                  ]  408.9kB/39.45MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.2052605Z  1008deaf6ec4 Downloading [>                                                  ]    114kB/11.19MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.2231146Z  71e9fc939447 Downloading [>                                                  ]   32.1kB/2.402MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.2785519Z  71e9fc939447 Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.2786337Z  71e9fc939447 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.2788989Z  b83ce1c86227 Extracting [==============>                                    ]  2.064MB/7.241MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.2800206Z  f9c0805c25ee Downloading [==========================>                        ]   21.3MB/39.45MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.2873530Z  1008deaf6ec4 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.3269965Z  c1bc68842c41 Downloading [>                                                  ]  3.434kB/180.3kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.3354799Z  f9c0805c25ee Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.3355359Z  f9c0805c25ee Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.3373646Z  0288b5a0d7e7 Downloading [==============>                                    ]  3.477kB/11.88kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.3376109Z  0288b5a0d7e7 Downloading [==================================================>]  11.88kB/11.88kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.3376941Z  0288b5a0d7e7 Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.3379907Z  0288b5a0d7e7 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.3390186Z  c1bc68842c41 Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.3390799Z  c1bc68842c41 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.3842103Z  34013573f278 Downloading [==================================================>]     496B/496B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.3844963Z  34013573f278 Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.3845487Z  34013573f278 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.3865523Z  66b530b96af1 Downloading [==================================================>]  1.169kB/1.169kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.4042322Z  597c6c618d36 Downloading [>                                                  ]  294.3kB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.4254064Z  b83ce1c86227 Extracting [============================================>      ]  6.488MB/7.241MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.4371751Z  c24c7d6fccfc Downloading [>                                                  ]  15.79kB/1.25MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.4374785Z  bd954af37158 Downloading [>                                                  ]  48.55kB/4.534MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.4614293Z  b83ce1c86227 Extracting [==================================================>]  7.241MB/7.241MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.4744546Z  b83ce1c86227 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.4757328Z  c24c7d6fccfc Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.4758022Z  c24c7d6fccfc Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.4784704Z  f94d28849fa3 Extracting [=>                                                 ]  32.77kB/1.637MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.4983005Z  bd954af37158 Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.4983722Z  bd954af37158 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.5053817Z  597c6c618d36 Downloading [=====================================>             ]  20.94MB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.5283327Z  597c6c618d36 Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.5284257Z  597c6c618d36 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.5304771Z  f94d28849fa3 Extracting [==================================================>]  1.637MB/1.637MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.5333840Z  f94d28849fa3 Extracting [==================================================>]  1.637MB/1.637MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.5344829Z  efd4a51d19b6 Downloading [>                                                  ]  81.32kB/8.066MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.5497610Z  43aa7ba523fa Downloading [>                                                  ]  15.79kB/1.196MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.5605270Z  597c6c618d36 Extracting [>                                                  ]  294.9kB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.5882283Z  d0cc8bc931fc Downloading [==================================================>]     116B/116B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.5883464Z  d0cc8bc931fc Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.5885209Z  d0cc8bc931fc Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.5948852Z  43aa7ba523fa Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.5956861Z  43aa7ba523fa Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.6039517Z  efd4a51d19b6 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.6368938Z  865e39758064 Downloading [==================================================>]  3.139kB/3.139kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.6371431Z  865e39758064 Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.6372237Z  865e39758064 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.6536720Z  d3ae9dd6950d Downloading [=================>                                 ]    3.5kB/10.29kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.6537848Z  d3ae9dd6950d Downloading [==================================================>]  10.29kB/10.29kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.6538576Z  d3ae9dd6950d Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.6539058Z  d3ae9dd6950d Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.6624620Z  597c6c618d36 Extracting [=======>                                           ]  4.129MB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.6674977Z  181f8d726f3d Downloading [>                                                  ]  530.2kB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.6882190Z  48e52dde8b5e Downloading [==================================================>]     127B/127B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.6883119Z  48e52dde8b5e Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.6883701Z  48e52dde8b5e Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.7035030Z  751d9ab5ce96 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.7379223Z  385c0fae381f Downloading [============================>                      ]  3.501kB/6.109kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.7380086Z  385c0fae381f Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.7597791Z  05627e956ac8 Downloading [==================================================>]     184B/184B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.7599010Z  05627e956ac8 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.7637234Z  597c6c618d36 Extracting [==============>                                    ]  8.258MB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.7680472Z  181f8d726f3d Downloading [==========>                                        ]  24.46MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.7898595Z  ecc329c18a28 Downloading [=>                                                 ]    3.5kB/129.1kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.8701973Z  41b71941effc Downloading [>                                                  ]  15.79kB/1.466MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.8734199Z  181f8d726f3d Downloading [============>                                      ]   28.7MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.8803976Z  ecc329c18a28 Downloading [==================================================>]  129.1kB/129.1kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.8804858Z  ecc329c18a28 Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.8808605Z  ecc329c18a28 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.9065587Z  41b71941effc Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.9066479Z  41b71941effc Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.9238440Z  597c6c618d36 Extracting [================>                                  ]  9.142MB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.9389570Z  2d35ebdb57d9 Downloading [>                                                  ]  48.49kB/3.802MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.9567571Z  1b88e4b47f1c Downloading [=>                                                 ]  3.499kB/126.9kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.9700376Z  1b88e4b47f1c Downloading [==================================================>]  126.9kB/126.9kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.9701473Z  1b88e4b47f1c Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.9701959Z  1b88e4b47f1c Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.9740461Z  181f8d726f3d Downloading [=========================>                         ]   57.9MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.9994671Z  2d35ebdb57d9 Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:51.9995282Z  2d35ebdb57d9 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.0003042Z  2d35ebdb57d9 Extracting [>                                                  ]  65.54kB/3.802MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.0221869Z  bb428e799734 Downloading [========>                                          ]    3.5kB/20.2kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.0226849Z  bb428e799734 Downloading [==================================================>]   20.2kB/20.2kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.0227747Z  bb428e799734 Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.0230010Z  bb428e799734 Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.0427459Z  597c6c618d36 Extracting [===================>                               ]  11.21MB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.0702705Z  e52dc8c18e3f Downloading [>                                                  ]  343.4kB/33.43MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.0728061Z  7dbec0deab4e Downloading [==================================================>]     229B/229B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.0729091Z  7dbec0deab4e Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.0729763Z  7dbec0deab4e Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.0742826Z  181f8d726f3d Downloading [======================================>            ]  87.08MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.1706154Z  e52dc8c18e3f Downloading [================================>                  ]  22.02MB/33.43MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.2025566Z  e52dc8c18e3f Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.2026174Z  e52dc8c18e3f Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.3288197Z  181f8d726f3d Downloading [=============================================>     ]  102.9MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.3316488Z  597c6c618d36 Extracting [==========================>                        ]  15.04MB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.3327755Z  2d35ebdb57d9 Extracting [===>                                               ]  262.1kB/3.802MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.3672923Z  181f8d726f3d Verifying Checksum 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.3673368Z  181f8d726f3d Download complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.4334727Z  597c6c618d36 Extracting [=====================================>             ]  21.23MB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.4337289Z  2d35ebdb57d9 Extracting [==============================>                    ]  2.294MB/3.802MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.4601251Z  2d35ebdb57d9 Extracting [==================================================>]  3.802MB/3.802MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.6118329Z  597c6c618d36 Extracting [==========================================>        ]  23.89MB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.7774774Z  597c6c618d36 Extracting [===========================================>       ]  24.48MB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:52.9193835Z  597c6c618d36 Extracting [================================================>  ]  27.13MB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:53.0681052Z  2d35ebdb57d9 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:53.1650609Z  1b88e4b47f1c Extracting [============>                                      ]  32.77kB/126.9kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:53.1660203Z  1b88e4b47f1c Extracting [==================================================>]  126.9kB/126.9kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:53.2012724Z  597c6c618d36 Extracting [================================================>  ]  27.43MB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:53.3460986Z  597c6c618d36 Extracting [=================================================> ]  28.02MB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:53.4002523Z  597c6c618d36 Extracting [==================================================>]  28.23MB/28.23MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:53.4626998Z  597c6c618d36 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:53.5170951Z  66b530b96af1 Extracting [==================================================>]  1.169kB/1.169kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:53.5175111Z  66b530b96af1 Extracting [==================================================>]  1.169kB/1.169kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.1823014Z  1b88e4b47f1c Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.1823584Z  66b530b96af1 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.1824495Z  f94d28849fa3 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.1838722Z  bd954af37158 Extracting [>                                                  ]  65.54kB/4.534MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.1843998Z  81260b173076 Extracting [=============>                                     ]  32.77kB/122.7kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.1861358Z  81260b173076 Extracting [==================================================>]  122.7kB/122.7kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.1863373Z  bb428e799734 Extracting [==================================================>]   20.2kB/20.2kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.1879676Z  bb428e799734 Extracting [==================================================>]   20.2kB/20.2kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.1973676Z  81260b173076 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.1976376Z  bb428e799734 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.2100894Z  f9c0805c25ee Extracting [>                                                  ]    426kB/39.45MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.2133145Z  e52dc8c18e3f Extracting [>                                                  ]  360.4kB/33.43MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.2844786Z  bd954af37158 Extracting [=================================>                 ]  3.015MB/4.534MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.3157057Z  f9c0805c25ee Extracting [=====>                                             ]  4.686MB/39.45MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.3187176Z  e52dc8c18e3f Extracting [=====>                                             ]  3.965MB/33.43MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.3581806Z  bd954af37158 Extracting [==================================================>]  4.534MB/4.534MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.4188299Z  f9c0805c25ee Extracting [===========>                                       ]  8.946MB/39.45MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.4224003Z  e52dc8c18e3f Extracting [===========>                                       ]   7.93MB/33.43MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.4495457Z  bd954af37158 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.4614108Z  c24c7d6fccfc Extracting [=>                                                 ]  32.77kB/1.25MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.4957465Z  c24c7d6fccfc Extracting [==================================================>]   1.25MB/1.25MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.5187808Z  f9c0805c25ee Extracting [===============>                                   ]  12.35MB/39.45MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.5190480Z  c24c7d6fccfc Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.5216861Z  efd4a51d19b6 Extracting [>                                                  ]   98.3kB/8.066MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.5292107Z  e52dc8c18e3f Extracting [====================>                              ]   13.7MB/33.43MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.6306005Z  e52dc8c18e3f Extracting [============================>                      ]   19.1MB/33.43MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.6309247Z  f9c0805c25ee Extracting [====================>                              ]  16.19MB/39.45MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.6313642Z  efd4a51d19b6 Extracting [==================>                                ]  3.047MB/8.066MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.7332621Z  efd4a51d19b6 Extracting [===========================>                       ]  4.424MB/8.066MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.7376411Z  f9c0805c25ee Extracting [============================>                      ]  22.58MB/39.45MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.7487239Z  e52dc8c18e3f Extracting [==================================================>]  33.43MB/33.43MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.7853890Z  e52dc8c18e3f Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.7866397Z  7dbec0deab4e Extracting [==================================================>]     229B/229B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.7877309Z  7dbec0deab4e Extracting [==================================================>]     229B/229B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.7979583Z  7dbec0deab4e Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.8047145Z  jaeger Pulled 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.8334015Z  efd4a51d19b6 Extracting [===================================>               ]  5.702MB/8.066MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.8390662Z  f9c0805c25ee Extracting [=====================================>             ]  29.82MB/39.45MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.9347646Z  efd4a51d19b6 Extracting [==============================================>    ]  7.471MB/8.066MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.9400123Z  f9c0805c25ee Extracting [=============================================>     ]  36.21MB/39.45MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.9559050Z  efd4a51d19b6 Extracting [==================================================>]  8.066MB/8.066MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:54.9930484Z  f9c0805c25ee Extracting [==================================================>]  39.45MB/39.45MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.0006615Z  efd4a51d19b6 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.0016646Z  f9c0805c25ee Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.0017406Z  43aa7ba523fa Extracting [=>                                                 ]  32.77kB/1.196MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.0062308Z  1008deaf6ec4 Extracting [>                                                  ]  131.1kB/11.19MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.0408837Z  43aa7ba523fa Extracting [==================================================>]  1.196MB/1.196MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.0491998Z  43aa7ba523fa Extracting [==================================================>]  1.196MB/1.196MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.0907538Z  43aa7ba523fa Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.0919596Z  d0cc8bc931fc Extracting [==================================================>]     116B/116B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.0926782Z  d0cc8bc931fc Extracting [==================================================>]     116B/116B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.1006093Z  d0cc8bc931fc Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.1018045Z  865e39758064 Extracting [==================================================>]  3.139kB/3.139kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.1027438Z  865e39758064 Extracting [==================================================>]  3.139kB/3.139kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.1074075Z  1008deaf6ec4 Extracting [============================>                      ]  6.423MB/11.19MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.1146191Z  865e39758064 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.1796380Z  181f8d726f3d Extracting [>                                                  ]  557.1kB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.1812286Z  1008deaf6ec4 Extracting [==================================================>]  11.19MB/11.19MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.1942042Z  1008deaf6ec4 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.1951988Z  71e9fc939447 Extracting [>                                                  ]  32.77kB/2.402MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.2354386Z  71e9fc939447 Extracting [==================================================>]  2.402MB/2.402MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.2488012Z  71e9fc939447 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.2499642Z  c1bc68842c41 Extracting [=========>                                         ]  32.77kB/180.3kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.2573270Z  c1bc68842c41 Extracting [==================================================>]  180.3kB/180.3kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.2585186Z  c1bc68842c41 Extracting [==================================================>]  180.3kB/180.3kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.2677837Z  c1bc68842c41 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.2688872Z  0288b5a0d7e7 Extracting [==================================================>]  11.88kB/11.88kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.2705231Z  0288b5a0d7e7 Extracting [==================================================>]  11.88kB/11.88kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.2810359Z  0288b5a0d7e7 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.2821570Z  34013573f278 Extracting [==================================================>]     496B/496B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.2829691Z  34013573f278 Extracting [==================================================>]     496B/496B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.2851074Z  181f8d726f3d Extracting [==>                                                ]  5.571MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.2915212Z  34013573f278 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.2978302Z  minio Pulled 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.3867070Z  181f8d726f3d Extracting [====>                                              ]   9.47MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.4902348Z  181f8d726f3d Extracting [=====>                                             ]  13.37MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.5948135Z  181f8d726f3d Extracting [=======>                                           ]  17.83MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.7033193Z  181f8d726f3d Extracting [==========>                                        ]   23.4MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.8066673Z  181f8d726f3d Extracting [=============>                                     ]   31.2MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:55.9076808Z  181f8d726f3d Extracting [=================>                                 ]  39.55MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:56.0094823Z  181f8d726f3d Extracting [=====================>                             ]  47.91MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:56.1132836Z  181f8d726f3d Extracting [========================>                          ]  54.59MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:56.2168691Z  181f8d726f3d Extracting [==========================>                        ]  60.16MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:56.3178521Z  181f8d726f3d Extracting [==============================>                    ]  68.52MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:56.4220705Z  181f8d726f3d Extracting [==================================>                ]  77.99MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:56.5285317Z  181f8d726f3d Extracting [======================================>            ]  86.34MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:56.6317406Z  181f8d726f3d Extracting [=========================================>         ]   94.7MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:56.7391922Z  181f8d726f3d Extracting [===========================================>       ]  97.48MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:56.8501592Z  181f8d726f3d Extracting [============================================>      ]  100.8MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:56.9560508Z  181f8d726f3d Extracting [==============================================>    ]  104.7MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:57.0827026Z  181f8d726f3d Extracting [===============================================>   ]  107.5MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:57.1928468Z  181f8d726f3d Extracting [================================================>  ]  109.2MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:57.4418170Z  181f8d726f3d Extracting [=================================================> ]  111.4MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:57.5488010Z  181f8d726f3d Extracting [==================================================>]  112.8MB/112.8MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.0826950Z  181f8d726f3d Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.0835603Z  d3ae9dd6950d Extracting [==================================================>]  10.29kB/10.29kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.0840918Z  d3ae9dd6950d Extracting [==================================================>]  10.29kB/10.29kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.0973146Z  d3ae9dd6950d Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.0983915Z  48e52dde8b5e Extracting [==================================================>]     127B/127B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.0987186Z  48e52dde8b5e Extracting [==================================================>]     127B/127B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.1052597Z  48e52dde8b5e Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.1062180Z  751d9ab5ce96 Extracting [==================================================>]     167B/167B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.1065196Z  751d9ab5ce96 Extracting [==================================================>]     167B/167B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.1336838Z  751d9ab5ce96 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.1346377Z  385c0fae381f Extracting [==================================================>]  6.109kB/6.109kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.1349483Z  385c0fae381f Extracting [==================================================>]  6.109kB/6.109kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.1435411Z  385c0fae381f Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.1445505Z  05627e956ac8 Extracting [==================================================>]     184B/184B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.1448605Z  05627e956ac8 Extracting [==================================================>]     184B/184B
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.1512942Z  05627e956ac8 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.1522623Z  ecc329c18a28 Extracting [============>                                      ]  32.77kB/129.1kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.1532825Z  ecc329c18a28 Extracting [==================================================>]  129.1kB/129.1kB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.1979021Z  ecc329c18a28 Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.1989941Z  41b71941effc Extracting [=>                                                 ]  32.77kB/1.466MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.2536323Z  41b71941effc Extracting [==================================================>]  1.466MB/1.466MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.2540349Z  41b71941effc Extracting [==================================================>]  1.466MB/1.466MB
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.2745137Z  41b71941effc Pull complete 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.2794521Z  postgres Pulled 
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.2816106Z  Network backend_default  Creating
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.3186402Z  Network backend_default  Created
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.3245460Z  Volume "backend_postgres_data"  Creating
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.3257514Z  Volume "backend_postgres_data"  Created
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.3260220Z  Volume "backend_minio_data"  Creating
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.3266541Z  Volume "backend_minio_data"  Created
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.3271574Z  Container coursera_jaeger  Creating
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.3271961Z  Container coursera_postgres  Creating
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.3272584Z  Container coursera_minio  Creating
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.3496202Z  Container coursera_jaeger  Created
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.3496939Z  Container coursera_postgres  Created
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.3497323Z  Container coursera_minio  Created
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.3509000Z  Container coursera_postgres  Starting
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.3509889Z  Container coursera_minio  Starting
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.3510722Z  Container coursera_jaeger  Starting
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.7341104Z  Container coursera_postgres  Started
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.7394988Z  Container coursera_minio  Started
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.7528691Z  Container coursera_jaeger  Started
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.7529984Z  Container coursera_minio  Waiting
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.7530681Z  Container coursera_jaeger  Waiting
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:58.7531241Z  Container coursera_postgres  Waiting
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:14:59.2547285Z  Container coursera_jaeger  Healthy
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:15:04.2544594Z  Container coursera_postgres  Healthy
+Run Blackbox Playwright E2E Tests	Start PostgreSQL & MinIO Infrastructure	2026-07-31T09:15:04.2545256Z  Container coursera_minio  Healthy
+Run Blackbox Playwright E2E Tests	Generate Backend ConnectRPC Stubs	﻿2026-07-31T09:15:04.2622554Z ##[group]Run make gen
+Run Blackbox Playwright E2E Tests	Generate Backend ConnectRPC Stubs	2026-07-31T09:15:04.2622844Z ^[[36;1mmake gen^[[0m
+Run Blackbox Playwright E2E Tests	Generate Backend ConnectRPC Stubs	2026-07-31T09:15:04.2672535Z shell: /usr/bin/bash -e {0}
+Run Blackbox Playwright E2E Tests	Generate Backend ConnectRPC Stubs	2026-07-31T09:15:04.2672810Z env:
+Run Blackbox Playwright E2E Tests	Generate Backend ConnectRPC Stubs	2026-07-31T09:15:04.2673079Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+Run Blackbox Playwright E2E Tests	Generate Backend ConnectRPC Stubs	2026-07-31T09:15:04.2673500Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+Run Blackbox Playwright E2E Tests	Generate Backend ConnectRPC Stubs	2026-07-31T09:15:04.2673842Z   UV_PYTHON: 3.13
+Run Blackbox Playwright E2E Tests	Generate Backend ConnectRPC Stubs	2026-07-31T09:15:04.2674104Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Run Blackbox Playwright E2E Tests	Generate Backend ConnectRPC Stubs	2026-07-31T09:15:04.2674419Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Generate Backend ConnectRPC Stubs	2026-07-31T09:15:04.2760408Z buf generate ../proto
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	﻿2026-07-31T09:15:04.4741713Z ##[group]Run make seed
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:04.4742028Z ^[[36;1mmake seed^[[0m
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:04.4790806Z shell: /usr/bin/bash -e {0}
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:04.4791085Z env:
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:04.4791360Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:04.4791779Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:04.4792131Z   UV_PYTHON: 3.13
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:04.4792412Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:04.4792717Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:04.4878904Z uv run alembic upgrade head
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:04.6202474Z Downloading cpython-3.13.14-linux-x86_64-gnu (download) (33.2MiB)
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:05.4207179Z  Downloaded cpython-3.13.14-linux-x86_64-gnu (download)
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:05.5739741Z Using CPython 3.13.14
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:05.5740215Z Creating virtual environment at: .venv
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:05.6767545Z Installed 82 packages in 92ms
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.5135986Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] asyncio: Using selector: EpollSelector
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.5946954Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Context impl PostgresqlImpl.
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.5947813Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Will assume transactional DDL.
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.6240873Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade  -> 3ca78cb96417, create catalog and learning tables
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.6487872Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: new branch insert 3ca78cb96417
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.6503235Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 3ca78cb96417 -> 41f8bbf03622, Add Track D identity financial aid and certificate tables
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.6608342Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 3ca78cb96417 to 41f8bbf03622
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.6623053Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 41f8bbf03622 -> 972357a021b8, Add enterprise licenses table
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.6639097Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 41f8bbf03622 to 972357a021b8
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.6647841Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 972357a021b8 -> 4d186f683851, create_forum_tables
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.6707957Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 972357a021b8 to 4d186f683851
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.6716405Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 4d186f683851 -> 629bc7bbb558, create_forum_votes_table
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.6747446Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 4d186f683851 to 629bc7bbb558
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.6755502Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 629bc7bbb558 -> 5b8f9e1029aa, Add Track B assessment tables
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7011643Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 629bc7bbb558 to 5b8f9e1029aa
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7020439Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 5b8f9e1029aa -> a7e8910b2c3d, Add is_identity_verified to users table
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7029639Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 5b8f9e1029aa to a7e8910b2c3d
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7041953Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade a7e8910b2c3d -> 10ba27276f02, add seat_assigned_at to users
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7080193Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update a7e8910b2c3d to 10ba27276f02
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7088726Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 10ba27276f02 -> 92c325e689de, add is_revoked revoked_reason to verified_certificates
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7104008Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 10ba27276f02 to 92c325e689de
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7112285Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 92c325e689de -> 685be7ef1e53, add specialization_id to verified_certificates
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7119747Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 92c325e689de to 685be7ef1e53
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7128304Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 685be7ef1e53 -> dd8170ce953d, change open_badges_json_ld from text to json type
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7157087Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 685be7ef1e53 to dd8170ce953d
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7166060Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade dd8170ce953d -> 38e60e429f76, standardize forum id column lengths to String(64)
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7223608Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update dd8170ce953d to 38e60e429f76
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7232207Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 38e60e429f76 -> 7a8f9e1029ab, create_course_reviews_table
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7274279Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 38e60e429f76 to 7a8f9e1029ab
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7282976Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 7a8f9e1029ab -> bc379768993c, add last_reset_at to learning_progresses
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7289980Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 7a8f9e1029ab to bc379768993c
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7298493Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade bc379768993c -> fd77c3cd6a9a, add_unique_constraint_to_course_reviews
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7308676Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update bc379768993c to fd77c3cd6a9a
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7317021Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade fd77c3cd6a9a -> 9116458c6c68, add_course_announcements_table
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7351182Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update fd77c3cd6a9a to 9116458c6c68
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7359834Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 9116458c6c68 -> 9af0a523dbdb, add_order_index_to_lessons_and_learning_items
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7375163Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 9116458c6c68 to 9af0a523dbdb
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7383649Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 9af0a523dbdb -> a87b2367f1e6, add_course_ownership_fields
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7400128Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 9af0a523dbdb to a87b2367f1e6
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7408518Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade a87b2367f1e6 -> 487286dcef82, add_forum_edit_fields
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7444415Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update a87b2367f1e6 to 487286dcef82
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7452859Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 487286dcef82 -> 55863ba0dee5, add_br_review_002_and_csat_cache
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7476800Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 487286dcef82 to 55863ba0dee5
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7485278Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 55863ba0dee5 -> ff858aa2ba07, add_subject_level_to_courses
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7501630Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 55863ba0dee5 to ff858aa2ba07
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7510062Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade ff858aa2ba07 -> 8ddf086a3a4d, add_categories_table
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7526794Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update ff858aa2ba07 to 8ddf086a3a4d
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7535437Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 8ddf086a3a4d -> f9caddc81895, complete_scorm_questionbank_schema
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7574799Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 8ddf086a3a4d to f9caddc81895
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7583356Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade f9caddc81895 -> 44e5fc5daf08, add_auto_transcribe_to_learning_item
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7592484Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update f9caddc81895 to 44e5fc5daf08
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7601047Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 44e5fc5daf08 -> add_content_to_forum, add content to forum_threads
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7609328Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 44e5fc5daf08 to add_content_to_forum
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7621551Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade add_content_to_forum -> e8ebc2975d4e, Initial baseline with partner module and V2 instructor signatures
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7684892Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update add_content_to_forum to e8ebc2975d4e
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7693364Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade e8ebc2975d4e -> 6b82ed381ac5, add_financial_aid_enabled_to_courses
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7702381Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update e8ebc2975d4e to 6b82ed381ac5
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7710910Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 6b82ed381ac5 -> 401a9bf0e06c, add_payment_and_subscription_tables
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7799944Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 6b82ed381ac5 to 401a9bf0e06c
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7808898Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 401a9bf0e06c -> e0b151c2d43e, add_scope_type_and_allowed_course_ids_to_enterprise_licenses
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7829492Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 401a9bf0e06c to e0b151c2d43e
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7839267Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade e0b151c2d43e -> 5181a248800b, add quiz active session table
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7935470Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update e0b151c2d43e to 5181a248800b
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7944231Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 5181a248800b -> b5a4c266f68e, add_course_status_and_rejection_reason
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.7991625Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 5181a248800b to b5a4c266f68e
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.8000420Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade b5a4c266f68e -> d510ee603d61, add_organization_and_role_models
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.8128054Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update b5a4c266f68e to d510ee603d61
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.8147878Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade d510ee603d61 -> 3b52b619e02b, add quiz session snapshots
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.8286196Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update d510ee603d61 to 3b52b619e02b
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.8295051Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 3b52b619e02b -> 5c33582e05dd, add_quiz_matrix_attempts_and_cooldown
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.8311089Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 3b52b619e02b to 5c33582e05dd
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.8319739Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 5c33582e05dd -> 480f9f14a872, create_instructor_applications_table
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.8386426Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 5c33582e05dd to 480f9f14a872
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.8394888Z 2026-07-31 09:15:07 [INFO] [req_id=-] alembic.runtime.migration: Running upgrade 480f9f14a872 -> f7b500c09994, migrate_partner_admin_to_org_owner
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.8423304Z 2026-07-31 09:15:07 [DEBUG] [req_id=-] alembic.runtime.migration: update 480f9f14a872 to f7b500c09994
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:07.9746613Z uv run python -m src.seed
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:08.6068769Z 2026-07-31 09:15:08 [DEBUG] [req_id=-] asyncio: Using selector: EpollSelector
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:08.6411839Z 2026-07-31 09:15:08 [INFO] [req_id=-] seed: [SEED] Seeding demonstration catalog into PostgreSQL...
+Run Blackbox Playwright E2E Tests	Seed Database Initial Catalog & Users	2026-07-31T09:15:08.9360678Z 2026-07-31 09:15:08 [INFO] [req_id=-] seed: [SEED] Database seeding completed successfully!
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	﻿2026-07-31T09:15:09.0596859Z ##[group]Run uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:09.0597431Z ^[[36;1muv run uvicorn src.main:app --host 0.0.0.0 --port 8000 &^[[0m
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:09.0597827Z ^[[36;1m# Wait for backend health check^[[0m
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:09.0598123Z ^[[36;1mfor i in {1..30}; do^[[0m
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:09.0598473Z ^[[36;1m  curl -s http://localhost:8000/health && break || sleep 1^[[0m
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:09.0598823Z ^[[36;1mdone^[[0m
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:09.0647950Z shell: /usr/bin/bash -e {0}
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:09.0648281Z env:
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:09.0648647Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:09.0649201Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:09.0649559Z   UV_PYTHON: 3.13
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:09.0649821Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:09.0650125Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:10.9141367Z 2026-07-31 09:15:10 [INFO] [req_id=-] src.shared.infrastructure.telemetry: SQLAlchemy OpenTelemetry Auto-Instrumentation enabled.
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:10.9162332Z 2026-07-31 09:15:10 [DEBUG] [req_id=-] asyncio: Using selector: EpollSelector
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:10.9416122Z 2026-07-31 09:15:10 [INFO] [req_id=-] uvicorn.error: Started server process [3270]
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:10.9417144Z 2026-07-31 09:15:10 [INFO] [req_id=-] uvicorn.error: Waiting for application startup.
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:10.9437966Z 2026-07-31 09:15:10 [INFO] [req_id=-] main: [STARTUP] Pre-initialized AuthPolicyRegistry successfully.
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:11.0515926Z 2026-07-31 09:15:11 [INFO] [req_id=-] alembic.runtime.plugins: setup plugin alembic.autogenerate.schemas
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:11.0517366Z 2026-07-31 09:15:11 [INFO] [req_id=-] alembic.runtime.plugins: setup plugin alembic.autogenerate.tables
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:11.0518596Z 2026-07-31 09:15:11 [INFO] [req_id=-] alembic.runtime.plugins: setup plugin alembic.autogenerate.types
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:11.0519518Z 2026-07-31 09:15:11 [INFO] [req_id=-] alembic.runtime.plugins: setup plugin alembic.autogenerate.constraints
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:11.0520305Z 2026-07-31 09:15:11 [INFO] [req_id=-] alembic.runtime.plugins: setup plugin alembic.autogenerate.defaults
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:11.0521040Z 2026-07-31 09:15:11 [INFO] [req_id=-] alembic.runtime.plugins: setup plugin alembic.autogenerate.comments
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:11.0647382Z 2026-07-31 09:15:11 [DEBUG] [req_id=-] asyncio: Using selector: EpollSelector
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:11.1061098Z 2026-07-31 09:15:11 [INFO] [req_id=-] alembic.runtime.migration: Context impl PostgresqlImpl.
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:11.1061955Z 2026-07-31 09:15:11 [INFO] [req_id=-] alembic.runtime.migration: Will assume transactional DDL.
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:11.1215614Z 2026-07-31 09:15:11 [INFO] [req_id=-] main: [AUTO MIGRATION] Alembic migrations upgraded to head successfully (Dev mode).
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:11.1830119Z 2026-07-31 09:15:11 [INFO] [req_id=-] seed: [SEED] Database already contains courses. Auto-seeding skipped.
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:11.1835611Z 2026-07-31 09:15:11 [INFO] [req_id=-] uvicorn.error: Application startup complete.
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:11.1838106Z 2026-07-31 09:15:11 [INFO] [req_id=-] uvicorn.error: Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+Run Blackbox Playwright E2E Tests	Start Backend API Server in Background	2026-07-31T09:15:12.1032472Z 2026-07-31 09:15:12 [INFO] [req_id=85af7dc2-8d38-4222-98e3-84ec06e801aa] uvicorn.access: 127.0.0.1:53820 - "GET /health HTTP/1.1" 200
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	﻿2026-07-31T09:15:17.1094667Z ##[group]Run pnpm install --frozen-lockfile
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:17.1095068Z ^[[36;1mpnpm install --frozen-lockfile^[[0m
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:17.1143976Z shell: /usr/bin/bash -e {0}
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:17.1144356Z env:
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:17.1144728Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:17.1145141Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:17.1145494Z   UV_PYTHON: 3.13
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:17.1145909Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:17.1146232Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:17.6611472Z ? Verifying lockfile against supply-chain policies (875 entries)...
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:17.6710228Z Lockfile is up to date, resolution step is skipped
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:17.8210864Z Progress: resolved 1, reused 0, downloaded 0, added 0
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:17.9171488Z Packages: +769
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:17.9172363Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:18.8162452Z Progress: resolved 769, reused 0, downloaded 0, added 0
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:20.0145276Z Progress: resolved 769, reused 0, downloaded 1, added 0
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:21.0672461Z Progress: resolved 769, reused 0, downloaded 61, added 0
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:21.2664951Z Packages are hard linked from the content-addressable store to the virtual store.
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:21.2677140Z   Content-addressable store is at: /home/runner/setup-pnpm/node_modules/.bin/store/v11
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:21.2697085Z   Virtual store is at:             node_modules/.pnpm
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:22.0669160Z Progress: resolved 769, reused 0, downloaded 105, added 4
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:23.1247507Z Progress: resolved 769, reused 0, downloaded 198, added 12
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:23.8970521Z ✓ Lockfile passes supply-chain policies (875 entries in 6.2s)
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:24.1261155Z Progress: resolved 769, reused 0, downloaded 276, added 16
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:25.1246889Z Progress: resolved 769, reused 0, downloaded 544, added 36
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:26.1264992Z Progress: resolved 769, reused 0, downloaded 767, added 236
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:26.5705075Z Progress: resolved 769, reused 0, downloaded 767, added 769, done
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0901278Z 
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0901813Z dependencies:
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0902164Z + @base-ui/react 1.6.0
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0902474Z + @bufbuild/protobuf 2.13.0
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0902774Z + @connectrpc/connect 2.1.2
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0903083Z + @connectrpc/connect-web 2.1.2
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0903396Z + @copilotkit/react-core 1.64.1
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0903675Z + @copilotkit/runtime 1.64.1
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0904003Z + @dicebear/avataaars 9.4.2
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0904264Z + @dicebear/core 9.4.3
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0904528Z + @tanstack/react-form 1.33.2
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0904831Z + @tanstack/react-query 5.101.4
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0905131Z + @tanstack/react-table 8.21.3
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0905438Z + class-variance-authority 0.7.1
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0905834Z + clsx 2.1.1
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0906052Z + hono 4.12.32
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0906302Z + next 16.3.0-preview.10
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0906588Z + next-themes 0.4.6
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0906811Z + react 19.2.4
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0907039Z + react-dom 19.2.4
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0907279Z + react-markdown 10.1.0
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0907530Z + react-youtube 10.1.0
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0907788Z + tailwind-merge 3.6.0
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0908007Z + zod 4.4.3
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0908117Z 
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0908223Z devDependencies:
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0908499Z + @tailwindcss/postcss 4.3.3
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0908772Z + @types/node 20.19.43
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0909499Z + @types/react 19.2.17
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0909868Z + @types/react-dom 19.2.3
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0910347Z + babel-plugin-react-compiler 1.0.0
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0910705Z + oxfmt 0.61.0
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0910916Z + oxlint 1.76.0
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0911154Z + tailwindcss 4.3.3
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0911666Z + typescript 7.0.2
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.0911953Z 
+Run Blackbox Playwright E2E Tests	Install Frontend Dependencies	2026-07-31T09:15:27.1484559Z Done in 9.9s using pnpm v11.18.0
+Run Blackbox Playwright E2E Tests	Generate Frontend ConnectRPC Stubs	﻿2026-07-31T09:15:27.2540380Z ##[group]Run pnpm run gen
+Run Blackbox Playwright E2E Tests	Generate Frontend ConnectRPC Stubs	2026-07-31T09:15:27.2540907Z ^[[36;1mpnpm run gen^[[0m
+Run Blackbox Playwright E2E Tests	Generate Frontend ConnectRPC Stubs	2026-07-31T09:15:27.2609005Z shell: /usr/bin/bash -e {0}
+Run Blackbox Playwright E2E Tests	Generate Frontend ConnectRPC Stubs	2026-07-31T09:15:27.2609444Z env:
+Run Blackbox Playwright E2E Tests	Generate Frontend ConnectRPC Stubs	2026-07-31T09:15:27.2609860Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+Run Blackbox Playwright E2E Tests	Generate Frontend ConnectRPC Stubs	2026-07-31T09:15:27.2610527Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+Run Blackbox Playwright E2E Tests	Generate Frontend ConnectRPC Stubs	2026-07-31T09:15:27.2611109Z   UV_PYTHON: 3.13
+Run Blackbox Playwright E2E Tests	Generate Frontend ConnectRPC Stubs	2026-07-31T09:15:27.2611526Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Run Blackbox Playwright E2E Tests	Generate Frontend ConnectRPC Stubs	2026-07-31T09:15:27.2612025Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Generate Frontend ConnectRPC Stubs	2026-07-31T09:15:27.7210059Z $ buf generate ../proto --template buf.gen.yaml
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	﻿2026-07-31T09:15:28.1833806Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1835115Z ##[group]Run actions/cache@v4
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1835389Z with:
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1835627Z   path: frontend/.next/cache
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1836578Z   key: Linux-nextjs-88432da19b318d79f0f5005cc55c6a2644f2070ede3738ec0056174849452f75-514fcc6292037cbf7c6cc5e39ce2f11d54f4d642982e7331e83a906bf8373ac4
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1837574Z   restore-keys: Linux-nextjs-88432da19b318d79f0f5005cc55c6a2644f2070ede3738ec0056174849452f75-
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	Linux-nextjs-
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1838123Z   enableCrossOsArchive: false
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1838385Z   fail-on-cache-miss: false
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1838631Z   lookup-only: false
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1838877Z   save-always: false
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1839127Z env:
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1839403Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1839814Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1840163Z   UV_PYTHON: 3.13
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1840427Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.1840728Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.2892959Z (node:3489) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.2894455Z (Use `node --trace-deprecation ...` to show where the warning was created)
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.3787001Z Cache hit for restore-key: Linux-nextjs-be09c90bb0c59a3887cc6171e25cd5117000722e92e2b85b5a10f5bcaa11884f-67d8779ada3341c7d0b55b732e379d0c01369712cffa4eba1c7f30d3c227440c
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.3886191Z (node:3489) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.4544482Z Received 90782 of 90782 (100.0%), 3.3 MBs/sec
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.4545073Z Cache Size: ~0 MB (90782 B)
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.4574450Z [command]/usr/bin/tar -xf /home/runner/work/_temp/3cab7f1b-aa8b-4e90-926e-1ea35a3a55da/cache.tzst -P -C /home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant --use-compress-program unzstd
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.4645400Z Cache restored successfully
+Run Blackbox Playwright E2E Tests	Cache Next.js Build Output	2026-07-31T09:15:28.4725331Z Cache restored from key: Linux-nextjs-be09c90bb0c59a3887cc6171e25cd5117000722e92e2b85b5a10f5bcaa11884f-67d8779ada3341c7d0b55b732e379d0c01369712cffa4eba1c7f30d3c227440c
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	﻿2026-07-31T09:15:28.4808212Z ##[group]Run pnpm run build
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:28.4808520Z ^[[36;1mpnpm run build^[[0m
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:28.4859283Z shell: /usr/bin/bash -e {0}
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:28.4859586Z env:
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:28.4859869Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:28.4860504Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:28.4860878Z   UV_PYTHON: 3.13
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:28.4861163Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:28.4861492Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:28.9118708Z $ next build
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:29.3692499Z ▲ Next.js 16.3.0-preview.10 (Turbopack)
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:29.3986582Z ✓ Running next.config.ts took 29ms
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:29.4107727Z - Experiments (use with caution):
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:29.4108838Z   ✓ useTypeScriptCli
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:29.4109441Z 
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:29.4780146Z   Creating an optimized production build ...
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:54.7663551Z ✓ Compiled successfully in 24.9s
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:54.7668364Z   Running TypeScript ...
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:56.0442006Z ##[error]src/components/assessment/PeerAssignmentWorkspace.tsx(34,3): error TS2304: Cannot find name 'useEffect'.
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:56.0460704Z Failed to type check.
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:56.0460911Z 
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:56.1328171Z [ELIFECYCLE] Command failed with exit code 1.
+Run Blackbox Playwright E2E Tests	Build Frontend Production App	2026-07-31T09:15:56.1621396Z ##[error]Process completed with exit code 1.
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	﻿2026-07-31T09:15:56.1714915Z ##[group]Run actions/upload-artifact@v6
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.1715223Z with:
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.1715455Z   name: playwright-e2e-report
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.1715924Z   path: e2e/playwright-report/
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.1716196Z   retention-days: 7
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.1716428Z   if-no-files-found: warn
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.1716684Z   compression-level: 6
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.1716916Z   overwrite: false
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.1717145Z   include-hidden-files: false
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.1717393Z env:
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.1717658Z   PNPM_HOME: /home/runner/setup-pnpm/node_modules/.bin
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.1718065Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.1718409Z   UV_PYTHON: 3.13
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.1718681Z   UV_CACHE_DIR: /home/runner/work/_temp/setup-uv-cache
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.1718986Z ##[endgroup]
+Run Blackbox Playwright E2E Tests	Upload Playwright Test Report Artifact	2026-07-31T09:15:56.3308325Z ##[warning]No files were found with the provided path: e2e/playwright-report/. No artifacts will be uploaded.
+Run Blackbox Playwright E2E Tests	Post Install pnpm	﻿2026-07-31T09:15:56.3510972Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+Run Blackbox Playwright E2E Tests	Post Install pnpm	2026-07-31T09:15:56.3512270Z Post job cleanup.
+Run Blackbox Playwright E2E Tests	Post Install pnpm	2026-07-31T09:15:56.4979233Z Pruning is unnecessary.
+Run Blackbox Playwright E2E Tests	Post Set up Buf CLI	﻿2026-07-31T09:15:56.5154083Z Post job cleanup.
+Run Blackbox Playwright E2E Tests	Post Set up Buf CLI	2026-07-31T09:15:56.6005840Z [command]/opt/hostedtoolcache/buf/1.72.0/x64/buf registry logout buf.build
+Run Blackbox Playwright E2E Tests	Post Set up Buf CLI	2026-07-31T09:15:56.6143151Z No BSR credentials found in /home/runner/.netrc; you are already logged out
+Run Blackbox Playwright E2E Tests	Post Checkout repository	﻿2026-07-31T09:15:56.6394742Z Post job cleanup.
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.7224084Z [command]/usr/bin/git version
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.7265888Z git version 2.54.0
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.7299992Z Temporarily overriding HOME='/home/runner/work/_temp/6e8943c2-cbce-4fd3-89c5-23237bab2a36' before making global git config changes
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.7301618Z Adding repository directory to the temporary git global config as a safe directory
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.7305582Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.7338684Z Removing SSH command configuration
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.7345457Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.7382049Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.7645460Z Removing HTTP extra header
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.7651583Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.7691842Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.7971800Z Removing includeIf entries pointing to credentials config files
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.7980901Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8043535Z includeif.gitdir:/home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant/.git.path
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8045203Z includeif.gitdir:/home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant/.git/worktrees/*.path
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8046620Z includeif.gitdir:/github/workspace/.git.path
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8047637Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8054286Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant/.git.path
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8084596Z /home/runner/work/_temp/git-credentials-b7a18b1c-4494-4897-a5ad-973ca3f2ecb6.config
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8096253Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-b7a18b1c\-4494\-4897\-a5ad\-973ca3f2ecb6\.config
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8138941Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant/.git/worktrees/*.path
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8179202Z /home/runner/work/_temp/git-credentials-b7a18b1c-4494-4897-a5ad-973ca3f2ecb6.config
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8189687Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/lms-ai-study-assistant/lms-ai-study-assistant/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-b7a18b1c\-4494\-4897\-a5ad\-973ca3f2ecb6\.config
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8226432Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8254923Z /github/runner_temp/git-credentials-b7a18b1c-4494-4897-a5ad-973ca3f2ecb6.config
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8264169Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-b7a18b1c\-4494\-4897\-a5ad\-973ca3f2ecb6\.config
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8302400Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8329373Z /github/runner_temp/git-credentials-b7a18b1c-4494-4897-a5ad-973ca3f2ecb6.config
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8337461Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-b7a18b1c\-4494\-4897\-a5ad\-973ca3f2ecb6\.config
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8374889Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Run Blackbox Playwright E2E Tests	Post Checkout repository	2026-07-31T09:15:56.8623812Z Removing credentials config '/home/runner/work/_temp/git-credentials-b7a18b1c-4494-4897-a5ad-973ca3f2ecb6.config'
+Run Blackbox Playwright E2E Tests	Complete job	﻿2026-07-31T09:15:56.8763373Z Cleaning up orphan processes
+Run Blackbox Playwright E2E Tests	Complete job	2026-07-31T09:15:57.0051567Z Terminate orphan process: pid (3265) (uv)
+Run Blackbox Playwright E2E Tests	Complete job	2026-07-31T09:15:57.0077995Z Terminate orphan process: pid (3270) (uvicorn)
+Run Blackbox Playwright E2E Tests	Complete job	2026-07-31T09:15:57.0110828Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/cache@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

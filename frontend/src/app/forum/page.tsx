@@ -41,8 +41,13 @@ export default function ForumPage() {
     isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
   const userRole =
     isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") || "" : "";
-  const isStaffOrAdmin = ["2", "3", "4", "5", "INSTRUCTOR", "TA", "ADMIN", "SUPER_ADMIN"].some(
-    (r) => userRole.toUpperCase().includes(r),
+  const isStaffOrAdmin = ["2", "3", "4", "5", "INSTRUCTOR", "TA", "ADMIN", "SUPER_ADMIN", "USER_ROLE_INSTRUCTOR", "USER_ROLE_TA", "USER_ROLE_SUPER_ADMIN", "USER_ROLE_ADMIN"].some(
+    (r) => {
+      const upperRole = userRole.toUpperCase();
+      // Ensure we don't accidentally match substrings of LEARNER
+      if (upperRole.includes("LEARNER") || upperRole === "1" || upperRole === "USER_ROLE_UNSPECIFIED") return false;
+      return upperRole.includes(r);
+    }
   );
 
   // New Thread Form State
