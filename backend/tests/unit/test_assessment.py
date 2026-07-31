@@ -333,10 +333,9 @@ async def test_graded_quiz_pass_and_cooldown_logic():
         await usecase.start_graded_quiz_session(user_fail, item_id)
     assert "quay lại sau" in str(exc_info.value)
 
-    # Verify session start is blocked because user has already passed
-    with pytest.raises(ValueError) as exc_info_pass:
-        await usecase.start_graded_quiz_session(user_id, item_id)
-    assert "vượt qua bài thi này" in str(exc_info_pass.value)
+    # Verify session start is NOT blocked because user has already passed (BR_QUIZ_001)
+    res_pass = await usecase.start_graded_quiz_session(user_id, item_id)
+    assert len(res_pass["questions"]) > 0
 
 
 @pytest.mark.asyncio
