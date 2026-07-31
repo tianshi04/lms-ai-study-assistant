@@ -6,38 +6,43 @@ export const DropdownMenu = BaseMenu.Root;
 export const DropdownMenuTrigger = BaseMenu.Trigger;
 export const DropdownMenuPortal = BaseMenu.Portal;
 
-export const DropdownMenuContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof BaseMenu.Popup>
->(({ className, children, ...props }, ref) => (
-  <DropdownMenuPortal>
-    <BaseMenu.Positioner sideOffset={6} className="z-50 outline-none">
-      <BaseMenu.Popup
-        ref={ref}
-        className={cn(
-          "min-w-[150px] overflow-hidden rounded-2xl bg-white dark:bg-slate-900 p-1.5 shadow-xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150",
-          className,
-        )}
-        {...props}
-      >
-        {children}
-      </BaseMenu.Popup>
-    </BaseMenu.Positioner>
-  </DropdownMenuPortal>
-));
-DropdownMenuContent.displayName = "DropdownMenuContent";
+export function DropdownMenuContent({
+  className,
+  children,
+  ref,
+  ...props
+}: React.ComponentProps<typeof BaseMenu.Popup>) {
+  return (
+    <DropdownMenuPortal>
+      <BaseMenu.Positioner sideOffset={6} className="z-50 outline-none">
+        <BaseMenu.Popup
+          ref={ref}
+          className={cn(
+            "min-w-[150px] overflow-hidden rounded-2xl bg-white dark:bg-slate-900 p-1.5 shadow-xl border border-slate-200 dark:border-slate-800 animate-in fade-in zoom-in-95 duration-150",
+            className,
+          )}
+          {...props}
+        >
+          {children}
+        </BaseMenu.Popup>
+      </BaseMenu.Positioner>
+    </DropdownMenuPortal>
+  );
+}
 
-export const DropdownMenuItem = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof BaseMenu.Item>
->(({ className, ...props }, ref) => (
-  <BaseMenu.Item
-    ref={ref}
-    className={cn(
-      "relative flex cursor-pointer select-none items-center justify-between gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium outline-none transition-colors hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200 data-[highlighted]:bg-slate-100 dark:data-[highlighted]:bg-slate-800/80",
-      className,
-    )}
-    {...props}
-  />
-));
-DropdownMenuItem.displayName = "DropdownMenuItem";
+export function DropdownMenuItem({
+  className,
+  ref,
+  ...props
+}: React.ComponentProps<typeof BaseMenu.Item>) {
+  return (
+    <BaseMenu.Item
+      ref={ref}
+      className={cn(
+        "relative flex cursor-pointer select-none items-center justify-between gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium outline-none transition-colors hover:bg-slate-100 dark:hover:bg-slate-800/80 text-slate-700 dark:text-slate-200 data-[highlighted]:bg-slate-100 dark:data-[highlighted]:bg-slate-800/80",
+        className,
+      )}
+      {...props}
+    />
+  );
+}

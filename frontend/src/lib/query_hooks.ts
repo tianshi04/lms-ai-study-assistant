@@ -65,7 +65,24 @@ import {
   LearningService,
   type LearningProgress,
   type PersonalNote,
+  type EnrolledCourseSummary,
 } from "@/gen/learning/v1/learning_pb";
+
+// --- Learning Hooks ---
+
+export function useMyEnrolledCoursesQuery(
+  options?: Partial<UseQueryOptions<EnrolledCourseSummary[], Error>>,
+) {
+  return useQuery<EnrolledCourseSummary[], Error>({
+    queryKey: ["myEnrolledCourses"],
+    queryFn: async () => {
+      const client = getRpcClient(LearningService);
+      const res = await client.listMyEnrolledCourses({});
+      return res.courses || [];
+    },
+    ...options,
+  });
+}
 import {
   AssessmentService,
   type QuizResult,
@@ -266,7 +283,7 @@ export function useLearningProgressQuery(
     queryFn: async () => {
       const client = getRpcClient(LearningService);
       const res = await client.getProgress({ courseId });
-      return res.progress || null;
+      return res.progress ?? null;
     },
     enabled: !!courseId,
     ...options,
@@ -751,7 +768,7 @@ export function useMyInstructorApplicationQuery(
     queryFn: async () => {
       const client = getRpcClient(IdentityService);
       const res = await client.getMyInstructorApplication({});
-      return res.application || null;
+      return res.application ?? null;
     },
     ...options,
   });

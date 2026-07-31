@@ -101,7 +101,7 @@ export class PartnerSettingsPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.pageHeading = page.locator('h1', { hasText: 'Cấu hình Self-Service Partner Admin' });
+    this.pageHeading = page.locator('h1', { hasText: 'Cấu hình Self-Service Tổ chức' });
     this.rotateKeyPairButton = page.getByRole('button', { name: /Tạo Cặp Khóa Ký số Mới|Rotate Key Pair/i });
     this.copyPublicKeyButton = page.getByRole('button', { name: /Sao chép Public Key/i });
     this.downloadOpenBadgesButton = page.getByRole('button', { name: /Tải xuống File Xác thực OpenBadges|openbadges-issuer.json/i });
