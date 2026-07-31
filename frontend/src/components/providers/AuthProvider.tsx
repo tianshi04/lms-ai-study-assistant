@@ -84,16 +84,9 @@ export function AuthProvider({
           document.cookie = `access_token=${encodeURIComponent(token)}; path=/; max-age=2592000`;
       }
       document.cookie = `user_name=${encodeURIComponent(newAuth.userName)}; path=/; max-age=2592000`;
-<<<<<<< HEAD
       if (newAuth.userEmail) document.cookie = `user_email=${encodeURIComponent(newAuth.userEmail)}; path=/; max-age=2592000`;
       if (newAuth.userRole) document.cookie = `user_role=${newAuth.userRole}; path=/; max-age=2592000`;
       if (newAuth.userAvatar) document.cookie = `user_avatar=${encodeURIComponent(newAuth.userAvatar)}; path=/; max-age=2592000`;
-=======
-      if (newAuth.userEmail)
-        document.cookie = `user_email=${encodeURIComponent(newAuth.userEmail)}; path=/; max-age=2592000`;
-      if (newAuth.userRole)
-        document.cookie = `user_role=${newAuth.userRole}; path=/; max-age=2592000`;
->>>>>>> origin/main
     } else {
       document.cookie = "user_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       document.cookie = "user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";

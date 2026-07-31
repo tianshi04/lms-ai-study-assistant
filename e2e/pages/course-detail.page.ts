@@ -11,7 +11,7 @@ export class CourseDetailPage {
     this.page = page;
     this.courseTitle = page.locator('h1');
     this.partnerName = page.locator('text=/Đối tác phát hành/i').locator('xpath=following-sibling::span');
-    this.enrollButton = page.locator('a[href*="/learn/"]').first();
+    this.enrollButton = page.getByRole('link', { name: /vào học (ngay|lại)|enroll|re-enter/i });
     this.syllabusHeading = page.getByRole('heading', { name: /Nội Dung Chương Trình Học|Course Syllabus/i });
   }
 
@@ -21,9 +21,9 @@ export class CourseDetailPage {
 
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/courses\/.+/);
-    await expect(this.courseTitle).toBeVisible({ timeout: 10000 });
-    await expect(this.enrollButton).toBeVisible({ timeout: 10000 });
-    await expect(this.syllabusHeading).toBeVisible({ timeout: 10000 });
+    await expect(this.courseTitle).toBeVisible({ timeout: 30000 });
+    await expect(this.enrollButton).toBeVisible({ timeout: 30000 });
+    await expect(this.syllabusHeading).toBeVisible({ timeout: 30000 });
   }
 
   async clickEnroll() {

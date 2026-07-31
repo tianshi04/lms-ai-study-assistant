@@ -241,7 +241,6 @@ export default function ProfilePage() {
               </div>
             </>
           )}
-          </div>
         </div>
 
         {/* Identity Verification (KYC Mock) Section */}
