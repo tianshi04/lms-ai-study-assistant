@@ -41,6 +41,7 @@ def _model_to_domain_progress(model: LearningProgressModel) -> LearningProgress:
         completed_item_ids=model.completed_item_ids,
         weekly_deadlines=deadlines,
         last_reset_at=model.last_reset_at,
+        scorm_data=model.scorm_data,
     )
 
 
@@ -85,6 +86,7 @@ class SQLAlchemyLearningRepository(ILearningRepository):
                     course_id=course_id,
                     overall_progress_percent=0.0,
                     completed_item_ids=[],
+                    scorm_data=None,
                 )
                 .on_conflict_do_nothing(index_elements=["id"])
             )

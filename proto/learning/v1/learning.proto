@@ -23,6 +23,7 @@ message LearningProgress {
   float overall_progress_percent = 3;
   repeated string completed_item_ids = 4;
   repeated WeeklyDeadline weekly_deadlines = 5;
+  string scorm_data_json = 6;
 }
 
 message PersonalNote {
