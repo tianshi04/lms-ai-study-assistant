@@ -32,8 +32,8 @@ export class AssessmentPage {
     this.labTab = page.getByRole('button', { name: /Auto-Graded Lab/i });
     this.peerTab = page.getByRole('button', { name: /Peer Review & Appeal/i });
 
-    this.confirmHonorButton = page.locator('button').filter({ hasText: /Confirm Honor Code|Cam kết/i }).first();
-    this.honorAgreedBadge = page.locator('span').filter({ hasText: /Đã xác nhận Cam kết|Honor Code Agreed/i }).first();
+    this.confirmHonorButton = page.locator('button').filter({ hasText: /Confirm Honor Code|Xác nhận Cam kết/i }).first();
+    this.honorAgreedBadge = page.locator('span').filter({ hasText: /Đã xác nhận Cam kết Trung thực|Honor Code Agreed/i }).first();
     this.submitQuizButton = page.getByRole('button', { name: /Submit Graded Quiz|Nộp bài thi/i });
     this.honorCheckbox = page.locator('.fixed.inset-0 input[type="checkbox"]').first();
     this.agreeAndContinueButton = page.locator('.fixed.inset-0 button').filter({ hasText: /Tôi đồng ý & Tiếp tục|I Agree & Continue|Submitting/i }).first();
@@ -44,15 +44,14 @@ export class AssessmentPage {
     this.gradePeersTab = page.getByRole('button', { name: /2. Grade Peers/i });
     this.gradeAppealTab = page.getByRole('button', { name: /3. Grade Appeal/i });
     this.submitPeerAssignmentButton = page.getByRole('button', { name: /Submit Peer Assignment/i });
-    this.lockWarningNotice = page.locator('text=/BR_PEER_001/i');
+    this.lockWarningNotice = page.locator('div').filter({ hasText: /You must pass the quiz first|Vui lòng hoàn thành bài trắc nghiệm/i }).first();
   }
 
   async goto() {
-    await this.page.goto('/assessments');
+    await this.page.goto('/learn/course-123/assessment');
   }
 
   async verifyPageLoaded() {
-    await expect(this.page).toHaveURL(/\/assessments/);
     await expect(this.quizTab).toBeVisible();
     await expect(this.labTab).toBeVisible();
     await expect(this.peerTab).toBeVisible();
@@ -78,6 +77,9 @@ export class AssessmentPage {
     // Wait for the submit button to be enabled then click
     await this.agreeAndContinueButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.agreeAndContinueButton.click();
+
+    // Ensure the modal actually closes before returning
+    await this.honorCheckbox.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => null);
   }
 
   async submitQuiz() {

@@ -9,7 +9,7 @@ export class CourseDetailPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.courseTitle = page.locator('h1');
+    this.courseTitle = page.locator('h1').first();
     this.partnerName = page.locator('text=/Đối tác phát hành/i').locator('xpath=following-sibling::span');
     this.enrollButton = page.getByRole('link', { name: /vào học (ngay|lại)|enroll|re-enter/i });
     this.syllabusHeading = page.getByRole('heading', { name: /Nội Dung Chương Trình Học|Course Syllabus/i });
