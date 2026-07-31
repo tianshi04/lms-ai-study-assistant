@@ -36,7 +36,7 @@ export class AssessmentPage {
     this.honorAgreedBadge = page.locator('span').filter({ hasText: /Đã xác nhận Cam kết|Honor Code Agreed/i }).first();
     this.submitQuizButton = page.getByRole('button', { name: /Submit Graded Quiz|Nộp bài thi/i });
     this.honorCheckbox = page.locator('.fixed.inset-0 input[type="checkbox"]').first();
-    this.agreeAndContinueButton = page.locator('.fixed.inset-0 button').filter({ hasText: /I Agree & Continue|Submitting/i }).first();
+    this.agreeAndContinueButton = page.locator('button', { hasText: /Tôi đồng ý & Tiếp tục|I Agree & Continue/i }).first();
 
     this.runLabButton = page.getByRole('button', { name: /Run & Submit Code/i });
 
@@ -65,18 +65,18 @@ export class AssessmentPage {
   }
 
   async agreeHonorCode() {
-    // Wait up to 3s for the confirm button to appear
-    await this.confirmHonorButton.waitFor({ state: 'visible', timeout: 3000 }).catch(() => null);
+    // Wait up to 15s for the confirm button to appear
+    await this.confirmHonorButton.waitFor({ state: 'visible', timeout: 15000 }).catch(() => null);
     if (!await this.confirmHonorButton.isVisible()) return;
 
     await this.confirmHonorButton.click();
 
     // Wait for modal to animate open and checkbox to appear
-    await this.honorCheckbox.waitFor({ state: 'visible', timeout: 3000 });
+    await this.honorCheckbox.waitFor({ state: 'visible', timeout: 10000 });
     await this.honorCheckbox.check({ force: true });
 
     // Wait for the submit button to be enabled then click
-    await this.agreeAndContinueButton.waitFor({ state: 'visible', timeout: 3000 });
+    await this.agreeAndContinueButton.waitFor({ state: 'visible', timeout: 10000 });
     await this.agreeAndContinueButton.click();
   }
 

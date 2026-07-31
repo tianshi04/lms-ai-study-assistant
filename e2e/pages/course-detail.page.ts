@@ -11,7 +11,7 @@ export class CourseDetailPage {
     this.page = page;
     this.courseTitle = page.locator('h1');
     this.partnerName = page.locator('text=/Đối tác phát hành/i').locator('xpath=following-sibling::span');
-    this.enrollButton = page.getByRole('link', { name: /vào học (ngay|lại)|enroll|re-enter/i });
+    this.enrollButton = page.getByRole('link', { name: /vào học (ngay|lại)|enroll|re-enter/i }).first();
     this.syllabusHeading = page.getByRole('heading', { name: /Nội Dung Chương Trình Học|Course Syllabus/i });
   }
 
