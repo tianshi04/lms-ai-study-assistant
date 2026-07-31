@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { HonorCodeModal } from "./HonorCodeModal";
@@ -242,7 +242,7 @@ export function GradedQuizRunner({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [itemId, selectedAnswers, sessionSeed, startTimeIso, isPreviewMode, onComplete]);
 
   const handleSubmitQuiz = async () => {
     if (!isHonorAgreed && !isPreviewMode) {

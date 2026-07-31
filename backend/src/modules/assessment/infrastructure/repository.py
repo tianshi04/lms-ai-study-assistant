@@ -14,6 +14,7 @@ from src.modules.assessment.domain.entities import (
     Question,
     QuestionBank,
     QuestionOption,
+    QuizActiveSession,
     QuizCooldown,
     QuizMatrix,
     QuizSubmission,
