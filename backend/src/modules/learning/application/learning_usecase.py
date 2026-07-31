@@ -133,7 +133,7 @@ class LearningUseCase:
         for p in progresses:
             course = course_map.get(p.course_id)
             c_title = course.title if course else f"Khóa học #{p.course_id}"
-            c_partner = course.partner_name if course else "Coursera Partner"
+            c_partner = course.partner_name if course else ""
 
             progress = p.overall_progress_percent
             if progress <= 0:

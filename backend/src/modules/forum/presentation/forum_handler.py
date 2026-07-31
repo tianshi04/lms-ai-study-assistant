@@ -14,12 +14,10 @@ ROLE_MAP = {
     "USER_ROLE_INSTRUCTOR": "Instructor",
     "USER_ROLE_TA": "Teaching Assistant",
     "USER_ROLE_SUPER_ADMIN": "Super Admin",
-    "USER_ROLE_PARTNER_ADMIN": "Partner Admin",
     "1": "Learner",
     "2": "Instructor",
     "3": "Teaching Assistant",
     "4": "Super Admin",
-    "5": "Partner Admin",
 }
 
 
@@ -95,7 +93,7 @@ class ForumHandler(ForumService):
 
         current_user = require_current_user()
         author_name = (
-            current_user.email.split("@")[0] if current_user.email else "Learner"
+            current_user.email.split("@")[0] if current_user.email else current_user.id
         )
 
         thread = await self.use_case.create_thread(
@@ -121,7 +119,7 @@ class ForumHandler(ForumService):
 
         current_user = require_current_user()
         author_name = (
-            current_user.email.split("@")[0] if current_user.email else "Learner"
+            current_user.email.split("@")[0] if current_user.email else current_user.id
         )
 
         reply = await self.use_case.post_reply(
@@ -156,13 +154,9 @@ class ForumHandler(ForumService):
         role = current_user.role
 
         normalized_role = str(role).lower()
-        is_staff = any(
+        is_staff = current_user.is_staff() or any(
             r in normalized_role
             for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
-        ) or role in (
-            "USER_ROLE_INSTRUCTOR",
-            "USER_ROLE_SUPER_ADMIN",
-            "USER_ROLE_PARTNER_ADMIN",
         )
 
         if not is_staff:

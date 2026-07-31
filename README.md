@@ -3,10 +3,12 @@
 [![Architecture](https://img.shields.io/badge/Architecture-Modular%20Monolith%20%2B%20DDD-blue)](https://github.com/tianshi04/lms-ai-study-assistant)
 [![Backend](https://img.shields.io/badge/Backend-Python%203.13%2B%20%7C%20Starlette%20%7C%20ConnectRPC-green)](backend/)
 [![Frontend](https://img.shields.io/badge/Frontend-Next.js%2016%20%7C%20React%2019%20%7C%20Tailwind%20v4-black)](frontend/)
+[![Security](https://img.shields.io/badge/Security-3--Layer%20PBAC%20%2B%20SQL%20Scope%20Pushdown-red)](#-3-layer-security-protocol)
+[![AI Assistant](https://img.shields.io/badge/AI%20Assistant-CopilotKit%20v2-purple)](frontend/)
 [![Database](https://img.shields.io/badge/Database-PostgreSQL%2017%20pgvector-blueviolet)](backend/docker-compose.yml)
 [![Protocol](https://img.shields.io/badge/API-ConnectRPC%20%2F%20Protobuf-orange)](proto/)
 
-A state-of-the-art **Coursera-style Online Learning Management System (LMS)** built with a **Modular Monolith architecture** following **Domain-Driven Design (DDD)** principles.
+A state-of-the-art **Coursera-style Online Learning Management System (LMS)** built with a **Modular Monolith architecture** following **Domain-Driven Design (DDD)** principles and a **3-Layer Security Architecture**.
 
 ---
 
@@ -14,6 +16,7 @@ A state-of-the-art **Coursera-style Online Learning Management System (LMS)** bu
 
 - [Key Features](#-key-features)
 - [System Architecture](#-system-architecture)
+- [3-Layer Security Protocol](#-3-layer-security-protocol)
 - [Technology Stack](#-technology-stack)
 - [Project Directory Structure](#-project-directory-structure)
 - [Bounded Contexts (Feature Modules)](#-bounded-contexts-feature-modules)
@@ -26,8 +29,10 @@ A state-of-the-art **Coursera-style Online Learning Management System (LMS)** bu
   - [5. Start Development Servers](#5-start-development-servers)
   - [Running via Docker Compose](#running-via-docker-compose)
 - [Helper Commands & Scripts](#-helper-commands--scripts)
+  - [Root Commands (Makefile)](#root-commands-makefile)
   - [Backend Commands (Makefile)](#backend-commands-makefile)
   - [Frontend Commands (NPM)](#frontend-commands-npm)
+  - [End-to-End (E2E) Testing](#end-to-end-e2e-testing-e2epackagejson)
 - [Development Rules & Conventions](#-development-rules--conventions)
 - [Documentation](#-documentation)
 
@@ -36,11 +41,15 @@ A state-of-the-art **Coursera-style Online Learning Management System (LMS)** bu
 ## ✨ Key Features
 
 - 🎓 **Structured Learning Hierarchy:** Specialization → Course → Module/Week → Lesson → Learning Items.
-- 🎥 **Interactive Video Player:** Supports VTT subtitles, scrolling interactive transcripts, in-video quiz checkpoints, and light/dark theme adaptation.
-- 📊 **Dynamic Learning Progress:** Automatic video completion tracking (completes at $\ge 80\%$ watch time), lesson checkboxes, real-time course percentage progress, and flexible deadline resetting.
+- 🏢 **Multi-Tenant Organization & Partner Scoping:** Organization Admin (`ORG OWNER`) role management, partner organization onboarding, instructor application submission & approval portal, and course organization binding.
+- 🔒 **3-Layer Security Architecture:** Method-level policy declaration `(auth.v1.policy)`, PostgreSQL SQL scope pushdown (`apply_organization_scope`), and strict domain resource ownership verification (`enforce_course_ownership`).
+- 🎥 **Interactive Video Player & Transcripts:** VTT subtitle support, scrolling interactive transcript panel with jump-to-timestamp capabilities, in-video quiz checkpoints, and light/dark theme adaptation.
+- 📊 **Dynamic Learning Progress:** Automatic video completion tracking ($\ge 80\%$ watch time), lesson checkboxes, real-time course percentage progress, and flexible deadline resetting.
 - 📝 **Assessments & Auto-Grading:** Practice quizzes, graded exams (pass grade threshold, cooldowns), auto-graded coding lab sandboxes, and rubric-based peer reviews.
+- 💳 **Payments & Subscriptions:** Course purchase checkout, subscription management, and financial aid application processing (150-word essay submission workflow).
 - 💬 **Lesson-Level Discussion Forums:** In-context discussion threads with staff answer pinning, upvoting/downvoting, and moderation.
-- 📜 **Financial Aid & Verified Certificates:** Financial Aid application workflow (150-word essay submission) and public verified digital certificates with shareable QR codes / OpenBadges.
+- 📜 **Verified Certificates:** Public verified digital certificates with shareable QR codes / OpenBadges validation.
+- 🤖 **AI-Assisted Learning Assistant:** Integrated CopilotKit v2 with vector RAG search over course materials powered by PostgreSQL `pgvector`.
 
 ---
 
@@ -63,6 +72,8 @@ The project follows a **Contract-First Modular Monolith** pattern:
                   │  │ Catalog  │ Learning  │ Assessment   │ │
                   │  ├──────────┼───────────┼──────────────┤ │
                   │  │ Forum    │ Identity  │ Certificate  │ │
+                  │  ├──────────┼───────────┼──────────────┤ │
+                  │  │ Partner  │ Payment   │              │ │
                   │  └──────────┴───────────┴──────────────┘ │
                   └────────┬─────────────────────┬───────────┘
                            │                     │
@@ -80,12 +91,28 @@ Each backend module enforces strict DDD layer separation:
 
 ---
 
+## 🔐 3-Layer Security Protocol
+
+The system enforces a strict 3-layer authorization model across all API endpoints:
+
+1. **Layer 1 — API Policy & Context Injection (`AuthInterceptor`):**
+   Every ConnectRPC service method in `.proto` explicitly declares its access policy using `(auth.v1.policy)` (`AUTH_POLICY_PUBLIC`, `AUTH_POLICY_AUTHENTICATED`, `AUTH_POLICY_ADMIN`, `AUTH_POLICY_INTERNAL`). `AuthInterceptor` verifies the JWT token, resolves caller identity, extracts the `x-organization-id` header (fallback to token claim), and injects `CurrentUserContext`.
+
+2. **Layer 2 — Database SQL Scope Pushdown (`apply_organization_scope`):**
+   Organization-scoped entity queries automatically execute `apply_organization_scope(stmt, Model, current_user)` at the repository layer. Multi-tenant filtering (`WHERE organization_id = active_org_id OR organization_id = INTERNAL_SYSTEM_ORG_ID`) is pushed directly down to the PostgreSQL execution plan. In-memory filtering is strictly prohibited.
+
+3. **Layer 3 — Domain Ownership & State Verification:**
+   Application Use Cases verify resource ownership (`owner_id`, `co_instructor_ids`) via `enforce_course_ownership()`, enforce lifecycle state restrictions (e.g. `PENDING_REVIEW` read-only lock), and check granular permissions via `CurrentUserContext`.
+
+---
+
 ## 🛠 Technology Stack
 
 ### **Backend (Python)**
 - **Runtime:** Python 3.13+
 - **API Protocol:** ConnectRPC (`@connectrpc/connect`) compiled via Protocol Buffers
-- **ORM & Database:** Async SQLAlchemy, Alembic for schema migrations
+- **ORM & Database:** Async SQLAlchemy 2.0, Alembic for schema migrations
+- **Security & Authorization:** `AuthInterceptor`, Custom Policy Registry, SQL Scope Pushdown (`apply_organization_scope`)
 - **Package Management:** [`uv`](https://github.com/astral-sh/uv) (fast Python package installer)
 - **Code Quality:** `ruff` (linter & formatter), `ty` (static type checker), `pytest` (test suite)
 
@@ -93,6 +120,8 @@ Each backend module enforces strict DDD layer separation:
 - **Framework:** Next.js 16 (App Router) & React 19
 - **API Client:** Connect-ES v2.0 (`@connectrpc/connect-web` / `@bufbuild/protobuf`)
 - **AI Assistant:** CopilotKit v2 (`@copilotkit/react-core`, `@copilotkit/runtime`)
+- **UI Primitives:** Base UI (`@base-ui/react`) for accessible unstyled components
+- **State & Data Management:** TanStack Query (`@tanstack/react-query`), TanStack Table, TanStack Form
 - **Styling:** Tailwind CSS v4 & `next-themes` (Dark/Light mode)
 - **Package Manager:** `npm`
 
@@ -112,15 +141,17 @@ Each backend module enforces strict DDD layer separation:
 │   ├── alembic/              # Async database migration scripts
 │   ├── src/
 │   │   ├── gen/              # Auto-generated Python ConnectRPC stubs (DO NOT EDIT)
-│   │   ├── modules/          # Bounded contexts (catalog, learning, assessment, etc.)
-│   │   │   ├── catalog/      # Course catalog bounded context
+│   │   ├── modules/          # Bounded contexts
+│   │   │   ├── catalog/      # Course catalog & hierarchy bounded context
 │   │   │   ├── learning/     # Video player & progress tracking bounded context
 │   │   │   ├── assessment/   # Quizzes & peer review bounded context
 │   │   │   ├── forum/        # Discussion forum bounded context
-│   │   │   ├── identity/     # User identity & financial aid bounded context
-│   │   │   └── certificate/  # Certificate verification bounded context
-│   │   ├── shared/           # Shared kernel (Base Entity, Value Object, DB Session)
-│   │   ├── main.py           # Uvicorn server entrypoint
+│   │   │   ├── identity/     # Identity, auth & instructor applications context
+│   │   │   ├── certificate/  # Certificate verification bounded context
+│   │   │   ├── partner/      # Organization & partner management bounded context
+│   │   │   └── payment/      # Payments & subscriptions bounded context
+│   │   ├── shared/           # Shared kernel (Auth, Scope Pushdown, Base Entity, DB)
+│   │   ├── main.py           # Uvicorn server entrypoint & RequestIDMiddleware
 │   │   └── seed.py           # Database seeding script (Upsert & Reset modes)
 │   ├── tests/                # Pytest test suite & code quality tests
 │   ├── Dockerfile            # Container build spec
@@ -128,18 +159,22 @@ Each backend module enforces strict DDD layer separation:
 │   └── pyproject.toml        # Project dependencies (managed via uv)
 ├── frontend/                 # Next.js TypeScript frontend
 │   ├── src/
-│   │   ├── app/              # App router pages (/courses, /learn, /my-courses, /certificates, /instructor, /admin, etc.)
-│   │   ├── components/       # Reusable UI component library
+│   │   ├── app/              # App router pages (/courses, /learn, /partner, /instructor, /admin, etc.)
+│   │   ├── components/       # Reusable UI component library (Base UI + Tailwind v4)
+│   │   ├── lib/              # ConnectRPC client & TanStack Query hooks
 │   │   └── gen/              # Auto-generated TypeScript stubs (DO NOT EDIT)
 │   └── package.json          # NPM package specification
-├── e2e/                      # Playwright End-to-End test suite
+├── e2e/                      # Playwright End-to-End test suite (Page Object Model)
 ├── proto/                    # Central Protocol Buffer shared contracts
 │   ├── assessment/           # Assessment & Quiz RPC schemas
+│   ├── auth/                 # Custom Auth policy options schema
 │   ├── catalog/              # Catalog & Course RPC schemas
 │   ├── certificate/          # Certificate verification RPC schemas
 │   ├── forum/                # Discussion forum RPC schemas
-│   ├── identity/             # Identity & Financial Aid RPC schemas
-│   └── learning/             # Learning progress RPC schemas
+│   ├── identity/             # Identity & Instructor Application RPC schemas
+│   ├── learning/             # Learning progress RPC schemas
+│   ├── partner/              # Organization & Partner RPC schemas
+│   └── payment/              # Payment & Subscription RPC schemas
 ├── docs/                     # Architectural & Business specifications
 └── AGENTS.md                 # Agent rules & architectural conventions
 ```
@@ -153,7 +188,9 @@ Each backend module enforces strict DDD layer separation:
 | **Catalog & Learning** | `catalog`, `learning` | `modules/catalog/`<br>`modules/learning/` | `/courses`<br>`/learn/[courseId]`<br>`/my-courses` |
 | **Assessments & Authoring** | `assessment` | `modules/assessment/` | `/assessments`<br>`/peer-review`<br>`/instructor` |
 | **Discussion Forum** | `forum` | `modules/forum/` | `/forum` |
-| **Identity & Certificates**| `identity`, `certificate` | `modules/identity/`<br>`modules/certificate/` | `/auth`<br>`/financial-aid`<br>`/certificates`<br>`/verify/[certId]`<br>`/admin` |
+| **Identity & Certificates**| `identity`, `certificate` | `modules/identity/`<br>`modules/certificate/` | `/auth`<br>`/financial-aid`<br>`/certificates`<br>`/verify/[certId]` |
+| **Organization & Partners**| `partner` | `modules/partner/` | `/partner`<br>`/partners`<br>`/admin` |
+| **Payment & Subscriptions**| `payment` | `modules/payment/` | `/checkout`<br>`/subscriptions` |
 
 ---
 
@@ -324,7 +361,10 @@ Run these commands from the `frontend/` directory:
 | :--- | :--- |
 | `npm run gen` | Compile Protocol Buffers in `proto/` into `frontend/src/gen/` |
 | `npm run dev` | Start Next.js development server (port 3000) |
-| `npm run lint` | Run ESLint static code analysis |
+| `npm run lint` | Run Oxlint static code analysis |
+| `npm run lint:fix` | Run Oxlint and automatically fix linting issues |
+| `npm run type-check` | Run fast standalone TypeScript type-checking (`tsc --noEmit`) |
+| `npm run check` | Run comprehensive check (type-check + lint) |
 | `npm run build` | Compile Next.js production build |
 
 ---
@@ -338,6 +378,7 @@ Run these commands from the `e2e/` directory:
 | `npm install` | Install Playwright testing framework dependencies |
 | `npx playwright install` | Download Playwright browser binaries (Chromium, Firefox, WebKit) |
 | `npm test` | Run full blackbox E2E test suite in headless mode |
+| `npm run test:all` | Run full cross-browser test suite |
 | `npm run test:ui` | Run Playwright test runner with interactive UI |
 | `npm run test:report` | Show HTML test execution report |
 
@@ -345,29 +386,7 @@ Run these commands from the `e2e/` directory:
 
 ## 📏 Development Rules & Conventions
 
-To maintain code quality and architectural integrity across the repository, all contributors must adhere to the following rules:
-
-1. **Contract-First Development:**
-   - Always update Protocol Buffer definitions in `proto/` first.
-   - **Never manually edit code inside generated directories (`backend/src/gen/` or `frontend/src/gen/`).** Always run `make gen` and `npm run gen`.
-
-2. **Domain-Driven Design (DDD) Boundaries:**
-   - Modules inside `backend/src/modules/` must not import directly from another module's private internal directories (`application`, `infrastructure`, `presentation`). Inter-module communication occurs via defined interfaces or events.
-   - Domain logic inside `domain/` must remain pure Python without external ORM or framework dependencies.
-
-3. **Database Migration Synchronization:**
-   - Whenever SQLAlchemy ORM models in `infrastructure/` are modified, generate an Alembic migration script inside `backend/` using:
-     ```bash
-     uv run alembic revision --autogenerate -m "<migration_description>"
-     ```
-
-4. **Package Management Discipline:**
-   - **Backend:** Add Python dependencies exclusively via `uv add <package>` inside `backend/`. Do not edit `pyproject.toml` or `uv.lock` manually.
-   - **Frontend:** Add Node dependencies exclusively via `npm install <package>` inside `frontend/`. Do not edit `package.json` manually.
-
-5. **Code Style & Verification:**
-   - Format and lint Python code before committing (`make format`).
-   - Ensure all unit tests, Ruff linting, and `ty` type checks pass (`make test`).
+All architectural guidelines, security protocols, database migration rules, and development conventions are centralized in [`AGENTS.md`](AGENTS.md). Please refer to [`AGENTS.md`](AGENTS.md) for full details before contributing or modifying the codebase.
 
 ---
 
@@ -376,7 +395,7 @@ To maintain code quality and architectural integrity across the repository, all 
 Detailed specification documents are available in the [`docs/`](docs/) directory:
 
 - [`docs/01_overview.md`](docs/01_overview.md) - Business overview, user personas (Admin, Instructor, Partner, Learner), and sequence diagrams.
-- [`docs/02_user_stories.md`](docs/02_user_stories.md) - Detailed User Stories and Acceptance Criteria across all 4 feature tracks.
+- [`docs/02_user_stories.md`](docs/02_user_stories.md) - Detailed User Stories and Acceptance Criteria across all feature tracks.
 - [`docs/03_functional_specifications.md`](docs/03_functional_specifications.md) - Detailed functional specifications and API endpoints.
 - [`docs/04_business_rules.md`](docs/04_business_rules.md) - Business rules (Honor Code, Grading, Financial Aid, Vector RAG parameters).
 - [`docs/05_uat_test_cases.md`](docs/05_uat_test_cases.md) - User Acceptance Testing (UAT) scenarios and test scripts.

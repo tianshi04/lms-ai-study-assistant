@@ -71,7 +71,7 @@ class CatalogUseCase:
                 if (
                     not allow_read_only_pending
                     and course.status == CourseStatus.PENDING_REVIEW
-                    and user.role not in ("SUPER_ADMIN", "PARTNER_ADMIN")
+                    and not user.is_admin()
                 ):
                     raise PermissionError(
                         "Khóa học đang ở trạng thái chờ kiểm duyệt (PENDING_REVIEW) và ở chế độ Chỉ đọc. Không thể chỉnh sửa."
@@ -106,9 +106,9 @@ class CatalogUseCase:
         rejection_reason: str = "",
         current_user: CurrentUser | None = None,
     ) -> Course:
-        if current_user and current_user.role not in ("SUPER_ADMIN", "PARTNER_ADMIN"):
+        if current_user and not current_user.is_admin():
             raise PermissionError(
-                "Chỉ Quản trị viên đối tác hoặc Super Admin mới có quyền phê duyệt/từ chối khóa học."
+                "Chỉ Quản trị viên Tổ chức hoặc Super Admin mới có quyền phê duyệt/từ chối khóa học."
             )
 
         async with async_session_scope() as session:
@@ -197,6 +197,7 @@ class CatalogUseCase:
         level: str = "",
         owner_id: str = "",
         financial_aid_enabled: bool = True,
+        organization_id: str = "partner_community",
     ) -> Course:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
@@ -211,6 +212,7 @@ class CatalogUseCase:
                 level=level,
                 owner_id=owner_id,
                 financial_aid_enabled=financial_aid_enabled,
+                organization_id=organization_id or "partner_community",
             )
             logger.info(
                 "Created course %s by owner %s",
@@ -252,7 +254,6 @@ class CatalogUseCase:
     async def create_week_module(
         self,
         course_id: str,
-        week_number: int,
         title: str,
         summary: str,
         current_user: CurrentUser | None = None,
@@ -262,7 +263,6 @@ class CatalogUseCase:
             await self._verify_ownership(repo, course_id, current_user, "tạo tuần học")
             return await repo.create_week_module(
                 course_id=course_id,
-                week_number=week_number,
                 title=title,
                 summary=summary,
             )
@@ -1074,7 +1074,6 @@ class CatalogUseCase:
                     for wm_dict in course_dict.get("weekModules", []):
                         wm = await repo.create_week_module(
                             course_id=course_id,
-                            week_number=wm_dict.get("weekNumber", 1),
                             title=wm_dict.get("title", ""),
                             summary=wm_dict.get("summary", ""),
                         )

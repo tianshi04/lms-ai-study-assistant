@@ -61,7 +61,6 @@ async def test_instructor_create_lesson_structure():
         # 1. Create Week Module
         week = await usecase.create_week_module(
             course_id=course.id,
-            week_number=1,
             title="Week 1: Self-Attention Mechanism",
             summary="Understanding Scaled Dot-Product Attention",
         )

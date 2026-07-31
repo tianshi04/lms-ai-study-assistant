@@ -19,6 +19,11 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
     * **Tầng 3 (Domain Resource & Ownership Level):** Do các Application Use Cases (như `CatalogUseCase._verify_ownership`) và `CurrentUserContext.require_permission()` đảm nhiệm. Kiểm tra quyền sở hữu đối tượng domain (`owner_id`, `co_instructor_ids`) hoặc permission granular.
   * **Quản lý Vai trò & Quyền Hạn Tập trung (Centralized Role & Permission Context):**
     * Đưa hằng số `ADMIN_ROLES`, `STAFF_ROLES` và `CurrentUserContext` (`has_permission()`, `require_permission()`, `require_org_context()`) tập trung vào `src/shared/auth.py`, loại bỏ hoàn toàn các câu lệnh so sánh chuỗi vai trò rải rác.
+    * **Vai trò ở cấp Tổ chức (`Organization Roles`):** Mỗi Tổ chức hỗ trợ 3 vai trò quản trị/nghiệp vụ chính: `Organization Admin`, `Organization Instructor`, và `Teaching Assistant (TA)`.
+    * **Phân biệt Member vs Enterprise Seat Holder:** Thành viên Tổ chức (`Organization Member`) đại diện cho vị trí hành chính/phân quyền (`org_role`), trong khi Suất học (`Enterprise Seat Holder`) đại diện cho bản quyền học tập trả phí (**Paid Mode**) do Tổ chức tài trợ cho Học viên (`Learner`).
+    * **[Yêu cầu Nghiệp vụ Chuyển đổi - BR-MIGRATION]:** Tinh giản và loại bỏ hoàn toàn vai trò quản trị đối tác legacy ở cấp toàn cục (`Partner Admin`), chuyển dịch 100% việc quản trị về vai trò `Organization Admin` thuộc từng Tổ chức (Chi tiết tại Mục 6 của [07_authentication_and_authorization_architecture.md](07_authentication_and_authorization_architecture.md)).
+
+
 * **BR_AUTH_002 (Cơ chế Refresh Token Rotation):**
   * Khi `access_token` hết hạn, client gọi RPC `RefreshToken` truyền `refresh_token` hợp lệ (yêu cầu payload claim `type == "refresh"` và tồn tại `user_id` sở hữu trong DB).
   * Hệ thống hủy cặp token cũ và phát hành mới đồng thời cả `access_token` và `refresh_token`.
@@ -32,6 +37,10 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
     * Hệ thống cập nhật vai trò tài khoản thành `user.role = USER_ROLE_INSTRUCTOR`.
     * Hệ thống tự động liên kết tài khoản này vào Partner Mặc định toàn sàn **`Coursera Project Network`** (`partner_id = "partner_community"`) với trạng thái thành viên `ACTIVE`.
     * Nhờ đó, giảng viên cá nhân thỏa mãn 100% ràng buộc kiến trúc (`partner_id` NOT NULL trên bảng `courses`) và có đầy đủ quyền lựa chọn Partner này khi soạn thảo bài giảng trong Course Builder.
+* **BR_AUTH_006 (Ranh giới Phân quyền Đơn Tổ chức của Organization Admin - Single-Tenant Authorization Boundary):**
+  * **Thẩm quyền Hạn định theo Tổ chức (Tenant-Scoped Authority):** Quản trị viên Tổ chức (`Organization Admin`) chỉ có thẩm quyền quản lý thành viên, xét duyệt đơn gia nhập nội bộ, phân bổ Suất học Enterprise Seat, phê duyệt khóa học hoặc xem báo cáo **nguyên tử trong phạm vi Tổ chức của mình** (`current_user.organization_id == target.organization_id`).
+  * **Ranh giới Bất khả Xâm phạm (Cross-Tenant & Platform Boundary):** Quản trị viên Tổ chức **TUYỆT ĐỐI KHÔNG CÓ QUYỀN** xem, thẩm định hoặc phê duyệt các yêu cầu/đơn đăng ký của người dùng thuộc Tổ chức khác hoặc người dùng cá nhân tự do ngoài phạm vi tổ chức của mình.
+  * **Phân định Duyệt Đơn Giảng viên Cá nhân:** Các đơn xin cấp quyền Giảng viên cá nhân toàn sàn (`SubmitInstructorApplication`) thuộc thẩm quyền thẩm định độc quyền của **Super Admin (Ban Quản trị Nền tảng)** để gán vào `Coursera Project Network` (`partner_community`). Organization Admin của các tổ chức B2B khác không có quyền can thiệp hay duyệt các đơn này.
 * **BR_ACCESS_001 (Phân quyền Audit Mode vs Paid Mode):**
   * *Audit Mode (Miễn phí):* Học viên được mở xem toàn bộ Video bài giảng, bài đọc (Reading) và làm các bài Practice Quiz. Tuy nhiên, hệ thống khóa quyền nộp bài thi Graded Quiz, bài tập Auto-Graded Lab, bài tập Peer Review và không được cấp Chứng chỉ.
   * *Paid Mode (Trả phí / Subscription):* Học viên có toàn bộ quyền làm các bài kiểm tra tính điểm, được bạn học chấm bài Peer Review và nhận Verified Certificate khi hoàn thành.
@@ -44,12 +53,12 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * *Xử lý trùng lặp (Idempotent Activation):* Khi học viên kích hoạt lại đúng mã Enterprise Key đã sở hữu trước đó (`user.enterprise_seat_key == clean_key`), hệ thống phản hồi thành công và bảo lưu trạng thái hiện tại mà **không tăng số lượng `used_seats`** (tránh cạn kiệt suất học).
   * *Ràng buộc 1 mã duy nhất (Single Active Key):* Mỗi tài khoản học viên chỉ được phép có 1 mã Enterprise Key hoạt động tại một thời điểm (`user.enterprise_seat_key`). Trường hợp tài khoản đã có mã Enterprise khác đang kích hoạt, hệ thống sẽ từ chối và yêu cầu thu hồi (Revoke) mã cũ trước khi gán mã mới.
 * **BR_ACCESS_003 (Thu hồi & Tái cấp Suất học Enterprise Seat Recycling & Fallback):**
-  * Partner Admin / Super Admin có quyền thu hồi suất học của nhân viên/sinh viên nếu tài khoản đó chưa đạt quá 20% tiến độ khóa học trong vòng 30 ngày kể từ ngày gán mã.
+  * Organization Admin / Super Admin có quyền thu hồi suất học của nhân viên/sinh viên nếu tài khoản đó chưa đạt quá 20% tiến độ khóa học trong vòng 30 ngày kể từ ngày gán mã.
   * Khi thu hồi thành công, hệ thống tự động hủy mã gán trên người dùng cũ và thực hiện giảm bộ đếm bằng khóa giao dịch DB Atomic Update (`UPDATE enterprise_keys SET used_seats = used_seats - 1 WHERE id = :key_id AND used_seats > 0`) nhằm ngăn ngừa triệt để nguy cơ sai lệch dữ liệu do Race Condition khi thao tác đồng thời.
   * *Chuyển đổi trạng thái & Bảo lưu tiến độ:* Tài khoản bị thu hồi Suất học sẽ tự động chuyển về **Audit Mode (Miễn phí)**. Hệ thống **bảo lưu 100% tiến độ học tập (Completed Items) và Ghi chú cá nhân (Personal Notes)** của học viên. Nếu sau đó học viên tự nâng cấp Paid Mode hoặc được cấp đơn Financial Aid, toàn bộ tiến độ cũ sẽ được mở khóa lại trọn vẹn.
 * **BR_ACCESS_004 (Phân loại Trả phí Cá nhân - Mua lẻ vs Thuê bao Coursera Plus & Quy định Giá):**
   * *Mua lẻ Khóa học (Single Purchase):* Học viên thanh toán cá nhân cho 1 khóa học lẻ sẽ được cấp quyền Paid Mode cố định cho riêng khóa học đó.
-  * *Quy định Giá Mua lẻ (Course Pricing Authority):* Mức giá (`price`) và đơn vị tiền tệ (`currency`) của từng khóa học do **Giảng viên sở hữu (`owner_id`)** hoặc **Quản trị Đối tác (`PARTNER_ADMIN`)** thiết lập trực tiếp trong giao diện Course Builder. **Super Admin** quản lý khung giá mặc định (Default Price Tier) và chính sách khuyến mãi toàn sàn. Khi học viên thanh toán (`PurchaseCourse`), Backend truy vấn giá niêm yết trực tiếp từ `CourseModel` để khởi tạo hóa đơn thanh toán, tuyệt đối không tin tưởng giá gửi lên từ Client.
+  * *Quy định Giá Mua lẻ (Course Pricing Authority):* Mức giá (`price`) và đơn vị tiền tệ (`currency`) của từng khóa học do **Giảng viên sở hữu (`owner_id`)** hoặc **Quản trị viên Tổ chức (`Organization Admin`)** thiết lập trực tiếp trong giao diện Course Builder. **Super Admin** quản lý khung giá mặc định (Default Price Tier) và chính sách khuyến mãi toàn sàn. Khi học viên thanh toán (`PurchaseCourse`), Backend truy vấn giá niêm yết trực tiếp từ `CourseModel` để khởi tạo hóa đơn thanh toán, tuyệt đối không tin tưởng giá gửi lên từ Client.
   * *Gói Thuê bao (Coursera Plus Subscription):* Học viên đăng ký gói thuê bao theo tháng (`MONTHLY` - 30 ngày) hoặc theo năm (`YEARLY` - 365 ngày) được tự động mở khóa Paid Mode trên toàn bộ danh mục khóa học khả dụng trong thời gian gói thuê bao còn hiệu lực (`expires_at > now()`). Khi gói thuê bao hết hạn, tài khoản tự động rớt về Audit Mode (tiến độ học tập và ghi chú cá nhân được bảo lưu 100%).
   * *Danh mục Đủ điều kiện (Plus Eligibility):* Mỗi khóa học có cờ cấu hình `is_plus_eligible` (Mặc định `= True`). Các khóa học đặc thù bị tắt cờ này (`False`) sẽ không được mở khóa tự động qua gói Coursera Plus mà yêu cầu mua lẻ hoặc gán mã Enterprise Key riêng.
 * **BR_FAID_001 (Quy trình nộp & xét duyệt Financial Aid):**
@@ -121,7 +130,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_CATALOG_003 (Quy trình Nộp & Phê duyệt Phát hành Khóa học - Submit for Launch & Course Review Workflow):**
   * *Pre-submit Self-Checklist (Tự đánh giá trước khi Nộp):* Giao diện Course Builder kiểm tra 4 tiêu chí bắt buộc: (1) 100% Video bài giảng có Phụ đề VTT, (2) Ma trận bài thi Graded Quiz không rỗng (`BR_QUIZ_002`), (3) Bài tập Peer Review có đủ bộ Tiêu chí Rubric (`BR_PEER_002`), và (4) Đã gán Giảng viên phụ trách chính (`owner_id`).
   * *Chuyển trạng thái Nộp bài (`Submit for Launch`):* Khi Giảng viên bấm nút **"Submit for Launch"**, khóa học chuyển sang trạng thái **`PENDING_REVIEW`** và chuyển sang chế độ Chỉ đọc (Read-only Mode) để ngăn ngừa chỉnh sửa trong thời gian chờ duyệt.
-  * *Màn hình Kiểm duyệt (Course Reviewer Portal & Student Preview Mode):* Quản trị viên Đối tác (`PARTNER_ADMIN`) hoặc Super Admin vào màn hình Reviewer Portal, trải nghiệm khóa học dưới chế độ Xem trước như Học viên (*Preview Mode*).
+  * *Màn hình Kiểm duyệt (Course Reviewer Portal & Student Preview Mode):* Quản trị viên Tổ chức (`Organization Admin`) hoặc Super Admin vào màn hình Reviewer Portal, trải nghiệm khóa học dưới chế độ Xem trước như Học viên (*Preview Mode*).
   * *Quyết định Phê duyệt hoặc Từ chối (Approve / Reject):*
     * **Phê duyệt (`Approve`):** Khóa học chuyển sang trạng thái **`PUBLISHED`** và chính thức xuất hiện trên Trang Tìm kiếm Công khai toàn cầu (`/courses`).
     * **Từ chối (`Reject`):** Reviewer nhập lý do/gợi ý chỉnh sửa (Feedback Log). Khóa học tự động chuyển về trạng thái **`DRAFT`** kèm nhật ký góp ý để Giảng viên hoàn thiện và nộp lại.
@@ -176,13 +185,13 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 
 ## 5. Quy tắc Quản lý Bounded Context Đối tác (BR_PARTNER)
 
-* **BR_PARTNER_001 (Hồ sơ B2B Đối tác, RPC RotateKeyPair & Phân quyền Partner Admin Self-Service):**
+* **BR_PARTNER_001 (Hồ sơ B2B Đối tác, RPC RotateKeyPair & Phân quyền Organization Admin Self-Service):**
   * Bounded Context `PartnerModule` quản lý tập trung toàn bộ các Tổ chức/Trường Đại học Đối tác với 15 thuộc tính chuẩn hóa (`id`, `name`, `slug`, `description`, `logo_url`, `banner_url`, `website_url`, `allowed_domains`, `signature_image_url`, `signer_name`, `signer_title`, `public_key_pem`, `created_at`, `updated_at`, `historical_public_keys`).
-  * *Ràng buộc Tên miền (`allowed_domains`):* Mỗi Đối tác khai báo danh sách tên miền email ủy quyền (VD: `["@stanford.edu", "@cs.stanford.edu"]`). Được sử dụng để: (1) Tự động gán Suất học Enterprise Seat cho sinh viên (`BR_ACCESS_002`), và (2) Tự động phân giải `partner_id` khi Quản trị viên Đối tác (`PARTNER_ADMIN`) gọi RPC `RotatePartnerKeyPair` mà không cần truyền `partner_id` thủ công.
-  * *RPC RotatePartnerKeyPair & Bảo lưu Lịch sử Khóa:* Cho phép Partner Admin bấm xoay khóa ký số bất kỳ lúc nào. Khóa cũ tự động được chuyển vào mảng `historical_public_keys`, hệ thống khởi tạo khóa ECDSA P-256 mới và trả về duy nhất `public_key_pem`.
-  * *Tự quản lý Self-Service:* Quản trị viên Đối tác (`PARTNER_ADMIN`) có toàn quyền tự cập nhật thông tin thương hiệu (Logo, Banner), hồ sơ chữ ký đại diện, người ký và danh sách nhiều người ký (Multi-Signatories) của tổ chức mình thông qua API RPC `UpdatePartner`.
+  * *Ràng buộc Tên miền (`allowed_domains`):* Mỗi Đối tác khai báo danh sách tên miền email ủy quyền (VD: `["@stanford.edu", "@cs.stanford.edu"]`). Được sử dụng để: (1) Tự động gán Suất học Enterprise Seat cho sinh viên (`BR_ACCESS_002`), và (2) Tự động phân giải `partner_id` khi Quản trị viên Tổ chức (`Organization Admin`) gọi RPC `RotatePartnerKeyPair` mà không cần truyền `partner_id` thủ công.
+  * *RPC RotatePartnerKeyPair & Bảo lưu Lịch sử Khóa:* Cho phép Organization Admin bấm xoay khóa ký số bất kỳ lúc nào. Khóa cũ tự động được chuyển vào mảng `historical_public_keys`, hệ thống khởi tạo khóa ECDSA P-256 mới và trả về duy nhất `public_key_pem`.
+  * *Tự quản lý Self-Service:* Quản trị viên Tổ chức (`Organization Admin`) có toàn quyền tự cập nhật thông tin thương hiệu (Logo, Banner), hồ sơ chữ ký đại diện, người ký và danh sách nhiều người ký (Multi-Signatories) của tổ chức mình thông qua API RPC `UpdatePartner`.
 * **BR_PARTNER_002 (Xác thực Ủy quyền Ký số & Xuất File Static `openbadges-issuer.json` cho Tên miền Đối tác):**
-  * *Cơ chế Tự động sinh Khóa (Auto-Generated Key Fallback):* Nếu Partner Admin không tự nhập `public_key_pem`, hệ thống tự động khởi tạo Cặp khóa ký số bất đối ứng ECDSA P-256 duy nhất (Private Key lưu an toàn trong Vault/HSM của Nền tảng, Public Key tự điền vào `public_key_pem`).
+  * *Cơ chế Tự động sinh Khóa (Auto-Generated Key Fallback):* Nếu Organization Admin không tự nhập `public_key_pem`, hệ thống tự động khởi tạo Cặp khóa ký số bất đối ứng ECDSA P-256 duy nhất (Private Key lưu an toàn trong Vault/HSM của Nền tảng, Public Key tự điền vào `public_key_pem`).
   * *Xuất File Xác thực Tĩnh W3C (`openbadges-issuer.json`):* Nền tảng tự động sinh file JSON tĩnh chuẩn OpenBadges 2.0/3.0 chứa mảng đối tượng `publicKey` (`CryptographicKey` Object Array) bao gồm **Cả Khóa Mới hiện tại và Toàn bộ Khóa Lịch sử Cũ (`historical_public_keys`)**. Cung cấp nút tải xuống trong Admin Portal để Đối tác dán vào thư mục công khai `https://<domain>/.well-known/openbadges-issuer.json` trên tên miền chính thức của mình (VD: `stanford.edu`), làm bằng chứng kỹ thuật xác thực việc Trường ủy quyền ký số cho Nền tảng LMS mà không cần phải dựng máy chủ API phức tạp, đồng thời bảo toàn tính hợp lệ 100% cho tất cả các bằng cấp cũ đã phát hành trong quá khứ.
 
 
@@ -195,7 +204,7 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_FORUM_001 (Ràng buộc 1 Vote/User & Idempotent Toggle):**
   * Mỗi `user_id` chỉ được vote 1 lượt trên mỗi bài/câu trả lời. Bấm Upvote lần đầu sẽ tăng +1 điểm; bấm lại lần nữa sẽ hủy vote (Un-vote) và giảm -1 điểm.
 * **BR_FORUM_002 (Phân quyền & Tự động Ghim Thread khi Pin Staff Answer):**
-  * Chỉ tài khoản có vai trò `INSTRUCTOR`, `TA`, `SUPER_ADMIN` hoặc `PARTNER_ADMIN` mới có quyền gọi lệnh ghim câu trả lời chính thức (`pin_staff_answer`).
+  * Chỉ tài khoản có vai trò `INSTRUCTOR`, `TA`, hoặc `SUPER_ADMIN` mới có quyền gọi lệnh ghim câu trả lời chính thức (`pin_staff_answer`).
   * Khi một câu trả lời được ghim làm `is_staff_answer = True`, bài thảo luận gốc (Thread) cũng tự động được đánh dấu `is_staff_pinned = True` để ưu tiên hiển thị trên đầu danh sách diễn đàn.
 * **BR_FORUM_003 (Phân quyền Tác giả/Moderation & Chỉ báo Bài viết đã Chỉnh sửa):**
   * *Quyền Chỉnh sửa & Xóa:* Tác giả bài viết (`author_user_id == current_user.id`) có quyền Cập nhật (`UpdateThread`, `UpdateReply`) hoặc Xóa (`DeleteThread`, `DeleteReply`) bài viết/bình luận của chính mình.
@@ -223,11 +232,11 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 ## 8. Quy tắc Quản lý Khóa học của Giảng viên (BR_INSTRUCTOR)
 
 * **BR_INSTRUCTOR_001 (Phân quyền Vai trò, Liên kết Đa Tổ chức & Quyền sở hữu Khóa học - Course Ownership & Partner Scoping):**
-  * Chỉ các tài khoản có vai trò `INSTRUCTOR`, `TA`, `SUPER_ADMIN` hoặc `PARTNER_ADMIN` mới có quyền gọi các RPC quản lý khóa học.
+  * Chỉ các tài khoản có vai trò `INSTRUCTOR`, `TA`, hoặc `SUPER_ADMIN` mới có quyền gọi các RPC quản lý khóa học.
   * *Liên kết Đa Tổ chức (Instructor Multi-Tenant Affiliation):* Một Giảng viên có thể thuộc/liên kết với nhiều Tổ chức/Trường học khác nhau (`user_id <-> partner_id` N-N). Giảng viên có quyền đại diện phát hành các khóa học cho từng Tổ chức mà mình có vai trò thành viên hợp lệ (`ACTIVE`).
   * *Ràng buộc Khóa học Bắt buộc thuộc Partner (`partner_id` NOT NULL):* 100% khóa học trên hệ thống BẮT BUỘC phải gắn với 1 Partner Organization đại diện bảo chứng. Không tồn tại khóa học mồ côi (`partner_id = NULL`). Khi tạo khóa học (`CreateCourse`), Giảng viên chỉ được chọn `partner_id` trong danh sách các Partner mà mình được cấp quyền. Với Giảng viên cá nhân tự do, hệ thống tự động gán `partner_id` mặc định là **`Coursera Project Network`** (`partner_id = "partner_community"`).
   * *Ràng buộc Quyền sở hữu (Course Ownership):* Mỗi khóa học được gắn với một Chủ sở hữu chính (`owner_id`) và danh sách Giảng viên đồng phụ trách (`co_instructor_ids`). Giảng viên chỉ có quyền chỉnh sửa (`UpdateCourse`), quản lý bài giảng (`CreateWeekModule`, `UpdateLesson`, v.v.) hoặc xóa (`DeleteCourse`) đối với khóa học do mình sở hữu hoặc phụ trách.
-  * *Quyền Admin toàn quyền:* `SUPER_ADMIN` và `PARTNER_ADMIN` giữ quyền ghi đè toàn hệ thống trên mọi khóa học.
+  * *Quyền Admin toàn quyền:* `SUPER_ADMIN` giữ quyền ghi đè toàn hệ thống trên mọi khóa học.
 * **BR_INSTRUCTOR_002 (Cơ chế Delete Cascade Dữ liệu Phụ thuộc):**
   * Khi thực hiện Xóa khóa học (`DeleteCourse`) hoặc Xóa các cấu trúc con (`DeleteWeekModule`, `DeleteLesson`, `DeleteLearningItem`), hệ thống tự động áp dụng cơ chế cascade xóa sạch các dữ liệu con liên quan (In-video Quizzes, Interactive Transcripts, Course Announcements) để bảo đảm tính toàn vẹn dữ liệu.
 * **BR_INSTRUCTOR_003 (Quy định Đăng Thông báo Khóa học Course Announcements):**

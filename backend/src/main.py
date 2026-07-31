@@ -6,7 +6,7 @@ from typing import Any, cast
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import Response, StreamingResponse
+from starlette.responses import JSONResponse, Response, StreamingResponse
 from starlette.routing import Mount, Route
 
 from src.gen.assessment.v1.assessment_connect import AssessmentServiceASGIApplication
@@ -90,7 +90,30 @@ async def lifespan(app: Starlette):
         await seed_database(auto_mode=True)
     except Exception as e:
         logger.warning("[STARTUP] Warning during startup: %s", e)
+
     yield
+
+    # --- GRACEFUL SHUTDOWN ---
+    logger.info("[SHUTDOWN] Initiating graceful shutdown...")
+
+    try:
+        from src.shared.infrastructure.database import dispose_engine
+
+        await dispose_engine()
+        logger.info("[SHUTDOWN] Database connection pool disposed.")
+    except Exception as e:
+        logger.warning("[SHUTDOWN] Error disposing database engine: %s", e)
+
+    try:
+        from opentelemetry import metrics, trace
+
+        trace.get_tracer_provider().shutdown()  # type: ignore
+        metrics.get_meter_provider().shutdown()  # type: ignore
+        logger.info("[SHUTDOWN] OpenTelemetry providers flushed and shut down.")
+    except Exception as e:
+        logger.warning("[SHUTDOWN] Error shutting down OpenTelemetry providers: %s", e)
+
+    logger.info("[SHUTDOWN] Graceful shutdown complete.")
 
 
 # 1. Dependency Injection (Bootstrapping Use Cases & Handlers)
@@ -200,9 +223,13 @@ async def proxy_media(request):
     return StreamingResponse(generate(), status_code=status_code, headers=headers)
 
 
-# 2. Register Routes & Middleware using Starlette
+async def health_check(request):
+    return JSONResponse({"status": "ok"})
+
 
 routes = [
+    Route("/health", endpoint=health_check, methods=["GET"]),
+    Route("/healthz", endpoint=health_check, methods=["GET"]),
     Mount("/catalog.v1.CatalogService", app=cast(Any, catalog_app)),
     Mount("/learning.v1.LearningService", app=cast(Any, learning_app)),
     Mount("/identity.v1.IdentityService", app=cast(Any, identity_app)),

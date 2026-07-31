@@ -1,9 +1,13 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { AuthNavbar } from "@/components/layout/AuthNavbar";
-import { AIChatbot } from "@/components/ai/AIChatbot";
+
+const AIChatbot = dynamic(() => import("@/components/ai/AIChatbot").then((mod) => mod.AIChatbot), {
+  ssr: false,
+});
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -18,9 +22,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col justify-between bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors duration-200">
       {isAuthPage ? <AuthNavbar /> : <Navbar />}
-      <div className="flex-1 flex flex-col">
-        {children}
-      </div>
+      <div className="flex-1 flex flex-col">{children}</div>
       <AIChatbot />
     </div>
   );

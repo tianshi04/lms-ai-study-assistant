@@ -89,6 +89,7 @@ message Course {
   bool financial_aid_enabled = 13;
   CourseStatus status = 14;
   string rejection_reason = 15;
+  string organization_id = 16;
 }
 
 // Specialization messages
@@ -168,6 +169,7 @@ message CreateCourseRequest {
   string subject = 7;
   string level = 8;
   bool financial_aid_enabled = 9;
+  string organization_id = 10;
 }
 
 message CreateCourseResponse {
@@ -201,9 +203,8 @@ message DeleteCourseResponse {
 
 message CreateWeekModuleRequest {
   string course_id = 1;
-  int32 week_number = 2;
-  string title = 3;
-  string summary = 4;
+  string title = 2;
+  string summary = 3;
 }
 
 message CreateWeekModuleResponse {

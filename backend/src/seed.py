@@ -25,7 +25,7 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 from sqlalchemy import select, text
-from src.shared.infrastructure.database import Base, async_session_scope, get_engine
+from src.shared.infrastructure.database import Base, async_session_scope
 from src.modules.assessment.infrastructure.models import (
     GradeAppealModel,
     HonorCodeModel,
@@ -62,7 +62,13 @@ from src.modules.forum.infrastructure.models import (
 )
 from src.modules.identity.application.identity_usecase import hash_password
 from src.modules.identity.domain.entities import UserRole
-from src.modules.identity.infrastructure.models import EnterpriseLicenseModel, UserModel
+from src.modules.identity.infrastructure.models import (
+    EnterpriseLicenseModel,
+    UserModel,
+    OrganizationModel,
+    OrganizationRoleModel,
+    OrganizationMemberModel,
+)
 from src.modules.learning.domain.entities import DeadlineStatus
 from src.modules.learning.infrastructure.models import (
     LearningProgressModel,
@@ -504,10 +510,6 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
     :param reset: If True, truncates all database tables before re-seeding.
     :param auto_mode: If True (e.g. dev startup), skips seeding if database already contains courses.
     """
-    engine = get_engine()
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
     async with async_session_scope() as session:
         if auto_mode:
             stmt = select(CourseModel).limit(1)
@@ -689,11 +691,67 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         partner_user = UserModel(
             id="user_partner_01",
             email="partner@coursera.ai",
-            full_name="Stanford Partner Admin",
-            role=UserRole.PARTNER_ADMIN,
+            full_name="Stanford Organization Admin",
+            role=UserRole.INSTRUCTOR,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=partner@coursera.ai",
             enterprise_seat_key="",
             password_hash=default_pw_hash,
+        )
+
+        org_role_admin = OrganizationRoleModel(
+            id="role_org_admin",
+            name="Organization Admin",
+            permissions=[
+                "org:manage",
+                "members:manage",
+                "courses:manage",
+                "seats:manage",
+            ],
+        )
+        org_role_instructor = OrganizationRoleModel(
+            id="role_org_instructor",
+            name="Organization Instructor",
+            permissions=["courses:write", "grades:view"],
+        )
+        org_role_ta = OrganizationRoleModel(
+            id="role_org_ta",
+            name="Teaching Assistant",
+            permissions=["forum:moderate", "grading:review"],
+        )
+
+        org_stanford = OrganizationModel(
+            id="partner_stanford",
+            name="Stanford University",
+            slug="stanford",
+            avatar_url="https://upload.wikimedia.org/wikipedia/commons/4/4b/Stanford_Cardinal_logo.svg",
+        )
+        org_community = OrganizationModel(
+            id="partner_community",
+            name="Coursera Project Network",
+            slug="coursera-project-network",
+            avatar_url="",
+        )
+
+        org_member_partner = OrganizationMemberModel(
+            id="member_partner_01",
+            user_id="user_partner_01",
+            organization_id="partner_stanford",
+            role_id="role_org_admin",
+            status="ACTIVE",
+        )
+        org_member_instructor = OrganizationMemberModel(
+            id="member_instructor_01",
+            user_id="user_instructor_01",
+            organization_id="partner_stanford",
+            role_id="role_org_instructor",
+            status="ACTIVE",
+        )
+        org_member_ta = OrganizationMemberModel(
+            id="member_ta_01",
+            user_id="user_ta_01",
+            organization_id="partner_stanford",
+            role_id="role_org_ta",
+            status="ACTIVE",
         )
 
         await session.merge(learner_user1)
@@ -703,6 +761,14 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         await session.merge(ta_user)
         await session.merge(admin_user)
         await session.merge(partner_user)
+        await session.merge(org_role_admin)
+        await session.merge(org_role_instructor)
+        await session.merge(org_role_ta)
+        await session.merge(org_stanford)
+        await session.merge(org_community)
+        await session.merge(org_member_partner)
+        await session.merge(org_member_instructor)
+        await session.merge(org_member_ta)
 
         # Seed Learning Progress & Deadlines
         prog1 = LearningProgressModel(

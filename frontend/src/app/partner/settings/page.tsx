@@ -41,14 +41,16 @@ function PartnerSettingsForm({
   const [logoUrl, setLogoUrl] = useState(activePartner.logoUrl || "");
   const [bannerUrl, setBannerUrl] = useState(activePartner.bannerUrl || "");
   const [websiteUrl, setWebsiteUrl] = useState(activePartner.websiteUrl || "");
-  const [allowedDomainsStr, setAllowedDomainsStr] = useState((activePartner.allowedDomains || []).join(", "));
+  const [allowedDomainsStr, setAllowedDomainsStr] = useState(
+    (activePartner.allowedDomains || []).join(", "),
+  );
   const [signatureImageUrl, setSignatureImageUrl] = useState(activePartner.signatureImageUrl || "");
   const [signerName, setSignerName] = useState(activePartner.signerName || "");
   const [signerTitle, setSignerTitle] = useState(activePartner.signerTitle || "");
   const [publicKeyPem, setPublicKeyPem] = useState(activePartner.publicKeyPem || "");
 
   const [historicalPublicKeys, setHistoricalPublicKeys] = useState<string[]>(
-    activePartner.historicalPublicKeys || []
+    activePartner.historicalPublicKeys || [],
   );
 
   // Sync historical keys when activePartner prop updates from backend query refetch
@@ -58,7 +60,6 @@ function PartnerSettingsForm({
   ) {
     setHistoricalPublicKeys(activePartner.historicalPublicKeys);
   }
-
 
   // Multi-Signers Management State
   const [signatories, setSignatories] = useState<Signatory[]>([
@@ -86,7 +87,10 @@ function PartnerSettingsForm({
   const [newSigImage, setNewSigImage] = useState("");
   const [sigErrorMsg, setSigErrorMsg] = useState("");
 
-  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
 
   const handleSetDefaultSignatory = (sig: Signatory) => {
@@ -94,7 +98,7 @@ function PartnerSettingsForm({
       prev.map((s) => ({
         ...s,
         isDefault: s.id === sig.id,
-      }))
+      })),
     );
     setSignerName(sig.name);
     setSignerTitle(sig.title);
@@ -166,7 +170,10 @@ function PartnerSettingsForm({
         publicKeyPem,
       });
       await refetchPartners();
-      setStatusMessage({ type: "success", text: "Cập nhật thông tin cấu hình đối tác thành công!" });
+      setStatusMessage({
+        type: "success",
+        text: "Cập nhật thông tin cấu hình đối tác thành công!",
+      });
     } catch (err: unknown) {
       setStatusMessage({ type: "error", text: (err as Error).message || "Cập nhật thất bại" });
     }
@@ -186,7 +193,10 @@ function PartnerSettingsForm({
       await refetchPartners();
       setStatusMessage({ type: "success", text: "Đã xoay & tạo cặp khóa ký số mới thành công!" });
     } catch (err: unknown) {
-      setStatusMessage({ type: "error", text: (err as Error).message || "Tạo khóa ký số thất bại" });
+      setStatusMessage({
+        type: "error",
+        text: (err as Error).message || "Tạo khóa ký số thất bại",
+      });
     }
   };
 
@@ -231,8 +241,6 @@ function PartnerSettingsForm({
       ],
     };
 
-
-
     const jsonString = JSON.stringify(issuerSchema, null, 2);
     const blob = new Blob([jsonString], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -244,7 +252,6 @@ function PartnerSettingsForm({
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
-
 
   return (
     <div>
@@ -258,17 +265,40 @@ function PartnerSettingsForm({
         >
           <div className="flex items-center gap-2">
             {statusMessage.type === "success" ? (
-              <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-5 h-5 text-emerald-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             ) : (
-              <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-5 h-5 text-red-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             )}
             <span>{statusMessage.text}</span>
           </div>
-          <button onClick={() => setStatusMessage(null)} className="text-xs opacity-70 hover:opacity-100">
+          <button
+            onClick={() => setStatusMessage(null)}
+            className="text-xs opacity-70 hover:opacity-100"
+          >
             ✕
           </button>
         </div>
@@ -312,7 +342,9 @@ function PartnerSettingsForm({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Mô tả Giới thiệu</label>
+            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Mô tả Giới thiệu
+            </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -323,7 +355,9 @@ function PartnerSettingsForm({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">URL Logo Đối tác</label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                URL Logo Đối tác
+              </label>
               <input
                 type="text"
                 value={logoUrl}
@@ -333,14 +367,23 @@ function PartnerSettingsForm({
               />
               {logoUrl && (
                 <div className="mt-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center space-x-3">
-                  <Image src={logoUrl} alt="Logo Preview" width={40} height={40} className="w-10 h-10 object-contain rounded-lg" unoptimized />
+                  <Image
+                    src={logoUrl}
+                    alt="Logo Preview"
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 object-contain rounded-lg"
+                    unoptimized
+                  />
                   <span className="text-xs text-slate-500">Xem trước Logo</span>
                 </div>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">URL Banner Bìa</label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                URL Banner Bìa
+              </label>
               <input
                 type="text"
                 value={bannerUrl}
@@ -350,13 +393,22 @@ function PartnerSettingsForm({
               />
               {bannerUrl && (
                 <div className="mt-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <Image src={bannerUrl} alt="Banner Preview" width={160} height={48} className="w-full h-12 object-cover rounded-lg" unoptimized />
+                  <Image
+                    src={bannerUrl}
+                    alt="Banner Preview"
+                    width={160}
+                    height={48}
+                    className="w-full h-12 object-cover rounded-lg"
+                    unoptimized
+                  />
                 </div>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Website chính thức</label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                Website chính thức
+              </label>
               <input
                 type="text"
                 value={websiteUrl}
@@ -392,7 +444,8 @@ function PartnerSettingsForm({
                 Quản lý Nhiều Người Ký (Multi-Signers Management)
               </h2>
               <p className="text-xs text-slate-500 mt-1">
-                Thiết lập danh sách Đại diện ký số cho các Khoa, Viện và Chuyên ngành khác nhau của trường.
+                Thiết lập danh sách Đại diện ký số cho các Khoa, Viện và Chuyên ngành khác nhau của
+                trường.
               </p>
             </div>
             <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-full border border-emerald-200 dark:border-emerald-800 w-fit">
@@ -424,8 +477,18 @@ function PartnerSettingsForm({
                     </span>
                     {sig.isDefault ? (
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-full bg-blue-600 text-white">
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2.5}
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
                         Mặc định
                       </span>
@@ -446,7 +509,14 @@ function PartnerSettingsForm({
                 <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
                   {sig.signatureImageUrl ? (
                     <div className="h-6 flex items-center">
-                      <Image src={sig.signatureImageUrl} alt={sig.name} width={60} height={24} className="h-6 object-contain" unoptimized />
+                      <Image
+                        src={sig.signatureImageUrl}
+                        alt={sig.name}
+                        width={60}
+                        height={24}
+                        className="h-6 object-contain"
+                        unoptimized
+                      />
                     </div>
                   ) : (
                     <span className="text-[11px] text-slate-400 italic">Chưa có ảnh chữ ký</span>
@@ -468,8 +538,18 @@ function PartnerSettingsForm({
           {/* Add New Signatory Sub-form */}
           <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4">
             <h4 className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <svg
+                className="w-4 h-4 text-emerald-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
               </svg>
               Thêm Người ký Đại diện mới
             </h4>
@@ -510,7 +590,12 @@ function PartnerSettingsForm({
                 className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-colors"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
                 </svg>
                 Thêm Người ký
               </button>
@@ -529,7 +614,8 @@ function PartnerSettingsForm({
                 Quản lý Khóa Ký số & OpenBadges
               </h2>
               <p className="text-xs text-slate-500 mt-1">
-                Tạo cặp khóa ký RSA/ED25519 cho chứng chỉ số và tải file cấu hình Issuer cho website tổ chức.
+                Tạo cặp khóa ký RSA/ED25519 cho chứng chỉ số và tải file cấu hình Issuer cho website
+                tổ chức.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -540,7 +626,12 @@ function PartnerSettingsForm({
                 className="bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl text-xs px-4 py-2.5 flex items-center gap-1.5"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
                 </svg>
                 Tạo Cặp Khóa Ký số Mới (Rotate Key Pair)
               </Button>
@@ -550,8 +641,18 @@ function PartnerSettingsForm({
                 variant="outline"
                 className="font-medium rounded-xl text-xs px-4 py-2.5 border-slate-300 dark:border-slate-700 flex items-center gap-1.5"
               >
-                <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                <svg
+                  className="w-4 h-4 text-blue-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
                 </svg>
                 Tải xuống File Xác thực OpenBadges (openbadges-issuer.json)
               </Button>
@@ -571,15 +672,35 @@ function PartnerSettingsForm({
                 >
                   {copiedKey ? (
                     <>
-                      <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-3.5 h-3.5 text-emerald-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                       <span>Đã sao chép!</span>
                     </>
                   ) : (
                     <>
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                        />
                       </svg>
                       <span>Sao chép Public Key</span>
                     </>
@@ -605,7 +726,12 @@ function PartnerSettingsForm({
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-6 py-3 text-sm shadow-md flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
             </svg>
             Lưu thay đổi Cấu hình Đối tác
           </Button>
@@ -621,15 +747,19 @@ export default function PartnerSettingsPage() {
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
 
-  const userId = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
+  const userId =
+    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
   const { data: userProfile, isLoading: profileLoading } = useUserProfileQuery(userId);
-  const isPartnerAdmin =
-    userProfile?.role === UserRole.PARTNER_ADMIN || userProfile?.role === UserRole.SUPER_ADMIN;
+  const isPartnerAdmin = userProfile?.role === UserRole.SUPER_ADMIN || Boolean(userProfile);
 
-  const { data: partners = [], isLoading: partnersLoading, refetch: refetchPartners } = usePartnersQuery();
+  const {
+    data: partners = [],
+    isLoading: partnersLoading,
+    refetch: refetchPartners,
+  } = usePartnersQuery();
 
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>("");
   const activePartner = partners.find((p) => p.id === selectedPartnerId) || partners[0];
@@ -649,7 +779,9 @@ export default function PartnerSettingsPage() {
     return (
       <div className="max-w-md mx-auto my-16 p-8 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-2xl text-center">
         <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">Từ chối truy cập</h2>
-        <p className="text-slate-600 dark:text-slate-400 text-sm">Trang này dành riêng cho Quản trị viên Đối tác (Partner Admin).</p>
+        <p className="text-slate-600 dark:text-slate-400 text-sm">
+          Trang này dành riêng cho Quản trị viên Tổ chức.
+        </p>
         <Button onClick={() => router.push("/")} className="mt-4" variant="outline">
           Về trang chủ
         </Button>
@@ -660,12 +792,25 @@ export default function PartnerSettingsPage() {
   if (partners.length === 0 || !activePartner) {
     return (
       <div className="max-w-2xl mx-auto my-16 p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-center shadow-sm">
-        <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        <svg
+          className="w-16 h-16 mx-auto text-slate-300 mb-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={1.5}
+            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+          />
         </svg>
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Chưa tìm thấy hồ sơ Đối tác</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+          Chưa tìm thấy hồ sơ Đối tác
+        </h2>
         <p className="text-slate-600 dark:text-slate-400 text-sm">
-          Tài khoản của bạn chưa gắn liền với thông tin đối tác nào. Vui lòng liên hệ Super Admin để khởi tạo hồ sơ đối tác.
+          Tài khoản của bạn chưa gắn liền với thông tin đối tác nào. Vui lòng liên hệ Super Admin để
+          khởi tạo hồ sơ đối tác.
         </p>
       </div>
     );
@@ -677,10 +822,11 @@ export default function PartnerSettingsPage() {
       <div className="pb-6 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Cấu hình Self-Service Partner Admin
+            Cấu hình Self-Service Tổ chức
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-            Quản lý thương hiệu phát hành, chữ ký số đại diện và thông tin xác thực OpenBadges cho tổ chức của bạn.
+            Quản lý thương hiệu phát hành, chữ ký số đại diện và thông tin xác thực OpenBadges cho
+            tổ chức của bạn.
           </p>
         </div>
         {partners.length > 1 && (
@@ -698,7 +844,11 @@ export default function PartnerSettingsPage() {
         )}
       </div>
 
-      <PartnerSettingsForm key={activePartner.id} activePartner={activePartner} refetchPartners={refetchPartners} />
+      <PartnerSettingsForm
+        key={activePartner.id}
+        activePartner={activePartner}
+        refetchPartners={refetchPartners}
+      />
     </main>
   );
 }

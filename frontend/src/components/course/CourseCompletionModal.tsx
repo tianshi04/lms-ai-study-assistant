@@ -6,7 +6,6 @@ import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 
-
 export interface CourseCompletionModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -22,7 +21,6 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
   courseTitle,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  
 
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number>(0);
@@ -194,7 +192,13 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
 
         {/* Trophy SVG Icon */}
         <div className="relative z-20 mx-auto w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-white/20 shadow-inner">
-          <svg className="w-9 h-9 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+          <svg
+            className="w-9 h-9 text-amber-300"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.75}
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -216,8 +220,18 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
         ) : certError ? (
           <div className="relative z-20 mt-5 mx-auto max-w-sm p-3.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-100 text-xs text-left backdrop-blur-sm">
             <span className="font-bold flex items-center gap-1.5 mb-1">
-              <svg className="w-4 h-4 text-red-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <svg
+                className="w-4 h-4 text-red-200"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
               <span>{"Không thể Xác minh Chứng chỉ"}</span>
             </span>
@@ -228,7 +242,13 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
             onClick={handleClaimCertificate}
             className="relative z-20 mt-5 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm shadow-lg hover:shadow-amber-400/25 transition-all transform active:scale-95 cursor-pointer"
           >
-            <svg className="w-5 h-5 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg
+              className="w-5 h-5 text-slate-950"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -243,7 +263,9 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
       {/* Course Review & Rating Section */}
       <div className="p-6 bg-white dark:bg-slate-900 space-y-5">
         <div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">{"Đánh giá & Nhận xét từ Học viên"}</h3>
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">
+            {"Đánh giá & Nhận xét từ Học viên"}
+          </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {"Các nhận xét thực tế từ học viên đã tham gia khóa học này"}
           </p>
@@ -252,11 +274,19 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
         {submitted ? (
           <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-4 rounded-xl text-center space-y-2">
             <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/60 rounded-full flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
             </div>
-            <h4 className="text-sm font-bold text-emerald-800 dark:text-emerald-300">{"Đã gửi đánh giá thành công!"}</h4>
+            <h4 className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
+              {"Đã gửi đánh giá thành công!"}
+            </h4>
             <p className="text-xs text-emerald-600 dark:text-emerald-400">
               {"Cảm ơn bạn đã phản hồi ý kiến cho khóa học."}
             </p>
@@ -266,8 +296,18 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                 onClick={() => setSubmitted(false)}
                 className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors cursor-pointer"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                  />
                 </svg>
                 <span>{"Viết / Sửa đánh giá"}</span>
               </button>
@@ -293,8 +333,11 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                       className="p-1 cursor-pointer transition-transform hover:scale-110 focus:outline-none"
                     >
                       <svg
-                        className={`w-8 h-8 transition-colors ${active ? "text-amber-400 fill-amber-400" : "text-slate-300 dark:text-slate-700"
-                          }`}
+                        className={`w-8 h-8 transition-colors ${
+                          active
+                            ? "text-amber-400 fill-amber-400"
+                            : "text-slate-300 dark:text-slate-700"
+                        }`}
                         viewBox="0 0 24 24"
                         stroke="currentColor"
                         strokeWidth={1.5}

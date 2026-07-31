@@ -17,4 +17,3 @@ export default async function Home() {
 
   return <PublicLanding />;
 }
-

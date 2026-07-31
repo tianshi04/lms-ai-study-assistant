@@ -5,7 +5,6 @@ import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { useToast } from "@/components/ui/Toast";
 
-
 interface PeerAssignmentWorkspaceProps {
   itemId: string;
   title?: string;
@@ -25,12 +24,12 @@ interface PeerItem {
   }[];
 }
 
-export function PeerAssignmentWorkspace({
-  itemId,
-  title,
-  userId,
-}: PeerAssignmentWorkspaceProps) {
-  const effectiveUserId = userId || (typeof window !== "undefined" ? localStorage.getItem("user_id") || "user-demo-1" : "user-demo-1");
+export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmentWorkspaceProps) {
+  const effectiveUserId =
+    userId ||
+    (typeof window !== "undefined"
+      ? localStorage.getItem("user_id") || "user-demo-1"
+      : "user-demo-1");
 
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
@@ -56,9 +55,11 @@ export function PeerAssignmentWorkspace({
     }
     return "";
   });
-  const [submissionUrl, setSubmissionUrl] = useState("https://github.com/learner/supervised-ml-capstone");
+  const [submissionUrl, setSubmissionUrl] = useState(
+    "https://github.com/learner/supervised-ml-capstone",
+  );
   const [textContent, setTextContent] = useState(
-    "Supervised Machine Learning Model Capstone Project. Built a Random Forest & Linear Regression model with 94.2% test accuracy."
+    "Supervised Machine Learning Model Capstone Project. Built a Random Forest & Linear Regression model with 94.2% test accuracy.",
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -67,21 +68,59 @@ export function PeerAssignmentWorkspace({
     {
       reviewId: "rev-sub-001",
       submissionUrl: "https://github.com/peer-alex/ml-capstone-project",
-      textContent: "Implemented XGBoost model for housing price prediction with Feature Engineering and K-Fold cross validation.",
+      textContent:
+        "Implemented XGBoost model for housing price prediction with Feature Engineering and K-Fold cross validation.",
       rubricCriteria: [
-        { criteriaId: "c1", title: "Code Structure & Best Practices", maxScore: 10, scoreGiven: 9, feedback: "Great modular structure!" },
-        { criteriaId: "c2", title: "Model Evaluation Metrics", maxScore: 10, scoreGiven: 10, feedback: "Thorough MSE & R2 reporting." },
-        { criteriaId: "c3", title: "Documentation & Readme", maxScore: 10, scoreGiven: 8, feedback: "Clear installation steps." },
+        {
+          criteriaId: "c1",
+          title: "Code Structure & Best Practices",
+          maxScore: 10,
+          scoreGiven: 9,
+          feedback: "Great modular structure!",
+        },
+        {
+          criteriaId: "c2",
+          title: "Model Evaluation Metrics",
+          maxScore: 10,
+          scoreGiven: 10,
+          feedback: "Thorough MSE & R2 reporting.",
+        },
+        {
+          criteriaId: "c3",
+          title: "Documentation & Readme",
+          maxScore: 10,
+          scoreGiven: 8,
+          feedback: "Clear installation steps.",
+        },
       ],
     },
     {
       reviewId: "rev-sub-002",
       submissionUrl: "https://github.com/peer-sam/regression-model",
-      textContent: "Supervised Learning project comparing Linear Regression and Polynomial Regression models.",
+      textContent:
+        "Supervised Learning project comparing Linear Regression and Polynomial Regression models.",
       rubricCriteria: [
-        { criteriaId: "c1", title: "Code Structure & Best Practices", maxScore: 10, scoreGiven: 8, feedback: "Good effort." },
-        { criteriaId: "c2", title: "Model Evaluation Metrics", maxScore: 10, scoreGiven: 7, feedback: "Missing cross validation." },
-        { criteriaId: "c3", title: "Documentation & Readme", maxScore: 10, scoreGiven: 8, feedback: "Decent readme." },
+        {
+          criteriaId: "c1",
+          title: "Code Structure & Best Practices",
+          maxScore: 10,
+          scoreGiven: 8,
+          feedback: "Good effort.",
+        },
+        {
+          criteriaId: "c2",
+          title: "Model Evaluation Metrics",
+          maxScore: 10,
+          scoreGiven: 7,
+          feedback: "Missing cross validation.",
+        },
+        {
+          criteriaId: "c3",
+          title: "Documentation & Readme",
+          maxScore: 10,
+          scoreGiven: 8,
+          feedback: "Decent readme.",
+        },
       ],
     },
   ]);
@@ -115,18 +154,21 @@ export function PeerAssignmentWorkspace({
       }
       setHasSubmitted(true);
       setLockNotice("");
-      setSubmitStatus("Assignment submitted successfully. Please grade 3 peer submissions to unlock your final score.");
+      setSubmitStatus(
+        "Assignment submitted successfully. Please grade 3 peer submissions to unlock your final score.",
+      );
       toast.success("Assignment submitted successfully!");
       setActiveTab("grade");
     } finally {
-
       setIsSubmitting(false);
     }
   };
 
   const handleTabClick = (tab: "submit" | "grade" | "appeal") => {
     if ((tab === "grade" || tab === "appeal") && !hasSubmitted) {
-      setLockNotice("🔒 Theo quy tắc BR_PEER_001: Bạn bắt buộc phải nộp bài cá nhân ở Tab 1 trước khi mở khóa chấm chéo bài của bạn học.");
+      setLockNotice(
+        "🔒 Theo quy tắc BR_PEER_001: Bạn bắt buộc phải nộp bài cá nhân ở Tab 1 trước khi mở khóa chấm chéo bài của bạn học.",
+      );
       return;
     }
     setLockNotice("");
@@ -177,7 +219,6 @@ export function PeerAssignmentWorkspace({
     }
   };
 
-
   return (
     <div className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
       {/* Header */}
@@ -203,7 +244,13 @@ export function PeerAssignmentWorkspace({
           >
             <span>1. My Submission</span>
             {hasSubmitted && (
-              <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg
+                className="w-3.5 h-3.5 text-emerald-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             )}
@@ -215,14 +262,24 @@ export function PeerAssignmentWorkspace({
               activeTab === "grade"
                 ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
                 : !hasSubmitted
-                ? "opacity-50 text-slate-400 cursor-not-allowed"
-                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                  ? "opacity-50 text-slate-400 cursor-not-allowed"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             <span>2. Grade Peers (3/3)</span>
             {!hasSubmitted && (
-              <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              <svg
+                className="w-3 h-3 text-slate-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
               </svg>
             )}
           </button>
@@ -233,14 +290,24 @@ export function PeerAssignmentWorkspace({
               activeTab === "appeal"
                 ? "bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs"
                 : !hasSubmitted
-                ? "opacity-50 text-slate-400 cursor-not-allowed"
-                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                  ? "opacity-50 text-slate-400 cursor-not-allowed"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             <span>3. Grade Appeal</span>
             {!hasSubmitted && (
-              <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              <svg
+                className="w-3 h-3 text-slate-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
               </svg>
             )}
           </button>
@@ -250,8 +317,18 @@ export function PeerAssignmentWorkspace({
       {/* Lock Warning Notice Banner */}
       {lockNotice && (
         <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200">
-          <svg className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          <svg
+            className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
           </svg>
           <span>{lockNotice}</span>
         </div>
@@ -262,13 +339,24 @@ export function PeerAssignmentWorkspace({
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 text-xs text-blue-900 dark:text-blue-200 space-y-1">
             <h4 className="font-bold flex items-center gap-1.5">
-              <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-4 h-4 text-blue-600 dark:text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <span>Submission Requirements:</span>
             </h4>
             <p>
-              Submit your GitHub repository URL and project summary. You must submit your assignment first to unlock peer review grading.
+              Submit your GitHub repository URL and project summary. You must submit your assignment
+              first to unlock peer review grading.
             </p>
           </div>
 
@@ -299,7 +387,13 @@ export function PeerAssignmentWorkspace({
 
             {submitStatus && (
               <p className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <svg
+                  className="w-4 h-4 text-emerald-600 dark:text-emerald-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
                 <span>{submitStatus}</span>
@@ -312,8 +406,18 @@ export function PeerAssignmentWorkspace({
               className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-xs flex items-center gap-2"
             >
               <span>{isSubmitting ? "Submitting..." : "Submit Peer Assignment"}</span>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
               </svg>
             </button>
           </div>
@@ -325,7 +429,8 @@ export function PeerAssignmentWorkspace({
         <div className="space-y-6">
           <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-xs text-amber-900 dark:text-amber-200">
             <p className="font-semibold">
-              Evaluate peer submissions objectively against the Rubric criteria below. Outlier flags are automatically triggered if score variance exceeds 30%.
+              Evaluate peer submissions objectively against the Rubric criteria below. Outlier flags
+              are automatically triggered if score variance exceeds 30%.
             </p>
           </div>
 
@@ -344,8 +449,18 @@ export function PeerAssignmentWorkspace({
                   rel="noreferrer"
                   className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
                   </svg>
                   <span>View Repository</span>
                 </a>
@@ -380,9 +495,7 @@ export function PeerAssignmentWorkspace({
                       max={crit.maxScore}
                       step={1}
                       value={crit.scoreGiven}
-                      onChange={(e) =>
-                        handleScoreChange(pIdx, cIdx, parseFloat(e.target.value))
-                      }
+                      onChange={(e) => handleScoreChange(pIdx, cIdx, parseFloat(e.target.value))}
                       className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
                     />
                   </div>
@@ -407,13 +520,25 @@ export function PeerAssignmentWorkspace({
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900/50 text-xs text-purple-900 dark:text-purple-200">
             <h4 className="font-bold mb-1 flex items-center gap-1.5">
-              <svg className="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+              <svg
+                className="w-4 h-4 text-purple-600 dark:text-purple-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
+                />
               </svg>
               <span>Submit Grade Appeal (BR_PEER_003)</span>
             </h4>
             <p>
-              If you believe peer reviewers scored your assignment unfairly or incorrectly, submit an appeal within 7 days. A Teaching Assistant (TA) will re-grade your submission directly.
+              If you believe peer reviewers scored your assignment unfairly or incorrectly, submit
+              an appeal within 7 days. A Teaching Assistant (TA) will re-grade your submission
+              directly.
             </p>
           </div>
 

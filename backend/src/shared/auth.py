@@ -14,11 +14,12 @@ REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 ADMIN_ROLES = {
     "SUPER_ADMIN",
-    "PARTNER_ADMIN",
     "ADMIN",
     "USER_ROLE_SUPER_ADMIN",
-    "USER_ROLE_PARTNER_ADMIN",
     "USER_ROLE_ADMIN",
+    "ORGANIZATION ADMIN",
+    "ORG_ADMIN",
+    "ORG_OWNER",
 }
 
 STAFF_ROLES = ADMIN_ROLES | {
@@ -26,6 +27,9 @@ STAFF_ROLES = ADMIN_ROLES | {
     "TA",
     "USER_ROLE_INSTRUCTOR",
     "USER_ROLE_TA",
+    "ORGANIZATION INSTRUCTOR",
+    "ORG_INSTRUCTOR",
+    "TEACHING ASSISTANT",
 }
 
 
@@ -51,17 +55,37 @@ class CurrentUserContext:
 
     id: str
     email: str = ""
-    role: str = ""  # Legacy global role for backward compatibility
+    role: str = ""
     system_role: str = "USER"  # SUPER_ADMIN | USER
     active_org_id: Optional[str] = None
     org_role: Optional[str] = None
     permissions: set[str] = field(default_factory=set)
 
     def is_admin(self) -> bool:
-        return self.is_system_admin() or is_admin_role(self.role)
+        if self.is_system_admin() or is_admin_role(self.role):
+            return True
+        if self.org_role and self.org_role.upper() in (
+            "ORGANIZATION ADMIN",
+            "ORG_ADMIN",
+            "ORG_OWNER",
+        ):
+            return True
+        return False
 
     def is_staff(self) -> bool:
-        return self.is_system_admin() or is_staff_role(self.role)
+        if self.is_system_admin() or is_staff_role(self.role):
+            return True
+        if self.org_role and self.org_role.upper() in (
+            "ORGANIZATION ADMIN",
+            "ORG_ADMIN",
+            "ORG_OWNER",
+            "ORGANIZATION INSTRUCTOR",
+            "ORG_INSTRUCTOR",
+            "TEACHING ASSISTANT",
+            "TA",
+        ):
+            return True
+        return False
 
     def is_system_admin(self) -> bool:
         return self.system_role.upper() == "SUPER_ADMIN" or self.role in (
@@ -86,7 +110,6 @@ class CurrentUserContext:
         return self.active_org_id
 
 
-# Alias for backward compatibility across existing handlers
 CurrentUser = CurrentUserContext
 
 

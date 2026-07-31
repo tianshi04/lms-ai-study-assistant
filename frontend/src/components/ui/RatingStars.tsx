@@ -23,7 +23,11 @@ export function RatingStars({
   };
 
   return (
-    <div className={cn("inline-flex items-center gap-1", className)}>
+    <div
+      role="img"
+      aria-label={`Đánh giá ${rating.toFixed(1)} trên ${maxStars} sao`}
+      className={cn("inline-flex items-center gap-1", className)}
+    >
       <div className="flex items-center gap-0.5 text-amber-400">
         {Array.from({ length: maxStars }).map((_, i) => {
           const starIndex = i + 1;
@@ -31,9 +35,12 @@ export function RatingStars({
           return (
             <svg
               key={i}
+              aria-hidden="true"
               className={cn(
                 sizeClasses[size],
-                isFilled ? "fill-amber-400 text-amber-400" : "text-slate-300 dark:text-slate-700 fill-none"
+                isFilled
+                  ? "fill-amber-400 text-amber-400"
+                  : "text-slate-300 dark:text-slate-700 fill-none",
               )}
               viewBox="0 0 24 24"
               stroke="currentColor"

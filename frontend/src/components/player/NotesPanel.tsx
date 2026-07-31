@@ -2,7 +2,6 @@
 
 import type { PersonalNote } from "@/gen/learning/v1/learning_pb";
 
-
 interface NotesPanelProps {
   notes: PersonalNote[];
   highlightText: string;
@@ -22,13 +21,18 @@ export function NotesPanel({
   onNoteCommentChange,
   onSaveNote,
 }: NotesPanelProps) {
-  const locale = 'vi';
+  const locale = "vi";
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Create Note Form */}
-      <form onSubmit={onSaveNote} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm">
-        <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">{"Ghi chú của tôi"}</h4>
+      <form
+        onSubmit={onSaveNote}
+        className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm"
+      >
+        <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+          {"Ghi chú của tôi"}
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <input
             type="text"
@@ -62,13 +66,22 @@ export function NotesPanel({
       ) : (
         <div className="space-y-3">
           {notes.map((note) => (
-            <div key={note.id} className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-xl text-xs space-y-1 shadow-sm">
+            <div
+              key={note.id}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-xl text-xs space-y-1 shadow-sm"
+            >
               <div className="flex items-center justify-between text-slate-400 dark:text-slate-500">
                 <span className="font-mono text-[10px]">Note ID: {note.id}</span>
-                <span>{new Date(note.createdAt).toLocaleDateString(locale === "vi" ? "vi-VN" : "en-US")}</span>
+                <span>
+                  {new Date(note.createdAt).toLocaleDateString(locale === "vi" ? "vi-VN" : "en-US")}
+                </span>
               </div>
-              <p className="text-blue-600 dark:text-blue-300 font-semibold italic">&quot;{note.highlightedText}&quot;</p>
-              {note.noteComment && <p className="text-slate-700 dark:text-slate-300">{note.noteComment}</p>}
+              <p className="text-blue-600 dark:text-blue-300 font-semibold italic">
+                &quot;{note.highlightedText}&quot;
+              </p>
+              {note.noteComment && (
+                <p className="text-slate-700 dark:text-slate-300">{note.noteComment}</p>
+              )}
             </div>
           ))}
         </div>

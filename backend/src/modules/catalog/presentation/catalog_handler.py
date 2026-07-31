@@ -153,6 +153,8 @@ def _to_pb_course(course: Course) -> pb.Course:
         financial_aid_enabled=getattr(course, "financial_aid_enabled", True),
         status=_to_pb_course_status(getattr(course, "status", "PUBLISHED")),
         rejection_reason=getattr(course, "rejection_reason", "") or "",
+        organization_id=getattr(course, "organization_id", "partner_community")
+        or "partner_community",
     )
 
 
@@ -340,6 +342,7 @@ class CatalogHandler(CatalogService):
             level=request.level,
             owner_id=user.id,
             financial_aid_enabled=request.financial_aid_enabled,
+            organization_id=request.organization_id,
         )
         return pb.CreateCourseResponse(course=_to_pb_course(course))
 
@@ -373,7 +376,6 @@ class CatalogHandler(CatalogService):
         user = self._verify_instructor_permission()
         wm = await self.use_case.create_week_module(
             course_id=request.course_id,
-            week_number=request.week_number,
             title=request.title,
             summary=request.summary,
             current_user=user,
@@ -458,7 +460,9 @@ class CatalogHandler(CatalogService):
 
         try:
             user_display_name = (
-                current_user.email.split("@")[0] if current_user.email else "Học viên"
+                current_user.email.split("@")[0]
+                if current_user.email
+                else current_user.id
             )
             review = await self.use_case.submit_course_review(
                 user_id=current_user.id,
@@ -668,7 +672,7 @@ class CatalogHandler(CatalogService):
         ],
     ) -> pb.CreateCourseAnnouncementResponse:
         user = self._verify_instructor_permission()
-        author_name = user.email.split("@")[0] if user.email else "Giảng viên"
+        author_name = user.email.split("@")[0] if user.email else user.id
         ann = await self.use_case.create_course_announcement(
             course_id=request.course_id,
             author_id=user.id,

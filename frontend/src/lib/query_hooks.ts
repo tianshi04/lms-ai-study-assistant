@@ -1,11 +1,26 @@
-import { useQuery, useMutation, useQueryClient, keepPreviousData, type UseQueryOptions, type UseMutationOptions } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+  type UseQueryOptions,
+  type UseMutationOptions,
+} from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
-import { CatalogService, type Course, type Category, type CourseReview } from "@/gen/catalog/v1/catalog_pb";
+import {
+  CatalogService,
+  type Course,
+  type Category,
+  type CourseReview,
+} from "@/gen/catalog/v1/catalog_pb";
 
 /**
  * Custom TanStack Query hook for fetching single course details.
  */
-export function useCourseDetailQuery(courseId: string, options?: Partial<UseQueryOptions<Course | null, Error>>) {
+export function useCourseDetailQuery(
+  courseId: string,
+  options?: Partial<UseQueryOptions<Course | null, Error>>,
+) {
   return useQuery<Course | null, Error>({
     queryKey: ["courseDetail", courseId],
     queryFn: async () => {
@@ -22,7 +37,10 @@ export function useCourseDetailQuery(courseId: string, options?: Partial<UseQuer
 /**
  * Custom TanStack Query hook for fetching course reviews.
  */
-export function useCourseReviewsQuery(courseId: string, options?: Partial<UseQueryOptions<CourseReview[], Error>>) {
+export function useCourseReviewsQuery(
+  courseId: string,
+  options?: Partial<UseQueryOptions<CourseReview[], Error>>,
+) {
   return useQuery<CourseReview[], Error>({
     queryKey: ["courseReviews", courseId],
     queryFn: async () => {
@@ -36,13 +54,51 @@ export function useCourseReviewsQuery(courseId: string, options?: Partial<UseQue
   });
 }
 
-import { IdentityService, type User, type EnterpriseSeat, type InstructorApplication } from "@/gen/identity/v1/identity_pb";
+import {
+  IdentityService,
+  type User,
+  type EnterpriseSeat,
+  type InstructorApplication,
+} from "@/gen/identity/v1/identity_pb";
 import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
-import { LearningService, type LearningProgress, type PersonalNote } from "@/gen/learning/v1/learning_pb";
-import { AssessmentService, type QuizResult, type AutoGradedLabResult, type QuestionBank, type Question, type QuestionOption } from "@/gen/assessment/v1/assessment_pb";
+import {
+  LearningService,
+  type LearningProgress,
+  type PersonalNote,
+  type EnrolledCourseSummary,
+} from "@/gen/learning/v1/learning_pb";
+
+// --- Learning Hooks ---
+
+export function useMyEnrolledCoursesQuery(
+  options?: Partial<UseQueryOptions<EnrolledCourseSummary[], Error>>,
+) {
+  return useQuery<EnrolledCourseSummary[], Error>({
+    queryKey: ["myEnrolledCourses"],
+    queryFn: async () => {
+      const client = getRpcClient(LearningService);
+      const res = await client.listMyEnrolledCourses({});
+      return res.courses || [];
+    },
+    ...options,
+  });
+}
+import {
+  AssessmentService,
+  type QuizResult,
+  type AutoGradedLabResult,
+  type QuestionBank,
+  type Question,
+  type QuestionOption,
+} from "@/gen/assessment/v1/assessment_pb";
 import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
 import { ForumService, type ForumThread } from "@/gen/forum/v1/forum_pb";
-import { PaymentService, PlanType, type CoursePurchase, type UserSubscription } from "@/gen/payment/v1/payment_pb";
+import {
+  PaymentService,
+  PlanType,
+  type CoursePurchase,
+  type UserSubscription,
+} from "@/gen/payment/v1/payment_pb";
 
 export interface CourseFilters {
   searchQuery?: string;
@@ -55,7 +111,10 @@ export interface CourseFilters {
 /**
  * Custom TanStack Query hook for fetching the course catalog.
  */
-export function useCoursesQuery(filters?: CourseFilters, options?: Partial<UseQueryOptions<Course[], Error>>) {
+export function useCoursesQuery(
+  filters?: CourseFilters,
+  options?: Partial<UseQueryOptions<Course[], Error>>,
+) {
   const normalizedFilters: CourseFilters = {
     searchQuery: filters?.searchQuery || "",
     subject: filters?.subject || "",
@@ -79,7 +138,10 @@ export function useCoursesQuery(filters?: CourseFilters, options?: Partial<UseQu
 /**
  * Custom TanStack Query hook for fetching categories.
  */
-export function useCategoriesQuery(typeFilter?: string, options?: Partial<UseQueryOptions<Category[], Error>>) {
+export function useCategoriesQuery(
+  typeFilter?: string,
+  options?: Partial<UseQueryOptions<Category[], Error>>,
+) {
   return useQuery<Category[], Error>({
     queryKey: ["categories", typeFilter],
     queryFn: async () => {
@@ -92,7 +154,9 @@ export function useCategoriesQuery(typeFilter?: string, options?: Partial<UseQue
 }
 
 export function useCreateCategoryMutation(
-  options?: Partial<UseMutationOptions<Category | undefined, Error, { name: string; type: string }>>
+  options?: Partial<
+    UseMutationOptions<Category | undefined, Error, { name: string; type: string }>
+  >,
 ) {
   const queryClient = useQueryClient();
   return useMutation<Category | undefined, Error, { name: string; type: string }>({
@@ -110,7 +174,7 @@ export function useCreateCategoryMutation(
 }
 
 export function useDeleteCategoryMutation(
-  options?: Partial<UseMutationOptions<boolean, Error, { id: string }>>
+  options?: Partial<UseMutationOptions<boolean, Error, { id: string }>>,
 ) {
   const queryClient = useQueryClient();
   return useMutation<boolean, Error, { id: string }>({
@@ -132,7 +196,10 @@ export function useDeleteCategoryMutation(
 /**
  * Custom TanStack Query hook for fetching current user profile.
  */
-export function useUserProfileQuery(userId?: string, options?: Partial<UseQueryOptions<User, Error>>) {
+export function useUserProfileQuery(
+  userId?: string,
+  options?: Partial<UseQueryOptions<User, Error>>,
+) {
   return useQuery<User, Error>({
     queryKey: ["userProfile", userId],
     queryFn: async () => {
@@ -151,9 +218,19 @@ export function useUserProfileQuery(userId?: string, options?: Partial<UseQueryO
  * Custom TanStack Mutation hook for assigning enterprise seat key.
  */
 export function useSaveEnterpriseKeyMutation(
-  options?: Partial<UseMutationOptions<{ success: boolean; message: string }, Error, { userId: string; enterpriseSeatKey: string }>>
+  options?: Partial<
+    UseMutationOptions<
+      { success: boolean; message: string },
+      Error,
+      { userId: string; enterpriseSeatKey: string }
+    >
+  >,
 ) {
-  return useMutation<{ success: boolean; message: string }, Error, { userId: string; enterpriseSeatKey: string }>({
+  return useMutation<
+    { success: boolean; message: string },
+    Error,
+    { userId: string; enterpriseSeatKey: string }
+  >({
     mutationFn: async ({ userId, enterpriseSeatKey }) => {
       const client = getRpcClient(IdentityService);
       const res = await client.assignEnterpriseSeat({ userId, enterpriseSeatKey });
@@ -163,7 +240,9 @@ export function useSaveEnterpriseKeyMutation(
   });
 }
 
-export function useEnterpriseSeatsQuery(options?: Partial<UseQueryOptions<EnterpriseSeat[], Error>>) {
+export function useEnterpriseSeatsQuery(
+  options?: Partial<UseQueryOptions<EnterpriseSeat[], Error>>,
+) {
   return useQuery<EnterpriseSeat[], Error>({
     queryKey: ["enterpriseSeats"],
     queryFn: async () => {
@@ -179,7 +258,9 @@ export function useEnterpriseSeatsQuery(options?: Partial<UseQueryOptions<Enterp
  * Custom TanStack Mutation hook for revoking enterprise seat.
  */
 export function useRevokeEnterpriseSeatMutation(
-  options?: Partial<UseMutationOptions<{ success: boolean; message: string }, Error, { userId: string }>>
+  options?: Partial<
+    UseMutationOptions<{ success: boolean; message: string }, Error, { userId: string }>
+  >,
 ) {
   return useMutation<{ success: boolean; message: string }, Error, { userId: string }>({
     mutationFn: async ({ userId }) => {
@@ -193,20 +274,26 @@ export function useRevokeEnterpriseSeatMutation(
 
 // --- Learning Hooks ---
 
-export function useLearningProgressQuery(courseId: string, options?: Partial<UseQueryOptions<LearningProgress | undefined, Error>>) {
-  return useQuery<LearningProgress | undefined, Error>({
+export function useLearningProgressQuery(
+  courseId: string,
+  options?: Partial<UseQueryOptions<LearningProgress | null, Error>>,
+) {
+  return useQuery<LearningProgress | null, Error>({
     queryKey: ["learningProgress", courseId],
     queryFn: async () => {
       const client = getRpcClient(LearningService);
       const res = await client.getProgress({ courseId });
-      return res.progress;
+      return res.progress ?? null;
     },
     enabled: !!courseId,
     ...options,
   });
 }
 
-export function usePersonalNotesQuery(courseId: string, options?: Partial<UseQueryOptions<PersonalNote[], Error>>) {
+export function usePersonalNotesQuery(
+  courseId: string,
+  options?: Partial<UseQueryOptions<PersonalNote[], Error>>,
+) {
   return useQuery<PersonalNote[], Error>({
     queryKey: ["personalNotes", courseId],
     queryFn: async () => {
@@ -222,9 +309,19 @@ export function usePersonalNotesQuery(courseId: string, options?: Partial<UseQue
 // --- Assessment Hooks ---
 
 export function useSubmitQuizMutation(
-  options?: Partial<UseMutationOptions<QuizResult | undefined, Error, { itemId: string; selectedOptionIndexes: number[] }>>
+  options?: Partial<
+    UseMutationOptions<
+      QuizResult | undefined,
+      Error,
+      { itemId: string; selectedOptionIndexes: number[] }
+    >
+  >,
 ) {
-  return useMutation<QuizResult | undefined, Error, { itemId: string; selectedOptionIndexes: number[] }>({
+  return useMutation<
+    QuizResult | undefined,
+    Error,
+    { itemId: string; selectedOptionIndexes: number[] }
+  >({
     mutationFn: async ({ itemId, selectedOptionIndexes }) => {
       const client = getRpcClient(AssessmentService);
       const res = await client.submitGradedQuiz({ itemId, selectedOptionIndexes });
@@ -235,9 +332,19 @@ export function useSubmitQuizMutation(
 }
 
 export function useSubmitLabMutation(
-  options?: Partial<UseMutationOptions<AutoGradedLabResult | undefined, Error, { itemId: string; sourceCode: string; language: string }>>
+  options?: Partial<
+    UseMutationOptions<
+      AutoGradedLabResult | undefined,
+      Error,
+      { itemId: string; sourceCode: string; language: string }
+    >
+  >,
 ) {
-  return useMutation<AutoGradedLabResult | undefined, Error, { itemId: string; sourceCode: string; language: string }>({
+  return useMutation<
+    AutoGradedLabResult | undefined,
+    Error,
+    { itemId: string; sourceCode: string; language: string }
+  >({
     mutationFn: async ({ itemId, sourceCode, language }) => {
       const client = getRpcClient(AssessmentService);
       const res = await client.submitAutoGradedLab({ itemId, sourceCode, language });
@@ -249,7 +356,12 @@ export function useSubmitLabMutation(
 
 // --- Certificate Hooks ---
 
-export function useCertificateVerificationQuery(certificateId: string, options?: Partial<UseQueryOptions<{ isValid: boolean; cert?: VerifiedCertificate; message: string }, Error>>) {
+export function useCertificateVerificationQuery(
+  certificateId: string,
+  options?: Partial<
+    UseQueryOptions<{ isValid: boolean; cert?: VerifiedCertificate; message: string }, Error>
+  >,
+) {
   return useQuery<{ isValid: boolean; cert?: VerifiedCertificate; message: string }, Error>({
     queryKey: ["certificate", certificateId],
     queryFn: async () => {
@@ -264,7 +376,10 @@ export function useCertificateVerificationQuery(certificateId: string, options?:
 
 // --- Forum Hooks ---
 
-export function useForumThreadsQuery(courseId: string, options?: Partial<UseQueryOptions<ForumThread[], Error>>) {
+export function useForumThreadsQuery(
+  courseId: string,
+  options?: Partial<UseQueryOptions<ForumThread[], Error>>,
+) {
   return useQuery<ForumThread[], Error>({
     queryKey: ["forumThreads", courseId],
     queryFn: async () => {
@@ -279,7 +394,10 @@ export function useForumThreadsQuery(courseId: string, options?: Partial<UseQuer
 
 // --- Question Bank Hooks ---
 
-export function useQuestionBanksQuery(courseId: string, options?: Partial<UseQueryOptions<QuestionBank[], Error>>) {
+export function useQuestionBanksQuery(
+  courseId: string,
+  options?: Partial<UseQueryOptions<QuestionBank[], Error>>,
+) {
   return useQuery<QuestionBank[], Error>({
     queryKey: ["questionBanks", courseId],
     queryFn: async () => {
@@ -293,9 +411,19 @@ export function useQuestionBanksQuery(courseId: string, options?: Partial<UseQue
 }
 
 export function useCreateQuestionBankMutation(
-  options?: Partial<UseMutationOptions<QuestionBank, Error, { courseId: string; title: string; category: string; description: string }>>
+  options?: Partial<
+    UseMutationOptions<
+      QuestionBank,
+      Error,
+      { courseId: string; title: string; category: string; description: string }
+    >
+  >,
 ) {
-  return useMutation<QuestionBank, Error, { courseId: string; title: string; category: string; description: string }>({
+  return useMutation<
+    QuestionBank,
+    Error,
+    { courseId: string; title: string; category: string; description: string }
+  >({
     mutationFn: async ({ courseId, title, category, description }) => {
       const client = getRpcClient(AssessmentService);
       const res = await client.createQuestionBank({ courseId, title, category, description });
@@ -307,10 +435,41 @@ export function useCreateQuestionBankMutation(
 }
 
 export function useAddQuestionToBankMutation(
-  options?: Partial<UseMutationOptions<Question, Error, { bankId: string; questionType: string; difficulty: string; text: string; explanation: string; options: Partial<QuestionOption>[] }>>
+  options?: Partial<
+    UseMutationOptions<
+      Question,
+      Error,
+      {
+        bankId: string;
+        questionType: string;
+        difficulty: string;
+        text: string;
+        explanation: string;
+        options: Partial<QuestionOption>[];
+      }
+    >
+  >,
 ) {
-  return useMutation<Question, Error, { bankId: string; questionType: string; difficulty: string; text: string; explanation: string; options: Partial<QuestionOption>[] }>({
-    mutationFn: async ({ bankId, questionType, difficulty, text, explanation, options: questionOptions }) => {
+  return useMutation<
+    Question,
+    Error,
+    {
+      bankId: string;
+      questionType: string;
+      difficulty: string;
+      text: string;
+      explanation: string;
+      options: Partial<QuestionOption>[];
+    }
+  >({
+    mutationFn: async ({
+      bankId,
+      questionType,
+      difficulty,
+      text,
+      explanation,
+      options: questionOptions,
+    }) => {
       const client = getRpcClient(AssessmentService);
       const res = await client.addQuestionToBank({
         bankId,
@@ -328,10 +487,41 @@ export function useAddQuestionToBankMutation(
 }
 
 export function useUpdateQuestionMutation(
-  options?: Partial<UseMutationOptions<Question, Error, { questionId: string; questionType: string; difficulty: string; text: string; explanation: string; options: Partial<QuestionOption>[] }>>
+  options?: Partial<
+    UseMutationOptions<
+      Question,
+      Error,
+      {
+        questionId: string;
+        questionType: string;
+        difficulty: string;
+        text: string;
+        explanation: string;
+        options: Partial<QuestionOption>[];
+      }
+    >
+  >,
 ) {
-  return useMutation<Question, Error, { questionId: string; questionType: string; difficulty: string; text: string; explanation: string; options: Partial<QuestionOption>[] }>({
-    mutationFn: async ({ questionId, questionType, difficulty, text, explanation, options: questionOptions }) => {
+  return useMutation<
+    Question,
+    Error,
+    {
+      questionId: string;
+      questionType: string;
+      difficulty: string;
+      text: string;
+      explanation: string;
+      options: Partial<QuestionOption>[];
+    }
+  >({
+    mutationFn: async ({
+      questionId,
+      questionType,
+      difficulty,
+      text,
+      explanation,
+      options: questionOptions,
+    }) => {
       const client = getRpcClient(AssessmentService);
       const res = await client.updateQuestion({
         questionId,
@@ -349,7 +539,9 @@ export function useUpdateQuestionMutation(
 }
 
 export function useDeleteQuestionMutation(
-  options?: Partial<UseMutationOptions<{ success: boolean; message: string }, Error, { questionId: string }>>
+  options?: Partial<
+    UseMutationOptions<{ success: boolean; message: string }, Error, { questionId: string }>
+  >,
 ) {
   return useMutation<{ success: boolean; message: string }, Error, { questionId: string }>({
     mutationFn: async ({ questionId }) => {
@@ -364,7 +556,9 @@ export function useDeleteQuestionMutation(
 /**
  * Custom TanStack Query hook for fetching and caching the user's verified certificates.
  */
-export function useMyCertificatesQuery(options?: Partial<UseQueryOptions<VerifiedCertificate[], Error>>) {
+export function useMyCertificatesQuery(
+  options?: Partial<UseQueryOptions<VerifiedCertificate[], Error>>,
+) {
   return useQuery<VerifiedCertificate[], Error>({
     queryKey: ["myCertificates"],
     queryFn: async () => {
@@ -393,7 +587,10 @@ export function usePartnersQuery(options?: Partial<UseQueryOptions<Partner[], Er
   });
 }
 
-export function usePartnerDetailQuery(partnerId: string, options?: Partial<UseQueryOptions<Partner | null, Error>>) {
+export function usePartnerDetailQuery(
+  partnerId: string,
+  options?: Partial<UseQueryOptions<Partner | null, Error>>,
+) {
   return useQuery<Partner | null, Error>({
     queryKey: ["partnerDetail", partnerId],
     queryFn: async () => {
@@ -422,7 +619,7 @@ export interface CreatePartnerInput {
 }
 
 export function useCreatePartnerMutation(
-  options?: Partial<UseMutationOptions<Partner | undefined, Error, CreatePartnerInput>>
+  options?: Partial<UseMutationOptions<Partner | undefined, Error, CreatePartnerInput>>,
 ) {
   const queryClient = useQueryClient();
   return useMutation<Partner | undefined, Error, CreatePartnerInput>({
@@ -455,7 +652,7 @@ export interface UpdatePartnerInput {
 }
 
 export function useUpdatePartnerMutation(
-  options?: Partial<UseMutationOptions<Partner | undefined, Error, UpdatePartnerInput>>
+  options?: Partial<UseMutationOptions<Partner | undefined, Error, UpdatePartnerInput>>,
 ) {
   const queryClient = useQueryClient();
   return useMutation<Partner | undefined, Error, UpdatePartnerInput>({
@@ -473,7 +670,7 @@ export function useUpdatePartnerMutation(
 }
 
 export function useDeletePartnerMutation(
-  options?: Partial<UseMutationOptions<boolean, Error, { id: string }>>
+  options?: Partial<UseMutationOptions<boolean, Error, { id: string }>>,
 ) {
   const queryClient = useQueryClient();
   return useMutation<boolean, Error, { id: string }>({
@@ -491,7 +688,7 @@ export function useDeletePartnerMutation(
 }
 
 export function useRotatePartnerKeyPairMutation(
-  options?: Partial<UseMutationOptions<string, Error, { partnerId: string }>>
+  options?: Partial<UseMutationOptions<string, Error, { partnerId: string }>>,
 ) {
   return useMutation<string, Error, { partnerId: string }>({
     mutationFn: async ({ partnerId }) => {
@@ -504,7 +701,9 @@ export function useRotatePartnerKeyPairMutation(
 }
 
 export function useUpdateInstructorProfileMutation(
-  options?: Partial<UseMutationOptions<User | undefined, Error, { title: string; signatureImageUrl: string }>>
+  options?: Partial<
+    UseMutationOptions<User | undefined, Error, { title: string; signatureImageUrl: string }>
+  >,
 ) {
   return useMutation<User | undefined, Error, { title: string; signatureImageUrl: string }>({
     mutationFn: async ({ title, signatureImageUrl }) => {
@@ -529,7 +728,7 @@ export function useSubmitInstructorApplicationMutation(
         demoVideoUrl?: string;
       }
     >
-  >
+  >,
 ) {
   const queryClient = useQueryClient();
   return useMutation<
@@ -562,14 +761,14 @@ export function useSubmitInstructorApplicationMutation(
 }
 
 export function useMyInstructorApplicationQuery(
-  options?: Partial<UseQueryOptions<InstructorApplication | undefined, Error>>
+  options?: Partial<UseQueryOptions<InstructorApplication | null, Error>>,
 ) {
-  return useQuery<InstructorApplication | undefined, Error>({
+  return useQuery<InstructorApplication | null, Error>({
     queryKey: ["myInstructorApplication"],
     queryFn: async () => {
       const client = getRpcClient(IdentityService);
       const res = await client.getMyInstructorApplication({});
-      return res.application;
+      return res.application ?? null;
     },
     ...options,
   });
@@ -577,7 +776,7 @@ export function useMyInstructorApplicationQuery(
 
 export function useListInstructorApplicationsQuery(
   statusFilter: string = "",
-  options?: Partial<UseQueryOptions<InstructorApplication[], Error>>
+  options?: Partial<UseQueryOptions<InstructorApplication[], Error>>,
 ) {
   return useQuery<InstructorApplication[], Error>({
     queryKey: ["instructorApplications", statusFilter],
@@ -597,7 +796,7 @@ export function useReviewInstructorApplicationMutation(
       Error,
       { applicationId: string; approve: boolean; rejectionReason?: string }
     >
-  >
+  >,
 ) {
   const queryClient = useQueryClient();
   return useMutation<
@@ -625,7 +824,7 @@ export function useReviewInstructorApplicationMutation(
 
 export function usePaymentAccessQuery(
   courseId: string,
-  options?: Partial<UseQueryOptions<{ hasPaidAccess: boolean; accessReason: string }, Error>>
+  options?: Partial<UseQueryOptions<{ hasPaidAccess: boolean; accessReason: string }, Error>>,
 ) {
   return useQuery<{ hasPaidAccess: boolean; accessReason: string }, Error>({
     queryKey: ["paymentAccess", courseId],
@@ -642,9 +841,19 @@ export function usePaymentAccessQuery(
 }
 
 export function usePurchaseCourseMutation(
-  options?: Partial<UseMutationOptions<{ success: boolean; message: string; purchase?: CoursePurchase }, Error, { courseId: string; paymentMethod?: string }>>
+  options?: Partial<
+    UseMutationOptions<
+      { success: boolean; message: string; purchase?: CoursePurchase },
+      Error,
+      { courseId: string; paymentMethod?: string }
+    >
+  >,
 ) {
-  return useMutation<{ success: boolean; message: string; purchase?: CoursePurchase }, Error, { courseId: string; paymentMethod?: string }>({
+  return useMutation<
+    { success: boolean; message: string; purchase?: CoursePurchase },
+    Error,
+    { courseId: string; paymentMethod?: string }
+  >({
     mutationFn: async ({ courseId, paymentMethod }) => {
       const client = getRpcClient(PaymentService);
       const res = await client.purchaseCourse({ courseId, paymentMethod: paymentMethod || "MOCK" });
@@ -659,12 +868,25 @@ export function usePurchaseCourseMutation(
 }
 
 export function useSubscribeCourseraPlusMutation(
-  options?: Partial<UseMutationOptions<{ success: boolean; message: string; subscription?: UserSubscription }, Error, { planType: PlanType; paymentMethod?: string }>>
+  options?: Partial<
+    UseMutationOptions<
+      { success: boolean; message: string; subscription?: UserSubscription },
+      Error,
+      { planType: PlanType; paymentMethod?: string }
+    >
+  >,
 ) {
-  return useMutation<{ success: boolean; message: string; subscription?: UserSubscription }, Error, { planType: PlanType; paymentMethod?: string }>({
+  return useMutation<
+    { success: boolean; message: string; subscription?: UserSubscription },
+    Error,
+    { planType: PlanType; paymentMethod?: string }
+  >({
     mutationFn: async ({ planType, paymentMethod }) => {
       const client = getRpcClient(PaymentService);
-      const res = await client.subscribeCourseraPlus({ planType, paymentMethod: paymentMethod || "MOCK" });
+      const res = await client.subscribeCourseraPlus({
+        planType,
+        paymentMethod: paymentMethod || "MOCK",
+      });
       return {
         success: res.success,
         message: res.message,
@@ -674,6 +896,3 @@ export function useSubscribeCourseraPlusMutation(
     ...options,
   });
 }
-
-
-

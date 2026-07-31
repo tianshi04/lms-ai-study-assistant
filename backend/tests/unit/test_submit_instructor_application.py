@@ -86,6 +86,33 @@ async def test_submit_instructor_application_duplicate_pending_raises():
 
 
 @pytest.mark.asyncio
+async def test_submit_instructor_application_rejected_cooldown_raises():
+    from datetime import datetime, timezone
+
+    repo = AsyncMock()
+    now_str = datetime.now(timezone.utc).isoformat()
+    repo.get_latest_by_user_id.return_value = InstructorApplication(
+        id="app_rejected",
+        user_id="user_123",
+        title="Tiến sĩ AI",
+        bio="Tiểu sử...",
+        linkedin_url="",
+        cv_url="",
+        demo_video_url="",
+        status=ApplicationStatus.REJECTED,
+        reviewed_at=now_str,
+    )
+    use_case = SubmitInstructorApplicationUseCase(repo)
+
+    with pytest.raises(ValueError, match="Đơn đăng ký trước đó của bạn đã bị từ chối"):
+        await use_case.execute(
+            user_id="user_123",
+            title="Giảng viên Mới",
+            bio="Tiểu sử mới",
+        )
+
+
+@pytest.mark.asyncio
 async def test_review_instructor_application_approve():
     from src.modules.identity.application.review_application_usecase import (
         ReviewInstructorApplicationUseCase,

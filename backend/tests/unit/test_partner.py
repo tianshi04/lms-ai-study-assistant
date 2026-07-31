@@ -1,3 +1,4 @@
+import uuid
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
@@ -61,15 +62,16 @@ async def test_usecase_create_partner_success():
 
     usecase = PartnerUseCase(repo=mock_repo)
     admin = CurrentUser(id="admin1", role="SUPER_ADMIN")
+    test_slug = f"stanford-test-{uuid.uuid4().hex[:6]}"
 
     res = await usecase.create_partner(
-        name="Stanford",
-        slug="stanford-online",
+        name="Stanford Test Partner",
+        slug=test_slug,
         description="Stanford Univ",
         current_user=admin,
     )
-    assert res.name == "Stanford"
-    assert res.slug == "stanford-online"
+    assert res.name == "Stanford Test Partner"
+    assert res.slug == test_slug
     mock_repo.create.assert_called_once()
 
 
@@ -242,10 +244,14 @@ async def test_usecase_rotate_key_pair_auto_resolve_domain():
     mock_repo.update.side_effect = lambda p: p
 
     usecase = PartnerUseCase(repo=mock_repo)
-    partner_admin = CurrentUser(
-        id="p_admin1", email="alice@stanford.edu", role="PARTNER_ADMIN"
+    org_admin = CurrentUser(
+        id="p_admin1",
+        email="alice@stanford.edu",
+        role="INSTRUCTOR",
+        active_org_id="partner_stanford",
+        org_role="Organization Admin",
     )
 
-    new_pem = await usecase.rotate_key_pair("", current_user=partner_admin)
+    new_pem = await usecase.rotate_key_pair("", current_user=org_admin)
     assert new_pem.startswith("-----BEGIN PUBLIC KEY-----")
     mock_repo.update.assert_called_once()

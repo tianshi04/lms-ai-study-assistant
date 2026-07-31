@@ -10,7 +10,6 @@ enum UserRole {
   USER_ROLE_INSTRUCTOR = 2;
   USER_ROLE_TA = 3;
   USER_ROLE_SUPER_ADMIN = 4;
-  USER_ROLE_PARTNER_ADMIN = 5;
 }
 
 message User {

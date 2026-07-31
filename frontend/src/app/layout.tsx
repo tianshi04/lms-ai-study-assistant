@@ -57,13 +57,16 @@ export default async function RootLayout({
     >
       <body className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white">
         <QueryProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             <AuthProvider initialAuth={initialAuth}>
               <CopilotProvider>
                 <ToastProvider>
-                  <MainLayout>
-                    {children}
-                  </MainLayout>
+                  <MainLayout>{children}</MainLayout>
                 </ToastProvider>
               </CopilotProvider>
             </AuthProvider>
@@ -73,4 +76,3 @@ export default async function RootLayout({
     </html>
   );
 }
-

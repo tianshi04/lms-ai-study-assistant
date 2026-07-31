@@ -23,6 +23,7 @@ from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
 from src.modules.identity.infrastructure.repository import (
     IdentityRepository,
     InstructorApplicationRepository,
+    OrganizationRepository,
 )
 from src.modules.identity.application.submit_application_usecase import (
     SubmitInstructorApplicationUseCase,
@@ -463,7 +464,10 @@ class IdentityUseCase:
         async with async_session_scope() as session:
             app_repo = InstructorApplicationRepository(session)
             identity_repo = IdentityRepository(session)
-            use_case = ReviewInstructorApplicationUseCase(app_repo, identity_repo)
+            org_repo = OrganizationRepository(session)
+            use_case = ReviewInstructorApplicationUseCase(
+                app_repo, identity_repo, org_repo
+            )
             return await use_case.execute(
                 application_id=application_id,
                 approve=approve,

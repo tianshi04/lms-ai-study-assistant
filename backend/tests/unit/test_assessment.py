@@ -221,20 +221,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         return matrix
 
     async def get_quiz_matrix(self, item_id: str):
-        if item_id in self.matrices:
-            return self.matrices[item_id]
-        from src.modules.assessment.domain.entities import QuizMatrix
-
-        return QuizMatrix(
-            item_id=item_id,
-            bank_id="bank_test_1",
-            time_limit_minutes=45,
-            passing_threshold_percent=80.0,
-            easy_count=3,
-            medium_count=2,
-            hard_count=0,
-            shuffle_options=True,
-        )
+        return self.matrices.get(item_id)
 
     async def get_questions_by_bank(self, bank_id: str):
         from src.modules.assessment.domain.entities import Question, QuestionOption
@@ -283,6 +270,16 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     usecase = AssessmentUseCase(repository=repo)
     user_id = "user-test-quiz"
     item_id = "item-quiz-1"
+    await repo.configure_quiz_matrix(
+        item_id=item_id,
+        bank_id="bank_test_1",
+        time_limit_minutes=45,
+        passing_threshold_percent=80.0,
+        easy_count=3,
+        medium_count=2,
+        hard_count=0,
+        shuffle_options=True,
+    )
 
     correct_answers = [
         q["shuffled_correct_index"]
@@ -336,10 +333,9 @@ async def test_graded_quiz_pass_and_cooldown_logic():
         await usecase.start_graded_quiz_session(user_fail, item_id)
     assert "quay lại sau" in str(exc_info.value)
 
-    # Verify session start is blocked because user has already passed
-    with pytest.raises(ValueError) as exc_info_pass:
-        await usecase.start_graded_quiz_session(user_id, item_id)
-    assert "vượt qua bài thi này" in str(exc_info_pass.value)
+    # Verify session start is NOT blocked because user has already passed (BR_QUIZ_001)
+    res_pass = await usecase.start_graded_quiz_session(user_id, item_id)
+    assert len(res_pass["questions"]) > 0
 
 
 @pytest.mark.asyncio
@@ -351,8 +347,25 @@ async def test_sandbox_auto_graded_lab():
 def solution(arr):
     return sum(arr)
 """
+    test_cases = [
+        {
+            "input": "solution([1, 2, 3])",
+            "expected_output": "6",
+            "assertion_code": "assert solution([1, 2, 3]) == 6",
+        },
+        {
+            "input": "solution([-1, 1])",
+            "expected_output": "0",
+            "assertion_code": "assert solution([-1, 1]) == 0",
+        },
+        {
+            "input": "solution([])",
+            "expected_output": "0",
+            "assertion_code": "assert solution([]) == 0",
+        },
+    ]
     res = await usecase.submit_auto_graded_lab(
-        "user-1", "item-lab-1", valid_code, "python"
+        "user-1", "item-lab-1", valid_code, "python", test_cases=test_cases
     )
     assert res["score_percent"] == 100.0
     assert res["passed"] is True
@@ -529,6 +542,16 @@ async def test_quiz_question_pool_and_option_shuffling():
     usecase = AssessmentUseCase(repository=repo)
     user_id = "user-shuffled-quiz"
     item_id = "item-shuffled-1"
+    await repo.configure_quiz_matrix(
+        item_id=item_id,
+        bank_id="bank_test_1",
+        time_limit_minutes=45,
+        passing_threshold_percent=80.0,
+        easy_count=3,
+        medium_count=2,
+        hard_count=0,
+        shuffle_options=True,
+    )
 
     # Start session and get N-sampled questions with shuffled options (BR_QUIZ_002)
     session_info = await usecase.start_graded_quiz_session(user_id, item_id)
@@ -613,6 +636,16 @@ async def test_graded_quiz_preview_mode():
     usecase = AssessmentUseCase(repository=repo)
     user_id = "instructor-test"
     item_id = "item-quiz-1"
+    await repo.configure_quiz_matrix(
+        item_id=item_id,
+        bank_id="bank_test_1",
+        time_limit_minutes=45,
+        passing_threshold_percent=80.0,
+        easy_count=3,
+        medium_count=2,
+        hard_count=0,
+        shuffle_options=True,
+    )
 
     # Start session in preview mode
     sess = await usecase.start_graded_quiz_session(user_id, item_id, preview=True)

@@ -10,13 +10,9 @@ export function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  
 
   // Push current page path into global Agent Context on every navigation turn
-  const routeContext = useMemo(
-    () => ({ currentPath: pathname }),
-    [pathname]
-  );
+  const routeContext = useMemo(() => ({ currentPath: pathname }), [pathname]);
   useAgentContext({
     description: "Current active page URL path in the LMS platform",
     value: routeContext,
@@ -30,7 +26,7 @@ export function AIChatbot() {
       path: z
         .string()
         .describe(
-          "Relative path to navigate to (e.g., '/courses', '/my-courses', '/certificates', '/forum', '/financial-aid')"
+          "Relative path to navigate to (e.g., '/courses', '/my-courses', '/certificates', '/forum', '/financial-aid')",
         ),
     }),
     handler: async ({ path }: { path: string }) => {
@@ -82,16 +78,15 @@ export function AIChatbot() {
                   d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
                 />
               </svg>
-              <h3 className="font-semibold text-sm tracking-wide">
-                Trợ lý AI
-              </h3>
+              <h3 className="font-semibold text-sm tracking-wide">Trợ lý AI</h3>
             </div>
             <button
               onClick={() => setIsOpen(false)}
               className="p-1 rounded-lg hover:bg-white/20 transition-colors text-white/90 hover:text-white cursor-pointer"
-              aria-label="Close"
+              aria-label="Đóng"
             >
               <svg
+                aria-hidden="true"
                 className="w-5 h-5"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -111,8 +106,7 @@ export function AIChatbot() {
           <div className="flex-1 overflow-hidden relative">
             <CopilotChat
               labels={{
-                welcomeMessageText:
-                  "Xin chào! Tôi có thể giúp gì cho bạn?",
+                welcomeMessageText: "Xin chào! Tôi có thể giúp gì cho bạn?",
                 chatInputPlaceholder: "Nhập câu hỏi cho AI...",
               }}
             />
@@ -163,7 +157,10 @@ export function AIChatbot() {
                 <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 13.8239 3.54117 15.5213 4.47167 16.9429L3.5 20.5L7.25 19.6C8.61868 20.495 10.2479 21 12 21Z" />
                 <circle cx="9" cy="11.5" r="1.25" fill="currentColor" stroke="none" />
                 <circle cx="15" cy="11.5" r="1.25" fill="currentColor" stroke="none" />
-                <path d="M10 14.5C10.6 15.1 11.3 15.5 12 15.5C12.7 15.5 13.4 15.1 14 14.5" strokeWidth={1.6} />
+                <path
+                  d="M10 14.5C10.6 15.1 11.3 15.5 12 15.5C12.7 15.5 13.4 15.1 14 14.5"
+                  strokeWidth={1.6}
+                />
               </svg>
               {/* Active Online Status Indicator */}
               <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-emerald-400 border-2 border-white dark:border-slate-900 rounded-full" />

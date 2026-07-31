@@ -13,7 +13,8 @@ export function ThemeToggle() {
   }, [resolvedTheme]);
 
   const toggleTheme = () => {
-    const isDarkNow = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+    const isDarkNow =
+      typeof document !== "undefined" && document.documentElement.classList.contains("dark");
     const nextTheme = isDarkNow ? "light" : "dark";
     setTheme(nextTheme);
     document.cookie = `theme=${nextTheme}; path=/; max-age=31536000; SameSite=Lax`;
@@ -24,7 +25,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggleTheme}
       className="relative inline-flex items-center h-8 w-14 rounded-full p-1 transition-colors duration-300 ease-in-out cursor-pointer select-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 shrink-0 shadow-inner bg-slate-200/90 dark:bg-slate-800 border border-slate-300/80 dark:border-slate-700/80 hover:bg-slate-300/80 dark:hover:bg-slate-800/90"
-      aria-label="Toggle theme"
+      aria-label="Chuyển đổi giao diện sáng/tối"
     >
       {/* Background Track Icons */}
       <span className="absolute left-1.5 flex items-center justify-center pointer-events-none">

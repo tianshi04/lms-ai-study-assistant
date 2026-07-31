@@ -38,7 +38,9 @@ This file provides rules, architectural conventions, and workspace instructions 
 - **Never modify code inside generated folders manually.** Always update the `.proto` files and run the generation scripts.
 - The `src/gen/` folders are ignored in Git.
 - We use **Connect-ES v2.0** on the frontend (utilizing `protoc-gen-es` only, where both messages and service schemas are generated directly in `_pb.ts` files without a separate `_connect.ts` stub).
-- **Development Stage & Backward Compatibility**: Since the project is currently in active initial development, API definitions and code structures can be refactored or modified freely without preserving backward compatibility.
+- **Development Stage & Zero-Legacy Refactoring Protocol**:
+  - Since the project is currently in active initial development, all design changes, API contracts, and code structures **MUST BE REFACTORED AGGRESSIVELY AND COMPLETELY** without preserving backward compatibility.
+  - **NO BACKWARD COMPATIBILITY & NO FALLBACK DEBT**: Never retain redundant parameters, optional fallback arguments, legacy branching logic, or unused data fields under the guise of "fallback" or "backward compatibility". Whenever a workflow or data field is automated or eliminated, completely erase all footprints of the legacy design across all architectural layers (Protobuf schemas, presentation handlers, application use cases, domain interfaces, and infrastructure implementations) to ensure a 100% minimal and pristine codebase.
 - **Protobuf Modification Protocol (STRICT SEQUENTIAL RULE)**:
   Whenever adding or modifying `.proto` files in `proto/`, agents MUST follow this exact sequence:
   1. Run `make format-proto` to format Protobuf files and `make lint-proto` to verify linting rules.
@@ -58,13 +60,19 @@ This file provides rules, architectural conventions, and workspace instructions 
     1. **Public / Consumer Context (Learners & Public Users)**: Public query RPCs (`AUTH_POLICY_PUBLIC`) MUST strictly enforce database query filters returning only published/active entities (`PUBLISHED`/`ACTIVE`). Never allow client-supplied flags to expose draft, unapproved, or internal data.
     2. **Creator / Owner Context (Instructors & Authors)**: Resource owner management RPCs (`AUTH_POLICY_AUTHENTICATED`) MUST resolve identity strictly from JWT context (`require_current_user()`), scope database queries to `owner_id` or collaborator lists (`co_instructor_ids`), and return entities across all lifecycle states (`DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `REJECTED`).
     3. **Operator / Admin Review Context (Admins & Reviewers)**: Administrative moderation & review RPCs MUST enforce staff/admin role boundaries and operate on dedicated review queue endpoints.
+- **3-Layer Security Protocol (Hybrid PBAC & Multi-Tenant SQL Scope Pushdown)**:
+  All security and data access operations MUST strictly adhere to the 3-layer authorization model:
+  1. **Layer 1 (API Method Policy & Context Injection)**: Every ConnectRPC method in `.proto` MUST declare custom option `(auth.v1.policy)` (`AUTH_POLICY_PUBLIC`, `AUTH_POLICY_AUTHENTICATED`, `AUTH_POLICY_ADMIN`, `AUTH_POLICY_INTERNAL`). `AuthInterceptor` & `AuthPolicyRegistry` validate JWT, extract `x-organization-id` header (fallback to token claim), and inject `CurrentUserContext` (`src.shared.auth`).
+  2. **Layer 2 (Database Query / SQL Scope Pushdown)**: Repositories querying organization-scoped entities MUST execute `apply_organization_scope(stmt, Model, get_current_user())` (`src.shared.infrastructure.scopes`). Pushes `WHERE organization_id = active_org_id OR organization_id = INTERNAL_SYSTEM_ORG_ID` down to PostgreSQL execution plan. In-memory organization filtering is strictly prohibited.
+  3. **Layer 3 (Domain Resource Ownership & State Verification)**: Application Use Cases MUST verify entity ownership (`owner_id`, `co_instructor_ids`) via `enforce_course_ownership()` (`src.shared.permissions`), enforce lifecycle state restrictions (e.g., `PENDING_REVIEW` read-only lock), or check granular permissions via `CurrentUserContext.require_permission()`.
+
 
 
 ---
 
 ## 3. Package Management & Dependencies Rule
 - **Backend (Python)**: Dependencies **MUST** be added via `uv` CLI command (`uv add <package>`) inside the `backend/` directory. **Never edit `pyproject.toml` or `uv.lock` manually.**
-- **Frontend (TypeScript)**: Dependencies **MUST** be added via `npm` CLI command (`npm install <package>`) inside the `frontend/` directory. **Never edit `package.json` manually.**
+- **Frontend (TypeScript)**: Dependencies **MUST** be added via `pnpm` CLI command (`pnpm add <package>`) inside the `frontend/` directory. **Never edit `package.json` or `pnpm-lock.yaml` manually.**
 
 ---
 
@@ -83,28 +91,29 @@ This file provides rules, architectural conventions, and workspace instructions 
     - **Handlers / Presentation / Stubs (30% - 50%)**: Network stubs and ConnectRPC handlers (primarily verified via E2E / Black-box integration tests).
   - Code quality tests are located in `backend/tests/test_code_quality.py`. These tests execute `ruff` and `ty` checks during the test run to ensure style consistency.
 - **Frontend (TypeScript)**:
-  - **Linter**: We use **ESLint** with `--max-warnings=0` enforced in CI. Execute `npm run lint` or auto-fix with `npm run lint:fix`. Unused variables trigger an error and MUST be cleaned up, or prefixed with an underscore (`_`) if required by signature specs.
-  - **Type Checker**: Fast standalone static type check via `tsc --noEmit` (`npm run type-check`). Complete build type checking via `npm run build`.
+  - **Linter & Formatter**: We use **Oxlint** (Rust-based static code analysis) paired with **Oxfmt** (Rust-based code formatter) for maximum speed and zero-friction formatting. Execute `pnpm run fix` to automatically lint (`oxlint --fix`) and format (`oxfmt --write .`) the entire frontend workspace in a single unified command. Unused variables trigger an error and MUST be cleaned up, or prefixed with an underscore (`_`) if required by signature specs.
+  - **Type Checker & Quality Verification**: Fast standalone static type check via `tsc --noEmit` (`pnpm run type-check`). Full quality check combining type-checking, linting, and format verification is run via `pnpm run check`.
 - **End-to-End Testing (Playwright TS)**:
   - Full-system blackbox E2E tests reside in the root `/e2e` workspace following the Page Object Model (POM) architecture.
   - **Navigation Strategy Rule**:
     - **UI Click Navigation**: Use for Critical User Journeys (verifying Navbar links, registration, and router navigation flow).
     - **Direct URL Navigation (`page.goto('/path')`)**: Use for Isolated Page & Feature Deep-Testing (leveraging pre-authenticated `storageState` from `auth.setup.ts` to skip redundant clicks and maximize execution speed).
+- **Pre-Commit Verification Protocol (STRICT MANDATORY RULE)**:
+  - Before executing `git commit` or submitting a Pull Request, agents **MUST** run code quality verification commands based on the modified workspace:
+    - **Frontend modified**: Run `pnpm run check` (or `pnpm run fix && pnpm run check`) in `frontend/`.
+    - **Backend modified**: Run `make test` in `backend/`.
+  - **NO UNVERIFIED COMMITS**: Never commit changes without empirical log proof that quality check commands passed cleanly.
 
 ---
 
 ## 5. Frontend Architecture & Conventions
 - The frontend is located in `frontend/` and built with **Next.js (App Router)**, **TypeScript**, and **Tailwind CSS v4**.
 - Styling is implemented using Tailwind CSS v4 utility classes.
-- **Headless UI Primitives & Accessibility (WAI-ARIA)**: We use **Base UI (`@base-ui/react`)** for complex unstyled interactive UI components (such as `Modal/Dialog`, `Tabs`, `DropdownMenu`, `Select`). Always leverage Base UI primitives wrapped with Tailwind CSS v4 styling to ensure standard keyboard navigation and WAI-ARIA accessibility without reinventing unstyled component logic.
-- **UI Icons & Aesthetics**: Always use clean, professional inline SVG vector icons instead of text-emoji characters in all UI components and pages.
+- Component design guidelines, accessibility (WAI-ARIA), Base UI primitives, and component taxonomy are governed by the `building-components` skill.
 - **Headless Logic Ecosystem (TanStack Ecosystem)**: We leverage the **TanStack Ecosystem** for all headless logic across the application:
   - **TanStack Query (`@tanstack/react-query`)**: For headless server state management, automatic caching, background revalidation, and deduplication of ConnectRPC API calls. Place reusable query/mutation hooks inside `frontend/src/lib/query_hooks.ts`.
   - **TanStack Table (`@tanstack/react-table`)**: For headless table state, sorting, filtering, and pagination in complex dashboards and data views.
   - **TanStack Form (`@tanstack/react-form`)**: For headless form validation and state management in multi-step or complex form interfaces.
-- **UI Component Reuse & Extension Protocol**:
-  - **Standard UI Flows**: Prefer auditing and reusing pre-built Design System components in `frontend/src/components/ui/` (e.g., buttons, form inputs, toasts, modals, cards, badges, dropdowns) for standard UI flows to maintain visual, behavioral, and accessibility consistency across the platform.
-  - **Specialized & Domain Features**: For features with specialized interaction or visual requirements (e.g., media player controls, interactive editors, canvas elements), developers and agents should extend existing components (via custom variants/props) or define new specialized domain components rather than creating ad-hoc inline UI elements.
 - **Primary Language (Vietnamese)**: The application exclusively uses **Vietnamese (`vi`)** for all UI elements, pages, components, modals, form labels, and user-facing notifications. All UI text must be written directly in Vietnamese.
 - API Client calls are made by importing service schemas from the generated stubs (e.g. `import { CatalogService } from "@/gen/catalog/v1/catalog_pb"`) and using the `@connectrpc/connect` client.
 
@@ -135,19 +144,21 @@ This file provides rules, architectural conventions, and workspace instructions 
 - `make test` - Run pytest suite (which also executes Ruff linting and Ty type checking).
 
 ### Frontend (from `frontend/` directory):
-- `npm run gen` - Regenerate TypeScript stubs from root `proto/` directory.
-- `npm run dev` - Start Next.js development server (port 3000).
-- `npm run lint` - Run ESLint checks (`--max-warnings=0`).
-- `npm run lint:fix` - Run ESLint checks and automatically fix auto-fixable formatting/lint issues.
-- `npm run type-check` - Fast standalone TypeScript type-checking (`tsc --noEmit`).
-- `npm run check` - Comprehensive quality check combining type checking and linting.
-- `npm run build` - Compile and build Next.js application for production.
+- `pnpm run gen` - Regenerate TypeScript stubs from root `proto/` directory.
+- `pnpm run dev` - Start Next.js development server (port 3000).
+- `pnpm run lint` - Run Oxlint static code analysis.
+- `pnpm run lint:fix` - Run Oxlint auto-fixes for linting issues.
+- `pnpm run format` - Format code with Oxfmt (`oxfmt --write .`).
+- `pnpm run fix` - Combined single command to auto-fix linting and format all code (`oxlint --fix && oxfmt --write .`).
+- `pnpm run type-check` - Fast standalone TypeScript type-checking (`tsc --noEmit`).
+- `pnpm run check` - Comprehensive quality check combining type checking, linting, and format verification.
+- `pnpm run build` - Compile and build Next.js application for production.
 
 ### E2E Testing (from `e2e/` directory):
-- `npm test` - Fast local E2E test run on Chromium browser.
-- `npm run test:all` - Run full cross-browser test suite (Chromium, Firefox, WebKit, Mobile Chrome).
-- `npm run test:ui` - Open interactive Playwright UI Test Runner.
-- `npm run test:report` - Show HTML test execution report.
+- `pnpm test` - Fast local E2E test run on Chromium browser.
+- `pnpm run test:all` - Run full cross-browser test suite (Chromium, Firefox, WebKit, Mobile Chrome).
+- `pnpm run test:ui` - Open interactive Playwright UI Test Runner.
+- `pnpm run test:report` - Show HTML test execution report.
 
 ---
 

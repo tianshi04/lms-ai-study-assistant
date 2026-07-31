@@ -8,20 +8,22 @@ export const DialogTrigger = BaseDialog.Trigger;
 export const DialogPortal = BaseDialog.Portal;
 export const DialogClose = BaseDialog.Close;
 
-export const DialogBackdrop = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof BaseDialog.Backdrop>
->(({ className, ...props }, ref) => (
-  <BaseDialog.Backdrop
-    ref={ref}
-    className={cn(
-      "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-150",
-      className
-    )}
-    {...props}
-  />
-));
-DialogBackdrop.displayName = "DialogBackdrop";
+export function DialogBackdrop({
+  className,
+  ref,
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Backdrop>) {
+  return (
+    <BaseDialog.Backdrop
+      ref={ref}
+      className={cn(
+        "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-150",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
 export type ModalSize = "sm" | "md" | "lg" | "xl" | "full";
 
@@ -33,12 +35,18 @@ const sizeClasses: Record<ModalSize, string> = {
   full: "max-w-[95vw] max-h-[90vh] overflow-y-auto",
 };
 
-export interface DialogContentProps extends React.ComponentPropsWithoutRef<typeof BaseDialog.Popup> {
+export interface DialogContentProps extends React.ComponentProps<typeof BaseDialog.Popup> {
   size?: ModalSize;
 }
 
-export const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
-  ({ className, children, size = "md", ...props }, ref) => (
+export function DialogContent({
+  className,
+  children,
+  size = "md",
+  ref,
+  ...props
+}: DialogContentProps) {
+  return (
     <DialogPortal>
       <DialogBackdrop />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
@@ -47,7 +55,7 @@ export const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps
           className={cn(
             "bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full p-6 border border-slate-200 dark:border-slate-700 animate-in fade-in zoom-in-95 duration-150 relative my-8",
             sizeClasses[size],
-            className
+            className,
           )}
           {...props}
         >
@@ -55,43 +63,61 @@ export const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps
         </BaseDialog.Popup>
       </div>
     </DialogPortal>
-  )
-);
-DialogContent.displayName = "DialogContent";
+  );
+}
 
 export const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("flex flex-col space-y-1.5 pb-4 border-b border-slate-200 dark:border-slate-700", className)} {...props} />
+  <div
+    className={cn(
+      "flex flex-col space-y-1.5 pb-4 border-b border-slate-200 dark:border-slate-700",
+      className,
+    )}
+    {...props}
+  />
 );
 DialogHeader.displayName = "DialogHeader";
 
 export const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4 border-t border-slate-200 dark:border-slate-700 gap-2 sm:gap-0", className)} {...props} />
+  <div
+    className={cn(
+      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4 border-t border-slate-200 dark:border-slate-700 gap-2 sm:gap-0",
+      className,
+    )}
+    {...props}
+  />
 );
 DialogFooter.displayName = "DialogFooter";
 
-export const DialogTitle = React.forwardRef<
-  HTMLHeadingElement,
-  React.ComponentPropsWithoutRef<typeof BaseDialog.Title>
->(({ className, ...props }, ref) => (
-  <BaseDialog.Title
-    ref={ref}
-    className={cn("text-lg font-semibold text-slate-900 dark:text-white leading-none tracking-tight", className)}
-    {...props}
-  />
-));
-DialogTitle.displayName = "DialogTitle";
+export function DialogTitle({
+  className,
+  ref,
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Title>) {
+  return (
+    <BaseDialog.Title
+      ref={ref}
+      className={cn(
+        "text-lg font-semibold text-slate-900 dark:text-white leading-none tracking-tight",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-export const DialogDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.ComponentPropsWithoutRef<typeof BaseDialog.Description>
->(({ className, ...props }, ref) => (
-  <BaseDialog.Description
-    ref={ref}
-    className={cn("text-sm text-slate-500 dark:text-slate-400 mt-1", className)}
-    {...props}
-  />
-));
-DialogDescription.displayName = "DialogDescription";
+export function DialogDescription({
+  className,
+  ref,
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Description>) {
+  return (
+    <BaseDialog.Description
+      ref={ref}
+      className={cn("text-sm text-slate-500 dark:text-slate-400 mt-1", className)}
+      {...props}
+    />
+  );
+}
 
 export interface ModalProps {
   isOpen: boolean;
@@ -115,7 +141,12 @@ export const Modal: React.FC<ModalProps> = ({
   className,
 }) => {
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
       <DialogContent size={size} className={className}>
         {(title || showCloseButton) && (
           <div className="flex items-start justify-between pb-4 border-b border-slate-200 dark:border-slate-700">
@@ -129,7 +160,14 @@ export const Modal: React.FC<ModalProps> = ({
                 aria-label="Close modal"
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1.5 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 ml-auto -mr-1 -mt-1"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </DialogClose>
@@ -160,8 +198,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onConfirm,
   title,
   description,
-  confirmText = "Confirm",
-  cancelText = "Cancel",
+  confirmText = "Xác nhận",
+  cancelText = "Hủy",
   variant = "primary",
   isLoading = false,
 }) => {
@@ -169,8 +207,19 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     if (variant === "danger") {
       return (
         <div className="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
-          <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          <svg
+            className="h-6 w-6 text-red-600 dark:text-red-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="1.5"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+            />
           </svg>
         </div>
       );
@@ -178,16 +227,38 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     if (variant === "warning") {
       return (
         <div className="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30 sm:mx-0 sm:h-10 sm:w-10">
-          <svg className="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.007v.008H12v-.008z" />
+          <svg
+            className="h-6 w-6 text-amber-600 dark:text-amber-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="1.5"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.007v.008H12v-.008z"
+            />
           </svg>
         </div>
       );
     }
     return (
       <div className="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 sm:mx-0 sm:h-10 sm:w-10">
-        <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+        <svg
+          className="h-6 w-6 text-blue-600 dark:text-blue-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth="1.5"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+          />
         </svg>
       </div>
     );
@@ -196,7 +267,12 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   const buttonVariant = variant === "danger" ? "danger" : "primary";
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open && !isLoading) onClose(); }}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open && !isLoading) onClose();
+      }}
+    >
       <DialogContent size="sm">
         <div className="sm:flex sm:items-start space-x-0 sm:space-x-4">
           {getIcon()}

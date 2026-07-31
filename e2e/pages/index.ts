@@ -21,6 +21,7 @@ export { ProfilePage } from './profile.page';
 export { PaymentPage } from './payment.page';
 export { BecomeAnInstructorPage } from './become-an-instructor.page';
 export { AdminApplicationsPage } from './admin-applications.page';
+export { NewCoursePage } from './new-course.page';
 
 
 

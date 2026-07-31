@@ -1,4 +1,4 @@
-.PHONY: help setup gen dev test format seed seed-reset infra infra-down infra-clean infra-logs app app-down all docker-build app-logs
+.PHONY: help setup gen dev test format seed seed-reset infra infra-down infra-clean infra-logs app app-down all docker-build app-logs migrate
 
 help:
 	@echo "Available commands:"
@@ -56,10 +56,13 @@ gen:
 dev:
 	uv run uvicorn src.main:app --port 8000 --reload
 
-seed:
+migrate:
+	uv run alembic upgrade head
+
+seed: migrate
 	uv run python -m src.seed
 
-seed-reset:
+seed-reset: migrate
 	uv run python -m src.seed --reset
 
 format:

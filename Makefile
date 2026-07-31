@@ -18,4 +18,4 @@ lint-proto:
 
 gen:
 	cd backend && $(MAKE) gen
-	cd frontend && npm run gen
+	cd frontend && pnpm run gen

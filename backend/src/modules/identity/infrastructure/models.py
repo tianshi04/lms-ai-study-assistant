@@ -26,7 +26,11 @@ class UserModel(Base):
     )
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(
-        SQLEnum(UserRole, native_enum=False),
+        SQLEnum(
+            UserRole,
+            native_enum=False,
+            values_callable=lambda obj: [e.value for e in obj],
+        ),
         nullable=False,
         default=UserRole.LEARNER,
     )
