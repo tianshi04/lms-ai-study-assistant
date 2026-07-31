@@ -48,10 +48,11 @@ export class AssessmentPage {
   }
 
   async goto() {
-    await this.page.goto('/learn/course-123/assessment');
+    await this.page.goto('/assessments');
   }
 
   async verifyPageLoaded() {
+    await expect(this.page).toHaveURL(/\/assessments/);
     await expect(this.quizTab).toBeVisible();
     await expect(this.labTab).toBeVisible();
     await expect(this.peerTab).toBeVisible();
