@@ -6,6 +6,9 @@ export async function POST() {
   // Clear the cookies
   response.cookies.delete("access_token");
   response.cookies.delete("refresh_token");
+  response.cookies.delete("user_name");
+  response.cookies.delete("user_email");
+  response.cookies.delete("user_role");
 
   return response;
 }

@@ -59,9 +59,33 @@ export async function POST(request: Request) {
       });
     }
 
-    // Also set a non-HttpOnly cookie for user metadata (so frontend can read it without hitting an API)
-    // Or we just return it in JSON and frontend can keep storing metadata (not tokens!) in localStorage.
-    // We will let frontend store metadata in localStorage for simplicity, as only the tokens are sensitive to XSS.
+    // Set user metadata cookies (non-HttpOnly so client can read them if needed, but primarily for Server Components like layout.tsx)
+    response.cookies.set({
+      name: "user_name",
+      value: encodeURIComponent(res.user.fullName),
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    });
+
+    response.cookies.set({
+      name: "user_email",
+      value: encodeURIComponent(res.user.email),
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    });
+
+    response.cookies.set({
+      name: "user_role",
+      value: String(res.user.role),
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+    });
 
     return response;
   } catch (err: unknown) {
