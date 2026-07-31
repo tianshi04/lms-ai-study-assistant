@@ -98,6 +98,11 @@ This file provides rules, architectural conventions, and workspace instructions 
   - **Navigation Strategy Rule**:
     - **UI Click Navigation**: Use for Critical User Journeys (verifying Navbar links, registration, and router navigation flow).
     - **Direct URL Navigation (`page.goto('/path')`)**: Use for Isolated Page & Feature Deep-Testing (leveraging pre-authenticated `storageState` from `auth.setup.ts` to skip redundant clicks and maximize execution speed).
+- **Pre-Commit Verification Protocol (STRICT MANDATORY RULE)**:
+  - Before executing `git commit` or submitting a Pull Request, agents **MUST** run code quality verification commands based on the modified workspace:
+    - **Frontend modified**: Run `pnpm run check` (or `pnpm run fix && pnpm run check`) in `frontend/`.
+    - **Backend modified**: Run `make test` in `backend/`.
+  - **NO UNVERIFIED COMMITS**: Never commit changes without empirical log proof that quality check commands passed cleanly.
 
 ---
 
