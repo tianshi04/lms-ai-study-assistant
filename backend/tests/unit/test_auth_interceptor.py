@@ -120,7 +120,10 @@ async def test_auth_interceptor_admin_endpoint_denies_learner() -> None:
 async def test_auth_interceptor_admin_endpoint_allows_admin() -> None:
     clear_current_user()
     token = create_access_token(
-        user_id="user_admin", email="admin@example.com", role="USER_ROLE_SUPER_ADMIN"
+        user_id="user_admin",
+        email="admin@example.com",
+        role="USER_ROLE_LEARNER",
+        system_role="SUPER_ADMIN",
     )
     interceptor = AuthInterceptor()
     ctx = MockCtx(

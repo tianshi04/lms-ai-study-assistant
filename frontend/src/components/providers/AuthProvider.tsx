@@ -26,6 +26,7 @@ export interface UserAuth {
   userName: string | null;
   userEmail: string | null;
   userRole: string | null;
+  systemRole?: string | null;
 }
 
 interface AuthContextType extends UserAuth {
@@ -34,6 +35,7 @@ interface AuthContextType extends UserAuth {
   isAuthenticated: boolean;
   isInstructorOrAdmin: boolean;
   isStaff: boolean;
+  isSuperAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -49,7 +51,13 @@ export function AuthProvider({
 
   useEffect(() => {
     setAuthState(initialAuth);
-  }, [initialAuth.userId, initialAuth.userEmail, initialAuth.userName, initialAuth.userRole]);
+  }, [
+    initialAuth.userId,
+    initialAuth.userEmail,
+    initialAuth.userName,
+    initialAuth.userRole,
+    initialAuth.systemRole,
+  ]);
 
   const setAuth = useCallback((newAuth: UserAuth) => {
     setAuthState(newAuth);
@@ -60,21 +68,41 @@ export function AuthProvider({
     if (typeof window !== "undefined") {
       localStorage.clear();
     }
-    setAuthState({ userId: null, userName: null, userEmail: null, userRole: null });
+    setAuthState({
+      userId: null,
+      userName: null,
+      userEmail: null,
+      userRole: null,
+      systemRole: null,
+    });
     window.location.href = "/auth/login";
   }, []);
 
   const isAuthenticated = Boolean(auth.userId || auth.userEmail);
+  const isSuperAdmin =
+    auth.systemRole === "SUPER_ADMIN" ||
+    auth.systemRole === "SYSTEM_ROLE_SUPER_ADMIN" ||
+    auth.systemRole === "2";
   const roleId = String(auth.userRole ?? "");
   const roleStr = roleId.toLowerCase();
   const isInstructorOrAdmin =
-    INSTRUCTOR_ADMIN_ROLE_IDS.has(roleId) || INSTRUCTOR_ADMIN_ROLE_NAMES.has(roleStr);
+    isSuperAdmin ||
+    INSTRUCTOR_ADMIN_ROLE_IDS.has(roleId) ||
+    INSTRUCTOR_ADMIN_ROLE_NAMES.has(roleStr);
   const isStaff =
     isInstructorOrAdmin || STAFF_EXTRA_ROLE_IDS.has(roleId) || STAFF_EXTRA_ROLE_NAMES.has(roleStr);
 
   const contextValue = useMemo(
-    () => ({ ...auth, setAuth, logout, isAuthenticated, isInstructorOrAdmin, isStaff }),
-    [auth, setAuth, logout, isAuthenticated, isInstructorOrAdmin, isStaff],
+    () => ({
+      ...auth,
+      setAuth,
+      logout,
+      isAuthenticated,
+      isInstructorOrAdmin,
+      isStaff,
+      isSuperAdmin,
+    }),
+    [auth, setAuth, logout, isAuthenticated, isInstructorOrAdmin, isStaff, isSuperAdmin],
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

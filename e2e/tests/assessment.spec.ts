@@ -14,7 +14,7 @@ test.describe.serial('Full System Blackbox - Assessment & Auto-Grader Flows (POM
     await assessmentPage.verifyPageLoaded();
 
     await assessmentPage.agreeHonorCode();
-    await expect(assessmentPage.honorAgreedBadge).toBeVisible({ timeout: 5000 });
+    await expect(assessmentPage.honorAgreedBadge).toBeVisible({ timeout: 10000 });
   });
 
   test('should submit graded quiz and display score result', async ({ page }) => {

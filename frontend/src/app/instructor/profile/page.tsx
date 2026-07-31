@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { UserRole } from "@/gen/identity/v1/identity_pb";
+import { SystemRole, UserRole } from "@/gen/identity/v1/identity_pb";
 import { useUserProfileQuery, useUpdateInstructorProfileMutation } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 
@@ -23,7 +23,7 @@ export default function InstructorProfilePage() {
   const isInstructorOrTA =
     userProfile?.role === UserRole.INSTRUCTOR ||
     userProfile?.role === UserRole.TA ||
-    userProfile?.role === UserRole.SUPER_ADMIN;
+    userProfile?.systemRole === SystemRole.SUPER_ADMIN;
 
   const updateMutation = useUpdateInstructorProfileMutation();
 

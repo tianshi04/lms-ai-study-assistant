@@ -9,7 +9,12 @@ enum UserRole {
   USER_ROLE_LEARNER = 1;
   USER_ROLE_INSTRUCTOR = 2;
   USER_ROLE_TA = 3;
-  USER_ROLE_SUPER_ADMIN = 4;
+}
+
+enum SystemRole {
+  SYSTEM_ROLE_UNSPECIFIED = 0;
+  SYSTEM_ROLE_USER = 1;
+  SYSTEM_ROLE_SUPER_ADMIN = 2;
 }
 
 message User {
@@ -17,11 +22,12 @@ message User {
   string email = 2;
   string full_name = 3;
   UserRole role = 4;
-  string avatar_url = 5;
-  string enterprise_seat_key = 6;
-  string signature_image_url = 7;
-  string title = 8;
-  bool is_identity_verified = 9;
+  SystemRole system_role = 5;
+  string avatar_url = 6;
+  string title = 7;
+  bool is_identity_verified = 8;
+  string signature_image_url = 9;
+  string enterprise_seat_key = 10;
 }
 
 message LoginRequest {

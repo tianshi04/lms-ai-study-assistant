@@ -505,7 +505,7 @@ class CatalogHandler(CatalogService):
 
     def _verify_super_admin(self) -> None:
         user = require_current_user()
-        if user.role not in ("USER_ROLE_SUPER_ADMIN", "ADMIN"):
+        if not user.is_system_admin():
             raise ConnectError(
                 Code.PERMISSION_DENIED,
                 "Chỉ Super Admin mới có quyền thực hiện thao tác này.",

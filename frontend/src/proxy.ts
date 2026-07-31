@@ -8,9 +8,30 @@ const PROTECTED_ROUTES = [
   "/assessments",
   "/financial-aid",
   "/auth/profile",
+  "/partner",
 ];
 const INSTRUCTOR_ROUTES = ["/instructor"];
 const ADMIN_ROUTES = ["/admin"];
+
+function extractSystemRoleFromToken(token?: string): string | null {
+  if (!token) return null;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join(""),
+    );
+    const payload = JSON.parse(jsonPayload);
+    return payload.system_role ?? null;
+  } catch {
+    return null;
+  }
+}
 
 function extractRoleFromToken(token?: string): number | null {
   if (!token) return null;
@@ -34,8 +55,6 @@ function extractRoleFromToken(token?: string): number | null {
       INSTRUCTOR: 2,
       USER_ROLE_TA: 3,
       TA: 3,
-      USER_ROLE_SUPER_ADMIN: 4,
-      SUPER_ADMIN: 4,
     };
     if (typeof payload.role === "number") return payload.role;
     if (typeof payload.role === "string") {
@@ -51,8 +70,11 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("access_token")?.value;
   const roleFromJwt = extractRoleFromToken(token);
+  const systemRoleFromJwt = extractSystemRoleFromToken(token);
   const roleStr = request.cookies.get("user_role")?.value;
   const role = roleFromJwt ?? (roleStr ? parseInt(roleStr, 10) : null);
+  const isSuperAdmin =
+    systemRoleFromJwt === "SUPER_ADMIN" || systemRoleFromJwt === "SYSTEM_ROLE_SUPER_ADMIN";
 
   // 1. Check Protected User Routes
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
@@ -62,7 +84,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 2. Check Instructor Routes (Role 2: Instructor, Role 3: TA, Role 4: Super Admin)
+  // 2. Check Instructor Routes (Role 2: Instructor, Role 3: TA, or System Super Admin)
   const isInstructorRoute = INSTRUCTOR_ROUTES.some((route) => pathname.startsWith(route));
   if (isInstructorRoute) {
     if (!token) {
@@ -70,13 +92,13 @@ export function proxy(request: NextRequest) {
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    const isAllowed = role !== null && [2, 3, 4].includes(role);
+    const isAllowed = isSuperAdmin || (role !== null && [2, 3].includes(role));
     if (!isAllowed) {
       return NextResponse.redirect(new URL("/courses", request.url));
     }
   }
 
-  // 3. Check Admin Routes (Role 4: Super Admin)
+  // 3. Check Admin Routes (System Super Admin)
   const isAdminRoute = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
   if (isAdminRoute) {
     if (!token) {
@@ -84,8 +106,7 @@ export function proxy(request: NextRequest) {
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    const isAllowed = role !== null && [4].includes(role);
-    if (!isAllowed) {
+    if (!isSuperAdmin) {
       return NextResponse.redirect(new URL("/courses", request.url));
     }
   }

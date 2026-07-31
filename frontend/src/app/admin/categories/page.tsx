@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { type Category } from "@/gen/catalog/v1/catalog_pb";
-import { UserRole } from "@/gen/identity/v1/identity_pb";
+import { SystemRole } from "@/gen/identity/v1/identity_pb";
 import {
   useCategoriesQuery,
   useCreateCategoryMutation,
@@ -65,7 +65,7 @@ export default function AdminCategoriesPage() {
   const { userId: authUserId } = useAuth();
   const userId = authUserId || "";
   const { data: userProfile, isLoading: profileLoading } = useUserProfileQuery(userId);
-  const isAdmin = userProfile?.role === UserRole.SUPER_ADMIN;
+  const isAdmin = userProfile?.systemRole === SystemRole.SUPER_ADMIN;
 
   const { data: subjects = [], refetch: refetchSubjects } = useCategoriesQuery("SUBJECT");
   const { data: levels = [], refetch: refetchLevels } = useCategoriesQuery("LEVEL");

@@ -13,6 +13,7 @@ export default async function Home() {
       initialToken={session.accessToken || undefined}
       initialUserName={session.userName || undefined}
       initialUserRole={session.userRole || undefined}
+      initialSystemRole={session.systemRole || undefined}
     />
   );
 }
