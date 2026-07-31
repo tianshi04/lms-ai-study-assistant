@@ -110,7 +110,7 @@ async def lifespan(app: Starlette):
         tracer_provider = trace.get_tracer_provider()
         if hasattr(tracer_provider, "shutdown"):
             getattr(tracer_provider, "shutdown")()
-            
+
         meter_provider = metrics.get_meter_provider()
         if hasattr(meter_provider, "shutdown"):
             getattr(meter_provider, "shutdown")()
