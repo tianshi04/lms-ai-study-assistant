@@ -8,7 +8,7 @@ export const DropdownMenuPortal = BaseMenu.Portal;
 
 export const DropdownMenuContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof BaseMenu.Popup>
+  React.ComponentPropsWithRef<typeof BaseMenu.Popup>
 >(({ className, children, ...props }, ref) => (
   <DropdownMenuPortal>
     <BaseMenu.Positioner sideOffset={6} className="z-50 outline-none">
@@ -29,7 +29,7 @@ DropdownMenuContent.displayName = "DropdownMenuContent";
 
 export const DropdownMenuItem = React.forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof BaseMenu.Item>
+  React.ComponentPropsWithRef<typeof BaseMenu.Item>
 >(({ className, ...props }, ref) => (
   <BaseMenu.Item
     ref={ref}

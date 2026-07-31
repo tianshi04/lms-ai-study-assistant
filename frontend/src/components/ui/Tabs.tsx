@@ -6,7 +6,7 @@ export const TabsRoot = BaseTabs.Root;
 
 export const TabsList = React.forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof BaseTabs.List>
+  React.ComponentPropsWithRef<typeof BaseTabs.List>
 >(({ className, ...props }, ref) => (
   <BaseTabs.List
     ref={ref}
@@ -18,7 +18,7 @@ TabsList.displayName = "TabsList";
 
 export const TabsTrigger = React.forwardRef<
   HTMLButtonElement,
-  React.ComponentPropsWithoutRef<typeof BaseTabs.Tab>
+  React.ComponentPropsWithRef<typeof BaseTabs.Tab>
 >(({ className, ...props }, ref) => (
   <BaseTabs.Tab
     ref={ref}
@@ -33,7 +33,7 @@ TabsTrigger.displayName = "TabsTrigger";
 
 export const TabsContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof BaseTabs.Panel>
+  React.ComponentPropsWithRef<typeof BaseTabs.Panel>
 >(({ className, ...props }, ref) => (
   <BaseTabs.Panel ref={ref} className={cn("pt-4 focus:outline-none", className)} {...props} />
 ));

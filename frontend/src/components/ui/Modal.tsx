@@ -10,7 +10,7 @@ export const DialogClose = BaseDialog.Close;
 
 export const DialogBackdrop = React.forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof BaseDialog.Backdrop>
+  React.ComponentPropsWithRef<typeof BaseDialog.Backdrop>
 >(({ className, ...props }, ref) => (
   <BaseDialog.Backdrop
     ref={ref}
@@ -33,9 +33,7 @@ const sizeClasses: Record<ModalSize, string> = {
   full: "max-w-[95vw] max-h-[90vh] overflow-y-auto",
 };
 
-export interface DialogContentProps extends React.ComponentPropsWithoutRef<
-  typeof BaseDialog.Popup
-> {
+export interface DialogContentProps extends React.ComponentPropsWithRef<typeof BaseDialog.Popup> {
   size?: ModalSize;
 }
 
@@ -85,7 +83,7 @@ DialogFooter.displayName = "DialogFooter";
 
 export const DialogTitle = React.forwardRef<
   HTMLHeadingElement,
-  React.ComponentPropsWithoutRef<typeof BaseDialog.Title>
+  React.ComponentPropsWithRef<typeof BaseDialog.Title>
 >(({ className, ...props }, ref) => (
   <BaseDialog.Title
     ref={ref}
@@ -100,7 +98,7 @@ DialogTitle.displayName = "DialogTitle";
 
 export const DialogDescription = React.forwardRef<
   HTMLParagraphElement,
-  React.ComponentPropsWithoutRef<typeof BaseDialog.Description>
+  React.ComponentPropsWithRef<typeof BaseDialog.Description>
 >(({ className, ...props }, ref) => (
   <BaseDialog.Description
     ref={ref}

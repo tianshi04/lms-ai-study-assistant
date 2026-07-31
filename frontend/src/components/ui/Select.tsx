@@ -8,7 +8,7 @@ export const SelectPortal = BaseSelect.Portal;
 
 export const SelectTrigger = React.forwardRef<
   HTMLButtonElement,
-  React.ComponentPropsWithoutRef<typeof BaseSelect.Trigger>
+  React.ComponentPropsWithRef<typeof BaseSelect.Trigger>
 >(({ className, children, ...props }, ref) => (
   <BaseSelect.Trigger
     ref={ref}
@@ -36,7 +36,7 @@ SelectTrigger.displayName = "SelectTrigger";
 
 export const SelectContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof BaseSelect.Popup>
+  React.ComponentPropsWithRef<typeof BaseSelect.Popup>
 >(({ className, children, ...props }, ref) => (
   <SelectPortal>
     <BaseSelect.Positioner sideOffset={6} className="z-50 outline-none">
@@ -57,7 +57,7 @@ SelectContent.displayName = "SelectContent";
 
 export const SelectItem = React.forwardRef<
   HTMLDivElement,
-  React.ComponentPropsWithoutRef<typeof BaseSelect.Item>
+  React.ComponentPropsWithRef<typeof BaseSelect.Item>
 >(({ className, children, ...props }, ref) => (
   <BaseSelect.Item
     ref={ref}
