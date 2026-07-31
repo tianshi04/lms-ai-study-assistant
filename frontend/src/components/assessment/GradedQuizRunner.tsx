@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { HonorCodeModal } from "./HonorCodeModal";
@@ -162,13 +162,12 @@ export function GradedQuizRunner({
     }
   };
 
-  const handleRetryQuiz = useCallback(async () => {
+  const handleRetryQuiz = async () => {
     setQuizResult(null);
     setSelectedAnswers([]);
     setSubmitError(null);
     setLoading(true);
     setError(null);
-    autoSubmitTriggeredRef.current = false;
 
     try {
       const client = getRpcClient(AssessmentService);
@@ -176,27 +175,21 @@ export function GradedQuizRunner({
       setQuestions(res.questions || []);
       setSessionSeed(res.sessionSeed);
       setStartTimeIso(res.startTimeIso);
-      setSessionToken(res.sessionToken || "");
       setTimeLimit(res.timeLimitMinutes || 45);
-      setTimeLeftSeconds((res.timeLimitMinutes || 45) * 60);
       setPassingThreshold(res.passingThresholdPercent || 80.0);
       setMaxAttempts(res.maxAttempts || 3);
       setCooldownHours(res.cooldownHours || 8);
       setSelectedAnswers(Array.from({ length: res.questions?.length || 0 }, () => -1));
-      if ((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft) {
-        setCooldownCountdown((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft!);
-      } else {
-        setCooldownCountdown(0);
-      }
+      setCooldownCountdown(0);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Không thể khởi động lại bài thi.";
       setError(errMsg);
     } finally {
       setLoading(false);
     }
-  }, [itemId, isPreviewMode]);
+  };
 
-  const executeSubmit = useCallback(async () => {
+  const executeSubmit = async () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -242,7 +235,7 @@ export function GradedQuizRunner({
     } finally {
       setIsSubmitting(false);
     }
-  }, [itemId, selectedAnswers, sessionSeed, startTimeIso, isPreviewMode, onComplete]);
+  };
 
   const handleSubmitQuiz = async () => {
     if (!isHonorAgreed && !isPreviewMode) {
@@ -603,15 +596,11 @@ export function GradedQuizRunner({
           )}
           {!quizResult && (
             <button
-              onClick={() => handleSubmitQuiz()}
-              disabled={
-                isSubmitting ||
-                (cooldownCountdown > 0 && !isPreviewMode) ||
-                (timeLeftSeconds !== null && timeLeftSeconds <= 0)
-              }
+              onClick={handleSubmitQuiz}
+              disabled={isSubmitting || (cooldownCountdown > 0 && !isPreviewMode)}
               className="px-6 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-xs transition-all flex items-center gap-2"
             >
-              <span>{isSubmitting ? "Đang chấm điểm..." : "Nộp bài thi"}</span>
+              <span aria-live="polite">{isSubmitting ? "Đang chấm điểm…" : "Nộp bài thi"}</span>
               {!isSubmitting && (
                 <svg
                   className="w-4 h-4"
