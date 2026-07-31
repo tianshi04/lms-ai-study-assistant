@@ -421,6 +421,7 @@ class IdentityUseCase:
             saved_user = await repo.save(user)
             logger.info("Updated user profile for user %s", user_id)
             return saved_user, ""
+
     async def submit_instructor_application(
         self,
         user_id: str,

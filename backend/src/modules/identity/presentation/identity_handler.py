@@ -330,6 +330,7 @@ class IdentityHandler(IdentityService):
                 Code.INVALID_ARGUMENT, err or "Cập nhật hồ sơ cá nhân thất bại"
             )
         return pb.UpdateUserProfileResponse(user=_to_pb_user(user))
+
     async def submit_instructor_application(
         self,
         request: pb.SubmitInstructorApplicationRequest,
