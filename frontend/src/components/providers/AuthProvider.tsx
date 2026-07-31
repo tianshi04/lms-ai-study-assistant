@@ -2,6 +2,12 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 
+// Static Sets computed once at module level for O(1) role lookups
+const INSTRUCTOR_ADMIN_ROLE_IDS = new Set(["2", "4", "5"]);
+const INSTRUCTOR_ADMIN_ROLE_NAMES = new Set(["instructor", "admin"]);
+const STAFF_EXTRA_ROLE_IDS = new Set(["3"]);
+const STAFF_EXTRA_ROLE_NAMES = new Set(["ta", "teaching assistant"]);
+
 export interface UserAuth {
   userName: string | null;
   userEmail: string | null;
@@ -97,18 +103,12 @@ export function AuthProvider({
     window.location.href = "/auth/login";
   };
 
-  const roleStr = String(auth.userRole || "").toLowerCase();
+  const roleId = auth.userRole ?? "";
+  const roleStr = roleId.toLowerCase();
   const isInstructorOrAdmin =
-    auth.userRole === "2" ||
-    auth.userRole === "4" ||
-    auth.userRole === "5" ||
-    roleStr.includes("instructor") ||
-    roleStr.includes("admin");
+    INSTRUCTOR_ADMIN_ROLE_IDS.has(roleId) || INSTRUCTOR_ADMIN_ROLE_NAMES.has(roleStr);
   const isStaff =
-    isInstructorOrAdmin ||
-    auth.userRole === "3" ||
-    roleStr.includes("ta") ||
-    roleStr.includes("teaching assistant");
+    isInstructorOrAdmin || STAFF_EXTRA_ROLE_IDS.has(roleId) || STAFF_EXTRA_ROLE_NAMES.has(roleStr);
 
   return (
     <AuthContext.Provider value={{ ...auth, setAuth, logout, isInstructorOrAdmin, isStaff }}>
