@@ -276,14 +276,14 @@ export function useRevokeEnterpriseSeatMutation(
 
 export function useLearningProgressQuery(
   courseId: string,
-  options?: Partial<UseQueryOptions<LearningProgress | undefined, Error>>,
+  options?: Partial<UseQueryOptions<LearningProgress | null, Error>>,
 ) {
-  return useQuery<LearningProgress | undefined, Error>({
+  return useQuery<LearningProgress | null, Error>({
     queryKey: ["learningProgress", courseId],
     queryFn: async () => {
       const client = getRpcClient(LearningService);
       const res = await client.getProgress({ courseId });
-      return res.progress;
+      return res.progress ?? null;
     },
     enabled: !!courseId,
     ...options,
@@ -761,14 +761,14 @@ export function useSubmitInstructorApplicationMutation(
 }
 
 export function useMyInstructorApplicationQuery(
-  options?: Partial<UseQueryOptions<InstructorApplication | undefined, Error>>,
+  options?: Partial<UseQueryOptions<InstructorApplication | null, Error>>,
 ) {
-  return useQuery<InstructorApplication | undefined, Error>({
+  return useQuery<InstructorApplication | null, Error>({
     queryKey: ["myInstructorApplication"],
     queryFn: async () => {
       const client = getRpcClient(IdentityService);
       const res = await client.getMyInstructorApplication({});
-      return res.application;
+      return res.application ?? null;
     },
     ...options,
   });
