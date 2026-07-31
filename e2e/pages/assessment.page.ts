@@ -36,6 +36,8 @@ export class AssessmentPage {
     this.honorAgreedBadge = page.locator('span').filter({ hasText: /Đã xác nhận Cam kết|Honor Code Agreed/i }).first();
     this.submitQuizButton = page.getByRole('button', { name: /Submit Graded Quiz|Nộp bài thi/i });
     this.honorCheckbox = page.locator('.fixed.inset-0 input[type="checkbox"]').first();
+    
+    // Sử dụng locator an toàn, kết hợp regex tiếng Anh & Việt, bỏ qua CSS class gây lỗi filter
     this.agreeAndContinueButton = page.locator('button', { hasText: /Tôi đồng ý & Tiếp tục|I Agree & Continue/i }).first();
 
     this.runLabButton = page.getByRole('button', { name: /Run & Submit Code/i });
@@ -65,7 +67,7 @@ export class AssessmentPage {
   }
 
   async agreeHonorCode() {
-    // Wait up to 15s for the confirm button to appear
+    // Wait up to 15s for the confirm button to appear (CI can be slow to load quiz)
     await this.confirmHonorButton.waitFor({ state: 'visible', timeout: 15000 }).catch(() => null);
     if (!await this.confirmHonorButton.isVisible()) return;
 
@@ -130,7 +132,3 @@ export class AssessmentPage {
     await this.page.waitForTimeout(1000);
   }
 }
-
-
-
-

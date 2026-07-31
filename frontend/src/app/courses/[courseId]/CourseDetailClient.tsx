@@ -37,8 +37,9 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   } = useCourseDetailQuery(courseId);
   const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(courseId);
 
-  const { data: myCertificates = [] } = useMyCertificatesQuery();
-  const { data: paymentAccess } = usePaymentAccessQuery(courseId);
+  const { data: myCertificates = [], isLoading: loadingCerts } = useMyCertificatesQuery();
+  const { data: paymentAccess, isLoading: loadingPayment } = usePaymentAccessQuery(courseId);
+  const loadingAccess = loadingCerts || loadingPayment;
   const isPaidAccess = paymentAccess?.hasPaidAccess ?? false;
   const matchingCert = course?.title
     ? myCertificates.find((c) => c.courseTitle.toLowerCase() === course.title.toLowerCase())
@@ -315,11 +316,13 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-xl space-y-6">
             <div>
               <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
-                {hasCert
-                  ? "Hoàn Thành Xuất Sắc"
-                  : isPaidAccess
-                    ? "Đã Mở Khóa Đầy Đủ (Paid Mode)"
-                    : "Miễn Phí Tham Gia"}
+                {loadingAccess
+                  ? "Đang tải thông tin..."
+                  : hasCert
+                    ? "Hoàn Thành Xuất Sắc"
+                    : isPaidAccess
+                      ? "Đã Mở Khóa Đầy Đủ (Paid Mode)"
+                      : "Miễn Phí Tham Gia"}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 {isPaidAccess
@@ -328,7 +331,12 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               </p>
             </div>
 
-            {hasCert ? (
+            {loadingAccess ? (
+              <div className="space-y-3 animate-pulse">
+                <div className="h-12 w-full bg-slate-200 dark:bg-slate-800 rounded-xl" />
+                <div className="h-10 w-full bg-slate-200 dark:bg-slate-800 rounded-xl" />
+              </div>
+            ) : hasCert ? (
               <div className="space-y-3">
                 <Link
                   href={`/verify/${certId}`}
