@@ -59,7 +59,8 @@ export function HonorCodeModal({ itemId, isOpen, onAgreed, onClose }: HonorCodeM
     >
       <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
         <p>
-          Bằng việc nộp bài kiểm tra này, tôi xác nhận tất cả nội dung làm bài đều là kết quả làm việc trung thực của chính tôi.
+          Bằng việc nộp bài kiểm tra này, tôi xác nhận tất cả nội dung làm bài đều là kết quả làm
+          việc trung thực của chính tôi.
         </p>
 
         <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-900 dark:text-amber-200 space-y-2">
