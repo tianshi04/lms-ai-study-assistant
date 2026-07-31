@@ -40,14 +40,19 @@ jobs:
           setup_only: true
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
           node-version: "22"
-          cache: 'npm'
+          cache: 'pnpm'
           cache-dependency-path: |
-            frontend/package-lock.json
-            e2e/package-lock.json
+            frontend/pnpm-lock.yaml
+            e2e/pnpm-lock.yaml
 
       - name: Set up uv for Python Backend
         uses: astral-sh/setup-uv@v9.0.0
@@ -81,20 +86,20 @@ jobs:
 
       # 2. Prepare Frontend App
       - name: Install Frontend Dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
         working-directory: frontend
 
       - name: Generate Frontend ConnectRPC Stubs
-        run: npm run gen
+        run: pnpm run gen
         working-directory: frontend
 
       - name: Build Frontend Production App
-        run: npm run build
+        run: pnpm run build
         working-directory: frontend
 
       - name: Start Frontend Server in Background
         run: |
-          npm run start &
+          pnpm run start &
           # Wait for frontend server
           for i in {1..30}; do
             curl -s http://localhost:3000 && break || sleep 1
@@ -103,15 +108,15 @@ jobs:
 
       # 3. Execute Playwright E2E Blackbox Tests
       - name: Install E2E Dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
         working-directory: e2e
 
       - name: Install Playwright Browsers with System Dependencies
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
         working-directory: e2e
 
       - name: Run Playwright E2E Tests
-        run: npm test
+        run: pnpm test
         working-directory: e2e
         env:
           BASE_URL: http://localhost:3000

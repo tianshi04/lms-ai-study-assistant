@@ -11,7 +11,7 @@
     "format": "oxfmt --write .",
     "fix": "oxlint --fix && oxfmt --write .",
     "type-check": "tsc --noEmit",
-    "check": "npm run type-check && oxlint && oxfmt --check .",
+    "check": "pnpm run type-check && oxlint && oxfmt --check .",
     "gen": "buf generate ../proto --template buf.gen.yaml"
   },
   "dependencies": {
