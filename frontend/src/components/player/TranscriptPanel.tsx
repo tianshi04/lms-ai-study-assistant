@@ -98,7 +98,7 @@ export function TranscriptPanel({
   // Helper function to highlight matching text
   const renderHighlightedText = (text: string, highlight: string) => {
     if (!highlight.trim()) return <span>{text}</span>;
-    const regex = new RegExp(`(${highlight.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&")})`, "gi");
+    const regex = new RegExp(`(${highlight.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")})`, "gi");
     const parts = text.split(regex);
     return (
       <span>

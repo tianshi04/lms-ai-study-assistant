@@ -86,7 +86,7 @@ export function GradedQuizRunner({
           setPassingThreshold(res.passingThresholdPercent || 80.0);
           setMaxAttempts(res.maxAttempts || 3);
           setCooldownHours(res.cooldownHours || 8);
-          setSelectedAnswers(new Array(res.questions?.length || 0).fill(-1));
+          setSelectedAnswers(Array.from({ length: res.questions?.length || 0 }, () => -1));
           if ((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft) {
             setCooldownCountdown((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft!);
           }
@@ -133,7 +133,7 @@ export function GradedQuizRunner({
   const handleResetPreview = async () => {
     setQuizResult(null);
     setSubmitError(null);
-    setSelectedAnswers(new Array(questions.length).fill(-1));
+    setSelectedAnswers(Array.from({ length: questions.length }, () => -1));
     setLoading(true);
     try {
       const client = getRpcClient(AssessmentService);
@@ -145,7 +145,7 @@ export function GradedQuizRunner({
       setPassingThreshold(res.passingThresholdPercent || 80.0);
       setMaxAttempts(res.maxAttempts || 3);
       setCooldownHours(res.cooldownHours || 8);
-      setSelectedAnswers(new Array(res.questions?.length || 0).fill(-1));
+      setSelectedAnswers(Array.from({ length: res.questions?.length || 0 }, () => -1));
       setCooldownCountdown(0);
     } catch (err) {
       console.error("Failed to reset preview session:", err);

@@ -13,8 +13,8 @@ export function parseVTT(vttContent: string): VTTCue[] {
   const blocks = normalized.split(/\n\n+/);
   
   // Regex to match timestamp line: e.g. "00:00:01.000 --> 00:00:04.000" or similar
-  const timeRegex = /(\d{2}:\d{2}:\d{2}[\.,]\d{3}) --> (\d{2}:\d{2}:\d{2}[\.,]\d{3})/;
-  const shortTimeRegex = /(\d{2}:\d{2}[\.,]\d{3}) --> (\d{2}:\d{2}[\.,]\d{3})/;
+  const timeRegex = /(\d{2}:\d{2}:\d{2}[.,]\d{3}) --> (\d{2}:\d{2}:\d{2}[.,]\d{3})/;
+  const shortTimeRegex = /(\d{2}:\d{2}[.,]\d{3}) --> (\d{2}:\d{2}[.,]\d{3})/;
 
   function parseTime(timeStr: string): number {
     const parts = timeStr.replace(",", ".").split(":");

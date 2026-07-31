@@ -206,7 +206,7 @@ export function VideoPlayer({
 
   function getYouTubeEmbedUrl(url: string, autoTranscribe: boolean = false): string | null {
     if (!url) return null;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     const ccParam = autoTranscribe ? "&cc_load_policy=1" : "";
     return match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?enablejsapi=1${ccParam}` : null;
