@@ -60,6 +60,36 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
     const [cues, setCues] = useState<VTTCue[]>([]);
     const [prevActiveItemId, setPrevActiveItemId] = useState<string | null>(null);
 
+    const [playbackRate, setPlaybackRate] = useState(1);
+    const [isSpeedMenuOpen, setIsSpeedMenuOpen] = useState(false);
+    const [isPipSupported, setIsPipSupported] = useState(false);
+
+    useEffect(() => {
+      setIsPipSupported(typeof document !== "undefined" && "pictureInPictureEnabled" in document);
+    }, []);
+
+    useEffect(() => {
+      if (internalVideoRef.current) {
+        internalVideoRef.current.playbackRate = playbackRate;
+      }
+      if (internalYoutubePlayerRef.current) {
+        internalYoutubePlayerRef.current.setPlaybackRate(playbackRate);
+      }
+    }, [playbackRate, activeItem?.id]); // Re-apply when item changes
+
+    const handleTogglePip = async () => {
+      if (!internalVideoRef.current) return;
+      try {
+        if (document.pictureInPictureElement) {
+          await document.exitPictureInPicture();
+        } else {
+          await internalVideoRef.current.requestPictureInPicture();
+        }
+      } catch (err) {
+        console.error("Failed to toggle PiP", err);
+      }
+    };
+
     useImperativeHandle(ref, () => ({
       get currentTime() {
         if (internalVideoRef.current) return internalVideoRef.current.currentTime;
@@ -323,6 +353,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
               onStateChange={(e: YouTubeEvent) => {
                 if (e.data === YouTube.PlayerState.PLAYING) {
                   setIsPlaying(true);
+                  e.target.setPlaybackRate(playbackRate);
                 } else {
                   setIsPlaying(false);
                 }
@@ -406,6 +437,57 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(
               </span>
             </div>
           )}
+
+          {/* Custom Floating Controls (Speed & PiP) */}
+          <div className="absolute bottom-16 right-4 z-20 flex flex-col items-end gap-2">
+            {/* Speed Menu Dropdown */}
+            {isSpeedMenuOpen && (
+              <div className="bg-slate-900/90 backdrop-blur-md rounded-xl p-2 shadow-2xl border border-slate-700 flex flex-col gap-1 animate-in fade-in slide-in-from-bottom-2">
+                {[0.5, 0.75, 1, 1.25, 1.5, 2].map((rate) => (
+                  <button
+                    key={rate}
+                    onClick={() => {
+                      setPlaybackRate(rate);
+                      setIsSpeedMenuOpen(false);
+                    }}
+                    className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-colors text-left ${
+                      playbackRate === rate
+                        ? "bg-emerald-500/20 text-emerald-400"
+                        : "text-white hover:bg-slate-800"
+                    }`}
+                  >
+                    {rate === 1 ? "Chuẩn (1x)" : `${rate}x`}
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            <div className="flex items-center gap-2">
+              {/* PiP Button (Only for native video) */}
+              {!youtubeId && isPipSupported && (
+                <button
+                  onClick={handleTogglePip}
+                  title="Picture-in-Picture"
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-slate-900/80 hover:bg-slate-900 text-white shadow-xl backdrop-blur-md border border-slate-700 hover:border-emerald-500 transition-all"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 3H3v18h18V3zM10 21V9h11" />
+                  </svg>
+                </button>
+              )}
+
+              {/* Speed Button */}
+              <button
+                onClick={() => setIsSpeedMenuOpen(!isSpeedMenuOpen)}
+                className="px-3 h-10 rounded-full bg-slate-900/80 hover:bg-slate-900 text-white shadow-xl backdrop-blur-md border border-slate-700 hover:border-emerald-500 transition-all flex items-center gap-1 font-bold text-xs"
+              >
+                <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {playbackRate === 1 ? "1x" : `${playbackRate}x`}
+              </button>
+            </div>
+          </div>
 
           {/* In-Video Quiz Overlay */}
           {activeQuiz && (
