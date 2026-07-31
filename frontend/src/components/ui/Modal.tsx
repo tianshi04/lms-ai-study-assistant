@@ -8,20 +8,22 @@ export const DialogTrigger = BaseDialog.Trigger;
 export const DialogPortal = BaseDialog.Portal;
 export const DialogClose = BaseDialog.Close;
 
-export const DialogBackdrop = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithRef<typeof BaseDialog.Backdrop>
->(({ className, ...props }, ref) => (
-  <BaseDialog.Backdrop
-    ref={ref}
-    className={cn(
-      "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-150",
-      className,
-    )}
-    {...props}
-  />
-));
-DialogBackdrop.displayName = "DialogBackdrop";
+export function DialogBackdrop({
+  className,
+  ref,
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Backdrop>) {
+  return (
+    <BaseDialog.Backdrop
+      ref={ref}
+      className={cn(
+        "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-150",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
 export type ModalSize = "sm" | "md" | "lg" | "xl" | "full";
 
@@ -33,12 +35,18 @@ const sizeClasses: Record<ModalSize, string> = {
   full: "max-w-[95vw] max-h-[90vh] overflow-y-auto",
 };
 
-export interface DialogContentProps extends React.ComponentPropsWithRef<typeof BaseDialog.Popup> {
+export interface DialogContentProps extends React.ComponentProps<typeof BaseDialog.Popup> {
   size?: ModalSize;
 }
 
-export const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
-  ({ className, children, size = "md", ...props }, ref) => (
+export function DialogContent({
+  className,
+  children,
+  size = "md",
+  ref,
+  ...props
+}: DialogContentProps) {
+  return (
     <DialogPortal>
       <DialogBackdrop />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
@@ -55,9 +63,8 @@ export const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps
         </BaseDialog.Popup>
       </div>
     </DialogPortal>
-  ),
-);
-DialogContent.displayName = "DialogContent";
+  );
+}
 
 export const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
@@ -81,32 +88,36 @@ export const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLD
 );
 DialogFooter.displayName = "DialogFooter";
 
-export const DialogTitle = React.forwardRef<
-  HTMLHeadingElement,
-  React.ComponentPropsWithRef<typeof BaseDialog.Title>
->(({ className, ...props }, ref) => (
-  <BaseDialog.Title
-    ref={ref}
-    className={cn(
-      "text-lg font-semibold text-slate-900 dark:text-white leading-none tracking-tight",
-      className,
-    )}
-    {...props}
-  />
-));
-DialogTitle.displayName = "DialogTitle";
+export function DialogTitle({
+  className,
+  ref,
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Title>) {
+  return (
+    <BaseDialog.Title
+      ref={ref}
+      className={cn(
+        "text-lg font-semibold text-slate-900 dark:text-white leading-none tracking-tight",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-export const DialogDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.ComponentPropsWithRef<typeof BaseDialog.Description>
->(({ className, ...props }, ref) => (
-  <BaseDialog.Description
-    ref={ref}
-    className={cn("text-sm text-slate-500 dark:text-slate-400 mt-1", className)}
-    {...props}
-  />
-));
-DialogDescription.displayName = "DialogDescription";
+export function DialogDescription({
+  className,
+  ref,
+  ...props
+}: React.ComponentProps<typeof BaseDialog.Description>) {
+  return (
+    <BaseDialog.Description
+      ref={ref}
+      className={cn("text-sm text-slate-500 dark:text-slate-400 mt-1", className)}
+      {...props}
+    />
+  );
+}
 
 export interface ModalProps {
   isOpen: boolean;

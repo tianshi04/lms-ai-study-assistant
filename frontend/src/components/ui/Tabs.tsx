@@ -4,40 +4,42 @@ import { cn } from "@/lib/utils";
 
 export const TabsRoot = BaseTabs.Root;
 
-export const TabsList = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithRef<typeof BaseTabs.List>
->(({ className, ...props }, ref) => (
-  <BaseTabs.List
-    ref={ref}
-    className={cn("flex border-b border-slate-200 dark:border-slate-800 gap-6", className)}
-    {...props}
-  />
-));
-TabsList.displayName = "TabsList";
+export function TabsList({ className, ref, ...props }: React.ComponentProps<typeof BaseTabs.List>) {
+  return (
+    <BaseTabs.List
+      ref={ref}
+      className={cn("flex border-b border-slate-200 dark:border-slate-800 gap-6", className)}
+      {...props}
+    />
+  );
+}
 
-export const TabsTrigger = React.forwardRef<
-  HTMLButtonElement,
-  React.ComponentPropsWithRef<typeof BaseTabs.Tab>
->(({ className, ...props }, ref) => (
-  <BaseTabs.Tab
-    ref={ref}
-    className={cn(
-      "pb-3 text-sm font-semibold transition-colors border-b-2 -mb-px flex items-center gap-2 cursor-pointer border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 data-[selected]:border-[#0056D2] data-[selected]:text-[#0056D2] dark:data-[selected]:text-blue-400 focus:outline-none",
-      className,
-    )}
-    {...props}
-  />
-));
-TabsTrigger.displayName = "TabsTrigger";
+export function TabsTrigger({
+  className,
+  ref,
+  ...props
+}: React.ComponentProps<typeof BaseTabs.Tab>) {
+  return (
+    <BaseTabs.Tab
+      ref={ref}
+      className={cn(
+        "pb-3 text-sm font-semibold transition-colors border-b-2 -mb-px flex items-center gap-2 cursor-pointer border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 data-[selected]:border-[#0056D2] data-[selected]:text-[#0056D2] dark:data-[selected]:text-blue-400 focus:outline-none",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-export const TabsContent = React.forwardRef<
-  HTMLDivElement,
-  React.ComponentPropsWithRef<typeof BaseTabs.Panel>
->(({ className, ...props }, ref) => (
-  <BaseTabs.Panel ref={ref} className={cn("pt-4 focus:outline-none", className)} {...props} />
-));
-TabsContent.displayName = "TabsContent";
+export function TabsContent({
+  className,
+  ref,
+  ...props
+}: React.ComponentProps<typeof BaseTabs.Panel>) {
+  return (
+    <BaseTabs.Panel ref={ref} className={cn("pt-4 focus:outline-none", className)} {...props} />
+  );
+}
 
 export interface TabItem {
   id: string;
