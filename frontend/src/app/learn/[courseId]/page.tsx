@@ -138,7 +138,15 @@ function CoursePlayerContent() {
       }
       try {
         const catalogClient = getRpcClient(CatalogService);
-        const courseRes = await catalogClient.getCourseDetail({ idOrSlug: courseId });
+        const learningClient = getRpcClient(LearningService);
+
+        // Fetch course details, progress, and personal notes in parallel to eliminate waterfalls
+        const [courseRes, progressRes, notesRes] = await Promise.all([
+          catalogClient.getCourseDetail({ idOrSlug: courseId }),
+          isPreviewMode ? Promise.resolve(null) : learningClient.getProgress({ courseId }),
+          isPreviewMode ? Promise.resolve(null) : learningClient.listPersonalNotes({ courseId }),
+        ]);
+
         setCourse(courseRes.course ?? null);
 
         // Set initial item based on previewItemId if provided
@@ -171,11 +179,9 @@ function CoursePlayerContent() {
             lastResetAt: "",
           } as unknown as LearningProgress);
         } else {
-          const learningClient = getRpcClient(LearningService);
-          const progressRes = await learningClient.getProgress({ courseId });
-          setProgress(progressRes.progress ?? null);
+          setProgress(progressRes?.progress ?? null);
 
-          if (progressRes.progress && progressRes.progress.overallProgressPercent >= 100) {
+          if (progressRes?.progress && progressRes.progress.overallProgressPercent >= 100) {
             try {
               const certClient = getRpcClient(CertificateService);
               const certRes = await certClient.getVerifiedCertificate({ courseId });
@@ -187,8 +193,7 @@ function CoursePlayerContent() {
             }
           }
 
-          const notesRes = await learningClient.listPersonalNotes({ courseId });
-          setNotes(notesRes.notes);
+          setNotes(notesRes?.notes || []);
         }
       } catch (err) {
         console.error("Error loading course player data:", err);
