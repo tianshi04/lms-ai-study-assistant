@@ -21,7 +21,7 @@ Tài liệu này tổng hợp các User Stories (câu chuyện người dùng) c
 | **US_09** | Học viên | Diễn đàn trao đổi học thuật theo bài học | Sẵn sàng |
 | **US_10** | Học viên | Bài kiểm tra năng lực và Chấm điểm chéo | Sẵn sàng |
 | **US_11** | Học viên | Chứng chỉ xác minh và Huy hiệu năng lực | Sẵn sàng |
-| **US_12** | Partner Admin | Thương hiệu đối tác và Suất học tổ chức | Sẵn sàng |
+| **US_12** | Organization Admin | Thương hiệu đối tác và Suất học tổ chức | Sẵn sàng |
 | **US_13** | Học viên | Đánh giá và Phản hồi chất lượng khóa học | Sẵn sàng |
 | **US_14** | Học viên | Nộp đơn đăng ký làm Giảng viên cá nhân | Sẵn sàng |
 
@@ -142,13 +142,13 @@ Tài liệu này tổng hợp các User Stories (câu chuyện người dùng) c
 
 ---
 
-### 2.4. VAI TRÒ: ĐỐI TÁC PHÁT HÀNH (PARTNER / ORGANIZATION ADMIN)
+### 2.4. VAI TRÒ: QUẢN TRỊ VIÊN TỔ CHỨC (ORGANIZATION ADMIN)
 
 #### US_12: Thương hiệu đối tác và Suất học tổ chức
 * **Mô tả Story (Problem Space):**
-  * **Là một** Partner Admin (Đại diện Trường Đại học / Doanh nghiệp đối tác),
+  * **Là một** Organization Admin (Quản trị viên / Đại diện Trường Đại học / Doanh nghiệp đối tác),
   * **Tôi muốn** quản lý thương hiệu tổ chức (Partner Logo), cấp phát và theo dõi suất học doanh nghiệp (Enterprise License Seats),
   * **Để** hỗ trợ sinh viên/nhân viên thuộc tổ chức tiếp cận khóa học chất lượng cao và quảng bá thương hiệu đối tác trên chứng chỉ.
 * **Tiêu chí nghiệm thu:**
-  * *AC 1:* Partner Admin có thể cập nhật Logo đối tác hiển thị trên các khóa học phát hành và Verified Certificate.
-  * *AC 2:* Partner Admin theo dõi được số suất học đã kích hoạt (`used_seats / total_seats`) và tỷ lệ nhận chứng chỉ của học viên thuộc tổ chức.
+  * *AC 1:* Organization Admin có thể cập nhật Logo đối tác hiển thị trên các khóa học phát hành và Verified Certificate.
+  * *AC 2:* Organization Admin theo dõi được số suất học đã kích hoạt (`used_seats / total_seats`) và tỷ lệ nhận chứng chỉ của học viên thuộc tổ chức.

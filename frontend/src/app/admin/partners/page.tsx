@@ -536,13 +536,13 @@ export default function AdminPartnersPage() {
             </div>
           </div>
 
-          {/* Section: Quản lý Quản trị viên Đối tác (PARTNER_ADMIN) */}
+          {/* Section: Quản lý Quản trị viên Tổ chức (Organization Admin) */}
           <div className="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-3">
             <h3 className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
               <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
-              Quản trị viên Đối tác (PARTNER_ADMIN)
+              Quản trị viên Tổ chức (Organization Admin)
             </h3>
 
             {adminErrorMsg && (

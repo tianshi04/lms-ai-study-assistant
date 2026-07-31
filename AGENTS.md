@@ -38,7 +38,9 @@ This file provides rules, architectural conventions, and workspace instructions 
 - **Never modify code inside generated folders manually.** Always update the `.proto` files and run the generation scripts.
 - The `src/gen/` folders are ignored in Git.
 - We use **Connect-ES v2.0** on the frontend (utilizing `protoc-gen-es` only, where both messages and service schemas are generated directly in `_pb.ts` files without a separate `_connect.ts` stub).
-- **Development Stage & Backward Compatibility**: Since the project is currently in active initial development, API definitions and code structures can be refactored or modified freely without preserving backward compatibility.
+- **Development Stage & Zero-Legacy Refactoring Protocol**:
+  - Since the project is currently in active initial development, all design changes, API contracts, and code structures **MUST BE REFACTORED AGGRESSIVELY AND COMPLETELY** without preserving backward compatibility.
+  - **NO BACKWARD COMPATIBILITY & NO FALLBACK DEBT**: Never retain redundant parameters, optional fallback arguments, legacy branching logic, or unused data fields under the guise of "fallback" or "backward compatibility". Whenever a workflow or data field is automated or eliminated, completely erase all footprints of the legacy design across all architectural layers (Protobuf schemas, presentation handlers, application use cases, domain interfaces, and infrastructure implementations) to ensure a 100% minimal and pristine codebase.
 - **Protobuf Modification Protocol (STRICT SEQUENTIAL RULE)**:
   Whenever adding or modifying `.proto` files in `proto/`, agents MUST follow this exact sequence:
   1. Run `make format-proto` to format Protobuf files and `make lint-proto` to verify linting rules.
@@ -58,6 +60,12 @@ This file provides rules, architectural conventions, and workspace instructions 
     1. **Public / Consumer Context (Learners & Public Users)**: Public query RPCs (`AUTH_POLICY_PUBLIC`) MUST strictly enforce database query filters returning only published/active entities (`PUBLISHED`/`ACTIVE`). Never allow client-supplied flags to expose draft, unapproved, or internal data.
     2. **Creator / Owner Context (Instructors & Authors)**: Resource owner management RPCs (`AUTH_POLICY_AUTHENTICATED`) MUST resolve identity strictly from JWT context (`require_current_user()`), scope database queries to `owner_id` or collaborator lists (`co_instructor_ids`), and return entities across all lifecycle states (`DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `REJECTED`).
     3. **Operator / Admin Review Context (Admins & Reviewers)**: Administrative moderation & review RPCs MUST enforce staff/admin role boundaries and operate on dedicated review queue endpoints.
+- **3-Layer Security Protocol (Hybrid PBAC & Multi-Tenant SQL Scope Pushdown)**:
+  All security and data access operations MUST strictly adhere to the 3-layer authorization model:
+  1. **Layer 1 (API Method Policy & Context Injection)**: Every ConnectRPC method in `.proto` MUST declare custom option `(auth.v1.policy)` (`AUTH_POLICY_PUBLIC`, `AUTH_POLICY_AUTHENTICATED`, `AUTH_POLICY_ADMIN`, `AUTH_POLICY_INTERNAL`). `AuthInterceptor` & `AuthPolicyRegistry` validate JWT, extract `x-organization-id` header (fallback to token claim), and inject `CurrentUserContext` (`src.shared.auth`).
+  2. **Layer 2 (Database Query / SQL Scope Pushdown)**: Repositories querying organization-scoped entities MUST execute `apply_organization_scope(stmt, Model, get_current_user())` (`src.shared.infrastructure.scopes`). Pushes `WHERE organization_id = active_org_id OR organization_id = INTERNAL_SYSTEM_ORG_ID` down to PostgreSQL execution plan. In-memory organization filtering is strictly prohibited.
+  3. **Layer 3 (Domain Resource Ownership & State Verification)**: Application Use Cases MUST verify entity ownership (`owner_id`, `co_instructor_ids`) via `enforce_course_ownership()` (`src.shared.permissions`), enforce lifecycle state restrictions (e.g., `PENDING_REVIEW` read-only lock), or check granular permissions via `CurrentUserContext.require_permission()`.
+
 
 
 ---

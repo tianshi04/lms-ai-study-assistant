@@ -1,10 +1,11 @@
 import json
 import logging
+import pytest
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.responses import JSONResponse
 from starlette.routing import Route
-from starlette.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 
 from src.shared.infrastructure.logging.config import (
     ContextAwareFormatter,
@@ -96,7 +97,8 @@ def test_setup_logging_runs_without_error():
     logger.info("Setup logging test message")
 
 
-def test_request_id_middleware():
+@pytest.mark.asyncio
+async def test_request_id_middleware():
     async def homepage(request):
         return JSONResponse({"request_id": get_request_id()})
 
@@ -105,16 +107,17 @@ def test_request_id_middleware():
         middleware=[Middleware(RequestIDMiddleware)],
     )
 
-    client = TestClient(app)
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
+        # 1. Custom x-request-id
+        resp = await client.get("/", headers={"x-request-id": "custom-id-007"})
+        assert resp.status_code == 200
+        assert resp.headers["x-request-id"] == "custom-id-007"
+        assert resp.json()["request_id"] == "custom-id-007"
 
-    # 1. Custom x-request-id
-    resp = client.get("/", headers={"x-request-id": "custom-id-007"})
-    assert resp.status_code == 200
-    assert resp.headers["x-request-id"] == "custom-id-007"
-    assert resp.json()["request_id"] == "custom-id-007"
-
-    # 2. Auto-generated x-request-id
-    resp_auto = client.get("/")
-    assert resp_auto.status_code == 200
-    assert "x-request-id" in resp_auto.headers
-    assert resp_auto.json()["request_id"] == resp_auto.headers["x-request-id"]
+        # 2. Auto-generated x-request-id
+        resp_auto = await client.get("/")
+        assert resp_auto.status_code == 200
+        assert "x-request-id" in resp_auto.headers
+        assert resp_auto.json()["request_id"] == resp_auto.headers["x-request-id"]

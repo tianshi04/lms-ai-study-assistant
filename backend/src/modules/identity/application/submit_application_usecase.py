@@ -1,6 +1,9 @@
 from datetime import datetime, timezone
 import uuid
 
+from src.modules.identity.domain.constants import (
+    INSTRUCTOR_APPLICATION_REAPPLY_COOLDOWN_DAYS,
+)
 from src.modules.identity.domain.entities import (
     ApplicationStatus,
     InstructorApplication,
@@ -32,10 +35,40 @@ class SubmitInstructorApplicationUseCase:
         if not clean_bio:
             raise ValueError("Bài viết tiểu sử năng lực không được để trống.")
 
-        # Check existing pending application for user
+        # Check existing application for user
         existing_app = await self._repository.get_latest_by_user_id(user_id)
-        if existing_app and existing_app.status == ApplicationStatus.PENDING_REVIEW:
-            raise ValueError("Bạn đã có đơn xin cấp quyền Giảng viên đang chờ duyệt.")
+        if existing_app:
+            if existing_app.status == ApplicationStatus.PENDING_REVIEW:
+                raise ValueError(
+                    "Bạn đã có đơn xin cấp quyền Giảng viên đang chờ duyệt."
+                )
+            elif (
+                existing_app.status == ApplicationStatus.REJECTED
+                and existing_app.reviewed_at
+            ):
+                reviewed_dt = None
+                try:
+                    reviewed_dt = datetime.fromisoformat(existing_app.reviewed_at)
+                    if reviewed_dt.tzinfo is None:
+                        reviewed_dt = reviewed_dt.replace(tzinfo=timezone.utc)
+                except (ValueError, TypeError):
+                    reviewed_dt = None
+
+                if reviewed_dt is not None:
+                    now_dt = datetime.now(timezone.utc)
+                    days_since_rejected = (now_dt - reviewed_dt).days
+                    if (
+                        days_since_rejected
+                        < INSTRUCTOR_APPLICATION_REAPPLY_COOLDOWN_DAYS
+                    ):
+                        remaining_days = max(
+                            1,
+                            INSTRUCTOR_APPLICATION_REAPPLY_COOLDOWN_DAYS
+                            - days_since_rejected,
+                        )
+                        raise ValueError(
+                            f"Đơn đăng ký trước đó của bạn đã bị từ chối. Vui lòng chờ thêm {remaining_days} ngày để nộp lại đơn mới."
+                        )
 
         now_str = datetime.now(timezone.utc).isoformat()
         application = InstructorApplication(

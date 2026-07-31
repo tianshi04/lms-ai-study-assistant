@@ -14,7 +14,6 @@ class UserRole(str, Enum):
     INSTRUCTOR = "USER_ROLE_INSTRUCTOR"
     TA = "USER_ROLE_TA"
     SUPER_ADMIN = "USER_ROLE_SUPER_ADMIN"
-    PARTNER_ADMIN = "USER_ROLE_PARTNER_ADMIN"
 
 
 class ApplicationStatus(str, Enum):

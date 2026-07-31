@@ -157,6 +157,7 @@ class Course(Entity):
         financial_aid_enabled: bool = True,
         status: CourseStatus = CourseStatus.DRAFT,
         rejection_reason: str = "",
+        organization_id: str = "partner_community",
     ) -> None:
         super().__init__(id=id)
         self.title = title
@@ -175,6 +176,7 @@ class Course(Entity):
         self.financial_aid_enabled = financial_aid_enabled
         self.status = status
         self.rejection_reason = rejection_reason
+        self.organization_id = organization_id
 
     def check_pre_submit_checklist(self) -> list[str]:
         """Validates BR_CATALOG_003 pre-submit 4 criteria."""

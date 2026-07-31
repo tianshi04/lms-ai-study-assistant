@@ -259,11 +259,11 @@ function LoginFormContent() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
               {[
-                { label: "Học viên (Learner)", email: "learner@coursera.ai", roleTag: "Role 1" },
-                { label: "Giảng viên (Instructor)", email: "instructor@coursera.ai", roleTag: "Role 2" },
-                { label: "Trợ giảng (TA)", email: "ta@coursera.ai", roleTag: "Role 3" },
-                { label: "Super Admin", email: "admin@coursera.ai", roleTag: "Role 4" },
-                { label: "Partner Admin", email: "partner@coursera.ai", roleTag: "Role 5" },
+                { label: "Học viên Cá nhân", email: "learner@coursera.ai", roleTag: "Learner" },
+                { label: "Giảng viên Cá nhân", email: "instructor@coursera.ai", roleTag: "Instructor" },
+                { label: "Trợ giảng Tổ chức", email: "ta@coursera.ai", roleTag: "Org TA" },
+                { label: "Quản trị viên Tổ chức", email: "partner@coursera.ai", roleTag: "Org Admin" },
+                { label: "Super Admin toàn sàn", email: "admin@coursera.ai", roleTag: "Super Admin" },
               ].map((acc) => (
                 <button
                   key={acc.email}

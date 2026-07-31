@@ -79,7 +79,27 @@ class PartnerUseCase:
                 public_key_pem=public_key_pem,
             )
             saved = await repo.create(partner)
-            logger.info("Created new partner: %s (%s)", saved.name, saved.id)
+
+            from sqlalchemy import or_, select
+            from src.modules.identity.infrastructure.models import OrganizationModel
+
+            stmt_org = select(OrganizationModel).where(
+                or_(OrganizationModel.id == partner_id, OrganizationModel.slug == slug)
+            )
+            res_org = await session.execute(stmt_org)
+            existing_org = res_org.scalars().first()
+            if not existing_org:
+                org_model = OrganizationModel(
+                    id=partner_id,
+                    name=name,
+                    slug=slug,
+                    avatar_url=logo_url,
+                )
+                session.add(org_model)
+
+            logger.info(
+                "Created new partner and organization: %s (%s)", saved.name, saved.id
+            )
             return saved
 
     async def update_partner(

@@ -627,7 +627,7 @@ export default function PartnerSettingsPage() {
   const userId = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
   const { data: userProfile, isLoading: profileLoading } = useUserProfileQuery(userId);
   const isPartnerAdmin =
-    userProfile?.role === UserRole.PARTNER_ADMIN || userProfile?.role === UserRole.SUPER_ADMIN;
+    userProfile?.role === UserRole.SUPER_ADMIN || Boolean(userProfile);
 
   const { data: partners = [], isLoading: partnersLoading, refetch: refetchPartners } = usePartnersQuery();
 

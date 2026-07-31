@@ -7,6 +7,7 @@ import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
 import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
 import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentWorkspace";
+import { parseVTT, type VTTCue } from "@/lib/vtt_parser";
 
 
 export interface VideoPlayerRef {
@@ -24,6 +25,7 @@ interface VideoPlayerProps {
   selectedOption: number | null;
   quizSubmitted: boolean;
   completedItemIds?: string[];
+  currentTime: number;
   onTimeUpdate: () => void;
   onSeeking?: () => void;
   onSelectOption: (index: number) => void;
@@ -40,6 +42,7 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   selectedOption,
   quizSubmitted,
   completedItemIds = [],
+  currentTime,
   onTimeUpdate,
   onSeeking,
   onSelectOption,
@@ -51,6 +54,8 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   const internalVideoRef = useRef<HTMLVideoElement>(null);
   const internalYoutubePlayerRef = useRef<YouTubePlayer | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [cues, setCues] = useState<VTTCue[]>([]);
+  const [prevActiveItemId, setPrevActiveItemId] = useState<string | null>(null);
 
   useImperativeHandle(ref, () => ({
     get currentTime() {
@@ -86,6 +91,34 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     }
     return () => clearInterval(interval);
   }, [isPlaying, onTimeUpdate]);
+
+  if (activeItem?.id !== prevActiveItemId) {
+    setPrevActiveItemId(activeItem?.id || null);
+    setCues([]);
+  }
+
+  useEffect(() => {
+    if (!activeItem || activeItem.type !== 1 || !activeItem.vttSubtitleUrl) {
+      return;
+    }
+    let isMounted = true;
+    fetch(activeItem.vttSubtitleUrl)
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch subtitles");
+        return res.text();
+      })
+      .then((text) => {
+        if (!isMounted) return;
+        const parsedCues = parseVTT(text);
+        setCues(parsedCues);
+      })
+      .catch((err) => {
+        console.error("Error fetching or parsing VTT:", err);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [activeItem]);
 
 
   if (!activeItem) {
@@ -151,11 +184,10 @@ export const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
               <button
                 onClick={() => onMarkComplete?.(activeItem.id)}
                 disabled={isCompleted}
-                className={`px-6 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                  isCompleted
+                className={`px-6 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${isCompleted
                     ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 cursor-default"
                     : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20"
-                }`}
+                  }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -220,6 +252,10 @@ function getYouTubeId(url: string): string | null {
   return match && match[2].length === 11 ? match[2] : null;
 }
 
+  const activeCue = cues.find(
+    (c) => currentTime >= c.startTime && currentTime <= c.endTime
+  );
+
   // 5. Video Item Default Fallback
   if (activeItem.type === 1 && activeItem.videoUrl) {
     const youtubeId = getYouTubeId(activeItem.videoUrl);
@@ -252,16 +288,24 @@ function getYouTubeId(url: string): string | null {
             onEnd={() => onMarkComplete?.(activeItem.id)}
           />
         ) : (
-          <video
-            key={activeItem.id}
-            ref={internalVideoRef}
-            src={activeItem.videoUrl}
-            controls
-            onTimeUpdate={onTimeUpdate}
-            onSeeking={onSeeking}
-            onEnded={() => onMarkComplete?.(activeItem.id)}
-            className="max-h-full max-w-full object-contain shadow-2xl rounded-lg border border-slate-300 dark:border-slate-800"
-          />
+          <>
+            <video
+              key={activeItem.id}
+              ref={internalVideoRef}
+              src={activeItem.videoUrl}
+              controls
+              onTimeUpdate={onTimeUpdate}
+              onSeeking={onSeeking}
+              onEnded={() => onMarkComplete?.(activeItem.id)}
+              className="max-h-full max-w-full object-contain shadow-2xl rounded-lg border border-slate-300 dark:border-slate-800"
+            />
+            {/* Custom Subtitles Overlay */}
+            {activeCue && (
+              <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-black/80 dark:bg-black/90 backdrop-blur-xs px-4 py-2.5 rounded-xl text-white text-xs sm:text-sm md:text-base font-bold text-center max-w-[85%] shadow-lg pointer-events-none transition-all z-20">
+                {activeCue.text}
+              </div>
+            )}
+          </>
         )}
 
         {/* Floating Top Control Overlay for Video Mark as Complete */}
@@ -270,11 +314,10 @@ function getYouTubeId(url: string): string | null {
             <button
               onClick={() => onMarkComplete?.(activeItem.id)}
               disabled={isCompleted}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xl backdrop-blur-md flex items-center gap-2 ${
-                isCompleted
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xl backdrop-blur-md flex items-center gap-2 ${isCompleted
                   ? "bg-emerald-500/90 text-white cursor-default"
                   : "bg-slate-900/80 hover:bg-slate-900 text-white border border-slate-700 hover:border-emerald-500"
-              }`}
+                }`}
             >
               <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />

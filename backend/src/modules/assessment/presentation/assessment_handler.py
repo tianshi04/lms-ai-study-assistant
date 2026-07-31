@@ -69,11 +69,15 @@ class AssessmentHandler(AssessmentService):
         ],
     ) -> pb.SubmitAutoGradedLabResponse:
         current_user = require_current_user()
+        if not request.language:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Vui lòng chỉ định ngôn ngữ lập trình"
+            )
         res = await self.use_case.submit_auto_graded_lab(
             user_id=current_user.id,
             item_id=request.item_id,
             source_code=request.source_code,
-            language=request.language or "python",
+            language=request.language,
         )
         lab_result = pb.AutoGradedLabResult(
             score_percent=res["score_percent"],
@@ -198,14 +202,9 @@ class AssessmentHandler(AssessmentService):
     ) -> pb.RegradePeerSubmissionByStaffResponse:
         current_user = require_current_user()
         role = (current_user.role or "").lower()
-        is_staff = any(
+        is_staff = current_user.is_staff() or any(
             r in role
             for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
-        ) or current_user.role in (
-            "USER_ROLE_INSTRUCTOR",
-            "USER_ROLE_TA",
-            "USER_ROLE_SUPER_ADMIN",
-            "USER_ROLE_PARTNER_ADMIN",
         )
         if not is_staff:
             raise ConnectError(

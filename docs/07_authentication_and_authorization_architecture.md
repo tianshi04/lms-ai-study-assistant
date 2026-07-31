@@ -46,7 +46,7 @@ graph TD
 
 ---
 
-## 3. Cấu trúc Đối tượng Security Context (`CurrentUserContext`)
+## 3. Cấu trúc Đối tượng Security Context (`CurrentUserContext`) & Các Vai trò trong Tổ chức
 
 Toàn bộ thông tin xác thực và phân quyền của User được lưu trong `CurrentUserContext` (`backend/src/shared/auth.py`) thông qua `contextvars` per-request:
 
@@ -58,15 +58,46 @@ class CurrentUserContext:
     role: str = ""                           # Legacy Role string (dùng cho tương thích ngược)
     system_role: str = "USER"                # SUPER_ADMIN | USER
     active_org_id: Optional[str] = None      # Organization ID hiện tại từ Header/Token
-    org_role: Optional[str] = None           # Role trong Organization hiện tại (e.g. ORG_ADMIN, INSTRUCTOR)
+    org_role: Optional[str] = None           # Role trong Organization hiện tại
     permissions: set[str] = field(default_factory=set)  # Tập hợp Permission trong Org hiện tại
 ```
 
-### Các Phương thức Kiểm tra Quyền Hạn:
+---
+
+## 3.1. Danh mục Vai trò trong 1 Tổ chức (Organization Roles)
+
+Mỗi Tổ chức (`Organization`) trong hệ thống duy trì 3 vai trò chính ở tầng Tổ chức (`organization_roles`):
+
+1. **Organization Admin (Quản trị viên Tổ chức)**:
+   * Quản lý thành viên, mời/xóa và phân quyền cho người dùng trong Tổ chức.
+   * Quản lý kho bản quyền, phân bổ và thu hồi Suất học Enterprise Seat (`enterprise_seat_key`).
+   * Quản lý danh mục khóa học, thông tin thương hiệu và chữ ký bảo chứng đại diện cho Tổ chức.
+2. **Organization Instructor (Giảng viên Tổ chức)**:
+   * Soạn thảo, quản lý cấu trúc học liệu, ma trận đề thi và xuất bản khóa học thuộc phạm vi Tổ chức.
+   * Xem báo cáo thống kê tiến độ, bảng điểm toàn bộ học viên thuộc các khóa học phụ trách.
+3. **Teaching Assistant - TA (Trợ giảng Tổ chức)**:
+   * Hỗ trợ Giảng viên rà soát bài nộp, chấm bài tự luận / phúc khảo bài tập Peer Review (`TA Regrade Override`).
+   * Quản lý và giải đáp thắc mắc trên Diễn đàn thảo luận (Discussion Forum), gán cờ câu trả lời chính thức (`is_staff_answer`).
+
+---
+
+## 3.2. Phân biệt Thành viên Tổ chức (Member) vs Người được cấp Suất học (Enterprise Seat Holder)
+
+| Tiêu chí | Thành viên Tổ chức (Organization Member) | Người được cấp Suất học (Enterprise Seat Holder) |
+| :--- | :--- | :--- |
+| **Bản chất** | **Hành chính / Phân quyền (AuthZ)**: Định nghĩa vị trí công tác và quyền quản lý/giảng dạy của người dùng trong Tổ chức (`organization_members`). | **Tài chính / Quyền lợi Học tập (License)**: Định nghĩa trạng thái tài trợ bản quyền học tập trả phí (`enterprise_seat_key`). |
+| **Vai trò tương ứng** | `Organization Admin`, `Organization Instructor`, `Teaching Assistant` hoặc `Member`. | Thường là `Learner` (Học viên / Sinh viên / Nhân viên). |
+| **Quyền lợi học tập** | Có quyền quản trị, biên soạn bài giảng hoặc trợ giảng tùy theo `org_role`. | Được nâng cấp từ **Audit Mode (Miễn phí)** lên **Paid Mode (Trả phí)**: Được làm bài thi tính điểm Graded Quiz, nộp Lab, được chấm bài Peer Review và nhận Verified Certificate mà không cần tự bỏ tiền mua khóa học. |
+| **Cơ chế hoạt động** | Xác định qua bộ quyền `permissions` trong `CurrentUserContext` khi đứng ở `active_org_id`. | Xác định qua mã `user.enterprise_seat_key` và phạm vi khóa học được phép (`scope_type`: `ALL_COURSES` hoặc `CURATED_COURSES`). |
+
+---
+
+## 3.3. Các Phương thức Kiểm tra Quyền Hạn:
 * `is_system_admin() -> bool`: Trả về `True` nếu user là Quản trị viên Toàn hệ thống (`SUPER_ADMIN`). Super Admin tự động có mọi quyền.
-* `has_permission(permission: str) -> bool`: Kiểm tra user có sở hữu permission cụ thể (e.g. `course:create`, `course:publish`) hay không.
+* `has_permission(permission: str) -> bool`: Kiểm tra user me có sở hữu permission cụ thể (e.g. `course:create`, `course:publish`) hay không.
 * `require_permission(permission: str) -> None`: Kiểm tra quyền, nếu không có sẽ ném lỗi `ConnectError(Code.PERMISSION_DENIED)`.
 * `require_org_context() -> str`: Trả về `active_org_id`, nếu thiếu sẽ ném lỗi `ConnectError(Code.FAILED_PRECONDITION)`.
+
 
 ---
 
@@ -106,3 +137,32 @@ def apply_organization_scope(stmt: Select, model_cls: Any, ctx: Optional[Current
   * Tên hiển thị: `Coursera Project Network`.
   * Slug: `coursera-project-network`.
   * Giảng viên cá nhân tự do sau khi được duyệt sẽ thuộc về Tổ chức mặc định toàn sàn này.
+
+---
+
+## 6. Yêu Cầu Nghiệp Vụ Chuyển Đổi (Business Migration Requirements)
+
+### A. Định hướng Nghiệp vụ
+Loại bỏ hoàn toàn khái niệm vai trò quản trị viên đối tác ở cấp độ tài khoản toàn cục (`Partner Admin`), chuyển dịch 100% việc quản trị tổ chức về vai trò **Quản trị viên Tổ chức (`Organization Admin`)** theo Ngữ cảnh Tổ chức (`Organization Context`).
+
+### B. Danh mục Yêu cầu Nghiệp vụ cần Thực hiện (Business TODO List)
+1. **[BR-MIGRATION-01] Loại bỏ Vai trò Quản trị viên Toàn cục của Đối tác**:
+   * Hệ thống không cấp vai trò quản trị đối tác ở cấp độ tài khoản toàn sàn. Tách biệt hoàn toàn giữa định danh cá nhân người dùng và chức vụ quản lý trong từng tổ chức.
+2. **[BR-MIGRATION-02] Chuyển đổi Quyền Quản trị về Cấp Tổ chức**:
+   * Chuyển toàn bộ tài khoản đang quản lý đối tác sang vai trò **Quản trị viên Tổ chức (`Organization Admin`)** thuộc Tổ chức tương ứng.
+   * Đảm bảo giữ nguyên các quyền hạn nghiệp vụ: Quản lý thành viên, Quản lý suất học Enterprise, Quản lý danh mục khóa học và Cài đặt thông tin tổ chức.
+3. **[BR-MIGRATION-03] Chuẩn hóa Phân quyền 3 Vai trò Tầng Tổ chức**:
+   * Áp dụng thống nhất mô hình 3 vai trò cấp Tổ chức trên toàn hệ thống: **Quản trị viên Tổ chức (`Organization Admin`)**, **Giảng viên Tổ chức (`Organization Instructor`)**, và **Trợ giảng Tổ chức (`Teaching Assistant`)**.
+
+---
+
+## 7. Ranh giới Thẩm quyền Xét duyệt (Single-Tenant Authorization Scope Boundary)
+
+* **Phân định Rõ ràng giữa Super Admin & Organization Admin**:
+  * 👑 **Super Admin (Platform Admin)**: Sở hữu thẩm quyền toàn sàn (Platform-wide Authority). Thực hiện thẩm định và phê duyệt các yêu cầu/đơn đăng ký toàn hệ thống (VD: Đơn đăng ký Giảng viên cá nhân `SubmitInstructorApplication`, Đơn Hỗ trợ Tài chính `FinancialAidApplication`, Khởi tạo Partner B2B mới).
+  * 🏢 **Organization Admin (Tenant Owner)**: Sở hữu thẩm quyền trong phạm vi tổ chức (Tenant-scoped Authority). **Chỉ được phép xem, duyệt đơn gia nhập, phân bổ Suất học Enterprise hoặc phê duyệt khóa học của người dùng/tài nguyên thuộc ĐÚNG Tổ chức mà mình quản lý (`current_user.organization_id == target.organization_id`)**.
+* **Nguyên tắc Cách ly Tuyệt đối (Cross-Tenant Non-Interference Rule)**:
+  * Organization Admin của Tổ chức A **TUYỆT ĐỐI KHÔNG CÓ QUYỀN** xem, can thiệp hoặc phê duyệt đơn đăng ký của người dùng thuộc Tổ chức B hoặc người dùng tự do ngoài phạm vi tổ chức của mình.
+
+
+

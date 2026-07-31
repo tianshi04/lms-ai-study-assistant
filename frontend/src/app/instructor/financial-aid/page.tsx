@@ -27,11 +27,9 @@ export default function InstructorFinancialAidPage() {
     userRole === "2" ||
     userRole === "3" ||
     userRole === "4" ||
-    userRole === "5" ||
     userRole === "USER_ROLE_INSTRUCTOR" ||
     userRole === "USER_ROLE_TA" ||
     userRole === "USER_ROLE_SUPER_ADMIN" ||
-    userRole === "USER_ROLE_PARTNER_ADMIN" ||
     userRole === "INSTRUCTOR" ||
     userRole === "TA" ||
     userRole === "ADMIN";

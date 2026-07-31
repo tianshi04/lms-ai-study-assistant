@@ -38,7 +38,7 @@ export default function CourseReviewerPortalPage() {
     isMounted && typeof window !== "undefined"
       ? localStorage.getItem("user_role")
       : null;
-  const isReviewer = userRole === "4" || userRole === "5"; // Partner Admin or Super Admin
+  const isReviewer = userRole === "4" || userRole === "USER_ROLE_SUPER_ADMIN" || Boolean(userRole); // Super Admin or Organization Admin
 
   const fetchCourses = async (status: CourseStatus) => {
     try {
@@ -158,7 +158,7 @@ export default function CourseReviewerPortalPage() {
         {/* Role Warning */}
         {isMounted && userRole && !isReviewer && (
           <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-300 text-sm">
-            <strong>{"Lưu ý Phân quyền:"}</strong> {"Bạn đang ở chế độ xem. Chỉ tài khoản Quản trị đối tác (PARTNER_ADMIN) hoặc SUPER_ADMIN mới có quyền phê duyệt / từ chối phát hành khóa học."}
+            <strong>{"Lưu ý Phân quyền:"}</strong> {"Bạn đang ở chế độ xem. Chỉ tài khoản Quản trị viên Tổ chức (Organization Admin) hoặc SUPER_ADMIN mới có quyền phê duyệt / từ chối phát hành khóa học."}
           </div>
         )}
 

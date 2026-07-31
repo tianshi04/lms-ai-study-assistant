@@ -90,7 +90,30 @@ async def lifespan(app: Starlette):
         await seed_database(auto_mode=True)
     except Exception as e:
         logger.warning("[STARTUP] Warning during startup: %s", e)
+
     yield
+
+    # --- GRACEFUL SHUTDOWN ---
+    logger.info("[SHUTDOWN] Initiating graceful shutdown...")
+
+    try:
+        from src.shared.infrastructure.database import dispose_engine
+
+        await dispose_engine()
+        logger.info("[SHUTDOWN] Database connection pool disposed.")
+    except Exception as e:
+        logger.warning("[SHUTDOWN] Error disposing database engine: %s", e)
+
+    try:
+        from opentelemetry import metrics, trace
+
+        trace.get_tracer_provider().shutdown()
+        metrics.get_meter_provider().shutdown()
+        logger.info("[SHUTDOWN] OpenTelemetry providers flushed and shut down.")
+    except Exception as e:
+        logger.warning("[SHUTDOWN] Error shutting down OpenTelemetry providers: %s", e)
+
+    logger.info("[SHUTDOWN] Graceful shutdown complete.")
 
 
 # 1. Dependency Injection (Bootstrapping Use Cases & Handlers)

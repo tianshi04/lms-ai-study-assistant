@@ -40,7 +40,6 @@ export default function InstructorCourseBuilderPage({
   const [showItemModal, setShowItemModal] = useState<string | null>(null); // lessonId
 
   // Form States
-  const [weekNumber, setWeekNumber] = useState(1);
   const [weekTitle, setWeekTitle] = useState("");
   const [weekSummary, setWeekSummary] = useState("");
 
@@ -116,9 +115,6 @@ export default function InstructorCourseBuilderPage({
       const res = await client.getCourseDetail({ idOrSlug: courseId });
       if (res.course) {
         setCourse(res.course);
-        // Default week number to next week
-        const nextWeekNum = (res.course.weekModules?.length || 0) + 1;
-        setWeekNumber(nextWeekNum);
       }
 
       // Fetch Question Banks
@@ -162,8 +158,6 @@ export default function InstructorCourseBuilderPage({
         const res = await client.getCourseDetail({ idOrSlug: courseId });
         if (!ignore && res.course) {
           setCourse(res.course);
-          const nextWeekNum = (res.course.weekModules?.length || 0) + 1;
-          setWeekNumber(nextWeekNum);
         }
 
         // Fetch Question Banks
@@ -202,7 +196,6 @@ export default function InstructorCourseBuilderPage({
       const client = getRpcClient(CatalogService);
       await client.createWeekModule({
         courseId,
-        weekNumber,
         title: weekTitle,
         summary: weekSummary,
       });
@@ -210,7 +203,7 @@ export default function InstructorCourseBuilderPage({
       setShowWeekModal(false);
       setWeekTitle("");
       setWeekSummary("");
-      toast.success(`Đã thêm Tuần ${weekNumber} vào khóa học thành công!`);
+      toast.success(`Đã thêm Tuần học mới vào khóa học thành công!`);
       await fetchCourseDetail();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Thêm Tuần học thất bại.";
@@ -739,153 +732,153 @@ export default function InstructorCourseBuilderPage({
                     <span>{submittingLaunch ? "Đang nộp..." : "Submit for Launch (Gửi duyệt)"}</span>
                   </button>
                 )}
-              <button
-                type="button"
-                onClick={async () => {
-                  try {
-                    setSaving(true);
-                    const client = getRpcClient(CatalogService);
-                    const res = await client.exportCourseToScorm({ courseId });
-                    if (res.downloadUrl) {
-                      toast.success("Đã đóng gói khóa học thành SCORM 1.2 ZIP!");
-                      window.open(res.downloadUrl, "_blank");
-                    }
-                  } catch (err: unknown) {
-                    const msg = err instanceof Error ? err.message : "Xuất SCORM thất bại.";
-                    toast.error(msg);
-                  } finally {
-                    setSaving(false);
-                  }
-                }}
-                disabled={saving}
-                className="px-3.5 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 text-xs font-bold hover:bg-amber-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                <span>{"Xuất SCORM 1.2 ZIP"}</span>
-              </button>
-
-              <label className="px-3.5 py-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 text-xs font-bold hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                <span>{"Import Gói SCORM"}</span>
-                <input
-                  type="file"
-                  accept=".zip"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
+                <button
+                  type="button"
+                  onClick={async () => {
                     try {
-                      setScormImporting(true);
-                      toast.info("Đang tải gói SCORM lên hệ thống lưu trữ...");
+                      setSaving(true);
                       const client = getRpcClient(CatalogService);
-                      
-                      const uploadRes = await client.generateUploadUrl({
-                        filename: file.name,
-                        contentType: "application/zip",
-                        folder: "scorm",
-                      });
-
-                      let uploadedKey = uploadRes.objectKey;
-                      let uploadSuccess = false;
-
-                      try {
-                        await new Promise<void>((resolve, reject) => {
-                          const xhr = new XMLHttpRequest();
-                          xhr.open("PUT", uploadRes.uploadUrl, true);
-                          xhr.setRequestHeader("Content-Type", "application/zip");
-                          xhr.timeout = 10000;
-                          xhr.ontimeout = () => reject(new Error("Timeout upload"));
-                          xhr.onload = () => {
-                            if (xhr.status >= 200 && xhr.status < 300) resolve();
-                            else reject(new Error(`Status ${xhr.status}`));
-                          };
-                          xhr.onerror = () => reject(new Error("Network error"));
-                          xhr.send(file);
-                        });
-                        uploadSuccess = true;
-                      } catch (err) {
-                        console.warn("Direct upload failed, fallback to byte upload:", err);
+                      const res = await client.exportCourseToScorm({ courseId });
+                      if (res.downloadUrl) {
+                        toast.success("Đã đóng gói khóa học thành SCORM 1.2 ZIP!");
+                        window.open(res.downloadUrl, "_blank");
                       }
-
-                      if (!uploadSuccess) {
-                        const arrayBuffer = await file.arrayBuffer();
-                        const byteRes = await client.uploadMediaFile({
-                          filename: file.name,
-                          contentType: "application/zip",
-                          fileBytes: new Uint8Array(arrayBuffer),
-                          folder: "scorm",
-                        });
-                        uploadedKey = byteRes.objectKey;
-                      }
-
-                      toast.info("Đang phân tích cấu trúc gói SCORM...");
-                      const parseRes = await client.parseScormPackage({
-                        scormObjectKey: uploadedKey,
-                        targetCourseId: courseId,
-                      });
-
-                      setScormObjectKey(uploadedKey);
-                      setScormPreviewCourse(parseRes.coursePreview || null);
-                      setShowScormReviewModal(true);
                     } catch (err: unknown) {
-                      const msg = err instanceof Error ? err.message : "Không thể phân tích gói SCORM.";
+                      const msg = err instanceof Error ? err.message : "Xuất SCORM thất bại.";
                       toast.error(msg);
                     } finally {
-                      setScormImporting(false);
-                      e.target.value = "";
+                      setSaving(false);
                     }
                   }}
-                />
-              </label>
-
-              <Link
-                href={`/instructor/courses/${courseId}/question-bank`}
-                className="px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-xs font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-1.5"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-                <span>{"Ngân hàng Câu hỏi"}</span>
-              </Link>
-
-              <Link
-                href={`/instructor/courses/${courseId}/analytics`}
-                className="px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-xs font-bold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-1.5"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span>{"Thống kê lớp học"}</span>
-              </Link>
-
-              <Link
-                href={`/instructor/courses/${courseId}/announcements`}
-                className="px-4 py-2.5 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 text-xs font-bold hover:bg-purple-100 transition-colors flex items-center justify-center gap-1.5"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                </svg>
-                <span>{"Đăng Thông báo"}</span>
-              </Link>
-
-              {isInstructorOrAdmin && (
-                <button
-                  onClick={() => setShowWeekModal(true)}
-                  className="w-full sm:w-auto px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
+                  disabled={saving}
+                  className="px-3.5 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 text-xs font-bold hover:bg-amber-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
-                  <span>{"Thêm Tuần học"}</span>
+                  <span>{"Xuất SCORM 1.2 ZIP"}</span>
                 </button>
-              )}
+
+                <label className="px-3.5 py-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 text-xs font-bold hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                  </svg>
+                  <span>{"Import Gói SCORM"}</span>
+                  <input
+                    type="file"
+                    accept=".zip"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      try {
+                        setScormImporting(true);
+                        toast.info("Đang tải gói SCORM lên hệ thống lưu trữ...");
+                        const client = getRpcClient(CatalogService);
+
+                        const uploadRes = await client.generateUploadUrl({
+                          filename: file.name,
+                          contentType: "application/zip",
+                          folder: "scorm",
+                        });
+
+                        let uploadedKey = uploadRes.objectKey;
+                        let uploadSuccess = false;
+
+                        try {
+                          await new Promise<void>((resolve, reject) => {
+                            const xhr = new XMLHttpRequest();
+                            xhr.open("PUT", uploadRes.uploadUrl, true);
+                            xhr.setRequestHeader("Content-Type", "application/zip");
+                            xhr.timeout = 10000;
+                            xhr.ontimeout = () => reject(new Error("Timeout upload"));
+                            xhr.onload = () => {
+                              if (xhr.status >= 200 && xhr.status < 300) resolve();
+                              else reject(new Error(`Status ${xhr.status}`));
+                            };
+                            xhr.onerror = () => reject(new Error("Network error"));
+                            xhr.send(file);
+                          });
+                          uploadSuccess = true;
+                        } catch (err) {
+                          console.warn("Direct upload failed, fallback to byte upload:", err);
+                        }
+
+                        if (!uploadSuccess) {
+                          const arrayBuffer = await file.arrayBuffer();
+                          const byteRes = await client.uploadMediaFile({
+                            filename: file.name,
+                            contentType: "application/zip",
+                            fileBytes: new Uint8Array(arrayBuffer),
+                            folder: "scorm",
+                          });
+                          uploadedKey = byteRes.objectKey;
+                        }
+
+                        toast.info("Đang phân tích cấu trúc gói SCORM...");
+                        const parseRes = await client.parseScormPackage({
+                          scormObjectKey: uploadedKey,
+                          targetCourseId: courseId,
+                        });
+
+                        setScormObjectKey(uploadedKey);
+                        setScormPreviewCourse(parseRes.coursePreview || null);
+                        setShowScormReviewModal(true);
+                      } catch (err: unknown) {
+                        const msg = err instanceof Error ? err.message : "Không thể phân tích gói SCORM.";
+                        toast.error(msg);
+                      } finally {
+                        setScormImporting(false);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
+                </label>
+
+                <Link
+                  href={`/instructor/courses/${courseId}/question-bank`}
+                  className="px-4 py-2.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-xs font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                  <span>{"Ngân hàng Câu hỏi"}</span>
+                </Link>
+
+                <Link
+                  href={`/instructor/courses/${courseId}/analytics`}
+                  className="px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-xs font-bold hover:bg-emerald-100 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <span>{"Thống kê lớp học"}</span>
+                </Link>
+
+                <Link
+                  href={`/instructor/courses/${courseId}/announcements`}
+                  className="px-4 py-2.5 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 text-xs font-bold hover:bg-purple-100 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                  </svg>
+                  <span>{"Đăng Thông báo"}</span>
+                </Link>
+
+                {isInstructorOrAdmin && (
+                  <button
+                    onClick={() => setShowWeekModal(true)}
+                    className="w-full sm:w-auto px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>{"Thêm Tuần học"}</span>
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        </>
+          </>
         )}
 
 
@@ -1288,18 +1281,6 @@ export default function InstructorCourseBuilderPage({
       >
         <form onSubmit={handleCreateWeek} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Số Tuần học"}</label>
-            <input
-              type="number"
-              min={1}
-              value={weekNumber}
-              onChange={(e) => setWeekNumber(parseInt(e.target.value) || 1)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold"
-              required
-            />
-          </div>
-
-          <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">{"Tiêu đề Tuần học"}</label>
             <input
               type="text"
@@ -1449,6 +1430,14 @@ export default function InstructorCourseBuilderPage({
                 label="Học liệu Video Bài giảng (Upload Tệp hoặc Đường dẫn)"
               />
 
+              <VideoUploadWidget
+                value={vttSubtitleUrl}
+                onChange={setVttSubtitleUrl}
+                folder="subtitles"
+                accept=".vtt,text/vtt"
+                label="Phụ đề cho Video (định dạng .vtt)"
+                placeholder="https://..."
+              />
 
               <InVideoQuizEditor
                 videoUrl={videoUrl}
@@ -1860,7 +1849,14 @@ Nội dung lý thuyết chi tiết...`}
                   label="Học liệu Video Bài giảng (Upload Tệp hoặc Đường dẫn)"
                 />
 
-
+                <VideoUploadWidget
+                  value={editingItem.vttSubtitleUrl}
+                  onChange={(url) => setEditingItem({ ...editingItem, vttSubtitleUrl: url })}
+                  folder="subtitles"
+                  accept=".vtt,text/vtt"
+                  label="Phụ đề cho Video (định dạng .vtt)"
+                  placeholder="https://..."
+                />
 
                 <InVideoQuizEditor
                   videoUrl={editingItem.videoUrl}

@@ -7,7 +7,8 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 ## 1. VAI TRÒ: SUPER ADMIN (QUẢN TRỊ NỀN TẢNG)
 
 ### 1.1. Quản lý tài khoản, Suất học Doanh nghiệp & Duyệt Hỗ trợ Tài chính
-* **Thêm mới & Phân quyền:** Admin tạo tài khoản hoặc import danh sách hàng loạt (`.xlsx`, `.csv`). Phân quyền các vai trò: `Learner`, `Instructor`, `TA (Teaching Assistant)`, `Partner Admin`.
+### 1.1. Quản lý tài khoản, Suất học Doanh nghiệp & Duyệt Hỗ trợ Tài chính
+* **Thêm mới & Phân quyền:** Admin tạo tài khoản hoặc import danh sách hàng loạt (`.xlsx`, `.csv`). Phân quyền các vai trò: `Learner`, `Instructor`, `TA (Teaching Assistant)`, `Organization Admin`.
 * **Mã hóa Mật khẩu, Declarative Auth Policy & Xác thực Token:**
   * Mật khẩu được mã hóa băm PBKDF2-HMAC-SHA256 (100k iterations + salt ngẫu nhiên), tự động tạo avatar SVG ngẫu nhiên từ DiceBear API và hỗ trợ quy trình Refresh Token rotation (`BR_AUTH_002`).
   * **Chính sách Phân quyền Declarative ở Tầng Contract (Protobuf Custom Options):** Toàn bộ các API ConnectRPC được gán nhãn chính sách bảo mật qua option `(auth.v1.policy)` trực tiếp trong hợp đồng `.proto`. `AuthPolicyRegistry` tự động quét descriptors khi khởi chạy server (Eager Pre-initialization) và phân lớp bảo mật 3 tầng (`BR_AUTH_001`): Tầng 1 (RPC Method Policy), Tầng 2 (ABAC Paid Access), Tầng 3 (Domain Resource Ownership).
@@ -36,11 +37,12 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 ### 1.5. Quản lý B2B Đối tác Phát hành & Cấp phát Mã Enterprise License (Partner Organization Management)
 * **Khởi tạo & Cấu hình B2B Partner:** Super Admin khởi tạo hồ sơ Đối tác (`CreatePartner`), cấu hình Tên miền được ủy quyền (`allowed_domains`), Logo, Banner và thông tin chữ ký mặc định.
 * **Cấu hình Mã Suất học Enterprise Key & Phạm vi Mở khóa (Enterprise Key Scope Configuration):**
-  * Partner Admin / Super Admin quản lý tạo mã Enterprise Key (`CreateEnterpriseLicense`) với cấu hình hạn mức suất (`total_seats`) và Phạm vi mở khóa (`scope_type`):
+  * Organization Admin / Super Admin quản lý tạo mã Enterprise Key (`CreateEnterpriseLicense`) với cấu hình hạn mức suất (`total_seats`) và Phạm vi mở khóa (`scope_type`):
     * **`ALL_COURSES`**: Cho phép người sở hữu mã truy cập trọn vẹn Paid Mode ở 100% các khóa học trên hệ thống.
-    * **`CURATED_COURSES`**: Cho phép Partner Admin tích chọn danh mục các khóa học chỉ định (`allowed_course_ids = [...]`). Người sở hữu mã chỉ được hưởng Paid Mode khi tham gia đúng các khóa học thuộc danh mục này.
+    * **`CURATED_COURSES`**: Cho phép Organization Admin tích chọn danh mục các khóa học chỉ định (`allowed_course_ids = [...]`). Người sở hữu mã chỉ được hưởng Paid Mode khi tham gia đúng các khóa học thuộc danh mục này.
 * **RPC Services (`PartnerService`):** Đã mở đầy đủ 6 API RPC: `CreatePartner`, `UpdatePartner`, `GetPartner`, `ListPartners`, `DeletePartner`, `RotatePartnerKeyPair`.
-* **Phân quyền Self-Service cho Partner Admin:** Cho phép tài khoản `PARTNER_ADMIN` tự chỉnh sửa hồ sơ thương hiệu, ảnh chữ ký đại diện, người ký và public key của chính tổ chức mình qua `UpdatePartner`, cũng như chủ động gọi `RotatePartnerKeyPair` để sinh cặp khóa ECDSA P-256 mới và nhận về duy nhất `public_key_pem` (`BR_PARTNER_001`, `BR_PARTNER_002`).
+* **Phân quyền Self-Service cho Organization Admin:** Cho phép tài khoản `Organization Admin` tự chỉnh sửa hồ sơ thương hiệu, ảnh chữ ký đại diện, người ký và public key của chính tổ chức mình qua `UpdatePartner`, cũng như chủ động gọi `RotatePartnerKeyPair` để sinh cặp khóa ECDSA P-256 mới và nhận về duy nhất `public_key_pem` (`BR_PARTNER_001`, `BR_PARTNER_002`).
+
 
 * **Xuất File Xác thực Tĩnh Tên miền (`openbadges-issuer.json`):** Hệ thống tự động sinh và cung cấp nút bấm tải file JSON tĩnh chuẩn OpenBadges 2.0 (`/partner/settings`) để Đối tác upload lên thư mục công khai `https://<domain>/.well-known/openbadges-issuer.json`, minh chứng quyền ủy quyền ký số mà không cần lập trình máy chủ (`BR_PARTNER_002`).
 
@@ -87,7 +89,7 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 * **Quy trình 4 Bước Phát hành Khóa học (`BR_CATALOG_003`):**
   1. **Pre-submit Self-Checklist (Giảng viên tự kiểm tra):** Khung công cụ Course Builder tự động quét kiểm tra 4 tiêu chí bắt buộc (Phụ đề VTT, Quiz Matrix không rỗng, Rubrics rõ ràng, có Giảng viên phụ trách).
   2. **Gửi Yêu cầu Phê duyệt (`Submit for Launch`):** Giảng viên bấm nút *"Submit for Launch"*. Khóa học chuyển sang trạng thái `PENDING_REVIEW` và chuyển sang chế độ Chỉ đọc (Read-only).
-  3. **Màn hình Kiểm duyệt (Course Reviewer Portal):** Partner Admin hoặc Super Admin truy cập giao diện Reviewer Portal, trải nghiệm khóa học dưới chế độ Xem trước như Học viên (*Preview Mode*).
+  3. **Màn hình Kiểm duyệt (Course Reviewer Portal):** Organization Admin hoặc Super Admin truy cập giao diện Reviewer Portal, trải nghiệm khóa học dưới chế độ Xem trước như Học viên (*Preview Mode*).
   4. **Quyết định Phê duyệt / Từ chối (`Approve / Reject`):**
      - *Phê duyệt (Approve):* Khóa học chuyển sang `PUBLISHED` và chính thức xuất hiện trên Trang Tìm kiếm Công khai toàn cầu (`/courses`).
      - *Từ chối (Reject):* Reviewer ghi lại nhận xét/Feedback chỉnh sửa. Khóa học chuyển về `DRAFT` để Giảng viên hoàn thiện và nộp lại.

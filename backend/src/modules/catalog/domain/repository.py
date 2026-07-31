@@ -67,6 +67,7 @@ class ICatalogRepository(ABC):
         owner_id: str = "",
         co_instructor_ids: list[str] | None = None,
         financial_aid_enabled: bool = True,
+        organization_id: str = "partner_community",
     ) -> Course:
         pass
 
@@ -95,7 +96,6 @@ class ICatalogRepository(ABC):
     async def create_week_module(
         self,
         course_id: str,
-        week_number: int,
         title: str,
         summary: str,
     ):

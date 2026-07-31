@@ -57,6 +57,7 @@ export class QuestionBankPage {
   }
 
   async addQuestionToBank(questionText: string, option1: string, option2: string) {
+    await expect(this.addQuestionButton).toBeVisible({ timeout: 10000 });
     await this.addQuestionButton.click();
     await expect(this.questionTextInput).toBeVisible({ timeout: 5000 });
     await this.questionTextInput.fill(questionText);

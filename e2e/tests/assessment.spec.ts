@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { AssessmentPage } from '../pages';
 
-test.describe('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () => {
+test.describe.serial('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () => {
   test('should load assessments page with 3 main assessment tabs', async ({ page }) => {
     const assessmentPage = new AssessmentPage(page);
     await assessmentPage.goto();
