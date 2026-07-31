@@ -65,7 +65,24 @@ import {
   LearningService,
   type LearningProgress,
   type PersonalNote,
+  type EnrolledCourseSummary,
 } from "@/gen/learning/v1/learning_pb";
+
+// --- Learning Hooks ---
+
+export function useMyEnrolledCoursesQuery(
+  options?: Partial<UseQueryOptions<EnrolledCourseSummary[], Error>>,
+) {
+  return useQuery<EnrolledCourseSummary[], Error>({
+    queryKey: ["myEnrolledCourses"],
+    queryFn: async () => {
+      const client = getRpcClient(LearningService);
+      const res = await client.listMyEnrolledCourses({});
+      return res.courses || [];
+    },
+    ...options,
+  });
+}
 import {
   AssessmentService,
   type QuizResult,

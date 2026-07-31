@@ -1,50 +1,11 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { getRpcClient } from "@/lib/connect_client";
-import { LearningService, type EnrolledCourseSummary } from "@/gen/learning/v1/learning_pb";
-
-const emptySubscribe = () => () => {};
+import { useMyEnrolledCoursesQuery } from "@/lib/query_hooks";
 
 export function LearningDashboard({ userName }: { userName: string }) {
-  const [courses, setCourses] = useState<EnrolledCourseSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
-
-  useEffect(() => {
-    if (!isMounted) return;
-
-    let isCancelled = false;
-    async function fetchMyCourses() {
-      try {
-        const client = getRpcClient(LearningService);
-        const res = await client.listMyEnrolledCourses({});
-        if (!isCancelled) {
-          setCourses(res.courses || []);
-        }
-      } catch (err: unknown) {
-        if (!isCancelled) {
-          console.error("Failed to fetch courses for dashboard:", err);
-          setError(err instanceof Error ? err.message : "Lỗi khi tải dữ liệu");
-        }
-      } finally {
-        if (!isCancelled) {
-          setLoading(false);
-        }
-      }
-    }
-    fetchMyCourses();
-    return () => {
-      isCancelled = true;
-    };
-  }, [isMounted]);
+  const { data: courses = [], isLoading: loading, error: queryError } = useMyEnrolledCoursesQuery();
+  const error = queryError ? queryError.message : null;
 
   // Derive stats
   const activeCourses = courses.filter(
