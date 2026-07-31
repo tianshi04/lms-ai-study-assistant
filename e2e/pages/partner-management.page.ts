@@ -40,7 +40,7 @@ export class PartnerAdminPage {
 
     this.nameInput = page.locator('input[placeholder="VD: Đại học Bách Khoa TP.HCM"]');
     this.slugInput = page.locator('input[placeholder="VD: hcmut"]');
-    this.descriptionInput = page.locator('textarea[placeholder="Giới thiệu sơ lược về tổ chức đối tác..."]');
+    this.descriptionInput = page.locator('textarea[placeholder*="Giới thiệu sơ lược về tổ chức đối tác"]');
     this.logoUrlInput = page.locator('input[placeholder="https://example.com/logo.png"]');
     this.bannerUrlInput = page.locator('input[placeholder="https://example.com/banner.jpg"]');
     this.websiteUrlInput = page.locator('input[placeholder="https://hcmut.edu.vn"]');
@@ -48,7 +48,7 @@ export class PartnerAdminPage {
     this.signerNameInput = page.locator('input[placeholder="GS.TS. Nguyễn Văn A"]');
     this.signerTitleInput = page.locator('input[placeholder="Hiệu trưởng"]');
     this.signatureImageUrlInput = page.locator('input[placeholder="https://example.com/signature.png"]');
-    this.publicKeyPemInput = page.locator('textarea[placeholder="-----BEGIN PUBLIC KEY-----..."]');
+    this.publicKeyPemInput = page.locator('textarea[placeholder*="BEGIN PUBLIC KEY"]');
     this.submitButton = page.locator('button[type="submit"]', { hasText: /Thêm đối tác|Cập nhật đối tác/i });
   }
 
