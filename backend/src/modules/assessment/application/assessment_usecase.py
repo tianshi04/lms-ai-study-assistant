@@ -397,42 +397,149 @@ class AssessmentUseCase:
                         "cooldown_hours": cooldown_hours,
                     }
 
-            # 2.5 Decode JWT session_token
-            if not session_token:
-                return {
-                    "score_percent": 0.0,
-                    "passed": False,
-                    "attempts_left": 0,
-                    "cooldown_seconds_left": 0,
-                    "answer_explanations": [
-                        "Thiếu token phiên làm bài (Session Token)."
-                    ],
-                }
-
-            # ===== FIX V1: Validate quiz session from DB (single source of truth) =====
-            active_session = await repo.get_quiz_active_session(user_id, item_id)
+            # 2.5 Decode JWT session_token (if provided)
             db_expires_at = None
-            if active_session:
-                db_expires_at = datetime.fromisoformat(active_session.expires_at)
-                grace_deadline = db_expires_at + timedelta(
-                    seconds=QUIZ_SUBMISSION_GRACE_PERIOD_SECONDS
-                )
+            is_expired = False
 
-                if now > grace_deadline:
-                    # Session expired per DB — reject and record 0-score
-                    await repo.delete_quiz_active_session(user_id, item_id)
-                    failed_count = (
-                        cooldown.failed_attempts_count if cooldown else 0
-                    ) + 1
+            if session_token:
+                # ===== FIX V1: Validate quiz session from DB (single source of truth) =====
+                active_session = await repo.get_quiz_active_session(user_id, item_id)
+                if active_session:
+                    db_expires_at = datetime.fromisoformat(active_session.expires_at)
+                    grace_deadline = db_expires_at + timedelta(
+                        seconds=QUIZ_SUBMISSION_GRACE_PERIOD_SECONDS
+                    )
+
+                    if now > grace_deadline:
+                        # Session expired per DB — reject and record 0-score
+                        await repo.delete_quiz_active_session(user_id, item_id)
+                        failed_count = (
+                            cooldown.failed_attempts_count if cooldown else 0
+                        ) + 1
+                        cooldown_until_iso = None
+                        seconds_left = 0
+                        if failed_count >= max_attempts:
+                            cooldown_until_dt = now + timedelta(hours=cooldown_hours)
+                            cooldown_until_iso = cooldown_until_dt.isoformat()
+                            seconds_left = int(cooldown_hours * 3600)
+                            attempts_left = 0
+                        else:
+                            attempts_left = max(0, max_attempts - failed_count)
+
+                        new_cooldown = QuizCooldown(
+                            user_id=user_id,
+                            item_id=item_id,
+                            failed_attempts_count=failed_count,
+                            last_attempt_at=now.isoformat(),
+                            cooldown_until=cooldown_until_iso,
+                        )
+                        await repo.save_quiz_cooldown(new_cooldown)
+
+                        submission = QuizSubmission(
+                            id=f"sub-{uuid.uuid4().hex[:8]}",
+                            user_id=user_id,
+                            item_id=item_id,
+                            selected_option_indexes=[-1],
+                            score_percent=0.0,
+                            passed=False,
+                            attempt_number=failed_count,
+                            created_at=now.isoformat(),
+                        )
+                        await repo.save_quiz_submission(submission)
+
+                        logger.warning(
+                            "User %s submitted quiz %s after DB session expired",
+                            user_id,
+                            item_id,
+                        )
+                        return {
+                            "score_percent": 0.0,
+                            "passed": False,
+                            "attempts_left": attempts_left,
+                            "cooldown_seconds_left": seconds_left,
+                            "answer_explanations": [
+                                "Phiên làm bài đã hết hạn theo máy chủ. "
+                                "Bạn bị tính 1 lần thi rớt (0 điểm)."
+                            ],
+                            "max_attempts": max_attempts,
+                            "cooldown_hours": cooldown_hours,
+                        }
+                    else:
+                        # Session still valid — proceed, delete active session
+                        await repo.delete_quiz_active_session(user_id, item_id)
+                else:
+                    # No active DB session — log warning, fallback to JWT
+                    logger.warning(
+                        "No active DB session for user %s quiz %s — falling back to JWT",
+                        user_id,
+                        item_id,
+                    )
+
+                try:
+                    payload = jwt.decode(
+                        session_token, settings.JWT_SECRET, algorithms=[JWT_ALGORITHM]
+                    )
+                    if (
+                        payload.get("sub") != user_id
+                        or payload.get("item_id") != item_id
+                    ):
+                        raise ValueError(
+                            "Token không khớp với người dùng hoặc bài thi."
+                        )
+                    session_seed = payload.get("seed", 42)
+                    start_time_iso = payload.get("start_time")
+                    duration_minutes = payload.get(
+                        "duration_minutes", DEFAULT_QUIZ_TIME_LIMIT_MINUTES
+                    )
+                except jwt.ExpiredSignatureError:
+                    is_expired = True
+                    try:
+                        payload = jwt.decode(
+                            session_token,
+                            settings.JWT_SECRET,
+                            algorithms=[JWT_ALGORITHM],
+                            options={"verify_exp": False},
+                        )
+                        session_seed = payload.get("seed", 42)
+                        start_time_iso = payload.get("start_time")
+                        duration_minutes = payload.get(
+                            "duration_minutes", DEFAULT_QUIZ_TIME_LIMIT_MINUTES
+                        )
+                    except Exception:
+                        return {
+                            "score_percent": 0.0,
+                            "passed": False,
+                            "attempts_left": 0,
+                            "cooldown_seconds_left": 0,
+                            "answer_explanations": [
+                                "Token phiên làm bài đã hết hạn tuyệt đối và không hợp lệ."
+                            ],
+                        }
+                except Exception as e:
+                    logger.error("Invalid session token for user %s: %s", user_id, e)
+                    return {
+                        "score_percent": 0.0,
+                        "passed": False,
+                        "attempts_left": 0,
+                        "cooldown_seconds_left": 0,
+                        "answer_explanations": ["Token phiên làm bài không hợp lệ."],
+                    }
+
+                if is_expired:
+                    # Token is expired. Record a failed attempt.
+                    failed_count = cooldown.failed_attempts_count if cooldown else 0
+                    failed_count += 1
                     cooldown_until_iso = None
                     seconds_left = 0
-                    if failed_count >= max_attempts:
-                        cooldown_until_dt = now + timedelta(hours=cooldown_hours)
+                    if failed_count >= MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN:
+                        cooldown_until_dt = now + timedelta(hours=QUIZ_COOLDOWN_HOURS)
                         cooldown_until_iso = cooldown_until_dt.isoformat()
-                        seconds_left = int(cooldown_hours * 3600)
+                        seconds_left = int(QUIZ_COOLDOWN_HOURS * 3600)
                         attempts_left = 0
                     else:
-                        attempts_left = max(0, max_attempts - failed_count)
+                        attempts_left = max(
+                            0, MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN - failed_count
+                        )
 
                     new_cooldown = QuizCooldown(
                         user_id=user_id,
@@ -455,126 +562,15 @@ class AssessmentUseCase:
                     )
                     await repo.save_quiz_submission(submission)
 
-                    logger.warning(
-                        "User %s submitted quiz %s after DB session expired",
-                        user_id,
-                        item_id,
-                    )
                     return {
                         "score_percent": 0.0,
                         "passed": False,
                         "attempts_left": attempts_left,
                         "cooldown_seconds_left": seconds_left,
                         "answer_explanations": [
-                            "Phiên làm bài đã hết hạn theo máy chủ. "
-                            "Bạn bị tính 1 lần thi rớt (0 điểm)."
-                        ],
-                        "max_attempts": max_attempts,
-                        "cooldown_hours": cooldown_hours,
-                    }
-                else:
-                    # Session still valid — proceed, delete active session
-                    await repo.delete_quiz_active_session(user_id, item_id)
-            else:
-                # No active DB session — log warning, fallback to JWT
-                logger.warning(
-                    "No active DB session for user %s quiz %s — falling back to JWT",
-                    user_id,
-                    item_id,
-                )
-
-            is_expired = False
-            try:
-                payload = jwt.decode(
-                    session_token, settings.JWT_SECRET, algorithms=[JWT_ALGORITHM]
-                )
-                if payload.get("sub") != user_id or payload.get("item_id") != item_id:
-                    raise ValueError("Token không khớp với người dùng hoặc bài thi.")
-                session_seed = payload.get("seed", 42)
-                start_time_iso = payload.get("start_time")
-                duration_minutes = payload.get(
-                    "duration_minutes", DEFAULT_QUIZ_TIME_LIMIT_MINUTES
-                )
-            except jwt.ExpiredSignatureError:
-                is_expired = True
-                try:
-                    payload = jwt.decode(
-                        session_token,
-                        settings.JWT_SECRET,
-                        algorithms=[JWT_ALGORITHM],
-                        options={"verify_exp": False},
-                    )
-                    session_seed = payload.get("seed", 42)
-                    start_time_iso = payload.get("start_time")
-                    duration_minutes = payload.get(
-                        "duration_minutes", DEFAULT_QUIZ_TIME_LIMIT_MINUTES
-                    )
-                except Exception:
-                    return {
-                        "score_percent": 0.0,
-                        "passed": False,
-                        "attempts_left": 0,
-                        "cooldown_seconds_left": 0,
-                        "answer_explanations": [
-                            "Token phiên làm bài đã hết hạn tuyệt đối và không hợp lệ."
+                            "Token phiên làm bài đã hết hạn tuyệt đối. Bạn bị tính 1 lần thi rớt (0 điểm)."
                         ],
                     }
-            except Exception as e:
-                logger.error("Invalid session token for user %s: %s", user_id, e)
-                return {
-                    "score_percent": 0.0,
-                    "passed": False,
-                    "attempts_left": 0,
-                    "cooldown_seconds_left": 0,
-                    "answer_explanations": ["Token phiên làm bài không hợp lệ."],
-                }
-
-            if is_expired:
-                # Token is expired. Record a failed attempt.
-                failed_count = cooldown.failed_attempts_count if cooldown else 0
-                failed_count += 1
-                cooldown_until_iso = None
-                seconds_left = 0
-                if failed_count >= MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN:
-                    cooldown_until_dt = now + timedelta(hours=QUIZ_COOLDOWN_HOURS)
-                    cooldown_until_iso = cooldown_until_dt.isoformat()
-                    seconds_left = int(QUIZ_COOLDOWN_HOURS * 3600)
-                    attempts_left = 0
-                else:
-                    attempts_left = max(
-                        0, MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN - failed_count
-                    )
-
-                new_cooldown = QuizCooldown(
-                    user_id=user_id,
-                    item_id=item_id,
-                    failed_attempts_count=failed_count,
-                    last_attempt_at=now.isoformat(),
-                    cooldown_until=cooldown_until_iso,
-                )
-                await repo.save_quiz_cooldown(new_cooldown)
-
-                submission = QuizSubmission(
-                    id=f"sub-{uuid.uuid4().hex[:8]}",
-                    user_id=user_id,
-                    item_id=item_id,
-                    selected_option_indexes=[-1],
-                    score_percent=0.0,
-                    passed=False,
-                    attempt_number=failed_count,
-                    created_at=now.isoformat(),
-                )
-                await repo.save_quiz_submission(submission)
-
-                return {
-                    "score_percent": 0.0,
-                    "passed": False,
-                    "attempts_left": attempts_left,
-                    "cooldown_seconds_left": seconds_left,
-                    "answer_explanations": [
-                        "Token phiên làm bài đã hết hạn tuyệt đối. Bạn bị tính 1 lần thi rớt (0 điểm)."
-                    ],
-                }
 
             # 3. Grade Quiz (BR_QUIZ_002: Dynamic shuffled options grading)
             if session_seed is None:

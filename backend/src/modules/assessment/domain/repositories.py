@@ -8,6 +8,7 @@ from src.modules.assessment.domain.entities import (
     PeerReview,
     Question,
     QuestionBank,
+    QuizActiveSession,
     QuizCooldown,
     QuizMatrix,
     QuizSubmission,
@@ -43,6 +44,20 @@ class AssessmentRepositoryInterface(ABC):
 
     @abstractmethod
     async def save_quiz_cooldown(self, cooldown: QuizCooldown) -> None:
+        pass
+
+    @abstractmethod
+    async def get_quiz_active_session(
+        self, user_id: str, item_id: str
+    ) -> Optional[QuizActiveSession]:
+        pass
+
+    @abstractmethod
+    async def save_quiz_active_session(self, session: QuizActiveSession) -> None:
+        pass
+
+    @abstractmethod
+    async def delete_quiz_active_session(self, user_id: str, item_id: str) -> None:
         pass
 
     @abstractmethod
