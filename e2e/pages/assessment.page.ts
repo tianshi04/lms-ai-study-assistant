@@ -32,11 +32,11 @@ export class AssessmentPage {
     this.labTab = page.getByRole('button', { name: /Auto-Graded Lab/i });
     this.peerTab = page.getByRole('button', { name: /Peer Review & Appeal/i });
 
-    this.confirmHonorButton = page.locator('button').filter({ hasText: /Confirm Honor Code|Xác nhận Cam kết/i }).first();
-    this.honorAgreedBadge = page.locator('span').filter({ hasText: /Đã xác nhận Cam kết Trung thực|Honor Code Agreed/i }).first();
-    this.submitQuizButton = page.getByRole('button', { name: /Submit Graded Quiz|Nộp bài thi/i });
-    this.honorCheckbox = page.locator('.fixed.inset-0 input[type="checkbox"]').first();
-    this.agreeAndContinueButton = page.locator('.fixed.inset-0 button').filter({ hasText: /Tôi đồng ý & Tiếp tục|I Agree & Continue|Submitting/i }).first();
+    this.confirmHonorButton = page.getByRole('button', { name: /Xác nhận Cam kết|Confirm Honor Code/i }).first();
+    this.honorAgreedBadge = page.getByText(/Đã xác nhận Cam kết Trung thực|Honor Code Agreed/i).first();
+    this.submitQuizButton = page.getByRole('button', { name: /Nộp bài thi|Submit Graded Quiz/i });
+    this.honorCheckbox = page.getByRole('checkbox');
+    this.agreeAndContinueButton = page.getByRole('button', { name: /Tôi đồng ý & Tiếp tục|I Agree & Continue/i }).first();
 
     this.runLabButton = page.getByRole('button', { name: /Run & Submit Code/i });
 
@@ -80,7 +80,7 @@ export class AssessmentPage {
     await this.agreeAndContinueButton.click();
 
     // Ensure the modal actually closes before returning
-    await this.honorCheckbox.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => null);
+    await this.honorCheckbox.waitFor({ state: 'hidden', timeout: 5000 });
   }
 
   async submitQuiz() {
