@@ -37,7 +37,10 @@ export interface ButtonProps
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, isLoading = false, asChild = false, disabled, children, ...props }, ref) => {
+  (
+    { className, variant, size, isLoading = false, asChild = false, disabled, children, ...props },
+    ref,
+  ) => {
     const compClasses = cn(buttonVariants({ variant, size, className }));
 
     if (asChild && React.isValidElement(children)) {
@@ -76,7 +79,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
               />
             </svg>
-            Loading...
+            Đang tải...
           </span>
         ) : (
           children

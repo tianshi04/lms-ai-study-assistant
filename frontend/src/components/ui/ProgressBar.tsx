@@ -32,7 +32,7 @@ export const ProgressBar = React.forwardRef<HTMLDivElement, ProgressBarProps>(
       <div ref={ref} className={cn("w-full space-y-1", className)} {...props}>
         {showLabel && (
           <div className="flex justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
-            <span>Progress</span>
+            <span>Tiến độ</span>
             <span>{Math.round(normalizedProgress)}%</span>
           </div>
         )}
