@@ -264,7 +264,6 @@ function CoursePlayerContent() {
       maxTimeRef.current = video.currentTime;
     }
 
-    const time = Math.floor(video.currentTime);
     setCurrentTime(video.currentTime);
 
     // Accumulate real watch time
