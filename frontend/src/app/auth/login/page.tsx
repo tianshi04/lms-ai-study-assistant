@@ -16,9 +16,7 @@ function LoginFormContent() {
   const searchParams = useSearchParams();
   const rawRedirect = searchParams.get("redirect");
   const redirectTarget =
-    rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
-      ? rawRedirect
-      : "/courses";
+    rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/";
 
   const toast = useToast();
   const { setAuth } = useAuth();
