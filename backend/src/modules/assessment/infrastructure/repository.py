@@ -173,6 +173,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
     async def save_quiz_active_session(self, session: QuizActiveSession) -> None:
         from sqlalchemy.dialects.postgresql import insert
+
         stmt = insert(QuizActiveSessionModel).values(
             id=session.id,
             user_id=session.user_id,
@@ -182,12 +183,12 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             expires_at=session.expires_at,
         )
         stmt = stmt.on_conflict_do_update(
-            index_elements=['id'],
+            index_elements=["id"],
             set_={
-                'session_token': stmt.excluded.session_token,
-                'session_seed': stmt.excluded.session_seed,
-                'expires_at': stmt.excluded.expires_at,
-            }
+                "session_token": stmt.excluded.session_token,
+                "session_seed": stmt.excluded.session_seed,
+                "expires_at": stmt.excluded.expires_at,
+            },
         )
         await self.session.execute(stmt)
         await self.session.commit()

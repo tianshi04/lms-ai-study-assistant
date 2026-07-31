@@ -27,7 +27,6 @@ from src.modules.assessment.domain.entities import (
     PeerReview,
     Question,
     QuestionBank,
-    QuizActiveSession,
     QuizCooldown,
     QuizMatrix,
     QuizSubmission,

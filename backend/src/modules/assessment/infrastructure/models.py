@@ -63,7 +63,6 @@ class QuizActiveSessionModel(Base):
     expires_at: Mapped[str] = mapped_column(String(64), nullable=False)
 
 
-
 class LabSubmissionModel(Base):
     __tablename__ = "lab_submissions"
 
