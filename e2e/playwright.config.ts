@@ -18,7 +18,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 1,
-  workers: process.env.CI ? 1 : 2,
+  workers: process.env.CI ? 1 : '50%',
   timeout: 30000,
   expect: {
     timeout: 5000,
@@ -34,7 +34,7 @@ export default defineConfig({
     testIdAttribute: 'data-testid',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: 'off',
     permissions: ['clipboard-read', 'clipboard-write'],
     extraHTTPHeaders: {
       'Accept-Language': 'vi',
