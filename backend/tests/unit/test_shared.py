@@ -46,3 +46,15 @@ def test_role_helpers_exact_match():
     assert is_staff_role("INSTRUCTOR") is True
     assert is_staff_role("TA") is True
     assert is_staff_role("DATA_ANALYST") is False
+
+
+def test_health_endpoint():
+    from starlette.testclient import TestClient
+
+    from src.main import app
+
+    client = TestClient(app)
+    for path in ("/health", "/healthz"):
+        response = client.get(path)
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok"}
