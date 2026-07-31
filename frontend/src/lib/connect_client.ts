@@ -99,12 +99,23 @@ export const transport = createConnectTransport({
 });
 
 /**
+ * Module-level cache for ConnectRPC client instances.
+ * Avoids redundant createClient() calls on every render or hook invocation.
+ */
+const clientCache = new Map<string, Client<DescService>>();
+
+/**
  * Factory function to obtain a typed ConnectRPC client for any generated service schema.
+ * Returns a cached instance if one already exists for the given service.
  *
  * @example
  * import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
  * const catalogClient = getRpcClient(CatalogService);
  */
 export function getRpcClient<T extends DescService>(service: T): Client<T> {
-  return createClient(service, transport);
+  const key = service.typeName;
+  if (!clientCache.has(key)) {
+    clientCache.set(key, createClient(service, transport));
+  }
+  return clientCache.get(key) as Client<T>;
 }
