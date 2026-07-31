@@ -4,8 +4,12 @@ import { IdentityService } from "@/gen/identity/v1/identity_pb";
 
 export async function POST(request: Request) {
   try {
-    const refreshToken = request.headers.get("cookie")?.split("; ").find(row => row.startsWith("refresh_token="))?.split("=")[1];
-    
+    const refreshToken = request.headers
+      .get("cookie")
+      ?.split("; ")
+      .find((row) => row.startsWith("refresh_token="))
+      ?.split("=")[1];
+
     if (!refreshToken) {
       return NextResponse.json({ error: "Missing refresh token." }, { status: 401 });
     }
@@ -46,7 +50,7 @@ export async function POST(request: Request) {
     }
 
     return response;
-  } catch (_err: unknown) {
+  } catch {
     return NextResponse.json({ error: "Refresh failed" }, { status: 401 });
   }
 }

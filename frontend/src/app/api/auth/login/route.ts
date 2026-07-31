@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     if (!email || !password) {
       return NextResponse.json(
         { error: "Vui lòng nhập đầy đủ email và mật khẩu." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     if (!res.accessToken || !res.user) {
       return NextResponse.json(
         { error: "Đăng nhập thất bại. Không nhận được token." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
         email: res.user.email,
         fullName: res.user.fullName,
         role: res.user.role,
-      }
+      },
     });
 
     // Set access token cookie

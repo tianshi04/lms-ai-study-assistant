@@ -13,7 +13,8 @@ export function ThemeToggle() {
   }, [resolvedTheme]);
 
   const toggleTheme = () => {
-    const isDarkNow = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+    const isDarkNow =
+      typeof document !== "undefined" && document.documentElement.classList.contains("dark");
     const nextTheme = isDarkNow ? "light" : "dark";
     setTheme(nextTheme);
     document.cookie = `theme=${nextTheme}; path=/; max-age=31536000; SameSite=Lax`;

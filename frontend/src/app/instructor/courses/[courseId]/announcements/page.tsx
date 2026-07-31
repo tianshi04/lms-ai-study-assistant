@@ -18,7 +18,7 @@ export default function InstructorAnnouncementsPage({
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
 
   const [announcements, setAnnouncements] = useState<CourseAnnouncement[]>([]);
@@ -28,7 +28,8 @@ export default function InstructorAnnouncementsPage({
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
+  const userRole =
+    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
   const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
 
   useEffect(() => {
@@ -64,7 +65,6 @@ export default function InstructorAnnouncementsPage({
     }
   };
 
-
   const handlePostAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) return;
@@ -96,20 +96,27 @@ export default function InstructorAnnouncementsPage({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
-
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Breadcrumbs */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <Link href="/instructor/courses" className="hover:text-blue-600 dark:hover:text-blue-400">
+            <Link
+              href="/instructor/courses"
+              className="hover:text-blue-600 dark:hover:text-blue-400"
+            >
               Giảng viên
             </Link>
             <span>/</span>
-            <Link href={`/instructor/courses/${courseId}`} className="hover:text-blue-600 dark:hover:text-blue-400">
+            <Link
+              href={`/instructor/courses/${courseId}`}
+              className="hover:text-blue-600 dark:hover:text-blue-400"
+            >
               Chi tiết khóa học
             </Link>
             <span>/</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">Thông báo khóa học</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">
+              Thông báo khóa học
+            </span>
           </div>
 
           <Link
@@ -130,7 +137,8 @@ export default function InstructorAnnouncementsPage({
               Thông báo Khóa học
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Gửi thông tin cập nhật, nhắc nhở hạn nộp bài và các thông điệp quan trọng tới toàn bộ học viên.
+              Gửi thông tin cập nhật, nhắc nhở hạn nộp bài và các thông điệp quan trọng tới toàn bộ
+              học viên.
             </p>
           </div>
         </div>
@@ -154,8 +162,18 @@ export default function InstructorAnnouncementsPage({
         {isInstructorOrAdmin && (
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <svg className="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <svg
+                className="w-5 h-5 text-purple-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
               </svg>
               Tạo Thông báo Mới
             </h2>
@@ -229,7 +247,9 @@ export default function InstructorAnnouncementsPage({
                       {ann.title}
                     </h3>
                     <span className="text-[11px] font-mono text-slate-400 flex-shrink-0">
-                      {ann.createdAt ? new Date(ann.createdAt).toLocaleDateString("vi-VN") : "Gần đây"}
+                      {ann.createdAt
+                        ? new Date(ann.createdAt).toLocaleDateString("vi-VN")
+                        : "Gần đây"}
                     </span>
                   </div>
 
@@ -238,10 +258,22 @@ export default function InstructorAnnouncementsPage({
                   </p>
 
                   <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs text-slate-400">
-                    <svg className="w-4 h-4 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    <svg
+                      className="w-4 h-4 text-purple-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
                     </svg>
-                    <span>Người đăng: <strong>{ann.authorName}</strong></span>
+                    <span>
+                      Người đăng: <strong>{ann.authorName}</strong>
+                    </span>
                   </div>
                 </div>
               ))}

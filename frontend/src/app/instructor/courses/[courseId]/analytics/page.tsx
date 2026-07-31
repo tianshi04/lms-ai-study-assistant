@@ -35,20 +35,27 @@ export default function InstructorAnalyticsPage({
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
-
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Breadcrumb */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <Link href="/instructor/courses" className="hover:text-blue-600 dark:hover:text-blue-400">
+            <Link
+              href="/instructor/courses"
+              className="hover:text-blue-600 dark:hover:text-blue-400"
+            >
               Giảng viên
             </Link>
             <span>/</span>
-            <Link href={`/instructor/courses/${courseId}`} className="hover:text-blue-600 dark:hover:text-blue-400">
+            <Link
+              href={`/instructor/courses/${courseId}`}
+              className="hover:text-blue-600 dark:hover:text-blue-400"
+            >
               Chi tiết khóa học
             </Link>
             <span>/</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">Thống kê lớp học</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">
+              Thống kê lớp học
+            </span>
           </div>
 
           <Link
@@ -69,7 +76,8 @@ export default function InstructorAnalyticsPage({
               Thống kê & Danh sách Học viên
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Theo dõi tình hình ghi danh, tiến độ học tập và mức độ hài lòng của sinh viên theo thời gian thực.
+              Theo dõi tình hình ghi danh, tiến độ học tập và mức độ hài lòng của sinh viên theo
+              thời gian thực.
             </p>
           </div>
         </div>
@@ -88,7 +96,9 @@ export default function InstructorAnalyticsPage({
             {/* Stat Cards Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Tổng Học Viên</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Tổng Học Viên
+                </span>
                 <div className="text-3xl font-black text-blue-600 dark:text-blue-400">
                   {analytics.totalEnrolledStudents}
                 </div>
@@ -96,7 +106,9 @@ export default function InstructorAnalyticsPage({
               </div>
 
               <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Tỷ Lệ Hoàn Thành</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Tỷ Lệ Hoàn Thành
+                </span>
                 <div className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
                   {analytics.averageCompletionRate}%
                 </div>
@@ -104,7 +116,9 @@ export default function InstructorAnalyticsPage({
               </div>
 
               <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Đánh Giá Trung Bình</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Đánh Giá Trung Bình
+                </span>
                 <div className="text-3xl font-black text-amber-500 flex items-center gap-1">
                   <span>{analytics.averageRating.toFixed(1)}</span>
                   <span className="text-lg">★</span>
@@ -113,7 +127,9 @@ export default function InstructorAnalyticsPage({
               </div>
 
               <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Trạng Thái Khóa Học</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  Trạng Thái Khóa Học
+                </span>
                 <div className="text-xl font-bold text-indigo-600 dark:text-indigo-400 pt-1">
                   Đang hoạt động
                 </div>
@@ -125,8 +141,18 @@ export default function InstructorAnalyticsPage({
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden space-y-4 p-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  <svg
+                    className="w-5 h-5 text-emerald-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                    />
                   </svg>
                   Danh sách Học viên Lớp học ({analytics.students.length})
                 </h2>
@@ -149,10 +175,15 @@ export default function InstructorAnalyticsPage({
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                       {analytics.students.map((student) => (
-                        <tr key={student.userId} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                        <tr
+                          key={student.userId}
+                          className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                        >
                           <td className="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-200">
                             <div>{student.userName}</div>
-                            <div className="text-xs font-mono font-normal text-slate-400">{student.userEmail || "Learner"}</div>
+                            <div className="text-xs font-mono font-normal text-slate-400">
+                              {student.userEmail || "Learner"}
+                            </div>
                           </td>
                           <td className="py-3.5 px-4 font-mono text-xs text-slate-500">
                             {student.userId}

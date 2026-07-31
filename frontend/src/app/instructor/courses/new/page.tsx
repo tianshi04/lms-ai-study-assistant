@@ -17,13 +17,15 @@ export default function NewCoursePage() {
   const _isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
 
   // User details
   const [userName, setUserName] = useState("Giảng viên Cá nhân");
   const [userTitle, setUserTitle] = useState("AI Specialist");
-  const [userAvatar, setUserAvatar] = useState("https://api.dicebear.com/7.x/avataaars/svg?seed=instructor");
+  const [userAvatar, setUserAvatar] = useState(
+    "https://api.dicebear.com/7.x/avataaars/svg?seed=instructor",
+  );
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loadingOrgs, setLoadingOrgs] = useState(true);
 
@@ -134,9 +136,13 @@ export default function NewCoursePage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
-              <Link href="/instructor/courses" className="hover:underline">Giao diện Giảng viên</Link>
+              <Link href="/instructor/courses" className="hover:underline">
+                Giao diện Giảng viên
+              </Link>
               <span>/</span>
-              <span className="font-semibold text-slate-700 dark:text-slate-200">Soạn khóa học mới</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-200">
+                Soạn khóa học mới
+              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Khởi Tạo Khóa Học Mới
@@ -164,10 +170,25 @@ export default function NewCoursePage() {
           <div className="space-y-2">
             {/* Offered by Partner Badge */}
             <div className="flex items-center gap-2 text-xs text-blue-200 font-semibold">
-              <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v12a2 2 0 01-2 2" />
+              <svg
+                className="w-4 h-4 text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v12a2 2 0 01-2 2"
+                />
               </svg>
-              <span>Offered by <strong className="text-white underline decoration-blue-400 decoration-2">{partnerDisplayName}</strong></span>
+              <span>
+                Offered by{" "}
+                <strong className="text-white underline decoration-blue-400 decoration-2">
+                  {partnerDisplayName}
+                </strong>
+              </span>
             </div>
 
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
@@ -185,13 +206,18 @@ export default function NewCoursePage() {
             />
             <div>
               <p className="text-xs text-slate-300 font-medium">Taught by</p>
-              <p className="text-sm font-bold text-white">{userName} <span className="text-xs font-normal text-slate-400">({userTitle})</span></p>
+              <p className="text-sm font-bold text-white">
+                {userName} <span className="text-xs font-normal text-slate-400">({userTitle})</span>
+              </p>
             </div>
           </div>
         </div>
 
         {/* Main Form */}
-        <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-lg border border-slate-200 dark:border-slate-800 space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-lg border border-slate-200 dark:border-slate-800 space-y-6"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Organization / Partner Scoping Selection */}
             <div className="md:col-span-2 space-y-2">
@@ -219,7 +245,9 @@ export default function NewCoursePage() {
                 </select>
               )}
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                100% khóa học bắt buộc phải gắn liền với 1 Partner Organization đại diện bảo chứng. Nếu bạn là giảng viên tự do, hệ thống tự động gán dưới tên bảo chứng <strong>Coursera Project Network</strong>.
+                100% khóa học bắt buộc phải gắn liền với 1 Partner Organization đại diện bảo chứng.
+                Nếu bạn là giảng viên tự do, hệ thống tự động gán dưới tên bảo chứng{" "}
+                <strong>Coursera Project Network</strong>.
               </p>
             </div>
 
@@ -313,7 +341,8 @@ export default function NewCoursePage() {
                   Cho phép Học viên Nộp Đơn Hỗ Trợ Tài Chính (Financial Aid)
                 </span>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                  Học viên có hoàn cảnh khó khăn có thể viết bài luận xin cấp học bổng theo học khóa học này.
+                  Học viên có hoàn cảnh khó khăn có thể viết bài luận xin cấp học bổng theo học khóa
+                  học này.
                 </span>
               </div>
               <input

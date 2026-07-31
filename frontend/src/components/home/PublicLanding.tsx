@@ -22,7 +22,8 @@ export function PublicLanding() {
           </h1>
 
           <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
-            Trải nghiệm trình phát bài học chuẩn Coursera với phụ đề tương tác, bài tập ngắt ngang video và chứng chỉ xác thực công khai.
+            Trải nghiệm trình phát bài học chuẩn Coursera với phụ đề tương tác, bài tập ngắt ngang
+            video và chứng chỉ xác thực công khai.
           </p>
 
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2">
@@ -32,7 +33,12 @@ export function PublicLanding() {
             >
               <span>Khám phá Danh mục Khóa học</span>
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+                />
               </svg>
             </Link>
 
@@ -53,11 +59,18 @@ export function PublicLanding() {
           >
             <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold mb-3 group-hover:scale-110 transition-transform">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                />
               </svg>
             </div>
             <h3 className="font-bold text-slate-900 dark:text-white mb-1">Catalog Khóa học</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Khám phá danh sách khóa học phong phú & chất lượng</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Khám phá danh sách khóa học phong phú & chất lượng
+            </p>
           </Link>
 
           <Link
@@ -66,12 +79,24 @@ export function PublicLanding() {
           >
             <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold mb-3 group-hover:scale-110 transition-transform">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
             <h3 className="font-bold text-slate-900 dark:text-white mb-1">Trình phát Bài học</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Player video phụ đề cuộn & In-Video Quiz</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Player video phụ đề cuộn & In-Video Quiz
+            </p>
           </Link>
 
           <Link
@@ -80,11 +105,18 @@ export function PublicLanding() {
           >
             <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold mb-3 group-hover:scale-110 transition-transform">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
             <h3 className="font-bold text-slate-900 dark:text-white mb-1">Hỗ trợ Tài chính</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Đơn xin học bổng 150 từ với đếm từ realtime</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Đơn xin học bổng 150 từ với đếm từ realtime
+            </p>
           </Link>
 
           <Link
@@ -93,12 +125,24 @@ export function PublicLanding() {
           >
             <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold mb-3 group-hover:scale-110 transition-transform">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 14l9-5-9-5-9 5 9 5z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
+                />
               </svg>
             </div>
             <h3 className="font-bold text-slate-900 dark:text-white mb-1">Xác minh Chứng chỉ</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Cổng tra cứu & xác thực chứng chỉ công khai</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Cổng tra cứu & xác thực chứng chỉ công khai
+            </p>
           </Link>
         </div>
       </main>
@@ -108,9 +152,15 @@ export function PublicLanding() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p>© 2026 Coursera LMS Platform. Nền tảng học tập trực tuyến hàng đầu.</p>
           <div className="flex space-x-4">
-            <Link href="/courses" className="hover:underline">Khóa học</Link>
-            <Link href="/auth/profile" className="hover:underline">Hồ sơ</Link>
-            <Link href="/instructor/courses" className="hover:underline">Giảng Viên</Link>
+            <Link href="/courses" className="hover:underline">
+              Khóa học
+            </Link>
+            <Link href="/auth/profile" className="hover:underline">
+              Hồ sơ
+            </Link>
+            <Link href="/instructor/courses" className="hover:underline">
+              Giảng Viên
+            </Link>
           </div>
         </div>
       </footer>

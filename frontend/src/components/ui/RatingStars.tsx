@@ -33,7 +33,9 @@ export function RatingStars({
               key={i}
               className={cn(
                 sizeClasses[size],
-                isFilled ? "fill-amber-400 text-amber-400" : "text-slate-300 dark:text-slate-700 fill-none"
+                isFilled
+                  ? "fill-amber-400 text-amber-400"
+                  : "text-slate-300 dark:text-slate-700 fill-none",
               )}
               viewBox="0 0 24 24"
               stroke="currentColor"

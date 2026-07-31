@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-
 export function NotFoundClient() {
-  
   const router = useRouter();
 
   return (
@@ -53,7 +51,9 @@ export function NotFoundClient() {
               {"Rất tiếc! Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển."}
             </h1>
             <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
-              {"Địa chỉ đường dẫn (URL) có thể đã bị thay đổi, bị xoá hoặc không khả dụng tạm thời. Hãy kiểm tra lại hoặc quay về trang chính."}
+              {
+                "Địa chỉ đường dẫn (URL) có thể đã bị thay đổi, bị xoá hoặc không khả dụng tạm thời. Hãy kiểm tra lại hoặc quay về trang chính."
+              }
             </p>
           </div>
 

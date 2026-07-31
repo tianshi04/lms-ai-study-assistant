@@ -361,8 +361,8 @@ Run these commands from the `frontend/` directory:
 | :--- | :--- |
 | `npm run gen` | Compile Protocol Buffers in `proto/` into `frontend/src/gen/` |
 | `npm run dev` | Start Next.js development server (port 3000) |
-| `npm run lint` | Run ESLint static code analysis (`--max-warnings=0`) |
-| `npm run lint:fix` | Run ESLint and automatically fix linting issues |
+| `npm run lint` | Run Oxlint static code analysis |
+| `npm run lint:fix` | Run Oxlint and automatically fix linting issues |
 | `npm run type-check` | Run fast standalone TypeScript type-checking (`tsc --noEmit`) |
 | `npm run check` | Run comprehensive check (type-check + lint) |
 | `npm run build` | Compile Next.js production build |

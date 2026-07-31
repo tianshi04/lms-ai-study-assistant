@@ -39,7 +39,7 @@ export default async function RootLayout({
   const token = cookieStore.get("access_token")?.value;
   const rawUserName = token ? cookieStore.get("user_name")?.value : null;
   const rawUserEmail = token ? cookieStore.get("user_email")?.value : null;
-  const userRole = token ? (cookieStore.get("user_role")?.value || null) : null;
+  const userRole = token ? cookieStore.get("user_role")?.value || null : null;
 
   const initialAuth = {
     userName: rawUserName ? decodeURIComponent(rawUserName) : null,
@@ -55,13 +55,16 @@ export default async function RootLayout({
     >
       <body className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white">
         <QueryProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             <AuthProvider initialAuth={initialAuth}>
               <CopilotProvider>
                 <ToastProvider>
-                  <MainLayout>
-                    {children}
-                  </MainLayout>
+                  <MainLayout>{children}</MainLayout>
                 </ToastProvider>
               </CopilotProvider>
             </AuthProvider>
@@ -71,4 +74,3 @@ export default async function RootLayout({
     </html>
   );
 }
-

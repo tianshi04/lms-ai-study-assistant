@@ -2,21 +2,14 @@
 
 import type { LearningProgress } from "@/gen/learning/v1/learning_pb";
 
-
 interface DeadlinesPanelProps {
   progress: LearningProgress | null;
   onResetDeadlines: () => void;
 }
 
 export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelProps) {
-  
-
   if (!progress) {
-    return (
-      <div className="text-center text-xs text-slate-500 py-6">
-        {"Đang tải..."}
-      </div>
-    );
+    return <div className="text-center text-xs text-slate-500 py-6">{"Đang tải..."}</div>;
   }
 
   const hasOverdue = progress.weeklyDeadlines.some((d) => d.status === 2);
@@ -26,8 +19,12 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="font-bold text-sm text-slate-900 dark:text-white">{"Các mốc Deadline sắp tới"}</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">{"Hạn nộp linh hoạt (Flexible Deadlines)"}</p>
+            <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+              {"Các mốc Deadline sắp tới"}
+            </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {"Hạn nộp linh hoạt (Flexible Deadlines)"}
+            </p>
           </div>
           {hasOverdue && (
             <button
@@ -35,7 +32,12 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
               className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-bold rounded-xl shadow-lg transition-all border border-amber-400/30 flex items-center gap-2 animate-pulse cursor-pointer"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
               </svg>
               Reset My Deadlines
             </button>
@@ -53,7 +55,9 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
               }`}
             >
               <div>
-                <span className="font-bold block">{"Tuần"} {d.weekNumber}</span>
+                <span className="font-bold block">
+                  {"Tuần"} {d.weekNumber}
+                </span>
                 <span className="text-[10px] opacity-80">{d.dueDate}</span>
               </div>
               <span

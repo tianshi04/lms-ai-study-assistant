@@ -15,7 +15,6 @@ interface AuthContextType extends UserAuth {
   isStaff: boolean;
 }
 
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({
@@ -90,13 +89,10 @@ export function AuthProvider({
     roleStr.includes("teaching assistant");
 
   return (
-    <AuthContext.Provider
-      value={{ ...auth, setAuth, logout, isInstructorOrAdmin, isStaff }}
-    >
+    <AuthContext.Provider value={{ ...auth, setAuth, logout, isInstructorOrAdmin, isStaff }}>
       {children}
     </AuthContext.Provider>
   );
-
 }
 
 export function useAuth() {

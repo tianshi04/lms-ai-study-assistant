@@ -28,12 +28,12 @@ export const Container = React.forwardRef<HTMLDivElement, ContainerProps>(
           "w-full mx-auto",
           sizeClasses[size],
           padded && "px-4 sm:px-6 lg:px-8",
-          className
+          className,
         )}
         {...props}
       />
     );
-  }
+  },
 );
 Container.displayName = "Container";
 
@@ -61,12 +61,12 @@ export const Section = React.forwardRef<HTMLElement, SectionProps>(
         className={cn(
           spacingClasses[spacing],
           bordered && "border-b border-slate-200 dark:border-slate-800",
-          className
+          className,
         )}
         {...props}
       />
     );
-  }
+  },
 );
 Section.displayName = "Section";
 
@@ -87,11 +87,16 @@ export const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(
     return (
       <div
         ref={ref}
-        className={cn("flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800/80 mb-6", className)}
+        className={cn(
+          "flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800/80 mb-6",
+          className,
+        )}
         {...props}
       >
         <div className="space-y-1.5">
-          {breadcrumbs && <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">{breadcrumbs}</div>}
+          {breadcrumbs && (
+            <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">{breadcrumbs}</div>
+          )}
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               {title}
@@ -104,14 +109,10 @@ export const PageHeader = React.forwardRef<HTMLDivElement, PageHeaderProps>(
             </p>
           )}
         </div>
-        {actions && (
-          <div className="flex items-center gap-3 shrink-0 flex-wrap">
-            {actions}
-          </div>
-        )}
+        {actions && <div className="flex items-center gap-3 shrink-0 flex-wrap">{actions}</div>}
       </div>
     );
-  }
+  },
 );
 PageHeader.displayName = "PageHeader";
 
@@ -128,7 +129,18 @@ export interface StackProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export const Stack = React.forwardRef<HTMLDivElement, StackProps>(
-  ({ className, direction = "column", gap = 4, align = "start", justify = "start", wrap = false, ...props }, ref) => {
+  (
+    {
+      className,
+      direction = "column",
+      gap = 4,
+      align = "start",
+      justify = "start",
+      wrap = false,
+      ...props
+    },
+    ref,
+  ) => {
     const gapClasses = {
       1: "gap-1",
       2: "gap-2",
@@ -165,11 +177,11 @@ export const Stack = React.forwardRef<HTMLDivElement, StackProps>(
           alignClasses[align],
           justifyClasses[justify],
           wrap && "flex-wrap",
-          className
+          className,
         )}
         {...props}
       />
     );
-  }
+  },
 );
 Stack.displayName = "Stack";

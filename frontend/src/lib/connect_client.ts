@@ -2,7 +2,6 @@ import { createConnectTransport } from "@connectrpc/connect-web";
 import { createClient, Client, Interceptor, ConnectError, Code } from "@connectrpc/connect";
 import type { DescService } from "@bufbuild/protobuf";
 
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 let isRefreshing = false;
@@ -19,7 +18,7 @@ async function doSilentRefreshToken(): Promise<boolean> {
   } catch (err) {
     console.warn("Silent token refresh failed:", err);
   }
-  
+
   // If refresh fails, clear user metadata and redirect to login
   localStorage.removeItem("user_id");
   localStorage.removeItem("user_email");
@@ -30,7 +29,7 @@ async function doSilentRefreshToken(): Promise<boolean> {
 
 /**
  * ConnectRPC Interceptor for Silent Token Refresh.
- * Note: Authorization header is no longer manually attached here because 
+ * Note: Authorization header is no longer manually attached here because
  * HttpOnly cookies are automatically sent by the browser.
  */
 const authInterceptor: Interceptor = (next) => async (req) => {
@@ -39,7 +38,10 @@ const authInterceptor: Interceptor = (next) => async (req) => {
   } catch (err) {
     // Catch Unauthenticated (401) errors and attempt silent auto-refresh via Next.js API
     if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
-      if (req.service.typeName === "identity.v1.IdentityService" && req.method.name === "RefreshToken") {
+      if (
+        req.service.typeName === "identity.v1.IdentityService" &&
+        req.method.name === "RefreshToken"
+      ) {
         throw err;
       }
 
@@ -71,12 +73,12 @@ export const transport = createConnectTransport({
     const options = init || {};
     options.credentials = "include"; // Send HttpOnly cookies cross-origin
     return fetch(input, options);
-  }
+  },
 });
 
 /**
  * Factory function to obtain a typed ConnectRPC client for any generated service schema.
- * 
+ *
  * @example
  * import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
  * const catalogClient = getRpcClient(CatalogService);

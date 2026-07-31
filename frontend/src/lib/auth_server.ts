@@ -16,7 +16,7 @@ export async function getAuthServer(): Promise<ServerUserAuth> {
   const token = cookieStore.get("access_token")?.value || null;
   const rawUserName = token ? cookieStore.get("user_name")?.value : undefined;
   const rawUserEmail = token ? cookieStore.get("user_email")?.value : undefined;
-  const userRole = token ? (cookieStore.get("user_role")?.value || null) : null;
+  const userRole = token ? cookieStore.get("user_role")?.value || null : null;
 
   let userName: string | null = null;
   if (rawUserName) {

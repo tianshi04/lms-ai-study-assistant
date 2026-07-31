@@ -4,7 +4,10 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { ConnectError, Code } from "@connectrpc/connect";
-import { CertificateService, type FinancialAidApplication } from "@/gen/certificate/v1/certificate_pb";
+import {
+  CertificateService,
+  type FinancialAidApplication,
+} from "@/gen/certificate/v1/certificate_pb";
 
 const emptySubscribe = () => () => {};
 
@@ -12,17 +15,23 @@ export default function InstructorFinancialAidPage() {
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
 
   const [applications, setApplications] = useState<FinancialAidApplication[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">("PENDING");
+  const [activeTab, setActiveTab] = useState<"ALL" | "PENDING" | "APPROVED" | "REJECTED">(
+    "PENDING",
+  );
   const [processingId, setProcessingId] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [toastMessage, setToastMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   // Authorization Check
-  const userRole = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
+  const userRole =
+    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
   const isInstructorOrAdmin =
     userRole === "2" ||
     userRole === "3" ||
@@ -58,7 +67,9 @@ export default function InstructorFinancialAidPage() {
           if (err instanceof ConnectError && err.code === Code.PermissionDenied) {
             setToastMessage({
               type: "error",
-              text: err.rawMessage || "Chỉ Giảng viên hoặc Quản trị viên mới có quyền xem danh sách đơn Hỗ trợ tài chính.",
+              text:
+                err.rawMessage ||
+                "Chỉ Giảng viên hoặc Quản trị viên mới có quyền xem danh sách đơn Hỗ trợ tài chính.",
             });
           } else {
             console.error("Failed to load financial aid applications:", err);
@@ -92,11 +103,13 @@ export default function InstructorFinancialAidPage() {
       if (res.application) {
         // Update local state
         setApplications((prev) =>
-          prev.map((item) => (item.id === appId ? res.application! : item))
+          prev.map((item) => (item.id === appId ? res.application! : item)),
         );
         setToastMessage({
           type: "success",
-          text: isApproved ? "Đã phê duyệt đơn Hỗ trợ tài chính!" : "Đã từ chối đơn Hỗ trợ tài chính.",
+          text: isApproved
+            ? "Đã phê duyệt đơn Hỗ trợ tài chính!"
+            : "Đã từ chối đơn Hỗ trợ tài chính.",
         });
       }
     } catch (err: unknown) {
@@ -114,16 +127,20 @@ export default function InstructorFinancialAidPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
-
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Breadcrumb & Navigation */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <Link href="/instructor/courses" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            <Link
+              href="/instructor/courses"
+              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
               Giảng viên
             </Link>
             <span>/</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">Xét duyệt Hỗ trợ tài chính</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">
+              Xét duyệt Hỗ trợ tài chính
+            </span>
           </div>
 
           <Link
@@ -131,7 +148,12 @@ export default function InstructorFinancialAidPage() {
             className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+              />
             </svg>
             <span>Quản lý Khóa học</span>
           </Link>
@@ -149,7 +171,8 @@ export default function InstructorFinancialAidPage() {
               Xét duyệt Đơn Hỗ trợ Tài chính (Financial Aid)
             </h1>
             <p className="text-sm text-blue-100/90 max-w-2xl">
-              Quản lý và thẩm định các bài luận xin học bổng 150 từ của học viên. Duyệt hoặc từ chối để cấp quyền truy cập khóa học trả phí.
+              Quản lý và thẩm định các bài luận xin học bổng 150 từ của học viên. Duyệt hoặc từ chối
+              để cấp quyền truy cập khóa học trả phí.
             </p>
           </div>
         </div>
@@ -165,19 +188,47 @@ export default function InstructorFinancialAidPage() {
           >
             <div className="flex items-center gap-2">
               {toastMessage.type === "success" ? (
-                <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-5 h-5 text-emerald-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               ) : (
-                <svg className="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5 text-rose-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               )}
               <span>{toastMessage.text}</span>
             </div>
-            <button onClick={() => setToastMessage(null)} className="p-1 rounded-md opacity-60 hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => setToastMessage(null)}
+              className="p-1 rounded-md opacity-60 hover:opacity-100 transition-opacity"
+            >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -188,12 +239,18 @@ export default function InstructorFinancialAidPage() {
           <div className="p-6 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-300">
             <h2 className="font-bold text-base flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
               Quyền truy cập bị hạn chế
             </h2>
             <p className="text-sm mt-1">
-              Bạn đang sử dụng tài khoản Học viên. Vui lòng đăng nhập với tài khoản Giảng viên (Instructor) hoặc Quản trị viên (Admin) để thực hiện quyền xét duyệt đơn.
+              Bạn đang sử dụng tài khoản Học viên. Vui lòng đăng nhập với tài khoản Giảng viên
+              (Instructor) hoặc Quản trị viên (Admin) để thực hiện quyền xét duyệt đơn.
             </p>
           </div>
         )}
@@ -227,15 +284,31 @@ export default function InstructorFinancialAidPage() {
         {loading ? (
           <div className="py-16 text-center space-y-3">
             <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-sm font-medium text-slate-500">Đang tải danh sách đơn Hỗ trợ tài chính...</p>
+            <p className="text-sm font-medium text-slate-500">
+              Đang tải danh sách đơn Hỗ trợ tài chính...
+            </p>
           </div>
         ) : filteredApps.length === 0 ? (
           <div className="py-16 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
-            <svg className="w-12 h-12 mx-auto text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg
+              className="w-12 h-12 mx-auto text-slate-400 mb-3"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
             </svg>
-            <p className="text-base font-bold text-slate-700 dark:text-slate-300">Không có đơn nộp nào trong danh mục này</p>
-            <p className="text-xs text-slate-500 mt-1">Các đơn Hỗ trợ tài chính mới từ học viên sẽ xuất hiện ở đây.</p>
+            <p className="text-base font-bold text-slate-700 dark:text-slate-300">
+              Không có đơn nộp nào trong danh mục này
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              Các đơn Hỗ trợ tài chính mới từ học viên sẽ xuất hiện ở đây.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
@@ -251,11 +324,17 @@ export default function InstructorFinancialAidPage() {
                         ID: {app.id}
                       </span>
                       <span className="text-xs font-semibold text-slate-500">
-                        Khóa học: <span className="font-bold text-slate-800 dark:text-slate-200">{app.courseId}</span>
+                        Khóa học:{" "}
+                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                          {app.courseId}
+                        </span>
                       </span>
                     </div>
                     <p className="text-xs text-slate-500">
-                      Học viên (User ID): <span className="font-mono text-slate-700 dark:text-slate-300">{app.userId}</span>
+                      Học viên (User ID):{" "}
+                      <span className="font-mono text-slate-700 dark:text-slate-300">
+                        {app.userId}
+                      </span>
                     </p>
                   </div>
 
@@ -300,8 +379,18 @@ export default function InstructorFinancialAidPage() {
                       disabled={processingId === app.id}
                       className="px-4 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                       <span>{processingId === app.id ? "Đang xử lý..." : "Từ chối đơn"}</span>
                     </button>
@@ -310,8 +399,18 @@ export default function InstructorFinancialAidPage() {
                       disabled={processingId === app.id}
                       className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                     >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                       <span>{processingId === app.id ? "Đang xử lý..." : "Phê duyệt đơn"}</span>
                     </button>

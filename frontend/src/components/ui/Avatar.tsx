@@ -23,8 +23,7 @@ const pixelSizes = {
 };
 
 export interface AvatarProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof avatarVariants> {
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof avatarVariants> {
   name: string;
   src?: string;
 }
@@ -50,7 +49,10 @@ export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
             width={dim}
             height={dim}
             unoptimized
-            className={cn(avatarVariants({ size: selectedSize }), "border border-slate-200 dark:border-slate-700")}
+            className={cn(
+              avatarVariants({ size: selectedSize }),
+              "border border-slate-200 dark:border-slate-700",
+            )}
           />
         </div>
       );
@@ -62,13 +64,13 @@ export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
         className={cn(
           avatarVariants({ size: selectedSize }),
           "bg-gradient-to-tr from-blue-600 to-indigo-600 font-bold text-white flex items-center justify-center shadow-sm",
-          className
+          className,
         )}
         {...props}
       >
         {initials}
       </div>
     );
-  }
+  },
 );
 Avatar.displayName = "Avatar";
