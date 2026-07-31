@@ -17,7 +17,7 @@ import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
 const columnHelper = createColumnHelper<EnterpriseSeat>();
 
 export default function AdminEnterpriseDashboardPage() {
-  const { userRole, isInstructorOrAdmin: isAdmin } = useAuth();
+  const { isInstructorOrAdmin: isAdmin } = useAuth();
 
   const {
     data: seats = [],
@@ -165,13 +165,9 @@ export default function AdminEnterpriseDashboardPage() {
               <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-indigo-500/30 text-indigo-300 border border-indigo-400/20 backdrop-blur-md">
                 Admin Enterprise Portal
               </span>
-              {userRole === "4" ? (
+              {isAdmin && (
                 <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                   Super Admin
-                </span>
-              ) : (
-                <span className="px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                  Partner Admin
                 </span>
               )}
             </div>
@@ -242,8 +238,7 @@ export default function AdminEnterpriseDashboardPage() {
             </svg>
             <span>
               Lưu ý: Bạn đang đăng nhập với tài khoản không có quyền Admin đầy đủ. Tính năng khởi
-              tạo và gán suất học yêu cầu tài khoản Quản trị viên Doanh nghiệp (Partner Admin) hoặc
-              Super Admin.
+              tạo và gán suất học yêu cầu tài khoản Quản trị viên hệ thống (Super Admin).
             </span>
           </div>
         )}

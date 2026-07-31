@@ -65,7 +65,7 @@ export default function AdminPartnersPage() {
   const [publicKeyPem, setPublicKeyPem] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Partner Admins State (keyed by partnerId or slug)
+  // Organization Admins State (keyed by partnerId or slug)
   const [partnerAdminsMap, setPartnerAdminsMap] = useState<Record<string, PartnerAdminUser[]>>({
     "partner-stanford": [
       { id: "pa-1", name: "Stanford Admin", email: "admin@stanford.edu", createdAt: "2026-01-15" },
@@ -665,10 +665,10 @@ export default function AdminPartnersPage() {
               </div>
             )}
 
-            {/* List of existing partner admins */}
+            {/* List of existing organization admins */}
             <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
               {currentPartnerAdmins.length === 0 ? (
-                <p className="text-xs text-slate-500 italic">Chưa gán Quản trị viên đối tác nào.</p>
+                <p className="text-xs text-slate-500 italic">Chưa gán Quản trị viên tổ chức nào.</p>
               ) : (
                 currentPartnerAdmins.map((admin) => (
                   <div
@@ -711,7 +711,7 @@ export default function AdminPartnersPage() {
               )}
             </div>
 
-            {/* Add new partner admin inputs */}
+            {/* Add new organization admin inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 pt-1">
               <input
                 type="text"

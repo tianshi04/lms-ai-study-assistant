@@ -780,7 +780,7 @@ export default function PartnerSettingsPage() {
       <div className="max-w-md mx-auto my-16 p-8 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-2xl text-center">
         <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">Từ chối truy cập</h2>
         <p className="text-slate-600 dark:text-slate-400 text-sm">
-          Trang này dành riêng cho Quản trị viên Đối tác (Partner Admin).
+          Trang này dành riêng cho Quản trị viên Tổ chức.
         </p>
         <Button onClick={() => router.push("/")} className="mt-4" variant="outline">
           Về trang chủ
@@ -822,7 +822,7 @@ export default function PartnerSettingsPage() {
       <div className="pb-6 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Cấu hình Self-Service Partner Admin
+            Cấu hình Self-Service Tổ chức
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
             Quản lý thương hiệu phát hành, chữ ký số đại diện và thông tin xác thực OpenBadges cho

@@ -1,9 +1,13 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
 import { AuthNavbar } from "@/components/layout/AuthNavbar";
-import { AIChatbot } from "@/components/ai/AIChatbot";
+
+const AIChatbot = dynamic(() => import("@/components/ai/AIChatbot").then((mod) => mod.AIChatbot), {
+  ssr: false,
+});
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
