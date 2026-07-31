@@ -45,11 +45,11 @@ test.describe('Full System Blackbox - B2B Partner & Signatures (POM)', () => {
     });
   });
 
-  // ─── Test 2: Partner Admin Self-Service & Digital Keys ─────────────────────
-  test.describe('Partner Admin - Partner Settings & Digital Keys', () => {
+  // ─── Test 2: Organization Admin Self-Service & Digital Keys ─────────────────────
+  test.describe('Organization Admin - Partner Settings & Digital Keys', () => {
     test.use({ storageState: ADMIN_AUTH });
 
-    test('Partner Admin truy cập /partner/settings, chỉnh sửa người ký, xoay khóa ký số và tải openbadges-issuer.json', async ({ page }) => {
+    test('Quản trị viên Tổ chức truy cập /partner/settings, chỉnh sửa người ký, xoay khóa ký số và tải openbadges-issuer.json', async ({ page }) => {
       const partnerSettingsPage = new PartnerSettingsPage(page);
       await partnerSettingsPage.goto();
       await partnerSettingsPage.verifyPageLoaded();
