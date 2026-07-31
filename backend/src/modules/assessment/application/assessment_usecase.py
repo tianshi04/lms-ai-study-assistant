@@ -181,12 +181,6 @@ class AssessmentUseCase:
             now = datetime.now(timezone.utc)
             expires_at = now + timedelta(minutes=duration_minutes)
 
-            # Check if user has already passed this quiz
-            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
-            has_passed = any(sub.passed for sub in prev_submissions)
-            if has_passed and not preview:
-                raise ValueError("Bạn đã vượt qua bài thi này và đạt điểm yêu cầu.")
-
             max_attempts = (
                 matrix.max_attempts if matrix else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
             )
