@@ -25,7 +25,7 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 from sqlalchemy import select, text
-from src.shared.infrastructure.database import Base, async_session_scope, get_engine
+from src.shared.infrastructure.database import Base, async_session_scope
 from src.modules.assessment.infrastructure.models import (
     GradeAppealModel,
     HonorCodeModel,
@@ -510,10 +510,6 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
     :param reset: If True, truncates all database tables before re-seeding.
     :param auto_mode: If True (e.g. dev startup), skips seeding if database already contains courses.
     """
-    engine = get_engine()
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
     async with async_session_scope() as session:
         if auto_mode:
             stmt = select(CourseModel).limit(1)
