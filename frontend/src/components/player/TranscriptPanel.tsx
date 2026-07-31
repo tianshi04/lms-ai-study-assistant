@@ -10,11 +10,7 @@ interface TranscriptPanelProps {
   onSeekVideo: (timestampSeconds: number) => void;
 }
 
-export function TranscriptPanel({
-  activeItem,
-  currentTime,
-  onSeekVideo,
-}: TranscriptPanelProps) {
+export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: TranscriptPanelProps) {
   const [cues, setCues] = useState<VTTCue[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -70,7 +66,7 @@ export function TranscriptPanel({
   // Find index of the currently active transcript cue based on currentTime
   const activeIndex = useMemo(() => {
     return allTranscripts.findIndex(
-      (cue) => currentTime >= cue.startTime && currentTime <= cue.endTime
+      (cue) => currentTime >= cue.startTime && currentTime <= cue.endTime,
     );
   }, [allTranscripts, currentTime]);
 
@@ -104,12 +100,15 @@ export function TranscriptPanel({
       <span>
         {parts.map((part, i) =>
           regex.test(part) ? (
-            <mark key={i} className="bg-yellow-200 dark:bg-yellow-800/80 text-slate-900 dark:text-white px-0.5 rounded font-semibold">
+            <mark
+              key={i}
+              className="bg-yellow-200 dark:bg-yellow-800/80 text-slate-900 dark:text-white px-0.5 rounded font-semibold"
+            >
               {part}
             </mark>
           ) : (
             part
-          )
+          ),
         )}
       </span>
     );
@@ -183,7 +182,9 @@ export function TranscriptPanel({
               >
                 <span className="font-mono text-blue-600 dark:text-blue-400 flex-shrink-0 font-bold">
                   {Math.floor(item.startTime / 60)}:
-                  {Math.floor(item.startTime % 60).toString().padStart(2, "0")}
+                  {Math.floor(item.startTime % 60)
+                    .toString()
+                    .padStart(2, "0")}
                 </span>
                 <span className="leading-relaxed">
                   {renderHighlightedText(item.text, searchQuery)}

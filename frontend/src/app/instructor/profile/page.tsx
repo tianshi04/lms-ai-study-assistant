@@ -15,11 +15,16 @@ export default function InstructorProfilePage() {
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
 
-  const userId = isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
-  const { data: userProfile, isLoading: profileLoading, refetch: refetchProfile } = useUserProfileQuery(userId);
+  const userId =
+    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
+  const {
+    data: userProfile,
+    isLoading: profileLoading,
+    refetch: refetchProfile,
+  } = useUserProfileQuery(userId);
 
   const isInstructorOrTA =
     userProfile?.role === UserRole.INSTRUCTOR ||
@@ -30,7 +35,10 @@ export default function InstructorProfilePage() {
 
   const [titleInput, setTitleInput] = useState<string | null>(null);
   const [signatureInput, setSignatureInput] = useState<string | null>(null);
-  const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const title = titleInput ?? userProfile?.title ?? "";
   const signatureImageUrl = signatureInput ?? userProfile?.signatureImageUrl ?? "";
@@ -51,7 +59,8 @@ export default function InstructorProfilePage() {
       <div className="max-w-md mx-auto my-16 p-8 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-2xl text-center">
         <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">Từ chối truy cập</h2>
         <p className="text-slate-600 dark:text-slate-400 text-sm">
-          Trang này chỉ dành cho Giảng viên (Instructor) hoặc Trợ giảng (TA) thiết lập hồ sơ và chữ ký tay điện tử.
+          Trang này chỉ dành cho Giảng viên (Instructor) hoặc Trợ giảng (TA) thiết lập hồ sơ và chữ
+          ký tay điện tử.
         </p>
         <Button onClick={() => router.push("/")} className="mt-4" variant="outline">
           Về trang chủ
@@ -72,7 +81,10 @@ export default function InstructorProfilePage() {
       await refetchProfile();
       setTitleInput(null);
       setSignatureInput(null);
-      setStatusMessage({ type: "success", text: "Cập nhật chức danh và chữ ký tay điện tử thành công!" });
+      setStatusMessage({
+        type: "success",
+        text: "Cập nhật chức danh và chữ ký tay điện tử thành công!",
+      });
     } catch (err: unknown) {
       setStatusMessage({ type: "error", text: (err as Error).message || "Cập nhật thất bại" });
     }
@@ -83,17 +95,23 @@ export default function InstructorProfilePage() {
       {/* Header */}
       <div className="pb-6 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center space-x-2 text-sm text-slate-500 mb-1">
-          <button onClick={() => router.push("/instructor/courses")} className="hover:text-blue-600 transition-colors">
+          <button
+            onClick={() => router.push("/instructor/courses")}
+            className="hover:text-blue-600 transition-colors"
+          >
             Giảng dạy
           </button>
           <span>/</span>
-          <span className="text-slate-800 dark:text-slate-200 font-medium">Hồ sơ & Chữ ký Giảng viên</span>
+          <span className="text-slate-800 dark:text-slate-200 font-medium">
+            Hồ sơ & Chữ ký Giảng viên
+          </span>
         </div>
         <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
           Cấu hình Hồ sơ & Chữ ký tay Điện tử
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
-          Chức danh khoa học và chữ ký điện tử của bạn sẽ tự động hiển thị trên chứng chỉ cấp cho Học viên hoàn thành khóa học.
+          Chức danh khoa học và chữ ký điện tử của bạn sẽ tự động hiển thị trên chứng chỉ cấp cho
+          Học viên hoàn thành khóa học.
         </p>
       </div>
 
@@ -107,17 +125,40 @@ export default function InstructorProfilePage() {
         >
           <div className="flex items-center gap-2">
             {statusMessage.type === "success" ? (
-              <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-5 h-5 text-emerald-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             ) : (
-              <svg className="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-5 h-5 text-red-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             )}
             <span>{statusMessage.text}</span>
           </div>
-          <button onClick={() => setStatusMessage(null)} className="text-xs opacity-70 hover:opacity-100">
+          <button
+            onClick={() => setStatusMessage(null)}
+            className="text-xs opacity-70 hover:opacity-100"
+          >
             ✕
           </button>
         </div>
@@ -129,16 +170,29 @@ export default function InstructorProfilePage() {
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center space-x-5">
           <div className="w-16 h-16 rounded-full bg-blue-600 text-white font-bold text-2xl flex items-center justify-center overflow-hidden shrink-0 shadow-md">
             {userProfile?.avatarUrl ? (
-              <Image src={userProfile.avatarUrl} alt={userProfile.fullName} width={64} height={64} className="w-full h-full object-cover" unoptimized />
+              <Image
+                src={userProfile.avatarUrl}
+                alt={userProfile.fullName}
+                width={64}
+                height={64}
+                className="w-full h-full object-cover"
+                unoptimized
+              />
             ) : (
               <span>{userProfile?.fullName?.charAt(0).toUpperCase() || "I"}</span>
             )}
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white">{userProfile?.fullName}</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              {userProfile?.fullName}
+            </h2>
             <p className="text-xs text-slate-500">{userProfile?.email}</p>
             <span className="inline-block mt-1.5 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider rounded-md bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-              {userProfile?.role === UserRole.INSTRUCTOR ? "Giảng viên" : userProfile?.role === UserRole.TA ? "Trợ giảng" : "Quản trị viên"}
+              {userProfile?.role === UserRole.INSTRUCTOR
+                ? "Giảng viên"
+                : userProfile?.role === UserRole.TA
+                  ? "Trợ giảng"
+                  : "Quản trị viên"}
             </span>
           </div>
         </div>
@@ -157,7 +211,8 @@ export default function InstructorProfilePage() {
               className="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none"
             />
             <p className="text-xs text-slate-500 mt-1">
-              Chức danh này sẽ xuất hiện bên dưới họ tên của bạn trên tất cả các Giấy chứng nhận hoàn thành khóa học.
+              Chức danh này sẽ xuất hiện bên dưới họ tên của bạn trên tất cả các Giấy chứng nhận
+              hoàn thành khóa học.
             </p>
           </div>
 
@@ -173,7 +228,8 @@ export default function InstructorProfilePage() {
               className="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none"
             />
             <p className="text-xs text-slate-500 mt-1">
-              Khuyến nghị tải lên ảnh dạng nét mực chữ ký tay trên nền trong suốt (Format PNG/SVG) để hiển thị sắc nét nhất trên bằng cấp.
+              Khuyến nghị tải lên ảnh dạng nét mực chữ ký tay trên nền trong suốt (Format PNG/SVG)
+              để hiển thị sắc nét nhất trên bằng cấp.
             </p>
           </div>
 
@@ -185,7 +241,14 @@ export default function InstructorProfilePage() {
               </p>
               <div className="flex items-center space-x-6">
                 <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 inline-block">
-                  <Image src={signatureImageUrl} alt="Mẫu chữ ký" width={140} height={56} className="h-14 object-contain" unoptimized />
+                  <Image
+                    src={signatureImageUrl}
+                    alt="Mẫu chữ ký"
+                    width={140}
+                    height={56}
+                    className="h-14 object-contain"
+                    unoptimized
+                  />
                 </div>
                 <div>
                   <p className="font-bold text-slate-900 dark:text-white text-base font-serif italic">
@@ -206,7 +269,12 @@ export default function InstructorProfilePage() {
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-6 py-3 text-sm shadow-md flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
             </svg>
             Lưu Hồ sơ Giảng viên
           </Button>

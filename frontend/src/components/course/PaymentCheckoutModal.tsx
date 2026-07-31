@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/Modal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { usePurchaseCourseMutation, useSubscribeCourseraPlusMutation } from "@/lib/query_hooks";
 import { PlanType } from "@/gen/payment/v1/payment_pb";
@@ -23,13 +30,21 @@ export function PaymentCheckoutModal({
   priceVnd = 1190000,
 }: PaymentCheckoutModalProps) {
   const queryClient = useQueryClient();
-  const [selectedOption, setSelectedOption] = useState<"SINGLE" | "PLUS_MONTHLY" | "PLUS_YEARLY">("SINGLE");
-  const [feedbackMsg, setFeedbackMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [selectedOption, setSelectedOption] = useState<"SINGLE" | "PLUS_MONTHLY" | "PLUS_YEARLY">(
+    "SINGLE",
+  );
+  const [feedbackMsg, setFeedbackMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const purchaseMutation = usePurchaseCourseMutation({
     onSuccess: (data) => {
       if (data.success) {
-        setFeedbackMsg({ type: "success", text: data.message || "Thanh toán mua khóa học thành công!" });
+        setFeedbackMsg({
+          type: "success",
+          text: data.message || "Thanh toán mua khóa học thành công!",
+        });
         queryClient.invalidateQueries({ queryKey: ["paymentAccess", courseId] });
         setTimeout(() => {
           onClose();
@@ -47,7 +62,10 @@ export function PaymentCheckoutModal({
   const subscribeMutation = useSubscribeCourseraPlusMutation({
     onSuccess: (data) => {
       if (data.success) {
-        setFeedbackMsg({ type: "success", text: data.message || "Đăng ký Coursera Plus thành công!" });
+        setFeedbackMsg({
+          type: "success",
+          text: data.message || "Đăng ký Coursera Plus thành công!",
+        });
         queryClient.invalidateQueries({ queryKey: ["paymentAccess", courseId] });
         setTimeout(() => {
           onClose();
@@ -80,13 +98,24 @@ export function PaymentCheckoutModal({
       <DialogContent size="lg" className="p-6">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            <svg
+              className="w-6 h-6 text-indigo-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
             </svg>
             Nâng Cấp Quyền Truy Cập Paid Mode
           </DialogTitle>
           <DialogDescription className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Mở khóa trọn vẹn bài thi tính điểm (Graded Quiz), bài tập thực hành Auto-Graded Lab, chấm chéo Peer Review và nhận Chứng chỉ Xác thực.
+            Mở khóa trọn vẹn bài thi tính điểm (Graded Quiz), bài tập thực hành Auto-Graded Lab,
+            chấm chéo Peer Review và nhận Chứng chỉ Xác thực.
           </DialogDescription>
         </DialogHeader>
 
@@ -99,12 +128,32 @@ export function PaymentCheckoutModal({
             }`}
           >
             {feedbackMsg.type === "success" ? (
-              <svg className="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-5 h-5 text-emerald-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
             ) : (
-              <svg className="w-5 h-5 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-5 h-5 text-rose-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             )}
             <span>{feedbackMsg.text}</span>
@@ -123,13 +172,21 @@ export function PaymentCheckoutModal({
           >
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mua Lẻ Khóa</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Mua Lẻ Khóa
+                </span>
                 <span className="w-4 h-4 rounded-full border border-indigo-600 flex items-center justify-center">
-                  {selectedOption === "SINGLE" && <span className="w-2 h-2 rounded-full bg-indigo-600" />}
+                  {selectedOption === "SINGLE" && (
+                    <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                  )}
                 </span>
               </div>
-              <h4 className="font-semibold text-slate-900 dark:text-white text-base mb-1 line-clamp-1">{courseTitle}</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Quyền truy cập Paid Mode vĩnh viễn riêng khóa học này.</p>
+              <h4 className="font-semibold text-slate-900 dark:text-white text-base mb-1 line-clamp-1">
+                {courseTitle}
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                Quyền truy cập Paid Mode vĩnh viễn riêng khóa học này.
+              </p>
             </div>
             <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
               <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
@@ -149,19 +206,30 @@ export function PaymentCheckoutModal({
           >
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Coursera Plus</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                  Coursera Plus
+                </span>
                 <span className="w-4 h-4 rounded-full border border-indigo-600 flex items-center justify-center">
-                  {selectedOption === "PLUS_MONTHLY" && <span className="w-2 h-2 rounded-full bg-indigo-600" />}
+                  {selectedOption === "PLUS_MONTHLY" && (
+                    <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                  )}
                 </span>
               </div>
-              <h4 className="font-semibold text-slate-900 dark:text-white text-base mb-1">Gói Theo Tháng</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Mở khóa 100% khóa học trên nền tảng trong 30 ngày.</p>
+              <h4 className="font-semibold text-slate-900 dark:text-white text-base mb-1">
+                Gói Theo Tháng
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                Mở khóa 100% khóa học trên nền tảng trong 30 ngày.
+              </p>
             </div>
             <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
               <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
                 399,000 VNĐ
               </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-normal"> / tháng</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">
+                {" "}
+                / tháng
+              </span>
             </div>
           </div>
 
@@ -179,13 +247,21 @@ export function PaymentCheckoutModal({
             </span>
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Coursera Plus</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                  Coursera Plus
+                </span>
                 <span className="w-4 h-4 rounded-full border border-indigo-600 flex items-center justify-center">
-                  {selectedOption === "PLUS_YEARLY" && <span className="w-2 h-2 rounded-full bg-indigo-600" />}
+                  {selectedOption === "PLUS_YEARLY" && (
+                    <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                  )}
                 </span>
               </div>
-              <h4 className="font-semibold text-slate-900 dark:text-white text-base mb-1">Gói Theo Năm</h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Mở khóa 100% khóa học trong 365 ngày liên tục.</p>
+              <h4 className="font-semibold text-slate-900 dark:text-white text-base mb-1">
+                Gói Theo Năm
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                Mở khóa 100% khóa học trong 365 ngày liên tục.
+              </p>
             </div>
             <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
               <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
@@ -208,8 +284,19 @@ export function PaymentCheckoutModal({
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
                 </svg>
                 Đang xử lý...
               </span>

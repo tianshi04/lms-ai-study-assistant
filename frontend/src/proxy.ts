@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 // Routes that require authentication
-const PROTECTED_ROUTES = ["/my-courses", "/learn", "/assessments", "/financial-aid", "/auth/profile"];
+const PROTECTED_ROUTES = [
+  "/my-courses",
+  "/learn",
+  "/assessments",
+  "/financial-aid",
+  "/auth/profile",
+];
 const INSTRUCTOR_ROUTES = ["/instructor"];
 const ADMIN_ROUTES = ["/admin"];
 
@@ -17,7 +23,7 @@ function extractRoleFromToken(token?: string): number | null {
       atob(base64)
         .split("")
         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
+        .join(""),
     );
     const payload = JSON.parse(jsonPayload);
 

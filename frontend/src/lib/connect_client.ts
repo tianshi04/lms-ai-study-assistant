@@ -63,7 +63,10 @@ const authInterceptor: Interceptor = (next) => async (req) => {
   } catch (err) {
     // 2. Catch Unauthenticated (401) errors and attempt silent auto-refresh
     if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
-      if (req.service.typeName === "identity.v1.IdentityService" && req.method.name === "RefreshToken") {
+      if (
+        req.service.typeName === "identity.v1.IdentityService" &&
+        req.method.name === "RefreshToken"
+      ) {
         throw err;
       }
 
@@ -97,7 +100,7 @@ export const transport = createConnectTransport({
 
 /**
  * Factory function to obtain a typed ConnectRPC client for any generated service schema.
- * 
+ *
  * @example
  * import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
  * const catalogClient = getRpcClient(CatalogService);
