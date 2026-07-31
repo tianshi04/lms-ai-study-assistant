@@ -81,6 +81,28 @@ export function UserDropdown() {
         {/* Menu Items */}
         <DropdownMenuItem className="p-0">
           <Link
+            href="/"
+            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 rounded-xl"
+          >
+            <svg
+              className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+              />
+            </svg>
+            <span>{"Bảng điều khiển chính"}</span>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem className="p-0">
+          <Link
             href="/auth/profile"
             className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium"
           >

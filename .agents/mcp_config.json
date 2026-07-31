@@ -12,6 +12,9 @@
             "args": [
                 "@playwright/mcp@latest"
             ]
+        },
+        "nextjs-local": {
+            "serverUrl": "http://localhost:3000/_next/mcp"
         }
     }
 }

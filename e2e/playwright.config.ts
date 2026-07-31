@@ -51,7 +51,7 @@ export default defineConfig({
     // ─── Learner role ─────────────────────────────────────────────────────────
     {
       name: 'chromium-learner',
-      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts', '**/certificate.spec.ts', '**/profile.spec.ts', '**/instructor-application.spec.ts'],
+      testMatch: ['**/auth.spec.ts', '**/catalog.spec.ts', '**/learning.spec.ts', '**/assessment.spec.ts', '**/forum.spec.ts', '**/financial-aid.spec.ts', '**/certificate.spec.ts', '**/profile.spec.ts', '**/instructor-application.spec.ts', '**/role-dashboards.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: LEARNER_AUTH,
@@ -62,7 +62,7 @@ export default defineConfig({
     // ─── Instructor role ──────────────────────────────────────────────────────
     {
       name: 'chromium-instructor',
-      testMatch: ['**/instructor.spec.ts', '**/question-bank.spec.ts', '**/financial-aid.spec.ts'],
+      testMatch: ['**/instructor.spec.ts', '**/question-bank.spec.ts', '**/financial-aid.spec.ts', '**/role-dashboards.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: INSTRUCTOR_AUTH,
@@ -73,7 +73,7 @@ export default defineConfig({
     // ─── Admin role ───────────────────────────────────────────────────────────
     {
       name: 'chromium-admin',
-      testMatch: ['**/admin.spec.ts', '**/partner.spec.ts', '**/admin-applications.spec.ts'],
+      testMatch: ['**/admin.spec.ts', '**/partner.spec.ts', '**/admin-applications.spec.ts', '**/role-dashboards.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: ADMIN_AUTH,
