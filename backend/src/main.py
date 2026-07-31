@@ -107,8 +107,13 @@ async def lifespan(app: Starlette):
     try:
         from opentelemetry import metrics, trace
 
-        trace.get_tracer_provider().shutdown()
-        metrics.get_meter_provider().shutdown()
+        tracer_provider = trace.get_tracer_provider()
+        if hasattr(tracer_provider, "shutdown"):
+            getattr(tracer_provider, "shutdown")()
+            
+        meter_provider = metrics.get_meter_provider()
+        if hasattr(meter_provider, "shutdown"):
+            getattr(meter_provider, "shutdown")()
         logger.info("[SHUTDOWN] OpenTelemetry providers flushed and shut down.")
     except Exception as e:
         logger.warning("[SHUTDOWN] Error shutting down OpenTelemetry providers: %s", e)
