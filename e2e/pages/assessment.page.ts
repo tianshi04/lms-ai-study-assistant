@@ -65,8 +65,8 @@ export class AssessmentPage {
   }
 
   async agreeHonorCode() {
-    // Wait up to 3s for the confirm button to appear
-    await this.confirmHonorButton.waitFor({ state: 'visible', timeout: 3000 }).catch(() => null);
+    // Wait up to 15s for the confirm button to appear (CI can be slow to load quiz)
+    await this.confirmHonorButton.waitFor({ state: 'visible', timeout: 15000 }).catch(() => null);
     if (!await this.confirmHonorButton.isVisible()) return;
 
     await this.confirmHonorButton.click();
