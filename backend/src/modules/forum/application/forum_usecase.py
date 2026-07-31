@@ -26,12 +26,21 @@ class ForumUseCase:
         return self.repo_factory(session)
 
     async def list_threads(
-        self, course_id: str = "", item_id: str = "", current_user_id: str = "", skip: int = 0, limit: int = 20
+        self,
+        course_id: str = "",
+        item_id: str = "",
+        current_user_id: str = "",
+        skip: int = 0,
+        limit: int = 20,
     ) -> tuple[Sequence[ForumThreadEntity], int]:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             return await repo.list_threads(
-                course_id=course_id, item_id=item_id, current_user_id=current_user_id, skip=skip, limit=limit
+                course_id=course_id,
+                item_id=item_id,
+                current_user_id=current_user_id,
+                skip=skip,
+                limit=limit,
             )
 
     async def create_thread(
@@ -149,7 +158,9 @@ class ForumUseCase:
                 return None
             if existing.author_user_id and existing.author_user_id != current_user_id:
                 if is_staff and user:
-                    await _verify_staff_course_moderation(session, existing.course_id, user)
+                    await _verify_staff_course_moderation(
+                        session, existing.course_id, user
+                    )
                 else:
                     logger.warning(
                         "User %s attempted to update thread %s owned by %s",

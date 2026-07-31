@@ -59,7 +59,12 @@ class ForumRepository(IForumRepository):
         )
 
     async def list_threads(
-        self, course_id: str = "", item_id: str = "", current_user_id: str = "", skip: int = 0, limit: int = 20
+        self,
+        course_id: str = "",
+        item_id: str = "",
+        current_user_id: str = "",
+        skip: int = 0,
+        limit: int = 20,
     ) -> tuple[Sequence[ForumThreadEntity], int]:
         voted_post_ids: set[str] = set()
         if current_user_id:
@@ -91,7 +96,9 @@ class ForumRepository(IForumRepository):
 
         result = await self.session.execute(query)
         orms = result.scalars().all()
-        return [self._to_thread_entity(orm, voted_post_ids) for orm in orms], total_count
+        return [
+            self._to_thread_entity(orm, voted_post_ids) for orm in orms
+        ], total_count
 
     async def get_thread_by_id(self, thread_id: str) -> ForumThreadEntity | None:
         query = (
@@ -226,11 +233,15 @@ class ForumRepository(IForumRepository):
                 # First time voting -> Record vote
                 new_vote = ForumVoteORM(user_id=user_id, post_id=post_id)
                 self.session.add(new_vote)
-            
+
             await self.session.commit()
 
         # Count total votes
-        count_stmt = select(func.count()).select_from(ForumVoteORM).where(ForumVoteORM.post_id == post_id)
+        count_stmt = (
+            select(func.count())
+            .select_from(ForumVoteORM)
+            .where(ForumVoteORM.post_id == post_id)
+        )
         c_res = await self.session.execute(count_stmt)
         total_votes = c_res.scalar_one_or_none() or 0
 
@@ -272,13 +283,17 @@ class ForumRepository(IForumRepository):
         thread_orm = t_res.scalar_one_or_none()
         if thread_orm:
             # Check if any reply in this thread is pinned
-            any_pinned_stmt = select(func.count()).select_from(ForumReplyORM).where(
-                ForumReplyORM.thread_id == reply_orm.thread_id,
-                ForumReplyORM.is_staff_answer == True
+            any_pinned_stmt = (
+                select(func.count())
+                .select_from(ForumReplyORM)
+                .where(
+                    ForumReplyORM.thread_id == reply_orm.thread_id,
+                    ForumReplyORM.is_staff_answer.is_(True),
+                )
             )
             p_res = await self.session.execute(any_pinned_stmt)
             pinned_count = p_res.scalar_one_or_none() or 0
-            thread_orm.is_staff_pinned = (pinned_count > 0)
+            thread_orm.is_staff_pinned = pinned_count > 0
             await self.session.commit()
 
         return True

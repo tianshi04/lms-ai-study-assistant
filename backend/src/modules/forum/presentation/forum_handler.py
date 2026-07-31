@@ -83,7 +83,9 @@ class ForumHandler(ForumService):
             skip=skip,
             limit=limit,
         )
-        return pb.ListThreadsResponse(threads=[_to_pb_thread(t) for t in threads], total=total)
+        return pb.ListThreadsResponse(
+            threads=[_to_pb_thread(t) for t in threads], total=total
+        )
 
     async def create_thread(
         self,
