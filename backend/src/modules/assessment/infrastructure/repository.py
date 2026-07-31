@@ -30,6 +30,7 @@ from src.modules.assessment.infrastructure.models import (
     QuestionBankModel,
     QuestionModel,
     QuestionOptionModel,
+    QuizActiveSessionModel,
     QuizCooldownModel,
     QuizMatrixModel,
     QuizSubmissionModel,

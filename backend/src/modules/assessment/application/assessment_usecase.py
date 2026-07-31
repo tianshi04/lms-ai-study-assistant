@@ -4,6 +4,10 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Optional
 
+import jwt
+from src.shared.config import settings
+from src.shared.auth import JWT_ALGORITHM
+
 
 from src.modules.assessment.domain.constants import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
@@ -12,6 +16,7 @@ from src.modules.assessment.domain.constants import (
     OUTLIER_SCORE_DELTA_THRESHOLD,
     PEER_REVIEW_COLD_START_HOURS,
     QUIZ_COOLDOWN_HOURS,
+    QUIZ_SUBMISSION_GRACE_PERIOD_SECONDS,
     REQUIRED_PEER_REVIEWS_COUNT,
 )
 from src.modules.assessment.domain.entities import (
@@ -22,6 +27,7 @@ from src.modules.assessment.domain.entities import (
     PeerReview,
     Question,
     QuestionBank,
+    QuizActiveSession,
     QuizCooldown,
     QuizMatrix,
     QuizSubmission,
@@ -326,6 +332,7 @@ class AssessmentUseCase:
         start_time_iso: Optional[str] = None,
         duration_minutes: int = DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
         session_seed: Optional[int] = None,
+        session_token: Optional[str] = None,
         preview: bool = False,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
