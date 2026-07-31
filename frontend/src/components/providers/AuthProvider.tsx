@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 
 // Static Sets computed once at module level for O(1) role lookups
 const INSTRUCTOR_ADMIN_ROLE_IDS = new Set(["2", "4", "5"]);
@@ -110,11 +110,12 @@ export function AuthProvider({
   const isStaff =
     isInstructorOrAdmin || STAFF_EXTRA_ROLE_IDS.has(roleId) || STAFF_EXTRA_ROLE_NAMES.has(roleStr);
 
-  return (
-    <AuthContext.Provider value={{ ...auth, setAuth, logout, isInstructorOrAdmin, isStaff }}>
-      {children}
-    </AuthContext.Provider>
+  const contextValue = useMemo(
+    () => ({ ...auth, setAuth, logout, isInstructorOrAdmin, isStaff }),
+    [auth, setAuth, logout, isInstructorOrAdmin, isStaff],
   );
+
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
