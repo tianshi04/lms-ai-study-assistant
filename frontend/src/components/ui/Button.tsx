@@ -33,14 +33,28 @@ export const buttonVariants = cva(
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   isLoading?: boolean;
+  asChild?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, isLoading = false, disabled, children, ...props }, ref) => {
+  ({ className, variant, size, isLoading = false, asChild = false, disabled, children, ...props }, ref) => {
+    const compClasses = cn(buttonVariants({ variant, size, className }));
+
+    if (asChild && React.isValidElement(children)) {
+      const child = children as React.ReactElement<any>;
+      return React.cloneElement(child, {
+        ...props,
+        ...child.props,
+        ref,
+        className: cn(compClasses, child.props.className),
+        disabled: disabled || isLoading || child.props.disabled,
+      });
+    }
+
     return (
       <button
         ref={ref}
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={compClasses}
         disabled={disabled || isLoading}
         aria-busy={isLoading}
         {...props}
