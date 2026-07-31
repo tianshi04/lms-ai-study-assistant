@@ -108,7 +108,8 @@ class AssessmentHandler(AssessmentService):
         self,
         request: pb.GetPeerAssignmentSubmissionRequest,
         ctx: RequestContext[
-            pb.GetPeerAssignmentSubmissionRequest, pb.GetPeerAssignmentSubmissionResponse
+            pb.GetPeerAssignmentSubmissionRequest,
+            pb.GetPeerAssignmentSubmissionResponse,
         ],
     ) -> pb.GetPeerAssignmentSubmissionResponse:
         current_user = require_current_user()

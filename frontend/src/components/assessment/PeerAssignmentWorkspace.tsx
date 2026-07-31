@@ -25,11 +25,7 @@ interface PeerItem {
 }
 
 export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmentWorkspaceProps) {
-  const effectiveUserId =
-    userId ||
-    (typeof window !== "undefined"
-      ? localStorage.getItem("user_id") || "user-demo-1"
-      : "user-demo-1");
+
 
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<"submit" | "grade" | "appeal">("submit");
