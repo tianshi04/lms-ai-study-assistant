@@ -1,4 +1,5 @@
 from sqlalchemy import ARRAY, Enum as SQLEnum, Float, ForeignKey, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.learning.domain.entities import DeadlineStatus
@@ -17,6 +18,7 @@ class LearningProgressModel(Base):
     completed_item_ids: Mapped[list[str]] = mapped_column(
         ARRAY(String(64)), nullable=False, default=list
     )
+    scorm_data: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     last_reset_at: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
     weekly_deadlines: Mapped[list["WeeklyDeadlineModel"]] = relationship(

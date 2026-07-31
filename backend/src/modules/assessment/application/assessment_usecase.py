@@ -182,6 +182,12 @@ class AssessmentUseCase:
                 if matrix
                 else DEFAULT_PASSING_THRESHOLD_PERCENT
             )
+            max_attempts = (
+                matrix.max_attempts if matrix else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
+            )
+            cooldown_hours_val = (
+                matrix.cooldown_hours if matrix else QUIZ_COOLDOWN_HOURS
+            )
 
             now = datetime.now(timezone.utc)
 
@@ -195,7 +201,7 @@ class AssessmentUseCase:
                     cooldown_seconds_left = 0
                     attempts_left = max(
                         0,
-                        MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
+                        max_attempts
                         - (cooldown.failed_attempts_count if cooldown else 0),
                     )
 
@@ -223,9 +229,9 @@ class AssessmentUseCase:
                         cooldown.failed_attempts_count if cooldown else 0
                     ) + 1
                     cooldown_until = None
-                    if failed_attempts >= MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN:
+                    if failed_attempts >= max_attempts:
                         cooldown_until = (
-                            now + timedelta(hours=QUIZ_COOLDOWN_HOURS)
+                            now + timedelta(hours=cooldown_hours_val)
                         ).isoformat()
 
                     if cooldown:
@@ -259,9 +265,7 @@ class AssessmentUseCase:
 
             expires_at = now + timedelta(minutes=duration_minutes)
 
-            max_attempts = (
-                matrix.max_attempts if matrix else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
-            )
+            # max_attempts already calculated above (before active session check)
             # Check Cooldown status
             cooldown = await repo.get_quiz_cooldown(user_id, item_id)
             cooldown_seconds_left = 0
@@ -340,9 +344,7 @@ class AssessmentUseCase:
                 "attempts_left": attempts_left,
                 "session_token": session_token,
                 "max_attempts": max_attempts,
-                "cooldown_hours": matrix.cooldown_hours
-                if matrix
-                else QUIZ_COOLDOWN_HOURS,
+                "cooldown_hours": cooldown_hours_val,
             }
 
     @require_paid_access()
@@ -431,8 +433,79 @@ class AssessmentUseCase:
                     ],
                 }
 
-            # Always delete active session if any, because they are submitting
-            await repo.delete_quiz_active_session(user_id, item_id)
+            # ===== FIX V1: Validate quiz session from DB (single source of truth) =====
+            active_session = await repo.get_quiz_active_session(user_id, item_id)
+            db_expires_at = None
+            if active_session:
+                db_expires_at = datetime.fromisoformat(active_session.expires_at)
+                grace_deadline = db_expires_at + timedelta(
+                    seconds=QUIZ_SUBMISSION_GRACE_PERIOD_SECONDS
+                )
+
+                if now > grace_deadline:
+                    # Session expired per DB — reject and record 0-score
+                    await repo.delete_quiz_active_session(user_id, item_id)
+                    failed_count = (
+                        cooldown.failed_attempts_count if cooldown else 0
+                    ) + 1
+                    cooldown_until_iso = None
+                    seconds_left = 0
+                    if failed_count >= max_attempts:
+                        cooldown_until_dt = now + timedelta(hours=cooldown_hours)
+                        cooldown_until_iso = cooldown_until_dt.isoformat()
+                        seconds_left = int(cooldown_hours * 3600)
+                        attempts_left = 0
+                    else:
+                        attempts_left = max(0, max_attempts - failed_count)
+
+                    new_cooldown = QuizCooldown(
+                        user_id=user_id,
+                        item_id=item_id,
+                        failed_attempts_count=failed_count,
+                        last_attempt_at=now.isoformat(),
+                        cooldown_until=cooldown_until_iso,
+                    )
+                    await repo.save_quiz_cooldown(new_cooldown)
+
+                    submission = QuizSubmission(
+                        id=f"sub-{uuid.uuid4().hex[:8]}",
+                        user_id=user_id,
+                        item_id=item_id,
+                        selected_option_indexes=[-1],
+                        score_percent=0.0,
+                        passed=False,
+                        attempt_number=failed_count,
+                        created_at=now.isoformat(),
+                    )
+                    await repo.save_quiz_submission(submission)
+
+                    logger.warning(
+                        "User %s submitted quiz %s after DB session expired",
+                        user_id,
+                        item_id,
+                    )
+                    return {
+                        "score_percent": 0.0,
+                        "passed": False,
+                        "attempts_left": attempts_left,
+                        "cooldown_seconds_left": seconds_left,
+                        "answer_explanations": [
+                            "Phiên làm bài đã hết hạn theo máy chủ. "
+                            "Bạn bị tính 1 lần thi rớt (0 điểm)."
+                        ],
+                        "max_attempts": max_attempts,
+                        "cooldown_hours": cooldown_hours,
+                    }
+                else:
+                    # Session still valid — proceed, delete active session
+                    await repo.delete_quiz_active_session(user_id, item_id)
+            else:
+                # No active DB session — log warning, fallback to JWT
+                logger.warning(
+                    "No active DB session for user %s quiz %s — falling back to JWT",
+                    user_id,
+                    item_id,
+                )
 
             is_expired = False
             try:
@@ -548,10 +621,29 @@ class AssessmentUseCase:
                     explanations.append(f"Câu {idx + 1}: Đúng!")
                 else:
                     explanations.append(
-                        f"Câu {idx + 1}: Chưa chính xác. Bạn đã chọn đáp án {chr(65 + user_ans) if user_ans >= 0 else 'Chưa chọn'}, đáp án đúng là {chr(65 + corr)}."
+                        f"Câu {idx + 1}: Chưa chính xác. Bạn đã chọn đáp án {chr(65 + user_ans) if user_ans >= 0 else 'Chưa chọn'}."
                     )
 
-            if start_time_iso:
+            if db_expires_at:
+                elapsed_seconds_past_grace = (now - db_expires_at).total_seconds()
+                if elapsed_seconds_past_grace > QUIZ_SUBMISSION_GRACE_PERIOD_SECONDS:
+                    logger.warning(
+                        "User %s submitted quiz %s too late (DB expires_at): %s > %s",
+                        user_id,
+                        item_id,
+                        elapsed_seconds_past_grace,
+                        QUIZ_SUBMISSION_GRACE_PERIOD_SECONDS,
+                    )
+                    correct_count = 0
+                    explanations = [
+                        f"Hết thời gian làm bài ({duration_minutes} phút). Máy chủ từ chối kết quả nộp trễ (Timeout/Bypass)."
+                    ]
+                elif elapsed_seconds_past_grace > 0:
+                    explanations.insert(
+                        0,
+                        f"Hết thời gian làm bài ({duration_minutes} phút). Hệ thống tự động nộp bài và chấm điểm.",
+                    )
+            elif start_time_iso:
                 try:
                     start_dt = datetime.fromisoformat(start_time_iso)
                     elapsed_seconds = (now - start_dt).total_seconds()
