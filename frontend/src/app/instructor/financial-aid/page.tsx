@@ -8,10 +8,12 @@ import {
   CertificateService,
   type FinancialAidApplication,
 } from "@/gen/certificate/v1/certificate_pb";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const emptySubscribe = () => () => {};
 
 export default function InstructorFinancialAidPage() {
+  const { isStaff: isInstructorOrAdmin } = useAuth();
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -28,20 +30,6 @@ export default function InstructorFinancialAidPage() {
     type: "success" | "error";
     text: string;
   } | null>(null);
-
-  // Authorization Check
-  const userRole =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
-  const isInstructorOrAdmin =
-    userRole === "2" ||
-    userRole === "3" ||
-    userRole === "4" ||
-    userRole === "USER_ROLE_INSTRUCTOR" ||
-    userRole === "USER_ROLE_TA" ||
-    userRole === "USER_ROLE_SUPER_ADMIN" ||
-    userRole === "INSTRUCTOR" ||
-    userRole === "TA" ||
-    userRole === "ADMIN";
 
   useEffect(() => {
     let ignore = false;

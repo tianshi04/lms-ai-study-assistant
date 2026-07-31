@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useQueryClient } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
@@ -11,19 +11,13 @@ import { Button } from "@/components/ui/Button";
 
 import { getAvatarDataUri } from "@/lib/avatar";
 
-const emptySubscribe = () => () => {};
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function ProfilePage() {
+  const { userId: authUserId } = useAuth();
+  const userId = authUserId || "";
   const queryClient = useQueryClient();
   const toast = useToast();
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
-
-  const userId =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
   const { data: user, isLoading: loading } = useUserProfileQuery(userId);
 
   const [enterpriseKey, setEnterpriseKey] = useState("");

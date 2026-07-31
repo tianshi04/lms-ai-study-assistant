@@ -19,14 +19,13 @@ export function HomeDashboardSwitch({
   initialUserName,
   initialUserRole,
 }: HomeDashboardSwitchProps) {
-  const { userName: clientUserName, userRole: clientUserRole } = useAuth();
+  const { isAuthenticated, userName: clientUserName, userRole: clientUserRole } = useAuth();
 
-  const token =
-    initialToken || (typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
+  const isUserAuthenticated = Boolean(initialToken) || isAuthenticated;
   const userRole = clientUserRole || initialUserRole || "1";
   const userName = clientUserName || initialUserName || "Học viên";
 
-  if (!token) {
+  if (!isUserAuthenticated) {
     return <PublicLanding />;
   }
 

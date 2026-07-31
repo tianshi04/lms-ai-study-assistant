@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { type Partner } from "@/gen/partner/v1/partner_pb";
@@ -22,19 +22,12 @@ interface PartnerAdminUser {
   createdAt: string;
 }
 
-const emptySubscribe = () => () => {};
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function AdminPartnersPage() {
   const router = useRouter();
-
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
-
-  const userId =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
+  const { userId: authUserId } = useAuth();
+  const userId = authUserId || "";
   const { data: userProfile, isLoading: profileLoading } = useUserProfileQuery(userId);
   const isAdmin = userProfile?.role === UserRole.SUPER_ADMIN;
 

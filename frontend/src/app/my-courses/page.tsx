@@ -5,12 +5,14 @@ import Link from "next/link";
 
 import { getRpcClient } from "@/lib/connect_client";
 import { LearningService, type EnrolledCourseSummary } from "@/gen/learning/v1/learning_pb";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 type Tab = "ALL" | "IN_PROGRESS" | "COMPLETED";
 
 const emptySubscribe = () => () => {};
 
 export default function MyCoursesPage() {
+  const { isAuthenticated } = useAuth();
   const [courses, setCourses] = useState<EnrolledCourseSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,8 +27,7 @@ export default function MyCoursesPage() {
   useEffect(() => {
     if (!isMounted) return;
 
-    const token = localStorage.getItem("access_token");
-    if (!token) {
+    if (!isAuthenticated) {
       window.location.href = "/auth/login?redirect=/my-courses";
       return;
     }

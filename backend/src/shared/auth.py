@@ -143,6 +143,7 @@ def create_access_token(
     user_id: str,
     email: str,
     role: str,
+    full_name: str = "",
     active_org_id: Optional[str] = None,
     system_role: str = "USER",
 ) -> str:
@@ -151,6 +152,7 @@ def create_access_token(
         "sub": user_id,
         "email": email,
         "role": role,
+        "full_name": full_name,
         "system_role": system_role,
         "type": "access",
         "iat": now,

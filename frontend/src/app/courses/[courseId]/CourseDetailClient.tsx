@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useCourseDetailQuery,
@@ -19,14 +19,14 @@ import { Modal } from "@/components/ui/Modal";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { useToast } from "@/components/ui/Toast";
 import { PaymentCheckoutModal } from "@/components/course/PaymentCheckoutModal";
-
-const emptySubscribe = () => () => {};
+import { useAuth } from "@/components/providers/AuthProvider";
 
 interface CourseDetailClientProps {
   courseId: string;
 }
 
 export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
+  const { isAuthenticated, isInstructorOrAdmin } = useAuth();
   const locale = "vi";
   const queryClient = useQueryClient();
 
@@ -46,15 +46,6 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
     : undefined;
   const hasCert = !!matchingCert;
   const certId = matchingCert?.certificateId || "";
-
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
-  const userRole =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
-  const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
 
   // Review Modal States
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -671,9 +662,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <button
                 type="button"
                 onClick={() => {
-                  const token =
-                    typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-                  if (!token) {
+                  if (!isAuthenticated) {
                     window.location.href = `/auth/login?redirect=/courses/${courseId}`;
                     return;
                   }

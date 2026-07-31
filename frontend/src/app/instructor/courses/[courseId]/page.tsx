@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore, use } from "react";
+import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import {
@@ -17,8 +17,7 @@ import { useToast } from "@/components/ui/Toast";
 
 import { VideoUploadWidget } from "@/components/ui/VideoUploadWidget";
 import { InVideoQuizEditor, type InVideoQuizItem } from "@/components/ui/InVideoQuizEditor";
-
-const emptySubscribe = () => () => {};
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function InstructorCourseBuilderPage({
   params,
@@ -27,12 +26,6 @@ export default function InstructorCourseBuilderPage({
 }) {
   const resolvedParams = use(params);
   const courseId = resolvedParams.courseId;
-
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
 
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
@@ -123,10 +116,7 @@ export default function InstructorCourseBuilderPage({
     quizCooldownHours?: number | string;
   } | null>(null);
 
-  // Authorization Check
-  const userRole =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
-  const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
+  const { isInstructorOrAdmin } = useAuth();
 
   const fetchCourseDetail = async () => {
     try {

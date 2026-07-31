@@ -7,6 +7,16 @@ const nextConfig: NextConfig = {
   experimental: {
     useTypeScriptCli: true,
   },
+  async rewrites() {
+    const backendUrl =
+      process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    return [
+      {
+        source: "/api/rpc/:path*",
+        destination: `${backendUrl}/:path*`,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

@@ -1,67 +1,24 @@
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { createClient, Client, Interceptor, ConnectError, Code } from "@connectrpc/connect";
 import type { DescService } from "@bufbuild/protobuf";
-import { IdentityService } from "@/gen/identity/v1/identity_pb";
+import { refreshSessionAction } from "@/app/auth/actions";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL =
+  typeof window !== "undefined"
+    ? "/api/rpc"
+    : process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 let isRefreshing = false;
-let refreshPromise: Promise<string | null> | null = null;
-
-async function doSilentRefreshToken(): Promise<string | null> {
-  if (typeof window === "undefined") return null;
-  const refreshToken = localStorage.getItem("refresh_token");
-  if (!refreshToken) return null;
-
-  try {
-    // Create direct un-intercepted client for refresh call to prevent infinite loop
-    const rawTransport = createConnectTransport({
-      baseUrl: API_BASE_URL,
-      fetch: (input, init) => fetch(input, { ...init, credentials: "include" }),
-    });
-    const client = createClient(IdentityService, rawTransport);
-    const res = await client.refreshToken({ refreshToken });
-
-    if (res.accessToken) {
-      localStorage.setItem("access_token", res.accessToken);
-      document.cookie = `access_token=${res.accessToken}; path=/; max-age=2592000; SameSite=Lax`;
-      if (res.refreshToken) {
-        localStorage.setItem("refresh_token", res.refreshToken);
-      }
-      return res.accessToken;
-    }
-  } catch (err) {
-    console.warn("Silent token refresh failed:", err);
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("user_email");
-    localStorage.removeItem("user_name");
-    localStorage.removeItem("user_role");
-    document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "user_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-  }
-  return null;
-}
+let refreshPromise: Promise<boolean> | null = null;
 
 /**
- * ConnectRPC Interceptor for automatic Bearer Authorization injection & Silent Token Refresh.
+ * ConnectRPC Interceptor for handling 401 Unauthenticated errors.
+ * Triggers a silent token refresh via Server Action (which manages HttpOnly cookies).
  */
-const authInterceptor: Interceptor = (next) => async (req) => {
-  // 1. Attach Authorization: Bearer <access_token> header if available
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("access_token");
-    if (token) {
-      req.header.set("Authorization", `Bearer ${token}`);
-    }
-  }
-
+const refreshInterceptor: Interceptor = (next) => async (req) => {
   try {
     return await next(req);
   } catch (err) {
-    // 2. Catch Unauthenticated (401) errors and attempt silent auto-refresh
     if (err instanceof ConnectError && err.code === Code.Unauthenticated) {
       if (
         req.service.typeName === "identity.v1.IdentityService" &&
@@ -72,17 +29,21 @@ const authInterceptor: Interceptor = (next) => async (req) => {
 
       if (!isRefreshing) {
         isRefreshing = true;
-        refreshPromise = doSilentRefreshToken().finally(() => {
-          isRefreshing = false;
-          refreshPromise = null;
-        });
+        refreshPromise = refreshSessionAction()
+          .then((res) => res.success)
+          .finally(() => {
+            isRefreshing = false;
+            refreshPromise = null;
+          });
       }
 
-      const newToken = await refreshPromise;
-      if (newToken) {
-        // Retry the failed request transparently with new Access Token
-        req.header.set("Authorization", `Bearer ${newToken}`);
+      const refreshed = await refreshPromise;
+      if (refreshed) {
+        // Retry the failed request transparently — browser will auto-send the updated access_token cookie
         return await next(req);
+      } else if (typeof window !== "undefined") {
+        // Refresh failed, redirect to login if on client
+        window.location.href = "/auth/login";
       }
     }
     throw err;
@@ -90,12 +51,12 @@ const authInterceptor: Interceptor = (next) => async (req) => {
 };
 
 /**
- * Shared ConnectRPC Transport instance configured with auth interceptors.
+ * Shared ConnectRPC Transport instance configured to include cookies on all requests.
  */
 export const transport = createConnectTransport({
   baseUrl: API_BASE_URL,
   fetch: (input, init) => fetch(input, { ...init, credentials: "include" }),
-  interceptors: [authInterceptor],
+  interceptors: [refreshInterceptor],
 });
 
 /**

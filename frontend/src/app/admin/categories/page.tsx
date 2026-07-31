@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { type Category } from "@/gen/catalog/v1/catalog_pb";
 import { UserRole } from "@/gen/identity/v1/identity_pb";
@@ -58,19 +57,13 @@ const CategoryList = ({
   </div>
 );
 
-const emptySubscribe = () => () => {};
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function AdminCategoriesPage() {
   const router = useRouter();
 
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
-
-  const userId =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
+  const { userId: authUserId } = useAuth();
+  const userId = authUserId || "";
   const { data: userProfile, isLoading: profileLoading } = useUserProfileQuery(userId);
   const isAdmin = userProfile?.role === UserRole.SUPER_ADMIN;
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const emptySubscribe = () => () => {};
 
@@ -44,6 +45,7 @@ function getStatusBadge(status: CourseStatus) {
 }
 
 export default function InstructorCoursesPage() {
+  const { userRole, isInstructorOrAdmin } = useAuth();
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -56,11 +58,6 @@ export default function InstructorCoursesPage() {
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
-
-  // Read user_role safely for SSR & hydration
-  const userRole =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
-  const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
 
   // Form State
   const [title, setTitle] = useState("");

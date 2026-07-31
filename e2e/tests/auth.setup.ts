@@ -34,7 +34,11 @@ async function loginAndSave(
     `access_token (localStorage or cookie) should be set after login for ${email}`
   ).toBeTruthy();
 
-  await page.context().storageState({ path: stateFile });
+  const state = await page.context().storageState();
+  state.cookies.forEach((c) => {
+    c.secure = false;
+  });
+  fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
 }
 
 // Ensure .auth directory exists before any setup step runs

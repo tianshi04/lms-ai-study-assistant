@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef, useSyncExternalStore } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import {
@@ -13,8 +13,7 @@ import {
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-
-const emptySubscribe = () => () => {};
+import { useAuth } from "@/components/providers/AuthProvider";
 
 function formatRoleName(role: string): string {
   if (!role) return "Learner";
@@ -36,18 +35,8 @@ export default function ForumPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
-  const currentUserId =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
-  const userRole =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") || "" : "";
-  const isStaffOrAdmin = ["2", "3", "4", "5", "INSTRUCTOR", "TA", "ADMIN", "SUPER_ADMIN"].some(
-    (r) => userRole.toUpperCase().includes(r),
-  );
+  const { userId: authUserId, isStaff: isStaffOrAdmin } = useAuth();
+  const currentUserId = authUserId || "";
 
   // New Thread Form State
   const [showCreateModal, setShowCreateModal] = useState(false);

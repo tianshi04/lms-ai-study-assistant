@@ -1,14 +1,28 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
+import { logoutAction } from "@/app/auth/actions";
 
 // Static Sets computed once at module level for O(1) role lookups
-const INSTRUCTOR_ADMIN_ROLE_IDS = new Set(["2", "4", "5"]);
-const INSTRUCTOR_ADMIN_ROLE_NAMES = new Set(["instructor", "admin"]);
-const STAFF_EXTRA_ROLE_IDS = new Set(["3"]);
-const STAFF_EXTRA_ROLE_NAMES = new Set(["ta", "teaching assistant"]);
+const INSTRUCTOR_ADMIN_ROLE_IDS = new Set([
+  "2",
+  "4",
+  "5",
+  "USER_ROLE_INSTRUCTOR",
+  "USER_ROLE_SUPER_ADMIN",
+]);
+const INSTRUCTOR_ADMIN_ROLE_NAMES = new Set([
+  "instructor",
+  "admin",
+  "super_admin",
+  "user_role_instructor",
+  "user_role_super_admin",
+]);
+const STAFF_EXTRA_ROLE_IDS = new Set(["3", "USER_ROLE_TA"]);
+const STAFF_EXTRA_ROLE_NAMES = new Set(["ta", "teaching assistant", "user_role_ta"]);
 
 export interface UserAuth {
+  userId: string | null;
   userName: string | null;
   userEmail: string | null;
   userRole: string | null;
@@ -17,6 +31,7 @@ export interface UserAuth {
 interface AuthContextType extends UserAuth {
   setAuth: (auth: UserAuth) => void;
   logout: () => void;
+  isAuthenticated: boolean;
   isInstructorOrAdmin: boolean;
   isStaff: boolean;
 }
@@ -33,77 +48,24 @@ export function AuthProvider({
   const [auth, setAuthState] = useState<UserAuth>(initialAuth);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("access_token");
-      const localName = localStorage.getItem("user_name");
-      const localEmail = localStorage.getItem("user_email");
-      const localRole = localStorage.getItem("user_role");
+    setAuthState(initialAuth);
+  }, [initialAuth.userId, initialAuth.userEmail, initialAuth.userName, initialAuth.userRole]);
 
-      if (token && localName) {
-        queueMicrotask(() => {
-          setAuthState({
-            userName: localName,
-            userEmail: localEmail,
-            userRole: localRole,
-          });
-        });
-        document.cookie = `access_token=${encodeURIComponent(token)}; path=/; max-age=2592000`;
-        document.cookie = `user_name=${encodeURIComponent(localName)}; path=/; max-age=2592000`;
-        if (localEmail)
-          document.cookie = `user_email=${encodeURIComponent(localEmail)}; path=/; max-age=2592000`;
-        if (localRole) document.cookie = `user_role=${localRole}; path=/; max-age=2592000`;
-      } else if (
-        !token &&
-        (initialAuth.userName || initialAuth.userEmail || initialAuth.userRole)
-      ) {
-        localStorage.removeItem("user_name");
-        localStorage.removeItem("user_email");
-        localStorage.removeItem("user_role");
-        localStorage.removeItem("user_id");
-        localStorage.removeItem("refresh_token");
-        queueMicrotask(() => {
-          setAuthState({
-            userName: null,
-            userEmail: null,
-            userRole: null,
-          });
-        });
-      }
-    }
-  }, [initialAuth.userEmail, initialAuth.userName, initialAuth.userRole]);
-
-  const setAuth = (newAuth: UserAuth) => {
+  const setAuth = useCallback((newAuth: UserAuth) => {
     setAuthState(newAuth);
-    if (newAuth.userName) {
-      if (typeof window !== "undefined") {
-        const token = localStorage.getItem("access_token");
-        if (token)
-          document.cookie = `access_token=${encodeURIComponent(token)}; path=/; max-age=2592000`;
-      }
-      document.cookie = `user_name=${encodeURIComponent(newAuth.userName)}; path=/; max-age=2592000`;
-      if (newAuth.userEmail)
-        document.cookie = `user_email=${encodeURIComponent(newAuth.userEmail)}; path=/; max-age=2592000`;
-      if (newAuth.userRole)
-        document.cookie = `user_role=${newAuth.userRole}; path=/; max-age=2592000`;
-    } else {
-      document.cookie = "user_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      document.cookie = "user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      document.cookie = "user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-      document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+  }, []);
+
+  const logout = useCallback(async () => {
+    await logoutAction();
+    if (typeof window !== "undefined") {
+      localStorage.clear();
     }
-  };
-
-  const logout = () => {
-    localStorage.clear();
-    document.cookie = "user_name=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "user_email=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-    setAuthState({ userName: null, userEmail: null, userRole: null });
+    setAuthState({ userId: null, userName: null, userEmail: null, userRole: null });
     window.location.href = "/auth/login";
-  };
+  }, []);
 
-  const roleId = auth.userRole ?? "";
+  const isAuthenticated = Boolean(auth.userId || auth.userEmail);
+  const roleId = String(auth.userRole ?? "");
   const roleStr = roleId.toLowerCase();
   const isInstructorOrAdmin =
     INSTRUCTOR_ADMIN_ROLE_IDS.has(roleId) || INSTRUCTOR_ADMIN_ROLE_NAMES.has(roleStr);
@@ -111,8 +73,8 @@ export function AuthProvider({
     isInstructorOrAdmin || STAFF_EXTRA_ROLE_IDS.has(roleId) || STAFF_EXTRA_ROLE_NAMES.has(roleStr);
 
   const contextValue = useMemo(
-    () => ({ ...auth, setAuth, logout, isInstructorOrAdmin, isStaff }),
-    [auth, setAuth, logout, isInstructorOrAdmin, isStaff],
+    () => ({ ...auth, setAuth, logout, isAuthenticated, isInstructorOrAdmin, isStaff }),
+    [auth, setAuth, logout, isAuthenticated, isInstructorOrAdmin, isStaff],
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
