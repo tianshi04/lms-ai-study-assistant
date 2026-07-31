@@ -40,10 +40,13 @@ message ForumThread {
 message ListThreadsRequest {
   string course_id = 1;
   string item_id = 2;
+  int32 skip = 3;
+  int32 limit = 4;
 }
 
 message ListThreadsResponse {
   repeated ForumThread threads = 1;
+  int32 total = 2;
 }
 
 message CreateThreadRequest {

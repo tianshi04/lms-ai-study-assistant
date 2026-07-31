@@ -26,12 +26,12 @@ class ForumUseCase:
         return self.repo_factory(session)
 
     async def list_threads(
-        self, course_id: str = "", item_id: str = "", current_user_id: str = ""
-    ) -> Sequence[ForumThreadEntity]:
+        self, course_id: str = "", item_id: str = "", current_user_id: str = "", skip: int = 0, limit: int = 20
+    ) -> tuple[Sequence[ForumThreadEntity], int]:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             return await repo.list_threads(
-                course_id=course_id, item_id=item_id, current_user_id=current_user_id
+                course_id=course_id, item_id=item_id, current_user_id=current_user_id, skip=skip, limit=limit
             )
 
     async def create_thread(
@@ -71,25 +71,6 @@ class ForumUseCase:
                 thread_id,
                 course_id,
             )
-
-            # If there is content, post it as the opening reply
-            if content.strip():
-                reply_entity = ForumReplyEntity(
-                    id=str(uuid.uuid4()),
-                    thread_id=thread_id,
-                    author_name=author_name,
-                    author_role=author_role,
-                    content=content,
-                    is_staff_answer=False,
-                    upvote_count=0,
-                    created_at=created_at,
-                    author_user_id=author_user_id,
-                )
-                await repo.create_reply(reply_entity)
-                # Re-fetch thread to include the reply
-                reloaded = await repo.get_thread_by_id(thread_id)
-                if reloaded:
-                    return reloaded
 
             return created_thread
 
@@ -159,6 +140,7 @@ class ForumUseCase:
         content: str,
         current_user_id: str,
         is_staff: bool = False,
+        user: CurrentUser | None = None,
     ) -> ForumThreadEntity | None:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
@@ -166,15 +148,18 @@ class ForumUseCase:
             if not existing:
                 return None
             if existing.author_user_id and existing.author_user_id != current_user_id:
-                logger.warning(
-                    "User %s attempted to update thread %s owned by %s",
-                    current_user_id,
-                    thread_id,
-                    existing.author_user_id,
-                )
-                raise PermissionError(
-                    "Chỉ tác giả mới có quyền chỉnh sửa bài viết này."
-                )
+                if is_staff and user:
+                    await _verify_staff_course_moderation(session, existing.course_id, user)
+                else:
+                    logger.warning(
+                        "User %s attempted to update thread %s owned by %s",
+                        current_user_id,
+                        thread_id,
+                        existing.author_user_id,
+                    )
+                    raise PermissionError(
+                        "Chỉ tác giả mới có quyền chỉnh sửa bài viết này."
+                    )
             return await repo.update_thread(
                 thread_id=thread_id,
                 title=title,
@@ -218,6 +203,7 @@ class ForumUseCase:
         content: str,
         current_user_id: str,
         is_staff: bool = False,
+        user: CurrentUser | None = None,
     ) -> ForumReplyEntity | None:
         async with async_session_scope() as session:
             repo = self._get_repo(session)
@@ -225,15 +211,20 @@ class ForumUseCase:
             if not existing:
                 return None
             if existing.author_user_id and existing.author_user_id != current_user_id:
-                logger.warning(
-                    "User %s attempted to update reply %s owned by %s",
-                    current_user_id,
-                    reply_id,
-                    existing.author_user_id,
-                )
-                raise PermissionError(
-                    "Chỉ tác giả mới có quyền chỉnh sửa bình luận này."
-                )
+                if is_staff and user:
+                    thread = await repo.get_thread_by_id(existing.thread_id)
+                    course_id = thread.course_id if thread else ""
+                    await _verify_staff_course_moderation(session, course_id, user)
+                else:
+                    logger.warning(
+                        "User %s attempted to update reply %s owned by %s",
+                        current_user_id,
+                        reply_id,
+                        existing.author_user_id,
+                    )
+                    raise PermissionError(
+                        "Chỉ tác giả mới có quyền chỉnh sửa bình luận này."
+                    )
             return await repo.update_reply(
                 reply_id=reply_id, content=content, edited_at=utc_now_str()
             )

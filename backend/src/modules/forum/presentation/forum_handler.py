@@ -74,12 +74,16 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.ListThreadsRequest, pb.ListThreadsResponse],
     ) -> pb.ListThreadsResponse:
         current_user = require_current_user()
-        threads = await self.use_case.list_threads(
+        skip = request.skip if request.skip > 0 else 0
+        limit = request.limit if request.limit > 0 else 20
+        threads, total = await self.use_case.list_threads(
             course_id=request.course_id,
             item_id=request.item_id,
             current_user_id=current_user.id,
+            skip=skip,
+            limit=limit,
         )
-        return pb.ListThreadsResponse(threads=[_to_pb_thread(t) for t in threads])
+        return pb.ListThreadsResponse(threads=[_to_pb_thread(t) for t in threads], total=total)
 
     async def create_thread(
         self,
@@ -89,6 +93,14 @@ class ForumHandler(ForumService):
         if not request.title.strip():
             raise ConnectError(
                 Code.INVALID_ARGUMENT, "Tiêu đề thảo luận không được để trống"
+            )
+        if len(request.title) > 200:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Tiêu đề thảo luận không được vượt quá 200 ký tự"
+            )
+        if len(request.content) > 10000:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Nội dung không được vượt quá 10000 ký tự"
             )
 
         current_user = require_current_user()
@@ -115,6 +127,10 @@ class ForumHandler(ForumService):
         if not request.content.strip():
             raise ConnectError(
                 Code.INVALID_ARGUMENT, "Nội dung phản hồi không được để trống"
+            )
+        if len(request.content) > 10000:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Nội dung không được vượt quá 10000 ký tự"
             )
 
         current_user = require_current_user()
@@ -175,6 +191,22 @@ class ForumHandler(ForumService):
         request: pb.UpdateThreadRequest,
         ctx: RequestContext[pb.UpdateThreadRequest, pb.UpdateThreadResponse],
     ) -> pb.UpdateThreadResponse:
+        if not request.title.strip():
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Tiêu đề thảo luận không được để trống"
+            )
+        if not request.content.strip():
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Nội dung thảo luận không được để trống"
+            )
+        if len(request.title) > 200:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Tiêu đề thảo luận không được vượt quá 200 ký tự"
+            )
+        if len(request.content) > 10000:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Nội dung không được vượt quá 10000 ký tự"
+            )
         current_user = require_current_user()
         role = current_user.role.lower()
         is_staff = any(
@@ -188,6 +220,7 @@ class ForumHandler(ForumService):
                 content=request.content,
                 current_user_id=current_user.id,
                 is_staff=is_staff,
+                user=current_user,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
@@ -224,6 +257,14 @@ class ForumHandler(ForumService):
         request: pb.UpdateReplyRequest,
         ctx: RequestContext[pb.UpdateReplyRequest, pb.UpdateReplyResponse],
     ) -> pb.UpdateReplyResponse:
+        if not request.content.strip():
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Nội dung phản hồi không được để trống"
+            )
+        if len(request.content) > 10000:
+            raise ConnectError(
+                Code.INVALID_ARGUMENT, "Nội dung không được vượt quá 10000 ký tự"
+            )
         current_user = require_current_user()
         role = current_user.role.lower()
         is_staff = any(
@@ -236,6 +277,7 @@ class ForumHandler(ForumService):
                 content=request.content,
                 current_user_id=current_user.id,
                 is_staff=is_staff,
+                user=current_user,
             )
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))

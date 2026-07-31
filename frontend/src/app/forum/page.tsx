@@ -16,16 +16,7 @@ import { useToast } from "@/components/ui/Toast";
 
 const emptySubscribe = () => () => {};
 
-function formatRoleName(role: string): string {
-  if (!role) return "Learner";
-  const r = role.toUpperCase();
-  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Learner";
-  if (r.includes("INSTRUCTOR") || r === "2") return "Instructor";
-  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "3")
-    return "Teaching Assistant";
-  if (r.includes("SUPER_ADMIN") || r.includes("ORG_ADMIN") || r === "ADMIN") return "Admin";
-  return role;
-}
+import { formatRoleName } from "@/lib/format_role";
 
 export default function ForumPage() {
   const locale = "vi";
@@ -35,6 +26,11 @@ export default function ForumPage() {
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalThreads, setTotalThreads] = useState<number>(0);
+  const threadsPerPage = 10;
 
   const isMounted = useSyncExternalStore(
     emptySubscribe,
@@ -90,7 +86,7 @@ export default function ForumPage() {
       }
     }
     fetchCatalog();
-  }, [newCourseId]);
+  }, []); // Remove newCourseId to prevent dependency loop
 
   // Fetch Forum Threads
   const fetchThreadsRef = useRef<() => Promise<void>>(async () => {});
@@ -103,12 +99,16 @@ export default function ForumPage() {
       setError(null);
       try {
         const client = getRpcClient(ForumService);
+        const skip = (currentPage - 1) * threadsPerPage;
         const res = await client.listThreads({
           courseId: selectedCourseId,
           itemId: "",
+          skip,
+          limit: threadsPerPage,
         });
         if (!cancelled) {
           setThreads(res.threads);
+          setTotalThreads(res.total || 0);
           const initialExpanded: Record<string, boolean> = {};
           res.threads.forEach((th) => {
             initialExpanded[th.id] = true;
@@ -134,7 +134,7 @@ export default function ForumPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedCourseId]);
+  }, [selectedCourseId, currentPage]);
 
   const fetchThreads = useCallback(() => fetchThreadsRef.current(), []);
 
@@ -157,12 +157,11 @@ export default function ForumPage() {
       setNewTitle("");
       setNewContent("");
       setShowCreateModal(false);
-      toast.success(
-        locale === "vi" ? "Đã đăng chủ đề thảo luận mới!" : "New discussion thread created!",
-      );
+      toast.success("Đăng thảo luận thành công!");
       fetchThreads();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra");
+      console.error("Error creating thread:", err);
+      toast.error(err instanceof Error ? err.message : "Lỗi đăng thảo luận");
     } finally {
       setSubmittingThread(false);
     }
@@ -188,10 +187,11 @@ export default function ForumPage() {
         content: editThreadContent,
       });
       setEditingThread(null);
-      toast.success("Bài viết đã được cập nhật!");
+      toast.success("Cập nhật chủ đề thành công!");
       fetchThreads();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra");
+      console.error("Error updating thread:", err);
+      toast.error(err instanceof Error ? err.message : "Lỗi cập nhật chủ đề");
     } finally {
       setSubmittingEditThread(false);
     }
@@ -202,10 +202,11 @@ export default function ForumPage() {
     try {
       const client = getRpcClient(ForumService);
       await client.deleteThread({ threadId });
-      toast.success("Bài viết đã được xóa!");
+      toast.success("Đã xóa chủ đề thảo luận!");
       fetchThreads();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra");
+      console.error("Error deleting thread:", err);
+      toast.error(err instanceof Error ? err.message : "Lỗi xóa chủ đề");
     }
   };
 
@@ -225,10 +226,11 @@ export default function ForumPage() {
 
       setReplyInputs((prev) => ({ ...prev, [threadId]: "" }));
       setActiveReplyBoxIds((prev) => ({ ...prev, [threadId]: false }));
-      toast.success(locale === "vi" ? "Đã gửi câu phản hồi!" : "Reply posted successfully!");
+      toast.success("Gửi phản hồi thành công!");
       fetchThreads();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Có lỗi xảy ra");
+      console.error("Error posting reply:", err);
+      toast.error(err instanceof Error ? err.message : "Lỗi gửi phản hồi");
     } finally {
       setSubmittingReply((prev) => ({ ...prev, [threadId]: false }));
     }
@@ -328,9 +330,11 @@ export default function ForumPage() {
     try {
       const client = getRpcClient(ForumService);
       await client.pinStaffAnswer({ replyId });
+      toast.success("Đã ghim câu trả lời của Staff!");
       fetchThreads();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error("Failed to pin staff answer:", err);
+      toast.error(err instanceof Error ? err.message : "Lỗi ghim câu trả lời");
     }
   };
 
@@ -452,6 +456,7 @@ export default function ForumPage() {
               const isThreadAuthor = Boolean(
                 currentUserId && thread.authorUserId === currentUserId,
               );
+              const canEditThread = isThreadAuthor || isStaffOrAdmin;
               const canDeleteThread = isThreadAuthor || isStaffOrAdmin;
 
               return (
@@ -494,9 +499,9 @@ export default function ForumPage() {
                           </span>
                         )}
 
-                        {(isThreadAuthor || canDeleteThread) && (
+                        {(canEditThread || canDeleteThread) && (
                           <div className="ml-auto flex items-center gap-2">
-                            {isThreadAuthor && (
+                            {canEditThread && (
                               <button
                                 onClick={() => openEditThreadModal(thread)}
                                 className="text-xs font-semibold text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
@@ -587,6 +592,7 @@ export default function ForumPage() {
                         const isReplyAuthor = Boolean(
                           currentUserId && reply.authorUserId === currentUserId,
                         );
+                        const canEditReply = isReplyAuthor || isStaffOrAdmin;
                         const canDeleteReply = isReplyAuthor || isStaffOrAdmin;
                         const isEditingThisReply = editingReplyId === reply.id;
 
@@ -620,7 +626,7 @@ export default function ForumPage() {
                               </div>
 
                               <div className="flex items-center gap-2">
-                                {isReplyAuthor && (
+                                {canEditReply && (
                                   <button
                                     onClick={() => startEditReply(reply)}
                                     className="text-xs font-semibold text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
@@ -774,6 +780,29 @@ export default function ForumPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {!loading && !error && totalThreads > threadsPerPage && (
+          <div className="flex justify-center mt-10 gap-3">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+              className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-semibold transition-all cursor-pointer"
+            >
+              {"Trang trước"}
+            </button>
+            <span className="px-4 py-2 text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {"Trang"} {currentPage} / {Math.ceil(totalThreads / threadsPerPage)}
+            </span>
+            <button
+              disabled={currentPage >= Math.ceil(totalThreads / threadsPerPage)}
+              onClick={() => setCurrentPage((p) => p + 1)}
+              className="px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl disabled:opacity-50 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-semibold transition-all cursor-pointer"
+            >
+              {"Trang sau"}
+            </button>
           </div>
         )}
       </main>

@@ -20,6 +20,8 @@ ADMIN_ROLES = {
     "ORGANIZATION ADMIN",
     "ORG_ADMIN",
     "ORG_OWNER",
+    "4",
+    "5",
 }
 
 STAFF_ROLES = ADMIN_ROLES | {
@@ -30,6 +32,8 @@ STAFF_ROLES = ADMIN_ROLES | {
     "ORGANIZATION INSTRUCTOR",
     "ORG_INSTRUCTOR",
     "TEACHING ASSISTANT",
+    "2",
+    "3",
 }
 
 

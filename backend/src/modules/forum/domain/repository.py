@@ -6,9 +6,9 @@ from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntit
 class IForumRepository(ABC):
     @abstractmethod
     async def list_threads(
-        self, course_id: str = "", item_id: str = "", current_user_id: str = ""
-    ) -> Sequence[ForumThreadEntity]:
-        """List forum threads matching course_id and optional item_id."""
+        self, course_id: str = "", item_id: str = "", current_user_id: str = "", skip: int = 0, limit: int = 20
+    ) -> tuple[Sequence[ForumThreadEntity], int]:
+        """List forum threads matching course_id and optional item_id, returning (threads, total_count)."""
         pass
 
     @abstractmethod

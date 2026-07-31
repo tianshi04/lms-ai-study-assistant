@@ -40,6 +40,7 @@ export function GradedQuizRunner({
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [isHonorAgreed, setIsHonorAgreed] = useState(isPreviewMode);
   const [isHonorModalOpen, setIsHonorModalOpen] = useState(false);
+  const [pendingAutoSubmit, setPendingAutoSubmit] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Dynamic quiz session state
@@ -198,6 +199,7 @@ export function GradedQuizRunner({
   const handleSubmitQuiz = useCallback(
     async (isAutoSubmit: boolean = false) => {
       if (!isHonorAgreed && !isAutoSubmit && !isPreviewMode) {
+        setPendingAutoSubmit(true);
         setIsHonorModalOpen(true);
         return;
       }
@@ -661,9 +663,15 @@ export function GradedQuizRunner({
         onAgreed={() => {
           setIsHonorAgreed(true);
           setIsHonorModalOpen(false);
-          executeSubmit();
+          if (pendingAutoSubmit) {
+            setPendingAutoSubmit(false);
+            executeSubmit();
+          }
         }}
-        onClose={() => setIsHonorModalOpen(false)}
+        onClose={() => {
+          setIsHonorModalOpen(false);
+          setPendingAutoSubmit(false);
+        }}
       />
     </div>
   );

@@ -157,6 +157,7 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         partner_logo_url=deeplearning_logo,
         instructor_names=["Andrew Ng", "Eddy Shyu"],
         owner_id="user_instructor_01",
+        co_instructor_ids=["user_ta_01"],
         subject="cat-subj-ds",
         level="cat-lvl-int",
         status="PUBLISHED",

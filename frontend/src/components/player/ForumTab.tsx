@@ -19,16 +19,7 @@ interface ForumTabProps {
   itemId: string;
 }
 
-function formatRoleName(role: string): string {
-  if (!role) return "Learner";
-  const r = role.toUpperCase();
-  if (r.includes("LEARNER") || r.includes("STUDENT") || r === "1") return "Learner";
-  if (r.includes("INSTRUCTOR") || r === "2") return "Instructor";
-  if (r.includes("TA") || r.includes("TEACHING ASSISTANT") || r === "3")
-    return "Teaching Assistant";
-  if (r.includes("SUPER_ADMIN") || r.includes("ORG_ADMIN") || r.includes("ADMIN")) return "Admin";
-  return role;
-}
+import { formatRoleName } from "@/lib/format_role";
 
 export function ForumTab({ courseId, itemId }: ForumTabProps) {
   const [threads, setThreads] = useState<ForumThread[]>([]);
@@ -315,6 +306,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
         <div className="space-y-3">
           {threads.map((thread) => {
             const isThreadAuthor = Boolean(currentUserId && thread.authorUserId === currentUserId);
+            const canEditThread = isThreadAuthor || isStaffOrAdmin;
             const canDeleteThread = isThreadAuthor || isStaffOrAdmin;
             const isEditingThisThread = editingThreadId === thread.id;
 
@@ -349,7 +341,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                           {"(Đã chỉnh sửa)"}
                         </span>
                       )}
-                      {isThreadAuthor && (
+                      {canEditThread && (
                         <button
                           onClick={() => startEditThread(thread)}
                           className="text-[10px] font-semibold text-slate-400 hover:text-blue-500 cursor-pointer ml-1"

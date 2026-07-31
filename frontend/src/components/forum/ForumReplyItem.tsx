@@ -32,6 +32,7 @@ export function ForumReplyItem({
   onContentChange,
 }: ForumReplyItemProps) {
   const isReplyAuthor = Boolean(currentUserId && reply.authorUserId === currentUserId);
+  const canEditReply = isReplyAuthor || isStaffOrAdmin;
   const canDeleteReply = isReplyAuthor || isStaffOrAdmin;
 
   return (
@@ -64,7 +65,7 @@ export function ForumReplyItem({
               {"(Đã chỉnh sửa)"}
             </span>
           )}
-          {isReplyAuthor && (
+          {canEditReply && (
             <button
               onClick={() => onStartEdit(reply)}
               className="text-[10px] font-semibold text-slate-400 hover:text-blue-500 cursor-pointer ml-1"
