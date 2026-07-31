@@ -369,7 +369,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                 type="text"
                 value={submissionUrl}
                 onChange={(e) => setSubmissionUrl(e.target.value)}
-                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-mono text-slate-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               />
             </div>
 
@@ -381,7 +381,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                 value={textContent}
                 onChange={(e) => setTextContent(e.target.value)}
                 rows={4}
-                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               />
             </div>
 
@@ -405,7 +405,9 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
               disabled={isSubmitting}
               className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-all shadow-xs flex items-center gap-2"
             >
-              <span>{isSubmitting ? "Submitting..." : "Submit Peer Assignment"}</span>
+              <span aria-live="polite">
+                {isSubmitting ? "Submitting…" : "Submit Peer Assignment"}
+              </span>
               <svg
                 className="w-4 h-4"
                 fill="none"
@@ -551,8 +553,8 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                 value={appealReason}
                 onChange={(e) => setAppealReason(e.target.value)}
                 rows={4}
-                placeholder="Explain why the peer review grade should be reviewed by a TA..."
-                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="Explain why the peer review grade should be reviewed by a TA…"
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               />
             </div>
 

@@ -84,7 +84,7 @@ export default function MyCertificatesPage() {
             </svg>
             <span>Verified Credentials</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4 text-balance">
             {"Chứng chỉ của tôi"}
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
@@ -132,8 +132,10 @@ export default function MyCertificatesPage() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={"Tìm kiếm chứng chỉ..."}
-              className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm transition-all shadow-sm"
+              placeholder={"Tìm kiếm chứng chỉ…"}
+              autoComplete="off"
+              spellCheck={false}
+              className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 text-sm transition-colors shadow-sm"
             />
           </div>
         </div>

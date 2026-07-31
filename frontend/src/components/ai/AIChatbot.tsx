@@ -107,7 +107,7 @@ export function AIChatbot() {
             <CopilotChat
               labels={{
                 welcomeMessageText: "Xin chào! Tôi có thể giúp gì cho bạn?",
-                chatInputPlaceholder: "Nhập câu hỏi cho AI...",
+                chatInputPlaceholder: "Nhập câu hỏi cho AI…",
               }}
             />
           </div>

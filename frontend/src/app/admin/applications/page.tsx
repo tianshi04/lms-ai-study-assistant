@@ -71,7 +71,7 @@ export default function AdminInstructorApplicationsPage() {
                 Đơn Giảng viên
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight text-balance">
               Quản Lý Thẩm Định Đơn Giảng Viên
             </h1>
           </div>
@@ -87,10 +87,15 @@ export default function AdminInstructorApplicationsPage() {
         </div>
 
         {actionSuccessMsg && (
-          <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-sm font-bold flex items-center justify-between">
+          <div
+            aria-live="polite"
+            className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200 text-sm font-bold flex items-center justify-between"
+          >
             <span>{actionSuccessMsg}</span>
             <button
+              type="button"
               onClick={() => setActionSuccessMsg("")}
+              aria-label="Đóng thông báo"
               className="text-emerald-600 dark:text-emerald-400 hover:opacity-75"
             >
               ✕
@@ -124,8 +129,11 @@ export default function AdminInstructorApplicationsPage() {
         {isLoading ? (
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="inline-block animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mb-3" />
-            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-              Đang tải danh sách đơn thẩm định...
+            <p
+              aria-live="polite"
+              className="text-slate-500 dark:text-slate-400 text-sm font-medium"
+            >
+              Đang tải danh sách đơn thẩm định…
             </p>
           </div>
         ) : applications.length === 0 ? (
@@ -294,8 +302,8 @@ export default function AdminInstructorApplicationsPage() {
                             value={rejectionReason}
                             onChange={(e) => setRejectionReason(e.target.value)}
                             rows={2}
-                            placeholder="Mô tả lý do từ chối hồ sơ..."
-                            className="w-full p-3 text-xs rounded-xl border border-rose-200 dark:border-rose-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+                            placeholder="Mô tả lý do từ chối hồ sơ…"
+                            className="w-full p-3 text-xs rounded-xl border border-rose-200 dark:border-rose-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
                           />
                           <div className="flex items-center justify-end gap-2">
                             <button

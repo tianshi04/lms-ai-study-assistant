@@ -130,8 +130,8 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Tìm kiếm nội dung bài giảng..."
-          className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          placeholder="Tìm kiếm nội dung bài giảng…"
+          className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
         />
         <svg
           className="w-4 h-4 text-slate-400 absolute left-3 top-2.5"

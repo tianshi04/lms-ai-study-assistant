@@ -47,7 +47,7 @@ export function NotFoundClient() {
 
           {/* Headings */}
           <div className="space-y-3 max-w-2xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white text-balance">
               {"Rất tiếc! Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển."}
             </h1>
             <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">

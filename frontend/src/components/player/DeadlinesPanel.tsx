@@ -9,7 +9,11 @@ interface DeadlinesPanelProps {
 
 export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelProps) {
   if (!progress) {
-    return <div className="text-center text-xs text-slate-500 py-6">{"Đang tải..."}</div>;
+    return (
+      <div aria-live="polite" className="text-center text-xs text-slate-500 py-6">
+        {"Đang tải…"}
+      </div>
+    );
   }
 
   const hasOverdue = progress.weeklyDeadlines.some((d) => d.status === 2);

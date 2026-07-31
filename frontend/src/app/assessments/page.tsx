@@ -24,7 +24,7 @@ export default function AssessmentsPage() {
               Coursera Auto-Grader &amp; Peer Review Engine
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 text-slate-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 text-slate-900 dark:text-white text-balance">
             Assessments &amp; Auto-Grader Sandbox
           </h1>
         </div>
@@ -113,7 +113,7 @@ export default function AssessmentsPage() {
         <input
           id="itemId"
           type="text"
-          className="flex-1 max-w-sm px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white transition-shadow"
+          className="flex-1 max-w-sm px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-white transition-colors"
           value={
             activeAssessment === "quiz"
               ? quizItemId
@@ -126,7 +126,7 @@ export default function AssessmentsPage() {
             if (activeAssessment === "lab") setLabItemId(e.target.value);
             if (activeAssessment === "peer") setPeerItemId(e.target.value);
           }}
-          placeholder="Enter Item ID..."
+          placeholder="Enter Item ID…"
         />
       </div>
 

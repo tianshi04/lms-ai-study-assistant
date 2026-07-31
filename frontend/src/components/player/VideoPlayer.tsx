@@ -119,7 +119,7 @@ export function VideoPlayer({
             <ReactMarkdown
               components={{
                 h1: ({ children }) => (
-                  <h1 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">
+                  <h1 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3 text-balance">
                     {children}
                   </h1>
                 ),

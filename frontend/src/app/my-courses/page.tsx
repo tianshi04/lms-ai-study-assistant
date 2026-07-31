@@ -70,7 +70,7 @@ export default function MyCoursesPage() {
   return (
     <main className="w-full max-w-7xl mx-auto px-6 py-12 flex-1">
       <div className="w-full mb-10 text-center md:text-left max-w-3xl">
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4 text-balance">
           {"Khóa học của tôi"}
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
@@ -165,7 +165,10 @@ export default function MyCoursesPage() {
           </Link>
         </div>
       ) : (
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          style={{ contentVisibility: "auto", containIntrinsicSize: "1px 300px" }}
+          className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           {filteredCourses.map((course) => (
             <div
               key={course.courseId}
@@ -190,12 +193,17 @@ export default function MyCoursesPage() {
                     </span>
                   )}
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 mb-4 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  {course.courseTitle}
-                </h3>
+                <Link
+                  href={`/courses/${course.courseId}`}
+                  className="block group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
+                >
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white line-clamp-2 mb-3">
+                    {course.courseTitle}
+                  </h3>
+                </Link>
 
                 <div className="space-y-1.5 mb-2">
-                  <div className="flex justify-between text-xs font-medium text-slate-600 dark:text-slate-400">
+                  <div className="flex justify-between text-xs font-medium text-slate-600 dark:text-slate-400 tabular-nums">
                     <span>{"Tiến độ:"}</span>
                     <span>{course.progressPercent}%</span>
                   </div>

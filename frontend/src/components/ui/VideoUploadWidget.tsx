@@ -20,7 +20,7 @@ export function VideoUploadWidget({
   folder = "videos",
   accept = "video/mp4,video/webm,video/quicktime",
   label = "Đường dẫn hoặc Upload Tệp Video",
-  placeholder = "https://...",
+  placeholder = "https://…",
 }: VideoUploadWidgetProps) {
   const [activeTab, setActiveTab] = useState<"upload" | "url">("upload");
   const [isUploading, setIsUploading] = useState(false);
@@ -200,7 +200,7 @@ export function VideoUploadWidget({
           {isUploading && (
             <div className="space-y-1 bg-blue-50 dark:bg-blue-950/40 p-3 rounded-xl border border-blue-200 dark:border-blue-900/50">
               <div className="flex justify-between text-xs font-semibold text-blue-700 dark:text-blue-300">
-                <span>Đang tải tệp lên Cloud Storage...</span>
+                <span aria-live="polite">Đang tải tệp lên Cloud Storage…</span>
                 <span>{uploadProgress}%</span>
               </div>
               <div className="w-full bg-blue-200 dark:bg-blue-900 rounded-full h-2 overflow-hidden">

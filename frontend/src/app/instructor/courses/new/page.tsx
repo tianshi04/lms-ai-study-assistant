@@ -145,7 +145,7 @@ export default function NewCoursePage() {
                 Soạn khóa học mới
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight text-balance">
               Khởi Tạo Khóa Học Mới
             </h1>
           </div>
@@ -193,7 +193,7 @@ export default function NewCoursePage() {
             </div>
 
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-              {title.trim() || "Tiêu đề Khóa học của bạn sẽ hiển thị ở đây..."}
+              {title.trim() || "Tiêu đề Khóa học của bạn sẽ hiển thị ở đây…"}
             </h2>
           </div>
 
@@ -233,7 +233,7 @@ export default function NewCoursePage() {
                 <select
                   value={selectedOrgId}
                   onChange={(e) => setSelectedOrgId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 >
                   <option value="partner_community">
                     🌐 Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)
@@ -265,7 +265,7 @@ export default function NewCoursePage() {
                 value={title}
                 onChange={handleTitleChange}
                 placeholder="Ví dụ: Lập trình Python Căn Bản Cho Người Mới Bắt Đầu"
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               />
             </div>
 
@@ -284,7 +284,7 @@ export default function NewCoursePage() {
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   placeholder="lap-trinh-python-can-ban"
-                  className="w-full px-4 py-3 bg-transparent text-sm font-mono text-slate-900 dark:text-white focus:outline-none"
+                  className="w-full px-4 py-3 bg-transparent text-sm font-mono text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 />
               </div>
             </div>
@@ -297,7 +297,7 @@ export default function NewCoursePage() {
               <select
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               >
                 <option value="Khoa học Máy tính">Khoa học Máy tính</option>
                 <option value="Trí tuệ Nhân tạo & AI">Trí tuệ Nhân tạo & AI</option>
@@ -315,7 +315,7 @@ export default function NewCoursePage() {
               <select
                 value={level}
                 onChange={(e) => setLevel(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               >
                 <option value="Sơ cấp">Sơ cấp (Beginner)</option>
                 <option value="Trung cấp">Trung cấp (Intermediate)</option>
@@ -332,8 +332,8 @@ export default function NewCoursePage() {
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Tóm tắt những kiến thức trọng tâm, mục tiêu đạt được sau khóa học..."
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                placeholder="Tóm tắt những kiến thức trọng tâm, mục tiêu đạt được sau khóa học…"
+                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               />
             </div>
 
@@ -352,7 +352,7 @@ export default function NewCoursePage() {
                 type="checkbox"
                 checked={financialAidEnabled}
                 onChange={(e) => setFinancialAidEnabled(e.target.checked)}
-                className="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
+                className="w-5 h-5 text-blue-600 rounded border-slate-300 focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
               />
             </div>
           </div>
@@ -373,7 +373,7 @@ export default function NewCoursePage() {
               {submitting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Đang khởi tạo...</span>
+                  <span aria-live="polite">Đang khởi tạo…</span>
                 </>
               ) : (
                 <span>🚀 Bắt Đầu Tạo Khóa Học</span>

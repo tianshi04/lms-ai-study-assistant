@@ -69,7 +69,7 @@ export function Button({
       {...props}
     >
       {isLoading ? (
-        <span className="inline-flex items-center gap-2">
+        <span aria-live="polite" className="inline-flex items-center gap-2">
           <svg className="animate-spin h-4 w-4 text-current fill-none" viewBox="0 0 24 24">
             <circle
               className="opacity-25"
@@ -85,7 +85,7 @@ export function Button({
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
             />
           </svg>
-          Đang tải...
+          Đang tải…
         </span>
       ) : (
         children

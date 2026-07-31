@@ -136,8 +136,8 @@ function FinancialAidContent() {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
             ></path>
           </svg>
-          <span className="text-sm font-medium">
-            {"Đang tải danh sách Đơn Hỗ trợ tài chính..."}
+          <span aria-live="polite" className="text-sm font-medium">
+            {"Đang tải danh sách Đơn Hỗ trợ tài chính…"}
           </span>
         </div>
       </div>
@@ -151,7 +151,7 @@ function FinancialAidContent() {
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-2">
           {"Chương trình Hỗ trợ Tài chính Coursera"}
         </div>
-        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight text-balance">
           {"Theo dõi Đơn xin Hỗ trợ Tài chính"}
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
@@ -526,8 +526,8 @@ function FinancialAidContent() {
                 rows={8}
                 value={essay}
                 onChange={(e) => setEssay(e.target.value)}
-                placeholder={"Tôi xin nộp đơn xin hỗ trợ tài chính cho khóa học này vì..."}
-                className="w-full p-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm leading-relaxed"
+                placeholder={"Tôi xin nộp đơn xin hỗ trợ tài chính cho khóa học này vì…"}
+                className="w-full p-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-sm leading-relaxed"
                 required
               />
               <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
@@ -556,11 +556,13 @@ function FinancialAidContent() {
                 }
                 className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
               >
-                {submitting
-                  ? "Đang gửi đơn..."
-                  : selectedCourse?.financialAidEnabled === false
-                    ? "Khóa học này đã tắt FinAid"
-                    : "Gửi đơn Hỗ trợ"}
+                <span aria-live="polite">
+                  {submitting
+                    ? "Đang gửi đơn…"
+                    : selectedCourse?.financialAidEnabled === false
+                      ? "Khóa học này đã tắt FinAid"
+                      : "Gửi đơn Hỗ trợ"}
+                </span>
               </button>
             </div>
           </form>
@@ -575,7 +577,9 @@ export default function FinancialAidPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center py-24">
-          <span className="text-sm text-slate-500">Loading...</span>
+          <span aria-live="polite" className="text-sm text-slate-500">
+            Loading…
+          </span>
         </div>
       }
     >

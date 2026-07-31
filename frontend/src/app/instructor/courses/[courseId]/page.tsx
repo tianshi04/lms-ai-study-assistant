@@ -667,7 +667,9 @@ export default function InstructorCourseBuilderPage({
         <div className="flex-1 flex items-center justify-center py-24">
           <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
             <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm font-medium">{"Đang tải cấu trúc bài giảng khóa học..."}</span>
+            <span aria-live="polite" className="text-sm font-medium">
+              {"Đang tải cấu trúc bài giảng khóa học…"}
+            </span>
           </div>
         </div>
       </div>
@@ -788,7 +790,7 @@ export default function InstructorCourseBuilderPage({
                   )}
                   <span className="text-xs font-mono text-slate-400">ID: {course.id}</span>
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight text-balance">
                   {course.title}
                 </h1>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2">
@@ -831,8 +833,8 @@ export default function InstructorCourseBuilderPage({
                         d="M5 13l4 4L19 7"
                       />
                     </svg>
-                    <span>
-                      {submittingLaunch ? "Đang nộp..." : "Submit for Launch (Gửi duyệt)"}
+                    <span aria-live="polite">
+                      {submittingLaunch ? "Đang nộp…" : "Submit for Launch (Gửi duyệt)"}
                     </span>
                   </button>
                 )}
@@ -887,7 +889,7 @@ export default function InstructorCourseBuilderPage({
                       if (!file) return;
                       try {
                         setScormImporting(true);
-                        toast.info("Đang tải gói SCORM lên hệ thống lưu trữ...");
+                        toast.info("Đang tải gói SCORM lên hệ thống lưu trữ…");
                         const client = getRpcClient(CatalogService);
 
                         const uploadRes = await client.generateUploadUrl({
@@ -929,7 +931,7 @@ export default function InstructorCourseBuilderPage({
                           uploadedKey = byteRes.objectKey;
                         }
 
-                        toast.info("Đang phân tích cấu trúc gói SCORM...");
+                        toast.info("Đang phân tích cấu trúc gói SCORM…");
                         const parseRes = await client.parseScormPackage({
                           scormObjectKey: uploadedKey,
                           targetCourseId: courseId,
@@ -1647,8 +1649,8 @@ export default function InstructorCourseBuilderPage({
               rows={3}
               value={weekSummary}
               onChange={(e) => setWeekSummary(e.target.value)}
-              placeholder={"Tóm tắt nội dung chính học viên sẽ thu hoạch được..."}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+              placeholder={"Tóm tắt nội dung chính học viên sẽ thu hoạch được…"}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             />
           </div>
 
@@ -1665,7 +1667,7 @@ export default function InstructorCourseBuilderPage({
               disabled={saving}
               className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
             >
-              {saving ? "Đang tạo..." : "Xác nhận tạo Tuần học"}
+              <span aria-live="polite">{saving ? "Đang tạo…" : "Xác nhận tạo Tuần học"}</span>
             </button>
           </div>
         </form>
@@ -1720,7 +1722,7 @@ export default function InstructorCourseBuilderPage({
               disabled={saving}
               className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
             >
-              {saving ? "Đang tạo..." : "Xác nhận tạo Bài học"}
+              <span aria-live="polite">{saving ? "Đang tạo…" : "Xác nhận tạo Bài học"}</span>
             </button>
           </div>
         </form>
@@ -1795,7 +1797,7 @@ export default function InstructorCourseBuilderPage({
                 folder="subtitles"
                 accept=".vtt,text/vtt"
                 label="Phụ đề cho Video (định dạng .vtt)"
-                placeholder="https://..."
+                placeholder="https://…"
               />
 
               <InVideoQuizEditor
@@ -1823,7 +1825,7 @@ export default function InstructorCourseBuilderPage({
               {showMarkdownPreview ? (
                 <div className="p-4 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 prose dark:prose-invert max-w-none text-sm min-h-[140px]">
                   {readingMarkdown || (
-                    <span className="text-slate-400 italic">Chưa có nội dung xem trước...</span>
+                    <span className="text-slate-400 italic">Chưa có nội dung xem trước…</span>
                   )}
                 </div>
               ) : (
@@ -1833,8 +1835,8 @@ export default function InstructorCourseBuilderPage({
                   onChange={(e) => setReadingMarkdown(e.target.value)}
                   placeholder={`# Giới thiệu bài học
 
-Nội dung lý thuyết chi tiết...`}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
+Nội dung lý thuyết chi tiết…`}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   required
                 />
               )}
@@ -2093,7 +2095,7 @@ Nội dung lý thuyết chi tiết...`}
               disabled={saving}
               className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
             >
-              {saving ? "Đang tạo..." : "Xác nhận tạo Học liệu"}
+              <span aria-live="polite">{saving ? "Đang tạo…" : "Xác nhận tạo Học liệu"}</span>
             </button>
           </div>
         </form>
@@ -2146,7 +2148,7 @@ Nội dung lý thuyết chi tiết...`}
                 disabled={saving}
                 className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
               >
-                {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                <span aria-live="polite">{saving ? "Đang lưu…" : "Lưu thay đổi"}</span>
               </button>
             </div>
           </form>
@@ -2207,7 +2209,7 @@ Nội dung lý thuyết chi tiết...`}
                 disabled={saving}
                 className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
               >
-                {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                <span aria-live="polite">{saving ? "Đang lưu…" : "Lưu thay đổi"}</span>
               </button>
             </div>
           </form>
@@ -2270,7 +2272,7 @@ Nội dung lý thuyết chi tiết...`}
                   folder="subtitles"
                   accept=".vtt,text/vtt"
                   label="Phụ đề cho Video (định dạng .vtt)"
-                  placeholder="https://..."
+                  placeholder="https://…"
                 />
 
                 <InVideoQuizEditor
@@ -2292,7 +2294,7 @@ Nội dung lý thuyết chi tiết...`}
                   rows={6}
                   value={editingItem.content}
                   onChange={(e) => setEditingItem({ ...editingItem, content: e.target.value })}
-                  placeholder="# Giới thiệu bài học..."
+                  placeholder="# Giới thiệu bài học…"
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
                   required
                 />
@@ -2553,7 +2555,7 @@ Nội dung lý thuyết chi tiết...`}
                 disabled={saving}
                 className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
               >
-                {saving ? "Đang lưu..." : "Lưu thay đổi"}
+                <span aria-live="polite">{saving ? "Đang lưu…" : "Lưu thay đổi"}</span>
               </button>
             </div>
           </form>
@@ -2660,7 +2662,7 @@ Nội dung lý thuyết chi tiết...`}
               {scormImporting ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Đang Import...</span>
+                  <span aria-live="polite">Đang Import…</span>
                 </>
               ) : (
                 <span>{"Xác nhận Import"}</span>

@@ -235,7 +235,7 @@ export default function InstructorCoursesPage() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">
               {"Instructor Portal"}
             </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
+            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white text-balance">
               {"Quản lý Khóa học Giảng dạy"}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -312,7 +312,7 @@ export default function InstructorCoursesPage() {
         {loading ? (
           <div className="flex items-center justify-center py-20 text-slate-500">
             <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-3" />
-            <span>{"Đang tải danh sách khóa học..."}</span>
+            <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
           </div>
         ) : courses.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
@@ -525,7 +525,7 @@ export default function InstructorCoursesPage() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder={"Ví dụ: Natural Language Processing with Transformers"}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     required
                   />
                 </div>
@@ -540,7 +540,7 @@ export default function InstructorCoursesPage() {
                       value={slug}
                       onChange={(e) => setSlug(e.target.value)}
                       placeholder={"course-nlp-transformers (Tự tạo nếu để trống)"}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 font-mono"
                     />
                   </div>
                 )}
@@ -553,8 +553,8 @@ export default function InstructorCoursesPage() {
                     rows={3}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder={"Tóm tắt tổng quan kiến thức và kỹ năng đạt được sau khóa học..."}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder={"Tóm tắt tổng quan kiến thức và kỹ năng đạt được sau khóa học…"}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     required
                   />
                 </div>
@@ -568,7 +568,7 @@ export default function InstructorCoursesPage() {
                       type="text"
                       value={partnerName}
                       onChange={(e) => setPartnerName(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                     />
                   </div>
                   <div>
@@ -579,7 +579,7 @@ export default function InstructorCoursesPage() {
                       type="text"
                       value={partnerLogoUrl}
                       onChange={(e) => setPartnerLogoUrl(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 font-mono text-xs"
                     />
                   </div>
                 </div>
@@ -592,7 +592,7 @@ export default function InstructorCoursesPage() {
                     type="text"
                     value={instructorNames}
                     onChange={(e) => setInstructorNames(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   />
                 </div>
 
@@ -602,7 +602,7 @@ export default function InstructorCoursesPage() {
                     id="financialAidToggle"
                     checked={financialAidEnabled}
                     onChange={(e) => setFinancialAidEnabled(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
+                    className="w-4 h-4 text-blue-600 rounded focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
                   />
                   <label
                     htmlFor="financialAidToggle"
@@ -625,11 +625,13 @@ export default function InstructorCoursesPage() {
                     disabled={saving}
                     className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold shadow-lg shadow-blue-500/20 disabled:opacity-50"
                   >
-                    {saving
-                      ? "Đang lưu..."
-                      : editingCourseId
-                        ? "Cập Nhật Khóa Học"
-                        : "Lưu & Đăng Khóa Học"}
+                    <span aria-live="polite">
+                      {saving
+                        ? "Đang lưu…"
+                        : editingCourseId
+                          ? "Cập Nhật Khóa Học"
+                          : "Lưu & Đăng Khóa Học"}
+                    </span>
                   </button>
                 </div>
               </form>

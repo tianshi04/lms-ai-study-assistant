@@ -167,7 +167,7 @@ export default function InstructorFinancialAidPage() {
                 Instructor Portal
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-balance">
               Xét duyệt Đơn Hỗ trợ Tài chính (Financial Aid)
             </h1>
             <p className="text-sm text-blue-100/90 max-w-2xl">
@@ -284,8 +284,8 @@ export default function InstructorFinancialAidPage() {
         {loading ? (
           <div className="py-16 text-center space-y-3">
             <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-            <p className="text-sm font-medium text-slate-500">
-              Đang tải danh sách đơn Hỗ trợ tài chính...
+            <p aria-live="polite" className="text-sm font-medium text-slate-500">
+              Đang tải danh sách đơn Hỗ trợ tài chính…
             </p>
           </div>
         ) : filteredApps.length === 0 ? (
@@ -392,7 +392,7 @@ export default function InstructorFinancialAidPage() {
                           d="M6 18L18 6M6 6l12 12"
                         />
                       </svg>
-                      <span>{processingId === app.id ? "Đang xử lý..." : "Từ chối đơn"}</span>
+                      <span>{processingId === app.id ? "Đang xử lý…" : "Từ chối đơn"}</span>
                     </button>
                     <button
                       onClick={() => handleReview(app.id, true)}
@@ -412,7 +412,7 @@ export default function InstructorFinancialAidPage() {
                           d="M5 13l4 4L19 7"
                         />
                       </svg>
-                      <span>{processingId === app.id ? "Đang xử lý..." : "Phê duyệt đơn"}</span>
+                      <span>{processingId === app.id ? "Đang xử lý…" : "Phê duyệt đơn"}</span>
                     </button>
                   </div>
                 )}

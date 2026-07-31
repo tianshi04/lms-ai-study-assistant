@@ -149,7 +149,9 @@ export default function AdminEnterpriseDashboardPage() {
       <div className="flex-1 flex items-center justify-center py-24">
         <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
           <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm font-medium">Đang tải bảng điều khiển Enterprise Admin...</span>
+          <span aria-live="polite" className="text-sm font-medium">
+            Đang tải bảng điều khiển Enterprise Admin…
+          </span>
         </div>
       </div>
     );
@@ -171,7 +173,7 @@ export default function AdminEnterpriseDashboardPage() {
                 </span>
               )}
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-balance">
               Quản trị Suất học Enterprise & Đối tác Doanh nghiệp
             </h1>
             <p className="text-sm text-slate-300 max-w-2xl">
@@ -285,7 +287,9 @@ export default function AdminEnterpriseDashboardPage() {
               <span>{message.text}</span>
             </div>
             <button
+              type="button"
               onClick={() => setMessage(null)}
+              aria-label="Đóng thông báo"
               className="p-1 rounded-md opacity-60 hover:opacity-100"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -475,7 +479,7 @@ export default function AdminEnterpriseDashboardPage() {
               disabled={saving}
               className="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md hover:bg-indigo-500 transition-all disabled:opacity-50"
             >
-              {saving ? "Đang xử lý..." : "Kích hoạt gán suất học"}
+              <span aria-live="polite">{saving ? "Đang xử lý…" : "Kích hoạt gán suất học"}</span>
             </button>
           </div>
         </form>
@@ -530,7 +534,7 @@ export default function AdminEnterpriseDashboardPage() {
               disabled={saving}
               className="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 text-white shadow-md hover:bg-indigo-500 transition-all disabled:opacity-50"
             >
-              {saving ? "Đang tạo..." : "Xác nhận tạo Giấy phép"}
+              <span aria-live="polite">{saving ? "Đang tạo…" : "Xác nhận tạo Giấy phép"}</span>
             </button>
           </div>
         </form>

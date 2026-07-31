@@ -37,7 +37,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
       <main className="relative max-w-7xl mx-auto px-6 py-12 space-y-12">
         {/* Header Greeting */}
         <header className="animate-in fade-in slide-in-from-bottom-4 duration-700">
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2">
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-2 text-balance">
             {getGreeting()},{" "}
             <span className="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
               {userName}
@@ -50,7 +50,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
         </header>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
+          <div aria-live="polite" className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
             <div className="col-span-1 md:col-span-2 h-64 bg-white/50 dark:bg-slate-900/50 rounded-3xl border border-slate-200 dark:border-slate-800" />
             <div className="h-64 bg-white/50 dark:bg-slate-900/50 rounded-3xl border border-slate-200 dark:border-slate-800" />
           </div>

@@ -267,7 +267,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
     return (
       <div className="p-4 text-xs text-slate-500 flex items-center justify-center gap-2">
         <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <span>Đang tải bài thảo luận...</span>
+        <span aria-live="polite">Đang tải bài thảo luận…</span>
       </div>
     );
   }
@@ -283,24 +283,24 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
           type="text"
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
-          placeholder="Đặt câu hỏi thảo luận cho bài học này..."
-          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+          placeholder="Đặt câu hỏi thảo luận cho bài học này…"
+          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
         />
         {newTitle.trim() && (
           <div className="flex gap-2 items-center">
             <textarea
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
-              placeholder="Chi tiết câu hỏi (nếu có)..."
+              placeholder="Chi tiết câu hỏi (nếu có)…"
               rows={2}
-              className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:outline-none"
+              className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
             />
             <button
               type="submit"
               disabled={submitting || !newTitle.trim()}
               className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shrink-0 cursor-pointer"
             >
-              {submitting ? "Đang gửi..." : "Đăng Thảo Luận"}
+              <span aria-live="polite">{submitting ? "Đang gửi…" : "Đăng Thảo Luận"}</span>
             </button>
           </div>
         )}
@@ -373,14 +373,14 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                           type="text"
                           value={editThreadTitle}
                           onChange={(e) => setEditThreadTitle(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs font-bold focus:outline-none"
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs font-bold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
                         />
                         <textarea
                           value={editThreadContent}
                           onChange={(e) => setEditThreadContent(e.target.value)}
-                          placeholder="Chi tiết câu hỏi (nếu có)..."
+                          placeholder="Chi tiết câu hỏi (nếu có)…"
                           rows={2}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs focus:outline-none"
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
                         />
                         <div className="flex justify-end gap-1">
                           <button
@@ -456,8 +456,8 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                     onChange={(e) =>
                       setReplyInputs((prev) => ({ ...prev, [thread.id]: e.target.value }))
                     }
-                    placeholder="Trả lời..."
-                    className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2.5 py-1 text-xs focus:outline-none"
+                    placeholder="Trả lời…"
+                    className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2.5 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
                   />
                   <button
                     onClick={() => handlePostReply(thread.id)}

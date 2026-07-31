@@ -37,7 +37,7 @@ export default function RegisterPage() {
         });
 
         if (res.user) {
-          toast.success("Đăng ký thành công! Đang chuyển hướng đến trang đăng nhập...");
+          toast.success("Đăng ký thành công! Đang chuyển hướng đến trang đăng nhập…");
           setTimeout(() => {
             router.push("/auth/login");
           }, 1500);
@@ -56,7 +56,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 text-balance">
               {"Đăng ký tài khoản"}
             </h1>
             <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -120,10 +120,10 @@ export default function RegisterPage() {
                         placeholder={"Nguyễn Văn A"}
                         autoComplete="name"
                         className={cn(
-                          "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2",
+                          "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2",
                           hasError
-                            ? "border-red-500 focus:ring-red-500/50 focus:border-red-500"
-                            : "border-slate-300 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500",
+                            ? "border-red-500 focus-visible:ring-red-500/50 focus-visible:border-red-500"
+                            : "border-slate-300 dark:border-slate-700 focus-visible:ring-blue-500 focus-visible:border-blue-500",
                         )}
                         required
                       />
@@ -188,11 +188,12 @@ export default function RegisterPage() {
                         onChange={(e) => field.handleChange(e.target.value)}
                         placeholder="learner@example.com"
                         autoComplete="email"
+                        spellCheck={false}
                         className={cn(
-                          "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2",
+                          "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-colors bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2",
                           hasError
-                            ? "border-red-500 focus:ring-red-500/50 focus:border-red-500"
-                            : "border-slate-300 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500",
+                            ? "border-red-500 focus-visible:ring-red-500/50 focus-visible:border-red-500"
+                            : "border-slate-300 dark:border-slate-700 focus-visible:ring-blue-500 focus-visible:border-blue-500",
                         )}
                         required
                       />
@@ -258,10 +259,10 @@ export default function RegisterPage() {
                         placeholder="••••••••"
                         autoComplete="new-password"
                         className={cn(
-                          "w-full pl-10 pr-11 py-3 rounded-xl border text-sm transition-all bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2",
+                          "w-full pl-10 pr-11 py-3 rounded-xl border text-sm transition-all bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2",
                           hasError
-                            ? "border-red-500 focus:ring-red-500/50 focus:border-red-500"
-                            : "border-slate-300 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500",
+                            ? "border-red-500 focus-visible:ring-red-500/50 focus-visible:border-red-500"
+                            : "border-slate-300 dark:border-slate-700 focus-visible:ring-blue-500 focus-visible:border-blue-500",
                         )}
                         required
                       />
@@ -348,7 +349,7 @@ export default function RegisterPage() {
                       name={field.name}
                       value={field.state.value}
                       onChange={(e) => field.handleChange(Number(e.target.value) as UserRole)}
-                      className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm appearance-none cursor-pointer"
+                      className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all text-sm appearance-none cursor-pointer"
                     >
                       <option value={UserRole.LEARNER}>{"Học viên (Learner)"}</option>
                       <option value={UserRole.INSTRUCTOR}>{"Giảng viên (Instructor)"}</option>
@@ -403,7 +404,7 @@ export default function RegisterPage() {
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                         ></path>
                       </svg>
-                      <span>{"Đang tạo tài khoản..."}</span>
+                      <span aria-live="polite">{"Đang tạo tài khoản…"}</span>
                     </>
                   ) : (
                     <span>{"Đăng ký ngay"}</span>

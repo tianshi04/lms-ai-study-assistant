@@ -113,7 +113,7 @@ export function AutoGradedLabRunner({
           <select
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 font-mono font-medium focus:ring-1 focus:ring-blue-500"
+            className="px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 font-mono font-medium focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:outline-none"
           >
             <option value="python">Python 3.12</option>
             <option value="javascript">JavaScript (Node.js)</option>
@@ -123,7 +123,9 @@ export function AutoGradedLabRunner({
             disabled={isRunning}
             className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2"
           >
-            {isRunning ? "Executing in Sandbox..." : "Run & Submit Code"}
+            <span aria-live="polite">
+              {isRunning ? "Executing in Sandbox…" : "Run & Submit Code"}
+            </span>
           </button>
         </div>
       </div>
@@ -141,7 +143,7 @@ export function AutoGradedLabRunner({
             onChange={(e) => setSourceCode(e.target.value)}
             rows={14}
             spellCheck={false}
-            className="w-full p-4 rounded-xl bg-slate-950 border border-slate-800 text-emerald-400 font-mono text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y leading-relaxed shadow-inner"
+            className="w-full p-4 rounded-xl bg-slate-950 border border-slate-800 text-emerald-400 font-mono text-xs focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none resize-y leading-relaxed shadow-inner"
           />
         </div>
 
@@ -167,7 +169,7 @@ export function AutoGradedLabRunner({
             {isRunning && (
               <div className="flex items-center gap-2 text-amber-400 animate-pulse">
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
-                <span>Compiling &amp; executing test cases in Sandbox...</span>
+                <span aria-live="polite">Compiling &amp; executing test cases in Sandbox…</span>
               </div>
             )}
 

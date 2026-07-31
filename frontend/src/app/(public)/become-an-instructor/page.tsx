@@ -99,7 +99,7 @@ export default function BecomeAnInstructorPage() {
             <span>Dành cho Chuyên gia & Đào tạo Cá nhân</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight text-balance">
             Nộp Đơn Xin Cấp Quyền{" "}
             <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
               Giảng Viên Cá Nhân
@@ -116,8 +116,11 @@ export default function BecomeAnInstructorPage() {
         {isLoadingApp ? (
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-sm">
             <div className="inline-block animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mb-3" />
-            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-              Đang kiểm tra hồ sơ đăng ký của bạn...
+            <p
+              aria-live="polite"
+              className="text-slate-500 dark:text-slate-400 text-sm font-medium"
+            >
+              Đang kiểm tra hồ sơ đăng ký của bạn…
             </p>
           </div>
         ) : isInstructor ? (
@@ -440,7 +443,7 @@ export default function BecomeAnInstructorPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Ví dụ: Chuyên gia AI & Khoa học Dữ liệu, Tiến sĩ Công nghệ Thông tin"
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors text-sm"
                 required
               />
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -458,8 +461,8 @@ export default function BecomeAnInstructorPage() {
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 rows={5}
-                placeholder="Mô tả quá trình công tác, thành tựu chuyên môn, các dự án thực tế và định hướng giảng dạy của bạn..."
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm resize-none"
+                placeholder="Mô tả quá trình công tác, thành tựu chuyên môn, các dự án thực tế và định hướng giảng dạy của bạn…"
+                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors text-sm resize-none"
                 required
               />
             </div>
@@ -474,7 +477,8 @@ export default function BecomeAnInstructorPage() {
                 value={linkedinUrl}
                 onChange={(e) => setLinkedinUrl(e.target.value)}
                 placeholder="https://linkedin.com/in/username hoặc https://yourportfolio.com"
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                spellCheck={false}
+                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors text-sm"
               />
             </div>
 
@@ -487,8 +491,9 @@ export default function BecomeAnInstructorPage() {
                 type="url"
                 value={cvUrl}
                 onChange={(e) => setCvUrl(e.target.value)}
-                placeholder="https://drive.google.com/file/d/... hoặc link file PDF"
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                placeholder="https://drive.google.com/file/d/… hoặc link file PDF"
+                spellCheck={false}
+                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors text-sm"
               />
             </div>
 
@@ -501,8 +506,9 @@ export default function BecomeAnInstructorPage() {
                 type="url"
                 value={demoVideoUrl}
                 onChange={(e) => setDemoVideoUrl(e.target.value)}
-                placeholder="https://youtube.com/watch?v=... hoặc link Video giới thiệu bài giảng"
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+                placeholder="https://youtube.com/watch?v=… hoặc link Video giới thiệu bài giảng"
+                spellCheck={false}
+                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors text-sm"
               />
             </div>
 
@@ -511,7 +517,7 @@ export default function BecomeAnInstructorPage() {
               <button
                 type="submit"
                 disabled={submitMutation.isPending}
-                className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
               >
                 {submitMutation.isPending ? (
                   <>
@@ -534,7 +540,7 @@ export default function BecomeAnInstructorPage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       />
                     </svg>
-                    <span>Đang gửi đơn...</span>
+                    <span aria-live="polite">Đang gửi đơn…</span>
                   </>
                 ) : (
                   <>

@@ -260,7 +260,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-extrabold uppercase mb-2">
               Question Pool Engine
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white text-balance">
               {"Ngân hàng Câu hỏi & Đề thi"}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -288,7 +288,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
         {isLoading ? (
           <div className="py-20 text-center text-slate-500">
             <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <span>{"Đang tải cấu trúc bài giảng khóa học..."}</span>
+            <span aria-live="polite">{"Đang tải cấu trúc bài giảng khóa học…"}</span>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -623,7 +623,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
               value={newBankTitle}
               onChange={(e) => setNewBankTitle(e.target.value)}
               placeholder="Ví dụ: Kho thi kết thúc Tuần 1: Khái niệm AI"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-hidden"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             />
           </div>
 
@@ -634,7 +634,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
             <select
               value={newBankCategory}
               onChange={(e) => setNewBankCategory(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-hidden"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-bold focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             >
               <option value="PRACTICE">{"Luyện tập (PRACTICE)"}</option>
               <option value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</option>
@@ -650,8 +650,8 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
               rows={3}
               value={newBankDesc}
               onChange={(e) => setNewBankDesc(e.target.value)}
-              placeholder="Mô tả tóm tắt nội dung các câu hỏi trong kho này..."
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-2 focus:ring-blue-500 outline-hidden"
+              placeholder="Mô tả tóm tắt nội dung các câu hỏi trong kho này…"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             />
           </div>
 
@@ -668,7 +668,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
               disabled={creatingBank}
               className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs cursor-pointer"
             >
-              {creatingBank ? "Đang tạo..." : "Xác nhận tạo Kho"}
+              <span aria-live="polite">{creatingBank ? "Đang tạo…" : "Xác nhận tạo Kho"}</span>
             </button>
           </div>
         </form>
@@ -691,8 +691,8 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
               rows={3}
               value={qText}
               onChange={(e) => setQText(e.target.value)}
-              placeholder="Nhập nội dung câu hỏi..."
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-hidden"
+              placeholder="Nhập nội dung câu hỏi…"
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             />
           </div>
 
@@ -713,13 +713,11 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                       { optionText: "Sai (False)", isCorrect: false },
                     ]);
                   } else if (qType === "TRUE_FALSE") {
-                    // Switch back to empty list if switching away from True/False
                     setQOptions([
                       { optionText: "", isCorrect: false },
                       { optionText: "", isCorrect: false },
                     ]);
                   } else if (val === "SINGLE_CHOICE") {
-                    // Switch to SINGLE_CHOICE: keep at most one correct option
                     let hasOneCorrect = false;
                     const normalized = qOptions.map((opt) => {
                       if (opt.isCorrect && !hasOneCorrect) {
@@ -731,95 +729,68 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                     setQOptions(normalized);
                   }
                 }}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-hidden"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-bold focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               >
                 <option value="SINGLE_CHOICE">Trắc nghiệm 1 đáp án (Single Choice)</option>
                 <option value="MULTIPLE_CHOICE">Trắc nghiệm nhiều đáp án (Multiple Choice)</option>
                 <option value="TRUE_FALSE">Chọn Đúng/Sai (True/False)</option>
               </select>
             </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                {"Bậc độ khó"}
-              </label>
-              <select
-                value={qDifficulty}
-                onChange={(e) => setQDifficulty(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-hidden"
-              >
-                <option value="EASY">{"Dễ (Easy)"}</option>
-                <option value="MEDIUM">{"Trung bình (Medium)"}</option>
-                <option value="HARD">{"Khó (Hard)"}</option>
-              </select>
-            </div>
           </div>
 
-          {/* Options Section */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                {"Danh sách các lựa chọn đáp án"} *
-              </label>
-              {qType !== "TRUE_FALSE" && (
-                <button
-                  type="button"
-                  onClick={handleAddOption}
-                  className="px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold hover:bg-blue-100 transition-colors cursor-pointer"
-                >
-                  {"Thêm tùy chọn đáp án"}
-                </button>
-              )}
-            </div>
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              Nội dung Cốt lõi của Câu hỏi *
+            </label>
+            <textarea
+              rows={3}
+              required
+              value={qText}
+              onChange={(e) => setQText(e.target.value)}
+              placeholder="Nhập nội dung đề bài câu hỏi…"
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            />
+          </div>
 
+          {/* Options */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                Danh sách Phương án Trả lời *
+              </label>
+              <button
+                type="button"
+                onClick={handleAddOption}
+                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+              >
+                + Thêm Phương án
+              </button>
+            </div>
             <div className="space-y-2">
               {qOptions.map((opt, idx) => (
-                <div key={idx} className="flex items-center gap-2.5">
-                  {/* Correct Selector Badge */}
-                  <label
-                    className="flex items-center justify-center p-1.5 rounded-lg border border-slate-200 dark:border-slate-700/60 bg-slate-100 dark:bg-slate-800 cursor-pointer"
-                    title={"Đánh dấu đây là đáp án đúng"}
-                  >
-                    <input
-                      type={qType === "MULTIPLE_CHOICE" ? "checkbox" : "radio"}
-                      name="correct_option"
-                      checked={opt.isCorrect}
-                      onChange={(e) => handleOptionCorrectChange(idx, e.target.checked)}
-                      className="w-4 h-4 text-emerald-600 accent-emerald-500 focus:ring-0 cursor-pointer"
-                    />
-                  </label>
-
-                  {/* Option Text Input */}
+                <div key={idx} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={opt.isCorrect}
+                    onChange={(e) => handleOptionCorrectChange(idx, e.target.checked)}
+                    className="w-4 h-4 text-blue-600 rounded cursor-pointer"
+                    title="Đánh dấu phương án đúng"
+                  />
                   <input
                     type="text"
                     required
                     value={opt.optionText}
                     onChange={(e) => handleOptionChange(idx, e.target.value)}
-                    disabled={qType === "TRUE_FALSE"}
-                    placeholder={"Nhập nội dung tùy chọn..."}
-                    className="flex-1 px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm"
+                    placeholder={`Phương án ${idx + 1}…`}
+                    className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                   />
-
-                  {/* Remove option button */}
-                  {qType !== "TRUE_FALSE" && qOptions.length > 2 && (
+                  {qOptions.length > 2 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveOption(idx)}
-                      className="p-2 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-xl cursor-pointer"
+                      className="p-1 text-slate-400 hover:text-rose-500 cursor-pointer"
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
+                      ✕
                     </button>
                   )}
                 </div>
@@ -828,19 +799,19 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-              {"Giải thích chi tiết đáp án"}
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              Giải thích Đáp án (Explanation)
             </label>
             <textarea
               rows={2}
               value={qExplanation}
               onChange={(e) => setQExplanation(e.target.value)}
-              placeholder="Nhập lời giải thích chi tiết khi học viên làm sai..."
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:ring-2 focus:ring-blue-500 outline-hidden"
+              placeholder="Giải thích lý do tại sao phương án đó đúng…"
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={() => setShowAddQuestionModal(false)}
@@ -853,11 +824,13 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
               disabled={submittingQuestion}
               className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs cursor-pointer"
             >
-              {submittingQuestion
-                ? "Đang lưu..."
-                : editingQuestionId
-                  ? "Lưu thay đổi"
-                  : "Lưu câu hỏi"}
+              <span aria-live="polite">
+                {submittingQuestion
+                  ? "Đang lưu…"
+                  : editingQuestionId
+                    ? "Lưu thay đổi"
+                    : "Lưu câu hỏi"}
+              </span>
             </button>
           </div>
         </form>

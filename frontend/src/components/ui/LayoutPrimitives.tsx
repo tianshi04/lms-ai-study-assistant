@@ -112,7 +112,7 @@ export function PageHeader({
           <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">{breadcrumbs}</div>
         )}
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white text-balance">
             {title}
           </h1>
           {badge && <div>{badge}</div>}

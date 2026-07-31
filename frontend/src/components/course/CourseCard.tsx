@@ -33,7 +33,7 @@ export function CourseCard({ course }: { course: Course }) {
       <div>
         {/* Partner Header */}
         <div className="flex items-center justify-between gap-3 mb-4 h-7">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             {!imgError && course.partnerLogoUrl ? (
               <Image
                 src={course.partnerLogoUrl}
@@ -42,7 +42,7 @@ export function CourseCard({ course }: { course: Course }) {
                 height={24}
                 unoptimized
                 onError={() => setImgError(true)}
-                className="h-6 max-w-[140px] w-auto object-contain dark:brightness-200 dark:contrast-200 transition-all"
+                className="h-6 max-w-[140px] w-auto object-contain dark:brightness-200 dark:contrast-200 transition-opacity"
               />
             ) : (
               <span className="text-xs font-bold font-mono text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-200 dark:border-blue-500/20">

@@ -29,7 +29,7 @@ const INITIAL_SUBMISSIONS: DemoSubmission[] = [
     itemTitle: "Bài luận: Phân tích Kiến trúc Microservices vs Modular Monolith",
     submittedAt: "31/07/2026 14:30",
     textContent:
-      "Bài luận phân tích ưu nhược điểm của Modular Monolith. Đã trình bày chi tiết về DDD layer boundaries (domain, application, infrastructure, presentation) và SQL scope pushdown...",
+      "Bài luận phân tích ưu nhược điểm của Modular Monolith. Đã trình bày chi tiết về DDD layer boundaries (domain, application, infrastructure, presentation) và SQL scope pushdown…",
     peerScore: 78,
     taScore: null,
     status: "PENDING",
@@ -42,7 +42,7 @@ const INITIAL_SUBMISSIONS: DemoSubmission[] = [
     itemTitle: "Báo cáo thực hành: Xây dựng mô hình Convolutional Neural Network (CNN)",
     submittedAt: "31/07/2026 11:15",
     textContent:
-      "Kết quả huấn luyện mô hình CNN nhận diện ảnh cifar-10 đạt độ chính xác 91.2%. Các lớp Conv2D, BatchNorm, Dropout và Adam Optimizer...",
+      "Kết quả huấn luyện mô hình CNN nhận diện ảnh cifar-10 đạt độ chính xác 91.2%. Các lớp Conv2D, BatchNorm, Dropout và Adam Optimizer…",
     peerScore: 65,
     taScore: null,
     status: "APPEALED",
@@ -55,7 +55,7 @@ const INITIAL_SUBMISSIONS: DemoSubmission[] = [
     itemTitle: "Bài thu hoạch: Tối ưu hóa truy vấn SQL & Cấu hình PgBouncer",
     submittedAt: "30/07/2026 18:45",
     textContent:
-      "Phân tích Execution Plan giải thích chỉ mục B-Tree và BRIN index. Đã cấu hình PgBouncer transaction pooling...",
+      "Phân tích Execution Plan giải thích chỉ mục B-Tree và BRIN index. Đã cấu hình PgBouncer transaction pooling…",
     peerScore: 85,
     taScore: 92,
     status: "GRADED",
@@ -144,7 +144,7 @@ export default function TAGradingPage() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/30">
               Hàng Chờ Chấm Bài Tự Luận (TA Grading Queue)
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-balance">
               Quản Lý Chấm Điểm & Kháng Nghị Bài Tập
             </h1>
             <p className="text-sm text-slate-300 max-w-2xl">
@@ -313,7 +313,7 @@ export default function TAGradingPage() {
                     max={100}
                     value={inputScore}
                     onChange={(e) => setInputScore(Number(e.target.value))}
-                    className="w-32 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-bold text-lg text-sky-600 dark:text-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    className="w-32 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-bold text-lg text-sky-600 dark:text-sky-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
                     required
                   />
                   <span className="text-xs text-slate-500">
@@ -335,8 +335,8 @@ export default function TAGradingPage() {
                   rows={3}
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
-                  placeholder="Nhập nhận xét chi tiết về bài làm, điểm mạnh và các điểm cần sửa đổi..."
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  placeholder="Nhập nhận xét chi tiết về bài làm, điểm mạnh và các điểm cần sửa đổi…"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
                 />
               </div>
 
@@ -354,7 +354,9 @@ export default function TAGradingPage() {
                   disabled={submitting}
                   className="px-6 py-2.5 rounded-xl text-xs font-bold bg-sky-600 text-white shadow-lg shadow-sky-600/30 hover:bg-sky-500 transition-all disabled:opacity-50"
                 >
-                  {submitting ? "Đang cập nhật..." : "Lưu & Xác Nhận Điểm Trợ Giảng"}
+                  <span aria-live="polite">
+                    {submitting ? "Đang cập nhật…" : "Lưu & Xác Nhận Điểm Trợ Giảng"}
+                  </span>
                 </button>
               </div>
             </form>

@@ -108,7 +108,7 @@ export function ForumReplyItem({
             value={editReplyContent}
             onChange={(e) => onContentChange(e.target.value)}
             rows={2}
-            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-1.5 text-xs text-slate-900 dark:text-white focus:outline-none"
+            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-1.5 text-xs text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
           />
           <div className="flex justify-end gap-1">
             <button

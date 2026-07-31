@@ -323,7 +323,7 @@ function PartnerSettingsForm({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 required
               />
             </div>
@@ -335,7 +335,7 @@ function PartnerSettingsForm({
                 type="text"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
-                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none font-mono"
+                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none font-mono"
                 required
               />
             </div>
@@ -349,7 +349,7 @@ function PartnerSettingsForm({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             />
           </div>
 
@@ -363,7 +363,7 @@ function PartnerSettingsForm({
                 value={logoUrl}
                 onChange={(e) => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
-                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               />
               {logoUrl && (
                 <div className="mt-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center space-x-3">
@@ -389,7 +389,7 @@ function PartnerSettingsForm({
                 value={bannerUrl}
                 onChange={(e) => setBannerUrl(e.target.value)}
                 placeholder="https://example.com/banner.jpg"
-                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               />
               {bannerUrl && (
                 <div className="mt-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
@@ -414,7 +414,7 @@ function PartnerSettingsForm({
                 value={websiteUrl}
                 onChange={(e) => setWebsiteUrl(e.target.value)}
                 placeholder="https://hcmut.edu.vn"
-                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               />
             </div>
           </div>
@@ -428,7 +428,7 @@ function PartnerSettingsForm({
               value={allowedDomainsStr}
               onChange={(e) => setAllowedDomainsStr(e.target.value)}
               placeholder="hcmut.edu.vn, vnuhcm.edu.vn"
-              className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             />
           </div>
         </div>
@@ -559,28 +559,28 @@ function PartnerSettingsForm({
                 value={newSigName}
                 onChange={(e) => setNewSigName(e.target.value)}
                 placeholder="Họ tên người ký (VD: PGS.TS. Lê Văn C)"
-                className="px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               />
               <input
                 type="text"
                 value={newSigTitle}
                 onChange={(e) => setNewSigTitle(e.target.value)}
                 placeholder="Chức danh (VD: Phó Hiệu trưởng)"
-                className="px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               />
               <input
                 type="text"
                 value={newSigDept}
                 onChange={(e) => setNewSigDept(e.target.value)}
                 placeholder="Khoa / Chuyên ngành (VD: Khoa Điện - Điện tử)"
-                className="px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               />
               <input
                 type="text"
                 value={newSigImage}
                 onChange={(e) => setNewSigImage(e.target.value)}
                 placeholder="URL Ảnh chữ ký (tùy chọn)"
-                className="px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               />
             </div>
             <div className="flex justify-end">
@@ -713,7 +713,7 @@ function PartnerSettingsForm({
               readOnly
               rows={4}
               placeholder="Chưa có Public Key PEM. Bấm nút 'Rotate Key Pair' để tạo mới."
-              className="w-full px-4 py-3 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 outline-none"
+              className="w-full px-4 py-3 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             />
           </div>
         </div>
@@ -769,7 +769,7 @@ export default function PartnerSettingsPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-slate-500">
           <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <span>Đang tải cấu hình đối tác...</span>
+          <span aria-live="polite">Đang tải cấu hình đối tác…</span>
         </div>
       </div>
     );
@@ -821,7 +821,7 @@ export default function PartnerSettingsPage() {
       {/* Header */}
       <div className="pb-6 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight text-balance">
             Cấu hình Self-Service Tổ chức
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
@@ -833,7 +833,7 @@ export default function PartnerSettingsPage() {
           <select
             value={selectedPartnerId || activePartner.id}
             onChange={(e) => setSelectedPartnerId(e.target.value)}
-            className="px-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             {partners.map((p) => (
               <option key={p.id} value={p.id}>

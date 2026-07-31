@@ -35,7 +35,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
               Bảng Điều Khiển Giảng Viên
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-balance">
               {getGreeting()},{" "}
               <span className="bg-gradient-to-r from-indigo-300 via-sky-300 to-white bg-clip-text text-transparent">
                 Thầy/Cô {userName}
@@ -247,8 +247,11 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           </div>
 
           {loading ? (
-            <div className="py-12 text-center text-slate-400 text-sm animate-pulse">
-              Đang tải danh sách khóa học...
+            <div
+              aria-live="polite"
+              className="py-12 text-center text-slate-400 text-sm animate-pulse"
+            >
+              Đang tải danh sách khóa học…
             </div>
           ) : courses.length === 0 ? (
             <div className="py-12 text-center text-slate-400 space-y-3">

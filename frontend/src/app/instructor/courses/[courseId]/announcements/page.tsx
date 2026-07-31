@@ -133,7 +133,7 @@ export default function InstructorAnnouncementsPage({
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-extrabold uppercase mb-2">
               Course Announcements
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white text-balance">
               Thông báo Khóa học
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -188,7 +188,7 @@ export default function InstructorAnnouncementsPage({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Ví dụ: Cập nhật hạn nộp bài tập Tuần 2 & Lịch livestream hỏi đáp"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                   required
                 />
               </div>
@@ -201,8 +201,8 @@ export default function InstructorAnnouncementsPage({
                   rows={4}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder="Nhập chi tiết nội dung thông báo gửi tới học viên..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="Nhập chi tiết nội dung thông báo gửi tới học viên…"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
                   required
                 />
               </div>
@@ -213,7 +213,7 @@ export default function InstructorAnnouncementsPage({
                   disabled={submitting}
                   className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm shadow-md transition-all cursor-pointer disabled:opacity-50"
                 >
-                  {submitting ? "Đang gửi..." : "Đăng Thông báo Ngay"}
+                  <span aria-live="polite">{submitting ? "Đang gửi…" : "Đăng Thông báo Ngay"}</span>
                 </button>
               </div>
             </form>
@@ -229,7 +229,7 @@ export default function InstructorAnnouncementsPage({
           {loading ? (
             <div className="py-12 text-center text-slate-500">
               <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-              <span>Đang tải danh sách thông báo...</span>
+              <span aria-live="polite">Đang tải danh sách thông báo…</span>
             </div>
           ) : announcements.length === 0 ? (
             <div className="py-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 text-slate-500 text-sm">

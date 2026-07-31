@@ -14,7 +14,7 @@ export function PublicLanding() {
             <span>Next-Gen Coursera AI LMS</span>
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight text-slate-900 dark:text-white leading-tight text-balance">
             Nền tảng Học tập <br />
             <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-sky-400 bg-clip-text text-transparent">
               Thông minh & Chuẩn Quốc tế

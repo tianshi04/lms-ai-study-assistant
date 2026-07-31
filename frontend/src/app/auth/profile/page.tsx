@@ -101,7 +101,9 @@ export default function ProfilePage() {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
             ></path>
           </svg>
-          <span className="text-sm font-medium">Đang tải hồ sơ...</span>
+          <span aria-live="polite" className="text-sm font-medium">
+            Đang tải hồ sơ…
+          </span>
         </div>
       </div>
     );
@@ -125,7 +127,7 @@ export default function ProfilePage() {
             className="w-24 h-24 rounded-full border-4 border-blue-500/20 shadow-inner bg-slate-100 dark:bg-slate-800"
           />
           <div className="text-center sm:text-left">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1 text-balance">
               {user?.fullName}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{user?.email}</p>
@@ -218,7 +220,9 @@ export default function ProfilePage() {
               value={enterpriseKey}
               onChange={(e) => setEnterpriseKey(e.target.value)}
               placeholder="Nhập mã Enterprise Key (ví dụ: ENT-UNI-2026-X99)"
-              className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm font-mono"
+              autoComplete="off"
+              spellCheck={false}
+              className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors text-sm font-mono"
             />
             <Button
               type="submit"

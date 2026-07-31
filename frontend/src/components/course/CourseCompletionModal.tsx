@@ -171,7 +171,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
       setSubmitted(true);
     } catch (err: unknown) {
       console.error("Failed to submit course review:", err);
-      const msg = err instanceof Error ? err.message : "Đang gửi...";
+      const msg = err instanceof Error ? err.message : "Đang gửi…";
       setErrorMessage(msg);
     } finally {
       setSubmitting(false);
@@ -215,7 +215,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
         {loadingCert ? (
           <div className="relative z-20 mt-5 mx-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/15 text-slate-100 text-xs font-semibold backdrop-blur-sm border border-white/10">
             <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            <span>{"Đang tải..."}</span>
+            <span aria-live="polite">{"Đang tải…"}</span>
           </div>
         ) : certError ? (
           <div className="relative z-20 mt-5 mx-auto max-w-sm p-3.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-100 text-xs text-left backdrop-blur-sm">
@@ -362,9 +362,9 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder={"Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng..."}
+                placeholder={"Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng…"}
                 rows={3}
-                className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all resize-none"
+                className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent focus-visible:outline-none transition-all resize-none"
               />
             </div>
 
@@ -385,7 +385,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                 disabled={submitting}
                 className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
               >
-                {submitting ? "Đang gửi..." : "Gửi đánh giá"}
+                <span aria-live="polite">{submitting ? "Đang gửi…" : "Gửi đánh giá"}</span>
               </button>
             </div>
           </form>

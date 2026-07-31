@@ -355,7 +355,7 @@ export default function ForumPage() {
               </svg>
               Coursera Learning Forum
             </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
+            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white text-balance">
               {"Diễn đàn Thảo luận Cộng đồng"}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
@@ -390,7 +390,7 @@ export default function ForumPage() {
             <select
               value={selectedCourseId}
               onChange={(e) => setSelectedCourseId(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm px-3.5 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 w-full md:w-80 cursor-pointer"
+              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm px-3.5 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 w-full md:w-80 cursor-pointer"
             >
               <option value="">-- All Courses --</option>
               {courses.map((c) => (
@@ -682,7 +682,7 @@ export default function ForumPage() {
                                   value={editReplyContent}
                                   onChange={(e) => setEditReplyContent(e.target.value)}
                                   rows={3}
-                                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
                                 />
                                 <div className="flex justify-end gap-2">
                                   <button
@@ -696,7 +696,9 @@ export default function ForumPage() {
                                     disabled={submittingEditReply || !editReplyContent.trim()}
                                     className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-500 disabled:opacity-50 cursor-pointer"
                                   >
-                                    {submittingEditReply ? "..." : "Lưu thay đổi"}
+                                    <span aria-live="polite">
+                                      {submittingEditReply ? "…" : "Lưu thay đổi"}
+                                    </span>
                                   </button>
                                 </div>
                               </div>
@@ -731,7 +733,7 @@ export default function ForumPage() {
                                 d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
                               />
                             </svg>
-                            <span>{"Nội dung thắc mắc hoặc thảo luận chi tiết..."}...</span>
+                            <span>{"Nội dung thắc mắc hoặc thảo luận chi tiết…"}</span>
                           </button>
                         ) : (
                           <div className="space-y-2">
@@ -741,9 +743,9 @@ export default function ForumPage() {
                               onChange={(e) =>
                                 setReplyInputs((prev) => ({ ...prev, [thread.id]: e.target.value }))
                               }
-                              placeholder={"Nội dung thắc mắc hoặc thảo luận chi tiết..."}
+                              placeholder={"Nội dung thắc mắc hoặc thảo luận chi tiết…"}
                               rows={3}
-                              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
                             />
                             <div className="flex justify-end gap-2">
                               <button
@@ -763,7 +765,9 @@ export default function ForumPage() {
                                 }
                                 className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-all shadow-xs cursor-pointer"
                               >
-                                {submittingReply[thread.id] ? "Đang gửi..." : "Đăng bài"}
+                                <span aria-live="polite">
+                                  {submittingReply[thread.id] ? "Đang gửi…" : "Đăng bài"}
+                                </span>
                               </button>
                             </div>
                           </div>
@@ -793,7 +797,7 @@ export default function ForumPage() {
             <select
               value={newCourseId}
               onChange={(e) => setNewCourseId(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 cursor-pointer"
             >
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -812,8 +816,8 @@ export default function ForumPage() {
               required
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              placeholder={"Tiêu đề chủ đề..."}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              placeholder={"Tiêu đề chủ đề…"}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
             />
           </div>
 
@@ -825,8 +829,8 @@ export default function ForumPage() {
               rows={4}
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
-              placeholder={"Nội dung thắc mắc hoặc thảo luận chi tiết..."}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              placeholder={"Nội dung thắc mắc hoặc thảo luận chi tiết…"}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
             />
           </div>
 
@@ -843,7 +847,7 @@ export default function ForumPage() {
               disabled={submittingThread || !newTitle.trim()}
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-blue-600/20 cursor-pointer"
             >
-              {submittingThread ? "..." : "Đăng bài"}
+              <span aria-live="polite">{submittingThread ? "…" : "Đăng bài"}</span>
             </button>
           </div>
         </form>
@@ -866,7 +870,7 @@ export default function ForumPage() {
               required
               value={editThreadTitle}
               onChange={(e) => setEditThreadTitle(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
             />
           </div>
 
@@ -878,7 +882,7 @@ export default function ForumPage() {
               rows={4}
               value={editThreadContent}
               onChange={(e) => setEditThreadContent(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
             />
           </div>
 
@@ -895,7 +899,7 @@ export default function ForumPage() {
               disabled={submittingEditThread || !editThreadTitle.trim()}
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-blue-600/20 cursor-pointer"
             >
-              {submittingEditThread ? "..." : "Lưu thay đổi"}
+              <span aria-live="polite">{submittingEditThread ? "…" : "Lưu thay đổi"}</span>
             </button>
           </div>
         </form>

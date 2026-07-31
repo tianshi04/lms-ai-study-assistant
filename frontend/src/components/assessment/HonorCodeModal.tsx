@@ -93,7 +93,7 @@ export function HonorCodeModal({ itemId, isOpen, onAgreed, onClose }: HonorCodeM
             type="checkbox"
             checked={isChecked}
             onChange={(e) => setIsChecked(e.target.checked)}
-            className="mt-0.5 w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300"
+            className="mt-0.5 w-4 h-4 rounded text-blue-600 focus-visible:ring-2 focus-visible:ring-blue-500 border-slate-300"
           />
           <span className="text-xs font-medium text-slate-800 dark:text-slate-200 leading-snug">
             Tôi hiểu và đồng ý tuân thủ Quy tắc Liêm chính Học thuật.

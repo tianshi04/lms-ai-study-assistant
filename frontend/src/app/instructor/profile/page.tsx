@@ -48,7 +48,7 @@ export default function InstructorProfilePage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-slate-500">
           <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <span>Đang tải thông tin hồ sơ...</span>
+          <span aria-live="polite">Đang tải thông tin hồ sơ…</span>
         </div>
       </div>
     );
@@ -106,7 +106,7 @@ export default function InstructorProfilePage() {
             Hồ sơ & Chữ ký Giảng viên
           </span>
         </div>
-        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight text-balance">
           Cấu hình Hồ sơ & Chữ ký tay Điện tử
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
@@ -208,7 +208,7 @@ export default function InstructorProfilePage() {
               value={title}
               onChange={(e) => setTitleInput(e.target.value)}
               placeholder="VD: PGS.TS, GS.TS, Giảng viên chính, Thạc sĩ Khoa học Máy tính"
-              className="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             />
             <p className="text-xs text-slate-500 mt-1">
               Chức danh này sẽ xuất hiện bên dưới họ tên của bạn trên tất cả các Giấy chứng nhận
@@ -225,7 +225,7 @@ export default function InstructorProfilePage() {
               value={signatureImageUrl}
               onChange={(e) => setSignatureInput(e.target.value)}
               placeholder="https://example.com/signature.png"
-              className="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full px-4 py-3 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             />
             <p className="text-xs text-slate-500 mt-1">
               Khuyến nghị tải lên ảnh dạng nét mực chữ ký tay trên nền trong suốt (Format PNG/SVG)

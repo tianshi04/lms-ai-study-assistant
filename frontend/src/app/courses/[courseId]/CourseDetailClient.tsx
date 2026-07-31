@@ -145,7 +145,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
       setIsReviewModalOpen(false);
     } catch (err: unknown) {
       console.error("Failed to submit review:", err);
-      const msg = err instanceof Error ? err.message : "Đang gửi...";
+      const msg = err instanceof Error ? err.message : "Đang gửi…";
       toast.error(msg);
     } finally {
       setSubmittingReview(false);
@@ -285,7 +285,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </div>
               )}
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4 leading-tight">
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4 leading-tight text-balance">
               {course.title}
             </h1>
             <p className="text-slate-600 dark:text-slate-300 text-lg leading-relaxed mb-6">
@@ -315,9 +315,9 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           {/* Enrollment Card */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-xl space-y-6">
             <div>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
+              <h3 aria-live="polite" className="text-2xl font-bold text-slate-900 dark:text-white">
                 {loadingAccess
-                  ? "Đang tải thông tin..."
+                  ? "Đang tải thông tin…"
                   : hasCert
                     ? "Hoàn Thành Xuất Sắc"
                     : isPaidAccess
@@ -474,8 +474,8 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                     disabled={checkingFinAidStatus}
                     className="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0 text-xs disabled:opacity-50"
                   >
-                    <span>
-                      {checkingFinAidStatus ? "Đang kiểm tra..." : "Financial Aid available"}
+                    <span aria-live="polite">
+                      {checkingFinAidStatus ? "Đang kiểm tra…" : "Financial Aid available"}
                     </span>
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
@@ -797,7 +797,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   onClick={() => setRating(star)}
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
-                  className="p-1 transition-transform hover:scale-125 focus:outline-none cursor-pointer"
+                  className="p-1 transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-md cursor-pointer"
                 >
                   <svg
                     className={`w-7 h-7 ${
@@ -836,8 +836,8 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               maxLength={2000}
-              placeholder={"Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng..."}
-              className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 outline-none transition-all resize-none"
+              placeholder={"Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng…"}
+              className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none transition-colors resize-none"
             />
           </div>
 
@@ -854,7 +854,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               disabled={submittingReview}
               className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
             >
-              {submittingReview ? "Đang gửi..." : "Gửi đánh giá"}
+              <span aria-live="polite">{submittingReview ? "Đang gửi…" : "Gửi đánh giá"}</span>
             </button>
           </div>
         </form>
@@ -995,8 +995,8 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 rows={8}
                 value={finAidEssay}
                 onChange={(e) => setFinAidEssay(e.target.value)}
-                placeholder={"Tôi xin nộp đơn xin hỗ trợ tài chính cho khóa học này vì..."}
-                className="w-full p-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm leading-relaxed"
+                placeholder={"Tôi xin nộp đơn xin hỗ trợ tài chính cho khóa học này vì…"}
+                className="w-full p-4 rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 text-sm leading-relaxed"
                 required
               />
               <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full mt-3 overflow-hidden">
@@ -1051,7 +1051,9 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   disabled={submittingFinAid || !isFinAidEnoughWords}
                   className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50 cursor-pointer"
                 >
-                  {submittingFinAid ? "Đang gửi đơn..." : "Gửi đơn xin Hỗ trợ"}
+                  <span aria-live="polite">
+                    {submittingFinAid ? "Đang gửi đơn…" : "Gửi đơn xin Hỗ trợ"}
+                  </span>
                 </button>
               </div>
             </div>

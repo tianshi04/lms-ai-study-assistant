@@ -328,7 +328,7 @@ function CoursePlayerContent() {
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-500 dark:text-slate-400">
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <span>Đang mở Trình phát bài học...</span>
+          <span aria-live="polite">Đang mở Trình phát bài học…</span>
         </div>
       </div>
     );
@@ -338,7 +338,7 @@ function CoursePlayerContent() {
     <div className="h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col overflow-hidden transition-colors duration-200">
       {/* Top Player Navbar */}
       <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between flex-shrink-0 z-30">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 min-w-0">
           {isPreviewMode ? (
             <button
               onClick={() => window.close()}
@@ -820,7 +820,7 @@ export default function CoursePlayerPage() {
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-3">
             <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <span>Đang mở Trình phát bài học...</span>
+            <span aria-live="polite">Đang mở Trình phát bài học…</span>
           </div>
         </div>
       }

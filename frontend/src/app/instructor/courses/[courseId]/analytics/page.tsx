@@ -72,7 +72,7 @@ export default function InstructorAnalyticsPage({
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-extrabold uppercase mb-2">
               Instructor Analytics & Student Roster
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white text-balance">
               Thống kê & Danh sách Học viên
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -85,7 +85,7 @@ export default function InstructorAnalyticsPage({
         {loading ? (
           <div className="py-20 text-center text-slate-500">
             <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-            <span>Đang tổng hợp dữ liệu học tập...</span>
+            <span aria-live="polite">Đang tổng hợp dữ liệu học tập…</span>
           </div>
         ) : !analytics ? (
           <div className="py-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 text-slate-500">

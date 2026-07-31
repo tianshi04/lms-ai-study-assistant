@@ -222,8 +222,8 @@ export function GradedQuizRunner({
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
-        <p className="text-sm text-slate-500 font-semibold">
-          Đang tạo phiên làm bài và tải câu hỏi...
+        <p aria-live="polite" className="text-sm text-slate-500 font-semibold">
+          Đang tạo phiên làm bài và tải câu hỏi…
         </p>
       </div>
     );
@@ -327,7 +327,7 @@ export function GradedQuizRunner({
                 BÀI THI CÓ TÍNH ĐIỂM
               </span>
             )}
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-400 tabular-nums">
               Điểm đạt: {passingThreshold}% • Thời gian: {timeLimit} phút • Lượt làm bài tối đa:{" "}
               {maxAttempts} • Thời gian chờ: {cooldownHours} giờ
             </span>
@@ -560,7 +560,7 @@ export function GradedQuizRunner({
             disabled={isSubmitting || (cooldownCountdown > 0 && !isPreviewMode)}
             className="px-6 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-xs transition-all flex items-center gap-2"
           >
-            <span>{isSubmitting ? "Đang chấm điểm..." : "Nộp bài thi"}</span>
+            <span aria-live="polite">{isSubmitting ? "Đang chấm điểm…" : "Nộp bài thi"}</span>
             {!isSubmitting && (
               <svg
                 className="w-4 h-4"

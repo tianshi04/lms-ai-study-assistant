@@ -36,7 +36,7 @@ export default function VerifyPortalPage() {
         </div>
 
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white text-balance">
             {"Xác minh & Tra cứu Chứng chỉ"}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto">
@@ -51,13 +51,15 @@ export default function VerifyPortalPage() {
             type="text"
             value={certId}
             onChange={(e) => setCertId(e.target.value)}
-            placeholder={"Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)..."}
-            className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            placeholder={"Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)…"}
+            autoComplete="off"
+            spellCheck={false}
+            className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 font-mono"
             required
           />
           <button
             type="submit"
-            className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-500/20 transition-all cursor-pointer"
+            className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-500/20 transition-colors cursor-pointer"
           >
             {"Tra cứu Chứng chỉ"}
           </button>

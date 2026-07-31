@@ -133,7 +133,7 @@ export default function CourseReviewerPortalPage() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-semibold uppercase tracking-wider mb-2">
               {"Course Reviewer Portal"}
             </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white">
+            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white text-balance">
               {"Kiểm duyệt & Phê duyệt Phát hành Khóa học"}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -209,7 +209,7 @@ export default function CourseReviewerPortalPage() {
         {loading ? (
           <div className="flex items-center justify-center py-20 text-slate-500">
             <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mr-3" />
-            <span>{"Đang tải danh sách khóa học..."}</span>
+            <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
           </div>
         ) : courses.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
@@ -322,23 +322,25 @@ export default function CourseReviewerPortalPage() {
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 rows={4}
-                placeholder="Ví dụ: Bài giảng tuần 2 thiếu phụ đề VTT, bài kiểm tra graded quiz chưa được chọn ma trận..."
-                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:ring-2 focus:ring-rose-500 outline-none"
+                placeholder="Ví dụ: Bài giảng tuần 2 thiếu phụ đề VTT, bài kiểm tra graded quiz chưa được chọn ma trận…"
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none"
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <button
+                type="button"
                 onClick={() => setRejectingCourseId(null)}
                 className="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-xs font-semibold"
               >
                 {"Hủy"}
               </button>
               <button
+                type="button"
                 onClick={handleConfirmReject}
                 disabled={submitting || !rejectionReason.trim()}
                 className="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold shadow-md disabled:opacity-50 cursor-pointer"
               >
-                {submitting ? "Đang xử lý..." : "Xác nhận Từ chối"}
+                <span aria-live="polite">{submitting ? "Đang xử lý…" : "Xác nhận Từ chối"}</span>
               </button>
             </div>
           </div>

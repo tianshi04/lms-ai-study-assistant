@@ -80,7 +80,7 @@ function LoginFormContent() {
     <div className="w-full max-w-md">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 text-balance">
             {"Đăng nhập tài khoản"}
           </h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -148,11 +148,12 @@ function LoginFormContent() {
                       onChange={(e) => field.handleChange(e.target.value)}
                       placeholder="learner@example.com"
                       autoComplete="email"
+                      spellCheck={false}
                       className={cn(
-                        "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2",
+                        "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-colors bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2",
                         hasError
-                          ? "border-red-500 focus:ring-red-500/50 focus:border-red-500"
-                          : "border-slate-300 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500",
+                          ? "border-red-500 focus-visible:ring-red-500/50 focus-visible:border-red-500"
+                          : "border-slate-300 dark:border-slate-700 focus-visible:ring-blue-500 focus-visible:border-blue-500",
                       )}
                       required
                     />
@@ -217,10 +218,10 @@ function LoginFormContent() {
                       placeholder="••••••••"
                       autoComplete="current-password"
                       className={cn(
-                        "w-full pl-10 pr-11 py-3 rounded-xl border text-sm transition-all bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2",
+                        "w-full pl-10 pr-11 py-3 rounded-xl border text-sm transition-all bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2",
                         hasError
-                          ? "border-red-500 focus:ring-red-500/50 focus:border-red-500"
-                          : "border-slate-300 dark:border-slate-700 focus:ring-blue-500 focus:border-blue-500",
+                          ? "border-red-500 focus-visible:ring-red-500/50 focus-visible:border-red-500"
+                          : "border-slate-300 dark:border-slate-700 focus-visible:ring-blue-500 focus-visible:border-blue-500",
                       )}
                       required
                     />
@@ -305,7 +306,7 @@ function LoginFormContent() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                       ></path>
                     </svg>
-                    <span>{"Đang đăng nhập..."}</span>
+                    <span aria-live="polite">{"Đang đăng nhập…"}</span>
                   </>
                 ) : (
                   <span>{"Đăng nhập ngay"}</span>
@@ -401,7 +402,13 @@ function LoginFormContent() {
 export default function LoginPage() {
   return (
     <main className="flex-1 flex items-center justify-center px-4 py-12">
-      <Suspense fallback={<div className="text-slate-500">{"Đang tải..."}</div>}>
+      <Suspense
+        fallback={
+          <div aria-live="polite" className="text-slate-500">
+            {"Đang tải…"}
+          </div>
+        }
+      >
         <LoginFormContent />
       </Suspense>
     </main>

@@ -23,7 +23,7 @@ export function PartnerDashboard({ userName }: { userName: string }) {
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
               Bảng Điều Khiển Đối Tác Doanh Nghiệp
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-balance">
               {getGreeting()},{" "}
               <span className="bg-gradient-to-r from-amber-300 via-yellow-300 to-white bg-clip-text text-transparent">
                 Đại diện {userName}

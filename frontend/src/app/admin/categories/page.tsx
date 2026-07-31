@@ -84,7 +84,12 @@ export default function AdminCategoriesPage() {
   const [newType, setNewType] = useState<"SUBJECT" | "LEVEL">("SUBJECT");
   const [errorMsg, setErrorMsg] = useState("");
 
-  if (profileLoading) return <div className="p-8 text-center">{"Đang tải..."}</div>;
+  if (profileLoading)
+    return (
+      <div aria-live="polite" className="p-8 text-center">
+        {"Đang tải…"}
+      </div>
+    );
   if (!isAdmin) return <div className="p-8 text-center text-red-500">{"Từ chối truy cập"}</div>;
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -116,7 +121,9 @@ export default function AdminCategoriesPage() {
     <main className="max-w-5xl mx-auto px-6 py-12 flex-1">
       <div className="mb-8 flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">{"Danh mục quản trị"}</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-balance">
+            {"Danh mục quản trị"}
+          </h1>
           <p className="text-slate-600 dark:text-slate-400 mt-2">{"Quản lý danh mục khóa học"}</p>
         </div>
         <button
@@ -139,7 +146,7 @@ export default function AdminCategoriesPage() {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder={"Nhập tên danh mục"}
-              className="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               required
             />
           </div>
@@ -150,7 +157,7 @@ export default function AdminCategoriesPage() {
             <select
               value={newType}
               onChange={(e) => setNewType(e.target.value as "SUBJECT" | "LEVEL")}
-              className="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 bg-slate-50 dark:bg-slate-950 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             >
               <option value="SUBJECT">{"Chủ đề"}</option>
               <option value="LEVEL">{"Cấp độ"}</option>
@@ -161,7 +168,9 @@ export default function AdminCategoriesPage() {
             disabled={createCategoryMutation.isPending}
             className="w-full md:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors disabled:opacity-70"
           >
-            {createCategoryMutation.isPending ? "Đang thêm..." : "Thêm danh mục"}
+            <span aria-live="polite">
+              {createCategoryMutation.isPending ? "Đang thêm…" : "Thêm danh mục"}
+            </span>
           </button>
         </form>
         {errorMsg && <p className="text-red-500 text-sm mt-3">{errorMsg}</p>}

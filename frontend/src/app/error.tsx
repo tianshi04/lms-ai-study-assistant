@@ -46,7 +46,7 @@ export default function ErrorPage({
 
         {/* Headings */}
         <div className="space-y-3 max-w-xl mx-auto">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white text-balance">
             {"Rất tiếc, đã có lỗi không mong muốn xảy ra!"}
           </h1>
           <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">

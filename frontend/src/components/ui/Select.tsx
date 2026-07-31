@@ -16,7 +16,7 @@ export function SelectTrigger({
     <BaseSelect.Trigger
       ref={ref}
       className={cn(
-        "w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none shadow-sm cursor-pointer hover:border-slate-300 transition-colors flex items-center justify-between gap-2",
+        "w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 appearance-none shadow-sm cursor-pointer hover:border-slate-300 transition-colors flex items-center justify-between gap-2",
         className,
       )}
       {...props}

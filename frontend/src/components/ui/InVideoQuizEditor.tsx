@@ -262,7 +262,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                 min={0}
                 value={timestampSeconds}
                 onChange={(e) => setTimestampSeconds(parseInt(e.target.value) || 0)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-mono font-bold"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-mono font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                 required
               />
               <span className="text-xs font-mono font-semibold text-slate-400">
@@ -280,7 +280,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="VD: Hàm print() trong Python có tác dụng gì?"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs"
+              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             />
           </div>
         </div>
@@ -328,8 +328,8 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                     type="text"
                     value={optText}
                     onChange={(e) => handleOptionChange(idx, e.target.value)}
-                    placeholder={`Nhập phương án ${letter}...`}
-                    className="w-full bg-transparent text-xs outline-none"
+                    placeholder={`Nhập phương án ${letter}…`}
+                    className="w-full bg-transparent text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500 rounded px-1"
                   />
                   {optionsList.length > 2 && (
                     <button
@@ -368,7 +368,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
             value={explanation}
             onChange={(e) => setExplanation(e.target.value)}
             placeholder="VD: print() là hàm tích hợp sẵn của Python để ghi dữ liệu ra console."
-            className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs"
+            className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           />
         </div>
 

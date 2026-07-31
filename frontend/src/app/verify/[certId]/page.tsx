@@ -78,7 +78,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
     <main className="max-w-4xl mx-auto px-4 py-10 w-full flex-1">
       {/* Interactive Search Bar */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 mb-8 shadow-sm">
-        <h1 className="text-xl font-extrabold text-slate-900 dark:text-white mb-2">
+        <h1 className="text-xl font-extrabold text-slate-900 dark:text-white mb-2 text-balance">
           {"Xác minh & Tra cứu Chứng chỉ"}
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
@@ -92,8 +92,10 @@ export default function VerifyPage({ params }: VerifyPageProps) {
             type="text"
             value={searchCertId}
             onChange={(e) => setSearchCertId(e.target.value)}
-            placeholder={"Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)..."}
-            className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            placeholder={"Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)…"}
+            spellCheck={false}
+            autoComplete="off"
+            className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 font-mono transition-colors"
           />
           <button
             type="submit"
@@ -115,7 +117,7 @@ export default function VerifyPage({ params }: VerifyPageProps) {
       {loading ? (
         <div className="flex items-center justify-center py-20 text-slate-500">
           <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-3" />
-          <span>{"Đang tải..."}</span>
+          <span aria-live="polite">{"Đang tải…"}</span>
         </div>
       ) : isValid && cert ? (
         <div className="space-y-8">

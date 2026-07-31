@@ -64,7 +64,7 @@ export function CourseCatalogClient() {
           </svg>
           {"Coursera-Style Specializations & Courses"}
         </div>
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4">
+        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4 text-balance">
           {"Khám phá Khóa học & Lộ trình Học tập"}
         </h1>
         <p className="text-slate-600 dark:text-slate-400 text-lg leading-relaxed">
@@ -97,12 +97,14 @@ export function CourseCatalogClient() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={"Tìm kiếm khóa học theo tên hoặc từ khóa..."}
-              className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+              placeholder={"Tìm kiếm khóa học theo tên hoặc từ khóa…"}
+              className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-xl text-slate-800 dark:text-slate-200 placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/30 focus-visible:border-blue-500 transition-colors"
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => setSearchQuery("")}
+                aria-label="Xóa tìm kiếm"
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold"
               >
                 ✕
@@ -277,6 +279,7 @@ export function CourseCatalogClient() {
         </div>
       ) : (
         <div
+          style={{ contentVisibility: "auto", containIntrinsicSize: "1px 320px" }}
           className={`w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-opacity duration-200 ${isFetching ? "opacity-60 pointer-events-none" : "opacity-100"}`}
         >
           {courses.map((course) => (

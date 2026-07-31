@@ -84,7 +84,7 @@ export default function AdminPartnersPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-slate-500">
           <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <span>Đang tải danh sách đối tác...</span>
+          <span aria-live="polite">Đang tải danh sách đối tác…</span>
         </div>
       </div>
     );
@@ -277,7 +277,7 @@ export default function AdminPartnersPage() {
               Đối tác phát hành
             </span>
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight text-balance">
             Quản lý Đối tác Phát hành
           </h1>
           <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
@@ -498,7 +498,7 @@ export default function AdminPartnersPage() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="VD: Đại học Bách Khoa TP.HCM"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 required
               />
             </div>
@@ -511,7 +511,7 @@ export default function AdminPartnersPage() {
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder="VD: hcmut"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none font-mono"
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none font-mono"
                 required
               />
             </div>
@@ -524,9 +524,9 @@ export default function AdminPartnersPage() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Giới thiệu sơ lược về tổ chức đối tác..."
+              placeholder="Giới thiệu sơ lược về tổ chức đối tác…"
               rows={2}
-              className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             />
           </div>
 
@@ -540,7 +540,7 @@ export default function AdminPartnersPage() {
                 value={logoUrl}
                 onChange={(e) => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               />
             </div>
             <div>
@@ -552,7 +552,7 @@ export default function AdminPartnersPage() {
                 value={bannerUrl}
                 onChange={(e) => setBannerUrl(e.target.value)}
                 placeholder="https://example.com/banner.jpg"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               />
             </div>
             <div>
@@ -564,7 +564,7 @@ export default function AdminPartnersPage() {
                 value={websiteUrl}
                 onChange={(e) => setWebsiteUrl(e.target.value)}
                 placeholder="https://hcmut.edu.vn"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               />
             </div>
           </div>
@@ -578,7 +578,7 @@ export default function AdminPartnersPage() {
               value={allowedDomainsStr}
               onChange={(e) => setAllowedDomainsStr(e.target.value)}
               placeholder="hcmut.edu.vn, vnuhcm.edu.vn"
-              className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             />
           </div>
 
@@ -610,7 +610,7 @@ export default function AdminPartnersPage() {
                   value={signerName}
                   onChange={(e) => setSignerName(e.target.value)}
                   placeholder="GS.TS. Nguyễn Văn A"
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 />
               </div>
               <div>
@@ -622,7 +622,7 @@ export default function AdminPartnersPage() {
                   value={signerTitle}
                   onChange={(e) => setSignerTitle(e.target.value)}
                   placeholder="Hiệu trưởng"
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 />
               </div>
               <div>
@@ -634,7 +634,7 @@ export default function AdminPartnersPage() {
                   value={signatureImageUrl}
                   onChange={(e) => setSignatureImageUrl(e.target.value)}
                   placeholder="https://example.com/signature.png"
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 />
               </div>
             </div>
@@ -718,14 +718,14 @@ export default function AdminPartnersPage() {
                 value={newAdminName}
                 onChange={(e) => setNewAdminName(e.target.value)}
                 placeholder="Tên quản trị viên"
-                className="sm:col-span-2 px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                className="sm:col-span-2 px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
               />
               <input
                 type="email"
                 value={newAdminEmail}
                 onChange={(e) => setNewAdminEmail(e.target.value)}
                 placeholder="email@domain.edu.vn"
-                className="sm:col-span-2 px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none font-mono"
+                className="sm:col-span-2 px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none font-mono"
               />
               <button
                 type="button"
@@ -752,9 +752,10 @@ export default function AdminPartnersPage() {
             <textarea
               value={publicKeyPem}
               onChange={(e) => setPublicKeyPem(e.target.value)}
-              placeholder="-----BEGIN PUBLIC KEY-----..."
+              placeholder="-----BEGIN PUBLIC KEY-----…"
+              spellCheck={false}
               rows={3}
-              className="w-full px-3.5 py-2 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none"
+              className="w-full px-3.5 py-2 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
             />
           </div>
 
