@@ -23,20 +23,18 @@ export function UserDropdown() {
     return userName.replace(/\s*\([^)]*\)/g, "").trim();
   }, [userName]);
 
-  const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
-  const isAdmin = userRole === "4" || userRole === "5";
+  const isInstructorOrAdmin = userRole === "2" || userRole === "4";
+  const isAdmin = userRole === "4";
   const roleLabel = useMemo(() => {
     switch (userRole) {
       case "2":
-        return "Instructor";
+        return "Giảng viên";
       case "3":
-        return "Teaching Assistant";
+        return "Trợ giảng";
       case "4":
-        return "Super Admin";
-      case "5":
-        return "Partner Admin";
+        return "Quản trị viên hệ thống";
       default:
-        return "Learner";
+        return "Học viên";
     }
   }, [userRole]);
 
