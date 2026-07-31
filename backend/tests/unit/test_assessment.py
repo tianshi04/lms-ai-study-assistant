@@ -461,6 +461,27 @@ async def test_quiz_session_timer_and_timeout():
 
     # Expired start_time (60 minutes ago)
     expired_start = (datetime.now(timezone.utc) - timedelta(minutes=60)).isoformat()
+
+    # FIX V1 test: Also expire the DB active session so it triggers DB-first validation
+    session_key = f"{user_id}:{item_id}"
+    active_sess = repo.active_sessions.get(session_key)
+    if active_sess:
+        active_sess.expires_at = (
+            datetime.now(timezone.utc) - timedelta(minutes=15)
+        ).isoformat()
+
+    token_payload = {
+        "sub": user_id,
+        "item_id": item_id,
+        "seed": 12345,
+        "start_time": expired_start,
+        "duration_minutes": 45,
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+    }
+    timeout_token = jwt.encode(
+        token_payload, settings.JWT_SECRET, algorithm=JWT_ALGORITHM
+    )
+
     res_timeout = await usecase.submit_graded_quiz(
         user_id,
         item_id,
@@ -468,7 +489,10 @@ async def test_quiz_session_timer_and_timeout():
         start_time_iso=expired_start,
         duration_minutes=45,
     )
-    assert "tự động nộp bài" in res_timeout["answer_explanations"][0]
+    # With Fix V1, DB session expiry now returns "hết hạn theo máy chủ" message
+    assert res_timeout["score_percent"] == 0.0
+    assert res_timeout["passed"] is False
+    assert "hết hạn" in res_timeout["answer_explanations"][0]
 
 
 @pytest.mark.asyncio

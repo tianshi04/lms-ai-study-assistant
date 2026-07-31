@@ -381,7 +381,18 @@ class IdentityUseCase:
 
             # BR_ACCESS_003: Atomic DB update for recycling enterprise seats
             if seat_key:
-                await repo.recycle_enterprise_seat(seat_key)
+                result = await session.execute(
+                    update(EnterpriseLicenseModel)
+                    .where(
+                        EnterpriseLicenseModel.key == seat_key,
+                        EnterpriseLicenseModel.used_seats > 0,
+                    )
+                    .values(used_seats=EnterpriseLicenseModel.used_seats - 1)
+                )
+                if getattr(result, "rowcount", 0) == 0:
+                    logger.warning(
+                        "Seat recycle skipped — already 0 for key %s", seat_key
+                    )
             await session.commit()
 
             logger.info(
