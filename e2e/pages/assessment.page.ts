@@ -36,7 +36,7 @@ export class AssessmentPage {
     this.honorAgreedBadge = page.locator('span').filter({ hasText: /Đã xác nhận Cam kết|Honor Code Agreed/i }).first();
     this.submitQuizButton = page.getByRole('button', { name: /Submit Graded Quiz|Nộp bài thi/i });
     this.honorCheckbox = page.locator('.fixed.inset-0 input[type="checkbox"]').first();
-    this.agreeAndContinueButton = page.locator('button', { hasText: 'I Agree & Continue' }).first();
+    this.agreeAndContinueButton = page.locator('button').filter({ hasText: /I Agree & Continue|Tôi đồng ý & Tiếp tục/i }).first();
 
     this.runLabButton = page.getByRole('button', { name: /Run & Submit Code/i });
 
