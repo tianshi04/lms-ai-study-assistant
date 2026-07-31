@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { useToast } from "@/components/ui/Toast";
@@ -23,9 +23,7 @@ interface PeerItem {
     feedback: string;
   }[];
 }
-
-export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmentWorkspaceProps) {
-
+export function PeerAssignmentWorkspace({ itemId, title }: PeerAssignmentWorkspaceProps) {
 
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<"submit" | "grade" | "appeal">("submit");
