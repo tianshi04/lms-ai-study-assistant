@@ -1,19 +1,18 @@
 import { cookies } from "next/headers";
-import { PublicLanding } from "@/components/home/PublicLanding";
-import { LearningDashboard } from "@/components/home/LearningDashboard";
+import { HomeDashboardSwitch } from "@/components/dashboard/HomeDashboardSwitch";
 
 export default async function Home() {
   const cookieStore = await cookies();
   const token = cookieStore.get("access_token")?.value;
   const rawUserName = cookieStore.get("user_name")?.value;
-  const userName = rawUserName || "Học viên";
+  const rawUserRole = cookieStore.get("user_role")?.value;
+  const userName = rawUserName ? decodeURIComponent(rawUserName) : undefined;
 
-  // Decode the URL encoded cookie value if present
-  const decodedUserName = decodeURIComponent(userName);
-
-  if (token && rawUserName) {
-    return <LearningDashboard userName={decodedUserName} />;
-  }
-
-  return <PublicLanding />;
+  return (
+    <HomeDashboardSwitch
+      initialToken={token}
+      initialUserName={userName}
+      initialUserRole={rawUserRole}
+    />
+  );
 }
