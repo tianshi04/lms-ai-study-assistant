@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useRef, ViewTransition } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import {
@@ -642,14 +642,758 @@ export default function InstructorCourseBuilderPage({
     }
   };
 
-  // Simple Live Drag & Reorder State
-  const [activeDrag, setActiveDrag] = useState<{
-    type: "week" | "lesson" | "item";
-    id: string;
-    containerId?: string;
+  // Zero-lag 60FPS DOM Pointer Drag Ref for Learning Items (no HTML5 ghost preview)
+  const itemPointerDragRef = useRef<{
+    itemId: string;
+    lessonId: string;
+    itemEl: HTMLElement;
+    containerEl: HTMLElement;
+    startY: number;
+    startScrollY: number;
+    lastClientY: number;
+    minY: number;
+    maxY: number;
     startIndex: number;
     currentIndex: number;
+    itemBounds: { id: string; top: number; bottom: number; mid: number }[];
+    animationFrameId: number | null;
   } | null>(null);
+
+  // 60FPS Continuous Lerp Auto-Scroll Engine Ref
+  const autoScrollStateRef = useRef<{
+    animationFrameId: number | null;
+    currentSpeed: number;
+    targetSpeed: number;
+    onFrame: (() => void) | null;
+  }>({
+    animationFrameId: null,
+    currentSpeed: 0,
+    targetSpeed: 0,
+    onFrame: null,
+  });
+
+  const updateAutoScrollEngine = (
+    elementEl: HTMLElement | null,
+    clientY: number,
+    onScrollFrame: () => void,
+  ) => {
+    const cursorThreshold = 90; // 90px edge threshold for cursor
+    const elementEdgeThreshold = 35; // 35px edge threshold for element edge
+    const maxSpeed = 20; // max scroll speed (px/frame)
+    const gentleSpeed = 4; // gentle scroll speed (px/frame)
+    const viewportHeight = window.innerHeight;
+
+    let computedTargetSpeed = 0;
+
+    if (clientY < cursorThreshold) {
+      const depth = (cursorThreshold - clientY) / cursorThreshold;
+      computedTargetSpeed = -Math.pow(depth, 1.5) * maxSpeed;
+    } else if (viewportHeight - clientY < cursorThreshold) {
+      const depth = (cursorThreshold - (viewportHeight - clientY)) / cursorThreshold;
+      computedTargetSpeed = Math.pow(depth, 1.5) * maxSpeed;
+    } else if (elementEl) {
+      const rect = elementEl.getBoundingClientRect();
+      if (
+        viewportHeight - rect.bottom < elementEdgeThreshold &&
+        viewportHeight - rect.bottom > -120
+      ) {
+        computedTargetSpeed = gentleSpeed;
+      } else if (rect.top < elementEdgeThreshold && rect.top > -120) {
+        computedTargetSpeed = -gentleSpeed;
+      }
+    }
+
+    const scrollState = autoScrollStateRef.current;
+    scrollState.targetSpeed = computedTargetSpeed;
+    scrollState.onFrame = onScrollFrame;
+
+    if (computedTargetSpeed !== 0 && scrollState.animationFrameId === null) {
+      const scrollLoop = () => {
+        const state = autoScrollStateRef.current;
+        state.currentSpeed += (state.targetSpeed - state.currentSpeed) * 0.25;
+
+        if (Math.abs(state.currentSpeed) > 0.1) {
+          window.scrollBy(0, state.currentSpeed);
+          if (state.onFrame) {
+            state.onFrame();
+          }
+          state.animationFrameId = requestAnimationFrame(scrollLoop);
+        } else {
+          state.currentSpeed = 0;
+          state.animationFrameId = null;
+        }
+      };
+
+      scrollState.animationFrameId = requestAnimationFrame(scrollLoop);
+    } else if (
+      computedTargetSpeed === 0 &&
+      Math.abs(scrollState.currentSpeed) < 0.2 &&
+      scrollState.animationFrameId !== null
+    ) {
+      cancelAnimationFrame(scrollState.animationFrameId);
+      scrollState.animationFrameId = null;
+      scrollState.currentSpeed = 0;
+    }
+  };
+
+  const stopAutoScrollEngine = () => {
+    const state = autoScrollStateRef.current;
+    if (state.animationFrameId !== null) {
+      cancelAnimationFrame(state.animationFrameId);
+      state.animationFrameId = null;
+    }
+    state.currentSpeed = 0;
+    state.targetSpeed = 0;
+    state.onFrame = null;
+  };
+
+  const [activeDraggingItemId, setActiveDraggingItemId] = useState<string | null>(null);
+
+  const handleItemPointerDown = (
+    e: React.PointerEvent<HTMLDivElement>,
+    lessonId: string,
+    itemId: string,
+    startIndex: number,
+  ) => {
+    if (!isInstructorOrAdmin) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const handleEl = e.currentTarget;
+    handleEl.setPointerCapture(e.pointerId);
+
+    const itemEl = handleEl.closest("[data-item-id]") as HTMLElement;
+    const containerEl = handleEl.closest("[data-items-container]") as HTMLElement;
+
+    if (!itemEl || !containerEl) return;
+
+    const itemRect = itemEl.getBoundingClientRect();
+    const containerRect = containerEl.getBoundingClientRect();
+
+    // Strict vertical bounds (constrained between top and bottom of lesson container)
+    const minY = containerRect.top - itemRect.top;
+    const maxY = containerRect.bottom - itemRect.bottom;
+
+    // Cache initial item bounds of siblings to avoid expensive DOM reads on every mouse move
+    const siblingEls = Array.from(containerEl.querySelectorAll<HTMLElement>("[data-item-id]"));
+    const itemBounds = siblingEls.map((el) => {
+      const r = el.getBoundingClientRect();
+      return {
+        id: el.getAttribute("data-item-id")!,
+        top: r.top,
+        bottom: r.bottom,
+        mid: r.top + r.height / 2,
+      };
+    });
+
+    itemEl.style.transform = "translateY(0px)";
+    itemEl.style.zIndex = "50";
+    itemEl.style.position = "relative";
+    itemEl.style.boxShadow =
+      "0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)";
+    itemEl.style.borderColor = "#94a3b8";
+    itemEl.style.transition = "none";
+
+    itemPointerDragRef.current = {
+      itemId,
+      lessonId,
+      itemEl,
+      containerEl,
+      startY: e.clientY,
+      startScrollY: window.scrollY,
+      lastClientY: e.clientY,
+      minY,
+      maxY,
+      startIndex,
+      currentIndex: startIndex,
+      itemBounds,
+      animationFrameId: null,
+    };
+
+    setActiveDraggingItemId(itemId);
+  };
+
+  const renderItemPointerDragFrame = (clientY: number) => {
+    const drag = itemPointerDragRef.current;
+    if (!drag) return;
+
+    const scrollDelta = window.scrollY - drag.startScrollY;
+    const deltaY = clientY - drag.startY + scrollDelta;
+    const constrainedY = Math.max(drag.minY, Math.min(drag.maxY, deltaY));
+
+    if (drag.itemEl) {
+      drag.itemEl.style.transform = `translateY(${constrainedY}px)`;
+    }
+
+    const draggedRect = drag.itemEl ? drag.itemEl.getBoundingClientRect() : null;
+    const draggedTop = draggedRect ? draggedRect.top : clientY;
+    const draggedBottom = draggedRect ? draggedRect.bottom : clientY;
+    const currentScrollOffset = window.scrollY - drag.startScrollY;
+    let newTargetIndex = drag.startIndex;
+
+    for (let idx = 0; idx < drag.itemBounds.length; idx++) {
+      const siblingMidpoint = drag.itemBounds[idx].mid - currentScrollOffset;
+
+      if (idx < drag.startIndex) {
+        if (draggedTop < siblingMidpoint) {
+          newTargetIndex = Math.min(newTargetIndex, idx);
+        }
+      } else if (idx > drag.startIndex) {
+        if (draggedBottom > siblingMidpoint) {
+          newTargetIndex = Math.max(newTargetIndex, idx);
+        }
+      }
+    }
+
+    drag.currentIndex = newTargetIndex;
+
+    const siblingEls = Array.from(drag.containerEl.querySelectorAll<HTMLElement>("[data-item-id]"));
+    const draggedHeight = drag.itemBounds[drag.startIndex]
+      ? drag.itemBounds[drag.startIndex].bottom - drag.itemBounds[drag.startIndex].top + 8
+      : 44;
+
+    siblingEls.forEach((el, idx) => {
+      if (idx === drag.startIndex) return;
+
+      el.style.transition = "transform 0.22s cubic-bezier(0.2, 0, 0, 1)";
+
+      if (drag.startIndex < newTargetIndex) {
+        if (idx > drag.startIndex && idx <= newTargetIndex) {
+          el.style.transform = `translateY(-${draggedHeight}px)`;
+        } else {
+          el.style.transform = "translateY(0px)";
+        }
+      } else if (drag.startIndex > newTargetIndex) {
+        if (idx >= newTargetIndex && idx < drag.startIndex) {
+          el.style.transform = `translateY(${draggedHeight}px)`;
+        } else {
+          el.style.transform = "translateY(0px)";
+        }
+      } else {
+        el.style.transform = "translateY(0px)";
+      }
+    });
+  };
+
+  const handleItemPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = itemPointerDragRef.current;
+    if (!drag) return;
+    e.preventDefault();
+
+    drag.lastClientY = e.clientY;
+
+    updateAutoScrollEngine(drag.itemEl, e.clientY, () => {
+      renderItemPointerDragFrame(drag.lastClientY);
+    });
+
+    if (drag.animationFrameId !== null) {
+      cancelAnimationFrame(drag.animationFrameId);
+    }
+
+    drag.animationFrameId = requestAnimationFrame(() => {
+      renderItemPointerDragFrame(e.clientY);
+    });
+  };
+
+  const handleItemPointerUp = async (e: React.PointerEvent<HTMLDivElement>) => {
+    stopAutoScrollEngine();
+    const drag = itemPointerDragRef.current;
+    if (!drag) return;
+    e.preventDefault();
+
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+
+    if (drag.animationFrameId !== null) {
+      cancelAnimationFrame(drag.animationFrameId);
+    }
+
+    const { lessonId, startIndex, currentIndex, itemEl, containerEl, itemBounds } = drag;
+    itemPointerDragRef.current = null;
+    setActiveDraggingItemId(null);
+
+    // Calculate exact morph target offset Y
+    const startTop = itemBounds[startIndex] ? itemBounds[startIndex].top : 0;
+    const targetTop = itemBounds[currentIndex] ? itemBounds[currentIndex].top : startTop;
+    const targetOffset = targetTop - startTop;
+
+    // Morph animate dragged element smoothly into target slot over 180ms
+    if (itemEl) {
+      itemEl.style.transition =
+        "transform 0.18s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.18s ease, border-color 0.18s ease";
+      itemEl.style.transform = `translateY(${targetOffset}px)`;
+      itemEl.style.boxShadow = "";
+      itemEl.style.borderColor = "";
+    }
+
+    // Wait 180ms for morph glide animation to complete
+    await new Promise((resolve) => setTimeout(resolve, 180));
+
+    // Reset inline styles & commit React state order
+    if (itemEl) {
+      itemEl.style.transform = "";
+      itemEl.style.zIndex = "";
+      itemEl.style.position = "";
+      itemEl.style.boxShadow = "";
+      itemEl.style.borderColor = "";
+      itemEl.style.transition = "";
+    }
+
+    if (containerEl) {
+      const siblingEls = Array.from(containerEl.querySelectorAll<HTMLElement>("[data-item-id]"));
+      siblingEls.forEach((el) => {
+        el.style.transform = "";
+        el.style.transition = "";
+      });
+    }
+
+    if (currentIndex !== startIndex) {
+      handleLiveReorderItems(lessonId, startIndex, currentIndex);
+      await handleSaveItemOrder(lessonId);
+    }
+  };
+
+  // Zero-lag 60FPS DOM Pointer Drag Ref for Lessons
+  const lessonPointerDragRef = useRef<{
+    lessonId: string;
+    weekId: string;
+    lessonEl: HTMLElement;
+    containerEl: HTMLElement;
+    startY: number;
+    startScrollY: number;
+    lastClientY: number;
+    minY: number;
+    maxY: number;
+    startIndex: number;
+    currentIndex: number;
+    lessonBounds: { id: string; top: number; bottom: number; mid: number }[];
+    animationFrameId: number | null;
+  } | null>(null);
+
+  const [activeDraggingLessonId, setActiveDraggingLessonId] = useState<string | null>(null);
+
+  const handleLessonPointerDown = (
+    e: React.PointerEvent<HTMLDivElement>,
+    weekId: string,
+    lessonId: string,
+    startIndex: number,
+  ) => {
+    if (!isInstructorOrAdmin) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const handleEl = e.currentTarget;
+    handleEl.setPointerCapture(e.pointerId);
+
+    const lessonEl = handleEl.closest("[data-lesson-id]") as HTMLElement;
+    const containerEl = handleEl.closest("[data-lessons-container]") as HTMLElement;
+
+    if (!lessonEl || !containerEl) return;
+
+    const lessonRect = lessonEl.getBoundingClientRect();
+    const containerRect = containerEl.getBoundingClientRect();
+
+    const minY = containerRect.top - lessonRect.top;
+    const maxY = containerRect.bottom - lessonRect.bottom;
+
+    const siblingEls = Array.from(containerEl.querySelectorAll<HTMLElement>("[data-lesson-id]"));
+    const lessonBounds = siblingEls.map((el) => {
+      const r = el.getBoundingClientRect();
+      return {
+        id: el.getAttribute("data-lesson-id")!,
+        top: r.top,
+        bottom: r.bottom,
+        mid: r.top + r.height / 2,
+      };
+    });
+
+    lessonEl.style.transform = "translateY(0px)";
+    lessonEl.style.zIndex = "40";
+    lessonEl.style.position = "relative";
+    lessonEl.style.boxShadow =
+      "0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)";
+    lessonEl.style.borderColor = "#94a3b8";
+    lessonEl.style.transition = "none";
+
+    lessonPointerDragRef.current = {
+      lessonId,
+      weekId,
+      lessonEl,
+      containerEl,
+      startY: e.clientY,
+      startScrollY: window.scrollY,
+      lastClientY: e.clientY,
+      minY,
+      maxY,
+      startIndex,
+      currentIndex: startIndex,
+      lessonBounds,
+      animationFrameId: null,
+    };
+
+    setActiveDraggingLessonId(lessonId);
+  };
+
+  const renderLessonPointerDragFrame = (clientY: number) => {
+    const drag = lessonPointerDragRef.current;
+    if (!drag) return;
+
+    const scrollDelta = window.scrollY - drag.startScrollY;
+    const deltaY = clientY - drag.startY + scrollDelta;
+    const constrainedY = Math.max(drag.minY, Math.min(drag.maxY, deltaY));
+
+    if (drag.lessonEl) {
+      drag.lessonEl.style.transform = `translateY(${constrainedY}px)`;
+    }
+
+    const draggedRect = drag.lessonEl ? drag.lessonEl.getBoundingClientRect() : null;
+    const draggedTop = draggedRect ? draggedRect.top : clientY;
+    const draggedBottom = draggedRect ? draggedRect.bottom : clientY;
+    const currentScrollOffset = window.scrollY - drag.startScrollY;
+    let newTargetIndex = drag.startIndex;
+
+    for (let idx = 0; idx < drag.lessonBounds.length; idx++) {
+      const siblingMidpoint = drag.lessonBounds[idx].mid - currentScrollOffset;
+
+      if (idx < drag.startIndex) {
+        if (draggedTop < siblingMidpoint) {
+          newTargetIndex = Math.min(newTargetIndex, idx);
+        }
+      } else if (idx > drag.startIndex) {
+        if (draggedBottom > siblingMidpoint) {
+          newTargetIndex = Math.max(newTargetIndex, idx);
+        }
+      }
+    }
+
+    drag.currentIndex = newTargetIndex;
+
+    const siblingEls = Array.from(
+      drag.containerEl.querySelectorAll<HTMLElement>("[data-lesson-id]"),
+    );
+    const draggedHeight = drag.lessonBounds[drag.startIndex]
+      ? drag.lessonBounds[drag.startIndex].bottom - drag.lessonBounds[drag.startIndex].top + 16
+      : 80;
+
+    siblingEls.forEach((el, idx) => {
+      if (idx === drag.startIndex) return;
+
+      el.style.transition = "transform 0.22s cubic-bezier(0.2, 0, 0, 1)";
+
+      if (drag.startIndex < newTargetIndex) {
+        if (idx > drag.startIndex && idx <= newTargetIndex) {
+          el.style.transform = `translateY(-${draggedHeight}px)`;
+        } else {
+          el.style.transform = "translateY(0px)";
+        }
+      } else if (drag.startIndex > newTargetIndex) {
+        if (idx >= newTargetIndex && idx < drag.startIndex) {
+          el.style.transform = `translateY(${draggedHeight}px)`;
+        } else {
+          el.style.transform = "translateY(0px)";
+        }
+      } else {
+        el.style.transform = "translateY(0px)";
+      }
+    });
+  };
+
+  const handleLessonPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = lessonPointerDragRef.current;
+    if (!drag) return;
+    e.preventDefault();
+
+    drag.lastClientY = e.clientY;
+
+    updateAutoScrollEngine(drag.lessonEl, e.clientY, () => {
+      renderLessonPointerDragFrame(drag.lastClientY);
+    });
+
+    if (drag.animationFrameId !== null) {
+      cancelAnimationFrame(drag.animationFrameId);
+    }
+
+    drag.animationFrameId = requestAnimationFrame(() => {
+      renderLessonPointerDragFrame(e.clientY);
+    });
+  };
+
+  const handleLessonPointerUp = async (e: React.PointerEvent<HTMLDivElement>) => {
+    stopAutoScrollEngine();
+    const drag = lessonPointerDragRef.current;
+    if (!drag) return;
+    e.preventDefault();
+
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+
+    if (drag.animationFrameId !== null) {
+      cancelAnimationFrame(drag.animationFrameId);
+    }
+
+    const { weekId, startIndex, currentIndex, lessonEl, containerEl, lessonBounds } = drag;
+    lessonPointerDragRef.current = null;
+    setActiveDraggingLessonId(null);
+
+    const startTop = lessonBounds[startIndex] ? lessonBounds[startIndex].top : 0;
+    const targetTop = lessonBounds[currentIndex] ? lessonBounds[currentIndex].top : startTop;
+    const targetOffset = targetTop - startTop;
+
+    if (lessonEl) {
+      lessonEl.style.transition =
+        "transform 0.18s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.18s ease, border-color 0.18s ease";
+      lessonEl.style.transform = `translateY(${targetOffset}px)`;
+      lessonEl.style.boxShadow = "";
+      lessonEl.style.borderColor = "";
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 180));
+
+    if (lessonEl) {
+      lessonEl.style.transform = "";
+      lessonEl.style.zIndex = "";
+      lessonEl.style.position = "";
+      lessonEl.style.boxShadow = "";
+      lessonEl.style.borderColor = "";
+      lessonEl.style.transition = "";
+    }
+
+    if (containerEl) {
+      const siblingEls = Array.from(containerEl.querySelectorAll<HTMLElement>("[data-lesson-id]"));
+      siblingEls.forEach((el) => {
+        el.style.transform = "";
+        el.style.transition = "";
+      });
+    }
+
+    if (currentIndex !== startIndex) {
+      handleLiveReorderLessons(weekId, startIndex, currentIndex);
+      await handleSaveLessonOrder(weekId);
+    }
+  };
+
+  // Zero-lag 60FPS DOM Pointer Drag Ref for Week Modules
+  const weekPointerDragRef = useRef<{
+    weekId: string;
+    weekEl: HTMLElement;
+    containerEl: HTMLElement;
+    startY: number;
+    startScrollY: number;
+    lastClientY: number;
+    minY: number;
+    maxY: number;
+    startIndex: number;
+    currentIndex: number;
+    weekBounds: { id: string; top: number; bottom: number; mid: number }[];
+    animationFrameId: number | null;
+  } | null>(null);
+
+  const [activeDraggingWeekId, setActiveDraggingWeekId] = useState<string | null>(null);
+
+  const handleWeekPointerDown = (
+    e: React.PointerEvent<HTMLDivElement>,
+    weekId: string,
+    startIndex: number,
+  ) => {
+    if (!isInstructorOrAdmin) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const handleEl = e.currentTarget;
+    handleEl.setPointerCapture(e.pointerId);
+
+    const weekEl = handleEl.closest("[data-week-id]") as HTMLElement;
+    const containerEl = handleEl.closest("[data-weeks-container]") as HTMLElement;
+
+    if (!weekEl || !containerEl) return;
+
+    const weekRect = weekEl.getBoundingClientRect();
+    const containerRect = containerEl.getBoundingClientRect();
+
+    const minY = containerRect.top - weekRect.top;
+    const maxY = containerRect.bottom - weekRect.bottom;
+
+    const siblingEls = Array.from(containerEl.querySelectorAll<HTMLElement>("[data-week-id]"));
+    const weekBounds = siblingEls.map((el) => {
+      const r = el.getBoundingClientRect();
+      return {
+        id: el.getAttribute("data-week-id")!,
+        top: r.top,
+        bottom: r.bottom,
+        mid: r.top + r.height / 2,
+      };
+    });
+
+    weekEl.style.transform = "translateY(0px)";
+    weekEl.style.zIndex = "30";
+    weekEl.style.position = "relative";
+    weekEl.style.boxShadow =
+      "0 12px 30px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)";
+    weekEl.style.borderColor = "#94a3b8";
+    weekEl.style.transition = "none";
+
+    weekPointerDragRef.current = {
+      weekId,
+      weekEl,
+      containerEl,
+      startY: e.clientY,
+      startScrollY: window.scrollY,
+      lastClientY: e.clientY,
+      minY,
+      maxY,
+      startIndex,
+      currentIndex: startIndex,
+      weekBounds,
+      animationFrameId: null,
+    };
+
+    setActiveDraggingWeekId(weekId);
+  };
+
+  const renderWeekPointerDragFrame = (clientY: number) => {
+    const drag = weekPointerDragRef.current;
+    if (!drag) return;
+
+    const scrollDelta = window.scrollY - drag.startScrollY;
+    const deltaY = clientY - drag.startY + scrollDelta;
+    const constrainedY = Math.max(drag.minY, Math.min(drag.maxY, deltaY));
+
+    if (drag.weekEl) {
+      drag.weekEl.style.transform = `translateY(${constrainedY}px)`;
+    }
+
+    const draggedRect = drag.weekEl ? drag.weekEl.getBoundingClientRect() : null;
+    const draggedTop = draggedRect ? draggedRect.top : clientY;
+    const draggedBottom = draggedRect ? draggedRect.bottom : clientY;
+    const currentScrollOffset = window.scrollY - drag.startScrollY;
+    let newTargetIndex = drag.startIndex;
+
+    for (let idx = 0; idx < drag.weekBounds.length; idx++) {
+      const siblingMidpoint = drag.weekBounds[idx].mid - currentScrollOffset;
+
+      if (idx < drag.startIndex) {
+        if (draggedTop < siblingMidpoint) {
+          newTargetIndex = Math.min(newTargetIndex, idx);
+        }
+      } else if (idx > drag.startIndex) {
+        if (draggedBottom > siblingMidpoint) {
+          newTargetIndex = Math.max(newTargetIndex, idx);
+        }
+      }
+    }
+
+    drag.currentIndex = newTargetIndex;
+
+    const siblingEls = Array.from(drag.containerEl.querySelectorAll<HTMLElement>("[data-week-id]"));
+    const draggedHeight = drag.weekBounds[drag.startIndex]
+      ? drag.weekBounds[drag.startIndex].bottom - drag.weekBounds[drag.startIndex].top + 24
+      : 160;
+
+    siblingEls.forEach((el, idx) => {
+      if (idx === drag.startIndex) return;
+
+      el.style.transition = "transform 0.22s cubic-bezier(0.2, 0, 0, 1)";
+
+      if (drag.startIndex < newTargetIndex) {
+        if (idx > drag.startIndex && idx <= newTargetIndex) {
+          el.style.transform = `translateY(-${draggedHeight}px)`;
+        } else {
+          el.style.transform = "translateY(0px)";
+        }
+      } else if (drag.startIndex > newTargetIndex) {
+        if (idx >= newTargetIndex && idx < drag.startIndex) {
+          el.style.transform = `translateY(${draggedHeight}px)`;
+        } else {
+          el.style.transform = "translateY(0px)";
+        }
+      } else {
+        el.style.transform = "translateY(0px)";
+      }
+    });
+  };
+
+  const handleWeekPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const drag = weekPointerDragRef.current;
+    if (!drag) return;
+    e.preventDefault();
+
+    drag.lastClientY = e.clientY;
+
+    updateAutoScrollEngine(drag.weekEl, e.clientY, () => {
+      renderWeekPointerDragFrame(drag.lastClientY);
+    });
+
+    if (drag.animationFrameId !== null) {
+      cancelAnimationFrame(drag.animationFrameId);
+    }
+
+    drag.animationFrameId = requestAnimationFrame(() => {
+      renderWeekPointerDragFrame(e.clientY);
+    });
+  };
+
+  const handleWeekPointerUp = async (e: React.PointerEvent<HTMLDivElement>) => {
+    stopAutoScrollEngine();
+    const drag = weekPointerDragRef.current;
+    if (!drag) return;
+    e.preventDefault();
+
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+
+    if (drag.animationFrameId !== null) {
+      cancelAnimationFrame(drag.animationFrameId);
+    }
+
+    const { startIndex, currentIndex, weekEl, containerEl, weekBounds } = drag;
+    weekPointerDragRef.current = null;
+    setActiveDraggingWeekId(null);
+
+    const startTop = weekBounds[startIndex] ? weekBounds[startIndex].top : 0;
+    const targetTop = weekBounds[currentIndex] ? weekBounds[currentIndex].top : startTop;
+    const targetOffset = targetTop - startTop;
+
+    if (weekEl) {
+      weekEl.style.transition =
+        "transform 0.18s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.18s ease, border-color 0.18s ease";
+      weekEl.style.transform = `translateY(${targetOffset}px)`;
+      weekEl.style.boxShadow = "";
+      weekEl.style.borderColor = "";
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 180));
+
+    if (weekEl) {
+      weekEl.style.transform = "";
+      weekEl.style.zIndex = "";
+      weekEl.style.position = "";
+      weekEl.style.boxShadow = "";
+      weekEl.style.borderColor = "";
+      weekEl.style.transition = "";
+    }
+
+    if (containerEl) {
+      const siblingEls = Array.from(containerEl.querySelectorAll<HTMLElement>("[data-week-id]"));
+      siblingEls.forEach((el) => {
+        el.style.transform = "";
+        el.style.transition = "";
+      });
+    }
+
+    if (currentIndex !== startIndex) {
+      handleLiveReorderWeeks(startIndex, currentIndex);
+      await handleSaveWeekOrder();
+    }
+  };
 
   if (loading) {
     return (
@@ -1073,536 +1817,465 @@ export default function InstructorCourseBuilderPage({
               )}
             </div>
           ) : (
-            <div className="space-y-6">
+            <div data-weeks-container className="space-y-6 relative">
               {course.weekModules.map((week, wIdx) => (
-                <div
-                  key={week.id}
-                  draggable={isInstructorOrAdmin}
-                  onDragStart={(e) => {
-                    e.dataTransfer.effectAllowed = "move";
-                    setActiveDrag({
-                      type: "week",
-                      id: week.id,
-                      startIndex: wIdx,
-                      currentIndex: wIdx,
-                    });
-                  }}
-                  onDragEnter={(e) => {
-                    e.preventDefault();
-                    if (
-                      activeDrag &&
-                      activeDrag.type === "week" &&
-                      activeDrag.currentIndex !== wIdx
-                    ) {
-                      handleLiveReorderWeeks(activeDrag.currentIndex, wIdx);
-                      setActiveDrag({ ...activeDrag, currentIndex: wIdx });
-                    }
-                  }}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDragEnd={async (e) => {
-                    e.stopPropagation();
-                    if (activeDrag && activeDrag.currentIndex !== activeDrag.startIndex) {
-                      await handleSaveWeekOrder();
-                    }
-                    setActiveDrag(null);
-                  }}
-                  className={`bg-white dark:bg-slate-900 rounded-3xl border ${
-                    activeDrag?.type === "week" && activeDrag.id === week.id
-                      ? "border-blue-500 ring-2 ring-blue-500/50 shadow-xl opacity-100 scale-[1.01]"
-                      : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
-                  } p-6 shadow-sm space-y-4`}
-                >
-                  {/* Week Module Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        {isInstructorOrAdmin && (
-                          <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg px-2 py-1 border border-slate-200 dark:border-slate-700">
-                            <span
-                              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold cursor-grab active:cursor-grabbing select-none"
+                <ViewTransition key={week.id}>
+                  <div
+                    data-week-id={week.id}
+                    style={{ touchAction: "none" }}
+                    className={`bg-white dark:bg-slate-900 rounded-3xl border ${
+                      activeDraggingWeekId === week.id
+                        ? "border-slate-400 dark:border-slate-600 shadow-xl opacity-100 scale-[1.005]"
+                        : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                    } p-6 shadow-sm space-y-4 transition-shadow`}
+                  >
+                    {/* Week Module Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          {isInstructorOrAdmin && (
+                            <div
+                              onPointerDown={(e) => handleWeekPointerDown(e, week.id, wIdx)}
+                              onPointerMove={handleWeekPointerMove}
+                              onPointerUp={handleWeekPointerUp}
+                              onPointerCancel={handleWeekPointerUp}
+                              className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg px-2 py-1 border border-slate-200 dark:border-slate-700 cursor-grab active:cursor-grabbing select-none hover:bg-slate-200 dark:hover:bg-slate-700"
                               title={"Kéo thả Tuần học để sắp xếp"}
                             >
-                              ⋮⋮
-                            </span>
-                          </div>
+                              <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold select-none">
+                                ⋮⋮
+                              </span>
+                            </div>
+                          )}
+                          <span className="px-2.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 text-xs font-black uppercase">
+                            {"Tuần"} {week.weekNumber}
+                          </span>
+                          <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
+                            {week.title}
+                          </h3>
+                        </div>
+                        {week.summary && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {week.summary}
+                          </p>
                         )}
-                        <span className="px-2.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 text-xs font-black uppercase">
-                          {"Tuần"} {week.weekNumber}
-                        </span>
-                        <h3 className="text-lg font-extrabold text-slate-900 dark:text-white">
-                          {week.title}
-                        </h3>
                       </div>
-                      {week.summary && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{week.summary}</p>
+
+                      {isInstructorOrAdmin && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() =>
+                              setEditingWeek({
+                                id: week.id,
+                                title: week.title,
+                                summary: week.summary,
+                              })
+                            }
+                            className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-semibold hover:bg-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                            <span>{"Sửa Tuần"}</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteWeek(week.id, week.title)}
+                            className="px-2.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:bg-rose-400 border border-rose-200 dark:border-rose-500/20 text-xs font-semibold hover:bg-rose-100 transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <svg
+                              className="w-3.5 h-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                            <span>{"Xóa Tuần"}</span>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setShowLessonModal(week.id);
+                              setLessonTitle("");
+                            }}
+                            className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <svg
+                              className="w-4 h-4 text-blue-600"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 4v16m8-8H4"
+                              />
+                            </svg>
+                            <span>{"Thêm Bài học"}</span>
+                          </button>
+                        </div>
                       )}
                     </div>
 
-                    {isInstructorOrAdmin && (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() =>
-                            setEditingWeek({
-                              id: week.id,
-                              title: week.title,
-                              summary: week.summary,
-                            })
-                          }
-                          className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-xs font-semibold hover:bg-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                          </svg>
-                          <span>{"Sửa Tuần"}</span>
-                        </button>
-
-                        <button
-                          onClick={() => handleDeleteWeek(week.id, week.title)}
-                          className="px-2.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:bg-rose-400 border border-rose-200 dark:border-rose-500/20 text-xs font-semibold hover:bg-rose-100 transition-colors flex items-center gap-1 cursor-pointer"
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                          <span>{"Xóa Tuần"}</span>
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setShowLessonModal(week.id);
-                            setLessonTitle("");
-                          }}
-                          className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
-                        >
-                          <svg
-                            className="w-4 h-4 text-blue-600"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4v16m8-8H4"
-                            />
-                          </svg>
-                          <span>{"Thêm Bài học"}</span>
-                        </button>
+                    {/* Lessons List under this Week */}
+                    {!week.lessons || week.lessons.length === 0 ? (
+                      <div className="py-6 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-4">
+                        <p className="text-xs text-slate-400">
+                          {"Chưa có Bài học nào trong Tuần"} {week.weekNumber}
+                        </p>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Lessons List under this Week */}
-                  {!week.lessons || week.lessons.length === 0 ? (
-                    <div className="py-6 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-4">
-                      <p className="text-xs text-slate-400">
-                        {"Chưa có Bài học nào trong Tuần"} {week.weekNumber}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4 pl-2 sm:pl-4 border-l-2 border-slate-200 dark:border-slate-800">
-                      {week.lessons.map((lesson, lIdx) => (
-                        <div
-                          key={lesson.id}
-                          draggable={isInstructorOrAdmin}
-                          onDragStart={(e) => {
-                            e.stopPropagation();
-                            e.dataTransfer.effectAllowed = "move";
-                            setActiveDrag({
-                              type: "lesson",
-                              id: lesson.id,
-                              containerId: week.id,
-                              startIndex: lIdx,
-                              currentIndex: lIdx,
-                            });
-                          }}
-                          onDragEnter={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (
-                              activeDrag &&
-                              activeDrag.type === "lesson" &&
-                              activeDrag.containerId === week.id &&
-                              activeDrag.currentIndex !== lIdx
-                            ) {
-                              handleLiveReorderLessons(week.id, activeDrag.currentIndex, lIdx);
-                              setActiveDrag({ ...activeDrag, currentIndex: lIdx });
-                            }
-                          }}
-                          onDragOver={(e) => e.preventDefault()}
-                          onDragEnd={async (e) => {
-                            e.stopPropagation();
-                            if (
-                              activeDrag &&
-                              activeDrag.currentIndex !== activeDrag.startIndex &&
-                              activeDrag.containerId
-                            ) {
-                              await handleSaveLessonOrder(activeDrag.containerId);
-                            }
-                            setActiveDrag(null);
-                          }}
-                          className={`bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-4 border ${
-                            activeDrag?.type === "lesson" && activeDrag.id === lesson.id
-                              ? "border-indigo-500 ring-2 ring-indigo-500/50 shadow-xl opacity-100 scale-[1.01]"
-                              : "border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700"
-                          } space-y-3`}
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                              {isInstructorOrAdmin && (
-                                <div className="flex items-center bg-white dark:bg-slate-900 rounded-lg px-2 py-1 border border-slate-200 dark:border-slate-800">
-                                  <span
-                                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold cursor-grab active:cursor-grabbing select-none"
+                    ) : (
+                      <div
+                        data-lessons-container
+                        className="space-y-4 pl-2 sm:pl-4 border-l-2 border-slate-200 dark:border-slate-800 relative"
+                      >
+                        {week.lessons.map((lesson, lIdx) => (
+                          <div
+                            key={lesson.id}
+                            data-lesson-id={lesson.id}
+                            style={{ touchAction: "none" }}
+                            className={`bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-4 border ${
+                              activeDraggingLessonId === lesson.id
+                                ? "border-slate-400 dark:border-slate-600 shadow-xl opacity-100 scale-[1.005]"
+                                : "border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700"
+                            } space-y-3 transition-shadow`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                {isInstructorOrAdmin && (
+                                  <div
+                                    onPointerDown={(e) =>
+                                      handleLessonPointerDown(e, week.id, lesson.id, lIdx)
+                                    }
+                                    onPointerMove={handleLessonPointerMove}
+                                    onPointerUp={handleLessonPointerUp}
+                                    onPointerCancel={handleLessonPointerUp}
+                                    className="flex items-center bg-white dark:bg-slate-900 rounded-lg px-2 py-1 border border-slate-200 dark:border-slate-800 cursor-grab active:cursor-grabbing select-none hover:bg-slate-100 dark:hover:bg-slate-800"
                                     title={"Kéo thả Bài học để sắp xếp"}
                                   >
-                                    ⋮⋮
-                                  </span>
+                                    <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold select-none">
+                                      ⋮⋮
+                                    </span>
+                                  </div>
+                                )}
+                                <svg
+                                  className="w-4 h-4 text-indigo-500"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                  />
+                                </svg>
+                                <span className="font-bold text-sm text-slate-800 dark:text-slate-200">
+                                  {lesson.title}
+                                </span>
+                                <span className="text-[10px] font-mono text-slate-400">
+                                  ({lesson.estimatedMinutes} {"phút"})
+                                </span>
+                              </div>
+
+                              {isInstructorOrAdmin && (
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    onClick={() =>
+                                      setEditingLesson({
+                                        id: lesson.id,
+                                        title: lesson.title,
+                                        estimatedMinutes: lesson.estimatedMinutes,
+                                      })
+                                    }
+                                    className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-semibold hover:bg-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <svg
+                                      className="w-3 h-3"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                      />
+                                    </svg>
+                                    <span>{"Sửa Bài"}</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleDeleteLesson(lesson.id, lesson.title)}
+                                    className="px-2 py-1 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[11px] font-semibold hover:bg-rose-100 transition-colors flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <svg
+                                      className="w-3 h-3"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                      />
+                                    </svg>
+                                    <span>{"Xóa Bài"}</span>
+                                  </button>
+
+                                  <button
+                                    onClick={() => {
+                                      setShowItemModal(lesson.id);
+                                      setItemTitle("");
+                                      setInVideoQuizzes([]);
+                                    }}
+                                    className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-bold hover:bg-blue-100 transition-colors flex items-center gap-1 cursor-pointer"
+                                  >
+                                    <svg
+                                      className="w-3.5 h-3.5"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M12 4v16m8-8H4"
+                                      />
+                                    </svg>
+                                    <span>{"Thêm Học liệu"}</span>
+                                  </button>
                                 </div>
                               )}
-                              <svg
-                                className="w-4 h-4 text-indigo-500"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                />
-                              </svg>
-                              <span className="font-bold text-sm text-slate-800 dark:text-slate-200">
-                                {lesson.title}
-                              </span>
-                              <span className="text-[10px] font-mono text-slate-400">
-                                ({lesson.estimatedMinutes} {"phút"})
-                              </span>
                             </div>
 
-                            {isInstructorOrAdmin && (
-                              <div className="flex items-center gap-1.5">
-                                <button
-                                  onClick={() =>
-                                    setEditingLesson({
-                                      id: lesson.id,
-                                      title: lesson.title,
-                                      estimatedMinutes: lesson.estimatedMinutes,
-                                    })
-                                  }
-                                  className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-semibold hover:bg-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
-                                >
-                                  <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                    />
-                                  </svg>
-                                  <span>{"Sửa Bài"}</span>
-                                </button>
+                            {/* Learning Items under this Lesson */}
+                            {!lesson.items || lesson.items.length === 0 ? (
+                              <p className="text-[11px] italic text-slate-400 pl-6">
+                                {"Chưa có nội dung video/bài đọc"}
+                              </p>
+                            ) : (
+                              <div data-items-container className="space-y-2 pl-4 relative">
+                                {lesson.items.map((item, iIdx) => (
+                                  <ViewTransition key={item.id}>
+                                    <div
+                                      data-item-id={item.id}
+                                      style={{ touchAction: "none" }}
+                                      className={`flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border ${
+                                        activeDraggingItemId === item.id
+                                          ? "border-slate-400 dark:border-slate-600 shadow-lg opacity-100 scale-[1.005]"
+                                          : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                                      } text-xs shadow-2xs transition-shadow`}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        {isInstructorOrAdmin && (
+                                          <div
+                                            onPointerDown={(e) =>
+                                              handleItemPointerDown(e, lesson.id, item.id, iIdx)
+                                            }
+                                            onPointerMove={handleItemPointerMove}
+                                            onPointerUp={handleItemPointerUp}
+                                            onPointerCancel={handleItemPointerUp}
+                                            className="flex items-center border-r border-slate-200 dark:border-slate-800 pr-2 mr-1 cursor-grab active:cursor-grabbing select-none p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
+                                            title={"Kéo lên/xuống để sắp xếp thứ tự"}
+                                          >
+                                            <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold select-none">
+                                              ⋮⋮
+                                            </span>
+                                          </div>
+                                        )}
+                                        {item.type === ItemType.VIDEO ? (
+                                          <span className="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold text-[10px]">
+                                            VIDEO
+                                          </span>
+                                        ) : item.type === ItemType.READING ? (
+                                          <span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">
+                                            READING
+                                          </span>
+                                        ) : item.type === ItemType.AUTO_GRADED_LAB ? (
+                                          <span className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 font-bold text-[10px]">
+                                            LAB
+                                          </span>
+                                        ) : item.type === ItemType.PEER_REVIEW ? (
+                                          <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold text-[10px]">
+                                            PEER REVIEW
+                                          </span>
+                                        ) : (
+                                          <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-[10px]">
+                                            QUIZ
+                                          </span>
+                                        )}
+                                        <span className="font-semibold text-slate-700 dark:text-slate-300">
+                                          {item.title}
+                                        </span>
+                                      </div>
 
-                                <button
-                                  onClick={() => handleDeleteLesson(lesson.id, lesson.title)}
-                                  className="px-2 py-1 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[11px] font-semibold hover:bg-rose-100 transition-colors flex items-center gap-1 cursor-pointer"
-                                >
-                                  <svg
-                                    className="w-3 h-3"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
-                                  </svg>
-                                  <span>{"Xóa Bài"}</span>
-                                </button>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-[10px] text-slate-400 font-mono">
+                                          {item.estimatedMinutes} {"phút"}
+                                        </span>
 
-                                <button
-                                  onClick={() => {
-                                    setShowItemModal(lesson.id);
-                                    setItemTitle("");
-                                    setInVideoQuizzes([]);
-                                  }}
-                                  className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-bold hover:bg-blue-100 transition-colors flex items-center gap-1 cursor-pointer"
-                                >
-                                  <svg
-                                    className="w-3.5 h-3.5"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M12 4v16m8-8H4"
-                                    />
-                                  </svg>
-                                  <span>{"Thêm Học liệu"}</span>
-                                </button>
+                                        <Link
+                                          href={`/learn/${courseId}?itemId=${item.id}&preview=true`}
+                                          target="_blank"
+                                          className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                          title={"Xem trước nội dung trong Trình phát bài học"}
+                                        >
+                                          <svg
+                                            className="w-3.5 h-3.5"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                            />
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                            />
+                                          </svg>
+                                        </Link>
+
+                                        {isInstructorOrAdmin && (
+                                          <>
+                                            <button
+                                              onClick={async () => {
+                                                let qMatrix = null;
+                                                if (
+                                                  item.type === ItemType.PRACTICE_QUIZ ||
+                                                  item.type === ItemType.GRADED_QUIZ
+                                                ) {
+                                                  try {
+                                                    const assessmentClient =
+                                                      getRpcClient(AssessmentService);
+                                                    const matrixRes =
+                                                      await assessmentClient.getQuizMatrix({
+                                                        itemId: item.id,
+                                                      });
+                                                    qMatrix = matrixRes.matrix;
+                                                  } catch (err) {
+                                                    console.warn(
+                                                      "Failed to load quiz matrix:",
+                                                      err,
+                                                    );
+                                                  }
+                                                }
+                                                setEditingItem({
+                                                  id: item.id,
+                                                  title: item.title,
+                                                  type: item.type,
+                                                  estimatedMinutes: item.estimatedMinutes,
+                                                  videoUrl: item.videoUrl || "",
+                                                  vttSubtitleUrl: item.vttSubtitleUrl || "",
+                                                  autoTranscribe: item.autoTranscribe || false,
+                                                  content: item.readingMarkdown || "",
+                                                  inVideoQuizzes: item.inVideoQuizzes
+                                                    ? item.inVideoQuizzes.map((q) => ({
+                                                        timestampSeconds: q.timestampSeconds,
+                                                        question: q.question,
+                                                        options: q.options
+                                                          ? Array.from(q.options)
+                                                          : [],
+                                                        correctOptionIndex: q.correctOptionIndex,
+                                                        explanation: q.explanation || "",
+                                                      }))
+                                                    : [],
+                                                  starterCode: item.starterCode || "",
+                                                  testCasesJson: item.testCasesJson || "",
+                                                  language: item.language || "",
+                                                  rubricCriteriaJson: item.rubricCriteriaJson || "",
+                                                  quizMatrixId: item.quizMatrixId || "",
+                                                  quizTimeLimit: qMatrix?.timeLimitMinutes ?? 45,
+                                                  quizPassingThreshold:
+                                                    qMatrix?.passingThresholdPercent ?? 80,
+                                                  quizEasyCount: qMatrix ? qMatrix.easyCount : 4,
+                                                  quizMediumCount: qMatrix
+                                                    ? qMatrix.mediumCount
+                                                    : 4,
+                                                  quizHardCount: qMatrix ? qMatrix.hardCount : 2,
+                                                  quizMaxAttempts: qMatrix?.maxAttempts ?? 3,
+                                                  quizCooldownHours: qMatrix?.cooldownHours ?? 8,
+                                                });
+                                              }}
+                                              className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded transition-colors cursor-pointer"
+                                              title={"Sửa nội dung học liệu"}
+                                            >
+                                              <svg
+                                                className="w-3.5 h-3.5"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                                />
+                                              </svg>
+                                            </button>
+                                            <button
+                                              onClick={() => handleDeleteItem(item.id, item.title)}
+                                              className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                                              title={"Xóa học liệu"}
+                                            >
+                                              <svg
+                                                className="w-3.5 h-3.5"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke="currentColor"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                />
+                                              </svg>
+                                            </button>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </ViewTransition>
+                                ))}
                               </div>
                             )}
                           </div>
-
-                          {/* Learning Items under this Lesson */}
-                          {!lesson.items || lesson.items.length === 0 ? (
-                            <p className="text-[11px] italic text-slate-400 pl-6">
-                              {"Chưa có nội dung video/bài đọc"}
-                            </p>
-                          ) : (
-                            <div className="space-y-2 pl-4">
-                              {lesson.items.map((item, iIdx) => (
-                                <div
-                                  key={item.id}
-                                  draggable={isInstructorOrAdmin}
-                                  onDragStart={(e) => {
-                                    e.stopPropagation();
-                                    e.dataTransfer.effectAllowed = "move";
-                                    setActiveDrag({
-                                      type: "item",
-                                      id: item.id,
-                                      containerId: lesson.id,
-                                      startIndex: iIdx,
-                                      currentIndex: iIdx,
-                                    });
-                                  }}
-                                  onDragEnter={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    if (
-                                      activeDrag &&
-                                      activeDrag.type === "item" &&
-                                      activeDrag.containerId === lesson.id &&
-                                      activeDrag.currentIndex !== iIdx
-                                    ) {
-                                      handleLiveReorderItems(
-                                        lesson.id,
-                                        activeDrag.currentIndex,
-                                        iIdx,
-                                      );
-                                      setActiveDrag({ ...activeDrag, currentIndex: iIdx });
-                                    }
-                                  }}
-                                  onDragOver={(e) => e.preventDefault()}
-                                  onDragEnd={async (e) => {
-                                    e.stopPropagation();
-                                    if (
-                                      activeDrag &&
-                                      activeDrag.currentIndex !== activeDrag.startIndex &&
-                                      activeDrag.containerId
-                                    ) {
-                                      await handleSaveItemOrder(activeDrag.containerId);
-                                    }
-                                    setActiveDrag(null);
-                                  }}
-                                  className={`flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border ${
-                                    activeDrag?.type === "item" && activeDrag.id === item.id
-                                      ? "border-blue-500 ring-2 ring-blue-500/50 shadow-xl opacity-100 scale-[1.01]"
-                                      : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
-                                  } text-xs shadow-2xs cursor-grab active:cursor-grabbing`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    {isInstructorOrAdmin && (
-                                      <div className="flex items-center border-r border-slate-200 dark:border-slate-800 pr-2 mr-1">
-                                        <span
-                                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs px-0.5 font-bold cursor-grab active:cursor-grabbing select-none"
-                                          title={"Kéo thả để xếp thứ tự"}
-                                        >
-                                          ⋮⋮
-                                        </span>
-                                      </div>
-                                    )}
-                                    {item.type === ItemType.VIDEO ? (
-                                      <span className="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold text-[10px]">
-                                        VIDEO
-                                      </span>
-                                    ) : item.type === ItemType.READING ? (
-                                      <span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">
-                                        READING
-                                      </span>
-                                    ) : item.type === ItemType.AUTO_GRADED_LAB ? (
-                                      <span className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 font-bold text-[10px]">
-                                        LAB
-                                      </span>
-                                    ) : item.type === ItemType.PEER_REVIEW ? (
-                                      <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold text-[10px]">
-                                        PEER REVIEW
-                                      </span>
-                                    ) : (
-                                      <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-[10px]">
-                                        QUIZ
-                                      </span>
-                                    )}
-                                    <span className="font-semibold text-slate-700 dark:text-slate-300">
-                                      {item.title}
-                                    </span>
-                                  </div>
-
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[10px] text-slate-400 font-mono">
-                                      {item.estimatedMinutes} {"phút"}
-                                    </span>
-
-                                    <Link
-                                      href={`/learn/${courseId}?itemId=${item.id}&preview=true`}
-                                      target="_blank"
-                                      className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                      title={"Xem trước nội dung trong Trình phát bài học"}
-                                    >
-                                      <svg
-                                        className="w-3.5 h-3.5"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                        />
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                        />
-                                      </svg>
-                                    </Link>
-
-                                    {isInstructorOrAdmin && (
-                                      <>
-                                        <button
-                                          onClick={async () => {
-                                            let qMatrix = null;
-                                            if (
-                                              item.type === ItemType.PRACTICE_QUIZ ||
-                                              item.type === ItemType.GRADED_QUIZ
-                                            ) {
-                                              try {
-                                                const assessmentClient =
-                                                  getRpcClient(AssessmentService);
-                                                const matrixRes =
-                                                  await assessmentClient.getQuizMatrix({
-                                                    itemId: item.id,
-                                                  });
-                                                qMatrix = matrixRes.matrix;
-                                              } catch (err) {
-                                                console.warn("Failed to load quiz matrix:", err);
-                                              }
-                                            }
-                                            setEditingItem({
-                                              id: item.id,
-                                              title: item.title,
-                                              type: item.type,
-                                              estimatedMinutes: item.estimatedMinutes,
-                                              videoUrl: item.videoUrl || "",
-                                              vttSubtitleUrl: item.vttSubtitleUrl || "",
-                                              autoTranscribe: item.autoTranscribe || false,
-                                              content: item.readingMarkdown || "",
-                                              inVideoQuizzes: item.inVideoQuizzes
-                                                ? item.inVideoQuizzes.map((q) => ({
-                                                    timestampSeconds: q.timestampSeconds,
-                                                    question: q.question,
-                                                    options: q.options ? Array.from(q.options) : [],
-                                                    correctOptionIndex: q.correctOptionIndex,
-                                                    explanation: q.explanation || "",
-                                                  }))
-                                                : [],
-                                              starterCode: item.starterCode || "",
-                                              testCasesJson: item.testCasesJson || "",
-                                              language: item.language || "",
-                                              rubricCriteriaJson: item.rubricCriteriaJson || "",
-                                              quizMatrixId: item.quizMatrixId || "",
-                                              quizTimeLimit: qMatrix?.timeLimitMinutes ?? 45,
-                                              quizPassingThreshold:
-                                                qMatrix?.passingThresholdPercent ?? 80,
-                                              quizEasyCount: qMatrix ? qMatrix.easyCount : 4,
-                                              quizMediumCount: qMatrix ? qMatrix.mediumCount : 4,
-                                              quizHardCount: qMatrix ? qMatrix.hardCount : 2,
-                                              quizMaxAttempts: qMatrix?.maxAttempts ?? 3,
-                                              quizCooldownHours: qMatrix?.cooldownHours ?? 8,
-                                            });
-                                          }}
-                                          className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded transition-colors cursor-pointer"
-                                          title={"Sửa nội dung học liệu"}
-                                        >
-                                          <svg
-                                            className="w-3.5 h-3.5"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                            />
-                                          </svg>
-                                        </button>
-                                        <button
-                                          onClick={() => handleDeleteItem(item.id, item.title)}
-                                          className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded transition-colors cursor-pointer"
-                                          title={"Xóa học liệu"}
-                                        >
-                                          <svg
-                                            className="w-3.5 h-3.5"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                            />
-                                          </svg>
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </ViewTransition>
               ))}
             </div>
           )}
