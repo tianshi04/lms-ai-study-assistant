@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, Suspense } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
@@ -46,6 +46,16 @@ function CoursePlayerContent() {
   const [activeTab, setActiveTab] = useState<"transcript" | "forum" | "notes" | "deadlines">(
     "transcript",
   );
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
+
+  const handleTabClick = (tab: "transcript" | "forum" | "notes" | "deadlines") => {
+    if (isPanelOpen && activeTab === tab) {
+      setIsPanelOpen(false);
+    } else {
+      setActiveTab(tab);
+      setIsPanelOpen(true);
+    }
+  };
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [certificateId, setCertificateId] = useState<string>("");
 
@@ -323,6 +333,29 @@ function CoursePlayerContent() {
     }
   };
 
+  // Calculate prev and next learning items in course order
+  const allItems: LearningItem[] = useMemo(() => {
+    if (!course?.weekModules) return [];
+    const items: LearningItem[] = [];
+    course.weekModules.forEach((wm) => {
+      wm.lessons.forEach((l) => {
+        items.push(...l.items);
+      });
+    });
+    return items;
+  }, [course]);
+
+  const activeIndexInCourse = useMemo(() => {
+    if (!activeItem) return -1;
+    return allItems.findIndex((i) => i.id === activeItem.id);
+  }, [allItems, activeItem]);
+
+  const prevItem = activeIndexInCourse > 0 ? allItems[activeIndexInCourse - 1] : null;
+  const nextItem =
+    activeIndexInCourse >= 0 && activeIndexInCourse < allItems.length - 1
+      ? allItems[activeIndexInCourse + 1]
+      : null;
+
   if (!course) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
@@ -597,8 +630,8 @@ function CoursePlayerContent() {
             </aside>
           )}
 
-          {/* Center Workspace & Bottom Panels */}
-          <main className="flex-1 flex flex-col bg-background overflow-hidden relative text-foreground">
+          {/* Center Workspace & Bottom Controls */}
+          <main className="flex-1 min-w-[360px] flex flex-col bg-background overflow-hidden relative text-foreground">
             {/* Lock Notice Banner */}
             {lockNotice && (
               <div className="p-3 bg-warning/10 border-b border-warning/30 text-warning text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-200">
@@ -612,141 +645,108 @@ function CoursePlayerContent() {
               </div>
             )}
 
-            {/* Top Video / Reading Media Viewer */}
-            <div className="flex-1 bg-card flex items-center justify-center relative overflow-hidden transition-colors duration-200">
-              <VideoPlayer
-                videoRef={videoRef}
-                activeItem={activeItem}
-                userId={userId}
-                activeQuiz={activeQuiz}
-                selectedOption={selectedOption}
-                quizSubmitted={quizSubmitted}
-                completedItemIds={progress?.completedItemIds || []}
-                currentTime={currentTime}
-                onTimeUpdate={handleTimeUpdate}
-                onSeeking={handleSeeking}
-                onSelectOption={setSelectedOption}
-                onSubmitQuiz={handleQuizSubmit}
-                onContinueVideo={handleContinueVideo}
-                onMarkComplete={handleMarkItemComplete}
-                isPreviewMode={isPreviewMode}
-              />
-            </div>
+            {/* Center Video & Bottom Control Bar Layout */}
+            <div className="flex-1 flex flex-col items-center justify-between relative overflow-y-auto p-6 transition-colors duration-200">
+              <div className="w-full flex-1 flex items-center justify-center min-h-[360px]">
+                <VideoPlayer
+                  videoRef={videoRef}
+                  activeItem={activeItem}
+                  userId={userId}
+                  activeQuiz={activeQuiz}
+                  selectedOption={selectedOption}
+                  quizSubmitted={quizSubmitted}
+                  completedItemIds={progress?.completedItemIds || []}
+                  currentTime={currentTime}
+                  onTimeUpdate={handleTimeUpdate}
+                  onSeeking={handleSeeking}
+                  onSelectOption={setSelectedOption}
+                  onSubmitQuiz={handleQuizSubmit}
+                  onContinueVideo={handleContinueVideo}
+                  onMarkComplete={handleMarkItemComplete}
+                  isPreviewMode={isPreviewMode}
+                />
+              </div>
 
-            {/* Bottom Tabs Section */}
-            {(!isPreviewMode ||
+              {/* Bottom Control Bar */}
+              <div className="w-full max-w-5xl mt-4 flex items-center justify-between bg-card border border-border p-3 rounded-2xl shadow-2xs z-10">
+                {prevItem ? (
+                  <button
+                    onClick={() => setActiveItem(prevItem)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-muted hover:bg-muted/80 text-foreground transition-colors flex items-center gap-1.5 cursor-pointer"
+                    title={prevItem.title}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                    <span>{"Bài trước"}</span>
+                  </button>
+                ) : (
+                  <div />
+                )}
+
+                {nextItem ? (
+                  <button
+                    onClick={() => setActiveItem(nextItem)}
+                    className="px-5 py-2.5 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground transition-colors shadow-md flex items-center gap-2 cursor-pointer"
+                    title={nextItem.title}
+                  >
+                    <span>{"Bài tiếp theo"}</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                ) : (
+                  <span className="text-xs text-muted-foreground font-semibold">
+                    {"Đã đến bài học cuối cùng"}
+                  </span>
+                )}
+              </div>
+            </div>
+          </main>
+
+          {/* Right Side Drawer Panel (Coursera-style Side-by-Side Video & Transcript/Tools) */}
+          {isPanelOpen &&
+            (!isPreviewMode ||
               (activeItem?.interactiveTranscripts &&
                 activeItem.interactiveTranscripts.length > 0) ||
               activeItem?.vttSubtitleUrl) && (
-              <div className="h-64 bg-card border-t border-border flex flex-col flex-shrink-0">
-                {/* Tab Header Bar */}
-                <div className="h-11 border-b border-border px-6 flex items-center justify-between bg-muted/50">
-                  <div className="flex items-center gap-6">
-                    <button
-                      onClick={() => setActiveTab("transcript")}
-                      className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 cursor-pointer ${
-                        activeTab === "transcript"
-                          ? "text-primary border-primary"
-                          : "text-muted-foreground border-transparent hover:text-foreground"
-                      }`}
-                    >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 6h16M4 12h16m-7 6h7"
-                        />
-                      </svg>
-                      {"Phụ đề Tương tác ({count})".replace(
-                        "{count}",
-                        (activeItem?.interactiveTranscripts.length || 0).toString(),
-                      )}
-                    </button>
-
-                    {!isPreviewMode && (
-                      <>
-                        <button
-                          onClick={() => setActiveTab("forum")}
-                          className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 cursor-pointer ${
-                            activeTab === "forum"
-                              ? "text-primary border-primary"
-                              : "text-muted-foreground border-transparent hover:text-foreground"
-                          }`}
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
-                            />
-                          </svg>
-                          {"Thảo luận"}
-                        </button>
-                        <button
-                          onClick={() => setActiveTab("notes")}
-                          className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 cursor-pointer ${
-                            activeTab === "notes"
-                              ? "text-primary border-primary"
-                              : "text-muted-foreground border-transparent hover:text-foreground"
-                          }`}
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                            />
-                          </svg>
-                          {"Ghi chú Cá nhân ({count})".replace("{count}", notes.length.toString())}
-                        </button>
-                        <button
-                          onClick={() => setActiveTab("deadlines")}
-                          className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 cursor-pointer ${
-                            activeTab === "deadlines"
-                              ? "text-primary border-primary"
-                              : "text-muted-foreground border-transparent hover:text-foreground"
-                          }`}
-                        >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
-                          {"Deadlines & Tiến độ"}
-                        </button>
-                      </>
-                    )}
-                  </div>
+              <aside className="w-80 xl:w-96 bg-card border-l border-border flex flex-col shrink-0 h-full z-10 transition-all duration-200">
+                {/* Drawer Header */}
+                <div className="h-14 border-b border-border px-4 flex items-center justify-between bg-muted/30 shrink-0">
+                  <h3 className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                    {activeTab === "transcript" && "Phụ đề Tương tác"}
+                    {activeTab === "forum" && "Thảo luận Bài học"}
+                    {activeTab === "notes" && "Ghi chú Cá nhân"}
+                    {activeTab === "deadlines" && "Deadlines & Tiến độ"}
+                  </h3>
+                  <button
+                    onClick={() => setIsPanelOpen(false)}
+                    className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    title="Đóng bảng công cụ"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
                 </div>
 
-                {/* Tab Body Content */}
-                <div className="flex-1 overflow-y-auto p-4 bg-background">
+                {/* Drawer Content */}
+                <div className="flex-1 overflow-y-auto p-4 bg-background min-h-0 flex flex-col">
                   {activeTab === "transcript" && (
                     <TranscriptPanel
                       activeItem={activeItem}
@@ -775,9 +775,114 @@ function CoursePlayerContent() {
                     <DeadlinesPanel progress={progress} onResetDeadlines={handleResetDeadlines} />
                   )}
                 </div>
-              </div>
+              </aside>
             )}
-          </main>
+
+          {/* Coursera-style Vertical Icon Strip (Far Right Strip) */}
+          <div className="w-16 lg:w-20 bg-card border-l border-border flex flex-col items-center justify-start py-4 gap-4 shrink-0 h-full z-20 select-none">
+            {/* Transcript Icon Button */}
+            <button
+              onClick={() => handleTabClick("transcript")}
+              className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
+                isPanelOpen && activeTab === "transcript"
+                  ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+              title="Phụ đề"
+            >
+              <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16m-7 6h7"
+                />
+              </svg>
+              <span className="text-[10px] tracking-tight leading-none">Phụ đề</span>
+            </button>
+
+            {!isPreviewMode && (
+              <>
+                {/* Notes Icon Button */}
+                <button
+                  onClick={() => handleTabClick("notes")}
+                  className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
+                    isPanelOpen && activeTab === "notes"
+                      ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                  title="Ghi chú"
+                >
+                  <svg
+                    className="w-5 h-5 mb-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+                  <span className="text-[10px] tracking-tight leading-none">Ghi chú</span>
+                </button>
+
+                {/* Forum Icon Button */}
+                <button
+                  onClick={() => handleTabClick("forum")}
+                  className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
+                    isPanelOpen && activeTab === "forum"
+                      ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                  title="Thảo luận"
+                >
+                  <svg
+                    className="w-5 h-5 mb-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
+                    />
+                  </svg>
+                  <span className="text-[10px] tracking-tight leading-none">Thảo luận</span>
+                </button>
+
+                {/* Deadlines Icon Button */}
+                <button
+                  onClick={() => handleTabClick("deadlines")}
+                  className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
+                    isPanelOpen && activeTab === "deadlines"
+                      ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                  title="Deadlines"
+                >
+                  <svg
+                    className="w-5 h-5 mb-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span className="text-[10px] tracking-tight leading-none">Deadlines</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         <CourseCompletionModal
