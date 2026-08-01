@@ -23,6 +23,17 @@ const serverAuthInterceptor: Interceptor = (next) => async (req) => {
 };
 
 /**
+ * Obtain a public ConnectRPC client without reading cookies/request-headers.
+ * Safe for use inside Next.js 16 `"use cache"` cached scopes.
+ */
+export function getPublicRpcServerClient<T extends DescService>(service: T): Client<T> {
+  const transport = createConnectTransport({
+    baseUrl: API_BASE_URL,
+  });
+  return createClient(service, transport);
+}
+
+/**
  * Factory function to obtain a typed ConnectRPC client configured for Server Components (RSC).
  * Automatically attaches Authorization header from cookies.
  *

@@ -1,15 +1,19 @@
 import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { getRpcServerClient } from "@/lib/server_connect_client";
+import { cacheLife, cacheTag } from "next/cache";
+import { getPublicRpcServerClient } from "@/lib/server_connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CourseCatalogClient } from "./CourseCatalogClient";
 
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
+/**
+ * Best Practice Next.js 16 Cache Components:
+ * High read-to-write catalog data cached for hours with explicit tag invalidation.
+ * Immediate cache invalidation is triggered via updateTag("courses") / updateTag("categories").
+ */
+async function getInitialCatalogData() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("courses", "categories");
 
-// TODO: Cache Components adoption — restore revalidate = 60 using cacheLife({ revalidate: 60 }) or "use cache"
-
-export default async function CoursesPage() {
   const queryClient = new QueryClient();
 
   const defaultFilters = {
@@ -20,12 +24,13 @@ export default async function CoursesPage() {
     pageSize: 10,
   };
 
+  const client = getPublicRpcServerClient(CatalogService);
+
   // Prefetch initial course list & category filters on the server
   await Promise.all([
     queryClient.prefetchQuery({
       queryKey: ["courses", defaultFilters],
       queryFn: async () => {
-        const client = await getRpcServerClient(CatalogService);
         const res = await client.listCourses(defaultFilters);
         return res.courses;
       },
@@ -33,7 +38,6 @@ export default async function CoursesPage() {
     queryClient.prefetchQuery({
       queryKey: ["categories", "SUBJECT"],
       queryFn: async () => {
-        const client = await getRpcServerClient(CatalogService);
         const res = await client.listCategories({ type: "SUBJECT" });
         return res.categories;
       },
@@ -41,15 +45,20 @@ export default async function CoursesPage() {
     queryClient.prefetchQuery({
       queryKey: ["categories", "LEVEL"],
       queryFn: async () => {
-        const client = await getRpcServerClient(CatalogService);
         const res = await client.listCategories({ type: "LEVEL" });
         return res.categories;
       },
     }),
   ]);
 
+  return dehydrate(queryClient);
+}
+
+export default async function CoursesPage() {
+  const dehydratedState = await getInitialCatalogData();
+
   return (
-    <HydrationBoundary state={dehydrate(queryClient)}>
+    <HydrationBoundary state={dehydratedState}>
       <CourseCatalogClient />
     </HydrationBoundary>
   );
