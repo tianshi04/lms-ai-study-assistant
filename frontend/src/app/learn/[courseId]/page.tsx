@@ -682,8 +682,8 @@ function CoursePlayerContent() {
             )}
 
             {/* Center Video & Bottom Control Bar Layout */}
-            <div className="flex-1 flex flex-col items-center justify-between relative overflow-y-auto p-6 bg-muted/60 transition-colors duration-200">
-              <div className="w-full flex-1 flex flex-col items-center justify-center min-h-[360px] max-w-5xl">
+            <div className="flex-1 flex flex-col items-center justify-start relative overflow-y-auto p-6 bg-muted/60 transition-colors duration-200 space-y-6">
+              <div className="w-full flex flex-col items-start justify-start max-w-5xl">
                 <div className="w-full bg-slate-950 rounded-2xl overflow-hidden shadow-2xl border border-border flex items-center justify-center">
                   <VideoPlayer
                     videoRef={videoRef}
@@ -721,7 +721,7 @@ function CoursePlayerContent() {
               </div>
 
               {/* Bottom Control Bar */}
-              <div className="w-full max-w-5xl mt-4 flex items-center justify-between bg-card border border-border p-3 rounded-2xl shadow-2xs z-10">
+              <div className="w-full max-w-5xl flex items-center justify-between bg-card border border-border p-3 rounded-2xl shadow-2xs z-10">
                 {prevItem ? (
                   <button
                     onClick={() => setActiveItem(prevItem)}
