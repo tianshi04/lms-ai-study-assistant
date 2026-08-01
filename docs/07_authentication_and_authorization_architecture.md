@@ -12,12 +12,31 @@ Hệ thống áp dụng mô hình **Hybrid PBAC (Permission-Based Access Control
   * **AuthN**: Đăng nhập, verify JWT Access Token, trích xuất `user_id` và `system_role`.
   * **AuthZ**: Kiểm tra quyền truy cập tài nguyên dựa trên ngữ cảnh Tổ chức (`active_org_id`) và tập hợp Quyền hạn (`permissions`).
 * **Mô hình BFF (Backend For Frontend) & Bảo mật HttpOnly Cookie**:
-  * **Browser ➔ Backend (ConnectRPC)**: Browser tự động gửi `HttpOnly` cookie (`access_token`) bằng `credentials: "include"`. Tuyệt đối không lưu token trong JavaScript, `localStorage` hay `document.cookie` (chống lỗ hổng XSS).
-  * **Next.js Server ➔ Backend (SSR)**: Trích xuất `access_token` từ Cookie context và chuyển đổi thành header `Authorization: Bearer <token>` khi thực hiện lệnh gọi ConnectRPC từ server (Server Components).
+  * **Browser ➔ BFF Gateway (Client-side)**: Trình duyệt tự động gửi `HttpOnly` cookie (`access_token`) bằng `credentials: "include"`. Tuyệt đối không lưu token trong JavaScript, `localStorage` hay `document.cookie` (chống lỗ hổng XSS).
+  * **Next.js Edge Proxy (`src/proxy.ts`)**: Đóng vai trò làm tầng chuyển tiếp bảo mật. Khi request từ trình duyệt đi qua tuyến `/api/rpc/:path*`, Next.js Proxy tự động đọc Cookie `access_token`, chuyển đổi thành header `Authorization: Bearer <token>` và proxy nguyên vẹn tới Backend Python (Port 8000) qua Next.js Native `rewrites()`.
+  * **Next.js Server ➔ Backend (SSR - `server_connect_client.ts`)**: Trích xuất `access_token` từ `cookies()` context và tự động đính kèm header `Authorization: Bearer <token>` khi thực hiện lệnh gọi ConnectRPC từ Server Components.
   * **Server Actions (BFF Gateway)**: Quản lý đăng nhập (`loginAction`), làm mới token (`refreshSessionAction`) và đăng xuất (`logoutAction`), thiết lập cookie `HttpOnly; Secure; SameSite=Lax`.
 * **Backend Token Resolver Chain (Strategy Pattern)**:
-  * Backend hỗ trợ trích xuất JWT thông qua chuỗi chiến lược `TokenResolverChain` (`backend/src/shared/infrastructure/auth/token_resolvers.py`): ưu tiên `BearerTokenResolver` (SSR/Mobile/Third-party) và `CookieTokenResolver` (Browser Direct).
+  * Backend hỗ trợ trích xuất JWT thông qua chuỗi chiến lược `TokenResolverChain` (`backend/src/shared/infrastructure/auth/token_resolvers.py`): ưu tiên `BearerTokenResolver` (SSR/Proxy/Mobile) và `CookieTokenResolver` (Fallback).
 * **Không phụ thuộc thư viện phân quyền bên ngoài**: Triển khai 100% bằng thư viện chuẩn Python (`contextvars`, `dataclasses`) và tính năng có sẵn của `SQLAlchemy 2.0`.
+
+### 1.1. Luồng truyền nhận Token qua Tầng BFF Proxy (Sequence Diagram)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Browser as Trình duyệt Web (Client-side)
+    participant Proxy as Next.js 16 Edge Proxy (src/proxy.ts)
+    participant Rewrite as Next.js Rewrites (next.config.ts)
+    participant BE as Backend Python (Port 8000)
+
+    Browser->>Proxy: 1. POST /api/rpc/learning... (Kèm Cookie: access_token=...)
+    Note over Proxy: Đọc Cookie access_token<br/>Chèn Header: Authorization: Bearer <token>
+    Proxy->>Rewrite: 2. Forward request với Headers mới
+    Rewrite->>BE: 3. Forward sang http://127.0.0.1:8000/learning...
+    Note over BE: AuthInterceptor giải mã<br/>BearerTokenResolver trích xuất JWT payload
+    BE-->>Browser: 4. Trả về kết quả 200 OK (ConnectRPC Response)
+```
 
 ---
 
