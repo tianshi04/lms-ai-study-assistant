@@ -7,6 +7,7 @@ import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
 import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
 import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentWorkspace";
 import { parseVTT, type VTTCue } from "@/lib/vtt_parser";
+import { FileText, Check, Eye, ArrowRight } from "lucide-react";
 
 interface VideoPlayerProps {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -92,19 +93,7 @@ export function VideoPlayer({
           {/* Reading Header */}
           <div className="pb-4 border-b border-border">
             <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-              <svg
-                className="w-7 h-7 text-success"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
+              <FileText className="w-7 h-7 text-success" />
               <span>{activeItem.title}</span>
               {isPreviewMode && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-warning/10 text-warning border border-warning/20 animate-pulse">
@@ -171,14 +160,7 @@ export function VideoPlayer({
                     : "bg-success hover:bg-success-hover text-success-foreground shadow-lg shadow-success/20"
                 }`}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+                <Check className="w-4 h-4" />
                 {isCompleted ? "Đã Hoàn Thành Bài Đọc" : "Đánh dấu Hoàn Thành Bài Đọc này"}
               </button>
             </div>
@@ -287,19 +269,7 @@ export function VideoPlayer({
                   : "bg-card hover:bg-card/90 text-foreground border border-border hover:border-success"
               }`}
             >
-              <svg
-                className="w-4 h-4 text-success"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2.5}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
+              <Check className="w-4 h-4 text-success" />
               {isCompleted ? "Đã Xem Video (>=80%)" : "Đánh dấu Xem Xong Video"}
             </button>
           </div>
@@ -309,24 +279,7 @@ export function VideoPlayer({
         {isPreviewMode && (
           <div className="absolute top-4 left-4 z-20">
             <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-warning text-warning-foreground shadow-lg flex items-center gap-1.5 animate-pulse">
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                />
-              </svg>
+              <Eye className="w-3.5 h-3.5" />
               <span>{"Chế độ Xem trước"}</span>
             </span>
           </div>
@@ -372,21 +325,7 @@ export function VideoPlayer({
                       className={`w-full text-left p-3 rounded-xl border text-xs transition-all flex items-center justify-between cursor-pointer ${optionStyle}`}
                     >
                       <span>{option}</span>
-                      {quizSubmitted && isCorrect && (
-                        <svg
-                          className="w-4 h-4 text-success"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2.5}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      )}
+                      {quizSubmitted && isCorrect && <Check className="w-4 h-4 text-success" />}
                     </button>
                   );
                 })}
@@ -414,14 +353,7 @@ export function VideoPlayer({
                     className="px-5 py-2.5 rounded-xl bg-success hover:bg-success-hover text-success-foreground font-bold text-xs shadow-lg transition-all flex items-center gap-2 cursor-pointer"
                   >
                     {"Tiếp Tục Xem Video"}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M14 5l7 7m0 0l-7 7m7-7H3"
-                      />
-                    </svg>
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                 )}
               </div>

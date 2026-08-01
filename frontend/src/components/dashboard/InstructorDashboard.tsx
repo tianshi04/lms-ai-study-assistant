@@ -3,6 +3,16 @@
 import Link from "next/link";
 import { useCoursesQuery } from "@/lib/query_hooks";
 import { CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
+import {
+  Plus,
+  Users,
+  BadgeCheck,
+  Clock,
+  FileEdit,
+  Layers,
+  UserCheck,
+  CircleDollarSign,
+} from "lucide-react";
 
 export function InstructorDashboard({ userName }: { userName: string }) {
   const { data: courses = [], isLoading: loading } = useCoursesQuery();
@@ -49,19 +59,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               href="/instructor/courses/new"
               className="px-6 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg transition-all flex items-center gap-2 cursor-pointer border border-border"
             >
-              <svg
-                className="w-5 h-5 text-primary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
+              <Plus className="w-5 h-5 text-primary" aria-hidden="true" />
               Tạo Khóa Học Mới
             </Link>
           </div>
@@ -71,14 +69,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
             <div className="w-14 h-14 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
-              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
+              <Users className="w-7 h-7" aria-hidden="true" />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -90,14 +81,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
           <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
             <div className="w-14 h-14 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0">
-              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138z"
-                />
-              </svg>
+              <BadgeCheck className="w-7 h-7" aria-hidden="true" />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -111,14 +95,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
           <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
             <div className="w-14 h-14 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
-              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <Clock className="w-7 h-7" aria-hidden="true" />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -132,14 +109,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
           <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
             <div className="w-14 h-14 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center shrink-0">
-              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
+              <FileEdit className="w-7 h-7" aria-hidden="true" />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -157,14 +127,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-start gap-4"
           >
             <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                />
-              </svg>
+              <Layers className="w-6 h-6" aria-hidden="true" />
             </div>
             <div className="space-y-1">
               <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">
@@ -181,14 +144,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-start gap-4"
           >
             <div className="w-12 h-12 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                />
-              </svg>
+              <UserCheck className="w-6 h-6" aria-hidden="true" />
             </div>
             <div className="space-y-1">
               <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">
@@ -205,14 +161,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-start gap-4"
           >
             <div className="w-12 h-12 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <CircleDollarSign className="w-6 h-6" aria-hidden="true" />
             </div>
             <div className="space-y-1">
               <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">

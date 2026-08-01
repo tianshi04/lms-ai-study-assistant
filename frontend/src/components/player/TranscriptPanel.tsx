@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
+import { Search } from "lucide-react";
 import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { parseVTT, type VTTCue } from "@/lib/vtt_parser";
 
@@ -130,19 +131,7 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
           placeholder="Tìm kiếm nội dung bài giảng…"
           className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-input bg-card text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
-        <svg
-          className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-          />
-        </svg>
+        <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery("")}

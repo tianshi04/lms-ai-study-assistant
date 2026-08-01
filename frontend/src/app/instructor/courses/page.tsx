@@ -8,6 +8,17 @@ import { CatalogService, CourseStatus, type Course } from "@/gen/catalog/v1/cata
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
+import {
+  FileText,
+  Plus,
+  AlertTriangle,
+  Pencil,
+  BarChart2,
+  Megaphone,
+  Trash2,
+  ArrowRight,
+  X,
+} from "lucide-react";
 
 const emptySubscribe = () => () => {};
 
@@ -251,19 +262,7 @@ export default function InstructorCoursesPage() {
               href="/instructor/financial-aid"
               className="px-4 py-3 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-sm transition-all flex items-center gap-2"
             >
-              <svg
-                className="w-5 h-5 text-primary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
+              <FileText className="w-5 h-5 text-primary" aria-hidden="true" />
               <span>{"Duyệt Financial Aid"}</span>
             </Link>
 
@@ -271,14 +270,7 @@ export default function InstructorCoursesPage() {
               href="/instructor/courses/new"
               className="px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/20 transition-all flex items-center gap-2 cursor-pointer"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
+              <Plus className="w-5 h-5" aria-hidden="true" />
               <span>{"Soạn Khóa Học Mới"}</span>
             </Link>
           </div>
@@ -287,19 +279,7 @@ export default function InstructorCoursesPage() {
         {/* Role Warning Banner if user is Learner */}
         {isMounted && userRole && !isInstructorOrAdmin && (
           <div className="mb-6 p-4 rounded-2xl bg-warning/10 border border-warning/20 text-warning text-sm flex items-center gap-3">
-            <svg
-              className="w-5 h-5 flex-shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
+            <AlertTriangle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
             <span>
               <strong>{"Lưu ý Phân quyền:"}</strong>{" "}
               {
@@ -367,19 +347,7 @@ export default function InstructorCoursesPage() {
                       href={`/instructor/courses/${course.id}`}
                       className="px-3 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center gap-1"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
+                      <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{"Biên soạn"}</span>
                     </Link>
 
@@ -387,19 +355,7 @@ export default function InstructorCoursesPage() {
                       href={`/instructor/courses/${course.id}/analytics`}
                       className="px-2.5 py-1 rounded-lg bg-success/10 text-success border border-success/20 text-xs font-semibold hover:bg-success/20 transition-colors flex items-center gap-1"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                        />
-                      </svg>
+                      <BarChart2 className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{"Thống kê"}</span>
                     </Link>
 
@@ -407,19 +363,7 @@ export default function InstructorCoursesPage() {
                       href={`/instructor/courses/${course.id}/announcements`}
                       className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-semibold hover:bg-primary/20 transition-colors flex items-center gap-1"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                        />
-                      </svg>
+                      <Megaphone className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{"Thông báo"}</span>
                     </Link>
                   </div>
@@ -431,19 +375,7 @@ export default function InstructorCoursesPage() {
                       onClick={() => handleOpenEditModal(course)}
                       className="px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-xs font-semibold text-foreground transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
+                      <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{"Sửa thông tin"}</span>
                     </button>
 
@@ -451,19 +383,7 @@ export default function InstructorCoursesPage() {
                       onClick={() => handleDeleteCourse(course.id, course.title)}
                       className="px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
+                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{"Xóa"}</span>
                     </button>
 
@@ -472,19 +392,7 @@ export default function InstructorCoursesPage() {
                       className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 ml-auto"
                     >
                       <span>{"Xem bài giảng"}</span>
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M14 5l7 7m0 0l-7 7m7-7H3"
-                        />
-                      </svg>
+                      <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                     </Link>
                   </div>
                 </div>
@@ -505,14 +413,7 @@ export default function InstructorCoursesPage() {
                   onClick={() => setShowModal(false)}
                   className="p-1 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  <X className="w-5 h-5" aria-hidden="true" />
                 </button>
               </div>
 

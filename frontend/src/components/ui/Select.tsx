@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Select as BaseSelect } from "@base-ui/react/select";
+import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const Select = BaseSelect.Root;
@@ -23,15 +24,7 @@ export function SelectTrigger({
     >
       {children}
       <BaseSelect.Icon className="text-muted-foreground shrink-0">
-        <svg
-          className="w-4 h-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+        <ChevronDown className="w-4 h-4" />
       </BaseSelect.Icon>
     </BaseSelect.Trigger>
   );
@@ -78,15 +71,7 @@ export function SelectItem({
     >
       <BaseSelect.ItemText>{children}</BaseSelect.ItemText>
       <BaseSelect.ItemIndicator className="text-primary">
-        <svg
-          className="w-3.5 h-3.5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2.5}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-        </svg>
+        <Check className="w-3.5 h-3.5" />
       </BaseSelect.ItemIndicator>
     </BaseSelect.Item>
   );

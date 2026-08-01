@@ -13,6 +13,7 @@ import { IdentityService, type EnterpriseSeat } from "@/gen/identity/v1/identity
 import { Modal } from "@/components/ui/Modal";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
+import { Plus, UserPlus, AlertTriangle, Check, X } from "lucide-react";
 
 const columnHelper = createColumnHelper<EnterpriseSeat>();
 
@@ -188,19 +189,7 @@ export default function AdminEnterpriseDashboardPage() {
                 onClick={() => setShowCreateModal(true)}
                 className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground font-bold text-xs border border-primary-foreground/20 backdrop-blur-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <svg
-                  className="w-4 h-4 text-primary-foreground"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
+                <Plus className="w-4 h-4 text-primary-foreground" aria-hidden="true" />
                 <span>Tạo Mã Enterprise Mới</span>
               </button>
 
@@ -208,19 +197,7 @@ export default function AdminEnterpriseDashboardPage() {
                 onClick={() => setShowAssignModal(true)}
                 className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-card text-foreground hover:bg-muted font-bold text-xs shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-border"
               >
-                <svg
-                  className="w-4 h-4 text-primary"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                  />
-                </svg>
+                <UserPlus className="w-4 h-4 text-primary" aria-hidden="true" />
                 <span>Gán Suất học cho Học viên</span>
               </button>
             </div>
@@ -230,19 +207,7 @@ export default function AdminEnterpriseDashboardPage() {
         {/* Access Guard Notice */}
         {!isAdmin && (
           <div className="p-5 rounded-2xl bg-warning/10 border border-warning/30 text-warning text-xs leading-relaxed flex items-center gap-3">
-            <svg
-              className="w-5 h-5 flex-shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
+            <AlertTriangle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
             <span>
               Lưu ý: Bạn đang đăng nhập với tài khoản không có quyền Admin đầy đủ. Tính năng khởi
               tạo và gán suất học yêu cầu tài khoản Quản trị viên hệ thống (Super Admin).
@@ -261,33 +226,9 @@ export default function AdminEnterpriseDashboardPage() {
           >
             <div className="flex items-center gap-2">
               {message.type === "success" ? (
-                <svg
-                  className="w-5 h-5 text-success"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+                <Check className="w-5 h-5 text-success" aria-hidden="true" />
               ) : (
-                <svg
-                  className="w-5 h-5 text-destructive"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="w-5 h-5 text-destructive" aria-hidden="true" />
               )}
               <span>{message.text}</span>
             </div>
@@ -297,14 +238,7 @@ export default function AdminEnterpriseDashboardPage() {
               aria-label="Đóng thông báo"
               className="p-1 rounded-md opacity-60 hover:opacity-100"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         )}

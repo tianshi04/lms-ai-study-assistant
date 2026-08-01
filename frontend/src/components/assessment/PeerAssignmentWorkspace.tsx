@@ -5,6 +5,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Check, Lock, AlertTriangle, Info, Send, ExternalLink, Scale } from "lucide-react";
 
 interface PeerAssignmentWorkspaceProps {
   itemId: string;
@@ -241,17 +242,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             }`}
           >
             <span>1. My Submission</span>
-            {hasSubmitted && (
-              <svg
-                className="w-3.5 h-3.5 text-success"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
-            )}
+            {hasSubmitted && <Check className="w-3.5 h-3.5 text-success" />}
           </button>
 
           <button
@@ -265,21 +256,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             }`}
           >
             <span>2. Grade Peers (3/3)</span>
-            {!hasSubmitted && (
-              <svg
-                className="w-3 h-3 text-muted-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-            )}
+            {!hasSubmitted && <Lock className="w-3 h-3 text-muted-foreground" />}
           </button>
 
           <button
@@ -293,21 +270,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             }`}
           >
             <span>3. Grade Appeal</span>
-            {!hasSubmitted && (
-              <svg
-                className="w-3 h-3 text-muted-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
-            )}
+            {!hasSubmitted && <Lock className="w-3 h-3 text-muted-foreground" />}
           </button>
         </div>
       </div>
@@ -315,19 +278,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
       {/* Lock Warning Notice Banner */}
       {lockNotice && (
         <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 text-warning text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200">
-          <svg
-            className="w-4 h-4 text-warning shrink-0"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-            />
-          </svg>
+          <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
           <span>{lockNotice}</span>
         </div>
       )}
@@ -337,19 +288,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-info/10 border border-info/20 text-xs text-info space-y-1">
             <h4 className="font-bold flex items-center gap-1.5">
-              <svg
-                className="w-4 h-4 text-info"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <Info className="w-4 h-4 text-info" />
               <span>Submission Requirements:</span>
             </h4>
             <p>
@@ -385,15 +324,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
 
             {submitStatus && (
               <p className="p-3 rounded-xl bg-success/10 border border-success/30 text-xs font-bold text-success flex items-center gap-1.5">
-                <svg
-                  className="w-4 h-4 text-success"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
+                <Check className="w-4 h-4 text-success" />
                 <span>{submitStatus}</span>
               </p>
             )}
@@ -406,19 +337,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
               <span aria-live="polite">
                 {isSubmitting ? "Submitting…" : "Submit Peer Assignment"}
               </span>
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                />
-              </svg>
+              <Send className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -449,19 +368,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                   rel="noreferrer"
                   className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
                 >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                    />
-                  </svg>
+                  <ExternalLink className="w-3.5 h-3.5" />
                   <span>View Repository</span>
                 </a>
               </div>
@@ -518,19 +425,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-accent text-accent-foreground border border-border text-xs">
             <h4 className="font-bold mb-1 flex items-center gap-1.5">
-              <svg
-                className="w-4 h-4 text-primary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"
-                />
-              </svg>
+              <Scale className="w-4 h-4 text-primary" />
               <span>Submit Grade Appeal (BR_PEER_003)</span>
             </h4>
             <p>

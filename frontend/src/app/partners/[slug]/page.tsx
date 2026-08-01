@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { usePartnersQuery, useCoursesQuery } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
+import { AlertTriangle, ExternalLink, BookOpen, PenTool, Globe, GraduationCap } from "lucide-react";
 
 export default function PartnerPublicPage() {
   const params = useParams();
@@ -37,19 +38,7 @@ export default function PartnerPublicPage() {
   if (!partner) {
     return (
       <div className="max-w-md mx-auto my-20 p-8 bg-card border border-border rounded-2xl text-center shadow-sm text-foreground">
-        <svg
-          className="w-16 h-16 mx-auto text-muted-foreground mb-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-          />
-        </svg>
+        <AlertTriangle className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
         <h1 className="text-2xl font-bold text-foreground mb-2 text-balance">
           Không tìm thấy Đối tác
         </h1>
@@ -122,19 +111,7 @@ export default function PartnerPublicPage() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center text-sm text-primary hover:underline mt-2 font-medium"
                   >
-                    <svg
-                      className="w-4 h-4 mr-1.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      />
-                    </svg>
+                    <ExternalLink className="w-4 h-4 mr-1.5" />
                     {partner.websiteUrl}
                   </a>
                 )}
@@ -189,19 +166,7 @@ export default function PartnerPublicPage() {
 
               {partnerCourses.length === 0 ? (
                 <div className="bg-card rounded-2xl p-12 text-center border border-border">
-                  <svg
-                    className="w-12 h-12 mx-auto text-muted-foreground mb-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={1.5}
-                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                  </svg>
+                  <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
                   <p className="text-muted-foreground font-medium">
                     Hiện chưa có khóa học nào được phát hành bởi đối tác này.
                   </p>
@@ -264,19 +229,7 @@ export default function PartnerPublicPage() {
                     {partner.signerName ? (
                       partner.signerName.charAt(0).toUpperCase()
                     ) : (
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                        />
-                      </svg>
+                      <PenTool className="w-6 h-6" />
                     )}
                   </div>
                   <div>
@@ -321,25 +274,7 @@ export default function PartnerPublicPage() {
                       key={i}
                       className="inline-flex items-center gap-1.5 px-3 py-1 bg-muted text-foreground font-mono text-xs rounded-lg border border-border"
                     >
-                      <svg
-                        className="w-3.5 h-3.5 text-primary"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M3.6 9h16.8M3.6 15h16.8"
-                        />
-                      </svg>
+                      <Globe className="w-3.5 h-3.5 text-primary" />
                       {domain}
                     </span>
                   ))}
@@ -350,25 +285,7 @@ export default function PartnerPublicPage() {
             {/* OpenBadges Compliance Badge */}
             <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20">
               <div className="flex items-center space-x-3 mb-2">
-                <svg
-                  className="w-6 h-6 text-primary shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 14l9-5-9-5-9 5 9 5z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
-                  />
-                </svg>
+                <GraduationCap className="w-6 h-6 text-primary shrink-0" />
                 <h3 className="font-bold text-foreground text-sm">
                   Tương thích OpenBadges v2.0 / v3.0
                 </h3>

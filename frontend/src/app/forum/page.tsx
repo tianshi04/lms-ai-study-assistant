@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { MessageSquare, Plus, Pin, ChevronUp, ChevronDown, Reply } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import {
@@ -334,14 +335,7 @@ export default function ForumPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 border-b border-border pb-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-3">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
-                />
-              </svg>
+              <MessageSquare className="w-3.5 h-3.5" />
               Coursera Learning Forum
             </div>
             <h1 className="text-3xl font-extrabold text-foreground text-balance">
@@ -357,14 +351,7 @@ export default function ForumPage() {
               onClick={() => setShowCreateModal(true)}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm transition-all shadow-md shadow-primary/20 cursor-pointer"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
+              <Plus className="w-4 h-4" />
               {"Tạo chủ đề thảo luận mới"}
             </button>
           </div>
@@ -412,19 +399,7 @@ export default function ForumPage() {
           </div>
         ) : threads.length === 0 ? (
           <div className="text-center py-16 bg-card rounded-2xl border border-border p-8">
-            <svg
-              className="w-12 h-12 text-muted-foreground mx-auto mb-3"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
+            <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
             <p className="text-muted-foreground font-medium">
               {"Chưa có chủ đề thảo luận nào. Hãy là người đầu tiên đặt câu hỏi!"}
             </p>
@@ -449,13 +424,7 @@ export default function ForumPage() {
                       <div className="flex items-center gap-2 flex-wrap mb-2">
                         {thread.isStaffPinned && (
                           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20 shadow-xs">
-                            <svg
-                              className="w-3.5 h-3.5 text-warning shrink-0"
-                              fill="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5v6l1 1 1-1v-6h5v-2l-2-2z" />
-                            </svg>
+                            <Pin className="w-3.5 h-3.5 text-warning shrink-0" />
                             <span>Staff Pinned</span>
                           </span>
                         )}
@@ -514,23 +483,13 @@ export default function ForumPage() {
                           : "bg-muted border-border text-foreground hover:border-primary hover:bg-primary/10 hover:text-primary"
                       }`}
                     >
-                      <svg
+                      <ChevronUp
                         className={`w-4 h-4 transition-transform duration-200 group-hover:-translate-y-0.5 ${
                           thread.isUpvotedByMe
                             ? "text-primary-foreground"
                             : "text-muted-foreground group-hover:text-primary"
                         }`}
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M4.5 15.75l7.5-7.5 7.5 7.5"
-                        />
-                      </svg>
+                      />
                       <span className="text-xs font-extrabold mt-1 tracking-tight">
                         {thread.upvoteCount}
                       </span>
@@ -548,19 +507,9 @@ export default function ForumPage() {
                           ? "Hide replies"
                           : `Show (${thread.replies.length}) ${"phản hồi"}`}
                       </span>
-                      <svg
+                      <ChevronDown
                         className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
+                      />
                     </button>
                   </div>
 
@@ -638,23 +587,13 @@ export default function ForumPage() {
                                       : "bg-card border-border text-foreground hover:border-primary hover:text-primary hover:bg-primary/10"
                                   }`}
                                 >
-                                  <svg
+                                  <ChevronUp
                                     className={`w-3.5 h-3.5 transition-transform duration-200 group-hover:-translate-y-0.5 ${
                                       reply.isUpvotedByMe
                                         ? "text-primary-foreground"
                                         : "text-primary"
                                     }`}
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth={2.5}
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      d="M4.5 15.75l7.5-7.5 7.5 7.5"
-                                    />
-                                  </svg>
+                                  />
                                   <span className="font-bold">{reply.upvoteCount}</span>
                                 </button>
                               </div>
@@ -704,19 +643,7 @@ export default function ForumPage() {
                             }
                             className="w-full flex items-center gap-2 px-4 py-2.5 bg-muted hover:bg-muted/80 border border-input rounded-xl text-xs font-medium text-muted-foreground transition-all cursor-pointer text-left group"
                           >
-                            <svg
-                              className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
-                              />
-                            </svg>
+                            <Reply className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                             <span>{"Nội dung thắc mắc hoặc thảo luận chi tiết…"}</span>
                           </button>
                         ) : (

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { useToast } from "@/components/ui/Toast";
+import { Clock, Video, Plus, Trash2, Pencil } from "lucide-react";
 
 export interface InVideoQuizItem {
   timestampSeconds: number;
@@ -197,14 +198,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                 onClick={captureCurrentTime}
                 className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center gap-1.5 cursor-pointer"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+                <Clock className="w-4 h-4" aria-hidden="true" />
                 <span>Lấy mốc giây hiện tại từ Video</span>
               </button>
             </div>
@@ -212,19 +206,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-2xl bg-muted/40 text-muted-foreground text-xs shadow-2xs">
-          <svg
-            className="w-10 h-10 mb-2 text-muted-foreground"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 00-2 2z"
-            />
-          </svg>
+          <Video className="w-10 h-10 mb-2 text-muted-foreground" aria-hidden="true" />
           <span className="font-semibold text-foreground">Chưa có video được chọn</span>
           <span className="text-[10px] text-muted-foreground mt-1 font-medium text-center">
             Vui lòng nhập đường dẫn URL hoặc upload video ở trên để bắt đầu cấu hình In-Video Quiz.
@@ -294,14 +276,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
               onClick={handleAddOption}
               className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
+              <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               <span>+ Thêm phương án</span>
             </button>
           </div>
@@ -338,19 +313,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                       className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
                       title="Xóa phương án này"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
+                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                     </button>
                   )}
                 </div>
@@ -378,14 +341,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
             onClick={handleAddOrUpdateQuiz}
             className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
+            <Plus className="w-4 h-4" aria-hidden="true" />
             <span>{editingIndex !== null ? "Lưu cập nhật mốc" : "Chèn mốc câu hỏi vào Video"}</span>
           </button>
         </div>
@@ -405,19 +361,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
               >
                 <div className="flex items-center gap-3">
                   <span className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary font-mono font-extrabold text-xs flex items-center gap-1.5 border border-primary/20">
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
+                    <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>
                       {formatSeconds(q.timestampSeconds)} ({q.timestampSeconds}s)
                     </span>
@@ -441,19 +385,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                     className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     title="Sửa mốc câu hỏi"
                   >
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                      />
-                    </svg>
+                    <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                   <button
                     type="button"
@@ -461,19 +393,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                     className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors cursor-pointer"
                     title="Xóa mốc câu hỏi"
                   >
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
+                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
                 </div>
               </div>
