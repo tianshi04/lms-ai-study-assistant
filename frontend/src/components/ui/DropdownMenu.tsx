@@ -39,7 +39,7 @@ export function DropdownMenuItem({
     <BaseMenu.Item
       ref={ref}
       className={cn(
-        "relative flex cursor-pointer select-none items-center justify-between gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium outline-none transition-colors hover:bg-accent text-foreground data-[highlighted]:bg-accent",
+        "relative flex cursor-pointer select-none items-center justify-start gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium outline-none transition-colors hover:bg-muted text-foreground data-[highlighted]:bg-muted/70",
         className,
       )}
       {...props}
