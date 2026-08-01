@@ -23,6 +23,7 @@ from src.modules.assessment.domain.entities import (
     GradeAppeal,
     HonorCodeAgreement,
     LabSubmission,
+    QuizActiveSession,
     PeerAssignmentSubmission,
     PeerReview,
     Question,
@@ -308,8 +309,19 @@ class AssessmentUseCase:
                 repo, item_id, seed=seed_val
             )
 
+            session_id = f"qsess-{uuid.uuid4().hex[:8]}"
+            
+            new_session = QuizActiveSession(
+                user_id=user_id,
+                item_id=item_id,
+                session_token=session_id,
+                session_seed=seed_val,
+                expires_at=expires_at.isoformat(),
+            )
+            await repo.save_quiz_active_session(new_session)
+
             return {
-                "session_id": f"qsess-{uuid.uuid4().hex[:8]}",
+                "session_id": session_id,
                 "start_time_iso": now.isoformat(),
                 "expires_at_iso": expires_at.isoformat(),
                 "duration_minutes": duration_minutes,
