@@ -6,7 +6,7 @@ export function Card({ className, ref, ...props }: React.ComponentProps<"div">) 
     <div
       ref={ref}
       className={cn(
-        "bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm p-6",
+        "bg-card text-card-foreground rounded-xl border border-border shadow-sm p-6",
         className,
       )}
       {...props}
@@ -23,7 +23,7 @@ export function CardTitle({ className, ref, ...props }: React.ComponentProps<"h3
     <h3
       ref={ref}
       className={cn(
-        "text-lg font-semibold leading-none tracking-tight text-slate-900 dark:text-white",
+        "text-lg font-semibold leading-none tracking-tight text-card-foreground",
         className,
       )}
       {...props}
@@ -32,13 +32,7 @@ export function CardTitle({ className, ref, ...props }: React.ComponentProps<"h3
 }
 
 export function CardDescription({ className, ref, ...props }: React.ComponentProps<"p">) {
-  return (
-    <p
-      ref={ref}
-      className={cn("text-sm text-slate-500 dark:text-slate-400", className)}
-      {...props}
-    />
-  );
+  return <p ref={ref} className={cn("text-sm text-muted-foreground", className)} {...props} />;
 }
 
 export function CardContent({ className, ref, ...props }: React.ComponentProps<"div">) {
@@ -49,10 +43,7 @@ export function CardFooter({ className, ref, ...props }: React.ComponentProps<"d
   return (
     <div
       ref={ref}
-      className={cn(
-        "flex items-center pt-4 border-t border-slate-100 dark:border-slate-800/80",
-        className,
-      )}
+      className={cn("flex items-center pt-4 border-t border-border", className)}
       {...props}
     />
   );
