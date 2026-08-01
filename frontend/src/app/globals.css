@@ -4,6 +4,10 @@
 @variant dark (&:where(.dark, .dark *));
 
 @theme {
+  /* Typography Tokens */
+  --font-sans: var(--font-be-vietnam-pro), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
   /* Surface & Text Tokens */
   --color-background: var(--background);
   --color-foreground: var(--foreground);

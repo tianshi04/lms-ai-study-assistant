@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Be_Vietnam_Pro, JetBrains_Mono } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
@@ -10,14 +10,17 @@ import { CopilotProvider } from "@/components/providers/CopilotProvider";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { getAuthServer } from "@/lib/auth_server";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const beVietnamPro = Be_Vietnam_Pro({
+  variable: "--font-be-vietnam-pro",
+  weight: ["300", "400", "500", "600", "700", "800"],
+  subsets: ["vietnamese", "latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["vietnamese", "latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -51,7 +54,7 @@ export default function RootLayout({
     <html
       lang="vi"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      className={`${beVietnamPro.variable} ${jetbrainsMono.variable} font-sans antialiased`}
     >
       <body className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
         <QueryProvider>
