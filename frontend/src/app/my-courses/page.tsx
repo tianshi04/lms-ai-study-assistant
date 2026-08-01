@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore, ViewTransition } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 
@@ -197,11 +197,9 @@ export default function MyCoursesPage() {
                     transitionTypes={["nav-forward"]}
                     className="block group-hover:text-primary transition-colors"
                   >
-                    <ViewTransition name={`course-title-${course.courseId}`} share="text-morph">
-                      <h3 className="text-lg font-bold text-foreground line-clamp-2 mb-3">
-                        {course.courseTitle}
-                      </h3>
-                    </ViewTransition>
+                    <h3 className="text-lg font-bold text-foreground line-clamp-2 mb-3">
+                      {course.courseTitle}
+                    </h3>
                   </Link>
 
                   <div className="space-y-1.5 mb-2">

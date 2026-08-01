@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ViewTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
@@ -54,11 +54,9 @@ export function CourseCard({ course }: { course: Course }) {
 
         {/* Title & Description */}
         <Link href={`/courses/${course.id}`} prefetch={true} className="block">
-          <ViewTransition name={`course-title-${course.id}`} share="text-morph">
-            <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors mb-3 line-clamp-2">
-              {course.title}
-            </h3>
-          </ViewTransition>
+          <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors mb-3 line-clamp-2">
+            {course.title}
+          </h3>
         </Link>
         <p className="text-sm text-muted-foreground mb-6 line-clamp-3 leading-relaxed">
           {course.description}

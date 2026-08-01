@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ViewTransition } from "react";
+import { useState } from "react";
 import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -277,11 +277,9 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </div>
               )}
             </div>
-            <ViewTransition name={`course-title-${courseId}`} share="text-morph">
-              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4 leading-tight text-balance">
-                {course.title}
-              </h1>
-            </ViewTransition>
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4 leading-tight text-balance">
+              {course.title}
+            </h1>
             <p className="text-muted-foreground text-lg leading-relaxed mb-6">
               {course.description}
             </p>
