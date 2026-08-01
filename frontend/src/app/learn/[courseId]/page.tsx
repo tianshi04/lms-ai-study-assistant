@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 import { getRpcClient } from "@/lib/connect_client";
 import {
   CatalogService,
@@ -24,13 +23,11 @@ import { DeadlinesPanel } from "@/components/player/DeadlinesPanel";
 import { ForumTab } from "@/components/player/ForumTab";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
+import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
-import { useAuth } from "@/components/providers/AuthProvider";
 
 function CoursePlayerContent() {
-  const { isAuthenticated, userId: authUserId } = useAuth();
   const params = useParams();
-  const router = useRouter();
   const courseId = params?.courseId as string;
 
   const searchParams = useSearchParams();
@@ -84,6 +81,30 @@ function CoursePlayerContent() {
       0,
     ) || 1;
 
+  // Flatten all course items for Coursera-style Previous / Next navigation
+  const allCourseItems = useMemo(() => {
+    if (!course) return [];
+    const items: LearningItem[] = [];
+    course.weekModules.forEach((wm) => {
+      wm.lessons.forEach((l) => {
+        l.items.forEach((i) => {
+          items.push(i);
+        });
+      });
+    });
+    return items;
+  }, [course]);
+
+  const currentItemIndex = useMemo(() => {
+    return allCourseItems.findIndex((i: LearningItem) => i.id === activeItem?.id);
+  }, [allCourseItems, activeItem]);
+
+  const prevItem = currentItemIndex > 0 ? allCourseItems[currentItemIndex - 1] : null;
+  const nextItem =
+    currentItemIndex !== -1 && currentItemIndex < allCourseItems.length - 1
+      ? allCourseItems[currentItemIndex + 1]
+      : null;
+
   // Mark Item as Complete
   const handleMarkItemComplete = useCallback(
     async (itemId: string) => {
@@ -130,34 +151,173 @@ function CoursePlayerContent() {
     [course, progress, totalCourseItems, courseId, isPreviewMode],
   );
 
+  const scormTrackingRef = useRef<Record<string, string>>({
+    "cmi.core.lesson_status": "not attempted",
+    "cmi.core.score.raw": "0",
+    "cmi.core.lesson_location": "",
+    "cmi.suspend_data": "",
+    "cmi.core.session_time": "",
+  });
+
+  useEffect(() => {
+    if (!activeItem || (activeItem.type as unknown as number) !== 7) {
+      if (typeof window !== "undefined") {
+        delete (window as Window & { API?: unknown }).API;
+      }
+      return;
+    }
+
+    if (isPreviewMode) {
+      // Mock API Adapter for SCORM
+      const apiAdapter = {
+        LMSInitialize: () => {
+          console.log("SCORM API Mock: LMSInitialize called");
+          return "true";
+        },
+        LMSFinish: () => {
+          console.log("SCORM API Mock: LMSFinish called");
+          return "true";
+        },
+        LMSGetValue: (element: string) => {
+          console.log(`SCORM API Mock: LMSGetValue(${element})`);
+          return "";
+        },
+        LMSSetValue: (element: string, value: string) => {
+          console.log(`SCORM API Mock: LMSSetValue(${element}, ${value})`);
+          return "true";
+        },
+        LMSCommit: () => {
+          console.log("SCORM API Mock: LMSCommit called");
+          return "true";
+        },
+        LMSGetLastError: () => 0,
+        LMSGetErrorString: () => "No error",
+        LMSGetDiagnostic: () => "No diagnostic",
+      };
+      (window as Window & { API?: unknown }).API = apiAdapter;
+      return () => {
+        if (typeof window !== "undefined") {
+          delete (window as Window & { API?: unknown }).API;
+        }
+      };
+    }
+
+    let active = true;
+
+    async function initScorm() {
+      try {
+        const learningClient = getRpcClient(LearningService);
+        const res = await (learningClient as any).getScormTracking({ itemId: activeItem!.id });
+        if (!active) return;
+
+        scormTrackingRef.current = {
+          "cmi.core.lesson_status": res.tracking?.cmiCoreLessonStatus || "not attempted",
+          "cmi.core.score.raw": String(res.tracking?.cmiCoreScoreRaw || 0.0),
+          "cmi.core.lesson_location": res.tracking?.cmiCoreLessonLocation || "",
+          "cmi.suspend_data": res.tracking?.cmiSuspendData || "",
+          "cmi.core.session_time": res.tracking?.cmiCoreSessionTime || "",
+        };
+
+        // Define the SCORM 1.2 API Adapter
+        const apiAdapter = {
+          LMSInitialize: () => {
+            console.log("SCORM API: LMSInitialize called");
+            return "true";
+          },
+          LMSFinish: () => {
+            console.log("SCORM API: LMSFinish called");
+            saveTracking();
+            return "true";
+          },
+          LMSGetValue: (element: string) => {
+            const val = scormTrackingRef.current[element] || "";
+            console.log(`SCORM API: LMSGetValue(${element}) -> ${val}`);
+            return val;
+          },
+          LMSSetValue: (element: string, value: string) => {
+            console.log(`SCORM API: LMSSetValue(${element}, ${value})`);
+            scormTrackingRef.current[element] = value;
+
+            if (
+              element === "cmi.core.lesson_status" &&
+              (value === "completed" || value === "passed")
+            ) {
+              if (activeItem && !progress?.completedItemIds.includes(activeItem.id)) {
+                handleMarkItemComplete(activeItem.id);
+              }
+            }
+            return "true";
+          },
+          LMSCommit: () => {
+            console.log("SCORM API: LMSCommit called");
+            saveTracking();
+            return "true";
+          },
+          LMSGetLastError: () => 0,
+          LMSGetErrorString: () => "No error",
+          LMSGetDiagnostic: () => "No diagnostic",
+        };
+
+        (window as Window & { API?: unknown }).API = apiAdapter;
+      } catch (err) {
+        console.error("Failed to fetch SCORM tracking data:", err);
+      }
+    }
+
+    async function saveTracking() {
+      if (!activeItem) return;
+      try {
+        const learningClient = getRpcClient(LearningService);
+        await (learningClient as any).saveScormTracking({
+          itemId: activeItem.id,
+          cmiCoreLessonStatus:
+            scormTrackingRef.current["cmi.core.lesson_status"] || "not attempted",
+          cmiCoreScoreRaw: parseFloat(scormTrackingRef.current["cmi.core.score.raw"]) || 0.0,
+          cmiCoreLessonLocation: scormTrackingRef.current["cmi.core.lesson_location"] || "",
+          cmiSuspendData: scormTrackingRef.current["cmi.suspend_data"] || "",
+          cmiCoreSessionTime: scormTrackingRef.current["cmi.core.session_time"] || "",
+        });
+        console.log("SCORM API: Saved tracking progress successfully");
+      } catch (err) {
+        console.error("Failed to save SCORM tracking progress:", err);
+      }
+    }
+
+    initScorm();
+
+    return () => {
+      active = false;
+      saveTracking();
+      if (typeof window !== "undefined") {
+        delete (window as Window & { API?: unknown }).API;
+      }
+    };
+  }, [activeItem, courseId, progress, handleMarkItemComplete, isPreviewMode]);
+
+  const router = useRouter();
+
   // Load Course & Progress
   useEffect(() => {
     if (!courseId) return;
 
     // Strict Auth Guard Check
-    if (!isAuthenticated) {
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    if (!token) {
       const redirectUrl = `/learn/${courseId}${previewItemId ? `?itemId=${previewItemId}` : ""}${isPreviewMode ? (previewItemId ? "&preview=true" : "?preview=true") : ""}`;
       router.push(`/auth/login?redirect=${encodeURIComponent(redirectUrl)}`);
       return;
     }
 
-    const effectiveUserId = authUserId || "";
+    // Safely get userId after auth guard passes (will be set in loadData)
+    const storedUserId = localStorage.getItem("user_id");
 
     async function loadData() {
-      if (effectiveUserId) {
-        setUserId(effectiveUserId);
+      if (storedUserId) {
+        setUserId(storedUserId);
       }
       try {
         const catalogClient = getRpcClient(CatalogService);
-        const learningClient = getRpcClient(LearningService);
-
-        // Fetch course details, progress, and personal notes in parallel to eliminate waterfalls
-        const [courseRes, progressRes, notesRes] = await Promise.all([
-          catalogClient.getCourseDetail({ idOrSlug: courseId }),
-          isPreviewMode ? Promise.resolve(null) : learningClient.getProgress({ courseId }),
-          isPreviewMode ? Promise.resolve(null) : learningClient.listPersonalNotes({ courseId }),
-        ]);
-
+        const courseRes = await catalogClient.getCourseDetail({ idOrSlug: courseId });
         setCourse(courseRes.course ?? null);
 
         // Set initial item based on previewItemId if provided
@@ -183,16 +343,18 @@ function CoursePlayerContent() {
         if (isPreviewMode) {
           // Set mock empty progress for preview
           setProgress({
-            userId: effectiveUserId || "preview-user",
+            userId: storedUserId || "preview-user",
             courseId,
             overallProgressPercent: 0,
             completedItemIds: [],
             lastResetAt: "",
           } as unknown as LearningProgress);
         } else {
-          setProgress(progressRes?.progress ?? null);
+          const learningClient = getRpcClient(LearningService);
+          const progressRes = await learningClient.getProgress({ courseId });
+          setProgress(progressRes.progress ?? null);
 
-          if (progressRes?.progress && progressRes.progress.overallProgressPercent >= 100) {
+          if (progressRes.progress && progressRes.progress.overallProgressPercent >= 100) {
             try {
               const certClient = getRpcClient(CertificateService);
               const certRes = await certClient.getVerifiedCertificate({ courseId });
@@ -204,7 +366,8 @@ function CoursePlayerContent() {
             }
           }
 
-          setNotes(notesRes?.notes || []);
+          const notesRes = await learningClient.listPersonalNotes({ courseId });
+          setNotes(notesRes.notes);
         }
       } catch (err) {
         console.error("Error loading course player data:", err);
@@ -238,7 +401,7 @@ function CoursePlayerContent() {
     }
 
     const time = Math.floor(video.currentTime);
-    setCurrentTime(video.currentTime);
+    setCurrentTime(time);
 
     // Auto mark as completed if watched >= 80% of video duration
     if (
@@ -334,35 +497,12 @@ function CoursePlayerContent() {
     }
   };
 
-  // Calculate prev and next learning items in course order
-  const allItems: LearningItem[] = useMemo(() => {
-    if (!course?.weekModules) return [];
-    const items: LearningItem[] = [];
-    course.weekModules.forEach((wm) => {
-      wm.lessons.forEach((l) => {
-        items.push(...l.items);
-      });
-    });
-    return items;
-  }, [course]);
-
-  const activeIndexInCourse = useMemo(() => {
-    if (!activeItem) return -1;
-    return allItems.findIndex((i) => i.id === activeItem.id);
-  }, [allItems, activeItem]);
-
-  const prevItem = activeIndexInCourse > 0 ? allItems[activeIndexInCourse - 1] : null;
-  const nextItem =
-    activeIndexInCourse >= 0 && activeIndexInCourse < allItems.length - 1
-      ? allItems[activeIndexInCourse + 1]
-      : null;
-
   if (!course) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-500 dark:text-slate-400">
         <div className="flex items-center gap-3">
-          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <span aria-live="polite">Đang mở Trình phát bài học…</span>
+          <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <span>Đang mở Trình phát bài học...</span>
         </div>
       </div>
     );
@@ -392,41 +532,20 @@ function CoursePlayerContent() {
                 <span>{"Đóng Xem trước"}</span>
               </button>
             ) : (
-              <div className="flex items-center gap-2">
-                <Link
-                  href={`/courses/${course.id}`}
-                  className="p-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground transition-colors"
-                  title="Quay lại khóa học"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                </Link>
-
-                <button
-                  onClick={() => setIsSidebarOpen((prev) => !prev)}
-                  className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                    isSidebarOpen
-                      ? "bg-primary/10 text-primary border border-primary/20"
-                      : "bg-muted hover:bg-muted/80 text-foreground"
-                  }`}
-                  title={isSidebarOpen ? "Ẩn lộ trình học" : "Hiện lộ trình học"}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h7"
-                    />
-                  </svg>
-                </button>
-              </div>
+              <Link
+                href={`/courses/${course.id}`}
+                className="p-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground transition-colors"
+                title="Quay lại khóa học"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </Link>
             )}
             <span className="font-bold text-sm text-foreground truncate max-w-md">
               {isPreviewMode ? `Xem trước: ${activeItem?.title || course.title}` : course.title}
@@ -485,25 +604,58 @@ function CoursePlayerContent() {
         </header>
 
         {/* Main Workspace Layout */}
-        <div className="flex-1 flex flex-row overflow-x-auto overflow-y-hidden">
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left Sidebar Icon Strip when collapsed */}
+          {!isSidebarOpen && !isPreviewMode && (
+            <div className="w-14 bg-card border-r border-border flex flex-col items-center py-4 shrink-0 z-20 select-none">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="w-12 py-2.5 px-1 rounded-xl flex flex-col items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer"
+                title="Mở Lộ trình Bài học"
+              >
+                <svg
+                  className="w-5 h-5 mb-1 text-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 10h16M4 14h16M4 18h16"
+                  />
+                </svg>
+                <span className="text-[10px] tracking-tight leading-none font-semibold">
+                  Lộ trình
+                </span>
+              </button>
+            </div>
+          )}
+
           {/* Left Sidebar - Course Content Navigation Tree */}
-          {!isPreviewMode && isSidebarOpen && (
-            <aside className="w-80 shrink-0 bg-card/95 border-r border-border overflow-y-auto flex flex-col transition-all duration-200">
+          {isSidebarOpen && !isPreviewMode && (
+            <aside className="w-80 bg-card/95 border-r border-border overflow-y-auto flex-shrink-0 flex flex-col transition-all duration-300">
               <div className="p-4 border-b border-border bg-muted/50 sticky top-0 z-10 flex items-center justify-between">
                 <h2 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
                   {"Lộ trình Bài học"}
                 </h2>
                 <button
                   onClick={() => setIsSidebarOpen(false)}
-                  className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                  title="Thu gọn lộ trình"
+                  className="w-6 h-6 inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
+                  title="Ẩn Lộ trình Bài học"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
+                      d="M6 18L18 6M6 6l12 12"
                     />
                   </svg>
                 </button>
@@ -539,13 +691,6 @@ function CoursePlayerContent() {
                               const isActive = activeItem?.id === item.id;
                               const isDone = progress?.completedItemIds.includes(item.id);
 
-                              const itemIndex = allItemsInCourse.findIndex((i) => i.id === item.id);
-                              const prevItem =
-                                itemIndex > 0 ? allItemsInCourse[itemIndex - 1] : null;
-                              const _isUnlocked =
-                                itemIndex <= 0 ||
-                                (prevItem && progress?.completedItemIds.includes(prevItem.id));
-
                               return (
                                 <button
                                   key={item.id}
@@ -557,7 +702,9 @@ function CoursePlayerContent() {
                                   className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
                                     isActive
                                       ? "bg-primary/10 text-primary font-semibold border border-primary/20"
-                                      : "hover:bg-muted text-muted-foreground"
+                                      : isDone
+                                        ? "hover:bg-muted text-foreground font-semibold"
+                                        : "hover:bg-muted text-muted-foreground"
                                   }`}
                                 >
                                   <span className="truncate flex items-center gap-2">
@@ -666,8 +813,8 @@ function CoursePlayerContent() {
             </aside>
           )}
 
-          {/* Center Workspace & Bottom Controls */}
-          <main className="flex-1 min-w-[360px] flex flex-col bg-background overflow-hidden relative text-foreground">
+          {/* Center Workspace & Bottom Panels */}
+          <main className="flex-1 flex flex-col bg-background overflow-hidden relative text-foreground min-w-[360px]">
             {/* Lock Notice Banner */}
             {lockNotice && (
               <div className="p-3 bg-warning/10 border-b border-warning/30 text-warning text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-200">
@@ -681,10 +828,11 @@ function CoursePlayerContent() {
               </div>
             )}
 
-            {/* Center Video & Bottom Control Bar Layout */}
-            <div className="flex-1 flex flex-col items-center justify-start relative overflow-y-auto p-6 bg-muted/60 transition-colors duration-200 space-y-6">
-              <div className="w-full flex flex-col items-start justify-start max-w-5xl">
-                <div className="w-full bg-slate-950 rounded-2xl overflow-hidden shadow-2xl border border-border flex items-center justify-center">
+            {/* Center Video & Side Tool Panel Layout - Locked 3-Frame Row */}
+            <div className="flex-1 flex flex-row overflow-x-auto overflow-y-hidden relative min-h-0">
+              {/* Left/Center Video / Reading Media Viewer Column */}
+              <div className="flex-1 min-w-[360px] bg-card flex flex-col items-center justify-between relative overflow-y-auto transition-colors duration-200 min-h-0">
+                <div className="w-full flex-1 flex items-start justify-center p-2 sm:p-3 pt-1 min-h-0 overflow-y-auto">
                   <VideoPlayer
                     videoRef={videoRef}
                     activeItem={activeItem}
@@ -704,247 +852,258 @@ function CoursePlayerContent() {
                   />
                 </div>
 
-                {/* Video / Lesson Title below Video */}
-                {activeItem && (
-                  <div className="w-full mt-4 text-left">
-                    <h1 className="text-base sm:text-lg font-extrabold text-foreground tracking-tight">
-                      {activeItem.title}
-                    </h1>
-                    {activeItem.estimatedMinutes > 0 && (
-                      <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
-                        <span>⏱️ {activeItem.estimatedMinutes} phút</span>
-                        {activeItem.type === 1 && <span>• 📹 Video bài giảng</span>}
-                      </p>
-                    )}
-                  </div>
-                )}
+                {/* Coursera-style Bottom Control Navigation Footer Bar */}
+                <div className="w-full h-14 border-t border-border px-4 sm:px-6 flex items-center justify-between bg-muted/30 shrink-0 z-10">
+                  {/* Left: Previous Item Button */}
+                  {prevItem ? (
+                    <button
+                      onClick={() => setActiveItem(prevItem)}
+                      className="px-3.5 py-2 rounded-xl text-xs font-semibold border border-border hover:bg-muted text-foreground transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      title={prevItem.title}
+                    >
+                      <svg
+                        className="w-4 h-4 text-muted-foreground"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                      <span>{"Bài trước"}</span>
+                    </button>
+                  ) : (
+                    <div />
+                  )}
+
+                  {/* Right: Next Item Button - Clean Text Only */}
+                  {nextItem ? (
+                    <button
+                      onClick={() => setActiveItem(nextItem)}
+                      className="px-5 py-2.5 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                    >
+                      <span>{"Bài tiếp theo"}</span>
+                      <svg
+                        className="w-4 h-4 shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </button>
+                  ) : (
+                    <span className="text-xs text-muted-foreground font-semibold">
+                      {"Đã đến bài học cuối cùng"}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {/* Bottom Control Bar */}
-              <div className="w-full max-w-5xl flex items-center justify-between bg-card border border-border p-3 rounded-2xl shadow-2xs z-10">
-                {prevItem ? (
-                  <button
-                    onClick={() => setActiveItem(prevItem)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-muted hover:bg-muted/80 text-foreground transition-colors flex items-center gap-1.5 cursor-pointer"
-                    title={prevItem.title}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
-                    <span>{"Bài trước"}</span>
-                  </button>
-                ) : (
-                  <div />
+              {/* Coursera-style Expandable Side Drawer Panel - Locked Width Column */}
+              {isPanelOpen &&
+                (!isPreviewMode ||
+                  (activeItem?.interactiveTranscripts &&
+                    activeItem.interactiveTranscripts.length > 0) ||
+                  activeItem?.vttSubtitleUrl) && (
+                  <aside className="w-80 xl:w-96 bg-card border-l border-border flex flex-col shrink-0 h-full overflow-hidden shadow-xs z-10 transition-all duration-300">
+                    {/* Drawer Header */}
+                    <div className="h-12 border-b border-border px-4 flex items-center justify-between bg-muted/40 shrink-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-xs text-foreground uppercase tracking-wider">
+                          {activeTab === "transcript" && "Phụ đề Tương tác"}
+                          {activeTab === "forum" && "Thảo luận Bài học"}
+                          {activeTab === "notes" && "Ghi chú Cá nhân"}
+                          {activeTab === "deadlines" && "Deadlines & Tiến độ"}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setIsPanelOpen(false)}
+                        className="w-7 h-7 inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
+                        title="Đóng bảng công cụ"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Tab Body Content */}
+                    <div className="flex-1 overflow-y-auto p-4 bg-background min-h-0 flex flex-col">
+                      {activeTab === "transcript" && (
+                        <TranscriptPanel
+                          activeItem={activeItem}
+                          currentTime={currentTime}
+                          onSeekVideo={handleSeekVideo}
+                        />
+                      )}
+
+                      {!isPreviewMode && activeTab === "forum" && (
+                        <ForumTab courseId={courseId} itemId={activeItem?.id || ""} />
+                      )}
+
+                      {!isPreviewMode && activeTab === "notes" && (
+                        <NotesPanel
+                          notes={notes}
+                          highlightText={highlightText}
+                          noteComment={noteComment}
+                          savingNote={savingNote}
+                          onHighlightTextChange={setHighlightText}
+                          onNoteCommentChange={setNoteComment}
+                          onSaveNote={handleSaveNote}
+                        />
+                      )}
+
+                      {!isPreviewMode && activeTab === "deadlines" && (
+                        <DeadlinesPanel
+                          progress={progress}
+                          onResetDeadlines={handleResetDeadlines}
+                        />
+                      )}
+                    </div>
+                  </aside>
                 )}
 
-                {nextItem ? (
-                  <button
-                    onClick={() => setActiveItem(nextItem)}
-                    className="px-5 py-2.5 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground transition-colors shadow-md flex items-center gap-2 cursor-pointer"
-                    title={nextItem.title}
+              {/* Coursera-style Vertical Icon Action Bar (Far Right Strip - Rigid Vertical Column) */}
+              <div className="w-16 lg:w-20 bg-card border-l border-border flex flex-col items-center justify-start py-4 gap-4 shrink-0 h-full z-20 select-none">
+                {/* Transcript Button */}
+                <button
+                  onClick={() => handleTabClick("transcript")}
+                  className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
+                    isPanelOpen && activeTab === "transcript"
+                      ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                  title="Phụ đề"
+                >
+                  <svg
+                    className="w-5 h-5 mb-1"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <span>{"Bài tiếp theo"}</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </button>
-                ) : (
-                  <span className="text-xs text-muted-foreground font-semibold">
-                    {"Đã đến bài học cuối cùng"}
-                  </span>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16m-7 6h7"
+                    />
+                  </svg>
+                  <span className="text-[10px] tracking-tight leading-none">Phụ đề</span>
+                </button>
+
+                {!isPreviewMode && (
+                  <>
+                    {/* Notes Button */}
+                    <button
+                      onClick={() => handleTabClick("notes")}
+                      className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
+                        isPanelOpen && activeTab === "notes"
+                          ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                      title="Ghi chú"
+                    >
+                      <svg
+                        className="w-5 h-5 mb-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                      </svg>
+                      <span className="text-[10px] tracking-tight leading-none">Ghi chú</span>
+                    </button>
+
+                    {/* Forum Button */}
+                    <button
+                      onClick={() => handleTabClick("forum")}
+                      className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
+                        isPanelOpen && activeTab === "forum"
+                          ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                      title="Thảo luận"
+                    >
+                      <svg
+                        className="w-5 h-5 mb-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
+                        />
+                      </svg>
+                      <span className="text-[10px] tracking-tight leading-none">Thảo luận</span>
+                    </button>
+
+                    {/* Deadlines Button */}
+                    <button
+                      onClick={() => handleTabClick("deadlines")}
+                      className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
+                        isPanelOpen && activeTab === "deadlines"
+                          ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                      title="Deadlines"
+                    >
+                      <svg
+                        className="w-5 h-5 mb-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span className="text-[10px] tracking-tight leading-none">Deadlines</span>
+                    </button>
+                  </>
                 )}
               </div>
             </div>
           </main>
 
-          {/* Right Side Drawer Panel (Coursera-style Side-by-Side Video & Transcript/Tools) */}
-          {isPanelOpen &&
-            (!isPreviewMode ||
-              (activeItem?.interactiveTranscripts &&
-                activeItem.interactiveTranscripts.length > 0) ||
-              activeItem?.vttSubtitleUrl) && (
-              <aside className="w-80 xl:w-96 bg-card border-l border-border flex flex-col shrink-0 h-full z-10 transition-all duration-200">
-                {/* Drawer Header */}
-                <div className="h-14 border-b border-border px-4 flex items-center justify-between bg-muted/30 shrink-0">
-                  <h3 className="font-bold text-xs uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                    {activeTab === "transcript" && "Phụ đề Tương tác"}
-                    {activeTab === "forum" && "Thảo luận Bài học"}
-                    {activeTab === "notes" && "Ghi chú Cá nhân"}
-                    {activeTab === "deadlines" && "Deadlines & Tiến độ"}
-                  </h3>
-                  <button
-                    onClick={() => setIsPanelOpen(false)}
-                    className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                    title="Đóng bảng công cụ"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Drawer Content */}
-                <div className="flex-1 overflow-y-auto p-4 bg-background min-h-0 flex flex-col">
-                  {activeTab === "transcript" && (
-                    <TranscriptPanel
-                      activeItem={activeItem}
-                      currentTime={currentTime}
-                      onSeekVideo={handleSeekVideo}
-                    />
-                  )}
-
-                  {!isPreviewMode && activeTab === "forum" && (
-                    <ForumTab courseId={courseId} itemId={activeItem?.id || ""} />
-                  )}
-
-                  {!isPreviewMode && activeTab === "notes" && (
-                    <NotesPanel
-                      notes={notes}
-                      highlightText={highlightText}
-                      noteComment={noteComment}
-                      savingNote={savingNote}
-                      onHighlightTextChange={setHighlightText}
-                      onNoteCommentChange={setNoteComment}
-                      onSaveNote={handleSaveNote}
-                    />
-                  )}
-
-                  {!isPreviewMode && activeTab === "deadlines" && (
-                    <DeadlinesPanel progress={progress} onResetDeadlines={handleResetDeadlines} />
-                  )}
-                </div>
-              </aside>
-            )}
-
-          {/* Coursera-style Vertical Icon Strip (Far Right Strip) */}
-          <div className="w-16 lg:w-20 bg-card border-l border-border flex flex-col items-center justify-start py-4 gap-4 shrink-0 h-full z-20 select-none">
-            {/* Transcript Icon Button */}
-            <button
-              onClick={() => handleTabClick("transcript")}
-              className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
-                isPanelOpen && activeTab === "transcript"
-                  ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-              title="Phụ đề"
-            >
-              <svg className="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16m-7 6h7"
-                />
-              </svg>
-              <span className="text-[10px] tracking-tight leading-none">Phụ đề</span>
-            </button>
-
-            {!isPreviewMode && (
-              <>
-                {/* Notes Icon Button */}
-                <button
-                  onClick={() => handleTabClick("notes")}
-                  className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
-                    isPanelOpen && activeTab === "notes"
-                      ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                  title="Ghi chú"
-                >
-                  <svg
-                    className="w-5 h-5 mb-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
-                  <span className="text-[10px] tracking-tight leading-none">Ghi chú</span>
-                </button>
-
-                {/* Forum Icon Button */}
-                <button
-                  onClick={() => handleTabClick("forum")}
-                  className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
-                    isPanelOpen && activeTab === "forum"
-                      ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                  title="Thảo luận"
-                >
-                  <svg
-                    className="w-5 h-5 mb-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
-                    />
-                  </svg>
-                  <span className="text-[10px] tracking-tight leading-none">Thảo luận</span>
-                </button>
-
-                {/* Deadlines Icon Button */}
-                <button
-                  onClick={() => handleTabClick("deadlines")}
-                  className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
-                    isPanelOpen && activeTab === "deadlines"
-                      ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                  title="Deadlines"
-                >
-                  <svg
-                    className="w-5 h-5 mb-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span className="text-[10px] tracking-tight leading-none">Deadlines</span>
-                </button>
-              </>
-            )}
-          </div>
+          <CourseCompletionModal
+            isOpen={showCompletionModal}
+            onClose={() => setShowCompletionModal(false)}
+            courseId={courseId}
+            courseTitle={course?.title || "Khóa học LMS"}
+            certificateId={certificateId || `CERT-${courseId.replace("course-", "").toUpperCase()}`}
+          />
         </div>
-
-        <CourseCompletionModal
-          isOpen={showCompletionModal}
-          onClose={() => setShowCompletionModal(false)}
-          courseId={courseId}
-          courseTitle={course?.title || "Khóa học LMS"}
-          certificateId={certificateId || `CERT-${courseId.replace("course-", "").toUpperCase()}`}
-        />
       </div>
     </DirectionalTransition>
   );

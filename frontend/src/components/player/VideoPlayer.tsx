@@ -1,12 +1,11 @@
 "use client";
 
-import { RefObject, useState, useEffect } from "react";
+import { RefObject } from "react";
 import ReactMarkdown from "react-markdown";
 import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
 import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
 import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentWorkspace";
-import { parseVTT, type VTTCue } from "@/lib/vtt_parser";
 
 interface VideoPlayerProps {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -16,7 +15,7 @@ interface VideoPlayerProps {
   selectedOption: number | null;
   quizSubmitted: boolean;
   completedItemIds?: string[];
-  currentTime: number;
+  currentTime?: number;
   onTimeUpdate: () => void;
   onSeeking?: () => void;
   onSelectOption: (index: number) => void;
@@ -34,7 +33,7 @@ export function VideoPlayer({
   selectedOption,
   quizSubmitted,
   completedItemIds = [],
-  currentTime,
+  currentTime: _currentTime,
   onTimeUpdate,
   onSeeking,
   onSelectOption,
@@ -43,40 +42,9 @@ export function VideoPlayer({
   onMarkComplete,
   isPreviewMode = false,
 }: VideoPlayerProps) {
-  const [cues, setCues] = useState<VTTCue[]>([]);
-  const [prevActiveItemId, setPrevActiveItemId] = useState<string | null>(null);
-
-  if (activeItem?.id !== prevActiveItemId) {
-    setPrevActiveItemId(activeItem?.id || null);
-    setCues([]);
-  }
-
-  useEffect(() => {
-    if (!activeItem || activeItem.type !== 1 || !activeItem.vttSubtitleUrl) {
-      return;
-    }
-    let isMounted = true;
-    fetch(activeItem.vttSubtitleUrl)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch subtitles");
-        return res.text();
-      })
-      .then((text) => {
-        if (!isMounted) return;
-        const parsedCues = parseVTT(text);
-        setCues(parsedCues);
-      })
-      .catch((err) => {
-        console.error("Error fetching or parsing VTT:", err);
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, [activeItem]);
-
   if (!activeItem) {
     return (
-      <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted">
+      <div className="w-full h-full flex items-center justify-center text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900">
         {"Chọn bài học từ danh sách bên trái để bắt đầu."}
       </div>
     );
@@ -87,13 +55,13 @@ export function VideoPlayer({
   // 1. Reading Item
   if (activeItem.type === 2) {
     return (
-      <div className="w-full h-full overflow-y-auto p-8 bg-card text-foreground transition-colors duration-200">
+      <div className="w-full h-full overflow-y-auto p-8 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
         <div className="max-w-3xl mx-auto space-y-6">
           {/* Reading Header */}
-          <div className="pb-4 border-b border-border">
-            <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
+          <div className="pb-4 border-b border-slate-200 dark:border-slate-800">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
               <svg
-                className="w-7 h-7 text-success"
+                className="w-7 h-7 text-emerald-600 dark:text-emerald-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -107,7 +75,7 @@ export function VideoPlayer({
               </svg>
               <span>{activeItem.title}</span>
               {isPreviewMode && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-warning/10 text-warning border border-warning/20 animate-pulse">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 animate-pulse">
                   {"Xem trước"}
                 </span>
               )}
@@ -119,37 +87,43 @@ export function VideoPlayer({
             <ReactMarkdown
               components={{
                 h1: ({ children }) => (
-                  <h1 className="text-xl font-bold text-foreground mt-6 mb-3 text-balance">
+                  <h1 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">
                     {children}
                   </h1>
                 ),
                 h2: ({ children }) => (
-                  <h2 className="text-lg font-bold text-primary mt-5 mb-2">{children}</h2>
+                  <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-5 mb-2">
+                    {children}
+                  </h2>
                 ),
                 h3: ({ children }) => (
-                  <h3 className="text-base font-bold text-foreground mt-4 mb-2">{children}</h3>
+                  <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mt-4 mb-2">
+                    {children}
+                  </h3>
                 ),
                 p: ({ children }) => (
-                  <p className="text-muted-foreground leading-relaxed my-2">{children}</p>
+                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed my-2">
+                    {children}
+                  </p>
                 ),
                 ul: ({ children }) => (
-                  <ul className="list-disc pl-6 space-y-1 my-3 text-muted-foreground">
+                  <ul className="list-disc pl-6 space-y-1 my-3 text-slate-700 dark:text-slate-300">
                     {children}
                   </ul>
                 ),
                 ol: ({ children }) => (
-                  <ol className="list-decimal pl-6 space-y-1 my-3 text-muted-foreground">
+                  <ol className="list-decimal pl-6 space-y-1 my-3 text-slate-700 dark:text-slate-300">
                     {children}
                   </ol>
                 ),
                 li: ({ children }) => <li className="leading-relaxed">{children}</li>,
                 blockquote: ({ children }) => (
-                  <blockquote className="border-l-4 border-success pl-4 py-2 italic bg-success/10 my-4 text-success rounded-r-lg border border-border">
+                  <blockquote className="border-l-4 border-emerald-500 pl-4 py-2 italic bg-emerald-50/60 dark:bg-slate-950/60 my-4 text-emerald-900 dark:text-emerald-300 rounded-r-lg border border-slate-200 dark:border-slate-800">
                     {children}
                   </blockquote>
                 ),
                 code: ({ children }) => (
-                  <code className="bg-muted text-foreground px-2 py-0.5 rounded font-mono text-xs border border-border">
+                  <code className="bg-slate-200 dark:bg-slate-950 text-slate-900 dark:text-amber-300 px-2 py-0.5 rounded font-mono text-xs border border-slate-300 dark:border-slate-800">
                     {children}
                   </code>
                 ),
@@ -161,14 +135,14 @@ export function VideoPlayer({
 
           {/* Coursera-Style Bottom Mark as Complete Action Banner */}
           {!isPreviewMode && (
-            <div className="pt-8 border-t border-border flex justify-end">
+            <div className="pt-8 border-t border-slate-200 dark:border-slate-800 flex justify-end">
               <button
                 onClick={() => onMarkComplete?.(activeItem.id)}
                 disabled={isCompleted}
-                className={`px-6 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                className={`px-6 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                   isCompleted
-                    ? "bg-success/10 text-success border border-success/30 cursor-default"
-                    : "bg-success hover:bg-success-hover text-success-foreground shadow-lg shadow-success/20"
+                    ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 cursor-default"
+                    : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20"
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +165,7 @@ export function VideoPlayer({
   // 2. Graded / Practice Quiz Item
   if (activeItem.type === 3 || activeItem.type === 4) {
     return (
-      <div className="w-full h-full overflow-y-auto p-6 bg-background">
+      <div className="w-full h-full overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950">
         <GradedQuizRunner
           itemId={activeItem.id}
           title={activeItem.title}
@@ -206,7 +180,7 @@ export function VideoPlayer({
   // 3. Auto-Graded Lab Item
   if (activeItem.type === 5) {
     return (
-      <div className="w-full h-full overflow-y-auto p-6 bg-background">
+      <div className="w-full h-full overflow-y-auto p-6 bg-slate-950">
         <AutoGradedLabRunner
           itemId={activeItem.id}
           title={activeItem.title}
@@ -222,8 +196,81 @@ export function VideoPlayer({
   // 4. Peer Review Item
   if (activeItem.type === 6) {
     return (
-      <div className="w-full h-full overflow-y-auto p-6 bg-background">
+      <div className="w-full h-full overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950">
         <PeerAssignmentWorkspace itemId={activeItem.id} title={activeItem.title} userId={userId} />
+      </div>
+    );
+  }
+
+  // SCORM Package Learning Item
+  if ((activeItem.type as unknown as number) === 7) {
+    return (
+      <div className="w-full h-full flex flex-col bg-white dark:bg-slate-900 transition-colors duration-200">
+        {/* Header toolbar */}
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="space-y-1">
+            <h2 className="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              <svg
+                className="w-5 h-5 text-amber-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                />
+              </svg>
+              <span>{activeItem.title}</span>
+              {isPreviewMode && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 animate-pulse">
+                  {"Xem trước"}
+                </span>
+              )}
+            </h2>
+            <p className="text-xs text-slate-500">{"Trình phát học liệu tương tác SCORM 1.2"}</p>
+          </div>
+          {!isPreviewMode && (
+            <button
+              onClick={() => onMarkComplete?.(activeItem.id)}
+              disabled={isCompleted}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                isCompleted
+                  ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 cursor-default"
+                  : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20"
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+              {isCompleted ? "Đã Hoàn Thành" : "Đánh dấu Hoàn Thành"}
+            </button>
+          )}
+        </div>
+
+        {/* Iframe Viewport */}
+        <div className="flex-1 w-full h-full min-h-[500px] relative bg-slate-100 dark:bg-slate-950 p-2">
+          {(activeItem as any).scormEntryHtml ? (
+            <iframe
+              key={activeItem.id}
+              src={(activeItem as any).scormEntryHtml}
+              className="w-full h-full border-0 rounded-2xl bg-white dark:bg-slate-900 shadow-lg"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-rose-500 font-bold bg-white dark:bg-slate-900 rounded-2xl">
+              {"Lỗi: Không tìm thấy tệp entry chạy chính của gói SCORM."}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -238,47 +285,37 @@ export function VideoPlayer({
       : null;
   }
 
-  const activeCue = cues.find((c) => currentTime >= c.startTime && currentTime <= c.endTime);
-
   // 5. Video Item Default Fallback
   if (activeItem.type === 1 && activeItem.videoUrl) {
     const youtubeEmbedUrl = getYouTubeEmbedUrl(activeItem.videoUrl, activeItem.autoTranscribe);
 
     return (
-      <div className="w-full h-full relative flex items-center justify-center bg-card transition-colors duration-200">
+      <div className="w-full h-full max-h-[60vh] 2xl:max-h-[680px] relative flex items-center justify-center bg-muted/50 border border-border/60 rounded-xl overflow-hidden transition-colors duration-200 shadow-sm">
         {youtubeEmbedUrl ? (
           <iframe
             key={activeItem.id}
             src={youtubeEmbedUrl}
-            className="w-full h-full border-0 rounded-lg shadow-2xl"
+            className="w-full h-full max-h-[60vh] 2xl:max-h-[680px] border-0 rounded-xl shadow-md"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
         ) : (
-          <>
-            <video
-              key={activeItem.id}
-              ref={videoRef}
-              src={activeItem.videoUrl}
-              controls
-              onTimeUpdate={onTimeUpdate}
-              onSeeking={onSeeking}
-              onEnded={() => onMarkComplete?.(activeItem.id)}
-              className="max-h-full max-w-full object-contain shadow-2xl rounded-lg border border-border"
-            />
-            {/* Custom Subtitles Overlay */}
-            {activeCue && (
-              <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 bg-background/90 backdrop-blur-xs px-4 py-2.5 rounded-xl text-foreground text-xs sm:text-sm md:text-base font-bold text-center max-w-[85%] shadow-lg pointer-events-none transition-all z-20 border border-border">
-                {activeCue.text}
-              </div>
-            )}
-          </>
+          <video
+            key={activeItem.id}
+            ref={videoRef}
+            src={activeItem.videoUrl}
+            controls
+            onTimeUpdate={onTimeUpdate}
+            onSeeking={onSeeking}
+            onEnded={() => onMarkComplete?.(activeItem.id)}
+            className="max-h-[60vh] 2xl:max-h-[680px] w-auto max-w-full object-contain shadow-md rounded-xl border border-border/40"
+          />
         )}
 
         {/* Floating Top Left Control Overlay for Video Preview Mode */}
         {isPreviewMode && (
           <div className="absolute top-4 left-4 z-20">
-            <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-warning text-warning-foreground shadow-lg flex items-center gap-1.5 animate-pulse">
+            <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-amber-500 text-white shadow-lg flex items-center gap-1.5 animate-pulse">
               <svg
                 className="w-3.5 h-3.5"
                 fill="none"
@@ -304,34 +341,39 @@ export function VideoPlayer({
 
         {/* In-Video Quiz Overlay */}
         {activeQuiz && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-md z-30 flex items-center justify-center p-6 animate-in fade-in duration-200">
-            <div className="bg-card border border-border rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
-              <div className="flex items-center justify-between border-b border-border pb-3">
-                <span className="text-xs font-extrabold text-primary uppercase tracking-wider">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-30 flex items-center justify-center p-6 animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
                   In-Video Quiz ({activeQuiz.timestampSeconds}s)
                 </span>
-                <span className="text-[10px] text-muted-foreground font-mono">
+                <span className="text-[10px] text-slate-500 font-mono">
                   {"Dừng video để kiểm tra"}
                 </span>
               </div>
 
-              <h3 className="text-base font-bold text-foreground">{activeQuiz.question}</h3>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                {activeQuiz.question}
+              </h3>
 
               <div className="space-y-2">
                 {activeQuiz.options.map((option, idx) => {
                   const isSelected = selectedOption === idx;
                   const isCorrect = idx === activeQuiz.correctOptionIndex;
-                  let optionStyle = "border-border hover:border-primary text-foreground";
+                  let optionStyle =
+                    "border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 text-slate-700 dark:text-slate-300";
 
                   if (quizSubmitted) {
                     if (isCorrect) {
-                      optionStyle = "border-success bg-success/10 text-success font-bold";
+                      optionStyle =
+                        "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 font-bold";
                     } else if (isSelected && !isCorrect) {
                       optionStyle =
-                        "border-destructive bg-destructive/10 text-destructive font-bold";
+                        "border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-300 font-bold";
                     }
                   } else if (isSelected) {
-                    optionStyle = "border-primary bg-primary/10 text-primary font-bold";
+                    optionStyle =
+                      "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 font-bold";
                   }
 
                   return (
@@ -339,12 +381,12 @@ export function VideoPlayer({
                       key={idx}
                       disabled={quizSubmitted}
                       onClick={() => onSelectOption(idx)}
-                      className={`w-full text-left p-3 rounded-xl border text-xs transition-all flex items-center justify-between cursor-pointer ${optionStyle}`}
+                      className={`w-full text-left p-3 rounded-xl border text-xs transition-all flex items-center justify-between ${optionStyle}`}
                     >
                       <span>{option}</span>
                       {quizSubmitted && isCorrect && (
                         <svg
-                          className="w-4 h-4 text-success"
+                          className="w-4 h-4 text-emerald-500"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -363,8 +405,10 @@ export function VideoPlayer({
               </div>
 
               {quizSubmitted && (
-                <div className="p-3 rounded-xl bg-muted text-xs text-foreground space-y-1 border border-border">
-                  <span className="font-bold text-primary">{"Giải thích: "}</span>
+                <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1">
+                  <span className="font-bold text-blue-600 dark:text-blue-400">
+                    {"Giải thích: "}
+                  </span>
                   <span>{activeQuiz.explanation}</span>
                 </div>
               )}
@@ -374,14 +418,14 @@ export function VideoPlayer({
                   <button
                     onClick={onSubmitQuiz}
                     disabled={selectedOption === null}
-                    className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground font-bold text-xs shadow-lg transition-all cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg transition-all"
                   >
                     {"Kiểm Tra Đáp Án"}
                   </button>
                 ) : (
                   <button
                     onClick={onContinueVideo}
-                    className="px-5 py-2.5 rounded-xl bg-success hover:bg-success-hover text-success-foreground font-bold text-xs shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition-all flex items-center gap-2"
                   >
                     {"Tiếp Tục Xem Video"}
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -403,7 +447,7 @@ export function VideoPlayer({
   }
 
   return (
-    <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted">
+    <div className="w-full h-full flex items-center justify-center text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900">
       {"Chọn bài học từ danh sách bên trái để bắt đầu."}
     </div>
   );
