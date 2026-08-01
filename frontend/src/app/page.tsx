@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { getAuthServer } from "@/lib/auth_server";
 import { HomeDashboardSwitch } from "@/components/dashboard/HomeDashboardSwitch";
-import { PublicLanding } from "@/components/home/PublicLanding";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 
 async function AuthenticatedHomeSwitch() {
   const session = await getAuthServer();
@@ -18,7 +18,7 @@ async function AuthenticatedHomeSwitch() {
 
 export default function Home() {
   return (
-    <Suspense fallback={<PublicLanding />}>
+    <Suspense fallback={<DashboardSkeleton />}>
       <AuthenticatedHomeSwitch />
     </Suspense>
   );

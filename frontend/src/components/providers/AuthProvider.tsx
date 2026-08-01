@@ -58,7 +58,9 @@ export function AuthProvider({
   const [auth, setAuthState] = useState<UserAuth>(initialAuth);
 
   useEffect(() => {
-    setAuthState(initialAuth);
+    if (initialAuth.userId || initialAuth.userRole) {
+      setAuthState(initialAuth);
+    }
   }, [
     initialAuth.userId,
     initialAuth.userEmail,
