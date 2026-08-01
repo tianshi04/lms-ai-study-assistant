@@ -58,6 +58,13 @@ const CategoryList = ({
 );
 
 import { useAuth } from "@/components/providers/AuthProvider";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 
 export default function AdminCategoriesPage() {
   const router = useRouter();
@@ -148,14 +155,22 @@ export default function AdminCategoriesPage() {
             <label className="block text-sm font-medium text-muted-foreground mb-1">
               {"Loại danh mục"}
             </label>
-            <select
+            <Select
               value={newType}
-              onChange={(e) => setNewType(e.target.value as "SUBJECT" | "LEVEL")}
-              className="w-full border border-input rounded-xl px-4 py-2.5 bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              onValueChange={(val) => {
+                if (val) setNewType(val as "SUBJECT" | "LEVEL");
+              }}
             >
-              <option value="SUBJECT">{"Chủ đề"}</option>
-              <option value="LEVEL">{"Cấp độ"}</option>
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Loại danh mục">
+                  {newType === "SUBJECT" ? "Chủ đề" : "Cấp độ"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="SUBJECT">{"Chủ đề"}</SelectItem>
+                <SelectItem value="LEVEL">{"Cấp độ"}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <button
             type="submit"

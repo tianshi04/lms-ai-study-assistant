@@ -5,6 +5,13 @@ import React, { useState, useEffect } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { Check, X } from "lucide-react";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 
 interface AutoGradedLabRunnerProps {
   itemId: string;
@@ -111,14 +118,26 @@ export function AutoGradedLabRunner({
         </div>
 
         <div className="flex items-center gap-3">
-          <select
+          <Select
             value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="px-3 py-1.5 rounded-xl bg-muted border border-input text-xs text-foreground font-mono font-medium focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+            onValueChange={(val) => {
+              if (val) setLanguage(val as string);
+            }}
           >
-            <option value="python">Python 3.12</option>
-            <option value="javascript">JavaScript (Node.js)</option>
-          </select>
+            <SelectTrigger className="w-[170px] text-xs font-mono font-medium">
+              <SelectValue placeholder="Ngôn ngữ">
+                {language === "python"
+                  ? "Python 3.12"
+                  : language === "javascript"
+                    ? "JavaScript (Node.js)"
+                    : language}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="python">{"Python 3.12"}</SelectItem>
+              <SelectItem value="javascript">{"JavaScript (Node.js)"}</SelectItem>
+            </SelectContent>
+          </Select>
           <button
             onClick={handleRunCode}
             disabled={isRunning}

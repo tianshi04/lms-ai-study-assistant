@@ -15,6 +15,13 @@ import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 
 function formatRoleName(role: string): string {
   if (!role) return "Learner";
@@ -363,18 +370,28 @@ export default function ForumPage() {
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
               {"Khóa học"}:
             </span>
-            <select
+            <Select
               value={selectedCourseId}
-              onChange={(e) => setSelectedCourseId(e.target.value)}
-              className="bg-muted border border-input text-foreground rounded-xl text-sm px-3.5 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring w-full md:w-80 cursor-pointer"
+              onValueChange={(val) => {
+                setSelectedCourseId((val as string) || "");
+              }}
             >
-              <option value="">-- All Courses --</option>
-              {courses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full md:w-80">
+                <SelectValue placeholder="-- All Courses --">
+                  {selectedCourseId
+                    ? courses.find((c) => c.id === selectedCourseId)?.title || "-- All Courses --"
+                    : "-- All Courses --"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">{"-- All Courses --"}</SelectItem>
+                {courses.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="text-xs text-muted-foreground">
@@ -705,17 +722,25 @@ export default function ForumPage() {
             <label className="block text-xs font-semibold text-muted-foreground mb-1">
               {"Khóa học"}
             </label>
-            <select
+            <Select
               value={newCourseId}
-              onChange={(e) => setNewCourseId(e.target.value)}
-              className="w-full bg-muted border border-input text-foreground rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+              onValueChange={(val) => {
+                if (val) setNewCourseId(val as string);
+              }}
             >
-              {courses.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Chọn khóa học">
+                  {courses.find((c) => c.id === newCourseId)?.title || newCourseId}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {courses.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>

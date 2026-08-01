@@ -14,6 +14,13 @@ import {
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Check, X, Plus, RefreshCw, Download, Copy, Building2 } from "lucide-react";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 
 export interface Signatory {
   id: string;
@@ -705,17 +712,29 @@ export default function PartnerSettingsPage() {
           </p>
         </div>
         {partners.length > 1 && (
-          <select
+          <Select
             value={selectedPartnerId || activePartner.id}
-            onChange={(e) => setSelectedPartnerId(e.target.value)}
-            className="px-4 py-2 text-sm rounded-xl border border-input bg-card font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            onValueChange={(val) => {
+              if (val) setSelectedPartnerId(val as string);
+            }}
           >
-            {partners.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger className="w-[200px] text-sm font-medium">
+              <SelectValue placeholder="Chọn đối tác">
+                {(() => {
+                  const currentId = selectedPartnerId || activePartner.id;
+                  const p = partners.find((item) => item.id === currentId);
+                  return p ? p.name : currentId;
+                })()}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {partners.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
       </div>
 

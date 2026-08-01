@@ -6,6 +6,13 @@ import { Plus, HelpCircle, FolderOpen, Pencil, Trash2, Info } from "lucide-react
 
 import { Modal, ConfirmDialog } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 
 import {
   useQuestionBanksQuery,
@@ -529,15 +536,29 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
             <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
               {"Phân loại Kho"}
             </label>
-            <select
+            <Select
               value={newBankCategory}
-              onChange={(e) => setNewBankCategory(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-bold focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              onValueChange={(val) => {
+                if (val) setNewBankCategory(val as string);
+              }}
             >
-              <option value="PRACTICE">{"Luyện tập (PRACTICE)"}</option>
-              <option value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</option>
-              <option value="FINAL_EXAM">{"Bài thi Cuối khóa (FINAL_EXAM)"}</option>
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Chọn phân loại Kho">
+                  {newBankCategory === "PRACTICE"
+                    ? "Luyện tập (PRACTICE)"
+                    : newBankCategory === "MODULE_EXAM"
+                      ? "Bài thi Tuần (MODULE_EXAM)"
+                      : newBankCategory === "FINAL_EXAM"
+                        ? "Bài thi Cuối khóa (FINAL_EXAM)"
+                        : newBankCategory}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="PRACTICE">{"Luyện tập (PRACTICE)"}</SelectItem>
+                <SelectItem value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</SelectItem>
+                <SelectItem value="FINAL_EXAM">{"Bài thi Cuối khóa (FINAL_EXAM)"}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
@@ -599,10 +620,10 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
               <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
                 {"Dạng câu hỏi"}
               </label>
-              <select
+              <Select
                 value={qType}
-                onChange={(e) => {
-                  const val = e.target.value;
+                onValueChange={(val) => {
+                  if (!val) return;
                   setQType(val);
 
                   if (val === "TRUE_FALSE") {
@@ -627,12 +648,28 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                     setQOptions(normalized);
                   }
                 }}
-                className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-bold focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
-                <option value="SINGLE_CHOICE">Trắc nghiệm 1 đáp án (Single Choice)</option>
-                <option value="MULTIPLE_CHOICE">Trắc nghiệm nhiều đáp án (Multiple Choice)</option>
-                <option value="TRUE_FALSE">Chọn Đúng/Sai (True/False)</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn dạng câu hỏi">
+                    {qType === "SINGLE_CHOICE"
+                      ? "Trắc nghiệm 1 đáp án (Single Choice)"
+                      : qType === "MULTIPLE_CHOICE"
+                        ? "Trắc nghiệm nhiều đáp án (Multiple Choice)"
+                        : qType === "TRUE_FALSE"
+                          ? "Chọn Đúng/Sai (True/False)"
+                          : qType}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SINGLE_CHOICE">
+                    {"Trắc nghiệm 1 đáp án (Single Choice)"}
+                  </SelectItem>
+                  <SelectItem value="MULTIPLE_CHOICE">
+                    {"Trắc nghiệm nhiều đáp án (Multiple Choice)"}
+                  </SelectItem>
+                  <SelectItem value="TRUE_FALSE">{"Chọn Đúng/Sai (True/False)"}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

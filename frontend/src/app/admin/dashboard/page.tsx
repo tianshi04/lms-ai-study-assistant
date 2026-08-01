@@ -14,6 +14,13 @@ import { Modal } from "@/components/ui/Modal";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
 import { Plus, UserPlus, AlertTriangle, Check, X } from "lucide-react";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 
 const columnHelper = createColumnHelper<EnterpriseSeat>();
 
@@ -384,18 +391,28 @@ export default function AdminEnterpriseDashboardPage() {
             <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
               Chọn Mã Enterprise Key
             </label>
-            <select
+            <Select
               value={selectedSeatKey}
-              onChange={(e) => setSelectedSeatKey(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-input bg-muted text-foreground text-sm font-mono font-semibold"
-              required
+              onValueChange={(val) => {
+                if (val) setSelectedSeatKey(val as string);
+              }}
             >
-              {seats.map((s) => (
-                <option key={s.id} value={s.seatKey}>
-                  {s.partnerName} ({s.seatKey})
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full font-mono font-semibold">
+                <SelectValue placeholder="Chọn Mã Enterprise Key">
+                  {(() => {
+                    const s = seats.find((seat) => seat.seatKey === selectedSeatKey);
+                    return s ? `${s.partnerName} (${s.seatKey})` : selectedSeatKey;
+                  })()}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {seats.map((s) => (
+                  <SelectItem key={s.id} value={s.seatKey}>
+                    {`${s.partnerName} (${s.seatKey})`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex justify-end gap-3 pt-2">

@@ -8,8 +8,15 @@ import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, UserRole } from "@/gen/identity/v1/identity_pb";
 import { useToast } from "@/components/ui/Toast";
 
-import { User, Mail, Lock, Eye, EyeOff, Users, ChevronDown, Loader2 } from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff, Users, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -278,23 +285,36 @@ export default function RegisterPage() {
                     {"Vai trò người dùng"}
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10 text-muted-foreground">
                       <Users className="w-5 h-5" />
                     </div>
-                    <select
-                      id={field.name}
-                      name={field.name}
-                      value={field.state.value}
-                      onChange={(e) => field.handleChange(Number(e.target.value) as UserRole)}
-                      className="w-full pl-10 pr-10 py-3 rounded-xl border border-input bg-muted text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring transition-all text-sm appearance-none cursor-pointer"
+                    <Select
+                      value={String(field.state.value)}
+                      onValueChange={(val) => {
+                        if (val) field.handleChange(Number(val) as UserRole);
+                      }}
                     >
-                      <option value={UserRole.LEARNER}>{"Học viên (Learner)"}</option>
-                      <option value={UserRole.INSTRUCTOR}>{"Giảng viên (Instructor)"}</option>
-                      <option value={UserRole.TA}>{"Trợ giảng (TA)"}</option>
-                    </select>
-                    <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-muted-foreground">
-                      <ChevronDown className="w-4 h-4" />
-                    </div>
+                      <SelectTrigger className="pl-10">
+                        <SelectValue placeholder="Chọn vai trò">
+                          {field.state.value === UserRole.LEARNER
+                            ? "Học viên (Learner)"
+                            : field.state.value === UserRole.INSTRUCTOR
+                              ? "Giảng viên (Instructor)"
+                              : field.state.value === UserRole.TA
+                                ? "Trợ giảng (TA)"
+                                : ""}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={String(UserRole.LEARNER)}>
+                          {"Học viên (Learner)"}
+                        </SelectItem>
+                        <SelectItem value={String(UserRole.INSTRUCTOR)}>
+                          {"Giảng viên (Instructor)"}
+                        </SelectItem>
+                        <SelectItem value={String(UserRole.TA)}>{"Trợ giảng (TA)"}</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               )}

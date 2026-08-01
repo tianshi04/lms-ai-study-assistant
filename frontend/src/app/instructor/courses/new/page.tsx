@@ -11,6 +11,13 @@ import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
 import { useToast } from "@/components/ui/Toast";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
 import { Building2 } from "lucide-react";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 
 const emptySubscribe = () => () => {};
 
@@ -220,22 +227,35 @@ export default function NewCoursePage() {
               {loadingOrgs ? (
                 <div className="h-10 bg-muted rounded-xl animate-pulse" />
               ) : (
-                <select
+                <Select
                   value={selectedOrgId}
-                  onChange={(e) => setSelectedOrgId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-card border border-input text-sm font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  onValueChange={(val) => {
+                    if (val) setSelectedOrgId(val as string);
+                  }}
                 >
-                  <option value="partner_community">
-                    🌐 Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)
-                  </option>
-                  {partners
-                    .filter((p) => p.id !== "partner_community")
-                    .map((p) => (
-                      <option key={p.id} value={p.id}>
-                        🏛️ {p.name} ({p.slug})
-                      </option>
-                    ))}
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn Partner / Tổ chức">
+                      {selectedOrgId === "partner_community"
+                        ? "🌐 Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)"
+                        : (() => {
+                            const p = partners.find((p) => p.id === selectedOrgId);
+                            return p ? `🏛️ ${p.name} (${p.slug})` : selectedOrgId;
+                          })()}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="partner_community">
+                      {"🌐 Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)"}
+                    </SelectItem>
+                    {partners
+                      .filter((p) => p.id !== "partner_community")
+                      .map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {`🏛️ ${p.name} (${p.slug})`}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               )}
               <p className="text-xs text-muted-foreground">
                 100% khóa học bắt buộc phải gắn liền với 1 Partner Organization đại diện bảo chứng.
@@ -284,17 +304,23 @@ export default function NewCoursePage() {
               <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
                 Lĩnh Vực Chuyên Môn
               </label>
-              <select
+              <Select
                 value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-card border border-input text-sm font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                onValueChange={(val) => {
+                  if (val) setSubject(val as string);
+                }}
               >
-                <option value="Khoa học Máy tính">Khoa học Máy tính</option>
-                <option value="Trí tuệ Nhân tạo & AI">Trí tuệ Nhân tạo & AI</option>
-                <option value="Khoa học Dữ liệu">Khoa học Dữ liệu</option>
-                <option value="Kinh doanh & Quản trị">Kinh doanh & Quản trị</option>
-                <option value="Thiết kế & Đồ họa">Thiết kế & Đồ họa</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn lĩnh vực">{subject}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Khoa học Máy tính">{"Khoa học Máy tính"}</SelectItem>
+                  <SelectItem value="Trí tuệ Nhân tạo & AI">{"Trí tuệ Nhân tạo & AI"}</SelectItem>
+                  <SelectItem value="Khoa học Dữ liệu">{"Khoa học Dữ liệu"}</SelectItem>
+                  <SelectItem value="Kinh doanh & Quản trị">{"Kinh doanh & Quản trị"}</SelectItem>
+                  <SelectItem value="Thiết kế & Đồ họa">{"Thiết kế & Đồ họa"}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Level */}
@@ -302,15 +328,29 @@ export default function NewCoursePage() {
               <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
                 Trình Độ Yêu Cầu
               </label>
-              <select
+              <Select
                 value={level}
-                onChange={(e) => setLevel(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-card border border-input text-sm font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                onValueChange={(val) => {
+                  if (val) setLevel(val as string);
+                }}
               >
-                <option value="Sơ cấp">Sơ cấp (Beginner)</option>
-                <option value="Trung cấp">Trung cấp (Intermediate)</option>
-                <option value="Nâng cao">Nâng cao (Advanced)</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn trình độ">
+                    {level === "Sơ cấp"
+                      ? "Sơ cấp (Beginner)"
+                      : level === "Trung cấp"
+                        ? "Trung cấp (Intermediate)"
+                        : level === "Nâng cao"
+                          ? "Nâng cao (Advanced)"
+                          : level}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Sơ cấp">{"Sơ cấp (Beginner)"}</SelectItem>
+                  <SelectItem value="Trung cấp">{"Trung cấp (Intermediate)"}</SelectItem>
+                  <SelectItem value="Nâng cao">{"Nâng cao (Advanced)"}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Description */}
