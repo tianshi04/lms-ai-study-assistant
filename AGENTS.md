@@ -115,6 +115,10 @@ This file provides rules, architectural conventions, and workspace instructions 
   - **TanStack Table (`@tanstack/react-table`)**: For headless table state, sorting, filtering, and pagination in complex dashboards and data views.
   - **TanStack Form (`@tanstack/react-form`)**: For headless form validation and state management in multi-step or complex form interfaces.
 - **Primary Language (Vietnamese)**: The application exclusively uses **Vietnamese (`vi`)** for all UI elements, pages, components, modals, form labels, and user-facing notifications. All UI text must be written directly in Vietnamese.
+- **Strict Semantic Design Tokens Rule (MANDATORY FOR ALL UI CODE)**:
+  - All new or updated UI components, pages, modals, cards, inputs, and buttons in `frontend/src/` **MUST** strictly use the 3-tier Semantic Design Tokens defined in `frontend/src/app/globals.css` (e.g., `bg-background`, `bg-card`, `text-foreground`, `text-muted-foreground`, `border-border`, `border-input`, `bg-primary`, `hover:bg-primary-hover`, `text-primary-foreground`, `bg-success/10`, `text-success`, `bg-warning/10`, `text-warning`, `bg-destructive/10`, `text-destructive`, `bg-muted`, `focus-visible:ring-ring`).
+  - **STRICT NO RAW COLOR RULE**: Never use hardcoded Hex color codes (e.g., `#2563eb`, `#0f172a`), inline style colors, or raw Tailwind color palette classes (e.g. `bg-blue-600`, `text-slate-900`, `bg-slate-50 dark:bg-slate-950`, `bg-white dark:bg-slate-900`) for standard UI components.
+  - **Valid Exceptions**: Canvas animations (e.g. Confetti in `CourseCompletionModal`), Star Rating visual icons (`text-amber-400 fill-amber-400`), QR Code white background canvas (`bg-white` in `VerifyDetailClient`), and Monaco/Terminal Code Runner canvases.
 - API Client calls are made by importing service schemas from the generated stubs (e.g. `import { CatalogService } from "@/gen/catalog/v1/catalog_pb"`) and using the `@connectrpc/connect` client.
 
 ---
