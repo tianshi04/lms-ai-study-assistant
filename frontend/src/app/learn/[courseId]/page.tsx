@@ -73,7 +73,6 @@ function CoursePlayerContent() {
   const handleMarkItemComplete = useCallback(
     async (itemId: string) => {
       if (isPreviewMode) {
-        console.log("Preview mode: skipping mark item complete logic");
         return;
       }
       if (!course || !progress || isMarkingRef.current) return;

@@ -250,7 +250,9 @@ export function GradedQuizRunner({
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500">
+          <span className="sr-only">Đang tải...</span>
+        </div>
         <p aria-live="polite" className="text-sm text-slate-500 font-semibold">
           Đang tạo phiên làm bài và tải câu hỏi…
         </p>

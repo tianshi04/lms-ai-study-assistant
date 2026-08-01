@@ -256,6 +256,7 @@ export function VideoPlayer({
           <iframe
             key={activeItem.id}
             src={youtubeEmbedUrl}
+            title={activeItem.title || "Video player"}
             className="w-full h-full border-0 rounded-lg shadow-2xl"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
