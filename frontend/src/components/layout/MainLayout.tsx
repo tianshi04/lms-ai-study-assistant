@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/layout/Navbar";
-import { AuthNavbar } from "@/components/layout/AuthNavbar";
 
 const AIChatbot = dynamic(() => import("@/components/ai/AIChatbot").then((mod) => mod.AIChatbot), {
   ssr: false,
@@ -21,9 +20,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-background text-foreground selection:bg-primary selection:text-primary-foreground transition-colors duration-200">
-      {isAuthPage ? <AuthNavbar /> : <Navbar />}
+      {!isAuthPage && <Navbar />}
       <div className="flex-1 flex flex-col">{children}</div>
-      <AIChatbot />
+      {!isAuthPage && <AIChatbot />}
     </div>
   );
 }

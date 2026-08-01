@@ -56,6 +56,19 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="bg-card border border-border rounded-3xl p-8 shadow-xl transition-colors">
           <div className="text-center mb-8">
+            <Link href="/" prefetch={true} className="inline-flex items-center gap-3 group mb-6">
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
+                C
+              </div>
+              <div className="text-left">
+                <span className="font-bold text-lg tracking-tight text-foreground block">
+                  Coursera AI
+                </span>
+                <span className="text-xs block text-muted-foreground font-medium">
+                  LMS Platform
+                </span>
+              </div>
+            </Link>
             <h1 className="text-2xl font-bold text-foreground mb-2 text-balance">
               {"Đăng ký tài khoản"}
             </h1>
