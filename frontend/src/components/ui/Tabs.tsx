@@ -8,7 +8,7 @@ export function TabsList({ className, ref, ...props }: React.ComponentProps<type
   return (
     <BaseTabs.List
       ref={ref}
-      className={cn("flex border-b border-slate-200 dark:border-slate-800 gap-6", className)}
+      className={cn("flex border-b border-border gap-6", className)}
       {...props}
     />
   );
@@ -23,7 +23,7 @@ export function TabsTrigger({
     <BaseTabs.Tab
       ref={ref}
       className={cn(
-        "pb-3 text-sm font-semibold transition-colors border-b-2 -mb-px flex items-center gap-2 cursor-pointer border-transparent text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 data-[selected]:border-[#0056D2] data-[selected]:text-[#0056D2] dark:data-[selected]:text-blue-400 focus:outline-none",
+        "pb-3 text-sm font-semibold transition-colors border-b-2 -mb-px flex items-center gap-2 cursor-pointer border-transparent text-muted-foreground hover:text-foreground data-[selected]:border-primary data-[selected]:text-primary focus:outline-none",
         className,
       )}
       {...props}
@@ -68,8 +68,8 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
                   className={cn(
                     "text-xs px-2 py-0.5 rounded-full font-medium transition-colors",
                     isActive
-                      ? "bg-blue-100 text-[#0056D2] dark:bg-blue-900/60 dark:text-blue-200"
-                      : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-muted text-muted-foreground",
                   )}
                 >
                   {tab.count}
