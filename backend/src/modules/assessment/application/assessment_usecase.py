@@ -310,7 +310,7 @@ class AssessmentUseCase:
             )
 
             session_id = f"qsess-{uuid.uuid4().hex[:8]}"
-            
+
             new_session = QuizActiveSession(
                 user_id=user_id,
                 item_id=item_id,
