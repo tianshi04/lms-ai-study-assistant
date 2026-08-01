@@ -163,7 +163,7 @@ export function usePointerDragOrder(options: DragOptions) {
     itemEl.style.position = "relative";
     itemEl.style.boxShadow =
       "0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)";
-    itemEl.style.borderColor = "#94a3b8";
+    itemEl.style.borderColor = "var(--border)";
     itemEl.style.transition = "none";
 
     itemPointerDragRef.current = {
@@ -382,7 +382,7 @@ export function usePointerDragOrder(options: DragOptions) {
     lessonEl.style.position = "relative";
     lessonEl.style.boxShadow =
       "0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)";
-    lessonEl.style.borderColor = "#94a3b8";
+    lessonEl.style.borderColor = "var(--border)";
     lessonEl.style.transition = "none";
 
     lessonPointerDragRef.current = {
@@ -601,7 +601,7 @@ export function usePointerDragOrder(options: DragOptions) {
     weekEl.style.position = "relative";
     weekEl.style.boxShadow =
       "0 12px 30px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)";
-    weekEl.style.borderColor = "#94a3b8";
+    weekEl.style.borderColor = "var(--border)";
     weekEl.style.transition = "none";
 
     weekPointerDragRef.current = {
