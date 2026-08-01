@@ -30,13 +30,13 @@ export class LearningPage {
     this.page = page;
     this.headerTitle = page.locator('header span.font-bold').first();
     this.progressBarPercent = page.locator('header span.font-mono');
-    this.sidebar = page.locator('aside');
-    this.sidebarItems = page.locator('aside button');
-    this.lockNotice = page.locator('div:has-text("🔒 Bài học")');
+    this.sidebar = page.locator('aside').first();
+    this.sidebarItems = page.locator('aside').first().locator('button');
+    this.lockNotice = page.locator('div:has-text("mở khóa Tuần")');
 
-    this.transcriptTab = page.getByRole('button', { name: /Interactive Transcript|Phụ đề & Transcripts|Transcripts|^Phụ đề Tương tác/i });
+    this.transcriptTab = page.getByRole('button', { name: /Interactive Transcript|Phụ đề & Transcripts|Transcripts|Phụ đề/i });
     this.forumTab = page.getByRole('button', { name: /Diễn đàn Bài học|Discussion|Thảo luận/i });
-    this.notesTab = page.getByRole('button', { name: /Personal Notes|My Notes|^Ghi chú Cá nhân/i });
+    this.notesTab = page.getByRole('button', { name: /^Ghi chú$|Personal Notes|My Notes/i });
     this.deadlinesTab = page.getByRole('button', { name: /Deadlines/i });
 
     this.highlightInput = page.locator('form input').first();
