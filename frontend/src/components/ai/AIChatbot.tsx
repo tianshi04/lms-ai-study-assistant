@@ -61,7 +61,7 @@ export function AIChatbot() {
     <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end pointer-events-auto">
       {/* Floating Chat Box Window */}
       {isOpen && (
-        <div className="mb-3 w-[360px] sm:w-[400px] h-[500px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-scale-up">
+        <div className="mb-3 w-[360px] sm:w-[400px] h-[500px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-scale-up">
           {/* Header Bar */}
           <div className="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between shadow-sm shrink-0">
             <div className="flex items-center gap-2">
@@ -118,7 +118,7 @@ export function AIChatbot() {
       <div className="relative group flex items-center">
         {/* Tooltip on hover */}
         {!isOpen && (
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none absolute right-16 bg-slate-900/90 dark:bg-slate-800/90 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-xl shadow-lg whitespace-nowrap">
+          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none absolute right-16 bg-popover/90 backdrop-blur-sm text-popover-foreground text-xs font-medium px-3 py-1.5 rounded-xl shadow-lg whitespace-nowrap">
             {"Trợ lý AI"}
           </span>
         )}
@@ -163,7 +163,7 @@ export function AIChatbot() {
                 />
               </svg>
               {/* Active Online Status Indicator */}
-              <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-emerald-400 border-2 border-white dark:border-slate-900 rounded-full" />
+              <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-success border-2 border-background rounded-full" />
             </>
           )}
         </button>
