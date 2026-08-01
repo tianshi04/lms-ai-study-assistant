@@ -7,14 +7,13 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-[#0056D2] text-white hover:bg-[#00419E] focus:ring-[#0056D2]",
-        secondary:
-          "bg-slate-200 text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600 focus:ring-slate-400",
+        primary: "bg-primary text-primary-foreground hover:bg-primary-hover focus:ring-ring",
+        secondary: "bg-secondary text-secondary-foreground hover:bg-muted focus:ring-ring",
         outline:
-          "border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800 focus:ring-slate-400",
-        danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
-        ghost:
-          "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 focus:ring-slate-400",
+          "border border-border text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-ring",
+        danger:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive",
+        ghost: "hover:bg-accent hover:text-accent-foreground text-foreground focus:ring-ring",
       },
       size: {
         sm: "px-3 py-1.5 text-xs",
