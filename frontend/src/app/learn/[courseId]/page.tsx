@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 import { getRpcClient } from "@/lib/connect_client";
 import {
   CatalogService,
@@ -334,481 +335,485 @@ function CoursePlayerContent() {
   }
 
   return (
-    <div className="h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col overflow-hidden transition-colors duration-200">
-      {/* Top Player Navbar */}
-      <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between flex-shrink-0 z-30">
-        <div className="flex items-center gap-4 min-w-0">
-          {isPreviewMode ? (
-            <button
-              onClick={() => window.close()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold transition-colors cursor-pointer"
-              title="Đóng trình xem trước"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              <span>{"Đóng Xem trước"}</span>
-            </button>
-          ) : (
-            <Link
-              href={`/courses/${course.id}`}
-              className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
-              title="Quay lại khóa học"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </Link>
-          )}
-          <span className="font-bold text-sm text-slate-900 dark:text-white truncate max-w-md">
-            {isPreviewMode ? `Xem trước: ${activeItem?.title || course.title}` : course.title}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-4">
-          {!isPreviewMode && progress && (
-            <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
-              <div className="w-24 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
-                  style={{ width: `${progress.overallProgressPercent}%` }}
-                />
-              </div>
-              <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">
-                {progress.overallProgressPercent}%
-              </span>
-            </div>
-          )}
-
-          {!isPreviewMode &&
-            progress &&
-            (progress.overallProgressPercent >= 100 ||
-              progress.completedItemIds.length >= totalCourseItems) && (
+    <DirectionalTransition>
+      <div className="h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col overflow-hidden transition-colors duration-200">
+        {/* Top Player Navbar */}
+        <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between flex-shrink-0 z-30">
+          <div className="flex items-center gap-4 min-w-0">
+            {isPreviewMode ? (
               <button
-                onClick={() => setShowCompletionModal(true)}
-                className="px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-sm hover:shadow transition-colors flex items-center gap-1.5 cursor-pointer"
+                onClick={() => window.close()}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold transition-colors cursor-pointer"
+                title="Đóng trình xem trước"
               >
                 <svg
-                  className="w-4 h-4 text-slate-950"
+                  className="w-4 h-4"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
-                  strokeWidth={2.25}
+                  strokeWidth={2}
                 >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span>{"Đóng Xem trước"}</span>
+              </button>
+            ) : (
+              <Link
+                href={`/courses/${course.id}`}
+                className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+                title="Quay lại khóa học"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
                   />
                 </svg>
-                <span>{"Xem Chứng Chỉ"}</span>
-              </button>
+              </Link>
             )}
-
-          {isPreviewMode && (
-            <span className="px-2.5 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 animate-pulse">
-              {"Xem trước học liệu"}
+            <span className="font-bold text-sm text-slate-900 dark:text-white truncate max-w-md">
+              {isPreviewMode ? `Xem trước: ${activeItem?.title || course.title}` : course.title}
             </span>
-          )}
-
-          <LanguageToggle />
-          <ThemeToggle />
-        </div>
-      </header>
-
-      {/* Main Workspace Layout */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar - Course Content Navigation Tree */}
-        {!isPreviewMode && (
-          <aside className="w-80 bg-white/95 dark:bg-slate-900/95 border-r border-slate-200 dark:border-slate-800 overflow-y-auto flex-shrink-0 flex flex-col">
-            <div className="p-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900 sticky top-0 z-10">
-              <h2 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {"Lộ trình Bài học"}
-              </h2>
-            </div>
-
-            <div className="p-4 space-y-6">
-              {(() => {
-                const allItemsInCourse: LearningItem[] = [];
-                course.weekModules.forEach((wm) => {
-                  wm.lessons.forEach((l) => {
-                    allItemsInCourse.push(...l.items);
-                  });
-                });
-
-                return course.weekModules.map((week) => (
-                  <div key={week.id} className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold uppercase text-blue-600 dark:text-blue-400">
-                        {"Tuần {week}".replace("{week}", week.weekNumber.toString())}
-                      </span>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
-                        {week.title}
-                      </span>
-                    </div>
-
-                    {week.lessons.map((lesson) => (
-                      <div key={lesson.id} className="space-y-1">
-                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-2 py-1">
-                          {lesson.title}
-                        </div>
-                        <div className="space-y-1 pl-2">
-                          {lesson.items.map((item) => {
-                            const isActive = activeItem?.id === item.id;
-                            const isDone = progress?.completedItemIds.includes(item.id);
-
-                            const itemIndex = allItemsInCourse.findIndex((i) => i.id === item.id);
-                            const prevItem = itemIndex > 0 ? allItemsInCourse[itemIndex - 1] : null;
-                            const isUnlocked =
-                              itemIndex <= 0 ||
-                              (prevItem && progress?.completedItemIds.includes(prevItem.id));
-
-                            return (
-                              <button
-                                key={item.id}
-                                onClick={() => {
-                                  if (!isUnlocked) {
-                                    setLockNotice(
-                                      'Bài học "{title}" đang bị khóa. Bạn cần hoàn thành bài học "{prevTitle}" trước.'
-                                        .replace("{title}", item.title)
-                                        .replace("{prevTitle}", prevItem?.title || ""),
-                                    );
-                                    setTimeout(() => setLockNotice(""), 4000);
-                                    return;
-                                  }
-                                  setLockNotice("");
-                                  setActiveItem(item);
-                                  setActiveQuiz(null);
-                                }}
-                                className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all ${
-                                  isActive
-                                    ? "bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-500/30"
-                                    : !isUnlocked
-                                      ? "opacity-50 hover:bg-transparent cursor-not-allowed text-slate-400 dark:text-slate-600"
-                                      : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
-                                }`}
-                              >
-                                <span className="truncate flex items-center gap-2">
-                                  {isDone ? (
-                                    <svg
-                                      className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2.5}
-                                        d="M5 13l4 4L19 7"
-                                      />
-                                    </svg>
-                                  ) : !isUnlocked ? (
-                                    <svg
-                                      className="w-3.5 h-3.5 text-slate-400 flex-shrink-0"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                      />
-                                    </svg>
-                                  ) : item.type === 1 ? (
-                                    <svg
-                                      className="w-3.5 h-3.5 text-blue-500 flex-shrink-0"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                                      />
-                                    </svg>
-                                  ) : item.type === 2 ? (
-                                    <svg
-                                      className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                      />
-                                    </svg>
-                                  ) : item.type === 5 ? (
-                                    <svg
-                                      className="w-3.5 h-3.5 text-purple-500 flex-shrink-0"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-                                      />
-                                    </svg>
-                                  ) : item.type === 6 ? (
-                                    <svg
-                                      className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                      />
-                                    </svg>
-                                  ) : (
-                                    <svg
-                                      className="w-3.5 h-3.5 text-amber-500 flex-shrink-0"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                      />
-                                    </svg>
-                                  )}
-                                  <span className={isDone ? "line-through opacity-80" : ""}>
-                                    {item.title}
-                                  </span>
-                                </span>
-                                <span className="text-[10px] opacity-60">
-                                  {item.estimatedMinutes}m
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ));
-              })()}
-            </div>
-          </aside>
-        )}
-
-        {/* Center Workspace & Bottom Panels */}
-        <main className="flex-1 flex flex-col bg-slate-100 dark:bg-slate-950 overflow-hidden relative">
-          {/* Lock Notice Banner */}
-          {lockNotice && (
-            <div className="p-3 bg-amber-50 dark:bg-amber-950/80 border-b border-amber-200 dark:border-amber-900/80 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-200">
-              <span>{lockNotice}</span>
-              <button
-                onClick={() => setLockNotice("")}
-                className="text-amber-800 dark:text-amber-300 hover:opacity-75 font-bold text-xs"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-
-          {/* Top Video / Reading Media Viewer */}
-          <div className="flex-1 bg-slate-100 dark:bg-black flex items-center justify-center relative overflow-hidden transition-colors duration-200">
-            <VideoPlayer
-              videoRef={videoRef}
-              activeItem={activeItem}
-              userId={userId}
-              activeQuiz={activeQuiz}
-              selectedOption={selectedOption}
-              quizSubmitted={quizSubmitted}
-              completedItemIds={progress?.completedItemIds || []}
-              currentTime={currentTime}
-              onTimeUpdate={handleTimeUpdate}
-              onSeeking={handleSeeking}
-              onSelectOption={setSelectedOption}
-              onSubmitQuiz={handleQuizSubmit}
-              onContinueVideo={handleContinueVideo}
-              onMarkComplete={handleMarkItemComplete}
-              isPreviewMode={isPreviewMode}
-            />
           </div>
 
-          {/* Bottom Tabs Section */}
-          {(!isPreviewMode ||
-            (activeItem?.interactiveTranscripts && activeItem.interactiveTranscripts.length > 0) ||
-            activeItem?.vttSubtitleUrl) && (
-            <div className="h-64 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0">
-              {/* Tab Header Bar */}
-              <div className="h-11 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between bg-slate-50 dark:bg-slate-900/90">
-                <div className="flex items-center gap-6">
-                  <button
-                    onClick={() => setActiveTab("transcript")}
-                    className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
-                      activeTab === "transcript"
-                        ? "text-blue-600 dark:text-blue-400 border-blue-500"
-                        : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
-                    }`}
-                  >
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 6h16M4 12h16m-7 6h7"
-                      />
-                    </svg>
-                    {"Phụ đề Tương tác ({count})".replace(
-                      "{count}",
-                      (activeItem?.interactiveTranscripts.length || 0).toString(),
-                    )}
-                  </button>
+          <div className="flex items-center gap-4">
+            {!isPreviewMode && progress && (
+              <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                <div className="w-24 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
+                    style={{ width: `${progress.overallProgressPercent}%` }}
+                  />
+                </div>
+                <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">
+                  {progress.overallProgressPercent}%
+                </span>
+              </div>
+            )}
 
-                  {!isPreviewMode && (
-                    <>
-                      <button
-                        onClick={() => setActiveTab("forum")}
-                        className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
-                          activeTab === "forum"
-                            ? "text-blue-600 dark:text-blue-400 border-blue-500"
-                            : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
-                        }`}
+            {!isPreviewMode &&
+              progress &&
+              (progress.overallProgressPercent >= 100 ||
+                progress.completedItemIds.length >= totalCourseItems) && (
+                <button
+                  onClick={() => setShowCompletionModal(true)}
+                  className="px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-sm hover:shadow transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <svg
+                    className="w-4 h-4 text-slate-950"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2.25}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span>{"Xem Chứng Chỉ"}</span>
+                </button>
+              )}
+
+            {isPreviewMode && (
+              <span className="px-2.5 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 animate-pulse">
+                {"Xem trước học liệu"}
+              </span>
+            )}
+
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
+        </header>
+
+        {/* Main Workspace Layout */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left Sidebar - Course Content Navigation Tree */}
+          {!isPreviewMode && (
+            <aside className="w-80 bg-white/95 dark:bg-slate-900/95 border-r border-slate-200 dark:border-slate-800 overflow-y-auto flex-shrink-0 flex flex-col">
+              <div className="p-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900 sticky top-0 z-10">
+                <h2 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {"Lộ trình Bài học"}
+                </h2>
+              </div>
+
+              <div className="p-4 space-y-6">
+                {(() => {
+                  const allItemsInCourse: LearningItem[] = [];
+                  course.weekModules.forEach((wm) => {
+                    wm.lessons.forEach((l) => {
+                      allItemsInCourse.push(...l.items);
+                    });
+                  });
+
+                  return course.weekModules.map((week) => (
+                    <div key={week.id} className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-extrabold uppercase text-blue-600 dark:text-blue-400">
+                          {"Tuần {week}".replace("{week}", week.weekNumber.toString())}
+                        </span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                          {week.title}
+                        </span>
+                      </div>
+
+                      {week.lessons.map((lesson) => (
+                        <div key={lesson.id} className="space-y-1">
+                          <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-2 py-1">
+                            {lesson.title}
+                          </div>
+                          <div className="space-y-1 pl-2">
+                            {lesson.items.map((item) => {
+                              const isActive = activeItem?.id === item.id;
+                              const isDone = progress?.completedItemIds.includes(item.id);
+
+                              const itemIndex = allItemsInCourse.findIndex((i) => i.id === item.id);
+                              const prevItem =
+                                itemIndex > 0 ? allItemsInCourse[itemIndex - 1] : null;
+                              const isUnlocked =
+                                itemIndex <= 0 ||
+                                (prevItem && progress?.completedItemIds.includes(prevItem.id));
+
+                              return (
+                                <button
+                                  key={item.id}
+                                  onClick={() => {
+                                    if (!isUnlocked) {
+                                      setLockNotice(
+                                        'Bài học "{title}" đang bị khóa. Bạn cần hoàn thành bài học "{prevTitle}" trước.'
+                                          .replace("{title}", item.title)
+                                          .replace("{prevTitle}", prevItem?.title || ""),
+                                      );
+                                      setTimeout(() => setLockNotice(""), 4000);
+                                      return;
+                                    }
+                                    setLockNotice("");
+                                    setActiveItem(item);
+                                    setActiveQuiz(null);
+                                  }}
+                                  className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all ${
+                                    isActive
+                                      ? "bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-500/30"
+                                      : !isUnlocked
+                                        ? "opacity-50 hover:bg-transparent cursor-not-allowed text-slate-400 dark:text-slate-600"
+                                        : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
+                                  }`}
+                                >
+                                  <span className="truncate flex items-center gap-2">
+                                    {isDone ? (
+                                      <svg
+                                        className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2.5}
+                                          d="M5 13l4 4L19 7"
+                                        />
+                                      </svg>
+                                    ) : !isUnlocked ? (
+                                      <svg
+                                        className="w-3.5 h-3.5 text-slate-400 flex-shrink-0"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                                        />
+                                      </svg>
+                                    ) : item.type === 1 ? (
+                                      <svg
+                                        className="w-3.5 h-3.5 text-blue-500 flex-shrink-0"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                                        />
+                                      </svg>
+                                    ) : item.type === 2 ? (
+                                      <svg
+                                        className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                        />
+                                      </svg>
+                                    ) : item.type === 5 ? (
+                                      <svg
+                                        className="w-3.5 h-3.5 text-purple-500 flex-shrink-0"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+                                        />
+                                      </svg>
+                                    ) : item.type === 6 ? (
+                                      <svg
+                                        className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                                        />
+                                      </svg>
+                                    ) : (
+                                      <svg
+                                        className="w-3.5 h-3.5 text-amber-500 flex-shrink-0"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                        />
+                                      </svg>
+                                    )}
+                                    <span className={isDone ? "line-through opacity-80" : ""}>
+                                      {item.title}
+                                    </span>
+                                  </span>
+                                  <span className="text-[10px] opacity-60">
+                                    {item.estimatedMinutes}m
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ));
+                })()}
+              </div>
+            </aside>
+          )}
+
+          {/* Center Workspace & Bottom Panels */}
+          <main className="flex-1 flex flex-col bg-slate-100 dark:bg-slate-950 overflow-hidden relative">
+            {/* Lock Notice Banner */}
+            {lockNotice && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/80 border-b border-amber-200 dark:border-amber-900/80 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-200">
+                <span>{lockNotice}</span>
+                <button
+                  onClick={() => setLockNotice("")}
+                  className="text-amber-800 dark:text-amber-300 hover:opacity-75 font-bold text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {/* Top Video / Reading Media Viewer */}
+            <div className="flex-1 bg-slate-100 dark:bg-black flex items-center justify-center relative overflow-hidden transition-colors duration-200">
+              <VideoPlayer
+                videoRef={videoRef}
+                activeItem={activeItem}
+                userId={userId}
+                activeQuiz={activeQuiz}
+                selectedOption={selectedOption}
+                quizSubmitted={quizSubmitted}
+                completedItemIds={progress?.completedItemIds || []}
+                currentTime={currentTime}
+                onTimeUpdate={handleTimeUpdate}
+                onSeeking={handleSeeking}
+                onSelectOption={setSelectedOption}
+                onSubmitQuiz={handleQuizSubmit}
+                onContinueVideo={handleContinueVideo}
+                onMarkComplete={handleMarkItemComplete}
+                isPreviewMode={isPreviewMode}
+              />
+            </div>
+
+            {/* Bottom Tabs Section */}
+            {(!isPreviewMode ||
+              (activeItem?.interactiveTranscripts &&
+                activeItem.interactiveTranscripts.length > 0) ||
+              activeItem?.vttSubtitleUrl) && (
+              <div className="h-64 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0">
+                {/* Tab Header Bar */}
+                <div className="h-11 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between bg-slate-50 dark:bg-slate-900/90">
+                  <div className="flex items-center gap-6">
+                    <button
+                      onClick={() => setActiveTab("transcript")}
+                      className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
+                        activeTab === "transcript"
+                          ? "text-blue-600 dark:text-blue-400 border-blue-500"
+                          : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
+                      }`}
+                    >
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                       >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 6h16M4 12h16m-7 6h7"
+                        />
+                      </svg>
+                      {"Phụ đề Tương tác ({count})".replace(
+                        "{count}",
+                        (activeItem?.interactiveTranscripts.length || 0).toString(),
+                      )}
+                    </button>
+
+                    {!isPreviewMode && (
+                      <>
+                        <button
+                          onClick={() => setActiveTab("forum")}
+                          className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
+                            activeTab === "forum"
+                              ? "text-blue-600 dark:text-blue-400 border-blue-500"
+                              : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
+                          }`}
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
-                          />
-                        </svg>
-                        {"Thảo luận"}
-                      </button>
-                      <button
-                        onClick={() => setActiveTab("notes")}
-                        className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
-                          activeTab === "notes"
-                            ? "text-blue-600 dark:text-blue-400 border-blue-500"
-                            : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
-                        }`}
-                      >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
+                            />
+                          </svg>
+                          {"Thảo luận"}
+                        </button>
+                        <button
+                          onClick={() => setActiveTab("notes")}
+                          className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
+                            activeTab === "notes"
+                              ? "text-blue-600 dark:text-blue-400 border-blue-500"
+                              : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
+                          }`}
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                          />
-                        </svg>
-                        {"Ghi chú Cá nhân ({count})".replace("{count}", notes.length.toString())}
-                      </button>
-                      <button
-                        onClick={() => setActiveTab("deadlines")}
-                        className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
-                          activeTab === "deadlines"
-                            ? "text-blue-600 dark:text-blue-400 border-blue-500"
-                            : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
-                        }`}
-                      >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                            />
+                          </svg>
+                          {"Ghi chú Cá nhân ({count})".replace("{count}", notes.length.toString())}
+                        </button>
+                        <button
+                          onClick={() => setActiveTab("deadlines")}
+                          className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
+                            activeTab === "deadlines"
+                              ? "text-blue-600 dark:text-blue-400 border-blue-500"
+                              : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
+                          }`}
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        {"Deadlines & Tiến độ"}
-                      </button>
-                    </>
+                          <svg
+                            className="w-3.5 h-3.5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          {"Deadlines & Tiến độ"}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tab Body Content */}
+                <div className="flex-1 overflow-y-auto p-4 bg-slate-50 dark:bg-slate-950">
+                  {activeTab === "transcript" && (
+                    <TranscriptPanel
+                      activeItem={activeItem}
+                      currentTime={currentTime}
+                      onSeekVideo={handleSeekVideo}
+                    />
+                  )}
+
+                  {!isPreviewMode && activeTab === "forum" && (
+                    <ForumTab courseId={courseId} itemId={activeItem?.id || ""} />
+                  )}
+
+                  {!isPreviewMode && activeTab === "notes" && (
+                    <NotesPanel
+                      notes={notes}
+                      highlightText={highlightText}
+                      noteComment={noteComment}
+                      savingNote={savingNote}
+                      onHighlightTextChange={setHighlightText}
+                      onNoteCommentChange={setNoteComment}
+                      onSaveNote={handleSaveNote}
+                    />
+                  )}
+
+                  {!isPreviewMode && activeTab === "deadlines" && (
+                    <DeadlinesPanel progress={progress} onResetDeadlines={handleResetDeadlines} />
                   )}
                 </div>
               </div>
+            )}
+          </main>
+        </div>
 
-              {/* Tab Body Content */}
-              <div className="flex-1 overflow-y-auto p-4 bg-slate-50 dark:bg-slate-950">
-                {activeTab === "transcript" && (
-                  <TranscriptPanel
-                    activeItem={activeItem}
-                    currentTime={currentTime}
-                    onSeekVideo={handleSeekVideo}
-                  />
-                )}
-
-                {!isPreviewMode && activeTab === "forum" && (
-                  <ForumTab courseId={courseId} itemId={activeItem?.id || ""} />
-                )}
-
-                {!isPreviewMode && activeTab === "notes" && (
-                  <NotesPanel
-                    notes={notes}
-                    highlightText={highlightText}
-                    noteComment={noteComment}
-                    savingNote={savingNote}
-                    onHighlightTextChange={setHighlightText}
-                    onNoteCommentChange={setNoteComment}
-                    onSaveNote={handleSaveNote}
-                  />
-                )}
-
-                {!isPreviewMode && activeTab === "deadlines" && (
-                  <DeadlinesPanel progress={progress} onResetDeadlines={handleResetDeadlines} />
-                )}
-              </div>
-            </div>
-          )}
-        </main>
+        <CourseCompletionModal
+          isOpen={showCompletionModal}
+          onClose={() => setShowCompletionModal(false)}
+          courseId={courseId}
+          courseTitle={course?.title || "Khóa học LMS"}
+          certificateId={certificateId || `CERT-${courseId.replace("course-", "").toUpperCase()}`}
+        />
       </div>
-
-      <CourseCompletionModal
-        isOpen={showCompletionModal}
-        onClose={() => setShowCompletionModal(false)}
-        courseId={courseId}
-        courseTitle={course?.title || "Khóa học LMS"}
-        certificateId={certificateId || `CERT-${courseId.replace("course-", "").toUpperCase()}`}
-      />
-    </div>
+    </DirectionalTransition>
   );
 }
 
