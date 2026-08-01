@@ -25,17 +25,28 @@ import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
-import {
-  X,
-  ChevronLeft,
-  CheckCircle2,
-  Check,
-  Play,
-  FileText,
-  Code,
-  Users,
-  Edit3,
-} from "lucide-react";
+import { X, ChevronLeft, ChevronDown, ChevronUp, CheckCircle2, Check, Lock } from "lucide-react";
+
+function getItemTypeName(type: number): string {
+  switch (type) {
+    case 1:
+      return "Video";
+    case 2:
+      return "Reading";
+    case 3:
+      return "Practice Quiz";
+    case 4:
+      return "Graded Quiz";
+    case 5:
+      return "Lab";
+    case 6:
+      return "Peer Review";
+    case 7:
+      return "SCORM";
+    default:
+      return "Item";
+  }
+}
 
 function CoursePlayerContent() {
   const params = useParams();
@@ -56,6 +67,51 @@ function CoursePlayerContent() {
   );
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [collapsedWeeks, setCollapsedWeeks] = useState<Record<string, boolean>>({});
+  const prevActiveItemIdRef = useRef<string | null>(null);
+
+  const toggleWeek = (weekId: string) => {
+    setCollapsedWeeks((prev) => ({
+      ...prev,
+      [weekId]: !prev[weekId],
+    }));
+  };
+
+  const isWeekUnlocked = useCallback(
+    (weekIndex: number): boolean => {
+      if (isPreviewMode || weekIndex === 0 || !course) return true;
+      for (let k = 0; k < weekIndex; k++) {
+        const precedingWeek = course.weekModules[k];
+        if (!precedingWeek) continue;
+        const allPrecedingItems = precedingWeek.lessons.flatMap((l) => l.items);
+        const allDone = allPrecedingItems.every((item) =>
+          progress?.completedItemIds.includes(item.id),
+        );
+        if (!allDone) return false;
+      }
+      return true;
+    },
+    [course, progress, isPreviewMode],
+  );
+
+  useEffect(() => {
+    if (course && activeItem && activeItem.id !== prevActiveItemIdRef.current) {
+      prevActiveItemIdRef.current = activeItem.id;
+      const parentWeek = course.weekModules.find((wm) =>
+        wm.lessons.some((l) => l.items.some((i) => i.id === activeItem.id)),
+      );
+      if (parentWeek) {
+        setCollapsedWeeks((prev) => {
+          if (prev[parentWeek.id]) {
+            const next = { ...prev };
+            delete next[parentWeek.id];
+            return next;
+          }
+          return prev;
+        });
+      }
+    }
+  }, [activeItem, course]);
 
   const handleTabClick = (tab: "transcript" | "forum" | "notes" | "deadlines") => {
     if (isPanelOpen && activeTab === tab) {
@@ -84,6 +140,22 @@ function CoursePlayerContent() {
   const [noteComment, setNoteComment] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const [lockNotice, setLockNotice] = useState("");
+  const isVideoItem = activeItem?.type === 1 || Boolean(activeItem?.videoUrl);
+  const isLectureItem = isVideoItem || activeItem?.type === 2;
+
+  // Auto-adjust activeTab when activeItem changes if the activeTab is not supported
+  useEffect(() => {
+    if (!activeItem) return;
+    if (activeTab === "transcript" && !isVideoItem) {
+      if (isLectureItem) {
+        setActiveTab("notes");
+      } else {
+        setActiveTab("deadlines");
+      }
+    } else if ((activeTab === "notes" || activeTab === "forum") && !isLectureItem) {
+      setActiveTab("deadlines");
+    }
+  }, [activeItem, activeTab, isVideoItem, isLectureItem]);
 
   // Total course items count
   const totalCourseItems =
@@ -636,81 +708,130 @@ function CoursePlayerContent() {
               </div>
 
               <div className="p-4 space-y-6">
-                {(() => {
-                  const allItemsInCourse: LearningItem[] = [];
-                  course.weekModules.forEach((wm) => {
-                    wm.lessons.forEach((l) => {
-                      allItemsInCourse.push(...l.items);
-                    });
-                  });
+                {course.weekModules.map((week, weekIndex) => {
+                  const isCollapsed = Boolean(collapsedWeeks[week.id]);
+                  const unlocked = isWeekUnlocked(weekIndex);
+                  const displayWeekTitle =
+                    week.title.startsWith("Tuần") || week.title.startsWith("Week")
+                      ? week.title
+                      : `Tuần ${week.weekNumber}: ${week.title}`;
 
-                  return course.weekModules.map((week) => (
+                  return (
                     <div key={week.id} className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-extrabold uppercase text-primary">
-                          {"Tuần {week}".replace("{week}", week.weekNumber.toString())}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          {week.title}
-                        </span>
-                      </div>
-
-                      {week.lessons.map((lesson) => (
-                        <div key={lesson.id} className="space-y-1">
-                          <div className="text-xs font-semibold text-foreground px-2 py-1">
-                            {lesson.title}
+                      {/* Module / Week Accordion Header */}
+                      <button
+                        type="button"
+                        onClick={() => toggleWeek(week.id)}
+                        className="w-full text-left flex items-center justify-between p-2 rounded-xl hover:bg-muted/60 transition-colors group cursor-pointer"
+                      >
+                        <div className="flex-1 min-w-0 pr-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold tracking-wide text-muted-foreground group-hover:text-primary transition-colors">
+                              {`Module ${week.weekNumber}`}
+                            </span>
+                            {!unlocked && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-muted-foreground bg-muted border border-border px-2 py-0.5 rounded-full">
+                                <Lock className="w-3 h-3" /> Bị khóa
+                              </span>
+                            )}
                           </div>
-                          <div className="space-y-1 pl-2">
-                            {lesson.items.map((item) => {
-                              const isActive = activeItem?.id === item.id;
-                              const isDone = progress?.completedItemIds.includes(item.id);
-
-                              return (
-                                <button
-                                  key={item.id}
-                                  onClick={() => {
-                                    setLockNotice("");
-                                    setActiveItem(item);
-                                    setActiveQuiz(null);
-                                  }}
-                                  className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
-                                    isActive
-                                      ? "bg-primary/10 text-primary font-semibold border border-primary/20"
-                                      : isDone
-                                        ? "hover:bg-muted text-foreground font-semibold"
-                                        : "hover:bg-muted text-muted-foreground"
-                                  }`}
-                                >
-                                  <span className="truncate flex items-center gap-2">
-                                    {isDone ? (
-                                      <Check className="w-3.5 h-3.5 text-success flex-shrink-0" />
-                                    ) : item.type === 1 ? (
-                                      <Play className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                                    ) : item.type === 2 ? (
-                                      <FileText className="w-3.5 h-3.5 text-success flex-shrink-0" />
-                                    ) : item.type === 5 ? (
-                                      <Code className="w-3.5 h-3.5 text-accent flex-shrink-0" />
-                                    ) : item.type === 6 ? (
-                                      <Users className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                                    ) : (
-                                      <Edit3 className="w-3.5 h-3.5 text-warning flex-shrink-0" />
-                                    )}
-                                    <span className={isDone ? "font-bold text-foreground" : ""}>
-                                      {item.title}
-                                    </span>
-                                  </span>
-                                  <span className="text-[10px] opacity-60">
-                                    {item.estimatedMinutes}m
-                                  </span>
-                                </button>
-                              );
-                            })}
+                          <div className="text-sm font-extrabold text-foreground group-hover:text-primary transition-colors leading-snug truncate">
+                            {displayWeekTitle}
                           </div>
                         </div>
-                      ))}
+                        <div className="text-muted-foreground group-hover:text-foreground transition-colors p-1 shrink-0">
+                          {isCollapsed ? (
+                            <ChevronDown className="w-4 h-4" />
+                          ) : (
+                            <ChevronUp className="w-4 h-4" />
+                          )}
+                        </div>
+                      </button>
+
+                      {/* Collapsible Lessons & Items List */}
+                      {!isCollapsed && (
+                        <div className="space-y-4 pl-1">
+                          {week.lessons.map((lesson) => (
+                            <div key={lesson.id} className="space-y-1.5">
+                              {/* Lesson Subheading */}
+                              <div className="text-xs font-bold text-muted-foreground px-2 pt-1">
+                                {lesson.title}
+                              </div>
+
+                              {/* Learning Items */}
+                              <div className="space-y-1">
+                                {lesson.items.map((item) => {
+                                  const isActive = activeItem?.id === item.id;
+                                  const isDone = progress?.completedItemIds.includes(item.id);
+
+                                  return (
+                                    <button
+                                      key={item.id}
+                                      type="button"
+                                      onClick={() => {
+                                        if (!unlocked) {
+                                          setLockNotice(
+                                            `Bạn cần hoàn thành tất cả các bài học ở Tuần ${weekIndex} để mở khóa Tuần ${weekIndex + 1}.`,
+                                          );
+                                          return;
+                                        }
+                                        setLockNotice("");
+                                        setActiveItem(item);
+                                        setActiveQuiz(null);
+                                      }}
+                                      className={`w-full text-left p-3 rounded-2xl flex items-start gap-3 transition-all cursor-pointer ${
+                                        !unlocked
+                                          ? "opacity-60 cursor-not-allowed hover:bg-transparent"
+                                          : isActive
+                                            ? "bg-primary/10 border border-primary/20 text-foreground shadow-2xs"
+                                            : "hover:bg-muted/60 text-foreground"
+                                      }`}
+                                    >
+                                      {/* Status Icon */}
+                                      <div className="shrink-0 mt-0.5">
+                                        {!unlocked ? (
+                                          <div className="w-5 h-5 rounded-full bg-muted border border-border flex items-center justify-center">
+                                            <Lock className="w-3 h-3 text-muted-foreground" />
+                                          </div>
+                                        ) : isDone ? (
+                                          <div className="w-5 h-5 rounded-full bg-success flex items-center justify-center">
+                                            <Check className="w-3.5 h-3.5 text-success-foreground stroke-[3]" />
+                                          </div>
+                                        ) : (
+                                          <div className="w-5 h-5 rounded-full bg-muted border border-border" />
+                                        )}
+                                      </div>
+
+                                      {/* Title & Sub-info */}
+                                      <div className="flex-1 min-w-0">
+                                        <div
+                                          className={`text-xs leading-snug truncate ${
+                                            isActive
+                                              ? "font-bold text-foreground"
+                                              : isDone
+                                                ? "font-medium text-foreground"
+                                                : "font-normal text-muted-foreground"
+                                          }`}
+                                        >
+                                          {item.title}
+                                        </div>
+                                        <div className="text-[11px] text-muted-foreground mt-0.5 font-normal">
+                                          {!unlocked
+                                            ? `Bị khóa • Hoàn thành Tuần ${weekIndex}`
+                                            : `${getItemTypeName(item.type)} • ${item.estimatedMinutes || 5} min`}
+                                        </div>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  ));
-                })()}
+                  );
+                })}
               </div>
             </aside>
           )}
@@ -761,7 +882,21 @@ function CoursePlayerContent() {
                   {/* Right: Next Item Button - Clean Text Only */}
                   {nextItem ? (
                     <button
-                      onClick={() => setActiveItem(nextItem)}
+                      onClick={() => {
+                        if (!nextItem || !course) return;
+                        const nextWeekIndex = course.weekModules.findIndex((wm) =>
+                          wm.lessons.some((l) => l.items.some((i) => i.id === nextItem.id)),
+                        );
+                        if (nextWeekIndex !== -1 && !isWeekUnlocked(nextWeekIndex)) {
+                          setLockNotice(
+                            `Bạn cần hoàn thành tất cả các bài học ở Tuần ${nextWeekIndex} để mở khóa Tuần ${nextWeekIndex + 1}.`,
+                          );
+                          return;
+                        }
+                        setLockNotice("");
+                        setActiveItem(nextItem);
+                        setActiveQuiz(null);
+                      }}
                       className="px-5 py-2.5 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground transition-all shadow-md flex items-center gap-2 cursor-pointer"
                     >
                       <span>{"Bài tiếp theo"}</span>
@@ -789,10 +924,11 @@ function CoursePlayerContent() {
 
               {/* Coursera-style Expandable Side Drawer Panel - Locked Width Column */}
               {isPanelOpen &&
-                (!isPreviewMode ||
-                  (activeItem?.interactiveTranscripts &&
-                    activeItem.interactiveTranscripts.length > 0) ||
-                  activeItem?.vttSubtitleUrl) && (
+                ((activeTab === "transcript" && isVideoItem) ||
+                  ((activeTab === "notes" || activeTab === "forum") &&
+                    isLectureItem &&
+                    !isPreviewMode) ||
+                  (activeTab === "deadlines" && !isPreviewMode)) && (
                   <aside className="w-80 xl:w-96 bg-card border-l border-border flex flex-col shrink-0 h-full overflow-hidden shadow-xs z-10 transition-all duration-300">
                     {/* Drawer Header */}
                     <div className="h-12 border-b border-border px-4 flex items-center justify-between bg-muted/40 shrink-0">
@@ -827,7 +963,7 @@ function CoursePlayerContent() {
 
                     {/* Tab Body Content */}
                     <div className="flex-1 overflow-y-auto p-4 bg-background min-h-0 flex flex-col">
-                      {activeTab === "transcript" && (
+                      {activeTab === "transcript" && isVideoItem && (
                         <TranscriptPanel
                           activeItem={activeItem}
                           currentTime={currentTime}
@@ -835,11 +971,11 @@ function CoursePlayerContent() {
                         />
                       )}
 
-                      {!isPreviewMode && activeTab === "forum" && (
+                      {!isPreviewMode && activeTab === "forum" && isLectureItem && (
                         <ForumTab courseId={courseId} itemId={activeItem?.id || ""} />
                       )}
 
-                      {!isPreviewMode && activeTab === "notes" && (
+                      {!isPreviewMode && activeTab === "notes" && isLectureItem && (
                         <NotesPanel
                           notes={notes}
                           highlightText={highlightText}
@@ -863,85 +999,91 @@ function CoursePlayerContent() {
 
               {/* Coursera-style Vertical Icon Action Bar (Far Right Strip - Rigid Vertical Column) */}
               <div className="w-16 lg:w-20 bg-card border-l border-border flex flex-col items-center justify-start py-4 gap-4 shrink-0 h-full z-20 select-none">
-                {/* Transcript Button */}
-                <button
-                  onClick={() => handleTabClick("transcript")}
-                  className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
-                    isPanelOpen && activeTab === "transcript"
-                      ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                  title="Phụ đề"
-                >
-                  <svg
-                    className="w-5 h-5 mb-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                {/* Transcript Button: Only for Video Items */}
+                {isVideoItem && (
+                  <button
+                    onClick={() => handleTabClick("transcript")}
+                    className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
+                      isPanelOpen && activeTab === "transcript"
+                        ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    }`}
+                    title="Phụ đề"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16m-7 6h7"
-                    />
-                  </svg>
-                  <span className="text-[10px] tracking-tight leading-none">Phụ đề</span>
-                </button>
+                    <svg
+                      className="w-5 h-5 mb-1"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 6h16M4 12h16m-7 6h7"
+                      />
+                    </svg>
+                    <span className="text-[10px] tracking-tight leading-none">Phụ đề</span>
+                  </button>
+                )}
 
                 {!isPreviewMode && (
                   <>
-                    {/* Notes Button */}
-                    <button
-                      onClick={() => handleTabClick("notes")}
-                      className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
-                        isPanelOpen && activeTab === "notes"
-                          ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
-                      title="Ghi chú"
-                    >
-                      <svg
-                        className="w-5 h-5 mb-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    {/* Notes Button: For Video & Reading Lecture Items */}
+                    {isLectureItem && (
+                      <button
+                        onClick={() => handleTabClick("notes")}
+                        className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
+                          isPanelOpen && activeTab === "notes"
+                            ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }`}
+                        title="Ghi chú"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
-                      <span className="text-[10px] tracking-tight leading-none">Ghi chú</span>
-                    </button>
+                        <svg
+                          className="w-5 h-5 mb-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                        <span className="text-[10px] tracking-tight leading-none">Ghi chú</span>
+                      </button>
+                    )}
 
-                    {/* Forum Button */}
-                    <button
-                      onClick={() => handleTabClick("forum")}
-                      className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
-                        isPanelOpen && activeTab === "forum"
-                          ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
-                      title="Thảo luận"
-                    >
-                      <svg
-                        className="w-5 h-5 mb-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    {/* Forum Button: For Video & Reading Lecture Items */}
+                    {isLectureItem && (
+                      <button
+                        onClick={() => handleTabClick("forum")}
+                        className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
+                          isPanelOpen && activeTab === "forum"
+                            ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }`}
+                        title="Thảo luận"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
-                        />
-                      </svg>
-                      <span className="text-[10px] tracking-tight leading-none">Thảo luận</span>
-                    </button>
+                        <svg
+                          className="w-5 h-5 mb-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
+                          />
+                        </svg>
+                        <span className="text-[10px] tracking-tight leading-none">Thảo luận</span>
+                      </button>
+                    )}
 
                     {/* Deadlines Button */}
                     <button
