@@ -300,16 +300,7 @@ function CoursePlayerContent() {
   useEffect(() => {
     if (!courseId) return;
 
-    // Strict Auth Guard Check
-    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-    if (!token) {
-      const redirectUrl = `/learn/${courseId}${previewItemId ? `?itemId=${previewItemId}` : ""}${isPreviewMode ? (previewItemId ? "&preview=true" : "?preview=true") : ""}`;
-      router.push(`/auth/login?redirect=${encodeURIComponent(redirectUrl)}`);
-      return;
-    }
-
-    // Safely get userId after auth guard passes (will be set in loadData)
-    const storedUserId = localStorage.getItem("user_id");
+    const storedUserId = typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
 
     async function loadData() {
       if (storedUserId) {
