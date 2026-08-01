@@ -65,10 +65,11 @@ export class AssessmentPage {
   }
 
   async agreeHonorCode() {
-    // Wait up to 5s for the confirm button to appear
-    await this.confirmHonorButton.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
-    if (!await this.confirmHonorButton.isVisible()) return;
+    // If it's already agreed, we don't need to do anything
+    if (await this.honorAgreedBadge.isVisible()) return;
 
+    // Wait for the confirm button to appear (might take a bit if API is slow on CI)
+    await this.confirmHonorButton.waitFor({ state: 'visible', timeout: 15000 });
     await this.confirmHonorButton.click();
 
     // Wait for modal to animate open and checkbox to appear
