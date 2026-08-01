@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Toast as BaseToast } from "@base-ui/react/toast";
+import { Bell, CheckCircle2, AlertCircle, AlertTriangle, Info, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type ToastType = "default" | "success" | "error" | "warning" | "info" | "loading";
@@ -22,122 +23,36 @@ export interface ToastOptions {
   id?: string;
 }
 
-// Icon Components using clean inline SVG vectors
+// Icon Components using lucide-react icons
 const VariantIcons: Record<ToastType, React.ReactNode> = {
   default: (
     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-      <svg
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth="1.5"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
-        />
-      </svg>
+      <Bell className="h-5 w-5" aria-hidden="true" />
     </div>
   ),
   success: (
     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
-      <svg
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth="2"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
+      <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
     </div>
   ),
   error: (
     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/15 text-destructive">
-      <svg
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth="2"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.007v.008H12v-.008z"
-        />
-      </svg>
+      <AlertCircle className="h-5 w-5" aria-hidden="true" />
     </div>
   ),
   warning: (
     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warning/15 text-warning">
-      <svg
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth="2"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-        />
-      </svg>
+      <AlertTriangle className="h-5 w-5" aria-hidden="true" />
     </div>
   ),
   info: (
     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-info/15 text-info">
-      <svg
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth="2"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
-        />
-      </svg>
+      <Info className="h-5 w-5" aria-hidden="true" />
     </div>
   ),
   loading: (
     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-      <svg
-        className="h-5 w-5 animate-spin"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth="2"
-        stroke="currentColor"
-        aria-hidden="true"
-      >
-        <circle
-          className="opacity-25"
-          cx="12"
-          cy="12"
-          r="10"
-          stroke="currentColor"
-          strokeWidth="4"
-        />
-        <path
-          className="opacity-75"
-          fill="currentColor"
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        />
-      </svg>
+      <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
     </div>
   ),
 };
@@ -200,16 +115,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast }) => {
         aria-label="Close notification"
         className="shrink-0 rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer -mr-1 -mt-1"
       >
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth="2"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <X className="h-4 w-4" aria-hidden="true" />
       </BaseToast.Close>
     </BaseToast.Root>
   );

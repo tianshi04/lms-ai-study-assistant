@@ -10,6 +10,7 @@ import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
 import { useToast } from "@/components/ui/Toast";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
+import { Building2 } from "lucide-react";
 
 const emptySubscribe = () => () => {};
 
@@ -171,19 +172,7 @@ export default function NewCoursePage() {
           <div className="space-y-2">
             {/* Offered by Partner Badge */}
             <div className="flex items-center gap-2 text-xs text-primary font-semibold">
-              <svg
-                className="w-4 h-4 text-primary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v12a2 2 0 01-2 2"
-                />
-              </svg>
+              <Building2 className="w-4 h-4 text-primary" aria-hidden="true" />
               <span>
                 Offered by{" "}
                 <strong className="text-foreground underline decoration-primary decoration-2">

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { Search, Check, X } from "lucide-react";
 
 interface VerifiedCertPayload {
   isValid: boolean;
@@ -91,14 +92,7 @@ export function VerifyDetailClient({
             type="submit"
             className="px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm shadow-md shadow-primary/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+            <Search className="w-4 h-4" />
             <span>{"Tra cứu Chứng chỉ"}</span>
           </button>
         </form>
@@ -109,14 +103,7 @@ export function VerifyDetailClient({
           {/* Status Verification Badge */}
           <div className="bg-success/10 border border-success/20 rounded-2xl p-4 flex items-center gap-3 text-success">
             <div className="w-8 h-8 rounded-full bg-success text-success-foreground flex items-center justify-center font-bold flex-shrink-0">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2.5}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
+              <Check className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-sm">{"Chứng chỉ Xác minh Chính thức"}</h3>
@@ -250,19 +237,7 @@ export function VerifyDetailClient({
                 >
                   {copied ? (
                     <>
-                      <svg
-                        className="w-4 h-4 text-success"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      <Check className="w-4 h-4 text-success" />
                       <span>Copied Link</span>
                     </>
                   ) : (
@@ -282,14 +257,7 @@ export function VerifyDetailClient({
       ) : (
         <div className="bg-destructive/10 border border-destructive/20 rounded-3xl p-8 text-center space-y-4">
           <div className="w-12 h-12 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center font-bold text-xl mx-auto">
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <X className="w-6 h-6" />
           </div>
           <h2 className="text-xl font-bold text-destructive">{"Không thể Xác minh Chứng chỉ"}</h2>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">

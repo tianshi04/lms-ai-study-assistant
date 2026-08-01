@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
+import { X, AlertTriangle, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./Button";
 
@@ -157,16 +158,7 @@ export const Modal: React.FC<ModalProps> = ({
                 aria-label="Close modal"
                 className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg cursor-pointer hover:bg-accent ml-auto -mr-1 -mt-1"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  aria-hidden="true"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <X className="w-5 h-5" aria-hidden="true" />
               </DialogClose>
             )}
           </div>
@@ -204,59 +196,20 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     if (variant === "danger") {
       return (
         <div className="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-destructive/15 sm:mx-0 sm:h-10 sm:w-10">
-          <svg
-            className="h-6 w-6 text-destructive"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-            />
-          </svg>
+          <AlertTriangle className="h-6 w-6 text-destructive" aria-hidden="true" />
         </div>
       );
     }
     if (variant === "warning") {
       return (
         <div className="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-warning/15 sm:mx-0 sm:h-10 sm:w-10">
-          <svg
-            className="h-6 w-6 text-warning"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="1.5"
-            stroke="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.007v.008H12v-.008z"
-            />
-          </svg>
+          <AlertCircle className="h-6 w-6 text-warning" aria-hidden="true" />
         </div>
       );
     }
     return (
       <div className="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent sm:mx-0 sm:h-10 sm:w-10">
-        <svg
-          className="h-6 w-6 text-accent-foreground"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth="1.5"
-          stroke="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
-          />
-        </svg>
+        <Info className="h-6 w-6 text-accent-foreground" aria-hidden="true" />
       </div>
     );
   };

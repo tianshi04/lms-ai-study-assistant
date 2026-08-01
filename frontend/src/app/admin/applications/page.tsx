@@ -10,6 +10,7 @@ import {
   InstructorApplicationStatus,
   type InstructorApplication,
 } from "@/gen/identity/v1/identity_pb";
+import { FileText, ExternalLink, PlayCircle, Check } from "lucide-react";
 
 export default function AdminInstructorApplicationsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -134,14 +135,7 @@ export default function AdminInstructorApplicationsPage() {
         ) : applications.length === 0 ? (
           <div className="bg-card rounded-3xl p-12 text-center border border-border shadow-sm space-y-3">
             <div className="w-12 h-12 bg-muted text-muted-foreground rounded-2xl flex items-center justify-center mx-auto">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
+              <FileText className="w-6 h-6" aria-hidden="true" />
             </div>
             <h3 className="text-lg font-bold text-foreground">Không có đơn đăng ký nào</h3>
             <p className="text-muted-foreground text-sm max-w-sm mx-auto">
@@ -215,9 +209,7 @@ export default function AdminInstructorApplicationsPage() {
                           rel="noreferrer"
                           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-info/10 text-info border border-info/20 text-xs font-semibold hover:bg-info/20 transition-colors"
                         >
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z" />
-                          </svg>
+                          <ExternalLink className="w-4 h-4" aria-hidden="true" />
                           <span>Xem LinkedIn/Portfolio</span>
                         </a>
                       )}
@@ -228,19 +220,7 @@ export default function AdminInstructorApplicationsPage() {
                           rel="noreferrer"
                           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-muted text-foreground border border-border text-xs font-semibold hover:bg-muted/80 transition-colors"
                         >
-                          <svg
-                            className="w-4 h-4 text-destructive"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-                            />
-                          </svg>
+                          <FileText className="w-4 h-4 text-destructive" aria-hidden="true" />
                           <span>Xem Hồ sơ CV (.pdf)</span>
                         </a>
                       )}
@@ -251,25 +231,7 @@ export default function AdminInstructorApplicationsPage() {
                           rel="noreferrer"
                           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors"
                         >
-                          <svg
-                            className="w-4 h-4 text-destructive"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
+                          <PlayCircle className="w-4 h-4 text-destructive" aria-hidden="true" />
                           <span>Xem Video Giảng Thử Demo</span>
                         </a>
                       )}
@@ -332,19 +294,7 @@ export default function AdminInstructorApplicationsPage() {
                             disabled={reviewMutation.isPending}
                             className="px-6 py-2.5 rounded-xl bg-success text-success-foreground hover:opacity-90 text-xs font-bold shadow-lg transition-all flex items-center gap-2"
                           >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
+                            <Check className="w-4 h-4" aria-hidden="true" />
                             <span>Phê Duyệt & Nâng Role Giảng Viên</span>
                           </button>
                         </>

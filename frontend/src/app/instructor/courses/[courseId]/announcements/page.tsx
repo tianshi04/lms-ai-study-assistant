@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type CourseAnnouncement } from "@/gen/catalog/v1/catalog_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Plus, User } from "lucide-react";
 
 export default function InstructorAnnouncementsPage({
   params,
@@ -144,19 +145,7 @@ export default function InstructorAnnouncementsPage({
         {isInstructorOrAdmin && (
           <div className="bg-card rounded-3xl p-6 sm:p-8 border border-border shadow-sm space-y-4">
             <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <svg
-                className="w-5 h-5 text-primary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
+              <Plus className="w-5 h-5 text-primary" aria-hidden="true" />
               Tạo Thông báo Mới
             </h2>
 
@@ -238,19 +227,7 @@ export default function InstructorAnnouncementsPage({
                   </p>
 
                   <div className="pt-3 border-t border-border flex items-center gap-2 text-xs text-muted-foreground">
-                    <svg
-                      className="w-4 h-4 text-primary"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                      />
-                    </svg>
+                    <User className="w-4 h-4 text-primary" aria-hidden="true" />
                     <span>
                       Người đăng: <strong>{ann.authorName}</strong>
                     </span>

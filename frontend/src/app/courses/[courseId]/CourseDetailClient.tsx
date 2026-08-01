@@ -21,6 +21,23 @@ import { RatingStars } from "@/components/ui/RatingStars";
 import { useToast } from "@/components/ui/Toast";
 import { PaymentCheckoutModal } from "@/components/course/PaymentCheckoutModal";
 import { useAuth } from "@/components/providers/AuthProvider";
+import {
+  Pencil,
+  CheckCircle2,
+  Star,
+  ArrowRight,
+  CreditCard,
+  Check,
+  CircleDollarSign,
+  BookOpen,
+  PlayCircle,
+  FileText,
+  Code2,
+  Users,
+  SquarePen,
+  X,
+  AlertTriangle,
+} from "lucide-react";
 
 interface CourseDetailClientProps {
   courseId: string;
@@ -223,54 +240,19 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   href={`/instructor/courses/${course.id}`}
                   className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-extrabold shadow-md transition-all cursor-pointer"
                 >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                    />
-                  </svg>
+                  <Pencil className="w-3.5 h-3.5" />
                   <span>{"Biên soạn Bài giảng (Instructor Builder)"}</span>
                 </Link>
               )}
               {hasCert && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 border border-success/20 text-success text-xs font-bold">
-                  <svg
-                    className="w-3.5 h-3.5 text-success"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-success" />
                   <span>{"Đã Nhận Chứng Chỉ"}</span>
                 </div>
               )}
               {course.averageRating > 0 && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-warning/10 border border-warning/20 text-warning text-xs font-bold">
-                  <svg
-                    className="w-4 h-4 text-amber-400 fill-amber-400"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={1.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                    />
-                  </svg>
+                  <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
                   <span>
                     {course.averageRating.toFixed(1)} ★ ({course.reviewCount} {"nhận xét"})
                   </span>
@@ -332,19 +314,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   href={`/verify/${certId}`}
                   className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-sm transition-all shadow-lg cursor-pointer"
                 >
-                  <svg
-                    className="w-4 h-4 text-warning-foreground"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+                  <CheckCircle2 className="w-4 h-4 text-warning-foreground" />
                   <span>{"Xem Chứng Chỉ"}</span>
                 </Link>
                 <Link
@@ -361,14 +331,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-all shadow-lg cursor-pointer"
                 >
                   <span>{"Vào Học Ngay (Paid Mode)"}</span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M14 5l7 7m0 0l-7 7m7-7H3"
-                    />
-                  </svg>
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             ) : (
@@ -378,33 +341,14 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-all shadow-lg cursor-pointer"
                 >
                   <span>{"Vào Học Ngay (Audit Mode)"}</span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M14 5l7 7m0 0l-7 7m7-7H3"
-                    />
-                  </svg>
+                  <ArrowRight className="w-4 h-4" />
                 </Link>
                 <button
                   type="button"
                   onClick={() => setIsPaymentModalOpen(true)}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary font-semibold text-sm transition-all cursor-pointer"
                 >
-                  <svg
-                    className="w-4 h-4 text-primary"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-                    />
-                  </svg>
+                  <CreditCard className="w-4 h-4 text-primary" />
                   <span>{"Nâng Cấp Paid Mode / Coursera Plus"}</span>
                 </button>
               </div>
@@ -412,52 +356,16 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
 
             <ul className="space-y-3 text-xs text-muted-foreground border-t border-border pt-4">
               <li className="flex items-center gap-2">
-                <svg
-                  className="w-4 h-4 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+                <Check className="w-4 h-4 text-primary" />
                 {"Hạn nộp linh hoạt (Flexible Deadlines)"}
               </li>
               <li className="flex items-center gap-2">
-                <svg
-                  className="w-4 h-4 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+                <Check className="w-4 h-4 text-primary" />
                 {"Chứng chỉ Xác thực Đã đăng ký"}
               </li>
               {course.financialAidEnabled && (
                 <li className="flex items-center gap-2 pt-1 border-t border-border">
-                  <svg
-                    className="w-4 h-4 text-success"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+                  <CircleDollarSign className="w-4 h-4 text-success" />
                   <button
                     type="button"
                     onClick={handleOpenFinAidModal}
@@ -467,14 +375,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                     <span aria-live="polite">
                       {checkingFinAidStatus ? "Đang kiểm tra…" : "Financial Aid available"}
                     </span>
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M14 5l7 7m0 0l-7 7m7-7H3"
-                      />
-                    </svg>
+                    <ArrowRight className="w-3 h-3" />
                   </button>
                 </li>
               )}
@@ -515,19 +416,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                       className="bg-muted/50 border border-border rounded-xl p-4"
                     >
                       <h4 className="font-semibold text-sm text-foreground mb-2 flex items-center gap-2">
-                        <svg
-                          className="w-4 h-4 text-primary"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                          />
-                        </svg>
+                        <BookOpen className="w-4 h-4 text-primary" />
                         {lesson.title}
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-6">
@@ -538,75 +427,15 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                           >
                             <span className="flex items-center gap-1">
                               {item.type === ItemType.VIDEO ? (
-                                <svg
-                                  className="w-3.5 h-3.5 text-primary flex-shrink-0"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                                  />
-                                </svg>
+                                <PlayCircle className="w-3.5 h-3.5 text-primary flex-shrink-0" />
                               ) : item.type === ItemType.READING ? (
-                                <svg
-                                  className="w-3.5 h-3.5 text-success flex-shrink-0"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                  />
-                                </svg>
+                                <FileText className="w-3.5 h-3.5 text-success flex-shrink-0" />
                               ) : item.type === ItemType.AUTO_GRADED_LAB ? (
-                                <svg
-                                  className="w-3.5 h-3.5 text-primary flex-shrink-0"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-                                  />
-                                </svg>
+                                <Code2 className="w-3.5 h-3.5 text-primary flex-shrink-0" />
                               ) : item.type === ItemType.PEER_REVIEW ? (
-                                <svg
-                                  className="w-3.5 h-3.5 text-primary flex-shrink-0"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                  />
-                                </svg>
+                                <Users className="w-3.5 h-3.5 text-primary flex-shrink-0" />
                               ) : (
-                                <svg
-                                  className="w-3.5 h-3.5 text-warning flex-shrink-0"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                  />
-                                </svg>
+                                <Pencil className="w-3.5 h-3.5 text-warning flex-shrink-0" />
                               )}
                             </span>
                             <span className="text-foreground font-medium truncate">
@@ -662,19 +491,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 }}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold shadow-sm transition-all cursor-pointer"
               >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                  />
-                </svg>
+                <SquarePen className="w-4 h-4" />
                 <span>{"Viết / Sửa đánh giá"}</span>
               </button>
             </div>
@@ -730,17 +547,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                     </div>
                     <div className="flex items-center gap-0.5 text-amber-400 bg-warning/10 border border-warning/20 px-2.5 py-1 rounded-full text-xs font-semibold">
                       <span>{rev.ratingStars}</span>
-                      <svg
-                        className="w-3.5 h-3.5 fill-amber-400"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                        />
-                      </svg>
+                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                     </div>
                   </div>
                   {rev.commentText && (
@@ -777,22 +584,13 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   onMouseLeave={() => setHoverRating(0)}
                   className="p-1 transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md cursor-pointer"
                 >
-                  <svg
+                  <Star
                     className={`w-7 h-7 ${
                       star <= (hoverRating || rating)
                         ? "fill-amber-400 text-amber-400"
                         : "text-muted-foreground/40 fill-none"
                     }`}
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={1.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                    />
-                  </svg>
+                  />
                 </button>
               ))}
             </div>
@@ -863,37 +661,13 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               )}
               {existingFinAidStatus.status === "APPROVED" && (
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20 flex items-center gap-1.5">
-                  <svg
-                    className="w-4 h-4 text-success"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                  <Check className="w-4 h-4 text-success" />
                   {"Đã Phê Duyệt"}
                 </span>
               )}
               {existingFinAidStatus.status === "REJECTED" && (
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-destructive/10 text-destructive border border-destructive/20 flex items-center gap-1.5">
-                  <svg
-                    className="w-4 h-4 text-destructive"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  <X className="w-4 h-4 text-destructive" />
                   {"Chưa được duyệt"}
                 </span>
               )}
@@ -934,14 +708,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-all flex items-center gap-1.5"
               >
                 <span>{"Quản lý danh sách Đơn Hỗ trợ tài chính của tôi"}</span>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M14 5l7 7m0 0l-7 7m7-7H3"
-                  />
-                </svg>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>
@@ -985,19 +752,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
 
             <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 text-xs text-warning space-y-1">
               <p className="font-bold flex items-center gap-1.5">
-                <svg
-                  className="w-4 h-4 text-warning"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
+                <AlertTriangle className="w-4 h-4 text-warning" />
                 {"Cam kết liêm chính học thuật:"}
               </p>
               <p>

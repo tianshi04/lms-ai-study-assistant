@@ -13,6 +13,7 @@ import {
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Check, X, Plus, RefreshCw, Download, Copy, Building2 } from "lucide-react";
 
 export interface Signatory {
   id: string;
@@ -264,33 +265,9 @@ function PartnerSettingsForm({
         >
           <div className="flex items-center gap-2">
             {statusMessage.type === "success" ? (
-              <svg
-                className="w-5 h-5 text-success"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
+              <Check className="w-5 h-5 text-success" />
             ) : (
-              <svg
-                className="w-5 h-5 text-destructive"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="w-5 h-5 text-destructive" />
             )}
             <span>{statusMessage.text}</span>
           </div>
@@ -474,19 +451,7 @@ function PartnerSettingsForm({
                     </span>
                     {sig.isDefault ? (
                       <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-full bg-primary text-primary-foreground">
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2.5}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
+                        <Check className="w-3 h-3" />
                         Mặc định
                       </span>
                     ) : (
@@ -537,19 +502,7 @@ function PartnerSettingsForm({
           {/* Add New Signatory Sub-form */}
           <div className="p-4 bg-muted rounded-xl border border-border space-y-4">
             <h4 className="text-xs font-bold uppercase text-foreground flex items-center gap-1.5">
-              <svg
-                className="w-4 h-4 text-success"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
+              <Plus className="w-4 h-4 text-success" />
               Thêm Người ký Đại diện mới
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -588,14 +541,7 @@ function PartnerSettingsForm({
                 onClick={handleAddSignatory}
                 className="bg-success hover:bg-success-hover text-success-foreground text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-colors"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
+                <Plus className="w-3.5 h-3.5" />
                 Thêm Người ký
               </button>
             </div>
@@ -624,14 +570,7 @@ function PartnerSettingsForm({
                 isLoading={rotateKeyPairMutation.isPending}
                 className="bg-warning hover:bg-warning-hover text-warning-foreground font-medium rounded-xl text-xs px-4 py-2.5 flex items-center gap-1.5"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
+                <RefreshCw className="w-4 h-4" />
                 Tạo Cặp Khóa Ký số Mới (Rotate Key Pair)
               </Button>
               <Button
@@ -640,19 +579,7 @@ function PartnerSettingsForm({
                 variant="outline"
                 className="font-medium rounded-xl text-xs px-4 py-2.5 border-input flex items-center gap-1.5"
               >
-                <svg
-                  className="w-4 h-4 text-primary"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                  />
-                </svg>
+                <Download className="w-4 h-4 text-primary" />
                 Tải xuống File Xác thực OpenBadges (openbadges-issuer.json)
               </Button>
             </div>
@@ -671,36 +598,12 @@ function PartnerSettingsForm({
                 >
                   {copiedKey ? (
                     <>
-                      <svg
-                        className="w-3.5 h-3.5 text-success"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      <Check className="w-3.5 h-3.5 text-success" />
                       <span>Đã sao chép!</span>
                     </>
                   ) : (
                     <>
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
-                        />
-                      </svg>
+                      <Copy className="w-3.5 h-3.5" />
                       <span>Sao chép Public Key</span>
                     </>
                   )}
@@ -724,14 +627,7 @@ function PartnerSettingsForm({
             isLoading={updateMutation.isPending}
             className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-xl px-6 py-3 text-sm shadow-md flex items-center gap-2"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
+            <Check className="w-4 h-4" />
             Lưu thay đổi Cấu hình Đối tác
           </Button>
         </div>
@@ -785,19 +681,7 @@ export default function PartnerSettingsPage() {
   if (partners.length === 0 || !activePartner) {
     return (
       <div className="max-w-2xl mx-auto my-16 p-8 bg-card border border-border rounded-2xl text-center shadow-sm">
-        <svg
-          className="w-16 h-16 mx-auto text-muted-foreground/60 mb-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.5}
-            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-          />
-        </svg>
+        <Building2 className="w-16 h-16 mx-auto text-muted-foreground/60 mb-4" />
         <h2 className="text-xl font-bold text-foreground mb-2">Chưa tìm thấy hồ sơ Đối tác</h2>
         <p className="text-muted-foreground text-sm">
           Tài khoản của bạn chưa gắn liền với thông tin đối tác nào. Vui lòng liên hệ Super Admin để

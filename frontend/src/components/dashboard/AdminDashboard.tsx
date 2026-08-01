@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CheckCircle2, Clock, List, Building2 } from "lucide-react";
 import AdminEnterpriseDashboardPage from "@/app/admin/dashboard/page";
 
 export function AdminDashboard({ userName: _userName }: { userName: string }) {
@@ -17,14 +18,7 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
             className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-center gap-4"
           >
             <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <CheckCircle2 className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-xs text-foreground group-hover:text-primary transition-colors">
@@ -41,14 +35,7 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
             className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-center gap-4"
           >
             <div className="w-10 h-10 rounded-xl bg-warning/10 text-warning flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <Clock className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-xs text-foreground group-hover:text-primary transition-colors">
@@ -65,14 +52,7 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
             className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-center gap-4"
           >
             <div className="w-10 h-10 rounded-xl bg-accent text-accent-foreground flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 10h16M4 14h16M4 18h16"
-                />
-              </svg>
+              <List className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-xs text-foreground group-hover:text-primary transition-colors">
@@ -87,14 +67,7 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
             className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-center gap-4"
           >
             <div className="w-10 h-10 rounded-xl bg-info/10 text-info flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                />
-              </svg>
+              <Building2 className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-xs text-foreground group-hover:text-primary transition-colors">

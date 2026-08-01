@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { Pin, ChevronUp } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import {
@@ -317,13 +318,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
                       {thread.isStaffPinned && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-warning bg-warning/10 px-1.5 py-0.5 rounded border border-warning/20">
-                          <svg
-                            className="w-3 h-3 text-warning"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5v6l1 1 1-1v-6h5v-2l-2-2z" />
-                          </svg>
+                          <Pin className="w-3 h-3 text-warning" />
                           Staff Pinned
                         </span>
                       )}
@@ -399,13 +394,9 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                     }`}
                     title={thread.isUpvotedByMe ? "Đã Upvote (Bấm để Hủy)" : "Upvote"}
                   >
-                    <svg
+                    <ChevronUp
                       className={`w-3 h-3 ${thread.isUpvotedByMe ? "text-primary-foreground" : "text-primary"}`}
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 4l-8 8h5v8h6v-8h5z" />
-                    </svg>
+                    />
                     <span>{thread.upvoteCount}</span>
                   </button>
                 </div>

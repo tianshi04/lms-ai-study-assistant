@@ -11,6 +11,7 @@ import {
   SelectItem,
 } from "@/components/ui/Select";
 import { useCoursesQuery, useCategoriesQuery } from "@/lib/query_hooks";
+import { GraduationCap, Search, RotateCcw } from "lucide-react";
 
 export function CourseCatalogClient() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -48,20 +49,7 @@ export function CourseCatalogClient() {
     <main className="w-full max-w-7xl mx-auto px-6 py-12 min-h-[65vh]">
       <div className="mb-10 text-center md:text-left max-w-5xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-4">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 14l9-5-9-5-9 5 9 5z"
-            />
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
-            />
-          </svg>
+          <GraduationCap className="w-3.5 h-3.5" aria-hidden="true" />
           {"Coursera-Style Specializations & Courses"}
         </div>
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4 text-balance">
@@ -80,19 +68,10 @@ export function CourseCatalogClient() {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-3 border-b border-border">
           {/* Search Bar (Spans remaining space smoothly) */}
           <div className="relative flex-1">
-            <svg
+            <Search
               className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+              aria-hidden="true"
+            />
             <input
               type="text"
               value={searchQuery}
@@ -124,14 +103,7 @@ export function CourseCatalogClient() {
                 }}
                 className="h-9 px-3 text-xs font-medium text-muted-foreground hover:text-destructive bg-muted hover:bg-destructive/10 rounded-xl transition-all flex items-center gap-1.5"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                  />
-                </svg>
+                <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{"Xóa bộ lọc"}</span>
               </button>
             ) : null}
@@ -238,14 +210,7 @@ export function CourseCatalogClient() {
       ) : courses.length === 0 ? (
         <div className="w-full min-h-[360px] flex flex-col items-center justify-center text-center p-8 bg-muted/50 rounded-3xl border border-dashed border-border">
           <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground mb-4 shadow-inner">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+            <Search className="w-8 h-8" aria-hidden="true" />
           </div>
           <h3 className="text-lg font-bold text-foreground mb-1">
             {"Không tìm thấy khóa học phù hợp"}
@@ -265,14 +230,7 @@ export function CourseCatalogClient() {
               }}
               className="px-4 py-2 text-xs font-semibold text-primary-foreground bg-primary hover:bg-primary-hover rounded-xl transition-all shadow-md shadow-primary/20 flex items-center gap-2"
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
+              <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{"Xóa bộ lọc"}</span>
             </button>
           )}

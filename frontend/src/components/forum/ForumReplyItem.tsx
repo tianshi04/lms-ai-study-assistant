@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, ThumbsUp } from "lucide-react";
 import { type ForumReply } from "@/gen/forum/v1/forum_pb";
 
 interface ForumReplyItemProps {
@@ -46,13 +47,7 @@ export function ForumReplyItem({
             {reply.authorName}
             {reply.isStaffAnswer && (
               <span className="inline-flex items-center gap-0.5 text-warning font-extrabold">
-                <svg className="w-3 h-3 text-warning" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                <Check className="w-3 h-3 text-warning" />
                 (TA Staff)
               </span>
             )}
@@ -87,13 +82,9 @@ export function ForumReplyItem({
           }`}
           title={reply.isUpvotedByMe ? "Đã Upvote (Bấm để Hủy)" : "Upvote"}
         >
-          <svg
+          <ThumbsUp
             className={`w-2.5 h-2.5 ${reply.isUpvotedByMe ? "text-primary-foreground" : "text-primary"}`}
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path d="M12 4l-8 8h5v8h6v-8h5z" />
-          </svg>
+          />
           <span>{reply.upvoteCount}</span>
         </button>
       </div>

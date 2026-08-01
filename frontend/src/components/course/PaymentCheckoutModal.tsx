@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { usePurchaseCourseMutation, useSubscribeCourseraPlusMutation } from "@/lib/query_hooks";
 import { PlanType } from "@/gen/payment/v1/payment_pb";
 import { useQueryClient } from "@tanstack/react-query";
+import { CreditCard, Check, AlertCircle, Loader2 } from "lucide-react";
 
 interface PaymentCheckoutModalProps {
   isOpen: boolean;
@@ -98,19 +99,7 @@ export function PaymentCheckoutModal({
       <DialogContent size="lg" className="p-6">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
-            <svg
-              className="w-6 h-6 text-primary"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
-            </svg>
+            <CreditCard className="w-6 h-6 text-primary" aria-hidden="true" />
             Nâng Cấp Quyền Truy Cập Paid Mode
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground mt-1">
@@ -128,33 +117,9 @@ export function PaymentCheckoutModal({
             }`}
           >
             {feedbackMsg.type === "success" ? (
-              <svg
-                className="w-5 h-5 text-success"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
+              <Check className="w-5 h-5 text-success" aria-hidden="true" />
             ) : (
-              <svg
-                className="w-5 h-5 text-destructive"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <AlertCircle className="w-5 h-5 text-destructive" aria-hidden="true" />
             )}
             <span>{feedbackMsg.text}</span>
           </div>
@@ -273,25 +238,10 @@ export function PaymentCheckoutModal({
           >
             {isLoading ? (
               <span aria-live="polite" className="flex items-center gap-2">
-                <svg
+                <Loader2
                   className="animate-spin h-4 w-4 text-primary-foreground"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                  />
-                </svg>
+                  aria-hidden="true"
+                />
                 Đang xử lý…
               </span>
             ) : (

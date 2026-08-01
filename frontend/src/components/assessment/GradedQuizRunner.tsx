@@ -5,6 +5,16 @@ import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { HonorCodeModal } from "./HonorCodeModal";
 import { useAuth } from "@/components/providers/AuthProvider";
+import {
+  CheckCircle2,
+  AlertCircle,
+  AlertTriangle,
+  Check,
+  ShieldCheck,
+  Clock,
+  X,
+  Send,
+} from "lucide-react";
 
 interface QuizSessionQuestionOption {
   optionIndex: number;
@@ -241,33 +251,9 @@ export function GradedQuizRunner({
           }`}
         >
           {isPassed ? (
-            <svg
-              className="w-12 h-12 text-success mx-auto"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <CheckCircle2 className="w-12 h-12 text-success mx-auto" />
           ) : (
-            <svg
-              className="w-12 h-12 text-destructive mx-auto"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 15v2m0-8v6m0 4h.01M3 12a9 9 0 1118 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
           )}
           <h3 className="text-lg font-bold">
             {isPassed ? "Bài Thi Đã Hoàn Thành" : "Bài Thi Bị Khóa"}
@@ -279,19 +265,7 @@ export function GradedQuizRunner({
 
     return (
       <div className="max-w-4xl mx-auto p-8 rounded-2xl bg-destructive/10 border border-destructive/30 text-destructive text-center space-y-3 shadow-xs">
-        <svg
-          className="w-10 h-10 text-destructive mx-auto"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-          />
-        </svg>
+        <AlertTriangle className="w-10 h-10 text-destructive mx-auto" />
         <p className="text-sm font-bold">{error}</p>
         <p className="text-xs text-muted-foreground">
           Vui lòng liên hệ giảng viên hoặc thiết lập cấu hình Ma trận đề thi cho bài thi này.
@@ -342,15 +316,7 @@ export function GradedQuizRunner({
             </span>
           ) : isHonorAgreed ? (
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-success/10 text-success flex items-center gap-1 border border-success/20">
-              <svg
-                className="w-3.5 h-3.5 text-success"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+              <Check className="w-3.5 h-3.5 text-success" />
               <span>Đã xác nhận Cam kết Trung thực</span>
             </span>
           ) : (
@@ -359,19 +325,7 @@ export function GradedQuizRunner({
               className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-warning hover:opacity-90 text-warning-foreground transition-colors shadow-xs flex items-center gap-1.5"
             >
               <span>Xác nhận Cam kết Trung thực</span>
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
+              <ShieldCheck className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
@@ -382,19 +336,7 @@ export function GradedQuizRunner({
         <div className="p-5 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive space-y-2">
           <div className="flex items-center justify-between">
             <h4 className="font-bold text-sm flex items-center gap-2">
-              <svg
-                className="w-4 h-4 text-destructive"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <Clock className="w-4 h-4 text-destructive" />
               <span>Thời gian chờ {cooldownHours} giờ đang kích hoạt</span>
             </h4>
             <span className="font-mono font-bold text-lg px-3 py-1 bg-destructive/20 rounded-xl">
@@ -463,25 +405,9 @@ export function GradedQuizRunner({
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full flex items-center justify-center bg-current/10">
                 {quizResult.passed ? (
-                  <svg
-                    className="w-5 h-5 text-success"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="w-5 h-5 text-success" />
                 ) : (
-                  <svg
-                    className="w-5 h-5 text-destructive"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="w-5 h-5 text-destructive" />
                 )}
               </div>
               <div>
@@ -523,15 +449,7 @@ export function GradedQuizRunner({
             className="text-destructive hover:opacity-80 p-1 rounded-lg transition-colors ml-2"
             aria-label="Close error message"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
@@ -559,21 +477,7 @@ export function GradedQuizRunner({
             className="px-6 py-2.5 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover disabled:opacity-50 rounded-xl shadow-xs transition-all flex items-center gap-2"
           >
             <span aria-live="polite">{isSubmitting ? "Đang chấm điểm…" : "Nộp bài thi"}</span>
-            {!isSubmitting && (
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 12L3 21l18-9L3 3l3 9zm0 0h75"
-                />
-              </svg>
-            )}
+            {!isSubmitting && <Send className="w-4 h-4" />}
           </button>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
+import { Users } from "lucide-react";
 
 export default function InstructorAnalyticsPage({
   params,
@@ -133,19 +134,7 @@ export default function InstructorAnalyticsPage({
             <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden space-y-4 p-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                  <svg
-                    className="w-5 h-5 text-success"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                    />
-                  </svg>
+                  <Users className="w-5 h-5 text-success" aria-hidden="true" />
                   Danh sách Học viên Lớp học ({analytics.students.length})
                 </h2>
               </div>

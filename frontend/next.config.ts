@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   experimental: {
     useTypeScriptCli: true,
+    optimizePackageImports: ["lucide-react"],
   },
   async rewrites() {
     const backendUrl =

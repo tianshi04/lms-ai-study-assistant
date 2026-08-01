@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { getAvatarDataUri } from "@/lib/avatar";
 
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Check, Loader2 } from "lucide-react";
 
 export default function ProfilePage() {
   const { userId: authUserId } = useAuth();
@@ -80,21 +81,7 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex items-center gap-3 text-muted-foreground">
-          <svg className="animate-spin h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none">
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            ></circle>
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-            ></path>
-          </svg>
+          <Loader2 className="animate-spin h-6 w-6 text-primary" aria-hidden="true" />
           <span aria-live="polite" className="text-sm font-medium">
             Đang tải hồ sơ…
           </span>
@@ -136,19 +123,7 @@ export default function ProfilePage() {
               </span>
               {user?.isIdentityVerified ? (
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20">
-                  <svg
-                    className="w-3.5 h-3.5 text-success"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2.5"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                  <Check className="w-3.5 h-3.5 text-success" aria-hidden="true" />
                   Đã xác minh KYC
                 </span>
               ) : (

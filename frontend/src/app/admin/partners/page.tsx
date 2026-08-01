@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Plus, Building2, Eye, Pencil, Trash2, PenTool, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { type Partner } from "@/gen/partner/v1/partner_pb";
@@ -280,9 +281,7 @@ export default function AdminPartnersPage() {
           onClick={handleOpenCreate}
           className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-xl px-5 py-2.5 shadow-sm"
         >
-          <svg className="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
+          <Plus className="w-5 h-5 mr-2 -ml-1" />
           Thêm đối tác mới
         </Button>
       </div>
@@ -291,19 +290,7 @@ export default function AdminPartnersPage() {
       <div className="mt-8 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
         {partners.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">
-            <svg
-              className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-50"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-              />
-            </svg>
+            <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-50" />
             <p className="text-lg font-medium text-foreground">Chưa có đối tác nào được tạo</p>
             <p className="text-sm text-muted-foreground mt-1">
               Bấm nút &quot;Thêm đối tác mới&quot; để thiết lập đối tác phát hành chứng chỉ đầu
@@ -387,63 +374,21 @@ export default function AdminPartnersPage() {
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors border border-border"
                         title="Xem trang công khai"
                       >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                          />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                          />
-                        </svg>
+                        <Eye className="w-3.5 h-3.5" />
                         <span>Xem</span>
                       </button>
                       <button
                         onClick={() => handleOpenEdit(partner)}
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
                       >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          />
-                        </svg>
+                        <Pencil className="w-3.5 h-3.5" />
                         <span>Sửa</span>
                       </button>
                       <button
                         onClick={() => setDeletingPartnerId(partner.id)}
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-colors"
                       >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
+                        <Trash2 className="w-3.5 h-3.5" />
                         <span>Xoá</span>
                       </button>
                     </td>
@@ -567,19 +512,7 @@ export default function AdminPartnersPage() {
           {/* Section: Thông tin Người ký mặc định */}
           <div className="border-t border-border pt-4">
             <h3 className="text-xs font-bold uppercase text-foreground mb-3 flex items-center gap-1.5">
-              <svg
-                className="w-4 h-4 text-primary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                />
-              </svg>
+              <PenTool className="w-4 h-4 text-primary" />
               Thông tin Người ký đại diện Mặc định
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -625,19 +558,7 @@ export default function AdminPartnersPage() {
           {/* Section: Quản lý Quản trị viên Tổ chức (Organization Admin) */}
           <div className="border-t border-border pt-4 space-y-3">
             <h3 className="text-xs font-bold uppercase text-foreground flex items-center gap-1.5">
-              <svg
-                className="w-4 h-4 text-primary"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
+              <Users className="w-4 h-4 text-primary" />
               Quản trị viên Tổ chức (Organization Admin)
             </h3>
 
@@ -676,19 +597,7 @@ export default function AdminPartnersPage() {
                       className="text-destructive hover:opacity-80 p-1"
                       title="Gỡ Quản trị viên"
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                 ))
@@ -716,14 +625,7 @@ export default function AdminPartnersPage() {
                 onClick={handleAddPartnerAdmin}
                 className="sm:col-span-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold py-1.5 px-3 rounded-xl border border-primary/20 transition-colors flex items-center justify-center gap-1"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
+                <Plus className="w-3.5 h-3.5" />
                 Gán
               </button>
             </div>

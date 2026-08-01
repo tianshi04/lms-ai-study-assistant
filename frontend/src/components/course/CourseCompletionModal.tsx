@@ -6,6 +6,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Trophy, AlertTriangle, CheckCircle2, Check, Pencil, Star } from "lucide-react";
 
 export interface CourseCompletionModalProps {
   isOpen: boolean;
@@ -195,19 +196,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
 
         {/* Trophy SVG Icon */}
         <div className="relative z-20 mx-auto w-16 h-16 bg-black/10 dark:bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-primary-foreground/20 shadow-inner">
-          <svg
-            className="w-9 h-9 text-warning"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.75}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-6.75a1.125 1.125 0 01-1.125-1.125V18.75m9-13.5h-9m9 0a2.25 2.25 0 002.25-2.25V3h-13.5v.75A2.25 2.25 0 007.5 5.25m9 0v3.375a3.375 3.375 0 01-3.375 3.375h-2.25A3.375 3.375 0 017.5 8.625V5.25"
-            />
-          </svg>
+          <Trophy className="w-9 h-9 text-warning" aria-hidden="true" />
         </div>
 
         <h2 className="relative z-20 text-2xl font-extrabold tracking-tight">Course Completed!</h2>
@@ -223,19 +212,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
         ) : certError ? (
           <div className="relative z-20 mt-5 mx-auto max-w-sm p-3.5 rounded-xl bg-destructive/20 border border-destructive/30 text-primary-foreground text-xs text-left backdrop-blur-sm">
             <span className="font-bold flex items-center gap-1.5 mb-1 text-destructive-foreground">
-              <svg
-                className="w-4 h-4 text-destructive-foreground"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
+              <AlertTriangle className="w-4 h-4 text-destructive-foreground" aria-hidden="true" />
               <span>{"Không thể Xác minh Chứng chỉ"}</span>
             </span>
             <span className="opacity-90 leading-relaxed block">{certError}</span>
@@ -245,19 +222,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
             onClick={handleClaimCertificate}
             className="relative z-20 mt-5 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-sm shadow-lg transition-all transform active:scale-95 cursor-pointer"
           >
-            <svg
-              className="w-5 h-5 text-warning-foreground"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <CheckCircle2 className="w-5 h-5 text-warning-foreground" aria-hidden="true" />
             <span>{"Xem Chứng Chỉ"}</span>
           </button>
         )}
@@ -277,15 +242,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
         {submitted ? (
           <div className="bg-success/10 border border-success/30 p-4 rounded-xl text-center space-y-2">
             <div className="w-10 h-10 bg-success/20 rounded-full flex items-center justify-center mx-auto text-success">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
+              <Check className="w-6 h-6" aria-hidden="true" />
             </div>
             <h4 className="text-sm font-bold text-success">{"Đã gửi đánh giá thành công!"}</h4>
             <p className="text-xs text-success">{"Cảm ơn bạn đã phản hồi ý kiến cho khóa học."}</p>
@@ -295,19 +252,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                 onClick={() => setSubmitted(false)}
                 className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline transition-colors cursor-pointer"
               >
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                  />
-                </svg>
+                <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{"Viết / Sửa đánh giá"}</span>
               </button>
             </div>
@@ -331,20 +276,12 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                       onMouseLeave={() => setHoverRating(0)}
                       className="p-1 cursor-pointer transition-transform hover:scale-110 focus:outline-none"
                     >
-                      <svg
+                      <Star
                         className={`w-8 h-8 transition-colors ${
                           active ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40"
                         }`}
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={1.5}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385c.116.486-.413.87-.837.614L12 17.653l-4.708 2.89c-.424.256-.953-.128-.837-.614l1.285-5.385a.563.563 0 00-.182-.557l-4.204-3.602c-.38-.325-.178-.948.32-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                        />
-                      </svg>
+                        aria-hidden="true"
+                      />
                     </button>
                   );
                 })}
