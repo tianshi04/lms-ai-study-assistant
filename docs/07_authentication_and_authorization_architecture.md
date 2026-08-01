@@ -146,23 +146,7 @@ def apply_organization_scope(stmt: Select, model_cls: Any, ctx: Optional[Current
 
 ---
 
-## 6. Yêu Cầu Nghiệp Vụ Chuyển Đổi (Business Migration Requirements)
-
-### A. Định hướng Nghiệp vụ
-Loại bỏ hoàn toàn khái niệm vai trò quản trị viên đối tác ở cấp độ tài khoản toàn cục (`Partner Admin`), chuyển dịch 100% việc quản trị tổ chức về vai trò **Quản trị viên Tổ chức (`Organization Admin`)** theo Ngữ cảnh Tổ chức (`Organization Context`).
-
-### B. Danh mục Yêu cầu Nghiệp vụ cần Thực hiện (Business TODO List)
-1. **[BR-MIGRATION-01] Loại bỏ Vai trò Quản trị viên Toàn cục của Đối tác**:
-   * Hệ thống không cấp vai trò quản trị đối tác ở cấp độ tài khoản toàn sàn. Tách biệt hoàn toàn giữa định danh cá nhân người dùng và chức vụ quản lý trong từng tổ chức.
-2. **[BR-MIGRATION-02] Chuyển đổi Quyền Quản trị về Cấp Tổ chức**:
-   * Chuyển toàn bộ tài khoản đang quản lý đối tác sang vai trò **Quản trị viên Tổ chức (`Organization Admin`)** thuộc Tổ chức tương ứng.
-   * Đảm bảo giữ nguyên các quyền hạn nghiệp vụ: Quản lý thành viên, Quản lý suất học Enterprise, Quản lý danh mục khóa học và Cài đặt thông tin tổ chức.
-3. **[BR-MIGRATION-03] Chuẩn hóa Phân quyền 3 Vai trò Tầng Tổ chức**:
-   * Áp dụng thống nhất mô hình 3 vai trò cấp Tổ chức trên toàn hệ thống: **Quản trị viên Tổ chức (`Organization Admin`)**, **Giảng viên Tổ chức (`Organization Instructor`)**, và **Trợ giảng Tổ chức (`Teaching Assistant`)**.
-
----
-
-## 7. Ranh giới Thẩm quyền Xét duyệt (Single-Tenant Authorization Scope Boundary)
+## 6. Ranh giới Thẩm quyền Xét duyệt (Single-Tenant Authorization Scope Boundary)
 
 * **Phân định Rõ ràng giữa Super Admin & Organization Admin**:
   * 👑 **Super Admin (Platform Admin)**: Sở hữu thẩm quyền toàn sàn (Platform-wide Authority). Thực hiện thẩm định và phê duyệt các yêu cầu/đơn đăng ký toàn hệ thống (VD: Đơn đăng ký Giảng viên cá nhân `SubmitInstructorApplication`, Đơn Hỗ trợ Tài chính `FinancialAidApplication`, Khởi tạo Partner B2B mới).
