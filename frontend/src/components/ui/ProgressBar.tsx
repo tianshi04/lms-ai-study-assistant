@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils";
 export const progressBarVariants = cva("h-full transition-all duration-300 ease-out", {
   variants: {
     color: {
-      blue: "bg-[#0056D2]",
-      emerald: "bg-emerald-500",
-      amber: "bg-amber-500",
-      danger: "bg-red-500",
+      blue: "bg-primary",
+      emerald: "bg-success",
+      amber: "bg-warning",
+      danger: "bg-destructive",
     },
   },
   defaultVariants: {
@@ -35,7 +35,7 @@ export function ProgressBar({
   return (
     <div ref={ref} className={cn("w-full space-y-1", className)} {...props}>
       {showLabel && (
-        <div className="flex justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
+        <div className="flex justify-between text-xs font-semibold text-muted-foreground">
           <span>Tiến độ</span>
           <span>{Math.round(normalizedProgress)}%</span>
         </div>
@@ -46,7 +46,7 @@ export function ProgressBar({
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label="Tiến độ học tập"
-        className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden"
+        className="w-full h-2 bg-muted rounded-full overflow-hidden"
       >
         <div
           className={cn(progressBarVariants({ color }))}
