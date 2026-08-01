@@ -1,11 +1,9 @@
+import { Suspense } from "react";
 import { getAuthServer } from "@/lib/auth_server";
 import { HomeDashboardSwitch } from "@/components/dashboard/HomeDashboardSwitch";
+import { PublicLanding } from "@/components/home/PublicLanding";
 
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
-export const instant = false;
-
-export default async function Home() {
+async function AuthenticatedHomeSwitch() {
   const session = await getAuthServer();
 
   return (
@@ -15,5 +13,13 @@ export default async function Home() {
       initialUserRole={session.userRole || undefined}
       initialSystemRole={session.systemRole || undefined}
     />
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<PublicLanding />}>
+      <AuthenticatedHomeSwitch />
+    </Suspense>
   );
 }

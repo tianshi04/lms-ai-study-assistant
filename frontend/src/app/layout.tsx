@@ -4,6 +4,9 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { ToastProvider } from "@/components/ui/Toast";
+import { AuthProvider } from "@/components/providers/AuthProvider";
+import { CopilotProvider } from "@/components/providers/CopilotProvider";
+import { MainLayout } from "@/components/layout/MainLayout";
 
 import { cookies } from "next/headers";
 import { getAuthServer } from "@/lib/auth_server";
@@ -23,12 +26,7 @@ export const metadata: Metadata = {
   description: "Coursera-style Online Learning Platform",
 };
 
-import { AuthProvider } from "@/components/providers/AuthProvider";
-import { CopilotProvider } from "@/components/providers/CopilotProvider";
-import { MainLayout } from "@/components/layout/MainLayout";
-
-// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
-// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+// Documented Block: RootLayout reads authenticated session cookies for top-level auth & theme context.
 export const instant = false;
 
 export default async function RootLayout({
