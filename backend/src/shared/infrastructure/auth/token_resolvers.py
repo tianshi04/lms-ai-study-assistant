@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from http.cookies import SimpleCookie
-from typing import Optional
+from typing import Any, Optional
+
+from starlette.datastructures import Headers
 
 
 class TokenResolver(ABC):
@@ -12,18 +14,47 @@ class TokenResolver(ABC):
         ...
 
 
+def extract_header(metadata: Any, name: str) -> str:
+    """Extract a header value case-insensitively using Starlette's Headers wrapper."""
+    if not metadata:
+        return ""
+    if isinstance(metadata, Headers):
+        return metadata.get(name, "")
+    if hasattr(metadata, "items"):
+        return Headers(headers={str(k): str(v) for k, v in metadata.items()}).get(
+            name, ""
+        )
+    if isinstance(metadata, (list, tuple)):
+        raw_tuples = []
+        for item in metadata:
+            if isinstance(item, (list, tuple)) and len(item) == 2:
+                k = (
+                    item[0].decode("utf-8")
+                    if isinstance(item[0], bytes)
+                    else str(item[0])
+                )
+                v = (
+                    item[1].decode("utf-8")
+                    if isinstance(item[1], bytes)
+                    else str(item[1])
+                )
+                raw_tuples.append((k.encode("latin-1"), v.encode("latin-1")))
+        return Headers(raw=raw_tuples).get(name, "")
+    if hasattr(metadata, "get"):
+        val = metadata.get(name) or metadata.get(name.lower())
+        if val:
+            return str(val)
+    return ""
+
+
 class BearerTokenResolver(TokenResolver):
     """Extracts JWT from Authorization: Bearer <token> header."""
 
-    def resolve(self, metadata: dict) -> Optional[str]:
-        auth_header = ""
-        if hasattr(metadata, "get"):
-            auth_header = metadata.get("authorization", "") or metadata.get(
-                "Authorization", ""
-            )
+    def resolve(self, metadata: Any) -> Optional[str]:
+        auth_header = extract_header(metadata, "authorization")
         if not auth_header:
             return None
-        raw_header = str(auth_header).strip()
+        raw_header = auth_header.strip()
         if raw_header.lower().startswith("bearer "):
             return raw_header[7:].strip()
         return raw_header
@@ -32,16 +63,14 @@ class BearerTokenResolver(TokenResolver):
 class CookieTokenResolver(TokenResolver):
     """Extracts JWT from access_token cookie."""
 
-    def resolve(self, metadata: dict) -> Optional[str]:
-        cookie_header = ""
-        if hasattr(metadata, "get"):
-            cookie_header = metadata.get("cookie", "") or metadata.get("Cookie", "")
+    def resolve(self, metadata: Any) -> Optional[str]:
+        cookie_header = extract_header(metadata, "cookie")
         if not cookie_header:
             return None
 
         try:
             cookie = SimpleCookie()
-            cookie.load(str(cookie_header))
+            cookie.load(cookie_header)
             if "access_token" in cookie:
                 return cookie["access_token"].value
         except Exception:

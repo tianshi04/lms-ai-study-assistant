@@ -7,6 +7,7 @@ import {
   type UseMutationOptions,
 } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
+import { useAuth } from "@/components/providers/AuthProvider";
 import {
   CatalogService,
   type Course,
@@ -73,6 +74,7 @@ import {
 export function useMyEnrolledCoursesQuery(
   options?: Partial<UseQueryOptions<EnrolledCourseSummary[], Error>>,
 ) {
+  const { isAuthenticated } = useAuth();
   return useQuery<EnrolledCourseSummary[], Error>({
     queryKey: ["myEnrolledCourses"],
     queryFn: async () => {
@@ -81,6 +83,7 @@ export function useMyEnrolledCoursesQuery(
       return res.courses || [];
     },
     ...options,
+    enabled: isAuthenticated && (options?.enabled ?? true),
   });
 }
 import {
@@ -200,6 +203,7 @@ export function useUserProfileQuery(
   userId?: string,
   options?: Partial<UseQueryOptions<User, Error>>,
 ) {
+  const { isAuthenticated } = useAuth();
   return useQuery<User, Error>({
     queryKey: ["userProfile", userId],
     queryFn: async () => {
@@ -209,8 +213,8 @@ export function useUserProfileQuery(
       if (!res.user) throw new Error("User profile not found");
       return res.user;
     },
-    enabled: !!userId,
     ...options,
+    enabled: isAuthenticated && !!userId && (options?.enabled ?? true),
   });
 }
 
@@ -243,6 +247,7 @@ export function useSaveEnterpriseKeyMutation(
 export function useEnterpriseSeatsQuery(
   options?: Partial<UseQueryOptions<EnterpriseSeat[], Error>>,
 ) {
+  const { isAuthenticated } = useAuth();
   return useQuery<EnterpriseSeat[], Error>({
     queryKey: ["enterpriseSeats"],
     queryFn: async () => {
@@ -251,6 +256,7 @@ export function useEnterpriseSeatsQuery(
       return res.seats;
     },
     ...options,
+    enabled: isAuthenticated && (options?.enabled ?? true),
   });
 }
 
@@ -559,6 +565,7 @@ export function useDeleteQuestionMutation(
 export function useMyCertificatesQuery(
   options?: Partial<UseQueryOptions<VerifiedCertificate[], Error>>,
 ) {
+  const { isAuthenticated } = useAuth();
   return useQuery<VerifiedCertificate[], Error>({
     queryKey: ["myCertificates"],
     queryFn: async () => {
@@ -568,6 +575,7 @@ export function useMyCertificatesQuery(
     },
     staleTime: 5 * 60 * 1000,
     ...options,
+    enabled: isAuthenticated && (options?.enabled ?? true),
   });
 }
 
@@ -761,6 +769,7 @@ export function useSubmitInstructorApplicationMutation(
 export function useMyInstructorApplicationQuery(
   options?: Partial<UseQueryOptions<InstructorApplication | null, Error>>,
 ) {
+  const { isAuthenticated } = useAuth();
   return useQuery<InstructorApplication | null, Error>({
     queryKey: ["myInstructorApplication"],
     queryFn: async () => {
@@ -769,6 +778,7 @@ export function useMyInstructorApplicationQuery(
       return res.application ?? null;
     },
     ...options,
+    enabled: isAuthenticated && (options?.enabled ?? true),
   });
 }
 
@@ -776,6 +786,7 @@ export function useListInstructorApplicationsQuery(
   statusFilter: string = "",
   options?: Partial<UseQueryOptions<InstructorApplication[], Error>>,
 ) {
+  const { isAuthenticated } = useAuth();
   return useQuery<InstructorApplication[], Error>({
     queryKey: ["instructorApplications", statusFilter],
     queryFn: async () => {
@@ -784,6 +795,7 @@ export function useListInstructorApplicationsQuery(
       return res.applications || [];
     },
     ...options,
+    enabled: isAuthenticated && (options?.enabled ?? true),
   });
 }
 
@@ -843,18 +855,18 @@ export function usePurchaseCourseMutation(
     UseMutationOptions<
       { success: boolean; message: string; purchase?: CoursePurchase },
       Error,
-      { courseId: string; paymentMethod?: string }
+      { courseId: string; paymentMethod: string }
     >
   >,
 ) {
   return useMutation<
     { success: boolean; message: string; purchase?: CoursePurchase },
     Error,
-    { courseId: string; paymentMethod?: string }
+    { courseId: string; paymentMethod: string }
   >({
     mutationFn: async ({ courseId, paymentMethod }) => {
       const client = getRpcClient(PaymentService);
-      const res = await client.purchaseCourse({ courseId, paymentMethod: paymentMethod || "MOCK" });
+      const res = await client.purchaseCourse({ courseId, paymentMethod });
       return {
         success: res.success,
         message: res.message,
@@ -870,20 +882,20 @@ export function useSubscribeCourseraPlusMutation(
     UseMutationOptions<
       { success: boolean; message: string; subscription?: UserSubscription },
       Error,
-      { planType: PlanType; paymentMethod?: string }
+      { planType: PlanType; paymentMethod: string }
     >
   >,
 ) {
   return useMutation<
     { success: boolean; message: string; subscription?: UserSubscription },
     Error,
-    { planType: PlanType; paymentMethod?: string }
+    { planType: PlanType; paymentMethod: string }
   >({
     mutationFn: async ({ planType, paymentMethod }) => {
       const client = getRpcClient(PaymentService);
       const res = await client.subscribeCourseraPlus({
         planType,
-        paymentMethod: paymentMethod || "MOCK",
+        paymentMethod,
       });
       return {
         success: res.success,
