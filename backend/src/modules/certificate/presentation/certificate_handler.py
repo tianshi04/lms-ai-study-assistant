@@ -183,9 +183,8 @@ class CertificateHandler(CertificateService):
         ctx: RequestContext[pb.RevokeCertificateRequest, pb.RevokeCertificateResponse],
     ) -> pb.RevokeCertificateResponse:
         current_user = require_current_user()
-        from src.modules.identity.domain.entities import UserRole
 
-        if current_user.role not in (UserRole.SUPER_ADMIN,):
+        if not current_user.is_system_admin():
             raise ConnectError(
                 Code.PERMISSION_DENIED,
                 "Chỉ Super Admin mới có quyền thu hồi chứng chỉ.",

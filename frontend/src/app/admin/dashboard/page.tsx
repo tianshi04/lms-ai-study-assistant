@@ -33,7 +33,7 @@ export default function AdminEnterpriseDashboardPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Form States
-  const [targetUserId, setTargetUserId] = useState("user-learner-demo");
+  const [targetUserId, setTargetUserId] = useState("");
   const [selectedSeatKey, setSelectedSeatKey] = useState("");
 
   const [newPartnerName, setNewPartnerName] = useState("");

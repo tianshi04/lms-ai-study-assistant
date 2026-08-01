@@ -9,17 +9,10 @@ import { UserDropdown } from "@/components/layout/UserDropdown";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 
 export function Navbar() {
-  const { userName, userRole } = useAuth();
+  const { userName, userRole, isInstructorOrAdmin } = useAuth();
 
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Check if role is INSTRUCTOR (2) or SUPER_ADMIN (4)
-  const isInstructorOrAdmin =
-    userRole === "2" ||
-    userRole === "4" ||
-    userRole === "USER_ROLE_INSTRUCTOR" ||
-    userRole === "USER_ROLE_SUPER_ADMIN";
 
   const isActive = (path: string) => {
     if (path === "/") return pathname === "/";

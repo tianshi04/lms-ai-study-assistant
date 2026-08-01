@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 interface PeerAssignmentWorkspaceProps {
   itemId: string;
@@ -25,11 +26,8 @@ interface PeerItem {
 }
 
 export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmentWorkspaceProps) {
-  const effectiveUserId =
-    userId ||
-    (typeof window !== "undefined"
-      ? localStorage.getItem("user_id") || "user-demo-1"
-      : "user-demo-1");
+  const { userId: authUserId } = useAuth();
+  const effectiveUserId = userId || authUserId || "user-demo-1";
 
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(() => {
     if (typeof window !== "undefined") {

@@ -10,11 +10,11 @@ from src.modules.identity.application.identity_usecase import IdentityUseCase
 from src.modules.identity.domain.entities import (
     User,
     UserRole,
+    SystemRole,
     InstructorApplication,
     ApplicationStatus,
 )
 from src.shared.auth import require_current_user
-from src.shared.config import settings
 
 
 def _to_pb_application_status(
@@ -50,7 +50,6 @@ def _to_pb_user_role(role: UserRole) -> pb.UserRole:
         UserRole.LEARNER: pb.UserRole.LEARNER,
         UserRole.INSTRUCTOR: pb.UserRole.INSTRUCTOR,
         UserRole.TA: pb.UserRole.TA,
-        UserRole.SUPER_ADMIN: pb.UserRole.SUPER_ADMIN,
     }
     return mapping.get(role, pb.UserRole.UNSPECIFIED)
 
@@ -61,16 +60,20 @@ def _pb_role_to_domain_str(role_val: Any) -> str:
         pb.UserRole.LEARNER: "USER_ROLE_LEARNER",
         pb.UserRole.INSTRUCTOR: "USER_ROLE_INSTRUCTOR",
         pb.UserRole.TA: "USER_ROLE_TA",
-        pb.UserRole.SUPER_ADMIN: "USER_ROLE_SUPER_ADMIN",
         0: "USER_ROLE_UNSPECIFIED",
         1: "USER_ROLE_LEARNER",
         2: "USER_ROLE_INSTRUCTOR",
         3: "USER_ROLE_TA",
-        4: "USER_ROLE_SUPER_ADMIN",
     }
     if role_val not in mapping:
         raise ConnectError(Code.INVALID_ARGUMENT, f"Vai trò '{role_val}' không hợp lệ")
     return mapping[role_val]
+
+
+def _to_pb_system_role(sys_role: SystemRole) -> pb.SystemRole:
+    if sys_role == SystemRole.SUPER_ADMIN:
+        return pb.SystemRole.SUPER_ADMIN
+    return pb.SystemRole.USER
 
 
 def _to_pb_user(user: User) -> pb.User:
@@ -84,6 +87,7 @@ def _to_pb_user(user: User) -> pb.User:
         signature_image_url=user.signature_image_url,
         title=user.title,
         is_identity_verified=user.is_identity_verified,
+        system_role=_to_pb_system_role(user.system_role),
     )
 
 
@@ -102,13 +106,6 @@ class IdentityHandler(IdentityService):
         if err or not user:
             raise ConnectError(Code.UNAUTHENTICATED, err or "Đăng nhập thất bại")
 
-        resp_headers: Any = getattr(ctx, "response_headers", None)
-        if resp_headers is not None and hasattr(resp_headers, "__setitem__"):
-            access_max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
-            resp_headers["set-cookie"] = (
-                f"access_token={access_token}; Path=/; HttpOnly; SameSite=Lax; Max-Age={access_max_age}"
-            )
-
         return pb.LoginResponse(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -126,13 +123,6 @@ class IdentityHandler(IdentityService):
         if err or not new_access:
             raise ConnectError(
                 Code.UNAUTHENTICATED, err or "Refresh token không hợp lệ"
-            )
-
-        resp_headers: Any = getattr(ctx, "response_headers", None)
-        if resp_headers is not None and hasattr(resp_headers, "__setitem__"):
-            access_max_age = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
-            resp_headers["set-cookie"] = (
-                f"access_token={new_access}; Path=/; HttpOnly; SameSite=Lax; Max-Age={access_max_age}"
             )
 
         return pb.RefreshTokenResponse(

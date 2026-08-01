@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { HonorCodeModal } from "./HonorCodeModal";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 interface QuizSessionQuestionOption {
   optionIndex: number;
@@ -32,11 +33,8 @@ export function GradedQuizRunner({
   onComplete,
   isPreviewMode = false,
 }: GradedQuizRunnerProps) {
-  const effectiveUserId =
-    userId ||
-    (typeof window !== "undefined"
-      ? localStorage.getItem("user_id") || "user-demo-1"
-      : "user-demo-1");
+  const { userId: authUserId } = useAuth();
+  const effectiveUserId = userId || authUserId || "user-demo-1";
   const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
   const [isHonorAgreed, setIsHonorAgreed] = useState(isPreviewMode);
   const [isHonorModalOpen, setIsHonorModalOpen] = useState(false);

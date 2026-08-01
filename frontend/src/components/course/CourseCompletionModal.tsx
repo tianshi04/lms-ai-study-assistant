@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export interface CourseCompletionModalProps {
   isOpen: boolean;
@@ -128,11 +129,13 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
     fetchCert();
   }, [isOpen, courseId]);
 
+  const { userId: authUserId } = useAuth();
+
   // Fetch existing review if any
   useEffect(() => {
     if (!isOpen || !courseId) return;
 
-    const activeUserId = typeof window !== "undefined" ? localStorage.getItem("user_id") : null;
+    const activeUserId = authUserId;
     if (!activeUserId) return;
 
     async function checkExistingReview() {

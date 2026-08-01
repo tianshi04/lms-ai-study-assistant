@@ -61,7 +61,7 @@ from src.modules.forum.infrastructure.models import (
     ForumVoteORM,
 )
 from src.modules.identity.application.identity_usecase import hash_password
-from src.modules.identity.domain.entities import UserRole
+from src.modules.identity.domain.entities import UserRole, SystemRole
 from src.modules.identity.infrastructure.models import (
     EnterpriseLicenseModel,
     UserModel,
@@ -682,7 +682,8 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             id="user_admin_01",
             email="admin@coursera.ai",
             full_name="Platform Admin",
-            role=UserRole.SUPER_ADMIN,
+            role=UserRole.LEARNER,
+            system_role=SystemRole.SUPER_ADMIN,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=admin@coursera.ai",
             enterprise_seat_key="",
             password_hash=default_pw_hash,

@@ -120,7 +120,10 @@ async def test_auth_interceptor_admin_endpoint_denies_learner() -> None:
 async def test_auth_interceptor_admin_endpoint_allows_admin() -> None:
     clear_current_user()
     token = create_access_token(
-        user_id="user_admin", email="admin@example.com", role="USER_ROLE_SUPER_ADMIN"
+        user_id="user_admin",
+        email="admin@example.com",
+        role="USER_ROLE_LEARNER",
+        system_role="SUPER_ADMIN",
     )
     interceptor = AuthInterceptor()
     ctx = MockCtx(
@@ -190,3 +193,59 @@ def test_current_user_context_pbac_permissions() -> None:
         system_role="SUPER_ADMIN",
     )
     assert admin_user.has_permission("anything") is True
+
+
+@pytest.mark.asyncio
+async def test_auth_interceptor_valid_cookie_token_sets_context() -> None:
+    clear_current_user()
+    token = create_access_token(
+        user_id="user_cookie", email="cookie@example.com", role="USER_ROLE_LEARNER"
+    )
+    interceptor = AuthInterceptor()
+    ctx = MockCtx(
+        path="/learning.v1.LearningService/GetProgress",
+        invocation_metadata={"cookie": f"access_token={token}; Path=/"},
+    )
+
+    captured_user: CurrentUser | None = None
+
+    async def call_next(req: Any, c: Any) -> str:
+        nonlocal captured_user
+        captured_user = require_current_user()
+        return "success"
+
+    res = await interceptor.intercept_unary(call_next, "dummy_req", ctx)
+    assert res == "success"
+    assert captured_user is not None
+    assert captured_user.id == "user_cookie"
+    assert captured_user.email == "cookie@example.com"
+
+
+def test_token_resolvers_unit() -> None:
+    from src.shared.infrastructure.auth import (
+        BearerTokenResolver,
+        CookieTokenResolver,
+        TokenResolverChain,
+    )
+
+    bearer_resolver = BearerTokenResolver()
+    assert bearer_resolver.resolve({"authorization": "Bearer token_123"}) == "token_123"
+    assert bearer_resolver.resolve({"authorization": "raw_token"}) == "raw_token"
+    assert bearer_resolver.resolve({}) is None
+
+    cookie_resolver = CookieTokenResolver()
+    assert (
+        cookie_resolver.resolve({"cookie": "access_token=token_456; Path=/"})
+        == "token_456"
+    )
+    assert cookie_resolver.resolve({"cookie": "other=123"}) is None
+    assert cookie_resolver.resolve({}) is None
+
+    chain = TokenResolverChain([bearer_resolver, cookie_resolver])
+    assert chain.resolve({"authorization": "Bearer b_tok"}) == "b_tok"
+    assert chain.resolve({"cookie": "access_token=c_tok"}) == "c_tok"
+    assert (
+        chain.resolve({"authorization": "Bearer b_tok", "cookie": "access_token=c_tok"})
+        == "b_tok"
+    )
+    assert chain.resolve({}) is None

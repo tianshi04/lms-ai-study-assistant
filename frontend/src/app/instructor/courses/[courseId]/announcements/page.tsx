@@ -1,25 +1,19 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore, use } from "react";
+import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type CourseAnnouncement } from "@/gen/catalog/v1/catalog_pb";
-
-const emptySubscribe = () => () => {};
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function InstructorAnnouncementsPage({
   params,
 }: {
   params: Promise<{ courseId: string }>;
 }) {
+  const { isInstructorOrAdmin } = useAuth();
   const resolvedParams = use(params);
   const courseId = resolvedParams.courseId;
-
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
 
   const [announcements, setAnnouncements] = useState<CourseAnnouncement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,10 +21,6 @@ export default function InstructorAnnouncementsPage({
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-
-  const userRole =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
-  const isInstructorOrAdmin = userRole === "2" || userRole === "4" || userRole === "5";
 
   useEffect(() => {
     let ignore = false;

@@ -6,10 +6,12 @@ import Image from "next/image";
 
 import { getRpcClient } from "@/lib/connect_client";
 import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const emptySubscribe = () => () => {};
 
 export default function MyCertificatesPage() {
+  const { isAuthenticated } = useAuth();
   const [certificates, setCertificates] = useState<VerifiedCertificate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,8 +26,7 @@ export default function MyCertificatesPage() {
   useEffect(() => {
     if (!isMounted) return;
 
-    const token = localStorage.getItem("access_token");
-    if (!token) {
+    if (!isAuthenticated) {
       window.location.href = "/auth/login?redirect=/certificates";
       return;
     }

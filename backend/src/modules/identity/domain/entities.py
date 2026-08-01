@@ -13,7 +13,6 @@ class UserRole(str, Enum):
     LEARNER = "USER_ROLE_LEARNER"
     INSTRUCTOR = "USER_ROLE_INSTRUCTOR"
     TA = "USER_ROLE_TA"
-    SUPER_ADMIN = "USER_ROLE_SUPER_ADMIN"
 
 
 class ApplicationStatus(str, Enum):

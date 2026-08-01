@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef, useSyncExternalStore } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import {
@@ -11,8 +11,7 @@ import {
   type ForumReply,
 } from "@/gen/forum/v1/forum_pb";
 import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
-
-const emptySubscribe = () => () => {};
+import { useAuth } from "@/components/providers/AuthProvider";
 
 interface ForumTabProps {
   courseId: string;
@@ -37,18 +36,8 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
   const [newContent, setNewContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
-  const currentUserId =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
-  const userRole =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") || "" : "";
-  const isStaffOrAdmin = ["2", "3", "4", "5", "INSTRUCTOR", "TA", "ADMIN", "SUPER_ADMIN"].some(
-    (r) => userRole.toUpperCase().includes(r),
-  );
+  const { userId: authUserId, isStaff: isStaffOrAdmin } = useAuth();
+  const currentUserId = authUserId || "";
 
   // Thread Edit State
   const [editingThreadId, setEditingThreadId] = useState<string | null>(null);

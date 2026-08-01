@@ -11,10 +11,12 @@ import {
 } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
 import { Modal } from "@/components/ui/Modal";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const emptySubscribe = () => () => {};
 
 export default function CourseReviewerPortalPage() {
+  const { userRole, isInstructorOrAdmin: isReviewer } = useAuth();
   const isMounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -31,10 +33,6 @@ export default function CourseReviewerPortalPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const toast = useToast();
-
-  const userRole =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_role") : null;
-  const isReviewer = userRole === "4" || userRole === "USER_ROLE_SUPER_ADMIN" || Boolean(userRole); // Super Admin or Organization Admin
 
   const fetchCourses = async (status: CourseStatus) => {
     try {

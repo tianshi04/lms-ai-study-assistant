@@ -12,22 +12,37 @@ interface HomeDashboardSwitchProps {
   initialToken?: string;
   initialUserName?: string;
   initialUserRole?: string;
+  initialSystemRole?: string;
 }
 
 export function HomeDashboardSwitch({
   initialToken,
   initialUserName,
   initialUserRole,
+  initialSystemRole,
 }: HomeDashboardSwitchProps) {
-  const { userName: clientUserName, userRole: clientUserRole } = useAuth();
+  const {
+    isAuthenticated,
+    userName: clientUserName,
+    userRole: clientUserRole,
+    systemRole: clientSystemRole,
+  } = useAuth();
 
-  const token =
-    initialToken || (typeof window !== "undefined" ? localStorage.getItem("access_token") : null);
+  const isUserAuthenticated = Boolean(initialToken) || isAuthenticated;
+  const systemRole = clientSystemRole || initialSystemRole;
   const userRole = clientUserRole || initialUserRole || "1";
   const userName = clientUserName || initialUserName || "Học viên";
 
-  if (!token) {
+  if (!isUserAuthenticated) {
     return <PublicLanding />;
+  }
+
+  if (
+    systemRole === "SUPER_ADMIN" ||
+    systemRole === "SYSTEM_ROLE_SUPER_ADMIN" ||
+    systemRole === "2"
+  ) {
+    return <AdminDashboard userName={userName} />;
   }
 
   switch (userRole) {

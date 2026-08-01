@@ -1,47 +1,57 @@
 import { cookies } from "next/headers";
+import { decodeJwtPayload, normalizeUserRole } from "@/lib/jwt";
 
 export interface ServerUserAuth {
   isAuthenticated: boolean;
   accessToken: string | null;
+  userId: string | null;
   userName: string | null;
   userEmail: string | null;
   userRole: string | null;
+  systemRole: string | null;
 }
 
 /**
  * Extract authenticated user info and tokens from cookies on the server side (Server Components / Route Handlers).
+ * Decodes the access_token JWT payload directly.
  */
 export async function getAuthServer(): Promise<ServerUserAuth> {
   const cookieStore = await cookies();
   const token = cookieStore.get("access_token")?.value || null;
-  const rawUserName = token ? cookieStore.get("user_name")?.value : undefined;
-  const rawUserEmail = token ? cookieStore.get("user_email")?.value : undefined;
-  const userRole = token ? cookieStore.get("user_role")?.value || null : null;
 
-  let userName: string | null = null;
-  if (rawUserName) {
-    try {
-      userName = decodeURIComponent(rawUserName);
-    } catch {
-      userName = rawUserName;
-    }
+  if (!token) {
+    return {
+      isAuthenticated: false,
+      accessToken: null,
+      userId: null,
+      userName: null,
+      userEmail: null,
+      userRole: null,
+      systemRole: null,
+    };
   }
 
-  let userEmail: string | null = null;
-  if (rawUserEmail) {
-    try {
-      userEmail = decodeURIComponent(rawUserEmail);
-    } catch {
-      userEmail = rawUserEmail;
-    }
+  const payload = decodeJwtPayload(token);
+  if (!payload) {
+    return {
+      isAuthenticated: false,
+      accessToken: null,
+      userId: null,
+      userName: null,
+      userEmail: null,
+      userRole: null,
+      systemRole: null,
+    };
   }
 
   return {
-    isAuthenticated: Boolean(token),
+    isAuthenticated: true,
     accessToken: token,
-    userName,
-    userEmail,
-    userRole,
+    userId: payload.sub || null,
+    userName: payload.full_name || payload.email || null,
+    userEmail: payload.email || null,
+    userRole: normalizeUserRole(payload.role),
+    systemRole: payload.system_role || null,
   };
 }
 

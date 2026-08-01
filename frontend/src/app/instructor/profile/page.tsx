@@ -1,25 +1,19 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { UserRole } from "@/gen/identity/v1/identity_pb";
+import { SystemRole, UserRole } from "@/gen/identity/v1/identity_pb";
 import { useUserProfileQuery, useUpdateInstructorProfileMutation } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 
-const emptySubscribe = () => () => {};
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function InstructorProfilePage() {
   const router = useRouter();
+  const { userId: authUserId } = useAuth();
+  const userId = authUserId || "";
 
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
-
-  const userId =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
   const {
     data: userProfile,
     isLoading: profileLoading,
@@ -29,7 +23,7 @@ export default function InstructorProfilePage() {
   const isInstructorOrTA =
     userProfile?.role === UserRole.INSTRUCTOR ||
     userProfile?.role === UserRole.TA ||
-    userProfile?.role === UserRole.SUPER_ADMIN;
+    userProfile?.systemRole === SystemRole.SUPER_ADMIN;
 
   const updateMutation = useUpdateInstructorProfileMutation();
 

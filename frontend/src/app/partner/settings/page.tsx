@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { type Partner } from "@/gen/partner/v1/partner_pb";
-import { UserRole } from "@/gen/identity/v1/identity_pb";
+import { SystemRole } from "@/gen/identity/v1/identity_pb";
 import {
   usePartnersQuery,
   useUpdatePartnerMutation,
@@ -12,8 +12,7 @@ import {
   useUserProfileQuery,
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
-
-const emptySubscribe = () => () => {};
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export interface Signatory {
   id: string;
@@ -744,16 +743,10 @@ function PartnerSettingsForm({
 export default function PartnerSettingsPage() {
   const router = useRouter();
 
-  const isMounted = useSyncExternalStore(
-    emptySubscribe,
-    () => true,
-    () => false,
-  );
-
-  const userId =
-    isMounted && typeof window !== "undefined" ? localStorage.getItem("user_id") || "" : "";
+  const { userId: authUserId } = useAuth();
+  const userId = authUserId || "";
   const { data: userProfile, isLoading: profileLoading } = useUserProfileQuery(userId);
-  const isPartnerAdmin = userProfile?.role === UserRole.SUPER_ADMIN || Boolean(userProfile);
+  const isPartnerAdmin = userProfile?.systemRole === SystemRole.SUPER_ADMIN;
 
   const {
     data: partners = [],

@@ -15,7 +15,6 @@ REFRESH_TOKEN_EXPIRE_DAYS = 7
 ADMIN_ROLES = {
     "SUPER_ADMIN",
     "ADMIN",
-    "USER_ROLE_SUPER_ADMIN",
     "USER_ROLE_ADMIN",
     "ORGANIZATION ADMIN",
     "ORG_ADMIN",
@@ -88,10 +87,7 @@ class CurrentUserContext:
         return False
 
     def is_system_admin(self) -> bool:
-        return self.system_role.upper() == "SUPER_ADMIN" or self.role in (
-            "SUPER_ADMIN",
-            "USER_ROLE_SUPER_ADMIN",
-        )
+        return self.system_role.upper() == "SUPER_ADMIN"
 
     def has_permission(self, permission: str) -> bool:
         if self.is_system_admin():
@@ -143,6 +139,7 @@ def create_access_token(
     user_id: str,
     email: str,
     role: str,
+    full_name: str = "",
     active_org_id: Optional[str] = None,
     system_role: str = "USER",
 ) -> str:
@@ -151,6 +148,7 @@ def create_access_token(
         "sub": user_id,
         "email": email,
         "role": role,
+        "full_name": full_name,
         "system_role": system_role,
         "type": "access",
         "iat": now,

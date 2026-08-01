@@ -6,6 +6,7 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { ToastProvider } from "@/components/ui/Toast";
 
 import { cookies } from "next/headers";
+import { getAuthServer } from "@/lib/auth_server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,6 +27,10 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { CopilotProvider } from "@/components/providers/CopilotProvider";
 import { MainLayout } from "@/components/layout/MainLayout";
 
+// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -36,15 +41,14 @@ export default async function RootLayout({
   const themeCookie = cookieStore.get("theme")?.value;
   const isDarkInitial = themeCookie === "dark";
 
-  const token = cookieStore.get("access_token")?.value;
-  const rawUserName = token ? cookieStore.get("user_name")?.value : null;
-  const rawUserEmail = token ? cookieStore.get("user_email")?.value : null;
-  const userRole = token ? cookieStore.get("user_role")?.value || null : null;
+  const session = await getAuthServer();
 
   const initialAuth = {
-    userName: rawUserName ? decodeURIComponent(rawUserName) : null,
-    userEmail: rawUserEmail ? decodeURIComponent(rawUserEmail) : null,
-    userRole: userRole,
+    userId: session.userId,
+    userName: session.userName,
+    userEmail: session.userEmail,
+    userRole: session.userRole,
+    systemRole: session.systemRole,
   };
 
   return (

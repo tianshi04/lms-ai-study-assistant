@@ -24,9 +24,12 @@ import { ForumTab } from "@/components/player/ForumTab";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 function CoursePlayerContent() {
+  const { isAuthenticated, userId: authUserId } = useAuth();
   const params = useParams();
+  const router = useRouter();
   const courseId = params?.courseId as string;
 
   const searchParams = useSearchParams();
@@ -114,26 +117,22 @@ function CoursePlayerContent() {
     [course, progress, totalCourseItems, courseId, isPreviewMode],
   );
 
-  const router = useRouter();
-
   // Load Course & Progress
   useEffect(() => {
     if (!courseId) return;
 
     // Strict Auth Guard Check
-    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-    if (!token) {
+    if (!isAuthenticated) {
       const redirectUrl = `/learn/${courseId}${previewItemId ? `?itemId=${previewItemId}` : ""}${isPreviewMode ? (previewItemId ? "&preview=true" : "?preview=true") : ""}`;
       router.push(`/auth/login?redirect=${encodeURIComponent(redirectUrl)}`);
       return;
     }
 
-    // Safely get userId after auth guard passes (will be set in loadData)
-    const storedUserId = localStorage.getItem("user_id");
+    const effectiveUserId = authUserId || "";
 
     async function loadData() {
-      if (storedUserId) {
-        setUserId(storedUserId);
+      if (effectiveUserId) {
+        setUserId(effectiveUserId);
       }
       try {
         const catalogClient = getRpcClient(CatalogService);
@@ -171,7 +170,7 @@ function CoursePlayerContent() {
         if (isPreviewMode) {
           // Set mock empty progress for preview
           setProgress({
-            userId: storedUserId || "preview-user",
+            userId: effectiveUserId || "preview-user",
             courseId,
             overallProgressPercent: 0,
             completedItemIds: [],

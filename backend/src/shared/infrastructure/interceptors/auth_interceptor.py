@@ -6,11 +6,22 @@ from connectrpc.interceptor import UnaryInterceptor
 
 from src.shared.auth import CurrentUser, decode_token, set_current_user
 from src.shared.auth_policy import AuthPolicyRegistry
+from src.shared.infrastructure.auth import (
+    BearerTokenResolver,
+    CookieTokenResolver,
+    TokenResolverChain,
+)
 from src.shared.infrastructure.logging import reset_user_id, set_user_id
 
 
 class AuthInterceptor(UnaryInterceptor):
-    """ConnectRPC interceptor that validates JWT tokens and populates CurrentUser context based on Protobuf AuthPolicy."""
+    """ConnectRPC interceptor that validates JWT tokens via strategy chain and populates CurrentUser context based on Protobuf AuthPolicy."""
+
+    def __init__(self, resolver_chain: TokenResolverChain | None = None) -> None:
+        super().__init__()
+        self._resolver_chain = resolver_chain or TokenResolverChain(
+            [BearerTokenResolver(), CookieTokenResolver()]
+        )
 
     async def intercept_unary(
         self,
@@ -33,18 +44,13 @@ class AuthInterceptor(UnaryInterceptor):
 
         is_public = AuthPolicyRegistry.is_public(method_path)
 
-        # Extract authorization header from RequestContext
+        # Extract metadata from RequestContext
         metadata = (
             getattr(ctx, "request_headers", None)
             or getattr(ctx, "invocation_metadata", None)
             or getattr(ctx, "headers", None)
             or {}
         )
-        auth_header = ""
-        if hasattr(metadata, "get"):
-            auth_header = metadata.get("authorization", "") or metadata.get(
-                "Authorization", ""
-            )
 
         # Extract organization header if provided
         active_org_id = ""
@@ -55,30 +61,8 @@ class AuthInterceptor(UnaryInterceptor):
                 or metadata.get("x-org-id", "")
             )
 
+        token = self._resolver_chain.resolve(metadata)
         current_user = None
-        token = None
-
-        if auth_header:
-            raw_header = str(auth_header).strip()
-            token = (
-                raw_header[7:].strip()
-                if raw_header.lower().startswith("bearer ")
-                else raw_header
-            )
-        else:
-            cookie_header = ""
-            if hasattr(metadata, "get"):
-                cookie_header = metadata.get("cookie", "") or metadata.get("Cookie", "")
-            if cookie_header:
-                from http.cookies import SimpleCookie
-
-                try:
-                    cookie = SimpleCookie()
-                    cookie.load(str(cookie_header))
-                    if "access_token" in cookie:
-                        token = cookie["access_token"].value
-                except Exception:
-                    pass
 
         if token:
             payload = decode_token(token)

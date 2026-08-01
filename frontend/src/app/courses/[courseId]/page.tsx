@@ -4,7 +4,11 @@ import { getRpcServerClient } from "@/lib/server_connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CourseDetailClient } from "./CourseDetailClient";
 
-export const revalidate = 60;
+// TODO: Cache Components adoption. Refactor this route so this opt-out can be removed.
+// See: https://nextjs.org/docs/app/guides/migrating-to-cache-components
+export const instant = false;
+
+// TODO: Cache Components adoption — restore revalidate = 60 using cacheLife({ revalidate: 60 }) or "use cache"
 
 export async function generateMetadata({
   params,

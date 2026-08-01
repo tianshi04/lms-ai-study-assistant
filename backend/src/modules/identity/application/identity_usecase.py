@@ -93,7 +93,13 @@ class IdentityUseCase:
                 return None, "", "", "Email hoặc mật khẩu không chính xác"
 
             logger.info("User %s successfully logged in", user.id)
-            access_token = create_access_token(user.id, user.email, user.role.value)
+            access_token = create_access_token(
+                user.id,
+                user.email,
+                user.role.value,
+                full_name=user.full_name,
+                system_role=user.system_role.value,
+            )
             refresh_token = create_refresh_token(user.id)
             return user, access_token, refresh_token, ""
 
@@ -113,7 +119,13 @@ class IdentityUseCase:
             if not user:
                 return "", "", "Không tìm thấy người dùng sở hữu token"
 
-            new_access_token = create_access_token(user.id, user.email, user.role.value)
+            new_access_token = create_access_token(
+                user.id,
+                user.email,
+                user.role.value,
+                full_name=user.full_name,
+                system_role=user.system_role.value,
+            )
             new_refresh_token = create_refresh_token(user.id)
             return new_access_token, new_refresh_token, ""
 
@@ -265,7 +277,7 @@ class IdentityUseCase:
                         if lic.is_active
                         else "Vô hiệu",
                         "status": "ACTIVE" if lic.is_active else "INACTIVE",
-                        "created_at": "2026",
+                        "created_at": datetime.now(timezone.utc).isoformat(),
                         "scope_type": getattr(lic, "scope_type", "ALL_COURSES"),
                         "allowed_course_ids": getattr(lic, "allowed_course_ids", []),
                     }
@@ -305,7 +317,7 @@ class IdentityUseCase:
                 "assigned_user_id": f"0/{DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS} seats",
                 "assigned_user_email": "Hoạt động",
                 "status": "ACTIVE",
-                "created_at": "2026",
+                "created_at": datetime.now(timezone.utc).isoformat(),
                 "scope_type": clean_scope,
                 "allowed_course_ids": courses_list,
             }
