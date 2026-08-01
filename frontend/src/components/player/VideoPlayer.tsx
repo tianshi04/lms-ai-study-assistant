@@ -275,36 +275,6 @@ export function VideoPlayer({
           </>
         )}
 
-        {/* Floating Top Control Overlay for Video Mark as Complete */}
-        {!isPreviewMode && (
-          <div className="absolute top-4 right-4 z-20">
-            <button
-              onClick={() => onMarkComplete?.(activeItem.id)}
-              disabled={isCompleted}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xl backdrop-blur-md flex items-center gap-2 cursor-pointer ${
-                isCompleted
-                  ? "bg-success text-success-foreground cursor-default"
-                  : "bg-card hover:bg-card/90 text-foreground border border-border hover:border-success"
-              }`}
-            >
-              <svg
-                className="w-4 h-4 text-success"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2.5}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-              {isCompleted ? "Đã Xem Video (>=80%)" : "Đánh dấu Xem Xong Video"}
-            </button>
-          </div>
-        )}
-
         {/* Floating Top Left Control Overlay for Video Preview Mode */}
         {isPreviewMode && (
           <div className="absolute top-4 left-4 z-20">

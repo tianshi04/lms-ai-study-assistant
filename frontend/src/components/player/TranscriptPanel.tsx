@@ -10,6 +10,15 @@ interface TranscriptPanelProps {
   onSeekVideo: (timestampSeconds: number) => void;
 }
 
+interface CueWithIndex extends VTTCue {
+  originalIndex: number;
+}
+
+interface ParagraphBlock {
+  startTime: number;
+  cues: CueWithIndex[];
+}
+
 export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: TranscriptPanelProps) {
   const [cues, setCues] = useState<VTTCue[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -63,6 +72,74 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
     });
   }, [cues, activeItem]);
 
+  // Group individual VTT cues into multi-sentence paragraph blocks (Coursera style)
+  const paragraphBlocks = useMemo<ParagraphBlock[]>(() => {
+    if (allTranscripts.length === 0) return [];
+
+    const blocks: ParagraphBlock[] = [];
+    let currentBlockCues: CueWithIndex[] = [];
+    let blockStartTime = allTranscripts[0].startTime;
+
+    const pushCurrentBlock = () => {
+      if (currentBlockCues.length > 0) {
+        blocks.push({
+          startTime: blockStartTime,
+          cues: currentBlockCues,
+        });
+        currentBlockCues = [];
+      }
+    };
+
+    for (let i = 0; i < allTranscripts.length; i++) {
+      const cue: CueWithIndex = { ...allTranscripts[i], originalIndex: i };
+      const prevCue = i > 0 ? allTranscripts[i - 1] : null;
+
+      if (currentBlockCues.length === 0) {
+        blockStartTime = cue.startTime;
+        currentBlockCues.push(cue);
+        continue;
+      }
+
+      const silenceGap = prevCue ? cue.startTime - prevCue.endTime : 0;
+      const currentBlockDuration = cue.endTime - blockStartTime;
+      const prevText = prevCue ? prevCue.text.trim() : "";
+      const hasSentenceEndingPunctuation = /[.!?]$/.test(prevText);
+
+      let shouldSplit = false;
+
+      // Rule 1: Silence gap >= 1.8s indicating natural pause
+      if (silenceGap >= 1.8) {
+        shouldSplit = true;
+      }
+      // Rule 2: Silence gap >= 4.5s (major topic break)
+      else if (silenceGap >= 4.5) {
+        shouldSplit = true;
+      }
+      // Rule 3: Paragraph duration >= 10s and ends with sentence punctuation
+      else if (currentBlockDuration >= 10.0 && hasSentenceEndingPunctuation) {
+        shouldSplit = true;
+      }
+      // Rule 4: Paragraph duration >= 15s with minor pause (> 1.5s)
+      else if (currentBlockDuration >= 15.0 && silenceGap >= 1.5) {
+        shouldSplit = true;
+      }
+      // Rule 5: Fallback safety limit (duration >= 28s or max 7 cues)
+      else if (currentBlockDuration >= 28.0 || currentBlockCues.length >= 7) {
+        shouldSplit = true;
+      }
+
+      if (shouldSplit) {
+        pushCurrentBlock();
+        blockStartTime = cue.startTime;
+      }
+
+      currentBlockCues.push(cue);
+    }
+
+    pushCurrentBlock();
+    return blocks;
+  }, [allTranscripts]);
+
   // Find index of the currently active transcript cue based on currentTime
   const activeIndex = useMemo(() => {
     return allTranscripts.findIndex(
@@ -70,34 +147,37 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
     );
   }, [allTranscripts, currentTime]);
 
-  // Auto-scroll the active cue into view
+  // Auto-scroll the active paragraph block into view
   useEffect(() => {
     if (activeIndex !== -1 && !searchQuery) {
-      const el = document.getElementById(`transcript-item-${activeIndex}`);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      const activeBlockIndex = paragraphBlocks.findIndex((block) =>
+        block.cues.some((c) => c.originalIndex === activeIndex),
+      );
+      if (activeBlockIndex !== -1) {
+        const el = document.getElementById(`transcript-block-${activeBlockIndex}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
       }
     }
-  }, [activeIndex, searchQuery]);
+  }, [activeIndex, searchQuery, paragraphBlocks]);
 
-  // Filter transcripts by search query
-  const filteredTranscripts = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return allTranscripts.map((t, idx) => ({ ...t, originalIndex: idx }));
-    }
+  // Filter paragraph blocks by search query
+  const filteredBlocks = useMemo(() => {
+    if (!searchQuery.trim()) return paragraphBlocks;
     const query = searchQuery.toLowerCase();
-    return allTranscripts
-      .map((t, idx) => ({ ...t, originalIndex: idx }))
-      .filter((t) => t.text.toLowerCase().includes(query));
-  }, [allTranscripts, searchQuery]);
+    return paragraphBlocks.filter((block) =>
+      block.cues.some((c) => c.text.toLowerCase().includes(query)),
+    );
+  }, [paragraphBlocks, searchQuery]);
 
   // Helper function to highlight matching text
   const renderHighlightedText = (text: string, highlight: string) => {
-    if (!highlight.trim()) return <span>{text}</span>;
+    if (!highlight.trim()) return text;
     const regex = new RegExp(`(${highlight.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")})`, "gi");
     const parts = text.split(regex);
     return (
-      <span>
+      <>
         {parts.map((part, i) =>
           regex.test(part) ? (
             <mark key={i} className="bg-warning/30 text-foreground px-0.5 rounded font-semibold">
@@ -107,7 +187,7 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
             part
           ),
         )}
-      </span>
+      </>
     );
   };
 
@@ -153,39 +233,58 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
         )}
       </div>
 
-      {/* Transcript Items Container */}
+      {/* Transcript Blocks Container */}
       <div
         ref={containerRef}
-        className="space-y-2 overflow-y-auto max-h-[400px] pr-2 scrollbar-thin"
+        className="space-y-4 overflow-y-auto max-h-[400px] pr-2 scrollbar-thin"
       >
-        {filteredTranscripts.length === 0 ? (
+        {filteredBlocks.length === 0 ? (
           <p className="text-xs text-muted-foreground text-center py-6">
             {"Không tìm thấy dòng phụ đề khớp với từ khóa"}
           </p>
         ) : (
-          filteredTranscripts.map((item) => {
-            const isActive = item.originalIndex === activeIndex;
+          filteredBlocks.map((block, blockIdx) => {
+            const hasActiveCue = block.cues.some((c) => c.originalIndex === activeIndex);
 
             return (
               <div
-                key={item.originalIndex}
-                id={`transcript-item-${item.originalIndex}`}
-                onClick={() => onSeekVideo(item.startTime)}
-                className={`p-2.5 rounded-lg text-xs cursor-pointer transition-all flex items-start gap-4 border ${
-                  isActive
-                    ? "bg-primary/10 text-primary font-medium border-l-4 border-l-2 border-primary pl-3 shadow-2xs"
-                    : "hover:bg-muted text-muted-foreground border-transparent hover:border-border"
+                key={blockIdx}
+                id={`transcript-block-${blockIdx}`}
+                className={`p-3.5 rounded-xl text-xs transition-all flex items-start gap-4 border ${
+                  hasActiveCue
+                    ? "bg-primary/10 border-primary/40 shadow-2xs"
+                    : "hover:bg-muted/60 border-transparent hover:border-border"
                 }`}
               >
-                <span className="font-mono text-primary flex-shrink-0 font-bold">
-                  {Math.floor(item.startTime / 60)}:
-                  {Math.floor(item.startTime % 60)
+                <button
+                  type="button"
+                  onClick={() => onSeekVideo(block.startTime)}
+                  className="font-mono text-primary flex-shrink-0 font-bold hover:underline cursor-pointer pt-0.5"
+                  title="Nhảy đến thời điểm này"
+                >
+                  {Math.floor(block.startTime / 60)}:
+                  {Math.floor(block.startTime % 60)
                     .toString()
                     .padStart(2, "0")}
-                </span>
-                <span className="leading-relaxed">
-                  {renderHighlightedText(item.text, searchQuery)}
-                </span>
+                </button>
+                <p className="leading-relaxed text-foreground text-xs">
+                  {block.cues.map((cue) => {
+                    const isCueActive = cue.originalIndex === activeIndex;
+                    return (
+                      <span
+                        key={cue.originalIndex}
+                        onClick={() => onSeekVideo(cue.startTime)}
+                        className={`cursor-pointer transition-colors duration-150 rounded px-0.5 py-0.2 mx-0.5 inline ${
+                          isCueActive
+                            ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                            : "hover:bg-muted-foreground/10 text-foreground"
+                        }`}
+                      >
+                        {renderHighlightedText(cue.text, searchQuery)}{" "}
+                      </span>
+                    );
+                  })}
+                </p>
               </div>
             );
           })

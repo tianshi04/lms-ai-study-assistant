@@ -430,10 +430,10 @@ function CoursePlayerContent() {
         </header>
 
         {/* Main Workspace Layout */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-row overflow-x-auto overflow-y-hidden">
           {/* Left Sidebar - Course Content Navigation Tree */}
           {!isPreviewMode && (
-            <aside className="w-80 bg-card/95 border-r border-border overflow-y-auto flex-shrink-0 flex flex-col">
+            <aside className="w-80 shrink-0 bg-card/95 border-r border-border overflow-y-auto flex flex-col">
               <div className="p-4 border-b border-border bg-muted/50 sticky top-0 z-10">
                 <h2 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
                   {"Lộ trình Bài học"}
@@ -473,7 +473,7 @@ function CoursePlayerContent() {
                               const itemIndex = allItemsInCourse.findIndex((i) => i.id === item.id);
                               const prevItem =
                                 itemIndex > 0 ? allItemsInCourse[itemIndex - 1] : null;
-                              const isUnlocked =
+                              const _isUnlocked =
                                 itemIndex <= 0 ||
                                 (prevItem && progress?.completedItemIds.includes(prevItem.id));
 
@@ -481,25 +481,14 @@ function CoursePlayerContent() {
                                 <button
                                   key={item.id}
                                   onClick={() => {
-                                    if (!isUnlocked) {
-                                      setLockNotice(
-                                        'Bài học "{title}" đang bị khóa. Bạn cần hoàn thành bài học "{prevTitle}" trước.'
-                                          .replace("{title}", item.title)
-                                          .replace("{prevTitle}", prevItem?.title || ""),
-                                      );
-                                      setTimeout(() => setLockNotice(""), 4000);
-                                      return;
-                                    }
                                     setLockNotice("");
                                     setActiveItem(item);
                                     setActiveQuiz(null);
                                   }}
-                                  className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all ${
+                                  className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all cursor-pointer ${
                                     isActive
                                       ? "bg-primary/10 text-primary font-semibold border border-primary/20"
-                                      : !isUnlocked
-                                        ? "opacity-50 hover:bg-transparent cursor-not-allowed text-muted-foreground"
-                                        : "hover:bg-muted text-muted-foreground"
+                                      : "hover:bg-muted text-muted-foreground"
                                   }`}
                                 >
                                   <span className="truncate flex items-center gap-2">
@@ -515,20 +504,6 @@ function CoursePlayerContent() {
                                           strokeLinejoin="round"
                                           strokeWidth={2.5}
                                           d="M5 13l4 4L19 7"
-                                        />
-                                      </svg>
-                                    ) : !isUnlocked ? (
-                                      <svg
-                                        className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                                         />
                                       </svg>
                                     ) : item.type === 1 ? (
@@ -602,7 +577,7 @@ function CoursePlayerContent() {
                                         />
                                       </svg>
                                     )}
-                                    <span className={isDone ? "line-through opacity-80" : ""}>
+                                    <span className={isDone ? "font-bold text-foreground" : ""}>
                                       {item.title}
                                     </span>
                                   </span>
