@@ -6,6 +6,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { revalidateCoursesCache } from "@/app/actions/revalidate";
 
 const emptySubscribe = () => () => {};
 
@@ -173,6 +174,7 @@ export default function InstructorCoursesPage() {
           toast.success(
             `${"Cập Nhật Khóa Học".replace("Cập Nhật ", "")} "${res.course.title}" ${"Tạo khóa học mới thành công!".split(" ").slice(-2).join(" ")}`,
           );
+          await revalidateCoursesCache(res.course.id);
           setShowModal(false);
           await refreshCourses();
         }
@@ -190,6 +192,7 @@ export default function InstructorCoursesPage() {
 
         if (res.course) {
           toast.success("Tạo khóa học mới thành công!");
+          await revalidateCoursesCache(res.course.id);
           setShowModal(false);
           await refreshCourses();
         }

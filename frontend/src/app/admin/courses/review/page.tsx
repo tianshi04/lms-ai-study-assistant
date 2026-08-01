@@ -12,6 +12,7 @@ import {
 import { useToast } from "@/components/ui/Toast";
 import { Modal } from "@/components/ui/Modal";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { revalidateCoursesCache } from "@/app/actions/revalidate";
 
 const emptySubscribe = () => () => {};
 
@@ -88,6 +89,7 @@ export default function CourseReviewerPortalPage() {
         action: CourseReviewAction.APPROVE,
       });
       toast.success(`Đã phê duyệt và xuất bản khóa học "${title}" thành công!`);
+      await revalidateCoursesCache(courseId);
       await fetchCourses(activeTab);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Phê duyệt khóa học thất bại.";
@@ -111,6 +113,7 @@ export default function CourseReviewerPortalPage() {
         rejectionReason: rejectionReason.trim(),
       });
       toast.success("Đã từ chối và phản hồi yêu cầu hoàn thiện lại khóa học.");
+      await revalidateCoursesCache(rejectingCourseId);
       setRejectingCourseId(null);
       setRejectionReason("");
       await fetchCourses(activeTab);

@@ -9,6 +9,7 @@ import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
 import { useToast } from "@/components/ui/Toast";
+import { revalidateCoursesCache } from "@/app/actions/revalidate";
 
 const emptySubscribe = () => () => {};
 
@@ -116,6 +117,7 @@ export default function NewCoursePage() {
       });
 
       toast.success("Khởi tạo khóa học mới thành công!");
+      await revalidateCoursesCache(res.course?.id);
       if (res.course?.id) {
         router.push(`/instructor/courses/${res.course.id}`);
       } else {
