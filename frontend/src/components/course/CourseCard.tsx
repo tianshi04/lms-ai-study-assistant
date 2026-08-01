@@ -53,7 +53,7 @@ export function CourseCard({ course }: { course: Course }) {
         </div>
 
         {/* Title & Description */}
-        <Link href={`/courses/${course.id}`} className="block">
+        <Link href={`/courses/${course.id}`} prefetch={true} className="block">
           <ViewTransition name={`course-title-${course.id}`} share="text-morph">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-3 line-clamp-2">
               {course.title}

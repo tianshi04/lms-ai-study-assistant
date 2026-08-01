@@ -56,18 +56,22 @@ export function Navbar() {
 
         {/* Navigation Links (Desktop) */}
         <nav className="hidden md:flex items-center gap-2 text-sm font-semibold">
-          <Link href="/courses" className={getLinkClasses("/courses")}>
+          <Link href="/courses" prefetch={true} className={getLinkClasses("/courses")}>
             {"Khóa học"}
           </Link>
           {userName && (
-            <Link href="/my-courses" className={getLinkClasses("/my-courses")}>
+            <Link href="/my-courses" prefetch={true} className={getLinkClasses("/my-courses")}>
               Khóa học của tôi
             </Link>
           )}
-          <Link href="/partners/stanford-online" className={getLinkClasses("/partners")}>
+          <Link
+            href="/partners/stanford-online"
+            prefetch={true}
+            className={getLinkClasses("/partners")}
+          >
             {"Đối tác"}
           </Link>
-          <Link href="/forum" className={getLinkClasses("/forum")}>
+          <Link href="/forum" prefetch={true} className={getLinkClasses("/forum")}>
             {"Diễn đàn"}
           </Link>
 

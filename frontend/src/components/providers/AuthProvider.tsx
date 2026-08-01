@@ -40,12 +40,20 @@ interface AuthContextType extends UserAuth {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const EMPTY_AUTH: UserAuth = {
+  userId: null,
+  userName: null,
+  userEmail: null,
+  userRole: null,
+  systemRole: null,
+};
+
 export function AuthProvider({
   children,
-  initialAuth,
+  initialAuth = EMPTY_AUTH,
 }: {
   children: React.ReactNode;
-  initialAuth: UserAuth;
+  initialAuth?: UserAuth;
 }) {
   const [auth, setAuthState] = useState<UserAuth>(initialAuth);
 

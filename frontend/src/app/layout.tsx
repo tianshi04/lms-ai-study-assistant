@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
@@ -7,8 +8,6 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { CopilotProvider } from "@/components/providers/CopilotProvider";
 import { MainLayout } from "@/components/layout/MainLayout";
-
-import { cookies } from "next/headers";
 import { getAuthServer } from "@/lib/auth_server";
 
 const geistSans = Geist({
@@ -26,19 +25,10 @@ export const metadata: Metadata = {
   description: "Coursera-style Online Learning Platform",
 };
 
-// Documented Block: RootLayout reads authenticated session cookies for top-level auth & theme context.
+// Documented Block: RootLayout allows dynamic authentication and params resolution across client subtrees.
 export const instant = false;
 
-export default async function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const cookieStore = await cookies();
-
-  const themeCookie = cookieStore.get("theme")?.value;
-  const isDarkInitial = themeCookie === "dark";
-
+async function AsyncAuthProvider({ children }: { children: React.ReactNode }) {
   const session = await getAuthServer();
 
   const initialAuth = {
@@ -49,11 +39,19 @@ export default async function RootLayout({
     systemRole: session.systemRole,
   };
 
+  return <AuthProvider initialAuth={initialAuth}>{children}</AuthProvider>;
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html
       lang="vi"
       suppressHydrationWarning
-      className={`${isDarkInitial ? "dark" : ""} ${geistSans.variable} ${geistMono.variable} antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
     >
       <body className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white">
         <QueryProvider>
@@ -63,13 +61,15 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <AuthProvider initialAuth={initialAuth}>
-              <CopilotProvider>
-                <ToastProvider>
-                  <MainLayout>{children}</MainLayout>
-                </ToastProvider>
-              </CopilotProvider>
-            </AuthProvider>
+            <ToastProvider>
+              <Suspense fallback={<AuthProvider>{children}</AuthProvider>}>
+                <AsyncAuthProvider>
+                  <CopilotProvider>
+                    <MainLayout>{children}</MainLayout>
+                  </CopilotProvider>
+                </AsyncAuthProvider>
+              </Suspense>
+            </ToastProvider>
           </ThemeProvider>
         </QueryProvider>
       </body>
