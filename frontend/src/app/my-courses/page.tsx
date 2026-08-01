@@ -141,7 +141,7 @@ export default function MyCoursesPage() {
             <p className="font-semibold">{error}</p>
           </div>
         ) : filteredCourses.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/80 p-12 rounded-2xl text-center text-slate-500 dark:text-slate-400 shadow-sm">
+          <div className="py-16 text-center text-slate-500 dark:text-slate-400">
             <svg
               className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-700 mb-4"
               fill="none"
