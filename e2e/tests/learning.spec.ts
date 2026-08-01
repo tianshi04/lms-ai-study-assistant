@@ -23,21 +23,21 @@ test.describe('Full System Blackbox - Learning Experience (POM)', () => {
 
     // Switch to Forum tab
     await learningPage.switchTab('forum');
-    await expect(learningPage.forumTab).toHaveClass(/border-blue-500/);
+    await expect(learningPage.forumTab).toHaveClass(/border-primary/);
 
     // Switch to Notes tab
     await learningPage.switchTab('notes');
-    await expect(learningPage.notesTab).toHaveClass(/border-blue-500/);
+    await expect(learningPage.notesTab).toHaveClass(/border-primary/);
     await expect(learningPage.highlightInput).toBeVisible();
 
     // Switch to Deadlines tab
     await learningPage.switchTab('deadlines');
-    await expect(learningPage.deadlinesTab).toHaveClass(/border-blue-500/);
+    await expect(learningPage.deadlinesTab).toHaveClass(/border-primary/);
     await expect(learningPage.deadlinesHeading).toBeVisible();
 
     // Switch back to Transcript tab
     await learningPage.switchTab('transcript');
-    await expect(learningPage.transcriptTab).toHaveClass(/border-blue-500/);
+    await expect(learningPage.transcriptTab).toHaveClass(/border-primary/);
   });
 
   test('should create a new personal note successfully', async ({ page }) => {
