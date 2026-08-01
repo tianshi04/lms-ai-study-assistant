@@ -48,6 +48,26 @@ const EMPTY_AUTH: UserAuth = {
   systemRole: null,
 };
 
+/**
+ * Clears user session data and transient application state from localStorage
+ * while preserving global non-sensitive UI preferences (e.g. theme, language).
+ */
+function clearSessionStorageData() {
+  if (typeof window === "undefined") return;
+
+  const PERSISTENT_PREFERENCE_KEYS = new Set(["theme", "language"]);
+  const keysToRemove: string[] = [];
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && !PERSISTENT_PREFERENCE_KEYS.has(key)) {
+      keysToRemove.push(key);
+    }
+  }
+
+  keysToRemove.forEach((key) => localStorage.removeItem(key));
+}
+
 export function AuthProvider({
   children,
   initialAuth = EMPTY_AUTH,
@@ -75,9 +95,7 @@ export function AuthProvider({
 
   const logout = useCallback(async () => {
     await logoutAction();
-    if (typeof window !== "undefined") {
-      localStorage.clear();
-    }
+    clearSessionStorageData();
     setAuthState({
       userId: null,
       userName: null,
