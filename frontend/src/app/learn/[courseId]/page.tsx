@@ -751,82 +751,89 @@ function CoursePlayerContent() {
                       {/* Collapsible Lessons & Items List */}
                       {!isCollapsed && (
                         <div className="space-y-4 pl-1">
-                          {week.lessons.map((lesson) => (
-                            <div key={lesson.id} className="space-y-1.5">
-                              {/* Lesson Subheading */}
-                              <div className="text-xs font-bold text-muted-foreground px-2 pt-1">
-                                {lesson.title}
-                              </div>
+                          {week.lessons.map((lesson, lessonIndex) => {
+                            const displayLessonTitle =
+                              lesson.title.startsWith("Bài") || lesson.title.startsWith("Lesson")
+                                ? lesson.title
+                                : `Bài ${lessonIndex + 1}: ${lesson.title}`;
 
-                              {/* Learning Items */}
-                              <div className="space-y-1">
-                                {lesson.items.map((item) => {
-                                  const isActive = activeItem?.id === item.id;
-                                  const isDone = progress?.completedItemIds.includes(item.id);
+                            return (
+                              <div key={lesson.id} className="space-y-1.5">
+                                {/* Lesson Subheading */}
+                                <div className="text-xs font-bold text-muted-foreground px-2 pt-1">
+                                  {displayLessonTitle}
+                                </div>
 
-                                  return (
-                                    <button
-                                      key={item.id}
-                                      type="button"
-                                      onClick={() => {
-                                        if (!unlocked) {
-                                          setLockNotice(
-                                            `Bạn cần hoàn thành tất cả các bài học ở Tuần ${weekIndex} để mở khóa Tuần ${weekIndex + 1}.`,
-                                          );
-                                          return;
-                                        }
-                                        setLockNotice("");
-                                        setActiveItem(item);
-                                        setActiveQuiz(null);
-                                      }}
-                                      className={`w-full text-left p-3 rounded-2xl flex items-start gap-3 transition-all cursor-pointer ${
-                                        !unlocked
-                                          ? "opacity-60 cursor-not-allowed hover:bg-transparent"
-                                          : isActive
-                                            ? "bg-primary/10 border border-primary/20 text-foreground shadow-2xs"
-                                            : "hover:bg-muted/60 text-foreground"
-                                      }`}
-                                    >
-                                      {/* Status Icon */}
-                                      <div className="shrink-0 mt-0.5">
-                                        {!unlocked ? (
-                                          <div className="w-5 h-5 rounded-full bg-muted border border-border flex items-center justify-center">
-                                            <Lock className="w-3 h-3 text-muted-foreground" />
-                                          </div>
-                                        ) : isDone ? (
-                                          <div className="w-5 h-5 rounded-full bg-success flex items-center justify-center">
-                                            <Check className="w-3.5 h-3.5 text-success-foreground stroke-[3]" />
-                                          </div>
-                                        ) : (
-                                          <div className="w-5 h-5 rounded-full bg-muted border border-border" />
-                                        )}
-                                      </div>
+                                {/* Learning Items */}
+                                <div className="space-y-1">
+                                  {lesson.items.map((item) => {
+                                    const isActive = activeItem?.id === item.id;
+                                    const isDone = progress?.completedItemIds.includes(item.id);
 
-                                      {/* Title & Sub-info */}
-                                      <div className="flex-1 min-w-0">
-                                        <div
-                                          className={`text-xs leading-snug truncate ${
-                                            isActive
-                                              ? "font-bold text-foreground"
-                                              : isDone
-                                                ? "font-medium text-foreground"
-                                                : "font-normal text-muted-foreground"
-                                          }`}
-                                        >
-                                          {item.title}
+                                    return (
+                                      <button
+                                        key={item.id}
+                                        type="button"
+                                        onClick={() => {
+                                          if (!unlocked) {
+                                            setLockNotice(
+                                              `Bạn cần hoàn thành tất cả các bài học ở Tuần ${weekIndex} để mở khóa Tuần ${weekIndex + 1}.`,
+                                            );
+                                            return;
+                                          }
+                                          setLockNotice("");
+                                          setActiveItem(item);
+                                          setActiveQuiz(null);
+                                        }}
+                                        className={`w-full text-left p-3 rounded-2xl flex items-start gap-3 transition-all cursor-pointer ${
+                                          !unlocked
+                                            ? "opacity-60 cursor-not-allowed hover:bg-transparent"
+                                            : isActive
+                                              ? "bg-primary/10 border border-primary/20 text-foreground shadow-2xs"
+                                              : "hover:bg-muted/60 text-foreground"
+                                        }`}
+                                      >
+                                        {/* Status Icon */}
+                                        <div className="shrink-0 mt-0.5">
+                                          {!unlocked ? (
+                                            <div className="w-5 h-5 rounded-full bg-muted border border-border flex items-center justify-center">
+                                              <Lock className="w-3 h-3 text-muted-foreground" />
+                                            </div>
+                                          ) : isDone ? (
+                                            <div className="w-5 h-5 rounded-full bg-success flex items-center justify-center">
+                                              <Check className="w-3.5 h-3.5 text-success-foreground stroke-[3]" />
+                                            </div>
+                                          ) : (
+                                            <div className="w-5 h-5 rounded-full bg-muted border border-border" />
+                                          )}
                                         </div>
-                                        <div className="text-[11px] text-muted-foreground mt-0.5 font-normal">
-                                          {!unlocked
-                                            ? `Bị khóa • Hoàn thành Tuần ${weekIndex}`
-                                            : `${getItemTypeName(item.type)} • ${item.estimatedMinutes || 5} min`}
+
+                                        {/* Title & Sub-info */}
+                                        <div className="flex-1 min-w-0">
+                                          <div
+                                            className={`text-xs leading-snug truncate ${
+                                              isActive
+                                                ? "font-bold text-foreground"
+                                                : isDone
+                                                  ? "font-medium text-foreground"
+                                                  : "font-normal text-muted-foreground"
+                                            }`}
+                                          >
+                                            {item.title}
+                                          </div>
+                                          <div className="text-[11px] text-muted-foreground mt-0.5 font-normal">
+                                            {!unlocked
+                                              ? `Bị khóa • Hoàn thành Tuần ${weekIndex}`
+                                              : `${getItemTypeName(item.type)} • ${item.estimatedMinutes || 5} min`}
+                                          </div>
                                         </div>
-                                      </div>
-                                    </button>
-                                  );
-                                })}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
