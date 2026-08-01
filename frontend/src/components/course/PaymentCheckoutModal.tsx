@@ -97,9 +97,9 @@ export function PaymentCheckoutModal({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent size="lg" className="p-6">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
             <svg
-              className="w-6 h-6 text-indigo-600"
+              className="w-6 h-6 text-primary"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -113,7 +113,7 @@ export function PaymentCheckoutModal({
             </svg>
             Nâng Cấp Quyền Truy Cập Paid Mode
           </DialogTitle>
-          <DialogDescription className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+          <DialogDescription className="text-sm text-muted-foreground mt-1">
             Mở khóa trọn vẹn bài thi tính điểm (Graded Quiz), bài tập thực hành Auto-Graded Lab,
             chấm chéo Peer Review và nhận Chứng chỉ Xác thực.
           </DialogDescription>
@@ -123,13 +123,13 @@ export function PaymentCheckoutModal({
           <div
             className={`p-3 rounded-lg text-sm font-medium my-3 flex items-center gap-2 ${
               feedbackMsg.type === "success"
-                ? "bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300"
-                : "bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300"
+                ? "bg-success/10 text-success border border-success/30"
+                : "bg-destructive/10 text-destructive border border-destructive/30"
             }`}
           >
             {feedbackMsg.type === "success" ? (
               <svg
-                className="w-5 h-5 text-emerald-600"
+                className="w-5 h-5 text-success"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -143,7 +143,7 @@ export function PaymentCheckoutModal({
               </svg>
             ) : (
               <svg
-                className="w-5 h-5 text-rose-600"
+                className="w-5 h-5 text-destructive"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -166,30 +166,30 @@ export function PaymentCheckoutModal({
             onClick={() => setSelectedOption("SINGLE")}
             className={`cursor-pointer p-4 rounded-xl border-2 transition-all flex flex-col justify-between ${
               selectedOption === "SINGLE"
-                ? "border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/30 shadow-md"
-                : "border-slate-200 dark:border-slate-700 hover:border-indigo-300"
+                ? "border-primary bg-primary/5 shadow-md"
+                : "border-border hover:border-primary/50"
             }`}
           >
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Mua Lẻ Khóa
                 </span>
-                <span className="w-4 h-4 rounded-full border border-indigo-600 flex items-center justify-center">
+                <span className="w-4 h-4 rounded-full border border-primary flex items-center justify-center">
                   {selectedOption === "SINGLE" && (
-                    <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                    <span className="w-2 h-2 rounded-full bg-primary" />
                   )}
                 </span>
               </div>
-              <h4 className="font-semibold text-slate-900 dark:text-white text-base mb-1 line-clamp-1">
+              <h4 className="font-semibold text-foreground text-base mb-1 line-clamp-1">
                 {courseTitle}
               </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+              <p className="text-xs text-muted-foreground mb-3">
                 Quyền truy cập Paid Mode vĩnh viễn riêng khóa học này.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
-              <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+            <div className="mt-4 pt-3 border-t border-border">
+              <span className="text-lg font-bold text-primary">
                 {priceVnd.toLocaleString("vi-VN")} VNĐ
               </span>
             </div>
@@ -200,36 +200,29 @@ export function PaymentCheckoutModal({
             onClick={() => setSelectedOption("PLUS_MONTHLY")}
             className={`cursor-pointer p-4 rounded-xl border-2 transition-all flex flex-col justify-between relative ${
               selectedOption === "PLUS_MONTHLY"
-                ? "border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/30 shadow-md"
-                : "border-slate-200 dark:border-slate-700 hover:border-indigo-300"
+                ? "border-primary bg-primary/5 shadow-md"
+                : "border-border hover:border-primary/50"
             }`}
           >
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-primary">
                   Coursera Plus
                 </span>
-                <span className="w-4 h-4 rounded-full border border-indigo-600 flex items-center justify-center">
+                <span className="w-4 h-4 rounded-full border border-primary flex items-center justify-center">
                   {selectedOption === "PLUS_MONTHLY" && (
-                    <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                    <span className="w-2 h-2 rounded-full bg-primary" />
                   )}
                 </span>
               </div>
-              <h4 className="font-semibold text-slate-900 dark:text-white text-base mb-1">
-                Gói Theo Tháng
-              </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+              <h4 className="font-semibold text-foreground text-base mb-1">Gói Theo Tháng</h4>
+              <p className="text-xs text-muted-foreground mb-3">
                 Mở khóa 100% khóa học trên nền tảng trong 30 ngày.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
-              <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                399,000 VNĐ
-              </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-normal">
-                {" "}
-                / tháng
-              </span>
+            <div className="mt-4 pt-3 border-t border-border">
+              <span className="text-lg font-bold text-primary">399,000 VNĐ</span>
+              <span className="text-xs text-muted-foreground font-normal"> / tháng</span>
             </div>
           </div>
 
@@ -238,52 +231,53 @@ export function PaymentCheckoutModal({
             onClick={() => setSelectedOption("PLUS_YEARLY")}
             className={`cursor-pointer p-4 rounded-xl border-2 transition-all flex flex-col justify-between relative ${
               selectedOption === "PLUS_YEARLY"
-                ? "border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/30 shadow-md"
-                : "border-slate-200 dark:border-slate-700 hover:border-indigo-300"
+                ? "border-primary bg-primary/5 shadow-md"
+                : "border-border hover:border-primary/50"
             }`}
           >
-            <span className="absolute -top-3 right-3 bg-amber-500 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow">
+            <span className="absolute -top-3 right-3 bg-warning text-warning-foreground text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow">
               Tặng 2 tháng
             </span>
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                <span className="text-xs font-semibold uppercase tracking-wider text-warning">
                   Coursera Plus
                 </span>
-                <span className="w-4 h-4 rounded-full border border-indigo-600 flex items-center justify-center">
+                <span className="w-4 h-4 rounded-full border border-primary flex items-center justify-center">
                   {selectedOption === "PLUS_YEARLY" && (
-                    <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                    <span className="w-2 h-2 rounded-full bg-primary" />
                   )}
                 </span>
               </div>
-              <h4 className="font-semibold text-slate-900 dark:text-white text-base mb-1">
-                Gói Theo Năm
-              </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+              <h4 className="font-semibold text-foreground text-base mb-1">Gói Theo Năm</h4>
+              <p className="text-xs text-muted-foreground mb-3">
                 Mở khóa 100% khóa học trong 365 ngày liên tục.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
-              <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                3,990,000 VNĐ
-              </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400 font-normal"> / năm</span>
+            <div className="mt-4 pt-3 border-t border-border">
+              <span className="text-lg font-bold text-primary">3,990,000 VNĐ</span>
+              <span className="text-xs text-muted-foreground font-normal"> / năm</span>
             </div>
           </div>
         </div>
 
-        <DialogFooter className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+        <DialogFooter className="flex items-center justify-end gap-3 pt-3 border-t border-border">
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Hủy bỏ
           </Button>
           <Button
             onClick={handleCheckout}
             disabled={isLoading}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white min-w-[140px]"
+            variant="primary"
+            className="min-w-[140px]"
           >
             {isLoading ? (
               <span aria-live="polite" className="flex items-center gap-2">
-                <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24" fill="none">
+                <svg
+                  className="animate-spin h-4 w-4 text-primary-foreground"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
                   <circle
                     className="opacity-25"
                     cx="12"

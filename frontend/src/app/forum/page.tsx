@@ -331,9 +331,9 @@ export default function ForumPage() {
     <>
       <main className="max-w-6xl mx-auto px-6 py-10 w-full">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 border-b border-slate-200 dark:border-slate-800 pb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 border-b border-border pb-6">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-semibold uppercase tracking-wider mb-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-3">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -344,10 +344,10 @@ export default function ForumPage() {
               </svg>
               Coursera Learning Forum
             </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white text-balance">
+            <h1 className="text-3xl font-extrabold text-foreground text-balance">
               {"Diễn đàn Thảo luận Cộng đồng"}
             </h1>
-            <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
+            <p className="text-muted-foreground text-sm mt-1">
               {"Nơi trao đổi thắc mắc, chia sẻ kinh nghiệm học tập cùng Giảng viên và Học viên."}
             </p>
           </div>
@@ -355,7 +355,7 @@ export default function ForumPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm transition-all shadow-md shadow-blue-600/20 cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm transition-all shadow-md shadow-primary/20 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -371,15 +371,15 @@ export default function ForumPage() {
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+        <div className="bg-card border border-border rounded-2xl p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-3 w-full md:w-auto">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
               {"Khóa học"}:
             </span>
             <select
               value={selectedCourseId}
               onChange={(e) => setSelectedCourseId(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm px-3.5 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 w-full md:w-80 cursor-pointer"
+              className="bg-muted border border-input text-foreground rounded-xl text-sm px-3.5 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring w-full md:w-80 cursor-pointer"
             >
               <option value="">-- All Courses --</option>
               {courses.map((c) => (
@@ -390,10 +390,8 @@ export default function ForumPage() {
             </select>
           </div>
 
-          <div className="text-xs text-slate-500">
-            Total{" "}
-            <span className="font-bold text-slate-800 dark:text-slate-200">{threads.length}</span>{" "}
-            threads
+          <div className="text-xs text-muted-foreground">
+            Total <span className="font-bold text-foreground">{threads.length}</span> threads
           </div>
         </div>
 
@@ -401,24 +399,21 @@ export default function ForumPage() {
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((n) => (
-              <div
-                key={n}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 animate-pulse"
-              >
-                <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-2/3 mb-4" />
-                <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3 mb-4" />
-                <div className="h-12 bg-slate-100 dark:bg-slate-800/60 rounded" />
+              <div key={n} className="bg-card border border-border rounded-2xl p-6 animate-pulse">
+                <div className="h-6 bg-muted rounded w-2/3 mb-4" />
+                <div className="h-4 bg-muted rounded w-1/3 mb-4" />
+                <div className="h-12 bg-muted rounded" />
               </div>
             ))}
           </div>
         ) : error ? (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 p-6 rounded-2xl text-center">
+          <div className="bg-destructive/10 border border-destructive/20 text-destructive p-6 rounded-2xl text-center">
             <p className="font-semibold">{error}</p>
           </div>
         ) : threads.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
+          <div className="text-center py-16 bg-card rounded-2xl border border-border p-8">
             <svg
-              className="w-12 h-12 text-slate-400 mx-auto mb-3"
+              className="w-12 h-12 text-muted-foreground mx-auto mb-3"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -430,7 +425,7 @@ export default function ForumPage() {
                 d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
               />
             </svg>
-            <p className="text-slate-600 dark:text-slate-400 font-medium">
+            <p className="text-muted-foreground font-medium">
               {"Chưa có chủ đề thảo luận nào. Hãy là người đầu tiên đặt câu hỏi!"}
             </p>
           </div>
@@ -446,16 +441,16 @@ export default function ForumPage() {
               return (
                 <div
                   key={thread.id}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 rounded-2xl p-6 transition-all shadow-sm"
+                  className="bg-card border border-border hover:border-accent-hover rounded-2xl p-6 transition-all shadow-sm"
                 >
                   {/* Thread Header */}
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-2">
                         {thread.isStaffPinned && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-700/60 shadow-xs">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20 shadow-xs">
                             <svg
-                              className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0"
+                              className="w-3.5 h-3.5 text-warning shrink-0"
                               fill="currentColor"
                               viewBox="0 0 24 24"
                             >
@@ -464,21 +459,21 @@ export default function ForumPage() {
                             <span>Staff Pinned</span>
                           </span>
                         )}
-                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        <span className="text-xs font-medium text-muted-foreground">
                           By{" "}
-                          <strong className="text-slate-700 dark:text-slate-300">
+                          <strong className="text-foreground">
                             {thread.authorName || "Thành viên LMS"}
                           </strong>{" "}
                           ({formatRoleName(thread.authorRole)})
                         </span>
-                        <span className="text-slate-300 dark:text-slate-700">•</span>
-                        <span className="text-xs text-slate-400">
+                        <span className="text-muted-foreground/40">•</span>
+                        <span className="text-xs text-muted-foreground">
                           {new Date(thread.createdAt).toLocaleString(
                             locale === "vi" ? "vi-VN" : "en-US",
                           )}
                         </span>
                         {thread.isEdited && (
-                          <span className="text-xs text-amber-600 dark:text-amber-400 font-medium italic">
+                          <span className="text-xs text-warning font-medium italic">
                             {"(Đã chỉnh sửa)"}
                           </span>
                         )}
@@ -488,7 +483,7 @@ export default function ForumPage() {
                             {isThreadAuthor && (
                               <button
                                 onClick={() => openEditThreadModal(thread)}
-                                className="text-xs font-semibold text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+                                className="text-xs font-semibold text-muted-foreground hover:text-primary cursor-pointer"
                               >
                                 {"Sửa"}
                               </button>
@@ -496,7 +491,7 @@ export default function ForumPage() {
                             {canDeleteThread && (
                               <button
                                 onClick={() => handleDeleteThread(thread.id)}
-                                className="text-xs font-semibold text-slate-500 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
+                                className="text-xs font-semibold text-muted-foreground hover:text-destructive cursor-pointer"
                               >
                                 {"Xóa"}
                               </button>
@@ -505,7 +500,7 @@ export default function ForumPage() {
                         )}
                       </div>
 
-                      <h2 className="text-xl font-bold text-slate-900 dark:text-white leading-snug">
+                      <h2 className="text-xl font-bold text-foreground leading-snug">
                         {thread.title}
                       </h2>
                     </div>
@@ -515,15 +510,15 @@ export default function ForumPage() {
                       onClick={() => handleVote(thread.id, true)}
                       className={`group flex flex-col items-center justify-center px-3.5 py-2.5 rounded-xl border transition-all duration-200 min-w-[54px] select-none cursor-pointer ${
                         thread.isUpvotedByMe
-                          ? "bg-gradient-to-b from-blue-600 to-indigo-600 border-blue-600 text-white shadow-lg shadow-blue-500/25 ring-2 ring-blue-400/30"
-                          : "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-blue-400 hover:bg-blue-50/50 dark:hover:bg-blue-950/30 hover:text-blue-600 dark:hover:text-blue-400"
+                          ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20 ring-2 ring-ring"
+                          : "bg-muted border-border text-foreground hover:border-primary hover:bg-primary/10 hover:text-primary"
                       }`}
                     >
                       <svg
                         className={`w-4 h-4 transition-transform duration-200 group-hover:-translate-y-0.5 ${
                           thread.isUpvotedByMe
-                            ? "text-white"
-                            : "text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+                            ? "text-primary-foreground"
+                            : "text-muted-foreground group-hover:text-primary"
                         }`}
                         fill="none"
                         stroke="currentColor"
@@ -543,10 +538,10 @@ export default function ForumPage() {
                   </div>
 
                   {/* Toggle Replies View */}
-                  <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-4 mt-4">
+                  <div className="flex items-center justify-between border-t border-border pt-4 mt-4">
                     <button
                       onClick={() => toggleThreadExpand(thread.id)}
-                      className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                      className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       <span>
                         {isExpanded
@@ -571,7 +566,7 @@ export default function ForumPage() {
 
                   {/* Replies List */}
                   {isExpanded && (
-                    <div className="mt-4 space-y-4 border-l-2 border-slate-200 dark:border-slate-800 pl-4 md:pl-6 pt-2">
+                    <div className="mt-4 space-y-4 border-l-2 border-border pl-4 md:pl-6 pt-2">
                       {thread.replies.map((reply) => {
                         const isReplyAuthor = Boolean(
                           currentUserId && reply.authorUserId === currentUserId,
@@ -584,25 +579,25 @@ export default function ForumPage() {
                             key={reply.id}
                             className={`p-4 rounded-xl text-sm transition-all ${
                               reply.isStaffAnswer
-                                ? "bg-amber-500/5 border border-amber-500/20"
-                                : "bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800"
+                                ? "bg-warning/10 border border-warning/20"
+                                : "bg-muted/50 border border-border"
                             }`}
                           >
                             <div className="flex items-center justify-between gap-2 mb-2">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                                <span className="font-semibold text-foreground">
                                   {reply.authorName || "Thành viên LMS"}
                                 </span>
                                 {reply.isStaffAnswer && (
-                                  <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 px-3 py-1 rounded-full border border-amber-300/60 dark:border-amber-500/40 shadow-xs">
+                                  <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-warning bg-warning/10 px-3 py-1 rounded-full border border-warning/30 shadow-xs">
                                     Official Staff Answer
                                   </span>
                                 )}
-                                <span className="text-xs text-slate-400">
+                                <span className="text-xs text-muted-foreground">
                                   ({formatRoleName(reply.authorRole)})
                                 </span>
                                 {reply.isEdited && (
-                                  <span className="text-xs text-amber-600 dark:text-amber-400 font-medium italic">
+                                  <span className="text-xs text-warning font-medium italic">
                                     {"(Đã chỉnh sửa)"}
                                   </span>
                                 )}
@@ -612,7 +607,7 @@ export default function ForumPage() {
                                 {isReplyAuthor && (
                                   <button
                                     onClick={() => startEditReply(reply)}
-                                    className="text-xs font-semibold text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+                                    className="text-xs font-semibold text-muted-foreground hover:text-primary cursor-pointer"
                                   >
                                     {"Sửa"}
                                   </button>
@@ -620,7 +615,7 @@ export default function ForumPage() {
                                 {canDeleteReply && (
                                   <button
                                     onClick={() => handleDeleteReply(reply.id)}
-                                    className="text-xs font-semibold text-slate-500 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
+                                    className="text-xs font-semibold text-muted-foreground hover:text-destructive cursor-pointer"
                                   >
                                     {"Xóa"}
                                   </button>
@@ -629,7 +624,7 @@ export default function ForumPage() {
                                 {isStaffOrAdmin && !reply.isStaffAnswer && (
                                   <button
                                     onClick={() => handlePinStaffAnswer(reply.id)}
-                                    className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 hover:bg-amber-100 dark:bg-amber-500/10 dark:hover:bg-amber-500/20 border border-amber-300 dark:border-amber-500/30 px-3 py-1 rounded-full transition-all cursor-pointer"
+                                    className="inline-flex items-center gap-1 text-xs font-semibold text-warning bg-warning/10 hover:bg-warning/20 border border-warning/30 px-3 py-1 rounded-full transition-all cursor-pointer"
                                   >
                                     Pin Answer
                                   </button>
@@ -639,15 +634,15 @@ export default function ForumPage() {
                                   onClick={() => handleVote(reply.id, true)}
                                   className={`group inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all duration-200 select-none cursor-pointer ${
                                     reply.isUpvotedByMe
-                                      ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-500/25"
-                                      : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-950/30"
+                                      ? "bg-primary border-primary text-primary-foreground shadow-md"
+                                      : "bg-card border-border text-foreground hover:border-primary hover:text-primary hover:bg-primary/10"
                                   }`}
                                 >
                                   <svg
                                     className={`w-3.5 h-3.5 transition-transform duration-200 group-hover:-translate-y-0.5 ${
                                       reply.isUpvotedByMe
-                                        ? "text-white"
-                                        : "text-blue-500 dark:text-blue-400"
+                                        ? "text-primary-foreground"
+                                        : "text-primary"
                                     }`}
                                     fill="none"
                                     stroke="currentColor"
@@ -671,19 +666,19 @@ export default function ForumPage() {
                                   value={editReplyContent}
                                   onChange={(e) => setEditReplyContent(e.target.value)}
                                   rows={3}
-                                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
+                                  className="w-full bg-card border border-input rounded-xl p-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 />
                                 <div className="flex justify-end gap-2">
                                   <button
                                     onClick={() => setEditingReplyId(null)}
-                                    className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium cursor-pointer"
+                                    className="px-3 py-1.5 border border-input text-muted-foreground hover:bg-muted rounded-lg text-xs font-medium cursor-pointer"
                                   >
                                     {"Hủy"}
                                   </button>
                                   <button
                                     onClick={() => handleUpdateReply(reply.id)}
                                     disabled={submittingEditReply || !editReplyContent.trim()}
-                                    className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-500 disabled:opacity-50 cursor-pointer"
+                                    className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-semibold hover:bg-primary-hover disabled:opacity-50 cursor-pointer"
                                   >
                                     <span aria-live="polite">
                                       {submittingEditReply ? "…" : "Lưu thay đổi"}
@@ -692,7 +687,7 @@ export default function ForumPage() {
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                              <p className="text-foreground leading-relaxed whitespace-pre-line">
                                 {reply.content}
                               </p>
                             )}
@@ -707,10 +702,10 @@ export default function ForumPage() {
                             onClick={() =>
                               setActiveReplyBoxIds((prev) => ({ ...prev, [thread.id]: true }))
                             }
-                            className="w-full flex items-center gap-2 px-4 py-2.5 bg-slate-100/80 hover:bg-slate-100 dark:bg-slate-800/60 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-xl text-xs font-medium text-slate-500 dark:text-slate-400 transition-all cursor-pointer text-left group"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 bg-muted hover:bg-muted/80 border border-input rounded-xl text-xs font-medium text-muted-foreground transition-all cursor-pointer text-left group"
                           >
                             <svg
-                              className="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors"
+                              className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -734,7 +729,7 @@ export default function ForumPage() {
                               }
                               placeholder={"Nội dung thắc mắc hoặc thảo luận chi tiết…"}
                               rows={3}
-                              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
+                              className="w-full bg-card border border-input rounded-xl p-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             />
                             <div className="flex justify-end gap-2">
                               <button
@@ -742,7 +737,7 @@ export default function ForumPage() {
                                   setActiveReplyBoxIds((prev) => ({ ...prev, [thread.id]: false }));
                                   setReplyInputs((prev) => ({ ...prev, [thread.id]: "" }));
                                 }}
-                                className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs font-medium cursor-pointer"
+                                className="px-3 py-1.5 border border-input text-muted-foreground hover:bg-muted rounded-lg text-xs font-medium cursor-pointer"
                               >
                                 {"Hủy"}
                               </button>
@@ -752,7 +747,7 @@ export default function ForumPage() {
                                   submittingReply[thread.id] ||
                                   !(replyInputs[thread.id] || "").trim()
                                 }
-                                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-semibold transition-all shadow-xs cursor-pointer"
+                                className="px-4 py-1.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground rounded-lg text-xs font-semibold transition-all shadow-xs cursor-pointer"
                               >
                                 <span aria-live="polite">
                                   {submittingReply[thread.id] ? "Đang gửi…" : "Đăng bài"}
@@ -780,13 +775,13 @@ export default function ForumPage() {
       >
         <form onSubmit={handleCreateThread} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-semibold text-muted-foreground mb-1">
               {"Khóa học"}
             </label>
             <select
               value={newCourseId}
               onChange={(e) => setNewCourseId(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 cursor-pointer"
+              className="w-full bg-muted border border-input text-foreground rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
             >
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -797,7 +792,7 @@ export default function ForumPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-semibold text-muted-foreground mb-1">
               Title *
             </label>
             <input
@@ -806,12 +801,12 @@ export default function ForumPage() {
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               placeholder={"Tiêu đề chủ đề…"}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
+              className="w-full bg-muted border border-input text-foreground rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-semibold text-muted-foreground mb-1">
               Content
             </label>
             <textarea
@@ -819,22 +814,22 @@ export default function ForumPage() {
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
               placeholder={"Nội dung thắc mắc hoặc thảo luận chi tiết…"}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
+              className="w-full bg-muted border border-input text-foreground rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <button
               type="button"
               onClick={() => setShowCreateModal(false)}
-              className="px-4 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              className="px-4 py-2.5 border border-input text-foreground hover:bg-muted rounded-xl text-xs font-semibold transition-all cursor-pointer"
             >
               {"Hủy"}
             </button>
             <button
               type="submit"
               disabled={submittingThread || !newTitle.trim()}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-blue-600/20 cursor-pointer"
+              className="px-5 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground rounded-xl text-xs font-semibold transition-all shadow-md shadow-primary/20 cursor-pointer"
             >
               <span aria-live="polite">{submittingThread ? "…" : "Đăng bài"}</span>
             </button>
@@ -851,7 +846,7 @@ export default function ForumPage() {
       >
         <form onSubmit={handleUpdateThread} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-semibold text-muted-foreground mb-1">
               Title *
             </label>
             <input
@@ -859,34 +854,34 @@ export default function ForumPage() {
               required
               value={editThreadTitle}
               onChange={(e) => setEditThreadTitle(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
+              className="w-full bg-muted border border-input text-foreground rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-semibold text-muted-foreground mb-1">
               Content
             </label>
             <textarea
               rows={4}
               value={editThreadContent}
               onChange={(e) => setEditThreadContent(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
+              className="w-full bg-muted border border-input text-foreground rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <button
               type="button"
               onClick={() => setEditingThread(null)}
-              className="px-4 py-2.5 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              className="px-4 py-2.5 border border-input text-foreground hover:bg-muted rounded-xl text-xs font-semibold transition-all cursor-pointer"
             >
               {"Hủy"}
             </button>
             <button
               type="submit"
               disabled={submittingEditThread || !editThreadTitle.trim()}
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-blue-600/20 cursor-pointer"
+              className="px-5 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground rounded-xl text-xs font-semibold transition-all shadow-md shadow-primary/20 cursor-pointer"
             >
               <span aria-live="polite">{submittingEditThread ? "…" : "Lưu thay đổi"}</span>
             </button>

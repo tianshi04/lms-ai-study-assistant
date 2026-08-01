@@ -116,17 +116,17 @@ export function VideoUploadWidget({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+        <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {label}
         </label>
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-xs">
+        <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg text-xs">
           <button
             type="button"
             onClick={() => setActiveTab("upload")}
             className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
               activeTab === "upload"
-                ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs"
-                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                ? "bg-card text-primary shadow-2xs"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Upload Tải lên
@@ -136,8 +136,8 @@ export function VideoUploadWidget({
             onClick={() => setActiveTab("url")}
             className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
               activeTab === "url"
-                ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs"
-                : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                ? "bg-card text-primary shadow-2xs"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Nhập Đường dẫn URL
@@ -162,8 +162,8 @@ export function VideoUploadWidget({
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
               dragOver
-                ? "border-blue-500 bg-blue-50/50 dark:bg-blue-500/10 scale-[1.01]"
-                : "border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 hover:border-blue-400"
+                ? "border-primary bg-primary/10 scale-[1.01]"
+                : "border-border bg-card hover:border-primary"
             }`}
           >
             <input
@@ -177,7 +177,7 @@ export function VideoUploadWidget({
               }}
             />
 
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3 border border-blue-200 dark:border-blue-500/20 shadow-xs">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3 border border-primary/20 shadow-xs">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -188,24 +188,24 @@ export function VideoUploadWidget({
               </svg>
             </div>
 
-            <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+            <p className="text-xs font-bold text-foreground">
               Kéo & thả tệp Video/Phụ đề vào đây hoặc{" "}
-              <span className="text-blue-600 dark:text-blue-400 underline">bấm để chọn tệp</span>
+              <span className="text-primary underline">bấm để chọn tệp</span>
             </p>
-            <p className="text-[11px] text-slate-400 mt-1 font-mono">
+            <p className="text-[11px] text-muted-foreground mt-1 font-mono">
               Hỗ trợ tệp MP4, WebM, MOV, VTT (Max 500MB)
             </p>
           </div>
 
           {isUploading && (
-            <div className="space-y-1 bg-blue-50 dark:bg-blue-950/40 p-3 rounded-xl border border-blue-200 dark:border-blue-900/50">
-              <div className="flex justify-between text-xs font-semibold text-blue-700 dark:text-blue-300">
+            <div className="space-y-1 bg-primary/10 p-3 rounded-xl border border-primary/20">
+              <div className="flex justify-between text-xs font-semibold text-primary">
                 <span aria-live="polite">Đang tải tệp lên Cloud Storage…</span>
                 <span>{uploadProgress}%</span>
               </div>
-              <div className="w-full bg-blue-200 dark:bg-blue-900 rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-blue-600 h-full transition-all duration-300 rounded-full"
+                  className="bg-primary h-full transition-all duration-300 rounded-full"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -219,25 +219,23 @@ export function VideoUploadWidget({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono"
+            className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
       )}
 
       {value && (
-        <div className="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 flex items-center justify-between gap-3">
+        <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 overflow-hidden text-xs">
-            <span className="px-2 py-0.5 rounded bg-blue-600 text-white font-bold text-[10px] uppercase tracking-wider shrink-0">
+            <span className="px-2 py-0.5 rounded bg-primary text-primary-foreground font-bold text-[10px] uppercase tracking-wider shrink-0">
               Video Đang Chọn
             </span>
-            <span className="font-mono text-slate-700 dark:text-slate-300 truncate font-semibold">
-              {value}
-            </span>
+            <span className="font-mono text-foreground truncate font-semibold">{value}</span>
           </div>
           <button
             type="button"
             onClick={() => onChange("")}
-            className="text-xs text-rose-600 dark:text-rose-400 hover:underline font-bold shrink-0 cursor-pointer"
+            className="text-xs text-destructive hover:underline font-bold shrink-0 cursor-pointer"
           >
             Gỡ bỏ Video
           </button>

@@ -258,14 +258,14 @@ function PartnerSettingsForm({
         <div
           className={`mt-6 p-4 rounded-xl text-sm font-medium border flex items-center justify-between ${
             statusMessage.type === "success"
-              ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-              : "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
+              ? "bg-success/10 text-success border-success/30"
+              : "bg-destructive/10 text-destructive border-destructive/30"
           }`}
         >
           <div className="flex items-center gap-2">
             {statusMessage.type === "success" ? (
               <svg
-                className="w-5 h-5 text-emerald-600"
+                className="w-5 h-5 text-success"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -279,7 +279,7 @@ function PartnerSettingsForm({
               </svg>
             ) : (
               <svg
-                className="w-5 h-5 text-red-600"
+                className="w-5 h-5 text-destructive"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -305,9 +305,9 @@ function PartnerSettingsForm({
 
       <form onSubmit={handleUpdateProfile} className="mt-8 space-y-8">
         {/* Branding Settings */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center">
-            <span className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center text-sm mr-2.5 font-bold">
+        <div className="bg-card rounded-2xl p-6 border border-border shadow-sm space-y-6">
+          <h2 className="text-lg font-bold text-foreground flex items-center">
+            <span className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center text-sm mr-2.5 font-bold">
               1
             </span>
             Thông tin Nhãn hiệu & Tổ chức
@@ -315,46 +315,44 @@ function PartnerSettingsForm({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
                 Tên Đối tác
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full px-4 py-2.5 text-sm rounded-xl border border-input bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                Slug URL
-              </label>
+              <label className="block text-sm font-semibold text-foreground mb-1.5">Slug URL</label>
               <input
                 type="text"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
-                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none font-mono"
+                className="w-full px-4 py-2.5 text-sm rounded-xl border border-input bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none font-mono"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            <label className="block text-sm font-semibold text-foreground mb-1.5">
               Mô tả Giới thiệu
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border border-input bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
                 URL Logo Đối tác
               </label>
               <input
@@ -362,10 +360,10 @@ function PartnerSettingsForm({
                 value={logoUrl}
                 onChange={(e) => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
-                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full px-4 py-2.5 text-sm rounded-xl border border-input bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               />
               {logoUrl && (
-                <div className="mt-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center space-x-3">
+                <div className="mt-2 p-2 bg-muted rounded-xl border border-border flex items-center space-x-3">
                   <Image
                     src={logoUrl}
                     alt="Logo Preview"
@@ -374,13 +372,13 @@ function PartnerSettingsForm({
                     className="w-10 h-10 object-contain rounded-lg"
                     unoptimized
                   />
-                  <span className="text-xs text-slate-500">Xem trước Logo</span>
+                  <span className="text-xs text-muted-foreground">Xem trước Logo</span>
                 </div>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
                 URL Banner Bìa
               </label>
               <input
@@ -388,10 +386,10 @@ function PartnerSettingsForm({
                 value={bannerUrl}
                 onChange={(e) => setBannerUrl(e.target.value)}
                 placeholder="https://example.com/banner.jpg"
-                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full px-4 py-2.5 text-sm rounded-xl border border-input bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               />
               {bannerUrl && (
-                <div className="mt-2 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div className="mt-2 p-2 bg-muted rounded-xl border border-border">
                   <Image
                     src={bannerUrl}
                     alt="Banner Preview"
@@ -405,7 +403,7 @@ function PartnerSettingsForm({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block text-sm font-semibold text-foreground mb-1.5">
                 Website chính thức
               </label>
               <input
@@ -413,13 +411,13 @@ function PartnerSettingsForm({
                 value={websiteUrl}
                 onChange={(e) => setWebsiteUrl(e.target.value)}
                 placeholder="https://hcmut.edu.vn"
-                className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full px-4 py-2.5 text-sm rounded-xl border border-input bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+            <label className="block text-sm font-semibold text-foreground mb-1.5">
               Danh sách Tên miền Được phép Cấp chứng chỉ (Phân cách bởi dấu phẩy)
             </label>
             <input
@@ -427,33 +425,33 @@ function PartnerSettingsForm({
               value={allowedDomainsStr}
               onChange={(e) => setAllowedDomainsStr(e.target.value)}
               placeholder="hcmut.edu.vn, vnuhcm.edu.vn"
-              className="w-full px-4 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="w-full px-4 py-2.5 text-sm rounded-xl border border-input bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
           </div>
         </div>
 
         {/* Multi-Signers Management Section */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+        <div className="bg-card rounded-2xl p-6 border border-border shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center">
-                <span className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm mr-2.5 font-bold">
+              <h2 className="text-lg font-bold text-foreground flex items-center">
+                <span className="w-8 h-8 rounded-lg bg-success/10 text-success flex items-center justify-center text-sm mr-2.5 font-bold">
                   2
                 </span>
                 Quản lý Nhiều Người Ký (Multi-Signers Management)
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Thiết lập danh sách Đại diện ký số cho các Khoa, Viện và Chuyên ngành khác nhau của
                 trường.
               </p>
             </div>
-            <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-full border border-emerald-200 dark:border-emerald-800 w-fit">
+            <span className="px-3 py-1 bg-success/10 text-success text-xs font-semibold rounded-full border border-success/20 w-fit">
               {signatories.length} Người ký
             </span>
           </div>
 
           {sigErrorMsg && (
-            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 text-red-600 text-xs rounded-xl">
+            <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-xs rounded-xl">
               {sigErrorMsg}
             </div>
           )}
@@ -465,17 +463,17 @@ function PartnerSettingsForm({
                 key={sig.id}
                 className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
                   sig.isDefault
-                    ? "bg-blue-50/60 dark:bg-blue-950/20 border-blue-300 dark:border-blue-700 shadow-sm"
-                    : "bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800"
+                    ? "bg-primary/10 border-primary/30 shadow-sm"
+                    : "bg-muted border-border"
                 }`}
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-muted text-muted-foreground">
                       {sig.department}
                     </span>
                     {sig.isDefault ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-full bg-blue-600 text-white">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-bold uppercase rounded-full bg-primary text-primary-foreground">
                         <svg
                           className="w-3 h-3"
                           fill="none"
@@ -495,17 +493,17 @@ function PartnerSettingsForm({
                       <button
                         type="button"
                         onClick={() => handleSetDefaultSignatory(sig)}
-                        className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+                        className="text-xs text-primary font-semibold hover:underline"
                       >
                         Đặt làm Mặc định
                       </button>
                     )}
                   </div>
-                  <h4 className="font-bold text-slate-900 dark:text-white text-sm">{sig.name}</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">{sig.title}</p>
+                  <h4 className="font-bold text-foreground text-sm">{sig.name}</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">{sig.title}</p>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
                   {sig.signatureImageUrl ? (
                     <div className="h-6 flex items-center">
                       <Image
@@ -518,13 +516,15 @@ function PartnerSettingsForm({
                       />
                     </div>
                   ) : (
-                    <span className="text-[11px] text-slate-400 italic">Chưa có ảnh chữ ký</span>
+                    <span className="text-[11px] text-muted-foreground italic">
+                      Chưa có ảnh chữ ký
+                    </span>
                   )}
                   {!sig.isDefault && (
                     <button
                       type="button"
                       onClick={() => handleRemoveSignatory(sig.id)}
-                      className="text-xs text-red-500 hover:text-red-700 font-medium"
+                      className="text-xs text-destructive hover:opacity-80 font-medium"
                     >
                       Gỡ bỏ
                     </button>
@@ -535,10 +535,10 @@ function PartnerSettingsForm({
           </div>
 
           {/* Add New Signatory Sub-form */}
-          <div className="p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4">
-            <h4 className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+          <div className="p-4 bg-muted rounded-xl border border-border space-y-4">
+            <h4 className="text-xs font-bold uppercase text-foreground flex items-center gap-1.5">
               <svg
-                className="w-4 h-4 text-emerald-600"
+                className="w-4 h-4 text-success"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -558,35 +558,35 @@ function PartnerSettingsForm({
                 value={newSigName}
                 onChange={(e) => setNewSigName(e.target.value)}
                 placeholder="Họ tên người ký (VD: PGS.TS. Lê Văn C)"
-                className="px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="px-3.5 py-2 text-xs rounded-xl border border-input bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
               <input
                 type="text"
                 value={newSigTitle}
                 onChange={(e) => setNewSigTitle(e.target.value)}
                 placeholder="Chức danh (VD: Phó Hiệu trưởng)"
-                className="px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="px-3.5 py-2 text-xs rounded-xl border border-input bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
               <input
                 type="text"
                 value={newSigDept}
                 onChange={(e) => setNewSigDept(e.target.value)}
                 placeholder="Khoa / Chuyên ngành (VD: Khoa Điện - Điện tử)"
-                className="px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="px-3.5 py-2 text-xs rounded-xl border border-input bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
               <input
                 type="text"
                 value={newSigImage}
                 onChange={(e) => setNewSigImage(e.target.value)}
                 placeholder="URL Ảnh chữ ký (tùy chọn)"
-                className="px-3.5 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="px-3.5 py-2 text-xs rounded-xl border border-input bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
             <div className="flex justify-end">
               <button
                 type="button"
                 onClick={handleAddSignatory}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-colors"
+                className="bg-success hover:bg-success-hover text-success-foreground text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-colors"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
@@ -603,16 +603,16 @@ function PartnerSettingsForm({
         </div>
 
         {/* Digital Key Pair & OpenBadges Management */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+        <div className="bg-card rounded-2xl p-6 border border-border shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center">
-                <span className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm mr-2.5 font-bold">
+              <h2 className="text-lg font-bold text-foreground flex items-center">
+                <span className="w-8 h-8 rounded-lg bg-warning/10 text-warning flex items-center justify-center text-sm mr-2.5 font-bold">
                   3
                 </span>
                 Quản lý Khóa Ký số & OpenBadges
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Tạo cặp khóa ký RSA/ED25519 cho chứng chỉ số và tải file cấu hình Issuer cho website
                 tổ chức.
               </p>
@@ -622,7 +622,7 @@ function PartnerSettingsForm({
                 type="button"
                 onClick={handleRotateKeyPair}
                 isLoading={rotateKeyPairMutation.isPending}
-                className="bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-xl text-xs px-4 py-2.5 flex items-center gap-1.5"
+                className="bg-warning hover:bg-warning-hover text-warning-foreground font-medium rounded-xl text-xs px-4 py-2.5 flex items-center gap-1.5"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
@@ -638,10 +638,10 @@ function PartnerSettingsForm({
                 type="button"
                 onClick={handleDownloadOpenBadgesJson}
                 variant="outline"
-                className="font-medium rounded-xl text-xs px-4 py-2.5 border-slate-300 dark:border-slate-700 flex items-center gap-1.5"
+                className="font-medium rounded-xl text-xs px-4 py-2.5 border-input flex items-center gap-1.5"
               >
                 <svg
-                  className="w-4 h-4 text-blue-600"
+                  className="w-4 h-4 text-primary"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -660,19 +660,19 @@ function PartnerSettingsForm({
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400">
+              <label className="block text-xs font-semibold uppercase text-muted-foreground">
                 Public Key PEM (Khóa Công khai Ký số Hiện tại)
               </label>
               {publicKeyPem && (
                 <button
                   type="button"
                   onClick={handleCopyPublicKey}
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline font-medium flex items-center gap-1"
+                  className="text-xs text-primary hover:underline font-medium flex items-center gap-1"
                 >
                   {copiedKey ? (
                     <>
                       <svg
-                        className="w-3.5 h-3.5 text-emerald-600"
+                        className="w-3.5 h-3.5 text-success"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -712,7 +712,7 @@ function PartnerSettingsForm({
               readOnly
               rows={4}
               placeholder="Chưa có Public Key PEM. Bấm nút 'Rotate Key Pair' để tạo mới."
-              className="w-full px-4 py-3 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="w-full px-4 py-3 text-xs font-mono rounded-xl border border-input bg-muted text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
         </div>
@@ -722,7 +722,7 @@ function PartnerSettingsForm({
           <Button
             type="submit"
             isLoading={updateMutation.isPending}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-6 py-3 text-sm shadow-md flex items-center gap-2"
+            className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-xl px-6 py-3 text-sm shadow-md flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
@@ -760,8 +760,8 @@ export default function PartnerSettingsPage() {
   if (profileLoading || partnersLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex items-center space-x-3 text-slate-500">
-          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="flex items-center space-x-3 text-muted-foreground">
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
           <span aria-live="polite">Đang tải cấu hình đối tác…</span>
         </div>
       </div>
@@ -770,9 +770,9 @@ export default function PartnerSettingsPage() {
 
   if (!isPartnerAdmin) {
     return (
-      <div className="max-w-md mx-auto my-16 p-8 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-2xl text-center">
-        <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">Từ chối truy cập</h2>
-        <p className="text-slate-600 dark:text-slate-400 text-sm">
+      <div className="max-w-md mx-auto my-16 p-8 bg-destructive/10 border border-destructive/20 rounded-2xl text-center">
+        <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
+        <p className="text-muted-foreground text-sm">
           Trang này dành riêng cho Quản trị viên Tổ chức.
         </p>
         <Button onClick={() => router.push("/")} className="mt-4" variant="outline">
@@ -784,9 +784,9 @@ export default function PartnerSettingsPage() {
 
   if (partners.length === 0 || !activePartner) {
     return (
-      <div className="max-w-2xl mx-auto my-16 p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-center shadow-sm">
+      <div className="max-w-2xl mx-auto my-16 p-8 bg-card border border-border rounded-2xl text-center shadow-sm">
         <svg
-          className="w-16 h-16 mx-auto text-slate-300 mb-4"
+          className="w-16 h-16 mx-auto text-muted-foreground/60 mb-4"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -798,10 +798,8 @@ export default function PartnerSettingsPage() {
             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
           />
         </svg>
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-          Chưa tìm thấy hồ sơ Đối tác
-        </h2>
-        <p className="text-slate-600 dark:text-slate-400 text-sm">
+        <h2 className="text-xl font-bold text-foreground mb-2">Chưa tìm thấy hồ sơ Đối tác</h2>
+        <p className="text-muted-foreground text-sm">
           Tài khoản của bạn chưa gắn liền với thông tin đối tác nào. Vui lòng liên hệ Super Admin để
           khởi tạo hồ sơ đối tác.
         </p>
@@ -812,12 +810,12 @@ export default function PartnerSettingsPage() {
   return (
     <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Header */}
-      <div className="pb-6 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="pb-6 border-b border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight text-balance">
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight text-balance">
             Cấu hình Self-Service Tổ chức
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             Quản lý thương hiệu phát hành, chữ ký số đại diện và thông tin xác thực OpenBadges cho
             tổ chức của bạn.
           </p>
@@ -826,7 +824,7 @@ export default function PartnerSettingsPage() {
           <select
             value={selectedPartnerId || activePartner.id}
             onChange={(e) => setSelectedPartnerId(e.target.value)}
-            className="px-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="px-4 py-2 text-sm rounded-xl border border-input bg-card font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {partners.map((p) => (
               <option key={p.id} value={p.id}>

@@ -45,7 +45,7 @@ export function CourseCard({ course }: { course: Course }) {
                 className="h-6 max-w-[140px] w-auto object-contain dark:brightness-200 dark:contrast-200 transition-opacity"
               />
             ) : (
-              <span className="text-xs font-bold font-mono text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-200 dark:border-blue-500/20">
+              <span className="text-xs font-bold font-mono text-info bg-info/10 px-2.5 py-1 rounded-md border border-info/20">
                 {course.partnerName}
               </span>
             )}
@@ -55,22 +55,22 @@ export function CourseCard({ course }: { course: Course }) {
         {/* Title & Description */}
         <Link href={`/courses/${course.id}`} prefetch={true} className="block">
           <ViewTransition name={`course-title-${course.id}`} share="text-morph">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-3 line-clamp-2">
+            <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors mb-3 line-clamp-2">
               {course.title}
             </h3>
           </ViewTransition>
         </Link>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 line-clamp-3 leading-relaxed">
+        <p className="text-sm text-muted-foreground mb-6 line-clamp-3 leading-relaxed">
           {course.description}
         </p>
       </div>
 
       <div>
         {/* Instructors & Modules Count */}
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 mb-6 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div className="pt-4 border-t border-border mb-6 flex items-center justify-between text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5 truncate max-w-[160px]">
             <svg
-              className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 flex-shrink-0"
+              className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -86,7 +86,7 @@ export function CourseCard({ course }: { course: Course }) {
           </span>
           <span className="flex items-center gap-1.5">
             <svg
-              className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500"
+              className="w-3.5 h-3.5 text-muted-foreground"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -106,7 +106,7 @@ export function CourseCard({ course }: { course: Course }) {
         <Link
           href={`/courses/${course.id}`}
           transitionTypes={["nav-forward"]}
-          className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-all shadow-lg shadow-blue-600/20 group-hover:shadow-blue-500/30"
+          className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-all shadow-lg"
         >
           {"Xem Chi Tiết Khóa Học"}
           <svg

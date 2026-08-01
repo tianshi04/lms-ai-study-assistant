@@ -47,7 +47,7 @@ export function WeekFormModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+          <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
             {"Tiêu đề Tuần học"}
           </label>
           <input
@@ -55,13 +55,13 @@ export function WeekFormModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={"Ví dụ: Week 1: Giới thiệu về Neural Networks"}
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             required
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+          <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
             {"Mô tả tóm tắt"}
           </label>
           <textarea
@@ -69,7 +69,7 @@ export function WeekFormModal({
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
             placeholder={"Tóm tắt nội dung chính học viên sẽ thu hoạch được…"}
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
 
@@ -77,14 +77,14 @@ export function WeekFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 transition-colors"
+            className="px-4 py-2 rounded-xl text-xs font-bold bg-muted text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
           >
             {"Hủy"}
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
+            className="px-5 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground shadow-md transition-all disabled:opacity-50 cursor-pointer"
           >
             <span aria-live="polite">
               {saving ? "Đang lưu…" : isEdit ? "Cập nhật Tuần học" : "Xác nhận tạo Tuần học"}

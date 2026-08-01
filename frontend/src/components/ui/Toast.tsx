@@ -25,7 +25,7 @@ export interface ToastOptions {
 // Icon Components using clean inline SVG vectors
 const VariantIcons: Record<ToastType, React.ReactNode> = {
   default: (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
       <svg
         className="h-5 w-5"
         fill="none"
@@ -43,7 +43,7 @@ const VariantIcons: Record<ToastType, React.ReactNode> = {
     </div>
   ),
   success: (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
       <svg
         className="h-5 w-5"
         fill="none"
@@ -61,7 +61,7 @@ const VariantIcons: Record<ToastType, React.ReactNode> = {
     </div>
   ),
   error: (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/15 text-destructive">
       <svg
         className="h-5 w-5"
         fill="none"
@@ -79,7 +79,7 @@ const VariantIcons: Record<ToastType, React.ReactNode> = {
     </div>
   ),
   warning: (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warning/15 text-warning">
       <svg
         className="h-5 w-5"
         fill="none"
@@ -97,7 +97,7 @@ const VariantIcons: Record<ToastType, React.ReactNode> = {
     </div>
   ),
   info: (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-info/15 text-info">
       <svg
         className="h-5 w-5"
         fill="none"
@@ -115,7 +115,7 @@ const VariantIcons: Record<ToastType, React.ReactNode> = {
     </div>
   ),
   loading: (
-    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
       <svg
         className="h-5 w-5 animate-spin"
         fill="none"
@@ -143,12 +143,12 @@ const VariantIcons: Record<ToastType, React.ReactNode> = {
 };
 
 const toastBorderVariants: Record<ToastType, string> = {
-  default: "border-slate-200 dark:border-slate-800",
-  success: "border-emerald-200 dark:border-emerald-900/50",
-  error: "border-rose-200 dark:border-rose-900/50",
-  warning: "border-amber-200 dark:border-amber-900/50",
-  info: "border-sky-200 dark:border-sky-900/50",
-  loading: "border-blue-200 dark:border-blue-900/50",
+  default: "border-border",
+  success: "border-success/30",
+  error: "border-destructive/30",
+  warning: "border-warning/30",
+  info: "border-info/30",
+  loading: "border-primary/30",
 };
 
 interface ToastItemProps {
@@ -165,7 +165,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast }) => {
       toast={toast}
       className={cn(
         "pointer-events-auto relative flex w-full items-start justify-between gap-3 overflow-hidden rounded-xl border p-4 shadow-lg transition-all duration-200 ease-out",
-        "bg-white/95 backdrop-blur-md dark:bg-slate-900/95 text-slate-900 dark:text-slate-100",
+        "bg-card/95 backdrop-blur-md text-card-foreground",
         "data-[ending]:animate-out data-[ending]:fade-out-0 data-[ending]:slide-out-to-right-full data-[ending]:duration-150",
         "data-[starting]:animate-in data-[starting]:fade-in-0 data-[starting]:slide-in-from-bottom-5 data-[starting]:duration-200",
         toastBorderVariants[type],
@@ -175,12 +175,12 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast }) => {
         {icon}
         <div className="flex flex-col gap-1 pt-0.5">
           {toast.title && (
-            <BaseToast.Title className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-snug">
+            <BaseToast.Title className="text-sm font-semibold text-card-foreground leading-snug">
               {toast.title}
             </BaseToast.Title>
           )}
           {toast.description && (
-            <BaseToast.Description className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            <BaseToast.Description className="text-xs text-muted-foreground leading-relaxed">
               {toast.description}
             </BaseToast.Description>
           )}
@@ -190,7 +190,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast }) => {
       {action && (
         <BaseToast.Action
           onClick={action.onClick}
-          className="shrink-0 self-center text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors px-2 py-1 rounded-md hover:bg-blue-50 dark:hover:bg-blue-950/40"
+          className="shrink-0 self-center text-xs font-semibold text-primary hover:text-primary-hover transition-colors px-2 py-1 rounded-md hover:bg-accent"
         >
           {action.label}
         </BaseToast.Action>
@@ -198,7 +198,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast }) => {
 
       <BaseToast.Close
         aria-label="Close notification"
-        className="shrink-0 rounded-lg p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer -mr-1 -mt-1"
+        className="shrink-0 rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer -mr-1 -mt-1"
       >
         <svg
           className="h-4 w-4"

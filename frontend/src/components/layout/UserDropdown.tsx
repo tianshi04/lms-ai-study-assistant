@@ -41,7 +41,7 @@ export function UserDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-all cursor-pointer group p-0.5 border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 shrink-0"
+        className="relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all cursor-pointer group p-0.5 border border-border hover:border-primary shrink-0"
         aria-label={displayUserName}
       >
         <Image
@@ -50,28 +50,26 @@ export function UserDropdown() {
           width={36}
           height={36}
           unoptimized
-          className="w-9 h-9 rounded-full bg-blue-500/20 object-cover group-hover:scale-105 transition-transform"
+          className="w-9 h-9 rounded-full bg-primary/10 object-cover group-hover:scale-105 transition-transform"
         />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="w-64 p-2 rounded-2xl shadow-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+      <DropdownMenuContent className="w-64 p-2 rounded-2xl shadow-2xl bg-card border border-border">
         {/* User Info Header with Avatar and Stacked Role Badge */}
-        <div className="flex items-center gap-3 px-3.5 py-3.5 border-b border-slate-100 dark:border-slate-800 mb-1 bg-slate-50/50 dark:bg-slate-800/40 rounded-t-xl">
+        <div className="flex items-center gap-3 px-3.5 py-3.5 border-b border-border mb-1 bg-muted/50 rounded-t-xl">
           <Image
             src={avatarSrc}
             alt={displayUserName}
             width={48}
             height={48}
             unoptimized
-            className="w-12 h-12 rounded-full bg-blue-500/20 object-cover ring-2 ring-blue-500/30 shrink-0"
+            className="w-12 h-12 rounded-full bg-primary/10 object-cover ring-2 ring-primary/30 shrink-0"
           />
           <div className="min-w-0 flex-1 space-y-1">
-            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
-              {displayUserName}
-            </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{userEmail}</p>
+            <p className="text-sm font-bold text-foreground truncate">{displayUserName}</p>
+            <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
             <div>
-              <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+              <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
                 {roleLabel}
               </span>
             </div>
@@ -82,10 +80,10 @@ export function UserDropdown() {
         <DropdownMenuItem className="p-0">
           <Link
             href="/"
-            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-500/10 rounded-xl"
+            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-bold text-primary bg-primary/10 rounded-xl"
           >
             <svg
-              className="w-4.5 h-4.5 text-indigo-600 dark:text-indigo-400"
+              className="w-4.5 h-4.5 text-primary"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -104,10 +102,10 @@ export function UserDropdown() {
         <DropdownMenuItem className="p-0">
           <Link
             href="/auth/profile"
-            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium"
+            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
           >
             <svg
-              className="w-4.5 h-4.5 text-slate-500"
+              className="w-4.5 h-4.5 text-muted-foreground"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -126,10 +124,10 @@ export function UserDropdown() {
         <DropdownMenuItem className="p-0">
           <Link
             href="/my-courses"
-            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium"
+            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
           >
             <svg
-              className="w-4.5 h-4.5 text-slate-500"
+              className="w-4.5 h-4.5 text-muted-foreground"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -148,10 +146,10 @@ export function UserDropdown() {
         <DropdownMenuItem className="p-0">
           <Link
             href="/certificates"
-            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium"
+            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
           >
             <svg
-              className="w-4.5 h-4.5 text-purple-500"
+              className="w-4.5 h-4.5 text-primary"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -170,10 +168,10 @@ export function UserDropdown() {
         <DropdownMenuItem className="p-0">
           <Link
             href="/financial-aid"
-            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium"
+            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
           >
             <svg
-              className="w-4.5 h-4.5 text-emerald-500"
+              className="w-4.5 h-4.5 text-success"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -193,10 +191,10 @@ export function UserDropdown() {
           <DropdownMenuItem className="p-0">
             <Link
               href="/become-an-instructor"
-              className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+              className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
             >
               <svg
-                className="w-4.5 h-4.5 text-blue-600 dark:text-blue-400"
+                className="w-4.5 h-4.5 text-primary"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -224,10 +222,10 @@ export function UserDropdown() {
             <DropdownMenuItem className="p-0">
               <Link
                 href="/instructor/courses"
-                className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium"
+                className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
               >
                 <svg
-                  className="w-4.5 h-4.5 text-blue-500"
+                  className="w-4.5 h-4.5 text-primary"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -245,10 +243,10 @@ export function UserDropdown() {
             <DropdownMenuItem className="p-0">
               <Link
                 href="/instructor/profile"
-                className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium"
+                className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
               >
                 <svg
-                  className="w-4.5 h-4.5 text-indigo-500"
+                  className="w-4.5 h-4.5 text-primary"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -270,10 +268,10 @@ export function UserDropdown() {
           <DropdownMenuItem className="p-0">
             <Link
               href="/partner/settings"
-              className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium"
+              className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
             >
               <svg
-                className="w-4.5 h-4.5 text-amber-500"
+                className="w-4.5 h-4.5 text-warning"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -301,10 +299,10 @@ export function UserDropdown() {
             <DropdownMenuItem className="p-0">
               <Link
                 href="/admin/dashboard"
-                className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium"
+                className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
               >
                 <svg
-                  className="w-4.5 h-4.5 text-indigo-500"
+                  className="w-4.5 h-4.5 text-primary"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -322,10 +320,10 @@ export function UserDropdown() {
             <DropdownMenuItem className="p-0">
               <Link
                 href="/admin/applications"
-                className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium"
+                className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
               >
                 <svg
-                  className="w-4.5 h-4.5 text-emerald-500"
+                  className="w-4.5 h-4.5 text-success"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -343,10 +341,10 @@ export function UserDropdown() {
             <DropdownMenuItem className="p-0">
               <Link
                 href="/admin/partners"
-                className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium"
+                className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
               >
                 <svg
-                  className="w-4.5 h-4.5 text-blue-600"
+                  className="w-4.5 h-4.5 text-primary"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -364,15 +362,15 @@ export function UserDropdown() {
           </>
         )}
 
-        <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
+        <div className="border-t border-border my-1" />
 
         <DropdownMenuItem className="p-0">
           <Link
             href="/partners/stanford-online"
-            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium"
+            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
           >
             <svg
-              className="w-4.5 h-4.5 text-emerald-500"
+              className="w-4.5 h-4.5 text-success"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -394,15 +392,15 @@ export function UserDropdown() {
           </Link>
         </DropdownMenuItem>
 
-        <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
+        <div className="border-t border-border my-1" />
 
         <DropdownMenuItem className="p-0">
           <Link
             href="/landing"
-            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium"
+            className="flex items-center gap-3 w-full px-3.5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
           >
             <svg
-              className="w-4.5 h-4.5 text-slate-500"
+              className="w-4.5 h-4.5 text-muted-foreground"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -418,11 +416,11 @@ export function UserDropdown() {
           </Link>
         </DropdownMenuItem>
 
-        <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
+        <div className="border-t border-border my-1" />
 
         <DropdownMenuItem
           onClick={handleLogout}
-          className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 cursor-pointer px-3.5 py-2.5 text-sm font-medium"
+          className="text-destructive hover:bg-destructive/10 cursor-pointer px-3.5 py-2.5 text-sm font-medium"
         >
           <span className="flex items-center gap-3">
             <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

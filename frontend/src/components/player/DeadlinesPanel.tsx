@@ -10,7 +10,7 @@ interface DeadlinesPanelProps {
 export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelProps) {
   if (!progress) {
     return (
-      <div aria-live="polite" className="text-center text-xs text-slate-500 py-6">
+      <div aria-live="polite" className="text-center text-xs text-muted-foreground py-6">
         {"Đang tải…"}
       </div>
     );
@@ -20,20 +20,18 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl space-y-4 shadow-sm">
+      <div className="bg-card border border-border p-4 rounded-xl space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="font-bold text-sm text-slate-900 dark:text-white">
-              {"Các mốc Deadline sắp tới"}
-            </h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <h4 className="font-bold text-sm text-foreground">{"Các mốc Deadline sắp tới"}</h4>
+            <p className="text-xs text-muted-foreground">
               {"Hạn nộp linh hoạt (Flexible Deadlines)"}
             </p>
           </div>
           {hasOverdue && (
             <button
               onClick={onResetDeadlines}
-              className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-bold rounded-xl shadow-lg transition-all border border-amber-400/30 flex items-center gap-2 animate-pulse cursor-pointer"
+              className="px-4 py-2 bg-warning hover:bg-warning-hover text-warning-foreground text-xs font-bold rounded-xl shadow-lg transition-all border border-warning/30 flex items-center gap-2 animate-pulse cursor-pointer"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -54,8 +52,8 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
               key={d.weekNumber}
               className={`p-3 rounded-xl border text-xs flex items-center justify-between ${
                 d.status === 2
-                  ? "bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-300"
-                  : "bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300"
+                  ? "bg-warning/10 border-warning/30 text-warning"
+                  : "bg-muted border-border text-foreground"
               }`}
             >
               <div>
@@ -67,8 +65,8 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
               <span
                 className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                   d.status === 2
-                    ? "bg-amber-500 text-slate-950"
-                    : "bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30"
+                    ? "bg-warning text-warning-foreground"
+                    : "bg-primary/10 text-primary border border-primary/30"
                 }`}
               >
                 {d.status === 2 ? "OVERDUE" : "ON TRACK"}

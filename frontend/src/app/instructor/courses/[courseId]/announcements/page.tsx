@@ -85,48 +85,40 @@ export default function InstructorAnnouncementsPage({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
+    <div className="min-h-screen bg-background text-foreground flex flex-col transition-colors">
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Breadcrumbs */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <Link
-              href="/instructor/courses"
-              className="hover:text-blue-600 dark:hover:text-blue-400"
-            >
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Link href="/instructor/courses" className="hover:text-primary">
               Giảng viên
             </Link>
             <span>/</span>
-            <Link
-              href={`/instructor/courses/${courseId}`}
-              className="hover:text-blue-600 dark:hover:text-blue-400"
-            >
+            <Link href={`/instructor/courses/${courseId}`} className="hover:text-primary">
               Chi tiết khóa học
             </Link>
             <span>/</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">
-              Thông báo khóa học
-            </span>
+            <span className="font-semibold text-foreground">Thông báo khóa học</span>
           </div>
 
           <Link
             href={`/instructor/courses/${courseId}`}
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 transition-colors"
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
           >
             Quay lại Biên soạn
           </Link>
         </div>
 
         {/* Page Header */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="bg-card rounded-3xl p-6 sm:p-8 border border-border shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 text-xs font-extrabold uppercase mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-extrabold uppercase mb-2">
               Course Announcements
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white text-balance">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground text-balance">
               Thông báo Khóa học
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               Gửi thông tin cập nhật, nhắc nhở hạn nộp bài và các thông điệp quan trọng tới toàn bộ
               học viên.
             </p>
@@ -137,8 +129,8 @@ export default function InstructorAnnouncementsPage({
           <div
             className={`p-4 rounded-2xl text-sm font-semibold flex items-center justify-between shadow-sm ${
               message.type === "success"
-                ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20"
-                : "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20"
+                ? "bg-success/10 text-success border border-success/20"
+                : "bg-destructive/10 text-destructive border border-destructive/20"
             }`}
           >
             <span>{message.text}</span>
@@ -150,10 +142,10 @@ export default function InstructorAnnouncementsPage({
 
         {/* Post Announcement Form */}
         {isInstructorOrAdmin && (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <div className="bg-card rounded-3xl p-6 sm:p-8 border border-border shadow-sm space-y-4">
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
               <svg
-                className="w-5 h-5 text-purple-600"
+                className="w-5 h-5 text-primary"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -170,7 +162,7 @@ export default function InstructorAnnouncementsPage({
 
             <form onSubmit={handlePostAnnouncement} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Tiêu đề thông báo *
                 </label>
                 <input
@@ -178,13 +170,13 @@ export default function InstructorAnnouncementsPage({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Ví dụ: Cập nhật hạn nộp bài tập Tuần 2 & Lịch livestream hỏi đáp"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-muted text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Nội dung chi tiết *
                 </label>
                 <textarea
@@ -192,7 +184,7 @@ export default function InstructorAnnouncementsPage({
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Nhập chi tiết nội dung thông báo gửi tới học viên…"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-muted text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   required
                 />
               </div>
@@ -201,7 +193,7 @@ export default function InstructorAnnouncementsPage({
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm shadow-md transition-all cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm shadow-md transition-all cursor-pointer disabled:opacity-50"
                 >
                   <span aria-live="polite">{submitting ? "Đang gửi…" : "Đăng Thông báo Ngay"}</span>
                 </button>
@@ -212,17 +204,17 @@ export default function InstructorAnnouncementsPage({
 
         {/* Announcements List */}
         <div className="space-y-4">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+          <h2 className="text-lg font-bold text-foreground">
             Lịch sử Thông báo ({announcements.length})
           </h2>
 
           {loading ? (
-            <div className="py-12 text-center text-slate-500">
-              <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+            <div className="py-12 text-center text-muted-foreground">
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
               <span aria-live="polite">Đang tải danh sách thông báo…</span>
             </div>
           ) : announcements.length === 0 ? (
-            <div className="py-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 text-slate-500 text-sm">
+            <div className="py-12 text-center bg-card rounded-3xl border border-border p-6 text-muted-foreground text-sm">
               Chưa có thông báo nào được đăng cho khóa học này.
             </div>
           ) : (
@@ -230,26 +222,24 @@ export default function InstructorAnnouncementsPage({
               {announcements.map((ann) => (
                 <div
                   key={ann.id}
-                  className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3"
+                  className="bg-card rounded-3xl p-6 border border-border shadow-sm space-y-3"
                 >
                   <div className="flex justify-between items-start gap-4">
-                    <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
-                      {ann.title}
-                    </h3>
-                    <span className="text-[11px] font-mono text-slate-400 flex-shrink-0">
+                    <h3 className="font-extrabold text-base text-foreground">{ann.title}</h3>
+                    <span className="text-[11px] font-mono text-muted-foreground flex-shrink-0">
                       {ann.createdAt
                         ? new Date(ann.createdAt).toLocaleDateString("vi-VN")
                         : "Gần đây"}
                     </span>
                   </div>
 
-                  <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
                     {ann.content}
                   </p>
 
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs text-slate-400">
+                  <div className="pt-3 border-t border-border flex items-center gap-2 text-xs text-muted-foreground">
                     <svg
-                      className="w-4 h-4 text-purple-500"
+                      className="w-4 h-4 text-primary"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"

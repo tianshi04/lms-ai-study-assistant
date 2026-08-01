@@ -38,9 +38,7 @@ export function RatingStars({
               aria-hidden="true"
               className={cn(
                 sizeClasses[size],
-                isFilled
-                  ? "fill-amber-400 text-amber-400"
-                  : "text-slate-300 dark:text-slate-700 fill-none",
+                isFilled ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30 fill-none",
               )}
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -56,9 +54,7 @@ export function RatingStars({
         })}
       </div>
       {showScore && (
-        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 ml-1">
-          {rating.toFixed(1)}
-        </span>
+        <span className="text-xs font-bold text-foreground ml-1">{rating.toFixed(1)}</span>
       )}
     </div>
   );

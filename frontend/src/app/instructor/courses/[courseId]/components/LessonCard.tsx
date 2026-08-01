@@ -58,10 +58,10 @@ export function LessonCard({
     <div
       data-lesson-id={lesson.id}
       style={{ touchAction: "none" }}
-      className={`bg-slate-50 dark:bg-slate-950/60 rounded-2xl p-4 border ${
+      className={`bg-muted/50 rounded-2xl p-4 border ${
         activeDraggingLessonId === lesson.id
-          ? "border-slate-400 dark:border-slate-600 shadow-xl opacity-100 scale-[1.005]"
-          : "border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700"
+          ? "border-primary shadow-xl opacity-100 scale-[1.005]"
+          : "border-border hover:border-input"
       } space-y-3 transition-shadow`}
     >
       <div className="flex items-center justify-between gap-2">
@@ -72,16 +72,16 @@ export function LessonCard({
               onPointerMove={onLessonPointerMove}
               onPointerUp={onLessonPointerUp}
               onPointerCancel={onLessonPointerUp}
-              className="flex items-center bg-white dark:bg-slate-900 rounded-lg px-2 py-1 border border-slate-200 dark:border-slate-800 cursor-grab active:cursor-grabbing select-none hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="flex items-center bg-card rounded-lg px-2 py-1 border border-border cursor-grab active:cursor-grabbing select-none hover:bg-muted"
               title={"Kéo thả Bài học để sắp xếp"}
             >
-              <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold select-none">
+              <span className="text-muted-foreground hover:text-foreground text-xs font-bold select-none">
                 ⋮⋮
               </span>
             </div>
           )}
           <svg
-            className="w-4 h-4 text-indigo-500"
+            className="w-4 h-4 text-primary"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -93,10 +93,8 @@ export function LessonCard({
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <span className="font-bold text-sm text-slate-800 dark:text-slate-200">
-            {lesson.title}
-          </span>
-          <span className="text-[10px] font-mono text-slate-400">
+          <span className="font-bold text-sm text-foreground">{lesson.title}</span>
+          <span className="text-[10px] font-mono text-muted-foreground">
             ({lesson.estimatedMinutes} {"phút"})
           </span>
         </div>
@@ -105,7 +103,7 @@ export function LessonCard({
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => onEditLesson(lesson)}
-              className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-semibold hover:bg-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
+              className="px-2 py-1 rounded-lg bg-muted text-foreground text-[11px] font-semibold hover:bg-muted/80 transition-colors flex items-center gap-1 cursor-pointer"
             >
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -120,7 +118,7 @@ export function LessonCard({
 
             <button
               onClick={() => onDeleteLesson(lesson.id, lesson.title)}
-              className="px-2 py-1 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-[11px] font-semibold hover:bg-rose-100 transition-colors flex items-center gap-1 cursor-pointer"
+              className="px-2 py-1 rounded-lg bg-destructive/10 text-destructive text-[11px] font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer"
             >
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -135,7 +133,7 @@ export function LessonCard({
 
             <button
               onClick={() => onAddItem(lesson.id)}
-              className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[11px] font-bold hover:bg-blue-100 transition-colors flex items-center gap-1 cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-bold hover:bg-primary/20 transition-colors flex items-center gap-1 cursor-pointer"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -153,7 +151,9 @@ export function LessonCard({
 
       {/* Learning Items under this Lesson */}
       {!lesson.items || lesson.items.length === 0 ? (
-        <p className="text-[11px] italic text-slate-400 pl-6">{"Chưa có nội dung video/bài đọc"}</p>
+        <p className="text-[11px] italic text-muted-foreground pl-6">
+          {"Chưa có nội dung video/bài đọc"}
+        </p>
       ) : (
         <div data-items-container className="space-y-2 pl-4 relative">
           {lesson.items.map((item, iIdx) => (

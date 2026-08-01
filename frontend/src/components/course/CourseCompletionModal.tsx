@@ -189,14 +189,14 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="" className="max-w-lg p-0 overflow-hidden">
-      <div className="relative bg-gradient-to-b from-blue-600 to-indigo-700 p-6 text-white text-center rounded-t-2xl overflow-hidden">
+      <div className="relative bg-primary p-6 text-primary-foreground text-center rounded-t-2xl overflow-hidden">
         {/* Celebration Canvas */}
         <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-10" />
 
         {/* Trophy SVG Icon */}
-        <div className="relative z-20 mx-auto w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-white/20 shadow-inner">
+        <div className="relative z-20 mx-auto w-16 h-16 bg-black/10 dark:bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-primary-foreground/20 shadow-inner">
           <svg
-            className="w-9 h-9 text-amber-300"
+            className="w-9 h-9 text-warning"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -211,20 +211,20 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
         </div>
 
         <h2 className="relative z-20 text-2xl font-extrabold tracking-tight">Course Completed!</h2>
-        <p className="relative z-20 text-blue-100 text-sm mt-1 max-w-sm mx-auto line-clamp-2">
+        <p className="relative z-20 text-primary-foreground/90 text-sm mt-1 max-w-sm mx-auto line-clamp-2">
           {courseTitle}
         </p>
 
         {loadingCert ? (
-          <div className="relative z-20 mt-5 mx-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/15 text-slate-100 text-xs font-semibold backdrop-blur-sm border border-white/10">
-            <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <div className="relative z-20 mt-5 mx-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-black/10 dark:bg-white/15 text-primary-foreground text-xs font-semibold backdrop-blur-sm border border-primary-foreground/10">
+            <div className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
             <span aria-live="polite">{"Đang tải…"}</span>
           </div>
         ) : certError ? (
-          <div className="relative z-20 mt-5 mx-auto max-w-sm p-3.5 rounded-xl bg-red-500/20 border border-red-500/30 text-red-100 text-xs text-left backdrop-blur-sm">
-            <span className="font-bold flex items-center gap-1.5 mb-1">
+          <div className="relative z-20 mt-5 mx-auto max-w-sm p-3.5 rounded-xl bg-destructive/20 border border-destructive/30 text-primary-foreground text-xs text-left backdrop-blur-sm">
+            <span className="font-bold flex items-center gap-1.5 mb-1 text-destructive-foreground">
               <svg
-                className="w-4 h-4 text-red-200"
+                className="w-4 h-4 text-destructive-foreground"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -243,10 +243,10 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
         ) : (
           <button
             onClick={handleClaimCertificate}
-            className="relative z-20 mt-5 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-sm shadow-lg hover:shadow-amber-400/25 transition-all transform active:scale-95 cursor-pointer"
+            className="relative z-20 mt-5 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-sm shadow-lg transition-all transform active:scale-95 cursor-pointer"
           >
             <svg
-              className="w-5 h-5 text-slate-950"
+              className="w-5 h-5 text-warning-foreground"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -264,19 +264,19 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
       </div>
 
       {/* Course Review & Rating Section */}
-      <div className="p-6 bg-white dark:bg-slate-900 space-y-5">
+      <div className="p-6 bg-card space-y-5">
         <div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">
+          <h3 className="text-base font-bold text-foreground">
             {"Đánh giá & Nhận xét từ Học viên"}
           </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {"Các nhận xét thực tế từ học viên đã tham gia khóa học này"}
           </p>
         </div>
 
         {submitted ? (
-          <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-4 rounded-xl text-center space-y-2">
-            <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/60 rounded-full flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400">
+          <div className="bg-success/10 border border-success/30 p-4 rounded-xl text-center space-y-2">
+            <div className="w-10 h-10 bg-success/20 rounded-full flex items-center justify-center mx-auto text-success">
               <svg
                 className="w-6 h-6"
                 fill="none"
@@ -287,17 +287,13 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
               </svg>
             </div>
-            <h4 className="text-sm font-bold text-emerald-800 dark:text-emerald-300">
-              {"Đã gửi đánh giá thành công!"}
-            </h4>
-            <p className="text-xs text-emerald-600 dark:text-emerald-400">
-              {"Cảm ơn bạn đã phản hồi ý kiến cho khóa học."}
-            </p>
+            <h4 className="text-sm font-bold text-success">{"Đã gửi đánh giá thành công!"}</h4>
+            <p className="text-xs text-success">{"Cảm ơn bạn đã phản hồi ý kiến cho khóa học."}</p>
             <div className="pt-2">
               <button
                 type="button"
                 onClick={() => setSubmitted(false)}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline transition-colors cursor-pointer"
               >
                 <svg
                   className="w-3.5 h-3.5"
@@ -319,8 +315,8 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
         ) : (
           <form onSubmit={handleSubmitReview} className="space-y-4">
             {/* Interactive 1-5 Star Picker */}
-            <div className="flex flex-col items-center justify-center p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800">
-              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
+            <div className="flex flex-col items-center justify-center p-3 bg-muted rounded-xl border border-border">
+              <span className="text-xs font-semibold text-muted-foreground mb-2">
                 {"Chọn số sao đánh giá:"} ({hoverRating || rating}/5)
               </span>
               <div className="flex items-center gap-1.5">
@@ -337,9 +333,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                     >
                       <svg
                         className={`w-8 h-8 transition-colors ${
-                          active
-                            ? "text-amber-400 fill-amber-400"
-                            : "text-slate-300 dark:text-slate-700"
+                          active ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40"
                         }`}
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -359,7 +353,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
 
             {/* Comment Textarea */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-foreground mb-1.5">
                 {"Nội dung nhận xét:"}
               </label>
               <textarea
@@ -367,26 +361,24 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                 onChange={(e) => setComment(e.target.value)}
                 placeholder={"Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng…"}
                 rows={3}
-                className="w-full text-xs p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-transparent focus-visible:outline-none transition-all resize-none"
+                className="w-full text-xs p-3 rounded-xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent focus-visible:outline-none transition-all resize-none"
               />
             </div>
 
-            {errorMessage && (
-              <p className="text-xs text-red-500 dark:text-red-400 font-medium">{errorMessage}</p>
-            )}
+            {errorMessage && <p className="text-xs text-destructive font-medium">{errorMessage}</p>}
 
             <div className="flex items-center justify-end gap-3 pt-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
               >
                 {"Hủy"}
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-xs font-semibold shadow-sm transition-colors cursor-pointer"
               >
                 <span aria-live="polite">{submitting ? "Đang gửi…" : "Gửi đánh giá"}</span>
               </button>

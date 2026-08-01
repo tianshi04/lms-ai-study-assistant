@@ -14,33 +14,33 @@ export default function AssessmentsPage() {
   return (
     <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-8 space-y-8">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-6">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/50">
+            <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-info/10 text-info border border-info/20">
               TRACK B ASSESSMENTS
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-xs text-muted-foreground">
               Coursera Auto-Grader &amp; Peer Review Engine
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 text-slate-900 dark:text-white text-balance">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 text-foreground text-balance">
             Assessments &amp; Auto-Grader Sandbox
           </h1>
         </div>
 
         {/* Assessment Selector Tabs */}
-        <div className="flex items-center gap-1.5 bg-slate-200/70 dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-300/60 dark:border-slate-800 shadow-inner">
+        <div className="flex items-center gap-1.5 bg-muted p-1.5 rounded-2xl border border-border shadow-inner">
           <button
             onClick={() => setActiveAssessment("quiz")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               activeAssessment === "quiz"
-                ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-card text-primary shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <svg
-              className="w-4 h-4 text-blue-500"
+              className="w-4 h-4 text-primary"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -58,12 +58,12 @@ export default function AssessmentsPage() {
             onClick={() => setActiveAssessment("lab")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               activeAssessment === "lab"
-                ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-card text-primary shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <svg
-              className="w-4 h-4 text-purple-500"
+              className="w-4 h-4 text-accent-foreground"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -81,12 +81,12 @@ export default function AssessmentsPage() {
             onClick={() => setActiveAssessment("peer")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
               activeAssessment === "peer"
-                ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-sm"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                ? "bg-card text-primary shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <svg
-              className="w-4 h-4 text-emerald-500"
+              className="w-4 h-4 text-success"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -103,17 +103,17 @@ export default function AssessmentsPage() {
         </div>
       </div>
       {/* Item ID Configuration */}
-      <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+      <div className="flex items-center gap-3 bg-muted p-4 rounded-xl border border-border">
         <label
           htmlFor="itemId"
-          className="text-sm font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap"
+          className="text-sm font-semibold text-muted-foreground whitespace-nowrap"
         >
           Current Item ID:
         </label>
         <input
           id="itemId"
           type="text"
-          className="flex-1 max-w-sm px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:text-white transition-colors"
+          className="flex-1 max-w-sm px-3 py-1.5 bg-card border border-input rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-foreground transition-colors"
           value={
             activeAssessment === "quiz"
               ? quizItemId

@@ -125,10 +125,10 @@ export default function InstructorCourseBuilderPage({
 
   if (builder.loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-center items-center py-24">
+      <div className="min-h-screen bg-background flex flex-col justify-center items-center py-24">
         <div className="flex-1 flex items-center justify-center py-24">
-          <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
             <span aria-live="polite" className="text-sm font-medium">
               {"Đang tải cấu trúc bài giảng khóa học…"}
             </span>
@@ -139,26 +139,21 @@ export default function InstructorCourseBuilderPage({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
+    <div className="min-h-screen bg-background text-foreground flex flex-col transition-colors">
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Breadcrumb & Return Nav */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <Link
-              href="/instructor/courses"
-              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            >
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Link href="/instructor/courses" className="hover:text-primary transition-colors">
               {"Giảng viên"}
             </Link>
             <span>/</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">
-              {"Biên soạn bài học"}
-            </span>
+            <span className="font-semibold text-foreground">{"Biên soạn bài học"}</span>
           </div>
 
           <Link
             href="/instructor/courses"
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors flex items-center gap-1.5"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path

@@ -28,9 +28,9 @@ export function NotesPanel({
       {/* Create Note Form */}
       <form
         onSubmit={onSaveNote}
-        className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3 shadow-sm"
+        className="bg-card p-4 rounded-xl border border-border space-y-3 shadow-sm"
       >
-        <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+        <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
           {"Ghi chú của tôi"}
         </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -39,20 +39,20 @@ export function NotesPanel({
             placeholder={"Nhập nội dung ghi chú bài học…"}
             value={highlightText}
             onChange={(e) => onHighlightTextChange(e.target.value)}
-            className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus-visible:outline-none focus-visible:border-blue-500"
+            className="bg-card border border-input rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
           <input
             type="text"
             placeholder={"Nhập nội dung ghi chú bài học…"}
             value={noteComment}
             onChange={(e) => onNoteCommentChange(e.target.value)}
-            className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus-visible:outline-none focus-visible:border-blue-500"
+            className="bg-card border border-input rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
         <button
           type="submit"
           disabled={savingNote || !highlightText.trim()}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-blue-600/20 cursor-pointer"
+          className="px-4 py-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground rounded-lg text-xs font-bold transition-all shadow-md shadow-primary/20 cursor-pointer"
         >
           <span aria-live="polite">{savingNote ? "Đang lưu…" : "Lưu ghi chú"}</span>
         </button>
@@ -60,7 +60,7 @@ export function NotesPanel({
 
       {/* List Saved Notes */}
       {notes.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-xl text-center text-xs text-slate-500 dark:text-slate-400">
+        <div className="bg-card border border-border p-6 rounded-xl text-center text-xs text-muted-foreground">
           {"Chưa có ghi chú nào cho bài học này."}
         </div>
       ) : (
@@ -68,20 +68,18 @@ export function NotesPanel({
           {notes.map((note) => (
             <div
               key={note.id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3.5 rounded-xl text-xs space-y-1 shadow-sm"
+              className="bg-card border border-border p-3.5 rounded-xl text-xs space-y-1 shadow-sm"
             >
-              <div className="flex items-center justify-between text-slate-400 dark:text-slate-500">
+              <div className="flex items-center justify-between text-muted-foreground">
                 <span className="font-mono text-[10px]">Note ID: {note.id}</span>
                 <span>
                   {new Date(note.createdAt).toLocaleDateString(locale === "vi" ? "vi-VN" : "en-US")}
                 </span>
               </div>
-              <p className="text-blue-600 dark:text-blue-300 font-semibold italic">
+              <p className="text-primary font-semibold italic">
                 &quot;{note.highlightedText}&quot;
               </p>
-              {note.noteComment && (
-                <p className="text-slate-700 dark:text-slate-300">{note.noteComment}</p>
-              )}
+              {note.noteComment && <p className="text-foreground">{note.noteComment}</p>}
             </div>
           ))}
         </div>

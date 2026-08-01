@@ -61,12 +61,12 @@ function LoginFormContent() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
+      <div className="bg-card border border-border rounded-3xl p-8 shadow-xl transition-colors">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 text-balance">
+          <h1 className="text-2xl font-bold text-foreground mb-2 text-balance">
             {"Đăng nhập tài khoản"}
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-muted-foreground">
             {searchParams.get("redirect")
               ? "Vui lòng đăng nhập để bắt đầu học bài giảng này"
               : "Chào mừng bạn quay trở lại với hệ thống học tập Coursera LMS"}
@@ -102,12 +102,12 @@ function LoginFormContent() {
                 <div className="space-y-1.5">
                   <label
                     htmlFor={field.name}
-                    className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                    className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
                   >
                     {"Địa chỉ Email"}
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
                       <svg
                         className="w-5 h-5"
                         fill="none"
@@ -133,16 +133,16 @@ function LoginFormContent() {
                       autoComplete="email"
                       spellCheck={false}
                       className={cn(
-                        "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-colors bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2",
+                        "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-colors bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2",
                         hasError
-                          ? "border-red-500 focus-visible:ring-red-500/50 focus-visible:border-red-500"
-                          : "border-slate-300 dark:border-slate-700 focus-visible:ring-blue-500 focus-visible:border-blue-500",
+                          ? "border-destructive focus-visible:ring-destructive/50 focus-visible:border-destructive"
+                          : "border-input focus-visible:ring-ring focus-visible:border-ring",
                       )}
                       required
                     />
                   </div>
                   {hasError && (
-                    <p className="text-xs text-red-500 dark:text-red-400 font-medium">
+                    <p className="text-xs text-destructive font-medium">
                       {String(field.state.meta.errors[0])}
                     </p>
                   )}
@@ -170,13 +170,13 @@ function LoginFormContent() {
                   <div className="flex justify-between items-center">
                     <label
                       htmlFor={field.name}
-                      className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                      className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
                     >
                       {"Mật khẩu"}
                     </label>
                   </div>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
                       <svg
                         className="w-5 h-5"
                         fill="none"
@@ -201,10 +201,10 @@ function LoginFormContent() {
                       placeholder="••••••••"
                       autoComplete="current-password"
                       className={cn(
-                        "w-full pl-10 pr-11 py-3 rounded-xl border text-sm transition-all bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2",
+                        "w-full pl-10 pr-11 py-3 rounded-xl border text-sm transition-all bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2",
                         hasError
-                          ? "border-red-500 focus-visible:ring-red-500/50 focus-visible:border-red-500"
-                          : "border-slate-300 dark:border-slate-700 focus-visible:ring-blue-500 focus-visible:border-blue-500",
+                          ? "border-destructive focus-visible:ring-destructive/50 focus-visible:border-destructive"
+                          : "border-input focus-visible:ring-ring focus-visible:border-ring",
                       )}
                       required
                     />
@@ -212,7 +212,7 @@ function LoginFormContent() {
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
-                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {showPassword ? (
                         <svg
@@ -251,7 +251,7 @@ function LoginFormContent() {
                     </button>
                   </div>
                   {hasError && (
-                    <p className="text-xs text-red-500 dark:text-red-400 font-medium">
+                    <p className="text-xs text-destructive font-medium">
                       {String(field.state.meta.errors[0])}
                     </p>
                   )}
@@ -266,12 +266,12 @@ function LoginFormContent() {
               <button
                 type="submit"
                 disabled={submitting || !canSubmit}
-                className="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {submitting ? (
                   <>
                     <svg
-                      className="animate-spin h-4 w-4 text-white"
+                      className="animate-spin h-4 w-4 text-primary-foreground"
                       viewBox="0 0 24 24"
                       fill="none"
                     >
@@ -301,9 +301,9 @@ function LoginFormContent() {
 
         {/* Quick Test Accounts Selector for Dev Mode */}
         {process.env.NEXT_PUBLIC_ENV !== "production" && (
-          <div className="mt-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-3">
+          <div className="mt-6 p-4 rounded-2xl bg-muted border border-border space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -319,7 +319,9 @@ function LoginFormContent() {
                 </svg>
                 {"Tài khoản Test sẵn (Dev Mode)"}
               </span>
-              <span className="text-[10px] font-mono text-slate-400">{"Mật khẩu: 123456"}</span>
+              <span className="text-[10px] font-mono text-muted-foreground">
+                {"Mật khẩu: 123456"}
+              </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -349,15 +351,17 @@ function LoginFormContent() {
                     form.setFieldValue("email", acc.email);
                     form.setFieldValue("password", "123456");
                   }}
-                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all text-xs font-medium flex items-center justify-between group cursor-pointer"
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-card border border-border hover:border-primary transition-all text-xs font-medium flex items-center justify-between group cursor-pointer"
                 >
                   <div className="truncate pr-1">
-                    <div className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">
+                    <div className="font-semibold text-foreground group-hover:text-primary truncate">
                       {acc.label}
                     </div>
-                    <div className="text-[10px] font-mono text-slate-500 truncate">{acc.email}</div>
+                    <div className="text-[10px] font-mono text-muted-foreground truncate">
+                      {acc.email}
+                    </div>
                   </div>
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 flex-shrink-0">
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground flex-shrink-0">
                     {acc.roleTag}
                   </span>
                 </button>
@@ -366,13 +370,10 @@ function LoginFormContent() {
           </div>
         )}
 
-        <div className="mt-6 text-center pt-4 border-t border-slate-200 dark:border-slate-800">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+        <div className="mt-6 text-center pt-4 border-t border-border">
+          <p className="text-sm text-muted-foreground">
             {"Chưa có tài khoản?"}{" "}
-            <Link
-              href="/auth/register"
-              className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-            >
+            <Link href="/auth/register" className="font-semibold text-primary hover:underline">
               {"Đăng ký miễn phí"}
             </Link>
           </p>
@@ -387,7 +388,7 @@ export default function LoginPage() {
     <main className="flex-1 flex items-center justify-center px-4 py-12">
       <Suspense
         fallback={
-          <div aria-live="polite" className="text-slate-500">
+          <div aria-live="polite" className="text-muted-foreground text-sm">
             {"Đang tải…"}
           </div>
         }

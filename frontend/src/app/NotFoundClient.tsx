@@ -14,22 +14,22 @@ export function NotFoundClient() {
       <main className="flex-1 relative z-10 flex items-center justify-center max-w-4xl mx-auto px-6 py-16 text-center">
         <div className="space-y-8 w-full">
           {/* Badge */}
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-info/10 border border-info/20 text-info text-xs font-semibold uppercase tracking-wider">
+            <span className="w-2 h-2 rounded-full bg-info animate-pulse" />
             <span>{"Lỗi 404 - Không tìm thấy trang"}</span>
           </div>
 
           {/* Graphical 404 Hero Illustration */}
           <div className="relative flex items-center justify-center my-4">
-            <div className="absolute w-72 h-72 bg-gradient-to-tr from-blue-500/20 via-indigo-500/20 to-sky-400/20 rounded-full blur-3xl -z-10 animate-pulse" />
+            <div className="absolute w-72 h-72 bg-primary/10 rounded-full blur-3xl -z-10 animate-pulse" />
             <div className="relative">
-              <span className="text-8xl sm:text-9xl font-black tracking-tighter bg-gradient-to-r from-blue-600 via-indigo-500 to-sky-400 bg-clip-text text-transparent select-none drop-shadow-sm">
+              <span className="text-8xl sm:text-9xl font-black tracking-tighter bg-gradient-to-r from-primary via-info to-primary bg-clip-text text-transparent select-none drop-shadow-sm">
                 404
               </span>
               {/* Floating Compass / Search SVG overlay */}
-              <div className="absolute -top-3 -right-4 sm:-top-4 sm:-right-6 w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl flex items-center justify-center rotate-12 transform hover:rotate-0 transition-transform duration-300">
+              <div className="absolute -top-3 -right-4 sm:-top-4 sm:-right-6 w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-card border border-border shadow-xl flex items-center justify-center rotate-12 transform hover:rotate-0 transition-transform duration-300">
                 <svg
-                  className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 dark:text-blue-400"
+                  className="w-6 h-6 sm:w-8 sm:h-8 text-primary"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -47,10 +47,10 @@ export function NotFoundClient() {
 
           {/* Headings */}
           <div className="space-y-3 max-w-2xl mx-auto">
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white text-balance">
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground text-balance">
               {"Rất tiếc! Trang bạn đang tìm kiếm không tồn tại hoặc đã được di chuyển."}
             </h1>
-            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+            <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
               {
                 "Địa chỉ đường dẫn (URL) có thể đã bị thay đổi, bị xoá hoặc không khả dụng tạm thời. Hãy kiểm tra lại hoặc quay về trang chính."
               }
@@ -63,7 +63,7 @@ export function NotFoundClient() {
               <Link
                 id="btn-notfound-home"
                 href="/"
-                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
               >
                 <svg
                   className="w-5 h-5"
@@ -84,10 +84,10 @@ export function NotFoundClient() {
               <Link
                 id="btn-notfound-catalog"
                 href="/courses"
-                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-semibold shadow-sm hover:bg-slate-100 dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-card border border-border text-foreground font-semibold shadow-sm hover:bg-muted hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
               >
                 <svg
-                  className="w-5 h-5 text-blue-600 dark:text-blue-400"
+                  className="w-5 h-5 text-primary"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -108,7 +108,7 @@ export function NotFoundClient() {
                 id="btn-notfound-goback"
                 type="button"
                 onClick={() => router.back()}
-                className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 font-semibold transition-colors duration-200 cursor-pointer"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary font-semibold transition-colors duration-200 cursor-pointer"
               >
                 <svg
                   className="w-4 h-4"
@@ -131,7 +131,7 @@ export function NotFoundClient() {
       </main>
 
       {/* Simple Footer */}
-      <footer className="relative z-10 py-6 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
+      <footer className="relative z-10 py-6 border-t border-border text-center text-xs text-muted-foreground">
         <p>{"© 2026 Coursera LMS Platform. Nền tảng học tập trực tuyến hàng đầu."}</p>
       </footer>
     </div>

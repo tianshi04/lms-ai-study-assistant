@@ -325,9 +325,9 @@ function CoursePlayerContent() {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-500 dark:text-slate-400">
+      <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
         <div className="flex items-center gap-3">
-          <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           <span aria-live="polite">Đang mở Trình phát bài học…</span>
         </div>
       </div>
@@ -336,14 +336,14 @@ function CoursePlayerContent() {
 
   return (
     <DirectionalTransition>
-      <div className="h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col overflow-hidden transition-colors duration-200">
+      <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden transition-colors duration-200">
         {/* Top Player Navbar */}
-        <header className="h-14 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between flex-shrink-0 z-30">
+        <header className="h-14 bg-card border-b border-border px-6 flex items-center justify-between flex-shrink-0 z-30">
           <div className="flex items-center gap-4 min-w-0">
             {isPreviewMode ? (
               <button
                 onClick={() => window.close()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-bold transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-bold transition-colors cursor-pointer"
                 title="Đóng trình xem trước"
               >
                 <svg
@@ -360,7 +360,7 @@ function CoursePlayerContent() {
             ) : (
               <Link
                 href={`/courses/${course.id}`}
-                className="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+                className="p-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground transition-colors"
                 title="Quay lại khóa học"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -373,21 +373,21 @@ function CoursePlayerContent() {
                 </svg>
               </Link>
             )}
-            <span className="font-bold text-sm text-slate-900 dark:text-white truncate max-w-md">
+            <span className="font-bold text-sm text-foreground truncate max-w-md">
               {isPreviewMode ? `Xem trước: ${activeItem?.title || course.title}` : course.title}
             </span>
           </div>
 
           <div className="flex items-center gap-4">
             {!isPreviewMode && progress && (
-              <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
-                <div className="w-24 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div className="flex items-center gap-3 bg-muted px-3 py-1.5 rounded-lg border border-border">
+                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
+                    className="h-full bg-primary rounded-full transition-all duration-500"
                     style={{ width: `${progress.overallProgressPercent}%` }}
                   />
                 </div>
-                <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400">
+                <span className="text-xs font-mono font-bold text-primary">
                   {progress.overallProgressPercent}%
                 </span>
               </div>
@@ -399,10 +399,10 @@ function CoursePlayerContent() {
                 progress.completedItemIds.length >= totalCourseItems) && (
                 <button
                   onClick={() => setShowCompletionModal(true)}
-                  className="px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs shadow-sm hover:shadow transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-lg bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-xs shadow-sm hover:shadow transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <svg
-                    className="w-4 h-4 text-slate-950"
+                    className="w-4 h-4 text-warning-foreground"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -419,7 +419,7 @@ function CoursePlayerContent() {
               )}
 
             {isPreviewMode && (
-              <span className="px-2.5 py-1 rounded-full text-xs font-extrabold uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/25 animate-pulse">
+              <span className="px-2.5 py-1 rounded-full text-xs font-extrabold uppercase bg-warning/10 text-warning border border-warning/20 animate-pulse">
                 {"Xem trước học liệu"}
               </span>
             )}
@@ -433,9 +433,9 @@ function CoursePlayerContent() {
         <div className="flex-1 flex overflow-hidden">
           {/* Left Sidebar - Course Content Navigation Tree */}
           {!isPreviewMode && (
-            <aside className="w-80 bg-white/95 dark:bg-slate-900/95 border-r border-slate-200 dark:border-slate-800 overflow-y-auto flex-shrink-0 flex flex-col">
-              <div className="p-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-900 sticky top-0 z-10">
-                <h2 className="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <aside className="w-80 bg-card/95 border-r border-border overflow-y-auto flex-shrink-0 flex flex-col">
+              <div className="p-4 border-b border-border bg-muted/50 sticky top-0 z-10">
+                <h2 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
                   {"Lộ trình Bài học"}
                 </h2>
               </div>
@@ -452,17 +452,17 @@ function CoursePlayerContent() {
                   return course.weekModules.map((week) => (
                     <div key={week.id} className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-extrabold uppercase text-blue-600 dark:text-blue-400">
+                        <span className="text-xs font-extrabold uppercase text-primary">
                           {"Tuần {week}".replace("{week}", week.weekNumber.toString())}
                         </span>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                        <span className="text-[10px] text-muted-foreground font-mono">
                           {week.title}
                         </span>
                       </div>
 
                       {week.lessons.map((lesson) => (
                         <div key={lesson.id} className="space-y-1">
-                          <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-2 py-1">
+                          <div className="text-xs font-semibold text-foreground px-2 py-1">
                             {lesson.title}
                           </div>
                           <div className="space-y-1 pl-2">
@@ -496,16 +496,16 @@ function CoursePlayerContent() {
                                   }}
                                   className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition-all ${
                                     isActive
-                                      ? "bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-300 font-semibold border border-blue-200 dark:border-blue-500/30"
+                                      ? "bg-primary/10 text-primary font-semibold border border-primary/20"
                                       : !isUnlocked
-                                        ? "opacity-50 hover:bg-transparent cursor-not-allowed text-slate-400 dark:text-slate-600"
-                                        : "hover:bg-slate-100 dark:hover:bg-slate-800/60 text-slate-600 dark:text-slate-400"
+                                        ? "opacity-50 hover:bg-transparent cursor-not-allowed text-muted-foreground"
+                                        : "hover:bg-muted text-muted-foreground"
                                   }`}
                                 >
                                   <span className="truncate flex items-center gap-2">
                                     {isDone ? (
                                       <svg
-                                        className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0"
+                                        className="w-3.5 h-3.5 text-success flex-shrink-0"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -519,7 +519,7 @@ function CoursePlayerContent() {
                                       </svg>
                                     ) : !isUnlocked ? (
                                       <svg
-                                        className="w-3.5 h-3.5 text-slate-400 flex-shrink-0"
+                                        className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -533,7 +533,7 @@ function CoursePlayerContent() {
                                       </svg>
                                     ) : item.type === 1 ? (
                                       <svg
-                                        className="w-3.5 h-3.5 text-blue-500 flex-shrink-0"
+                                        className="w-3.5 h-3.5 text-primary flex-shrink-0"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -547,7 +547,7 @@ function CoursePlayerContent() {
                                       </svg>
                                     ) : item.type === 2 ? (
                                       <svg
-                                        className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0"
+                                        className="w-3.5 h-3.5 text-success flex-shrink-0"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -561,7 +561,7 @@ function CoursePlayerContent() {
                                       </svg>
                                     ) : item.type === 5 ? (
                                       <svg
-                                        className="w-3.5 h-3.5 text-purple-500 flex-shrink-0"
+                                        className="w-3.5 h-3.5 text-accent flex-shrink-0"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -575,7 +575,7 @@ function CoursePlayerContent() {
                                       </svg>
                                     ) : item.type === 6 ? (
                                       <svg
-                                        className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0"
+                                        className="w-3.5 h-3.5 text-primary flex-shrink-0"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -589,7 +589,7 @@ function CoursePlayerContent() {
                                       </svg>
                                     ) : (
                                       <svg
-                                        className="w-3.5 h-3.5 text-amber-500 flex-shrink-0"
+                                        className="w-3.5 h-3.5 text-warning flex-shrink-0"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -623,14 +623,14 @@ function CoursePlayerContent() {
           )}
 
           {/* Center Workspace & Bottom Panels */}
-          <main className="flex-1 flex flex-col bg-slate-100 dark:bg-slate-950 overflow-hidden relative">
+          <main className="flex-1 flex flex-col bg-background overflow-hidden relative text-foreground">
             {/* Lock Notice Banner */}
             {lockNotice && (
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/80 border-b border-amber-200 dark:border-amber-900/80 text-amber-900 dark:text-amber-200 text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-200">
+              <div className="p-3 bg-warning/10 border-b border-warning/30 text-warning text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-200">
                 <span>{lockNotice}</span>
                 <button
                   onClick={() => setLockNotice("")}
-                  className="text-amber-800 dark:text-amber-300 hover:opacity-75 font-bold text-xs"
+                  className="text-warning hover:opacity-75 font-bold text-xs cursor-pointer"
                 >
                   ✕
                 </button>
@@ -638,7 +638,7 @@ function CoursePlayerContent() {
             )}
 
             {/* Top Video / Reading Media Viewer */}
-            <div className="flex-1 bg-slate-100 dark:bg-black flex items-center justify-center relative overflow-hidden transition-colors duration-200">
+            <div className="flex-1 bg-card flex items-center justify-center relative overflow-hidden transition-colors duration-200">
               <VideoPlayer
                 videoRef={videoRef}
                 activeItem={activeItem}
@@ -663,16 +663,16 @@ function CoursePlayerContent() {
               (activeItem?.interactiveTranscripts &&
                 activeItem.interactiveTranscripts.length > 0) ||
               activeItem?.vttSubtitleUrl) && (
-              <div className="h-64 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-col flex-shrink-0">
+              <div className="h-64 bg-card border-t border-border flex flex-col flex-shrink-0">
                 {/* Tab Header Bar */}
-                <div className="h-11 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between bg-slate-50 dark:bg-slate-900/90">
+                <div className="h-11 border-b border-border px-6 flex items-center justify-between bg-muted/50">
                   <div className="flex items-center gap-6">
                     <button
                       onClick={() => setActiveTab("transcript")}
-                      className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
+                      className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 cursor-pointer ${
                         activeTab === "transcript"
-                          ? "text-blue-600 dark:text-blue-400 border-blue-500"
-                          : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
+                          ? "text-primary border-primary"
+                          : "text-muted-foreground border-transparent hover:text-foreground"
                       }`}
                     >
                       <svg
@@ -698,10 +698,10 @@ function CoursePlayerContent() {
                       <>
                         <button
                           onClick={() => setActiveTab("forum")}
-                          className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
+                          className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 cursor-pointer ${
                             activeTab === "forum"
-                              ? "text-blue-600 dark:text-blue-400 border-blue-500"
-                              : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
+                              ? "text-primary border-primary"
+                              : "text-muted-foreground border-transparent hover:text-foreground"
                           }`}
                         >
                           <svg
@@ -721,10 +721,10 @@ function CoursePlayerContent() {
                         </button>
                         <button
                           onClick={() => setActiveTab("notes")}
-                          className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
+                          className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 cursor-pointer ${
                             activeTab === "notes"
-                              ? "text-blue-600 dark:text-blue-400 border-blue-500"
-                              : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
+                              ? "text-primary border-primary"
+                              : "text-muted-foreground border-transparent hover:text-foreground"
                           }`}
                         >
                           <svg
@@ -744,10 +744,10 @@ function CoursePlayerContent() {
                         </button>
                         <button
                           onClick={() => setActiveTab("deadlines")}
-                          className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 ${
+                          className={`text-xs font-bold tracking-wide transition-colors py-3 border-b-2 inline-flex items-center gap-1.5 cursor-pointer ${
                             activeTab === "deadlines"
-                              ? "text-blue-600 dark:text-blue-400 border-blue-500"
-                              : "text-slate-500 dark:text-slate-400 border-transparent hover:text-slate-900 dark:hover:text-slate-200"
+                              ? "text-primary border-primary"
+                              : "text-muted-foreground border-transparent hover:text-foreground"
                           }`}
                         >
                           <svg
@@ -771,7 +771,7 @@ function CoursePlayerContent() {
                 </div>
 
                 {/* Tab Body Content */}
-                <div className="flex-1 overflow-y-auto p-4 bg-slate-50 dark:bg-slate-950">
+                <div className="flex-1 overflow-y-auto p-4 bg-background">
                   {activeTab === "transcript" && (
                     <TranscriptPanel
                       activeItem={activeItem}
@@ -821,9 +821,9 @@ export default function CoursePlayerPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-500 dark:text-slate-400">
+        <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground">
           <div className="flex items-center gap-3">
-            <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             <span aria-live="polite">Đang mở Trình phát bài học…</span>
           </div>
         </div>

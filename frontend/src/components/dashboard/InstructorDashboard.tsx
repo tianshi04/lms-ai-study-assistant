@@ -23,25 +23,22 @@ export function InstructorDashboard({ userName }: { userName: string }) {
   };
 
   return (
-    <div className="w-full flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen">
+    <div className="w-full flex-1 bg-background min-h-screen">
       {/* Decorative background glow */}
-      <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-indigo-50/50 to-transparent dark:from-indigo-900/10 dark:to-transparent pointer-events-none" />
+      <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
 
       <main className="relative max-w-7xl mx-auto px-6 py-12 space-y-10">
         {/* Header Banner */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-8 text-white shadow-xl">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-primary text-primary-foreground rounded-3xl p-8 shadow-xl">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-black/10 dark:bg-white/10 text-primary-foreground border border-primary-foreground/20">
+              <span className="w-2 h-2 rounded-full bg-primary-foreground animate-ping" />
               Bảng Điều Khiển Giảng Viên
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-balance">
-              {getGreeting()},{" "}
-              <span className="bg-gradient-to-r from-indigo-300 via-sky-300 to-white bg-clip-text text-transparent">
-                Thầy/Cô {userName}
-              </span>
+              {getGreeting()}, <span className="opacity-90">Thầy/Cô {userName}</span>
             </h1>
-            <p className="text-sm text-slate-300 max-w-xl">
+            <p className="text-sm opacity-80 max-w-xl">
               Quản lý danh sách khóa học giảng dạy, theo dõi lượng học viên đăng ký, kiểm duyệt bài
               tập và cập nhật nội dung bài giảng.
             </p>
@@ -50,9 +47,14 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/instructor/courses/new"
-              className="px-6 py-3 rounded-2xl bg-indigo-500 hover:bg-indigo-400 text-white font-bold text-sm shadow-lg shadow-indigo-500/30 transition-all flex items-center gap-2 cursor-pointer"
+              className="px-6 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg transition-all flex items-center gap-2 cursor-pointer border border-border"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg
+                className="w-5 h-5 text-primary"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -67,8 +69,8 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
         {/* Dynamic KPI Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
+            <div className="w-14 h-14 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
               <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -79,17 +81,15 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               </svg>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Tổng Học Viên
               </p>
-              <p className="text-3xl font-black text-slate-900 dark:text-white font-mono">
-                {totalStudents}
-              </p>
+              <p className="text-3xl font-black text-foreground font-mono">{totalStudents}</p>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
+            <div className="w-14 h-14 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0">
               <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -100,17 +100,17 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               </svg>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Đã Xuất Bản
               </p>
-              <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
+              <p className="text-3xl font-black text-success font-mono">
                 {publishedCourses.length}
               </p>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
-            <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
+            <div className="w-14 h-14 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
               <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -121,17 +121,17 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               </svg>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Chờ Kiểm Duyệt
               </p>
-              <p className="text-3xl font-black text-amber-600 dark:text-amber-400 font-mono">
+              <p className="text-3xl font-black text-warning font-mono">
                 {pendingReviewCourses.length}
               </p>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
-            <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 shrink-0">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
+            <div className="w-14 h-14 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center shrink-0">
               <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -142,12 +142,10 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               </svg>
             </div>
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Bản Nháp (Draft)
               </p>
-              <p className="text-3xl font-black text-slate-700 dark:text-slate-300 font-mono">
-                {draftCourses.length}
-              </p>
+              <p className="text-3xl font-black text-foreground font-mono">{draftCourses.length}</p>
             </div>
           </div>
         </div>
@@ -156,9 +154,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link
             href="/instructor/courses"
-            className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-indigo-500/50 shadow-sm transition-all group flex items-start gap-4"
+            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-start gap-4"
           >
-            <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -169,10 +167,10 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               </svg>
             </div>
             <div className="space-y-1">
-              <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+              <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">
                 Danh sách Khóa học Giảng dạy
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 Xem và chỉnh sửa chương trình học, bài giảng video, câu hỏi trắc nghiệm và đề thi.
               </p>
             </div>
@@ -180,9 +178,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
           <Link
             href="/instructor/profile"
-            className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-indigo-500/50 shadow-sm transition-all group flex items-start gap-4"
+            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-start gap-4"
           >
-            <div className="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -193,10 +191,10 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               </svg>
             </div>
             <div className="space-y-1">
-              <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-sky-600 transition-colors">
+              <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">
                 Hồ sơ & Chữ ký Giảng viên
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 Cập nhật chức danh, học vị và chữ ký số ký duyệt trên chứng chỉ học viên.
               </p>
             </div>
@@ -204,9 +202,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
           <Link
             href="/instructor/financial-aid"
-            className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-indigo-500/50 shadow-sm transition-all group flex items-start gap-4"
+            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-start gap-4"
           >
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -217,10 +215,10 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               </svg>
             </div>
             <div className="space-y-1">
-              <h3 className="font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors">
+              <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">
                 Duyệt Hỗ Trợ Tài Chính
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 Xét duyệt các đơn xin miễn giảm học phí từ những học viên có hoàn cảnh đặc biệt.
               </p>
             </div>
@@ -228,19 +226,17 @@ export function InstructorDashboard({ userName }: { userName: string }) {
         </div>
 
         {/* Teaching Courses Overview List */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-sm space-y-4">
+        <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-extrabold text-slate-900 dark:text-white">
-                Khóa Học Đang Quản Lý
-              </h2>
-              <p className="text-xs text-slate-500">
+              <h2 className="text-lg font-extrabold text-foreground">Khóa Học Đang Quản Lý</h2>
+              <p className="text-xs text-muted-foreground">
                 Danh sách tất cả các khóa học bạn phụ trách chuyên môn.
               </p>
             </div>
             <Link
               href="/instructor/courses"
-              className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="text-xs font-bold text-primary hover:underline"
             >
               Xem tất cả →
             </Link>
@@ -249,16 +245,16 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           {loading ? (
             <div
               aria-live="polite"
-              className="py-12 text-center text-slate-400 text-sm animate-pulse"
+              className="py-12 text-center text-muted-foreground text-sm animate-pulse"
             >
               Đang tải danh sách khóa học…
             </div>
           ) : courses.length === 0 ? (
-            <div className="py-12 text-center text-slate-400 space-y-3">
+            <div className="py-12 text-center text-muted-foreground space-y-3">
               <p className="text-sm font-semibold">Bạn chưa khởi tạo khóa học nào trên hệ thống.</p>
               <Link
                 href="/instructor/courses/new"
-                className="inline-block px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs"
+                className="inline-block px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs"
               >
                 Khởi tạo khóa học đầu tiên
               </Link>
@@ -269,35 +265,31 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                 <Link
                   key={c.id}
                   href={`/instructor/courses/${c.id}`}
-                  className="p-5 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-indigo-500/40 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all flex flex-col justify-between space-y-3"
+                  className="p-5 rounded-2xl border border-border hover:border-primary/40 hover:bg-muted transition-all flex flex-col justify-between space-y-3"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-muted text-muted-foreground">
                         {c.subject || "COURSE"}
                       </span>
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                           c.status === CourseStatus.PUBLISHED
-                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+                            ? "bg-success/10 text-success"
                             : c.status === CourseStatus.PENDING_REVIEW
-                              ? "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300"
-                              : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                              ? "bg-warning/10 text-warning"
+                              : "bg-muted text-muted-foreground"
                         }`}
                       >
                         {CourseStatus[c.status] || "DRAFT"}
                       </span>
                     </div>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-sm line-clamp-2">
-                      {c.title}
-                    </h3>
+                    <h3 className="font-bold text-foreground text-sm line-clamp-2">{c.title}</h3>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100 dark:border-slate-800/60">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
                     <span>{c.level || "Tất cả cấp độ"}</span>
-                    <span className="text-indigo-600 dark:text-indigo-400 font-semibold">
-                      Chỉnh sửa →
-                    </span>
+                    <span className="text-primary font-semibold">Chỉnh sửa →</span>
                   </div>
                 </Link>
               ))}

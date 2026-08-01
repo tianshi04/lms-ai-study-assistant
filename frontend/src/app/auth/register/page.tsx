@@ -54,12 +54,12 @@ export default function RegisterPage() {
   return (
     <main className="flex-1 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
+        <div className="bg-card border border-border rounded-3xl p-8 shadow-xl transition-colors">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 text-balance">
+            <h1 className="text-2xl font-bold text-foreground mb-2 text-balance">
               {"Đăng ký tài khoản"}
             </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-sm text-muted-foreground">
               {"Bắt đầu hành trình học tập chuyên sâu ngay hôm nay"}
             </p>
           </div>
@@ -90,12 +90,12 @@ export default function RegisterPage() {
                   <div className="space-y-1.5">
                     <label
                       htmlFor={field.name}
-                      className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                      className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
                     >
                       {"Họ và tên"}
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
                         <svg
                           className="w-5 h-5"
                           fill="none"
@@ -120,16 +120,16 @@ export default function RegisterPage() {
                         placeholder={"Nguyễn Văn A"}
                         autoComplete="name"
                         className={cn(
-                          "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2",
+                          "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2",
                           hasError
-                            ? "border-red-500 focus-visible:ring-red-500/50 focus-visible:border-red-500"
-                            : "border-slate-300 dark:border-slate-700 focus-visible:ring-blue-500 focus-visible:border-blue-500",
+                            ? "border-destructive focus-visible:ring-destructive/50 focus-visible:border-destructive"
+                            : "border-input focus-visible:ring-ring focus-visible:border-ring",
                         )}
                         required
                       />
                     </div>
                     {hasError && (
-                      <p className="text-xs text-red-500 dark:text-red-400 font-medium">
+                      <p className="text-xs text-destructive font-medium">
                         {String(field.state.meta.errors[0])}
                       </p>
                     )}
@@ -159,12 +159,12 @@ export default function RegisterPage() {
                   <div className="space-y-1.5">
                     <label
                       htmlFor={field.name}
-                      className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                      className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
                     >
                       {"Địa chỉ Email"}
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
                         <svg
                           className="w-5 h-5"
                           fill="none"
@@ -190,16 +190,16 @@ export default function RegisterPage() {
                         autoComplete="email"
                         spellCheck={false}
                         className={cn(
-                          "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-colors bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2",
+                          "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-colors bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2",
                           hasError
-                            ? "border-red-500 focus-visible:ring-red-500/50 focus-visible:border-red-500"
-                            : "border-slate-300 dark:border-slate-700 focus-visible:ring-blue-500 focus-visible:border-blue-500",
+                            ? "border-destructive focus-visible:ring-destructive/50 focus-visible:border-destructive"
+                            : "border-input focus-visible:ring-ring focus-visible:border-ring",
                         )}
                         required
                       />
                     </div>
                     {hasError && (
-                      <p className="text-xs text-red-500 dark:text-red-400 font-medium">
+                      <p className="text-xs text-destructive font-medium">
                         {String(field.state.meta.errors[0])}
                       </p>
                     )}
@@ -229,12 +229,12 @@ export default function RegisterPage() {
                   <div className="space-y-1.5">
                     <label
                       htmlFor={field.name}
-                      className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                      className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
                     >
                       {"Mật khẩu"}
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
                         <svg
                           className="w-5 h-5"
                           fill="none"
@@ -259,10 +259,10 @@ export default function RegisterPage() {
                         placeholder="••••••••"
                         autoComplete="new-password"
                         className={cn(
-                          "w-full pl-10 pr-11 py-3 rounded-xl border text-sm transition-all bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2",
+                          "w-full pl-10 pr-11 py-3 rounded-xl border text-sm transition-all bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2",
                           hasError
-                            ? "border-red-500 focus-visible:ring-red-500/50 focus-visible:border-red-500"
-                            : "border-slate-300 dark:border-slate-700 focus-visible:ring-blue-500 focus-visible:border-blue-500",
+                            ? "border-destructive focus-visible:ring-destructive/50 focus-visible:border-destructive"
+                            : "border-input focus-visible:ring-ring focus-visible:border-ring",
                         )}
                         required
                       />
@@ -270,7 +270,7 @@ export default function RegisterPage() {
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
-                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-pointer"
+                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                       >
                         {showPassword ? (
                           <svg
@@ -309,7 +309,7 @@ export default function RegisterPage() {
                       </button>
                     </div>
                     {hasError && (
-                      <p className="text-xs text-red-500 dark:text-red-400 font-medium">
+                      <p className="text-xs text-destructive font-medium">
                         {String(field.state.meta.errors[0])}
                       </p>
                     )}
@@ -324,12 +324,12 @@ export default function RegisterPage() {
                 <div className="space-y-1.5">
                   <label
                     htmlFor={field.name}
-                    className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
+                    className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
                   >
                     {"Vai trò người dùng"}
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
                       <svg
                         className="w-5 h-5"
                         fill="none"
@@ -349,13 +349,13 @@ export default function RegisterPage() {
                       name={field.name}
                       value={field.state.value}
                       onChange={(e) => field.handleChange(Number(e.target.value) as UserRole)}
-                      className="w-full pl-10 pr-10 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 transition-all text-sm appearance-none cursor-pointer"
+                      className="w-full pl-10 pr-10 py-3 rounded-xl border border-input bg-muted text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring transition-all text-sm appearance-none cursor-pointer"
                     >
                       <option value={UserRole.LEARNER}>{"Học viên (Learner)"}</option>
                       <option value={UserRole.INSTRUCTOR}>{"Giảng viên (Instructor)"}</option>
                       <option value={UserRole.TA}>{"Trợ giảng (TA)"}</option>
                     </select>
-                    <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                    <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-muted-foreground">
                       <svg
                         className="w-4 h-4"
                         fill="none"
@@ -381,12 +381,12 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   disabled={submitting || !canSubmit}
-                  className="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-500/25 transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {submitting ? (
                     <>
                       <svg
-                        className="animate-spin h-4 w-4 text-white"
+                        className="animate-spin h-4 w-4 text-primary-foreground"
                         viewBox="0 0 24 24"
                         fill="none"
                       >
@@ -414,13 +414,10 @@ export default function RegisterPage() {
             </form.Subscribe>
           </form>
 
-          <div className="mt-8 text-center pt-6 border-t border-slate-200 dark:border-slate-800">
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+          <div className="mt-8 text-center pt-6 border-t border-border">
+            <p className="text-sm text-muted-foreground">
               {"Đã có tài khoản?"}{" "}
-              <Link
-                href="/auth/login"
-                className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-              >
+              <Link href="/auth/login" className="font-semibold text-primary hover:underline">
                 {"Đăng nhập tại đây"}
               </Link>
             </p>

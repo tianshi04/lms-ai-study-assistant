@@ -100,10 +100,7 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
       <span>
         {parts.map((part, i) =>
           regex.test(part) ? (
-            <mark
-              key={i}
-              className="bg-yellow-200 dark:bg-yellow-800/80 text-slate-900 dark:text-white px-0.5 rounded font-semibold"
-            >
+            <mark key={i} className="bg-warning/30 text-foreground px-0.5 rounded font-semibold">
               {part}
             </mark>
           ) : (
@@ -116,7 +113,7 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
 
   if (allTranscripts.length === 0) {
     return (
-      <p className="text-xs text-slate-500 dark:text-slate-500 text-center py-12">
+      <p className="text-xs text-muted-foreground text-center py-12">
         {"Không có nội dung phụ đề cho học liệu này."}
       </p>
     );
@@ -131,10 +128,10 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Tìm kiếm nội dung bài giảng…"
-          className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
+          className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-input bg-card text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         <svg
-          className="w-4 h-4 text-slate-400 absolute left-3 top-2.5"
+          className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -149,7 +146,7 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
         {searchQuery && (
           <button
             onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold"
+            className="absolute right-3 top-2 text-muted-foreground hover:text-foreground text-xs font-bold cursor-pointer"
           >
             ✕
           </button>
@@ -159,10 +156,10 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
       {/* Transcript Items Container */}
       <div
         ref={containerRef}
-        className="space-y-2 overflow-y-auto max-h-[400px] pr-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-800"
+        className="space-y-2 overflow-y-auto max-h-[400px] pr-2 scrollbar-thin"
       >
         {filteredTranscripts.length === 0 ? (
-          <p className="text-xs text-slate-500 dark:text-slate-500 text-center py-6">
+          <p className="text-xs text-muted-foreground text-center py-6">
             {"Không tìm thấy dòng phụ đề khớp với từ khóa"}
           </p>
         ) : (
@@ -174,13 +171,13 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
                 key={item.originalIndex}
                 id={`transcript-item-${item.originalIndex}`}
                 onClick={() => onSeekVideo(item.startTime)}
-                className={`p-2.5 rounded-lg text-xs cursor-pointer transition-all flex items-start gap-4 border border-transparent ${
+                className={`p-2.5 rounded-lg text-xs cursor-pointer transition-all flex items-start gap-4 border ${
                   isActive
-                    ? "bg-blue-50 dark:bg-blue-600/20 text-blue-700 dark:text-blue-200 font-medium border-l-4 border-l-2 border-blue-500 pl-3 shadow-2xs"
-                    : "hover:bg-slate-200/60 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-slate-300/40 dark:hover:border-slate-800"
+                    ? "bg-primary/10 text-primary font-medium border-l-4 border-l-2 border-primary pl-3 shadow-2xs"
+                    : "hover:bg-muted text-muted-foreground border-transparent hover:border-border"
                 }`}
               >
-                <span className="font-mono text-blue-600 dark:text-blue-400 flex-shrink-0 font-bold">
+                <span className="font-mono text-primary flex-shrink-0 font-bold">
                   {Math.floor(item.startTime / 60)}:
                   {Math.floor(item.startTime % 60)
                     .toString()

@@ -63,10 +63,10 @@ export function AIChatbot() {
       {isOpen && (
         <div className="mb-3 w-[360px] sm:w-[400px] h-[500px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-scale-up">
           {/* Header Bar */}
-          <div className="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between shadow-sm shrink-0">
+          <div className="px-4 py-3 bg-primary text-primary-foreground flex items-center justify-between shadow-sm shrink-0">
             <div className="flex items-center gap-2">
               <svg
-                className="w-5 h-5 text-amber-300 animate-pulse"
+                className="w-5 h-5 text-warning animate-pulse"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -82,7 +82,7 @@ export function AIChatbot() {
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="p-1 rounded-lg hover:bg-white/20 transition-colors text-white/90 hover:text-white cursor-pointer"
+              className="p-1 rounded-lg hover:bg-black/10 dark:hover:bg-white/20 transition-colors text-primary-foreground/90 hover:text-primary-foreground cursor-pointer"
               aria-label="Đóng"
             >
               <svg
@@ -125,7 +125,7 @@ export function AIChatbot() {
 
         <button
           onClick={() => setIsOpen((prev) => !prev)}
-          className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white shadow-xl hover:shadow-2xl hover:scale-108 active:scale-95 transition-all duration-200 cursor-pointer flex items-center justify-center relative border border-white/20"
+          className="w-14 h-14 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground shadow-xl hover:shadow-2xl hover:scale-108 active:scale-95 transition-all duration-200 cursor-pointer flex items-center justify-center relative border border-border"
           aria-label={"Trợ lý AI"}
         >
           {isOpen ? (

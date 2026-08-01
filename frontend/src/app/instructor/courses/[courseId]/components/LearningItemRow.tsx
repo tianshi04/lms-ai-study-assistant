@@ -41,10 +41,10 @@ export function LearningItemRow({
       <div
         data-item-id={item.id}
         style={{ touchAction: "none" }}
-        className={`flex items-center justify-between p-2.5 rounded-xl bg-white dark:bg-slate-900 border ${
+        className={`flex items-center justify-between p-2.5 rounded-xl bg-card border ${
           activeDraggingItemId === item.id
-            ? "border-slate-400 dark:border-slate-600 shadow-lg opacity-100 scale-[1.005]"
-            : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+            ? "border-primary shadow-lg opacity-100 scale-[1.005]"
+            : "border-border hover:border-input"
         } text-xs shadow-2xs transition-shadow`}
       >
         <div className="flex items-center gap-2">
@@ -54,47 +54,47 @@ export function LearningItemRow({
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onPointerCancel={onPointerUp}
-              className="flex items-center border-r border-slate-200 dark:border-slate-800 pr-2 mr-1 cursor-grab active:cursor-grabbing select-none p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded"
+              className="flex items-center border-r border-border pr-2 mr-1 cursor-grab active:cursor-grabbing select-none p-1 hover:bg-muted rounded"
               title={"Kéo lên/xuống để sắp xếp thứ tự"}
             >
-              <span className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold select-none">
+              <span className="text-muted-foreground hover:text-foreground text-xs font-bold select-none">
                 ⋮⋮
               </span>
             </div>
           )}
           {item.type === ItemType.VIDEO ? (
-            <span className="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-bold text-[10px]">
+            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-bold text-[10px]">
               VIDEO
             </span>
           ) : item.type === ItemType.READING ? (
-            <span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-[10px]">
+            <span className="px-2 py-0.5 rounded bg-success/10 text-success font-bold text-[10px]">
               READING
             </span>
           ) : item.type === ItemType.AUTO_GRADED_LAB ? (
-            <span className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 font-bold text-[10px]">
+            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-bold text-[10px]">
               LAB
             </span>
           ) : item.type === ItemType.PEER_REVIEW ? (
-            <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold text-[10px]">
+            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-bold text-[10px]">
               PEER REVIEW
             </span>
           ) : (
-            <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold text-[10px]">
+            <span className="px-2 py-0.5 rounded bg-warning/10 text-warning font-bold text-[10px]">
               QUIZ
             </span>
           )}
-          <span className="font-semibold text-slate-700 dark:text-slate-300">{item.title}</span>
+          <span className="font-semibold text-foreground">{item.title}</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-slate-400 font-mono">
+          <span className="text-[10px] text-muted-foreground font-mono">
             {item.estimatedMinutes} {"phút"}
           </span>
 
           <Link
             href={`/learn/${courseId}?itemId=${item.id}&preview=true`}
             target="_blank"
-            className="p-1 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+            className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
             title={"Xem trước nội dung trong Trình phát bài học"}
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -117,7 +117,7 @@ export function LearningItemRow({
             <>
               <button
                 onClick={() => onEdit(item)}
-                className="p-1 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded transition-colors cursor-pointer"
+                className="p-1 text-muted-foreground hover:text-primary hover:bg-muted rounded transition-colors cursor-pointer"
                 title={"Sửa nội dung học liệu"}
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -131,7 +131,7 @@ export function LearningItemRow({
               </button>
               <button
                 onClick={() => onDelete(item.id, item.title)}
-                className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                className="p-1 text-destructive hover:bg-destructive/10 rounded transition-colors cursor-pointer"
                 title={"Xóa học liệu"}
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

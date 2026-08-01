@@ -5,10 +5,6 @@ export interface SkeletonProps extends React.ComponentProps<"div"> {}
 
 export function Skeleton({ className, ref, ...props }: SkeletonProps) {
   return (
-    <div
-      ref={ref}
-      className={cn("animate-pulse rounded-md bg-slate-200 dark:bg-slate-700/60", className)}
-      {...props}
-    />
+    <div ref={ref} className={cn("animate-pulse rounded-md bg-muted", className)} {...props} />
   );
 }

@@ -156,7 +156,7 @@ export function LearningItemFormModal({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
               {"Tên Học liệu"}
             </label>
             <input
@@ -164,19 +164,19 @@ export function LearningItemFormModal({
               value={itemTitle}
               onChange={(e) => setItemTitle(e.target.value)}
               placeholder={"Ví dụ: Video 1.1: Trực quan hóa thuật toán Descent Gradient"}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
               {"Loại nội dung"}
             </label>
             <select
               value={itemType}
               onChange={(e) => setItemType(Number(e.target.value) as ItemType)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value={ItemType.VIDEO}>{"VIDEO (Bài giảng Video)"}</option>
               <option value={ItemType.READING}>{"READING (Bài đọc Markdown)"}</option>
@@ -191,7 +191,7 @@ export function LearningItemFormModal({
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+          <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
             {"Thời lượng ước tính hoàn thành (Phút)"}
           </label>
           <input
@@ -199,14 +199,14 @@ export function LearningItemFormModal({
             min={1}
             value={itemMinutes}
             onChange={(e) => setItemMinutes(parseInt(e.target.value) || 1)}
-            className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             required
           />
         </div>
 
         {/* Dynamic Form Sections based on Item Type */}
         {itemType === ItemType.VIDEO && (
-          <div className="space-y-4 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <div className="space-y-4 pt-2 border-t border-border">
             <VideoUploadWidget
               value={videoUrl}
               onChange={(url) => setVideoUrl(url)}
@@ -230,21 +230,21 @@ export function LearningItemFormModal({
         )}
 
         {itemType === ItemType.READING && (
-          <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <div className="space-y-2 pt-2 border-t border-border">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 {"Nội dung Bài đọc (Định dạng Markdown)"}
               </label>
               <button
                 type="button"
                 onClick={() => setShowMarkdownPreview(!showMarkdownPreview)}
-                className="text-xs text-blue-600 font-semibold hover:underline cursor-pointer"
+                className="text-xs text-primary font-semibold hover:underline cursor-pointer"
               >
                 {showMarkdownPreview ? "Sửa Markdown" : "Xem trước Markdown"}
               </button>
             </div>
             {showMarkdownPreview ? (
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-sm prose dark:prose-invert max-w-none min-h-[160px]">
+              <div className="p-4 rounded-xl border border-border bg-card text-foreground text-sm prose dark:prose-invert max-w-none min-h-[160px]">
                 {readingMarkdown || "(Chưa có nội dung)"}
               </div>
             ) : (
@@ -253,22 +253,22 @@ export function LearningItemFormModal({
                 value={readingMarkdown}
                 onChange={(e) => setReadingMarkdown(e.target.value)}
                 placeholder={"Nhập nội dung giáo trình bài đọc bằng định dạng Markdown…"}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             )}
           </div>
         )}
 
         {itemType === ItemType.AUTO_GRADED_LAB && (
-          <div className="space-y-4 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <div className="space-y-4 pt-2 border-t border-border">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
                 {"Ngôn ngữ lập trình"}
               </label>
               <select
                 value={labLanguage}
                 onChange={(e) => setLabLanguage(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <option value="python">Python 3</option>
                 <option value="javascript">JavaScript (Node.js)</option>
@@ -277,41 +277,41 @@ export function LearningItemFormModal({
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
                 {"Code mẫu ban đầu (Starter Code)"}
               </label>
               <textarea
                 rows={4}
                 value={labStarterCode}
                 onChange={(e) => setLabStarterCode(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
                 {"Test Cases (JSON Format)"}
               </label>
               <textarea
                 rows={4}
                 value={labTestCasesJson}
                 onChange={(e) => setLabTestCasesJson(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
           </div>
         )}
 
         {(itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ) && (
-          <div className="space-y-4 pt-2 border-t border-slate-200 dark:border-slate-800">
+          <div className="space-y-4 pt-2 border-t border-border">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
                 {"Ngân hàng Câu hỏi liên kết"}
               </label>
               <select
                 value={quizBankId}
                 onChange={(e) => setQuizBankId(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <option value="">{"-- Chọn Ngân hàng Câu hỏi --"}</option>
                 {questionBanks.map((bank) => (
@@ -324,83 +324,83 @@ export function LearningItemFormModal({
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 mb-1">
+                <label className="block text-[11px] font-bold text-muted-foreground mb-1">
                   {"Thời gian (phút)"}
                 </label>
                 <input
                   type="number"
                   value={quizTimeLimit}
                   onChange={(e) => setQuizTimeLimit(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
+                  className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 mb-1">
+                <label className="block text-[11px] font-bold text-muted-foreground mb-1">
                   {"Điểm đạt (%)"}
                 </label>
                 <input
                   type="number"
                   value={quizPassingThreshold}
                   onChange={(e) => setQuizPassingThreshold(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
+                  className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 mb-1">
+                <label className="block text-[11px] font-bold text-muted-foreground mb-1">
                   {"Số lần làm tối đa"}
                 </label>
                 <input
                   type="number"
                   value={quizMaxAttempts}
                   onChange={(e) => setQuizMaxAttempts(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
+                  className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 mb-1">
+                <label className="block text-[11px] font-bold text-muted-foreground mb-1">
                   {"Thời gian chờ (Giờ)"}
                 </label>
                 <input
                   type="number"
                   value={quizCooldownHours}
                   onChange={(e) => setQuizCooldownHours(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
+                  className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3 pt-1">
               <div>
-                <label className="block text-[11px] font-bold text-emerald-600 mb-1">
+                <label className="block text-[11px] font-bold text-success mb-1">
                   {"Số câu Dễ"}
                 </label>
                 <input
                   type="number"
                   value={quizEasyCount}
                   onChange={(e) => setQuizEasyCount(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
+                  className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-amber-600 mb-1">
+                <label className="block text-[11px] font-bold text-warning mb-1">
                   {"Số câu Trung bình"}
                 </label>
                 <input
                   type="number"
                   value={quizMediumCount}
                   onChange={(e) => setQuizMediumCount(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
+                  className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-rose-600 mb-1">
+                <label className="block text-[11px] font-bold text-destructive mb-1">
                   {"Số câu Khó"}
                 </label>
                 <input
                   type="number"
                   value={quizHardCount}
                   onChange={(e) => setQuizHardCount(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
+                  className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs"
                 />
               </div>
             </div>
@@ -408,15 +408,15 @@ export function LearningItemFormModal({
         )}
 
         {itemType === ItemType.PEER_REVIEW && (
-          <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+          <div className="space-y-2 pt-2 border-t border-border">
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
               {"Tiêu chí chấm điểm Peer Review (JSON Format)"}
             </label>
             <textarea
               rows={5}
               value={peerRubricJson}
               onChange={(e) => setPeerRubricJson(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
         )}
@@ -425,14 +425,14 @@ export function LearningItemFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 transition-colors"
+            className="px-4 py-2 rounded-xl text-xs font-bold bg-muted text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
           >
             {"Hủy"}
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md hover:bg-blue-500 transition-all disabled:opacity-50"
+            className="px-5 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground shadow-md transition-all disabled:opacity-50 cursor-pointer"
           >
             <span aria-live="polite">
               {saving ? "Đang lưu…" : isEdit ? "Cập nhật Học liệu" : "Xác nhận tạo Học liệu"}

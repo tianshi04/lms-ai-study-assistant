@@ -37,18 +37,16 @@ export function ForumReplyItem({
   return (
     <div
       className={`p-2 rounded ${
-        reply.isStaffAnswer
-          ? "bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20"
-          : "bg-slate-50 dark:bg-slate-800/40"
+        reply.isStaffAnswer ? "bg-warning/10 border border-warning/20" : "bg-muted/50"
       }`}
     >
       <div className="flex items-center justify-between text-[11px] mb-1">
         <div className="flex items-center gap-1 flex-wrap">
-          <span className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+          <span className="font-semibold text-foreground flex items-center gap-1">
             {reply.authorName}
             {reply.isStaffAnswer && (
-              <span className="inline-flex items-center gap-0.5 text-amber-700 dark:text-amber-300 font-extrabold">
-                <svg className="w-3 h-3 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+              <span className="inline-flex items-center gap-0.5 text-warning font-extrabold">
+                <svg className="w-3 h-3 text-warning" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -60,14 +58,12 @@ export function ForumReplyItem({
             )}
           </span>
           {reply.isEdited && (
-            <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium italic">
-              {"(Đã chỉnh sửa)"}
-            </span>
+            <span className="text-[10px] text-warning font-medium italic">{"(Đã chỉnh sửa)"}</span>
           )}
           {isReplyAuthor && (
             <button
               onClick={() => onStartEdit(reply)}
-              className="text-[10px] font-semibold text-slate-400 hover:text-blue-500 cursor-pointer ml-1"
+              className="text-[10px] font-semibold text-muted-foreground hover:text-primary cursor-pointer ml-1"
             >
               {"Sửa"}
             </button>
@@ -75,7 +71,7 @@ export function ForumReplyItem({
           {canDeleteReply && (
             <button
               onClick={() => onDelete(reply.id)}
-              className="text-[10px] font-semibold text-slate-400 hover:text-red-500 cursor-pointer ml-1"
+              className="text-[10px] font-semibold text-muted-foreground hover:text-destructive cursor-pointer ml-1"
             >
               {"Xóa"}
             </button>
@@ -84,15 +80,15 @@ export function ForumReplyItem({
 
         <button
           onClick={() => onVote(reply.id, true)}
-          className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded border transition-all ${
+          className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded border transition-all cursor-pointer ${
             reply.isUpvotedByMe
-              ? "bg-blue-600 border-blue-600 text-white"
-              : "text-slate-500 border-slate-200 dark:border-slate-700"
+              ? "bg-primary border-primary text-primary-foreground"
+              : "text-muted-foreground border-border hover:bg-muted"
           }`}
           title={reply.isUpvotedByMe ? "Đã Upvote (Bấm để Hủy)" : "Upvote"}
         >
           <svg
-            className={`w-2.5 h-2.5 ${reply.isUpvotedByMe ? "text-white" : "text-blue-500"}`}
+            className={`w-2.5 h-2.5 ${reply.isUpvotedByMe ? "text-primary-foreground" : "text-primary"}`}
             fill="currentColor"
             viewBox="0 0 24 24"
           >
@@ -108,26 +104,26 @@ export function ForumReplyItem({
             value={editReplyContent}
             onChange={(e) => onContentChange(e.target.value)}
             rows={2}
-            className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-1.5 text-xs text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
+            className="w-full bg-card border border-input rounded p-1.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
           <div className="flex justify-end gap-1">
             <button
               onClick={onCancelEdit}
-              className="px-2 py-0.5 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded text-[10px]"
+              className="px-2 py-0.5 border border-input text-muted-foreground rounded text-[10px]"
             >
               {"Hủy"}
             </button>
             <button
               onClick={() => onSaveEdit(reply.id)}
               disabled={submittingEditReply || !editReplyContent.trim()}
-              className="px-2 py-0.5 bg-blue-600 text-white rounded text-[10px] font-semibold hover:bg-blue-500"
+              className="px-2 py-0.5 bg-primary text-primary-foreground rounded text-[10px] font-semibold hover:bg-primary-hover"
             >
               {"Lưu thay đổi"}
             </button>
           </div>
         </div>
       ) : (
-        <p className="text-slate-700 dark:text-slate-300">{reply.content}</p>
+        <p className="text-foreground">{reply.content}</p>
       )}
     </div>
   );

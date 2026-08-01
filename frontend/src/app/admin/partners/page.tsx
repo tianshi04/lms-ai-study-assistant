@@ -75,8 +75,8 @@ export default function AdminPartnersPage() {
   if (profileLoading || partnersLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex items-center space-x-3 text-slate-500">
-          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="flex items-center space-x-3 text-muted-foreground">
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
           <span aria-live="polite">Đang tải danh sách đối tác…</span>
         </div>
       </div>
@@ -85,9 +85,9 @@ export default function AdminPartnersPage() {
 
   if (!isAdmin) {
     return (
-      <div className="max-w-md mx-auto my-16 p-8 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-2xl text-center">
-        <h2 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">Từ chối truy cập</h2>
-        <p className="text-slate-600 dark:text-slate-400 text-sm">
+      <div className="max-w-md mx-auto my-16 p-8 bg-destructive/10 border border-destructive/30 rounded-2xl text-center">
+        <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
+        <p className="text-muted-foreground text-sm">
           Bạn cần quyền Super Admin để truy cập trang quản trị đối tác.
         </p>
         <Button onClick={() => router.push("/")} className="mt-4" variant="outline">
@@ -256,31 +256,29 @@ export default function AdminPartnersPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-slate-200 dark:border-slate-800 gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-border gap-4">
         <div>
-          <div className="flex items-center space-x-2 text-sm text-slate-500 mb-1">
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-1">
             <button
               onClick={() => router.push("/admin/dashboard")}
-              className="hover:text-blue-600 transition-colors"
+              className="hover:text-primary transition-colors"
             >
               Trang quản trị
             </button>
             <span>/</span>
-            <span className="text-slate-800 dark:text-slate-200 font-medium">
-              Đối tác phát hành
-            </span>
+            <span className="text-foreground font-medium">Đối tác phát hành</span>
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight text-balance">
+          <h1 className="text-3xl font-extrabold text-foreground tracking-tight text-balance">
             Quản lý Đối tác Phát hành
           </h1>
-          <p className="text-slate-600 dark:text-slate-400 text-sm mt-1">
+          <p className="text-muted-foreground text-sm mt-1">
             Quản lý danh sách các trường đại học, viện nghiên cứu và doanh nghiệp phát hành chứng
             chỉ số.
           </p>
         </div>
         <Button
           onClick={handleOpenCreate}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-5 py-2.5 shadow-sm"
+          className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-xl px-5 py-2.5 shadow-sm"
         >
           <svg className="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -290,11 +288,11 @@ export default function AdminPartnersPage() {
       </div>
 
       {/* Partners List Table */}
-      <div className="mt-8 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div className="mt-8 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
         {partners.length === 0 ? (
-          <div className="p-12 text-center text-slate-500">
+          <div className="p-12 text-center text-muted-foreground">
             <svg
-              className="w-12 h-12 mx-auto text-slate-300 mb-4"
+              className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-50"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -306,10 +304,8 @@ export default function AdminPartnersPage() {
                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
               />
             </svg>
-            <p className="text-lg font-medium text-slate-700 dark:text-slate-300">
-              Chưa có đối tác nào được tạo
-            </p>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-lg font-medium text-foreground">Chưa có đối tác nào được tạo</p>
+            <p className="text-sm text-muted-foreground mt-1">
               Bấm nút &quot;Thêm đối tác mới&quot; để thiết lập đối tác phát hành chứng chỉ đầu
               tiên.
             </p>
@@ -318,23 +314,20 @@ export default function AdminPartnersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 uppercase tracking-wider text-xs">
-                  <th className="py-4 px-6 font-semibold">Đối tác</th>
-                  <th className="py-4 px-6 font-semibold">Slug URL</th>
-                  <th className="py-4 px-6 font-semibold">Tên miền xác thực</th>
-                  <th className="py-4 px-6 font-semibold">Người ký đại diện</th>
-                  <th className="py-4 px-6 font-semibold text-right">Thao tác</th>
+                <tr className="bg-muted border-b border-border text-muted-foreground uppercase tracking-wider text-xs font-bold">
+                  <th className="py-4 px-6">Đối tác</th>
+                  <th className="py-4 px-6">Slug URL</th>
+                  <th className="py-4 px-6">Tên miền xác thực</th>
+                  <th className="py-4 px-6">Người ký đại diện</th>
+                  <th className="py-4 px-6 text-right">Thao tác</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody className="divide-y divide-border">
                 {partners.map((partner) => (
-                  <tr
-                    key={partner.id}
-                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors"
-                  >
+                  <tr key={partner.id} className="hover:bg-muted/50 transition-colors">
                     <td className="py-4 px-6">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 p-1 border border-slate-200 dark:border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-muted p-1 border border-border flex items-center justify-center overflow-hidden shrink-0">
                           {partner.logoUrl ? (
                             <Image
                               src={partner.logoUrl}
@@ -345,21 +338,19 @@ export default function AdminPartnersPage() {
                               unoptimized
                             />
                           ) : (
-                            <span className="font-bold text-blue-600 text-sm">
+                            <span className="font-bold text-primary text-sm">
                               {partner.name.substring(0, 2).toUpperCase()}
                             </span>
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold text-slate-900 dark:text-white">
-                            {partner.name}
-                          </p>
+                          <p className="font-semibold text-foreground">{partner.name}</p>
                           {partner.websiteUrl && (
                             <a
                               href={partner.websiteUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs text-blue-600 hover:underline"
+                              className="text-xs text-primary hover:underline"
                             >
                               {partner.websiteUrl}
                             </a>
@@ -367,7 +358,7 @@ export default function AdminPartnersPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-slate-600 dark:text-slate-400 font-mono text-xs">
+                    <td className="py-4 px-6 text-muted-foreground font-mono text-xs">
                       /partners/{partner.slug}
                     </td>
                     <td className="py-4 px-6">
@@ -376,26 +367,24 @@ export default function AdminPartnersPage() {
                           {partner.allowedDomains.map((domain, i) => (
                             <span
                               key={i}
-                              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+                              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-info/10 text-info border border-info/20"
                             >
                               {domain}
                             </span>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-slate-400 text-xs italic">Chưa giới hạn</span>
+                        <span className="text-muted-foreground text-xs italic">Chưa giới hạn</span>
                       )}
                     </td>
                     <td className="py-4 px-6">
-                      <p className="font-medium text-slate-800 dark:text-slate-200">
-                        {partner.signerName || "—"}
-                      </p>
-                      <p className="text-xs text-slate-500">{partner.signerTitle}</p>
+                      <p className="font-medium text-foreground">{partner.signerName || "—"}</p>
+                      <p className="text-xs text-muted-foreground">{partner.signerTitle}</p>
                     </td>
                     <td className="py-4 px-6 text-right space-x-2">
                       <button
                         onClick={() => router.push(`/partners/${partner.slug}`)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors border border-border"
                         title="Xem trang công khai"
                       >
                         <svg
@@ -421,7 +410,7 @@ export default function AdminPartnersPage() {
                       </button>
                       <button
                         onClick={() => handleOpenEdit(partner)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
                       >
                         <svg
                           className="w-3.5 h-3.5"
@@ -440,7 +429,7 @@ export default function AdminPartnersPage() {
                       </button>
                       <button
                         onClick={() => setDeletingPartnerId(partner.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-red-50 hover:bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 transition-colors"
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-colors"
                       >
                         <svg
                           className="w-3.5 h-3.5"
@@ -476,42 +465,42 @@ export default function AdminPartnersPage() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           {errorMsg && (
-            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 text-red-600 text-sm rounded-xl">
+            <div className="p-3 bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-xl">
               {errorMsg}
             </div>
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">
-                Tên đối tác / Trường học <span className="text-red-500">*</span>
+              <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+                Tên đối tác / Trường học <span className="text-destructive">*</span>
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="VD: Đại học Bách Khoa TP.HCM"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">
-                Slug URL định danh <span className="text-red-500">*</span>
+              <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+                Slug URL định danh <span className="text-destructive">*</span>
               </label>
               <input
                 type="text"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder="VD: hcmut"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none font-mono"
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none font-mono"
                 required
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
               Mô tả giới thiệu
             </label>
             <textarea
@@ -519,13 +508,13 @@ export default function AdminPartnersPage() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Giới thiệu sơ lược về tổ chức đối tác…"
               rows={2}
-              className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">
+              <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
                 URL Logo đối tác
               </label>
               <input
@@ -533,11 +522,11 @@ export default function AdminPartnersPage() {
                 value={logoUrl}
                 onChange={(e) => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">
+              <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
                 URL Banner bìa
               </label>
               <input
@@ -545,11 +534,11 @@ export default function AdminPartnersPage() {
                 value={bannerUrl}
                 onChange={(e) => setBannerUrl(e.target.value)}
                 placeholder="https://example.com/banner.jpg"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">
+              <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
                 Website chính thức
               </label>
               <input
@@ -557,13 +546,13 @@ export default function AdminPartnersPage() {
                 value={websiteUrl}
                 onChange={(e) => setWebsiteUrl(e.target.value)}
                 placeholder="https://hcmut.edu.vn"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
               Tên miền được phép cấp chứng chỉ (Phân cách bởi dấu phẩy)
             </label>
             <input
@@ -571,15 +560,15 @@ export default function AdminPartnersPage() {
               value={allowedDomainsStr}
               onChange={(e) => setAllowedDomainsStr(e.target.value)}
               placeholder="hcmut.edu.vn, vnuhcm.edu.vn"
-              className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
           </div>
 
           {/* Section: Thông tin Người ký mặc định */}
-          <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-            <h3 className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
+          <div className="border-t border-border pt-4">
+            <h3 className="text-xs font-bold uppercase text-foreground mb-3 flex items-center gap-1.5">
               <svg
-                className="w-4 h-4 text-blue-600"
+                className="w-4 h-4 text-primary"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -595,7 +584,7 @@ export default function AdminPartnersPage() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">
+                <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
                   Họ tên người ký (signer_name)
                 </label>
                 <input
@@ -603,11 +592,11 @@ export default function AdminPartnersPage() {
                   value={signerName}
                   onChange={(e) => setSignerName(e.target.value)}
                   placeholder="GS.TS. Nguyễn Văn A"
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">
+                <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
                   Chức danh (signer_title)
                 </label>
                 <input
@@ -615,11 +604,11 @@ export default function AdminPartnersPage() {
                   value={signerTitle}
                   onChange={(e) => setSignerTitle(e.target.value)}
                   placeholder="Hiệu trưởng"
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">
+                <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
                   URL Ảnh chữ ký (signature_image_url)
                 </label>
                 <input
@@ -627,17 +616,17 @@ export default function AdminPartnersPage() {
                   value={signatureImageUrl}
                   onChange={(e) => setSignatureImageUrl(e.target.value)}
                   placeholder="https://example.com/signature.png"
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Section: Quản lý Quản trị viên Tổ chức (Organization Admin) */}
-          <div className="border-t border-slate-200 dark:border-slate-800 pt-4 space-y-3">
-            <h3 className="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+          <div className="border-t border-border pt-4 space-y-3">
+            <h3 className="text-xs font-bold uppercase text-foreground flex items-center gap-1.5">
               <svg
-                className="w-4 h-4 text-indigo-600"
+                className="w-4 h-4 text-primary"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -653,7 +642,7 @@ export default function AdminPartnersPage() {
             </h3>
 
             {adminErrorMsg && (
-              <div className="p-2.5 bg-red-50 dark:bg-red-950/40 border border-red-200 text-red-600 text-xs rounded-lg">
+              <div className="p-2.5 bg-destructive/10 border border-destructive/30 text-destructive text-xs rounded-lg">
                 {adminErrorMsg}
               </div>
             )}
@@ -661,28 +650,30 @@ export default function AdminPartnersPage() {
             {/* List of existing organization admins */}
             <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
               {currentPartnerAdmins.length === 0 ? (
-                <p className="text-xs text-slate-500 italic">Chưa gán Quản trị viên tổ chức nào.</p>
+                <p className="text-xs text-muted-foreground italic">
+                  Chưa gán Quản trị viên tổ chức nào.
+                </p>
               ) : (
                 currentPartnerAdmins.map((admin) => (
                   <div
                     key={admin.id}
-                    className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-xs"
+                    className="flex items-center justify-between p-2.5 bg-muted rounded-xl border border-border text-xs"
                   >
                     <div className="flex items-center space-x-2">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 font-bold flex items-center justify-center text-[10px]">
+                      <div className="w-6 h-6 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-[10px]">
                         {admin.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">
-                          {admin.name}
+                        <span className="font-semibold text-foreground">{admin.name}</span>
+                        <span className="text-muted-foreground ml-2 font-mono">
+                          ({admin.email})
                         </span>
-                        <span className="text-slate-400 ml-2 font-mono">({admin.email})</span>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleRemovePartnerAdmin(admin.id)}
-                      className="text-red-500 hover:text-red-700 p-1"
+                      className="text-destructive hover:opacity-80 p-1"
                       title="Gỡ Quản trị viên"
                     >
                       <svg
@@ -711,19 +702,19 @@ export default function AdminPartnersPage() {
                 value={newAdminName}
                 onChange={(e) => setNewAdminName(e.target.value)}
                 placeholder="Tên quản trị viên"
-                className="sm:col-span-2 px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="sm:col-span-2 px-3 py-1.5 text-xs rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               />
               <input
                 type="email"
                 value={newAdminEmail}
                 onChange={(e) => setNewAdminEmail(e.target.value)}
                 placeholder="email@domain.edu.vn"
-                className="sm:col-span-2 px-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none font-mono"
+                className="sm:col-span-2 px-3 py-1.5 text-xs rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none font-mono"
               />
               <button
                 type="button"
                 onClick={handleAddPartnerAdmin}
-                className="sm:col-span-1 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-semibold py-1.5 px-3 rounded-xl border border-blue-200 dark:border-blue-800 transition-colors flex items-center justify-center gap-1"
+                className="sm:col-span-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold py-1.5 px-3 rounded-xl border border-primary/20 transition-colors flex items-center justify-center gap-1"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
@@ -738,8 +729,8 @@ export default function AdminPartnersPage() {
             </div>
           </div>
 
-          <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-            <label className="block text-xs font-semibold uppercase text-slate-600 dark:text-slate-400 mb-1">
+          <div className="border-t border-border pt-4">
+            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
               Public Key PEM (Khóa công khai ký số)
             </label>
             <textarea
@@ -748,17 +739,17 @@ export default function AdminPartnersPage() {
               placeholder="-----BEGIN PUBLIC KEY-----…"
               spellCheck={false}
               rows={3}
-              className="w-full px-3.5 py-2 text-xs font-mono rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="w-full px-3.5 py-2 text-xs font-mono rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-border">
             <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
               Hủy
             </Button>
             <Button
               type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl"
+              className="bg-primary hover:bg-primary-hover text-primary-foreground font-medium rounded-xl"
               isLoading={createMutation.isPending || updateMutation.isPending}
             >
               {editingPartner ? "Cập nhật đối tác" : "Thêm đối tác"}

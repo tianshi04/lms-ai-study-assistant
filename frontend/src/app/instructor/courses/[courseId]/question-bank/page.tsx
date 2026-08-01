@@ -222,48 +222,40 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
+    <div className="min-h-screen bg-background text-foreground flex flex-col transition-colors">
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Breadcrumb */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <Link
-              href="/instructor/courses"
-              className="hover:text-blue-600 dark:hover:text-blue-400"
-            >
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Link href="/instructor/courses" className="hover:text-primary">
               {"Giảng viên"}
             </Link>
             <span>/</span>
-            <Link
-              href={`/instructor/courses/${courseId}`}
-              className="hover:text-blue-600 dark:hover:text-blue-400"
-            >
+            <Link href={`/instructor/courses/${courseId}`} className="hover:text-primary">
               {"Biên soạn bài học"}
             </Link>
             <span>/</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">
-              {"Ngân hàng Câu hỏi & Đề thi"}
-            </span>
+            <span className="font-semibold text-foreground">{"Ngân hàng Câu hỏi & Đề thi"}</span>
           </div>
 
           <Link
             href={`/instructor/courses/${courseId}`}
-            className="text-xs font-semibold px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+            className="text-xs font-semibold px-4 py-2 rounded-xl bg-muted text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
           >
             {"Danh sách Khóa học"}
           </Link>
         </div>
 
         {/* Page Header */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="bg-card rounded-3xl p-6 sm:p-8 border border-border shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-extrabold uppercase mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-extrabold uppercase mb-2">
               Question Pool Engine
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white text-balance">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground text-balance">
               {"Ngân hàng Câu hỏi & Đề thi"}
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {
                 "Quản lý các kho đề thi và câu hỏi của khóa học. Thiết lập các bậc câu hỏi để rút ngẫu nhiên làm đề thi."
               }
@@ -271,7 +263,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
           </div>
           <button
             onClick={() => setShowCreateBankModal(true)}
-            className="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-md shadow-blue-500/10 transition-all flex items-center gap-2 cursor-pointer"
+            className="px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm shadow-md shadow-primary/10 transition-all flex items-center gap-2 cursor-pointer"
           >
             <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path
@@ -286,20 +278,20 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
         </div>
 
         {isLoading ? (
-          <div className="py-20 text-center text-slate-500">
-            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="py-20 text-center text-muted-foreground">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <span aria-live="polite">{"Đang tải cấu trúc bài giảng khóa học…"}</span>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             {/* Left Panel - Question Banks Directory */}
             <div className="lg:col-span-4 space-y-4">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
                 Danh sách Kho đề ({banks.length})
               </h2>
 
               {banks.length === 0 ? (
-                <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 text-slate-500">
+                <div className="p-8 text-center bg-card rounded-3xl border border-dashed border-border text-muted-foreground">
                   <p className="text-sm font-semibold">
                     {"Khóa học này chưa có Kho ngân hàng đề nào."}
                   </p>
@@ -314,31 +306,31 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                         onClick={() => setSelectedBankId(bank.id)}
                         className={`w-full text-left p-5 rounded-2xl border transition-all flex flex-col gap-1 cursor-pointer ${
                           isSelected
-                            ? "bg-blue-50/50 dark:bg-blue-950/20 border-blue-500 ring-1 ring-blue-500"
-                            : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+                            ? "bg-primary/10 border-primary ring-1 ring-primary"
+                            : "bg-card border-border hover:border-muted-foreground/30"
                         }`}
                       >
                         <div className="flex items-center justify-between w-full">
-                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase">
+                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-muted text-muted-foreground uppercase">
                             {bank.category === "MODULE_EXAM"
                               ? "Tuần"
                               : bank.category === "FINAL_EXAM"
                                 ? "Cuối khóa"
                                 : "Luyện tập"}
                           </span>
-                          <span className="text-[11px] text-slate-400 font-mono">
+                          <span className="text-[11px] text-muted-foreground font-mono">
                             ID: {bank.id}
                           </span>
                         </div>
-                        <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-200 mt-1">
+                        <h3 className="font-extrabold text-sm text-foreground mt-1">
                           {bank.title}
                         </h3>
                         {bank.description && (
-                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">
+                          <p className="text-xs text-muted-foreground line-clamp-1">
                             {bank.description}
                           </p>
                         )}
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 mt-2 border-t border-slate-100 dark:border-slate-800/60 pt-2 w-full">
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2 border-t border-border pt-2 w-full">
                           <svg
                             className="w-3.5 h-3.5"
                             fill="none"
@@ -364,9 +356,9 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
             {/* Right Panel - Bank Questions list */}
             <div className="lg:col-span-8">
               {!selectedBank ? (
-                <div className="py-20 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 space-y-4">
+                <div className="py-20 text-center bg-card rounded-3xl border border-border p-8 space-y-4">
                   <svg
-                    className="w-16 h-16 mx-auto text-slate-300 dark:text-slate-700"
+                    className="w-16 h-16 mx-auto text-muted-foreground/40"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -379,10 +371,10 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                     />
                   </svg>
                   <div>
-                    <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">
+                    <h3 className="text-base font-bold text-foreground">
                       Chưa chọn Kho ngân hàng đề
                     </h3>
-                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                    <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
                       Vui lòng chọn một Kho đề thi ở danh sách bên trái hoặc tạo Kho mới để bắt đầu
                       quản lý danh sách câu hỏi.
                     </p>
@@ -391,22 +383,18 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
               ) : (
                 <div className="space-y-6">
                   {/* Selected Bank Banner */}
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="bg-card p-6 rounded-3xl border border-border shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-black text-slate-800 dark:text-slate-100">
-                          {selectedBank.title}
-                        </h2>
-                        <span className="text-xs font-mono px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-slate-500">
+                        <h2 className="text-lg font-black text-foreground">{selectedBank.title}</h2>
+                        <span className="text-xs font-mono px-2 py-0.5 bg-muted rounded text-muted-foreground">
                           ID: {selectedBank.id}
                         </span>
                       </div>
                       {selectedBank.description && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {selectedBank.description}
-                        </p>
+                        <p className="text-xs text-muted-foreground">{selectedBank.description}</p>
                       )}
-                      <p className="text-xs font-bold text-blue-600 dark:text-blue-400 pt-1">
+                      <p className="text-xs font-bold text-primary pt-1">
                         {"Tổng số câu hỏi:"} {selectedBank.questions?.length || 0}
                       </p>
                     </div>
@@ -424,7 +412,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                         ]);
                         setShowAddQuestionModal(true);
                       }}
-                      className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0"
+                      className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer flex-shrink-0"
                     >
                       <svg
                         className="w-4 h-4"
@@ -445,9 +433,9 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
 
                   {/* Questions List */}
                   {!selectedBank.questions || selectedBank.questions.length === 0 ? (
-                    <div className="py-16 text-center bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 text-slate-500 p-8 space-y-3">
+                    <div className="py-16 text-center bg-card rounded-3xl border border-dashed border-border text-muted-foreground p-8 space-y-3">
                       <svg
-                        className="w-10 h-10 mx-auto text-slate-400"
+                        className="w-10 h-10 mx-auto text-muted-foreground/50"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -469,11 +457,11 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                         return (
                           <div
                             key={q.id}
-                            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3 hover:border-slate-300 dark:hover:border-slate-700 transition-colors"
+                            className="bg-card rounded-2xl border border-border p-5 shadow-xs space-y-3 hover:border-muted-foreground/30 transition-colors"
                           >
                             {/* Question Meta */}
                             <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-extrabold text-slate-400">
+                              <span className="text-[10px] font-extrabold text-muted-foreground">
                                 CÂU HỎI {idx + 1}
                               </span>
 
@@ -481,10 +469,10 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                                 <span
                                   className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
                                     q.difficulty === "EASY"
-                                      ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                      ? "bg-success/10 text-success border border-success/20"
                                       : q.difficulty === "MEDIUM"
-                                        ? "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400"
-                                        : "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                                        ? "bg-warning/10 text-warning border border-warning/20"
+                                        : "bg-destructive/10 text-destructive border border-destructive/20"
                                   }`}
                                 >
                                   {q.difficulty === "EASY"
@@ -493,14 +481,14 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                                       ? "Trung bình (Medium)"
                                       : "Khó (Hard)"}
                                 </span>
-                                <span className="text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded mr-2">
+                                <span className="text-[10px] font-mono bg-muted text-muted-foreground px-1.5 py-0.5 rounded mr-2">
                                   {q.questionType}
                                 </span>
 
-                                <div className="flex items-center gap-1 border-l border-slate-200 dark:border-slate-800 pl-2">
+                                <div className="flex items-center gap-1 border-l border-border pl-2">
                                   <button
                                     onClick={() => handleOpenEditQuestionModal(q)}
-                                    className="p-1 rounded text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                    className="p-1 rounded text-muted-foreground hover:text-primary hover:bg-muted transition-colors cursor-pointer"
                                     title="Sửa"
                                   >
                                     <svg
@@ -519,7 +507,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                                   </button>
                                   <button
                                     onClick={() => setDeletingQuestionId(q.id)}
-                                    className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                    className="p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
                                     title="Xoá"
                                   >
                                     <svg
@@ -541,7 +529,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                             </div>
 
                             {/* Question Text */}
-                            <p className="text-sm font-bold text-slate-800 dark:text-slate-100 whitespace-pre-wrap">
+                            <p className="text-sm font-bold text-foreground whitespace-pre-wrap">
                               {q.text}
                             </p>
 
@@ -552,16 +540,16 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                                   key={opt.id || oIdx}
                                   className={`flex items-center gap-2.5 p-3 rounded-xl border text-xs ${
                                     opt.isCorrect
-                                      ? "bg-emerald-50/40 dark:bg-emerald-950/15 border-emerald-500/40 text-emerald-800 dark:text-emerald-300 font-bold"
-                                      : "bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/80 text-slate-600 dark:text-slate-400"
+                                      ? "bg-success/10 border-success/30 text-success font-bold"
+                                      : "bg-muted/50 border-border text-muted-foreground"
                                   }`}
                                 >
                                   {opt.isCorrect ? (
-                                    <span className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-[10px] shadow-xs flex-shrink-0">
+                                    <span className="w-5 h-5 rounded-full bg-success text-success-foreground flex items-center justify-center font-bold text-[10px] shadow-xs flex-shrink-0">
                                       ✓
                                     </span>
                                   ) : (
-                                    <span className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 flex items-center justify-center font-bold text-[10px] text-slate-400 flex-shrink-0">
+                                    <span className="w-5 h-5 rounded-full bg-muted border border-border flex items-center justify-center font-bold text-[10px] text-muted-foreground flex-shrink-0">
                                       {oIdx + 1}
                                     </span>
                                   )}
@@ -572,9 +560,9 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
 
                             {/* Answer Explanation */}
                             {q.explanation && (
-                              <div className="mt-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800/60 text-xs text-slate-500 dark:text-slate-400 flex items-start gap-2">
+                              <div className="mt-3 p-3.5 rounded-xl bg-card border border-border text-xs text-muted-foreground flex items-start gap-2">
                                 <svg
-                                  className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0"
+                                  className="w-4 h-4 text-primary mt-0.5 flex-shrink-0"
                                   fill="none"
                                   viewBox="0 0 24 24"
                                   stroke="currentColor"
@@ -587,7 +575,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                                   />
                                 </svg>
                                 <div>
-                                  <span className="font-bold text-slate-700 dark:text-slate-300 block mb-0.5">
+                                  <span className="font-bold text-foreground block mb-0.5">
                                     Lời giải thích:
                                   </span>
                                   {q.explanation}
@@ -614,7 +602,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
       >
         <form onSubmit={handleCreateBank} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
               {"Tên Kho Ngân hàng Đề"} *
             </label>
             <input
@@ -623,18 +611,18 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
               value={newBankTitle}
               onChange={(e) => setNewBankTitle(e.target.value)}
               placeholder="Ví dụ: Kho thi kết thúc Tuần 1: Khái niệm AI"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-semibold focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
               {"Phân loại Kho"}
             </label>
             <select
               value={newBankCategory}
               onChange={(e) => setNewBankCategory(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-bold focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-bold focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <option value="PRACTICE">{"Luyện tập (PRACTICE)"}</option>
               <option value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</option>
@@ -643,7 +631,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
               {"Mô tả"}
             </label>
             <textarea
@@ -651,22 +639,22 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
               value={newBankDesc}
               onChange={(e) => setNewBankDesc(e.target.value)}
               placeholder="Mô tả tóm tắt nội dung các câu hỏi trong kho này…"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <button
               type="button"
               onClick={() => setShowCreateBankModal(false)}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-muted cursor-pointer"
             >
               {"Hủy"}
             </button>
             <button
               type="submit"
               disabled={creatingBank}
-              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground font-bold text-xs cursor-pointer"
             >
               <span aria-live="polite">{creatingBank ? "Đang tạo…" : "Xác nhận tạo Kho"}</span>
             </button>
@@ -683,7 +671,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
       >
         <form onSubmit={handleAddQuestion} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
           <div>
-            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
               {"Nội dung câu hỏi (hỗ trợ Markdown)"} *
             </label>
             <textarea
@@ -692,13 +680,13 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
               value={qText}
               onChange={(e) => setQText(e.target.value)}
               placeholder="Nhập nội dung câu hỏi…"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+              className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-semibold focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
                 {"Dạng câu hỏi"}
               </label>
               <select
@@ -729,7 +717,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                     setQOptions(normalized);
                   }
                 }}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-bold focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-bold focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
                 <option value="SINGLE_CHOICE">Trắc nghiệm 1 đáp án (Single Choice)</option>
                 <option value="MULTIPLE_CHOICE">Trắc nghiệm nhiều đáp án (Multiple Choice)</option>
@@ -739,7 +727,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
               Nội dung Cốt lõi của Câu hỏi *
             </label>
             <textarea
@@ -748,20 +736,20 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
               value={qText}
               onChange={(e) => setQText(e.target.value)}
               placeholder="Nhập nội dung đề bài câu hỏi…"
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
           {/* Options */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Danh sách Phương án Trả lời *
               </label>
               <button
                 type="button"
                 onClick={handleAddOption}
-                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
+                className="text-xs font-bold text-primary hover:underline cursor-pointer"
               >
                 + Thêm Phương án
               </button>
@@ -773,7 +761,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                     type="checkbox"
                     checked={opt.isCorrect}
                     onChange={(e) => handleOptionCorrectChange(idx, e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded cursor-pointer"
+                    className="w-4 h-4 text-primary rounded cursor-pointer"
                     title="Đánh dấu phương án đúng"
                   />
                   <input
@@ -782,13 +770,13 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                     value={opt.optionText}
                     onChange={(e) => handleOptionChange(idx, e.target.value)}
                     placeholder={`Phương án ${idx + 1}…`}
-                    className="flex-1 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="flex-1 px-3 py-1.5 rounded-lg border border-input bg-card text-foreground text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                   {qOptions.length > 2 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveOption(idx)}
-                      className="p-1 text-slate-400 hover:text-rose-500 cursor-pointer"
+                      className="p-1 text-muted-foreground hover:text-destructive cursor-pointer"
                     >
                       ✕
                     </button>
@@ -799,7 +787,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">
+            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
               Giải thích Đáp án (Explanation)
             </label>
             <textarea
@@ -807,7 +795,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
               value={qExplanation}
               onChange={(e) => setQExplanation(e.target.value)}
               placeholder="Giải thích lý do tại sao phương án đó đúng…"
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
 
@@ -815,14 +803,14 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
             <button
               type="button"
               onClick={() => setShowAddQuestionModal(false)}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-muted cursor-pointer"
             >
               {"Hủy"}
             </button>
             <button
               type="submit"
               disabled={submittingQuestion}
-              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground font-bold text-xs cursor-pointer"
             >
               <span aria-live="polite">
                 {submittingQuestion

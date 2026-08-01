@@ -78,9 +78,9 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
-        <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400">
-          <svg className="animate-spin h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="none">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <svg className="animate-spin h-6 w-6 text-primary" viewBox="0 0 24 24" fill="none">
             <circle
               className="opacity-25"
               cx="12"
@@ -105,9 +105,9 @@ export default function ProfilePage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12 w-full flex-1">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 shadow-xl shadow-slate-200/50 dark:shadow-none">
+      <div className="bg-card border border-border rounded-3xl p-8 shadow-xl">
         {/* User Banner */}
-        <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-border">
           <Image
             src={
               !user?.avatarUrl || user.avatarUrl.includes("api.dicebear.com")
@@ -118,15 +118,15 @@ export default function ProfilePage() {
             width={96}
             height={96}
             unoptimized
-            className="w-24 h-24 rounded-full border-4 border-blue-500/20 shadow-inner bg-slate-100 dark:bg-slate-800"
+            className="w-24 h-24 rounded-full border-4 border-primary/20 shadow-inner bg-muted"
           />
           <div className="text-center sm:text-left">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1 text-balance">
+            <h1 className="text-2xl font-bold text-foreground mb-1 text-balance">
               {user?.fullName}
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{user?.email}</p>
+            <p className="text-sm text-muted-foreground mb-3">{user?.email}</p>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-info/10 text-info border border-info/20">
                 Vai trò:{" "}
                 {user?.role === 1
                   ? "Learner (Học viên)"
@@ -135,9 +135,9 @@ export default function ProfilePage() {
                     : "TA / Admin"}
               </span>
               {user?.isIdentityVerified ? (
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20">
                   <svg
-                    className="w-3.5 h-3.5 text-emerald-500"
+                    className="w-3.5 h-3.5 text-success"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -152,7 +152,7 @@ export default function ProfilePage() {
                   Đã xác minh KYC
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20">
                   Chưa xác minh KYC
                 </span>
               )}
@@ -161,13 +161,13 @@ export default function ProfilePage() {
         </div>
 
         {/* Identity Verification (KYC Mock) Section */}
-        <div className="mt-8 pb-8 border-b border-slate-200 dark:border-slate-800">
+        <div className="mt-8 pb-8 border-b border-border">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">
+              <h2 className="text-lg font-bold text-foreground mb-1">
                 Xác minh Danh tính Sinh trắc học (KYC Verification)
               </h2>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 {user?.isIdentityVerified
                   ? "Tài khoản của bạn đã hoàn tất xác minh danh tính CCCD/Hộ chiếu. Bạn đủ điều kiện cấp Verified Certificate."
                   : "Yêu cầu hoàn tất xác minh danh tính bằng CCCD/Hộ chiếu trước khi nhận Chứng chỉ Verified Certificate lần đầu tiên."}
@@ -179,7 +179,7 @@ export default function ProfilePage() {
                   disabled
                   variant="outline"
                   size="sm"
-                  className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 cursor-default"
+                  className="bg-success/10 text-success border-success/20 cursor-default"
                 >
                   Đã xác minh
                 </Button>
@@ -189,7 +189,7 @@ export default function ProfilePage() {
                   isLoading={verifyingIdentity}
                   variant="primary"
                   size="sm"
-                  className="bg-emerald-600 hover:bg-emerald-500 border-none shadow-md shadow-emerald-500/20"
+                  className="bg-success hover:bg-success-hover text-success-foreground border-none shadow-md"
                 >
                   Giả lập Xác minh KYC (Mock Verification)
                 </Button>
@@ -200,10 +200,10 @@ export default function ProfilePage() {
 
         {/* Enterprise Seat Key Section */}
         <div className="mt-8">
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+          <h2 className="text-lg font-bold text-foreground mb-2">
             Suất học Doanh nghiệp / Đối tác (Enterprise License)
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mb-6">
+          <p className="text-sm text-muted-foreground mb-6">
             Nhập mã kích hoạt (Enterprise Seat Key) được cấp bởi trường đại học hoặc doanh nghiệp để
             mở khóa 100% tài nguyên học tập trả phí.
           </p>
@@ -216,7 +216,7 @@ export default function ProfilePage() {
               placeholder="Nhập mã Enterprise Key (ví dụ: ENT-UNI-2026-X99)"
               autoComplete="off"
               spellCheck={false}
-              className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors text-sm font-mono"
+              className="flex-1 px-4 py-3 rounded-xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors text-sm font-mono"
             />
             <Button
               type="submit"
