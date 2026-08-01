@@ -71,7 +71,7 @@ export default function MyCoursesPage() {
 
   return (
     <DirectionalTransition>
-      <main className="w-full max-w-7xl mx-auto px-6 py-12 flex-1">
+      <main className="w-full max-w-7xl mx-auto px-6 pt-12 pb-20 flex-1">
         <div className="w-full mb-10 text-center md:text-left max-w-3xl">
           <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4 text-balance">
             {"Khóa học của tôi"}
@@ -169,16 +169,13 @@ export default function MyCoursesPage() {
             </Link>
           </div>
         ) : (
-          <div
-            style={{ contentVisibility: "auto", containIntrinsicSize: "1px 300px" }}
-            className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6">
             {filteredCourses.map((course) => (
               <div
                 key={course.courseId}
-                className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full"
+                className="group relative hover:z-20 bg-card text-card-foreground border border-border rounded-2xl shadow-md hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full"
               >
-                <div className="p-6 flex-1">
+                <div className="p-6 flex-1 rounded-t-2xl">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       {course.partnerName}
@@ -229,7 +226,7 @@ export default function MyCoursesPage() {
                   </div>
                 </div>
 
-                <div className="p-4 border-t border-slate-100 dark:border-slate-800/60 bg-slate-50 dark:bg-slate-900/50">
+                <div className="p-4 border-t border-border bg-slate-50 dark:bg-slate-900/50 rounded-b-2xl">
                   <Link
                     href={`/learn/${course.courseId}`}
                     transitionTypes={["nav-forward"]}

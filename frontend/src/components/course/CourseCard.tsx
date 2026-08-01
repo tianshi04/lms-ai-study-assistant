@@ -28,7 +28,7 @@ export function CourseCard({ course }: { course: Course }) {
   return (
     <div
       onMouseEnter={handlePrefetch}
-      className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 flex flex-col justify-between"
+      className="group relative hover:z-10 bg-card text-card-foreground border border-border hover:border-primary/50 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/5 flex flex-col justify-between"
     >
       <div>
         {/* Partner Header */}

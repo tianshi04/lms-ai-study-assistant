@@ -197,13 +197,13 @@ export default function MyCertificatesPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6">
           {filteredCertificates.map((cert) => (
             <div
               key={cert.certificateId}
-              className="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+              className="group relative hover:z-20 bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
             >
-              <div className="p-6">
+              <div className="p-6 rounded-t-3xl">
                 {/* Header Badge & Partner */}
                 <div className="flex items-center justify-between gap-3 mb-4">
                   <div className="flex items-center gap-2">
@@ -266,7 +266,7 @@ export default function MyCertificatesPage() {
               </div>
 
               {/* Footer Actions */}
-              <div className="p-4 border-t border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/50 flex items-center gap-2">
+              <div className="p-4 border-t border-border bg-slate-50/50 dark:bg-slate-900/50 flex items-center gap-2 rounded-b-3xl">
                 <Link
                   href={cert.verificationUrl || `/verify/${cert.certificateId}`}
                   className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition-all shadow-md shadow-purple-600/10 cursor-pointer"
