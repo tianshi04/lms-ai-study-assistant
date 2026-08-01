@@ -82,7 +82,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast }) => {
         "pointer-events-auto relative flex w-full items-start justify-between gap-3 overflow-hidden rounded-xl border p-4 shadow-lg transition-all duration-200 ease-out",
         "bg-card/95 backdrop-blur-md text-card-foreground",
         "data-[ending]:animate-out data-[ending]:fade-out-0 data-[ending]:slide-out-to-right-full data-[ending]:duration-150",
-        "data-[starting]:animate-in data-[starting]:fade-in-0 data-[starting]:slide-in-from-bottom-5 data-[starting]:duration-200",
+        "data-[starting]:animate-in data-[starting]:fade-in-0 data-[starting]:slide-in-from-top-5 data-[starting]:duration-200",
         toastBorderVariants[type],
       )}
     >
@@ -126,7 +126,7 @@ function ToastViewportList() {
 
   return (
     <BaseToast.Portal>
-      <BaseToast.Viewport className="fixed bottom-4 right-4 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none p-4 sm:p-0">
+      <BaseToast.Viewport className="fixed top-4 right-4 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none p-4 sm:p-0">
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} />
         ))}
