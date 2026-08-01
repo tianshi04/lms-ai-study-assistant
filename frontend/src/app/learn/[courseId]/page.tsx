@@ -47,6 +47,7 @@ function CoursePlayerContent() {
     "transcript",
   );
   const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const handleTabClick = (tab: "transcript" | "forum" | "notes" | "deadlines") => {
     if (isPanelOpen && activeTab === tab) {
@@ -391,20 +392,41 @@ function CoursePlayerContent() {
                 <span>{"Đóng Xem trước"}</span>
               </button>
             ) : (
-              <Link
-                href={`/courses/${course.id}`}
-                className="p-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground transition-colors"
-                title="Quay lại khóa học"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/courses/${course.id}`}
+                  className="p-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground transition-colors"
+                  title="Quay lại khóa học"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </Link>
+
+                <button
+                  onClick={() => setIsSidebarOpen((prev) => !prev)}
+                  className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                    isSidebarOpen
+                      ? "bg-primary/10 text-primary border border-primary/20"
+                      : "bg-muted hover:bg-muted/80 text-foreground"
+                  }`}
+                  title={isSidebarOpen ? "Ẩn lộ trình học" : "Hiện lộ trình học"}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h7"
+                    />
+                  </svg>
+                </button>
+              </div>
             )}
             <span className="font-bold text-sm text-foreground truncate max-w-md">
               {isPreviewMode ? `Xem trước: ${activeItem?.title || course.title}` : course.title}
@@ -465,12 +487,26 @@ function CoursePlayerContent() {
         {/* Main Workspace Layout */}
         <div className="flex-1 flex flex-row overflow-x-auto overflow-y-hidden">
           {/* Left Sidebar - Course Content Navigation Tree */}
-          {!isPreviewMode && (
-            <aside className="w-80 shrink-0 bg-card/95 border-r border-border overflow-y-auto flex flex-col">
-              <div className="p-4 border-b border-border bg-muted/50 sticky top-0 z-10">
+          {!isPreviewMode && isSidebarOpen && (
+            <aside className="w-80 shrink-0 bg-card/95 border-r border-border overflow-y-auto flex flex-col transition-all duration-200">
+              <div className="p-4 border-b border-border bg-muted/50 sticky top-0 z-10 flex items-center justify-between">
                 <h2 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
                   {"Lộ trình Bài học"}
                 </h2>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                  title="Thu gọn lộ trình"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
               </div>
 
               <div className="p-4 space-y-6">
@@ -646,25 +682,42 @@ function CoursePlayerContent() {
             )}
 
             {/* Center Video & Bottom Control Bar Layout */}
-            <div className="flex-1 flex flex-col items-center justify-between relative overflow-y-auto p-6 transition-colors duration-200">
-              <div className="w-full flex-1 flex items-center justify-center min-h-[360px]">
-                <VideoPlayer
-                  videoRef={videoRef}
-                  activeItem={activeItem}
-                  userId={userId}
-                  activeQuiz={activeQuiz}
-                  selectedOption={selectedOption}
-                  quizSubmitted={quizSubmitted}
-                  completedItemIds={progress?.completedItemIds || []}
-                  currentTime={currentTime}
-                  onTimeUpdate={handleTimeUpdate}
-                  onSeeking={handleSeeking}
-                  onSelectOption={setSelectedOption}
-                  onSubmitQuiz={handleQuizSubmit}
-                  onContinueVideo={handleContinueVideo}
-                  onMarkComplete={handleMarkItemComplete}
-                  isPreviewMode={isPreviewMode}
-                />
+            <div className="flex-1 flex flex-col items-center justify-between relative overflow-y-auto p-6 bg-muted/60 transition-colors duration-200">
+              <div className="w-full flex-1 flex flex-col items-center justify-center min-h-[360px] max-w-5xl">
+                <div className="w-full bg-slate-950 rounded-2xl overflow-hidden shadow-2xl border border-border flex items-center justify-center">
+                  <VideoPlayer
+                    videoRef={videoRef}
+                    activeItem={activeItem}
+                    userId={userId}
+                    activeQuiz={activeQuiz}
+                    selectedOption={selectedOption}
+                    quizSubmitted={quizSubmitted}
+                    completedItemIds={progress?.completedItemIds || []}
+                    currentTime={currentTime}
+                    onTimeUpdate={handleTimeUpdate}
+                    onSeeking={handleSeeking}
+                    onSelectOption={setSelectedOption}
+                    onSubmitQuiz={handleQuizSubmit}
+                    onContinueVideo={handleContinueVideo}
+                    onMarkComplete={handleMarkItemComplete}
+                    isPreviewMode={isPreviewMode}
+                  />
+                </div>
+
+                {/* Video / Lesson Title below Video */}
+                {activeItem && (
+                  <div className="w-full mt-4 text-left">
+                    <h1 className="text-base sm:text-lg font-extrabold text-foreground tracking-tight">
+                      {activeItem.title}
+                    </h1>
+                    {activeItem.estimatedMinutes > 0 && (
+                      <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                        <span>⏱️ {activeItem.estimatedMinutes} phút</span>
+                        {activeItem.type === 1 && <span>• 📹 Video bài giảng</span>}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Bottom Control Bar */}
