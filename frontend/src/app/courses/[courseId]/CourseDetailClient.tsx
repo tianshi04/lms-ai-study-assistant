@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, ViewTransition } from "react";
+import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useCourseDetailQuery,
@@ -208,7 +209,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   }
 
   return (
-    <>
+    <DirectionalTransition>
       {/* Hero Banner */}
       <div className="bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900/80 dark:to-slate-950 border-b border-slate-200 dark:border-slate-800/80 py-12">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -276,9 +277,11 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </div>
               )}
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4 leading-tight text-balance">
-              {course.title}
-            </h1>
+            <ViewTransition name={`course-title-${courseId}`} share="text-morph">
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mb-4 leading-tight text-balance">
+                {course.title}
+              </h1>
+            </ViewTransition>
             <p className="text-slate-600 dark:text-slate-300 text-lg leading-relaxed mb-6">
               {course.description}
             </p>
@@ -1056,6 +1059,6 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
         courseId={course.id}
         courseTitle={course.title}
       />
-    </>
+    </DirectionalTransition>
   );
 }

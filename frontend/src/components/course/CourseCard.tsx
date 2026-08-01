@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, ViewTransition } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
@@ -54,9 +54,11 @@ export function CourseCard({ course }: { course: Course }) {
 
         {/* Title & Description */}
         <Link href={`/courses/${course.id}`} className="block">
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-3 line-clamp-2">
-            {course.title}
-          </h3>
+          <ViewTransition name={`course-title-${course.id}`} share="text-morph">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-3 line-clamp-2">
+              {course.title}
+            </h3>
+          </ViewTransition>
         </Link>
         <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 line-clamp-3 leading-relaxed">
           {course.description}
@@ -103,6 +105,7 @@ export function CourseCard({ course }: { course: Course }) {
         {/* Action Link */}
         <Link
           href={`/courses/${course.id}`}
+          transitionTypes={["nav-forward"]}
           className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-all shadow-lg shadow-blue-600/20 group-hover:shadow-blue-500/30"
         >
           {"Xem Chi Tiết Khóa Học"}
