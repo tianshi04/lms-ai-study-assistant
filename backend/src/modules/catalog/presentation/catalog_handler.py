@@ -155,6 +155,8 @@ def _to_pb_course(course: Course) -> pb.Course:
         rejection_reason=getattr(course, "rejection_reason", "") or "",
         organization_id=getattr(course, "organization_id", "partner_community")
         or "partner_community",
+        owner_id=getattr(course, "owner_id", "") or "",
+        co_instructor_ids=getattr(course, "co_instructor_ids", []) or [],
     )
 
 

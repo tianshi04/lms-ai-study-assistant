@@ -367,14 +367,25 @@ class CatalogUseCase:
                 course_id
             )
 
-            # BR_REVIEW_004: Check if user is instructor or TA of the course
-            is_instructor_role = any(
-                r in user_role.lower() for r in ["instructor", "ta"]
-            )
-            is_instructor_id_or_name = user_id.startswith("inst_") or (
-                instructor_names and user_name in instructor_names
-            )
-            if is_instructor_role or is_instructor_id_or_name:
+            # BR_REVIEW_004: Check if user is owner or instructor of THIS SPECIFIC course
+            course_detail = await repo.get_course_detail(real_course_id)
+            is_own_course = False
+            if course_detail:
+                if user_id and (
+                    user_id == course_detail.owner_id
+                    or user_id in (course_detail.co_instructor_ids or [])
+                ):
+                    is_own_course = True
+                elif instructor_names and user_name in instructor_names:
+                    is_own_course = True
+                elif user_id.startswith("inst_") and (
+                    not course_detail.owner_id or course_detail.owner_id == user_id
+                ):
+                    is_own_course = True
+            elif instructor_names and user_name in instructor_names:
+                is_own_course = True
+
+            if is_own_course:
                 logger.warning(
                     "Instructor %s attempted to submit review for own course %s",
                     user_id,
