@@ -136,6 +136,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
     async def save_quiz_cooldown(self, cooldown: QuizCooldown) -> None:
         from sqlalchemy.dialects.postgresql import insert
+
         stmt = insert(QuizCooldownModel).values(
             id=cooldown.id,
             user_id=cooldown.user_id,
@@ -145,12 +146,12 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             cooldown_until=cooldown.cooldown_until,
         )
         stmt = stmt.on_conflict_do_update(
-            index_elements=['id'],
+            index_elements=["id"],
             set_={
-                'failed_attempts_count': stmt.excluded.failed_attempts_count,
-                'last_attempt_at': stmt.excluded.last_attempt_at,
-                'cooldown_until': stmt.excluded.cooldown_until,
-            }
+                "failed_attempts_count": stmt.excluded.failed_attempts_count,
+                "last_attempt_at": stmt.excluded.last_attempt_at,
+                "cooldown_until": stmt.excluded.cooldown_until,
+            },
         )
         await self.session.execute(stmt)
         await self.session.commit()
