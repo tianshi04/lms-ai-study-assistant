@@ -11,6 +11,8 @@ import {
   type InstructorApplication,
 } from "@/gen/identity/v1/identity_pb";
 import { FileText, ExternalLink, PlayCircle, Check } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
 
 export default function AdminInstructorApplicationsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("");
@@ -76,12 +78,9 @@ export default function AdminInstructorApplicationsPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Link
-              href="/admin/dashboard"
-              className="px-4 py-2 rounded-xl bg-card border border-border text-sm font-semibold text-foreground hover:bg-muted transition-colors"
-            >
-              Về Dashboard
-            </Link>
+            <Button variant="outline" asChild>
+              <Link href="/admin/dashboard">Về Dashboard</Link>
+            </Button>
           </div>
         </div>
 
@@ -91,14 +90,16 @@ export default function AdminInstructorApplicationsPage() {
             className="p-4 rounded-2xl bg-success/10 border border-success/30 text-success text-sm font-bold flex items-center justify-between"
           >
             <span>{actionSuccessMsg}</span>
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               type="button"
               onClick={() => setActionSuccessMsg("")}
               aria-label="Đóng thông báo"
-              className="text-success hover:opacity-75"
+              className="text-success hover:text-success h-6 w-6"
             >
               ✕
-            </button>
+            </Button>
           </div>
         )}
 
@@ -110,17 +111,14 @@ export default function AdminInstructorApplicationsPage() {
             { label: "Đã phê duyệt", value: "APPROVED" },
             { label: "Đã từ chối", value: "REJECTED" },
           ].map((tab) => (
-            <button
+            <Button
               key={tab.value}
+              variant={statusFilter === tab.value ? "primary" : "outline"}
+              size="sm"
               onClick={() => setStatusFilter(tab.value)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all ${
-                statusFilter === tab.value
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "bg-card text-foreground hover:bg-muted border border-border"
-              }`}
             >
               {tab.label}
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -250,53 +248,54 @@ export default function AdminInstructorApplicationsPage() {
                     <div className="border-t border-border pt-4 flex flex-wrap items-center justify-end gap-3">
                       {rejectingAppId === app.id ? (
                         <div className="w-full space-y-3 bg-destructive/10 p-4 rounded-2xl border border-destructive/30">
-                          <label className="block text-xs font-bold text-destructive">
-                            Nhập lý do từ chối đơn:
-                          </label>
-                          <textarea
+                          <Textarea
+                            label="Nhập lý do từ chối đơn:"
                             value={rejectionReason}
                             onChange={(e) => setRejectionReason(e.target.value)}
                             rows={2}
                             placeholder="Mô tả lý do từ chối hồ sơ…"
-                            className="w-full p-3 text-xs rounded-xl border border-input bg-card text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           />
                           <div className="flex items-center justify-end gap-2">
-                            <button
+                            <Button
                               type="button"
+                              variant="secondary"
+                              size="sm"
                               onClick={() => setRejectingAppId(null)}
-                              className="px-3.5 py-1.5 rounded-xl bg-muted text-xs font-bold text-muted-foreground"
                             >
                               Hủy
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               type="button"
+                              variant="danger"
+                              size="sm"
                               onClick={() => handleConfirmReject(app.id)}
-                              disabled={reviewMutation.isPending}
-                              className="px-4 py-1.5 rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground text-xs font-bold shadow-md"
+                              isLoading={reviewMutation.isPending}
                             >
                               Xác nhận Từ chối
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       ) : (
                         <>
-                          <button
+                          <Button
                             type="button"
+                            variant="danger"
+                            size="sm"
                             onClick={() => setRejectingAppId(app.id)}
                             disabled={reviewMutation.isPending}
-                            className="px-5 py-2.5 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 text-xs font-bold hover:bg-destructive/20 transition-colors"
                           >
                             Từ Chối Hồ Sơ
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="primary"
+                            size="sm"
                             onClick={() => handleApprove(app.id)}
-                            disabled={reviewMutation.isPending}
-                            className="px-6 py-2.5 rounded-xl bg-success text-success-foreground hover:opacity-90 text-xs font-bold shadow-lg transition-all flex items-center gap-2"
+                            isLoading={reviewMutation.isPending}
                           >
-                            <Check className="w-4 h-4" aria-hidden="true" />
+                            <Check className="w-4 h-4 mr-1.5" aria-hidden="true" />
                             <span>Phê Duyệt & Nâng Role Giảng Viên</span>
-                          </button>
+                          </Button>
                         </>
                       )}
                     </div>

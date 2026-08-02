@@ -14,6 +14,16 @@ import { Modal } from "@/components/ui/Modal";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
 import { Plus, UserPlus, AlertTriangle, Check, X } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/Table";
 import {
   Select,
   SelectTrigger,
@@ -84,7 +94,7 @@ export default function AdminEnterpriseDashboardPage() {
     [],
   );
 
-  // eslint-disable-next-line react-hooks/incompatible-library
+  // eslint-disable-next-library
   const table = useReactTable({
     data: seats,
     columns,
@@ -192,21 +202,23 @@ export default function AdminEnterpriseDashboardPage() {
 
           {isAdmin && (
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-              <button
+              <Button
                 onClick={() => setShowCreateModal(true)}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground font-bold text-xs border border-primary-foreground/20 backdrop-blur-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                variant="outline"
+                className="w-full sm:w-auto border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
               >
-                <Plus className="w-4 h-4 text-primary-foreground" aria-hidden="true" />
+                <Plus className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 <span>Tạo Mã Enterprise Mới</span>
-              </button>
+              </Button>
 
-              <button
+              <Button
                 onClick={() => setShowAssignModal(true)}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-card text-foreground hover:bg-muted font-bold text-xs shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer border border-border"
+                variant="secondary"
+                className="w-full sm:w-auto"
               >
-                <UserPlus className="w-4 h-4 text-primary" aria-hidden="true" />
+                <UserPlus className="w-4 h-4 mr-1.5 text-primary" aria-hidden="true" />
                 <span>Gán Suất học cho Học viên</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -239,14 +251,15 @@ export default function AdminEnterpriseDashboardPage() {
               )}
               <span>{message.text}</span>
             </div>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setMessage(null)}
               aria-label="Đóng thông báo"
-              className="p-1 rounded-md opacity-60 hover:opacity-100"
+              className="h-6 w-6 opacity-60 hover:opacity-100"
             >
               <X className="w-4 h-4" aria-hidden="true" />
-            </button>
+            </Button>
           </div>
         )}
 
@@ -313,54 +326,50 @@ export default function AdminEnterpriseDashboardPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <tr
-                      key={headerGroup.id}
-                      className="border-b border-border text-muted-foreground uppercase tracking-wider font-bold"
-                    >
-                      {headerGroup.headers.map((header) => (
-                        <th key={header.id} className="py-3 px-4">
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(header.column.columnDef.header, header.getContext())}
-                        </th>
-                      ))}
-                      <th className="py-3 px-4 text-right">Thao tác</th>
-                    </tr>
-                  ))}
-                </thead>
-                <tbody className="divide-y divide-border text-foreground">
-                  {seats.map((seat) => (
-                    <tr key={seat.id} className="hover:bg-muted transition-colors">
-                      <td className="py-3.5 px-4 font-bold text-foreground">{seat.partnerName}</td>
-                      <td className="py-3.5 px-4 font-mono font-bold text-primary">
-                        {seat.seatKey}
-                      </td>
-                      <td className="py-3.5 px-4 font-mono font-semibold">{seat.assignedUserId}</td>
-                      <td className="py-3.5 px-4">
-                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-success/10 text-success border border-success/20">
-                          {seat.status}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <button
-                          onClick={() => {
-                            setSelectedSeatKey(seat.seatKey);
-                            setShowAssignModal(true);
-                          }}
-                          className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-colors cursor-pointer"
-                        >
-                          Gán học viên
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableHead>
+                    ))}
+                    <TableHead className="text-right">Thao tác</TableHead>
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {seats.map((seat) => (
+                  <TableRow key={seat.id}>
+                    <TableCell className="font-bold">{seat.partnerName}</TableCell>
+                    <TableCell className="font-mono font-bold text-primary">
+                      {seat.seatKey}
+                    </TableCell>
+                    <TableCell className="font-mono font-semibold">{seat.assignedUserId}</TableCell>
+                    <TableCell>
+                      <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-success/10 text-success border border-success/20">
+                        {seat.status}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          setSelectedSeatKey(seat.seatKey);
+                          setShowAssignModal(true);
+                        }}
+                      >
+                        Gán học viên
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </div>
       </main>
@@ -373,22 +382,18 @@ export default function AdminEnterpriseDashboardPage() {
         size="md"
       >
         <form onSubmit={handleAssignSeat} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-              Mã Học viên (User ID)
-            </label>
-            <input
-              type="text"
-              value={targetUserId}
-              onChange={(e) => setTargetUserId(e.target.value)}
-              placeholder="Ví dụ: user-learner-demo"
-              className="w-full px-4 py-2.5 rounded-xl border border-input bg-muted text-foreground text-sm font-mono"
-              required
-            />
-          </div>
+          <Input
+            label="Mã Học viên (User ID)"
+            type="text"
+            value={targetUserId}
+            onChange={(e) => setTargetUserId(e.target.value)}
+            placeholder="Ví dụ: user-learner-demo"
+            className="font-mono"
+            required
+          />
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+            <label className="block text-xs font-semibold text-foreground mb-1.5">
               Chọn Mã Enterprise Key
             </label>
             <Select
@@ -416,20 +421,17 @@ export default function AdminEnterpriseDashboardPage() {
           </div>
 
           <div className="flex justify-end gap-3 pt-2">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => setShowAssignModal(false)}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-muted text-muted-foreground"
             >
               Hủy
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-5 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground shadow-md transition-all disabled:opacity-50"
-            >
-              <span aria-live="polite">{saving ? "Đang xử lý…" : "Kích hoạt gán suất học"}</span>
-            </button>
+            </Button>
+            <Button type="submit" isLoading={saving} size="sm">
+              Kích hoạt gán suất học
+            </Button>
           </div>
         </form>
       </Modal>
@@ -442,49 +444,37 @@ export default function AdminEnterpriseDashboardPage() {
         size="md"
       >
         <form onSubmit={handleCreateSeatKey} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-              Tên Trường học / Doanh nghiệp Đối tác
-            </label>
-            <input
-              type="text"
-              value={newPartnerName}
-              onChange={(e) => setNewPartnerName(e.target.value)}
-              placeholder="Ví dụ: Trường Đại học Bách Khoa TP.HCM"
-              className="w-full px-4 py-2.5 rounded-xl border border-input bg-muted text-foreground text-sm"
-              required
-            />
-          </div>
+          <Input
+            label="Tên Trường học / Doanh nghiệp Đối tác"
+            type="text"
+            value={newPartnerName}
+            onChange={(e) => setNewPartnerName(e.target.value)}
+            placeholder="Ví dụ: Trường Đại học Bách Khoa TP.HCM"
+            required
+          />
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-              Mã Enterprise Key
-            </label>
-            <input
-              type="text"
-              value={newSeatKey}
-              onChange={(e) => setNewSeatKey(e.target.value)}
-              placeholder="Ví dụ: BKTPHCM-ENTERPRISE-2026"
-              className="w-full px-4 py-2.5 rounded-xl border border-input bg-muted text-foreground text-sm font-mono"
-              required
-            />
-          </div>
+          <Input
+            label="Mã Enterprise Key"
+            type="text"
+            value={newSeatKey}
+            onChange={(e) => setNewSeatKey(e.target.value)}
+            placeholder="Ví dụ: BKTPHCM-ENTERPRISE-2026"
+            className="font-mono"
+            required
+          />
 
           <div className="flex justify-end gap-3 pt-2">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => setShowCreateModal(false)}
-              className="px-4 py-2 rounded-xl text-xs font-bold bg-muted text-muted-foreground"
             >
               Hủy
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-5 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground shadow-md transition-all disabled:opacity-50"
-            >
-              <span aria-live="polite">{saving ? "Đang tạo…" : "Xác nhận tạo Giấy phép"}</span>
-            </button>
+            </Button>
+            <Button type="submit" isLoading={saving} size="sm">
+              Xác nhận tạo Giấy phép
+            </Button>
           </div>
         </form>
       </Modal>

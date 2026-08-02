@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { UserDropdown } from "@/components/layout/UserDropdown";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
+import { Button } from "@/components/ui/Button";
 
 export function Navbar() {
   const { userName, userRole, isInstructorOrAdmin } = useAuth();
@@ -118,26 +119,32 @@ export function Navbar() {
             <UserDropdown />
           ) : (
             <div className="flex items-center gap-2">
-              <Link
-                href="/auth/login"
-                className="text-xs font-semibold px-3.5 py-2 rounded-xl text-primary bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors"
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="rounded-xl text-xs font-semibold bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
               >
-                {"Đăng nhập"}
-              </Link>
-              <Link
-                href="/auth/register"
-                className="text-xs font-semibold px-3.5 py-2 rounded-xl text-primary-foreground bg-primary hover:bg-primary-hover shadow-md shadow-primary/20 transition-all"
+                <Link href="/auth/login">{"Đăng nhập"}</Link>
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                asChild
+                className="rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
               >
-                {"Đăng ký"}
-              </Link>
+                <Link href="/auth/register">{"Đăng ký"}</Link>
+              </Button>
             </div>
           )}
 
           {/* Mobile Hamburger Toggle Button */}
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
+            className="md:hidden rounded-xl text-muted-foreground hover:bg-muted"
             aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? (
@@ -145,7 +152,7 @@ export function Navbar() {
             ) : (
               <Menu className="w-6 h-6" aria-hidden="true" />
             )}
-          </button>
+          </Button>
         </div>
       </div>
 

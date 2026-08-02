@@ -1,6 +1,7 @@
 "use client";
 
 import { Layers, BookOpen, Plus } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import {
   type Course,
   type WeekModule,
@@ -96,13 +97,14 @@ export function SyllabusTree({
             </p>
           </div>
           {isInstructorOrAdmin && (
-            <button
+            <Button
+              variant="primary"
               onClick={onAddWeek}
-              className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-md transition-all inline-flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-2 rounded-xl font-bold text-xs shadow-md gap-1.5"
             >
               <Plus className="w-4 h-4" aria-hidden="true" />
               <span>{"Khởi tạo Tuần 1 ngay"}</span>
-            </button>
+            </Button>
           )}
         </div>
       ) : (

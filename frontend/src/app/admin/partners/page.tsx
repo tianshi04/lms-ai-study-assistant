@@ -15,6 +15,14 @@ import {
 } from "@/lib/query_hooks";
 import { Modal, ConfirmDialog } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/Table";
 
 interface PartnerAdminUser {
   id: string;
@@ -298,105 +306,102 @@ export default function AdminPartnersPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
-              <thead>
-                <tr className="bg-muted border-b border-border text-muted-foreground uppercase tracking-wider text-xs font-bold">
-                  <th className="py-4 px-6">Đối tác</th>
-                  <th className="py-4 px-6">Slug URL</th>
-                  <th className="py-4 px-6">Tên miền xác thực</th>
-                  <th className="py-4 px-6">Người ký đại diện</th>
-                  <th className="py-4 px-6 text-right">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {partners.map((partner) => (
-                  <tr key={partner.id} className="hover:bg-muted/50 transition-colors">
-                    <td className="py-4 px-6">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-xl bg-muted p-1 border border-border flex items-center justify-center overflow-hidden shrink-0">
-                          {partner.logoUrl ? (
-                            <Image
-                              src={partner.logoUrl}
-                              alt={partner.name}
-                              width={36}
-                              height={36}
-                              className="object-contain max-h-full"
-                              unoptimized
-                            />
-                          ) : (
-                            <span className="font-bold text-primary text-sm">
-                              {partner.name.substring(0, 2).toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-foreground">{partner.name}</p>
-                          {partner.websiteUrl && (
-                            <a
-                              href={partner.websiteUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-primary hover:underline"
-                            >
-                              {partner.websiteUrl}
-                            </a>
-                          )}
-                        </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Đối tác</TableHead>
+                <TableHead>Slug URL</TableHead>
+                <TableHead>Tên miền xác thực</TableHead>
+                <TableHead>Người ký đại diện</TableHead>
+                <TableHead className="text-right">Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {partners.map((partner) => (
+                <TableRow key={partner.id}>
+                  <TableCell>
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 rounded-xl bg-muted p-1 border border-border flex items-center justify-center overflow-hidden shrink-0">
+                        {partner.logoUrl ? (
+                          <Image
+                            src={partner.logoUrl}
+                            alt={partner.name}
+                            width={36}
+                            height={36}
+                            className="object-contain max-h-full"
+                            unoptimized
+                          />
+                        ) : (
+                          <span className="font-bold text-primary text-sm">
+                            {partner.name.substring(0, 2).toUpperCase()}
+                          </span>
+                        )}
                       </div>
-                    </td>
-                    <td className="py-4 px-6 text-muted-foreground font-mono text-xs">
-                      /partners/{partner.slug}
-                    </td>
-                    <td className="py-4 px-6">
-                      {partner.allowedDomains && partner.allowedDomains.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {partner.allowedDomains.map((domain, i) => (
-                            <span
-                              key={i}
-                              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-info/10 text-info border border-info/20"
-                            >
-                              {domain}
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-xs italic">Chưa giới hạn</span>
-                      )}
-                    </td>
-                    <td className="py-4 px-6">
-                      <p className="font-medium text-foreground">{partner.signerName || "—"}</p>
-                      <p className="text-xs text-muted-foreground">{partner.signerTitle}</p>
-                    </td>
-                    <td className="py-4 px-6 text-right space-x-2">
-                      <button
-                        onClick={() => router.push(`/partners/${partner.slug}`)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-muted hover:bg-muted/80 text-foreground transition-colors border border-border"
-                        title="Xem trang công khai"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Xem</span>
-                      </button>
-                      <button
-                        onClick={() => handleOpenEdit(partner)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                        <span>Sửa</span>
-                      </button>
-                      <button
-                        onClick={() => setDeletingPartnerId(partner.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20 transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Xoá</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <div>
+                        <p className="font-semibold text-foreground">{partner.name}</p>
+                        {partner.websiteUrl && (
+                          <a
+                            href={partner.websiteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline"
+                          >
+                            {partner.websiteUrl}
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground font-mono text-xs">
+                    /partners/{partner.slug}
+                  </TableCell>
+                  <TableCell>
+                    {partner.allowedDomains && partner.allowedDomains.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {partner.allowedDomains.map((domain, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-info/10 text-info border border-info/20"
+                          >
+                            {domain}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-xs italic">Chưa giới hạn</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <p className="font-medium text-foreground">{partner.signerName || "—"}</p>
+                    <p className="text-xs text-muted-foreground">{partner.signerTitle}</p>
+                  </TableCell>
+                  <TableCell className="text-right space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => router.push(`/partners/${partner.slug}`)}
+                      title="Xem trang công khai"
+                    >
+                      <Eye className="w-3.5 h-3.5 mr-1" />
+                      Xem
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={() => handleOpenEdit(partner)}>
+                      <Pencil className="w-3.5 h-3.5 mr-1" />
+                      Sửa
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => setDeletingPartnerId(partner.id)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1" />
+                      Xoá
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </div>
 

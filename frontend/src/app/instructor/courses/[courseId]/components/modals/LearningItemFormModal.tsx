@@ -5,6 +5,9 @@ import ReactMarkdown from "react-markdown";
 import { ItemType } from "@/gen/catalog/v1/catalog_pb";
 import { type QuestionBank } from "@/gen/assessment/v1/assessment_pb";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import { VideoUploadWidget } from "@/components/ui/VideoUploadWidget";
 import { InVideoQuizEditor, type InVideoQuizItem } from "@/components/ui/InVideoQuizEditor";
 import type { LearningItemPayload } from "../../hooks/useCourseBuilder";
@@ -176,15 +179,13 @@ export function LearningItemFormModal({
         <div className="bg-muted/40 p-3.5 rounded-xl border border-border/80 mb-3 space-y-2 shrink-0">
           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
             <div className="sm:col-span-6">
-              <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1">
-                Tên Học liệu <span className="text-destructive">*</span>
-              </label>
-              <input
+              <Input
+                label="Tên Học liệu"
                 type="text"
                 value={itemTitle}
                 onChange={(e) => setItemTitle(e.target.value)}
                 placeholder="Hãy điền tên học liệu"
-                className="w-full px-3.5 py-2 rounded-xl border border-input bg-card text-foreground text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shadow-2xs"
+                className="w-full bg-card font-semibold shadow-2xs"
                 required
               />
             </div>
@@ -238,15 +239,13 @@ export function LearningItemFormModal({
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1">
-                Thời lượng (phút)
-              </label>
-              <input
+              <Input
+                label="Thời lượng (phút)"
                 type="number"
                 min={1}
                 value={itemMinutes}
                 onChange={(e) => setItemMinutes(parseInt(e.target.value) || 1)}
-                className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-sm font-semibold text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shadow-2xs"
+                className="w-full bg-card font-semibold text-center shadow-2xs"
                 required
               />
             </div>
@@ -307,12 +306,12 @@ export function LearningItemFormModal({
                     Nội dung Soạn thảo (Markdown)
                   </label>
                 </div>
-                <textarea
+                <Textarea
                   rows={13}
                   value={readingMarkdown}
                   onChange={(e) => setReadingMarkdown(e.target.value)}
                   placeholder="Nhập nội dung bài đọc định dạng Markdown tại đây...&#10;&#10;# Tiêu đề bài đọc&#10;- Ý chính 1&#10;- Ý chính 2"
-                  className="w-full p-4 rounded-2xl border border-input bg-card text-foreground text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shadow-2xs"
+                  className="w-full font-mono shadow-2xs"
                 />
               </div>
 
@@ -375,26 +374,22 @@ export function LearningItemFormModal({
               {/* 2 Columns: Starter Code & Test Cases */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Code mẫu ban đầu (Starter Code)
-                  </label>
-                  <textarea
+                  <Textarea
+                    label="Code mẫu ban đầu (Starter Code)"
                     rows={10}
                     value={labStarterCode}
                     onChange={(e) => setLabStarterCode(e.target.value)}
-                    className="w-full p-3.5 rounded-2xl border border-input bg-card text-foreground text-xs font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shadow-2xs"
+                    className="w-full font-mono text-xs shadow-2xs"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Cấu hình Test Cases (Định dạng JSON)
-                  </label>
-                  <textarea
+                  <Textarea
+                    label="Cấu hình Test Cases (Định dạng JSON)"
                     rows={10}
                     value={labTestCasesJson}
                     onChange={(e) => setLabTestCasesJson(e.target.value)}
-                    className="w-full p-3.5 rounded-2xl border border-input bg-card text-foreground text-xs font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring shadow-2xs"
+                    className="w-full font-mono text-xs shadow-2xs"
                   />
                 </div>
               </div>
@@ -445,47 +440,39 @@ export function LearningItemFormModal({
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-[11px] font-bold text-muted-foreground mb-1">
-                        Thời gian (phút)
-                      </label>
-                      <input
+                      <Input
+                        label="Thời gian (phút)"
                         type="number"
                         value={quizTimeLimit}
                         onChange={(e) => setQuizTimeLimit(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs font-semibold"
+                        className="w-full text-xs font-semibold"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-muted-foreground mb-1">
-                        Điểm đạt (%)
-                      </label>
-                      <input
+                      <Input
+                        label="Điểm đạt (%)"
                         type="number"
                         value={quizPassingThreshold}
                         onChange={(e) => setQuizPassingThreshold(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs font-semibold"
+                        className="w-full text-xs font-semibold"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-muted-foreground mb-1">
-                        Số lần làm tối đa
-                      </label>
-                      <input
+                      <Input
+                        label="Số lần làm tối đa"
                         type="number"
                         value={quizMaxAttempts}
                         onChange={(e) => setQuizMaxAttempts(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs font-semibold"
+                        className="w-full text-xs font-semibold"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-muted-foreground mb-1">
-                        Thời gian chờ (Giờ)
-                      </label>
-                      <input
+                      <Input
+                        label="Thời gian chờ (Giờ)"
                         type="number"
                         value={quizCooldownHours}
                         onChange={(e) => setQuizCooldownHours(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs font-semibold"
+                        className="w-full text-xs font-semibold"
                       />
                     </div>
                   </div>
@@ -501,36 +488,30 @@ export function LearningItemFormModal({
                   </div>
                   <div className="grid grid-cols-3 gap-3 pt-1">
                     <div>
-                      <label className="block text-[11px] font-bold text-success mb-1">
-                        Số câu Dễ
-                      </label>
-                      <input
+                      <Input
+                        label="Số câu Dễ"
                         type="number"
                         value={quizEasyCount}
                         onChange={(e) => setQuizEasyCount(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs font-semibold"
+                        className="w-full text-xs font-semibold"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-warning mb-1">
-                        Số câu Trung bình
-                      </label>
-                      <input
+                      <Input
+                        label="Số câu Trung bình"
                         type="number"
                         value={quizMediumCount}
                         onChange={(e) => setQuizMediumCount(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs font-semibold"
+                        className="w-full text-xs font-semibold"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-bold text-destructive mb-1">
-                        Số câu Khó
-                      </label>
-                      <input
+                      <Input
+                        label="Số câu Khó"
                         type="number"
                         value={quizHardCount}
                         onChange={(e) => setQuizHardCount(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl border border-input bg-card text-foreground text-xs font-semibold"
+                        className="w-full text-xs font-semibold"
                       />
                     </div>
                   </div>
@@ -547,11 +528,11 @@ export function LearningItemFormModal({
                   Tiêu chí chấm điểm Peer Review (Cấu hình JSON)
                 </label>
               </div>
-              <textarea
+              <Textarea
                 rows={8}
                 value={peerRubricJson}
                 onChange={(e) => setPeerRubricJson(e.target.value)}
-                className="w-full p-4 rounded-xl border border-input bg-card text-foreground text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="w-full font-mono text-sm shadow-2xs"
               />
             </div>
           )}
@@ -559,22 +540,25 @@ export function LearningItemFormModal({
 
         {/* Fixed Footer Buttons */}
         <div className="flex justify-end gap-3 pt-3 border-t border-border mt-3 shrink-0">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-muted text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+            className="rounded-xl text-xs font-bold"
           >
             Hủy
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
+            variant="primary"
+            size="sm"
             disabled={saving}
-            className="px-5 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground shadow-md transition-all disabled:opacity-50 cursor-pointer"
+            isLoading={saving}
+            className="rounded-xl text-xs font-bold shadow-md"
           >
-            <span aria-live="polite">
-              {saving ? "Đang lưu…" : isEdit ? "Cập nhật Học liệu" : "Xác nhận tạo Học liệu"}
-            </span>
-          </button>
+            {isEdit ? "Cập nhật Học liệu" : "Xác nhận tạo Học liệu"}
+          </Button>
         </div>
       </form>
     </Modal>

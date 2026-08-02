@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { CourseCard } from "@/components/course/CourseCard";
 import { CourseGridSkeleton } from "@/components/course/CourseGridSkeleton";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Card } from "@/components/ui/Card";
 import {
   Select,
   SelectTrigger,
@@ -63,49 +66,53 @@ export function CourseCatalogClient() {
       </div>
 
       {/* Controls Section: Search & Filters */}
-      <div className="w-full mb-8 bg-card p-4 md:p-5 rounded-2xl border border-border shadow-xs space-y-3.5">
+      <Card className="w-full mb-8 p-4 md:p-5 rounded-2xl shadow-xs space-y-3.5">
         {/* Top Toolbar: Search Bar + Controls */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-3 border-b border-border">
           {/* Search Bar (Spans remaining space smoothly) */}
           <div className="relative flex-1">
             <Search
-              className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+              className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-10"
               aria-hidden="true"
             />
-            <input
+            <Input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={"Tìm kiếm khóa học theo tên hoặc từ khóa…"}
-              className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-muted border border-input rounded-xl text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
+              className="w-full pl-9 pr-8 py-1.5 text-xs sm:text-sm bg-muted rounded-xl"
             />
             {searchQuery && (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => setSearchQuery("")}
                 aria-label="Xóa tìm kiếm"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs font-bold"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-xs font-bold text-muted-foreground hover:text-foreground"
               >
                 ✕
-              </button>
+              </Button>
             )}
           </div>
 
           {/* Action Controls: Reset Filters + Sort Dropdown */}
           <div className="flex items-center gap-2 shrink-0">
             {subject || level || searchQuery || sortBy ? (
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setSubject("");
                   setLevel("");
                   setSearchQuery("");
                   setSortBy("");
                 }}
-                className="h-9 px-3 text-xs font-medium text-muted-foreground hover:text-destructive bg-muted hover:bg-destructive/10 rounded-xl transition-all flex items-center gap-1.5"
+                className="h-9 px-3 text-xs text-muted-foreground hover:text-destructive bg-muted hover:bg-destructive/10 rounded-xl"
               >
-                <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                <RotateCcw className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
                 <span>{"Xóa bộ lọc"}</span>
-              </button>
+              </Button>
             ) : null}
 
             {/* Sort Dropdown */}
@@ -140,28 +147,24 @@ export function CourseCatalogClient() {
             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider w-16 shrink-0 hidden md:inline-block">
               {"Chủ đề"}
             </span>
-            <button
+            <Button
+              variant={subject === "" ? "primary" : "secondary"}
+              size="sm"
               onClick={() => setSubject("")}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                subject === ""
-                  ? "bg-primary text-primary-foreground shadow-xs font-semibold"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-              }`}
+              className="rounded-full text-xs"
             >
               {"Tất cả chủ đề"}
-            </button>
+            </Button>
             {subjects.map((s) => (
-              <button
+              <Button
                 key={s.id}
+                variant={subject === s.id ? "primary" : "secondary"}
+                size="sm"
                 onClick={() => setSubject(s.id)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                  subject === s.id
-                    ? "bg-primary text-primary-foreground shadow-xs font-semibold"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                }`}
+                className="rounded-full text-xs"
               >
                 {getCategoryTranslation(s.slug, s.name)}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -170,32 +173,28 @@ export function CourseCatalogClient() {
             <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider w-16 shrink-0 hidden md:inline-block">
               {"Cấp độ"}
             </span>
-            <button
+            <Button
+              variant={level === "" ? "primary" : "secondary"}
+              size="sm"
               onClick={() => setLevel("")}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                level === ""
-                  ? "bg-primary text-primary-foreground shadow-xs font-semibold"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-              }`}
+              className="rounded-full text-xs"
             >
               {"Tất cả cấp độ"}
-            </button>
+            </Button>
             {levels.map((l) => (
-              <button
+              <Button
                 key={l.id}
+                variant={level === l.id ? "primary" : "secondary"}
+                size="sm"
                 onClick={() => setLevel(l.id)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                  level === l.id
-                    ? "bg-primary text-primary-foreground shadow-xs font-semibold"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground"
-                }`}
+                className="rounded-full text-xs"
               >
                 {getCategoryTranslation(l.slug, l.name)}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Content Section: Course Cards Grid */}
       {loading ? (
@@ -221,18 +220,20 @@ export function CourseCatalogClient() {
             }
           </p>
           {(subject || level || searchQuery || sortBy) && (
-            <button
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => {
                 setSubject("");
                 setLevel("");
                 setSearchQuery("");
                 setSortBy("");
               }}
-              className="px-4 py-2 text-xs font-semibold text-primary-foreground bg-primary hover:bg-primary-hover rounded-xl transition-all shadow-md shadow-primary/20 flex items-center gap-2"
+              className="rounded-xl shadow-md flex items-center gap-2"
             >
               <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{"Xóa bộ lọc"}</span>
-            </button>
+            </Button>
           )}
         </div>
       ) : (

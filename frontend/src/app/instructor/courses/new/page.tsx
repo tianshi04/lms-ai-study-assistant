@@ -11,6 +11,11 @@ import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
 import { useToast } from "@/components/ui/Toast";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
 import { Building2 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import {
   Select,
   SelectTrigger,
@@ -167,12 +172,15 @@ export default function NewCoursePage() {
         </div>
 
         {/* Live Preview Card */}
-        <div className="bg-card text-foreground border border-border rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden space-y-4">
+        <Card className="rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden space-y-4">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="flex items-center justify-between">
-            <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider border border-primary/20">
+            <Badge
+              variant="outline"
+              className="bg-primary/10 text-primary border-primary/20 px-3 py-1 font-bold uppercase tracking-wider"
+            >
               Live Badge Preview
-            </span>
+            </Badge>
             <span className="text-xs text-muted-foreground font-mono">Bản nháp DRAFT</span>
           </div>
 
@@ -211,7 +219,7 @@ export default function NewCoursePage() {
               </p>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Main Form */}
         <form
@@ -269,13 +277,13 @@ export default function NewCoursePage() {
               <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
                 Tên Khóa Học <span className="text-destructive">*</span>
               </label>
-              <input
+              <Input
                 type="text"
                 required
                 value={title}
                 onChange={handleTitleChange}
                 placeholder="Ví dụ: Lập trình Python Căn Bản Cho Người Mới Bắt Đầu"
-                className="w-full px-4 py-3 rounded-xl bg-card border border-input text-sm font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="py-3 rounded-xl font-semibold bg-card"
               />
             </div>
 
@@ -358,12 +366,12 @@ export default function NewCoursePage() {
               <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
                 Mô Tả Tổng Quan Khóa Học
               </label>
-              <textarea
+              <Textarea
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Tóm tắt những kiến thức trọng tâm, mục tiêu đạt được sau khóa học…"
-                className="w-full px-4 py-3 rounded-xl bg-card border border-input text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="p-3 rounded-xl bg-card"
               />
             </div>
 
@@ -395,20 +403,15 @@ export default function NewCoursePage() {
             >
               Hủy bỏ
             </Link>
-            <button
+            <Button
               type="submit"
+              variant="primary"
               disabled={submitting}
-              className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold shadow-lg shadow-primary/25 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+              isLoading={submitting}
+              className="px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-primary/25"
             >
-              {submitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                  <span aria-live="polite">Đang khởi tạo…</span>
-                </>
-              ) : (
-                <span>🚀 Bắt Đầu Tạo Khóa Học</span>
-              )}
-            </button>
+              <span>🚀 Bắt Đầu Tạo Khóa Học</span>
+            </Button>
           </div>
         </form>
       </div>

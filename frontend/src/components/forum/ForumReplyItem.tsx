@@ -2,6 +2,9 @@
 
 import { Check, ThumbsUp } from "lucide-react";
 import { type ForumReply } from "@/gen/forum/v1/forum_pb";
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
+import { Badge } from "@/components/ui/Badge";
 
 interface ForumReplyItemProps {
   reply: ForumReply;
@@ -46,71 +49,81 @@ export function ForumReplyItem({
           <span className="font-semibold text-foreground flex items-center gap-1">
             {reply.authorName}
             {reply.isStaffAnswer && (
-              <span className="inline-flex items-center gap-0.5 text-warning font-extrabold">
+              <Badge
+                variant="warning"
+                className="gap-0.5 text-warning font-extrabold text-[10px] py-0 px-1"
+              >
                 <Check className="w-3 h-3 text-warning" />
                 (TA Staff)
-              </span>
+              </Badge>
             )}
           </span>
           {reply.isEdited && (
             <span className="text-[10px] text-warning font-medium italic">{"(Đã chỉnh sửa)"}</span>
           )}
           {isReplyAuthor && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => onStartEdit(reply)}
-              className="text-[10px] font-semibold text-muted-foreground hover:text-primary cursor-pointer ml-1"
+              className="text-[10px] font-semibold text-muted-foreground hover:text-primary h-auto p-0.5 ml-1"
             >
               {"Sửa"}
-            </button>
+            </Button>
           )}
           {canDeleteReply && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => onDelete(reply.id)}
-              className="text-[10px] font-semibold text-muted-foreground hover:text-destructive cursor-pointer ml-1"
+              className="text-[10px] font-semibold text-muted-foreground hover:text-destructive h-auto p-0.5 ml-1"
             >
               {"Xóa"}
-            </button>
+            </Button>
           )}
         </div>
 
-        <button
+        <Button
+          variant={reply.isUpvotedByMe ? "primary" : "outline"}
+          size="sm"
           onClick={() => onVote(reply.id, true)}
-          className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded border transition-all cursor-pointer ${
-            reply.isUpvotedByMe
-              ? "bg-primary border-primary text-primary-foreground"
-              : "text-muted-foreground border-border hover:bg-muted"
-          }`}
           title={reply.isUpvotedByMe ? "Đã Upvote (Bấm để Hủy)" : "Upvote"}
+          className="text-[10px] font-bold px-1.5 py-0.5 h-auto gap-1"
         >
           <ThumbsUp
             className={`w-2.5 h-2.5 ${reply.isUpvotedByMe ? "text-primary-foreground" : "text-primary"}`}
           />
           <span>{reply.upvoteCount}</span>
-        </button>
+        </Button>
       </div>
 
       {isEditing ? (
         <div className="space-y-1 mt-1">
-          <textarea
+          <Textarea
             value={editReplyContent}
             onChange={(e) => onContentChange(e.target.value)}
             rows={2}
-            className="w-full bg-card border border-input rounded p-1.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="p-1.5 text-xs bg-card"
           />
           <div className="flex justify-end gap-1">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={onCancelEdit}
-              className="px-2 py-0.5 border border-input text-muted-foreground rounded text-[10px]"
+              className="px-2 py-0.5 text-[10px] h-auto"
             >
               {"Hủy"}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => onSaveEdit(reply.id)}
               disabled={submittingEditReply || !editReplyContent.trim()}
-              className="px-2 py-0.5 bg-primary text-primary-foreground rounded text-[10px] font-semibold hover:bg-primary-hover"
+              isLoading={submittingEditReply}
+              className="px-2 py-0.5 text-[10px] font-semibold h-auto"
             >
               {"Lưu thay đổi"}
-            </button>
+            </Button>
           </div>
         </div>
       ) : (

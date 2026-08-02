@@ -10,6 +10,16 @@ import {
   useDeleteCategoryMutation,
   useUserProfileQuery,
 } from "@/lib/query_hooks";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { useAuth } from "@/components/providers/AuthProvider";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 
 const CategoryList = ({
   title,
@@ -43,28 +53,20 @@ const CategoryList = ({
               <p className="font-semibold text-foreground">{item.name}</p>
               <p className="text-xs text-muted-foreground">Slug: {item.slug}</p>
             </div>
-            <button
+            <Button
+              variant="danger"
+              size="sm"
               onClick={() => handleDelete(item.id, type)}
-              className="text-destructive hover:bg-destructive/10 p-2 rounded-md transition-colors"
               title={deleteText}
             >
               {deleteText}
-            </button>
+            </Button>
           </li>
         ))}
       </ul>
     )}
   </div>
 );
-
-import { useAuth } from "@/components/providers/AuthProvider";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
 
 export default function AdminCategoriesPage() {
   const router = useRouter();
@@ -127,32 +129,26 @@ export default function AdminCategoriesPage() {
           </h1>
           <p className="text-muted-foreground mt-2">{"Quản lý danh mục khóa học"}</p>
         </div>
-        <button
-          onClick={() => router.push("/admin/dashboard")}
-          className="text-sm font-medium text-primary hover:underline"
-        >
+        <Button variant="ghost" size="sm" onClick={() => router.push("/admin/dashboard")}>
           &larr; {"Về trang quản trị"}
-        </button>
+        </Button>
       </div>
 
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-8">
         <h2 className="text-lg font-semibold mb-4 text-foreground">{"Thêm danh mục mới"}</h2>
         <form onSubmit={handleCreate} className="flex flex-col md:flex-row gap-4 items-end">
           <div className="flex-1 w-full">
-            <label className="block text-sm font-medium text-muted-foreground mb-1">
-              {"Tên danh mục"}
-            </label>
-            <input
+            <Input
+              label="Tên danh mục"
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              placeholder={"Nhập tên danh mục"}
-              className="w-full border border-input rounded-xl px-4 py-2.5 bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              placeholder="Nhập tên danh mục"
               required
             />
           </div>
           <div className="w-full md:w-48">
-            <label className="block text-sm font-medium text-muted-foreground mb-1">
+            <label className="block text-xs font-semibold text-foreground mb-1.5">
               {"Loại danh mục"}
             </label>
             <Select
@@ -172,15 +168,13 @@ export default function AdminCategoriesPage() {
               </SelectContent>
             </Select>
           </div>
-          <button
+          <Button
             type="submit"
-            disabled={createCategoryMutation.isPending}
-            className="w-full md:w-auto px-6 py-2.5 bg-primary hover:bg-primary-hover text-primary-foreground font-medium rounded-xl transition-colors disabled:opacity-70"
+            isLoading={createCategoryMutation.isPending}
+            className="w-full md:w-auto"
           >
-            <span aria-live="polite">
-              {createCategoryMutation.isPending ? "Đang thêm…" : "Thêm danh mục"}
-            </span>
-          </button>
+            Thêm danh mục
+          </Button>
         </form>
         {errorMsg && <p className="text-destructive text-sm mt-3">{errorMsg}</p>}
       </div>

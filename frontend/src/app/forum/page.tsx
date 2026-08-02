@@ -15,6 +15,11 @@ import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import {
   Select,
   SelectTrigger,
@@ -354,18 +359,19 @@ export default function ForumPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
+            <Button
+              variant="primary"
               onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm transition-all shadow-md shadow-primary/20 cursor-pointer"
+              className="px-5 py-2.5 rounded-xl font-semibold text-sm shadow-md shadow-primary/20 gap-2"
             >
               <Plus className="w-4 h-4" />
               {"Tạo chủ đề thảo luận mới"}
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-card border border-border rounded-2xl p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+        <Card className="rounded-2xl p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
           <div className="flex items-center gap-3 w-full md:w-auto">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
               {"Khóa học"}:
@@ -397,7 +403,7 @@ export default function ForumPage() {
           <div className="text-xs text-muted-foreground">
             Total <span className="font-bold text-foreground">{threads.length}</span> threads
           </div>
-        </div>
+        </Card>
 
         {/* Content */}
         {loading ? (
@@ -431,19 +437,19 @@ export default function ForumPage() {
               const canDeleteThread = isThreadAuthor || isStaffOrAdmin;
 
               return (
-                <div
+                <Card
                   key={thread.id}
-                  className="bg-card border border-border hover:border-accent-hover rounded-2xl p-6 transition-all shadow-sm"
+                  className="rounded-2xl p-6 transition-all shadow-sm hover:border-accent-hover"
                 >
                   {/* Thread Header */}
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-2">
                         {thread.isStaffPinned && (
-                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20 shadow-xs">
+                          <Badge variant="warning" className="gap-1.5 px-3 py-1 shadow-xs">
                             <Pin className="w-3.5 h-3.5 text-warning shrink-0" />
                             <span>Staff Pinned</span>
-                          </span>
+                          </Badge>
                         )}
                         <span className="text-xs font-medium text-muted-foreground">
                           By{" "}
@@ -467,20 +473,24 @@ export default function ForumPage() {
                         {(isThreadAuthor || canDeleteThread) && (
                           <div className="ml-auto flex items-center gap-2">
                             {isThreadAuthor && (
-                              <button
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => openEditThreadModal(thread)}
-                                className="text-xs font-semibold text-muted-foreground hover:text-primary cursor-pointer"
+                                className="text-xs text-muted-foreground hover:text-primary h-auto p-1"
                               >
                                 {"Sửa"}
-                              </button>
+                              </Button>
                             )}
                             {canDeleteThread && (
-                              <button
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 onClick={() => handleDeleteThread(thread.id)}
-                                className="text-xs font-semibold text-muted-foreground hover:text-destructive cursor-pointer"
+                                className="text-xs text-muted-foreground hover:text-destructive h-auto p-1"
                               >
                                 {"Xóa"}
-                              </button>
+                              </Button>
                             )}
                           </div>
                         )}
@@ -492,13 +502,10 @@ export default function ForumPage() {
                     </div>
 
                     {/* Upvote Button */}
-                    <button
+                    <Button
+                      variant={thread.isUpvotedByMe ? "primary" : "outline"}
                       onClick={() => handleVote(thread.id, true)}
-                      className={`group flex flex-col items-center justify-center px-3.5 py-2.5 rounded-xl border transition-all duration-200 min-w-[54px] select-none cursor-pointer ${
-                        thread.isUpvotedByMe
-                          ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20 ring-2 ring-ring"
-                          : "bg-muted border-border text-foreground hover:border-primary hover:bg-primary/10 hover:text-primary"
-                      }`}
+                      className="group flex-col h-auto px-3.5 py-2.5 rounded-xl min-w-[54px]"
                     >
                       <ChevronUp
                         className={`w-4 h-4 transition-transform duration-200 group-hover:-translate-y-0.5 ${
@@ -510,14 +517,16 @@ export default function ForumPage() {
                       <span className="text-xs font-extrabold mt-1 tracking-tight">
                         {thread.upvoteCount}
                       </span>
-                    </button>
+                    </Button>
                   </div>
 
                   {/* Toggle Replies View */}
                   <div className="flex items-center justify-between border-t border-border pt-4 mt-4">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => toggleThreadExpand(thread.id)}
-                      className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                      className="text-xs text-primary hover:underline gap-1 p-0 h-auto font-semibold"
                     >
                       <span>
                         {isExpanded
@@ -527,7 +536,7 @@ export default function ForumPage() {
                       <ChevronDown
                         className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                       />
-                    </button>
+                    </Button>
                   </div>
 
                   {/* Replies List */}
@@ -555,9 +564,12 @@ export default function ForumPage() {
                                   {reply.authorName || "Thành viên LMS"}
                                 </span>
                                 {reply.isStaffAnswer && (
-                                  <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-warning bg-warning/10 px-3 py-1 rounded-full border border-warning/30 shadow-xs">
+                                  <Badge
+                                    variant="warning"
+                                    className="text-[11px] font-extrabold uppercase tracking-wider px-3 py-1"
+                                  >
                                     Official Staff Answer
-                                  </span>
+                                  </Badge>
                                 )}
                                 <span className="text-xs text-muted-foreground">
                                   ({formatRoleName(reply.authorRole)})
@@ -571,75 +583,76 @@ export default function ForumPage() {
 
                               <div className="flex items-center gap-2">
                                 {isReplyAuthor && (
-                                  <button
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => startEditReply(reply)}
-                                    className="text-xs font-semibold text-muted-foreground hover:text-primary cursor-pointer"
+                                    className="text-xs text-muted-foreground hover:text-primary h-auto p-1"
                                   >
                                     {"Sửa"}
-                                  </button>
+                                  </Button>
                                 )}
                                 {canDeleteReply && (
-                                  <button
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => handleDeleteReply(reply.id)}
-                                    className="text-xs font-semibold text-muted-foreground hover:text-destructive cursor-pointer"
+                                    className="text-xs text-muted-foreground hover:text-destructive h-auto p-1"
                                   >
                                     {"Xóa"}
-                                  </button>
+                                  </Button>
                                 )}
 
                                 {isStaffOrAdmin && !reply.isStaffAnswer && (
-                                  <button
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => handlePinStaffAnswer(reply.id)}
-                                    className="inline-flex items-center gap-1 text-xs font-semibold text-warning bg-warning/10 hover:bg-warning/20 border border-warning/30 px-3 py-1 rounded-full transition-all cursor-pointer"
+                                    className="text-xs text-warning bg-warning/10 hover:bg-warning/20 border-warning/30 px-3 py-1 rounded-full h-auto"
                                   >
                                     Pin Answer
-                                  </button>
+                                  </Button>
                                 )}
 
-                                <button
+                                <Button
+                                  variant={reply.isUpvotedByMe ? "primary" : "outline"}
+                                  size="sm"
                                   onClick={() => handleVote(reply.id, true)}
-                                  className={`group inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all duration-200 select-none cursor-pointer ${
-                                    reply.isUpvotedByMe
-                                      ? "bg-primary border-primary text-primary-foreground shadow-md"
-                                      : "bg-card border-border text-foreground hover:border-primary hover:text-primary hover:bg-primary/10"
-                                  }`}
+                                  className="rounded-full text-xs gap-1 px-3 py-1 h-auto"
                                 >
-                                  <ChevronUp
-                                    className={`w-3.5 h-3.5 transition-transform duration-200 group-hover:-translate-y-0.5 ${
-                                      reply.isUpvotedByMe
-                                        ? "text-primary-foreground"
-                                        : "text-primary"
-                                    }`}
-                                  />
+                                  <ChevronUp className="w-3.5 h-3.5" />
                                   <span className="font-bold">{reply.upvoteCount}</span>
-                                </button>
+                                </Button>
                               </div>
                             </div>
 
                             {isEditingThisReply ? (
                               <div className="mt-2 space-y-2">
-                                <textarea
+                                <Textarea
                                   value={editReplyContent}
                                   onChange={(e) => setEditReplyContent(e.target.value)}
                                   rows={3}
-                                  className="w-full bg-card border border-input rounded-xl p-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                  className="bg-card p-3 text-sm"
                                 />
                                 <div className="flex justify-end gap-2">
-                                  <button
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
                                     onClick={() => setEditingReplyId(null)}
-                                    className="px-3 py-1.5 border border-input text-muted-foreground hover:bg-muted rounded-lg text-xs font-medium cursor-pointer"
+                                    className="text-xs font-medium"
                                   >
                                     {"Hủy"}
-                                  </button>
-                                  <button
+                                  </Button>
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
                                     onClick={() => handleUpdateReply(reply.id)}
                                     disabled={submittingEditReply || !editReplyContent.trim()}
-                                    className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-semibold hover:bg-primary-hover disabled:opacity-50 cursor-pointer"
+                                    isLoading={submittingEditReply}
+                                    className="text-xs font-semibold"
                                   >
-                                    <span aria-live="polite">
-                                      {submittingEditReply ? "…" : "Lưu thay đổi"}
-                                    </span>
-                                  </button>
+                                    {"Lưu thay đổi"}
+                                  </Button>
                                 </div>
                               </div>
                             ) : (
@@ -654,18 +667,19 @@ export default function ForumPage() {
                       {/* Reply Input Form */}
                       <div className="pt-2">
                         {!activeReplyBoxIds[thread.id] && !(replyInputs[thread.id] || "").trim() ? (
-                          <button
+                          <Button
+                            variant="outline"
                             onClick={() =>
                               setActiveReplyBoxIds((prev) => ({ ...prev, [thread.id]: true }))
                             }
-                            className="w-full flex items-center gap-2 px-4 py-2.5 bg-muted hover:bg-muted/80 border border-input rounded-xl text-xs font-medium text-muted-foreground transition-all cursor-pointer text-left group"
+                            className="w-full justify-start text-xs font-medium text-muted-foreground bg-muted hover:bg-muted/80 rounded-xl p-3 h-auto group border-input"
                           >
-                            <Reply className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <Reply className="w-4 h-4 mr-2 text-muted-foreground group-hover:text-primary transition-colors" />
                             <span>{"Nội dung thắc mắc hoặc thảo luận chi tiết…"}</span>
-                          </button>
+                          </Button>
                         ) : (
                           <div className="space-y-2">
-                            <textarea
+                            <Textarea
                               autoFocus
                               value={replyInputs[thread.id] || ""}
                               onChange={(e) =>
@@ -673,37 +687,40 @@ export default function ForumPage() {
                               }
                               placeholder={"Nội dung thắc mắc hoặc thảo luận chi tiết…"}
                               rows={3}
-                              className="w-full bg-card border border-input rounded-xl p-3 text-sm text-foreground placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              className="bg-card p-3 text-sm"
                             />
                             <div className="flex justify-end gap-2">
-                              <button
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={() => {
                                   setActiveReplyBoxIds((prev) => ({ ...prev, [thread.id]: false }));
                                   setReplyInputs((prev) => ({ ...prev, [thread.id]: "" }));
                                 }}
-                                className="px-3 py-1.5 border border-input text-muted-foreground hover:bg-muted rounded-lg text-xs font-medium cursor-pointer"
+                                className="text-xs font-medium"
                               >
                                 {"Hủy"}
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                variant="primary"
+                                size="sm"
                                 onClick={() => handlePostReply(thread.id)}
                                 disabled={
                                   submittingReply[thread.id] ||
                                   !(replyInputs[thread.id] || "").trim()
                                 }
-                                className="px-4 py-1.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground rounded-lg text-xs font-semibold transition-all shadow-xs cursor-pointer"
+                                isLoading={submittingReply[thread.id]}
+                                className="text-xs font-semibold"
                               >
-                                <span aria-live="polite">
-                                  {submittingReply[thread.id] ? "Đang gửi…" : "Đăng bài"}
-                                </span>
-                              </button>
+                                {"Đăng bài"}
+                              </Button>
                             </div>
                           </div>
                         )}
                       </div>
                     </div>
                   )}
-                </div>
+                </Card>
               );
             })}
           </div>
@@ -747,13 +764,13 @@ export default function ForumPage() {
             <label className="block text-xs font-semibold text-muted-foreground mb-1">
               Title *
             </label>
-            <input
+            <Input
               type="text"
               required
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               placeholder={"Tiêu đề chủ đề…"}
-              className="w-full bg-muted border border-input text-foreground rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="bg-muted text-sm p-3 rounded-xl"
             />
           </div>
 
@@ -761,30 +778,33 @@ export default function ForumPage() {
             <label className="block text-xs font-semibold text-muted-foreground mb-1">
               Content
             </label>
-            <textarea
+            <Textarea
               rows={4}
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
               placeholder={"Nội dung thắc mắc hoặc thảo luận chi tiết…"}
-              className="w-full bg-muted border border-input text-foreground rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="bg-muted text-sm p-3 rounded-xl"
             />
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setShowCreateModal(false)}
-              className="px-4 py-2.5 border border-input text-foreground hover:bg-muted rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              className="px-4 py-2.5 rounded-xl text-xs font-semibold"
             >
               {"Hủy"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={submittingThread || !newTitle.trim()}
-              className="px-5 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground rounded-xl text-xs font-semibold transition-all shadow-md shadow-primary/20 cursor-pointer"
+              isLoading={submittingThread}
+              className="px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
             >
-              <span aria-live="polite">{submittingThread ? "…" : "Đăng bài"}</span>
-            </button>
+              {"Đăng bài"}
+            </Button>
           </div>
         </form>
       </Modal>
@@ -801,12 +821,12 @@ export default function ForumPage() {
             <label className="block text-xs font-semibold text-muted-foreground mb-1">
               Title *
             </label>
-            <input
+            <Input
               type="text"
               required
               value={editThreadTitle}
               onChange={(e) => setEditThreadTitle(e.target.value)}
-              className="w-full bg-muted border border-input text-foreground rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="bg-muted text-sm p-3 rounded-xl"
             />
           </div>
 
@@ -814,29 +834,32 @@ export default function ForumPage() {
             <label className="block text-xs font-semibold text-muted-foreground mb-1">
               Content
             </label>
-            <textarea
+            <Textarea
               rows={4}
               value={editThreadContent}
               onChange={(e) => setEditThreadContent(e.target.value)}
-              className="w-full bg-muted border border-input text-foreground rounded-xl text-sm p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="bg-muted text-sm p-3 rounded-xl"
             />
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setEditingThread(null)}
-              className="px-4 py-2.5 border border-input text-foreground hover:bg-muted rounded-xl text-xs font-semibold transition-all cursor-pointer"
+              className="px-4 py-2.5 rounded-xl text-xs font-semibold"
             >
               {"Hủy"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={submittingEditThread || !editThreadTitle.trim()}
-              className="px-5 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground rounded-xl text-xs font-semibold transition-all shadow-md shadow-primary/20 cursor-pointer"
+              isLoading={submittingEditThread}
+              className="px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
             >
-              <span aria-live="polite">{submittingEditThread ? "…" : "Lưu thay đổi"}</span>
-            </button>
+              {"Lưu thay đổi"}
+            </Button>
           </div>
         </form>
       </Modal>

@@ -19,6 +19,10 @@ import {
 import { Modal } from "@/components/ui/Modal";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { useToast } from "@/components/ui/Toast";
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { PaymentCheckoutModal } from "@/components/course/PaymentCheckoutModal";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
@@ -343,14 +347,15 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   <span>{"Vào Học Ngay (Audit Mode)"}</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => setIsPaymentModalOpen(true)}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary font-semibold text-sm transition-all cursor-pointer"
+                  className="w-full py-3 px-6 rounded-xl bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary font-semibold text-sm justify-center gap-2"
                 >
                   <CreditCard className="w-4 h-4 text-primary" />
                   <span>{"Nâng Cấp Paid Mode / Coursera Plus"}</span>
-                </button>
+                </Button>
               </div>
             )}
 
@@ -366,17 +371,19 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               {course.financialAidEnabled && (
                 <li className="flex items-center gap-2 pt-1 border-t border-border">
                   <CircleDollarSign className="w-4 h-4 text-success" />
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={handleOpenFinAidModal}
                     disabled={checkingFinAidStatus}
-                    className="font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer bg-transparent border-0 p-0 text-xs disabled:opacity-50"
+                    className="font-bold text-primary hover:underline p-0 h-auto text-xs justify-start"
                   >
                     <span aria-live="polite">
                       {checkingFinAidStatus ? "Đang kiểm tra…" : "Financial Aid available"}
                     </span>
-                    <ArrowRight className="w-3 h-3" />
-                  </button>
+                    <ArrowRight className="w-3 h-3 ml-1" />
+                  </Button>
                 </li>
               )}
             </ul>
@@ -480,8 +487,10 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   </div>
                 </div>
               )}
-              <button
+              <Button
                 type="button"
+                variant="primary"
+                size="sm"
                 onClick={() => {
                   if (!isAuthenticated) {
                     window.location.href = `/auth/login?redirect=/courses/${courseId}`;
@@ -489,11 +498,11 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   }
                   setIsReviewModalOpen(true);
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold shadow-sm transition-all cursor-pointer"
+                className="px-4 py-2.5 rounded-xl font-bold shadow-sm gap-2"
               >
                 <SquarePen className="w-4 h-4" />
                 <span>{"Viết / Sửa đánh giá"}</span>
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -512,10 +521,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {reviews.map((rev) => (
-                <div
-                  key={rev.id}
-                  className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-3"
-                >
+                <Card key={rev.id} className="rounded-2xl shadow-sm space-y-3 p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold uppercase shadow-sm">
@@ -527,13 +533,19 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                             {rev.userName || "Học viên LMS"}
                           </h4>
                           {rev.isVerifiedCompleter ? (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-success/10 text-success border border-success/20">
+                            <Badge
+                              variant="success"
+                              className="px-1.5 py-0.5 text-[10px] font-bold"
+                            >
                               ✓ Verified Completer
-                            </span>
+                            </Badge>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground border border-input">
+                            <Badge
+                              variant="outline"
+                              className="px-1.5 py-0.5 text-[10px] font-bold bg-muted text-muted-foreground"
+                            >
                               Active Learner Review
-                            </span>
+                            </Badge>
                           )}
                         </div>
                         <span className="text-[11px] text-muted-foreground">
@@ -555,7 +567,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                       &ldquo;{rev.commentText}&rdquo;
                     </p>
                   )}
-                </div>
+                </Card>
               ))}
             </div>
           )}
@@ -607,31 +619,36 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 {comment.length}/2000
               </span>
             </div>
-            <textarea
+            <Textarea
               rows={4}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               maxLength={2000}
               placeholder={"Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng…"}
-              className="w-full text-xs p-3 rounded-xl border border-input bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none transition-colors resize-none"
+              className="text-xs p-3 rounded-xl bg-card resize-none"
             />
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => setIsReviewModalOpen(false)}
-              className="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
+              className="text-xs text-muted-foreground"
             >
               {"Hủy"}
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
+              size="sm"
               disabled={submittingReview}
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+              isLoading={submittingReview}
+              className="text-xs shadow-sm"
             >
-              <span aria-live="polite">{submittingReview ? "Đang gửi…" : "Gửi đánh giá"}</span>
-            </button>
+              {"Gửi đánh giá"}
+            </Button>
           </div>
         </form>
       </Modal>
@@ -696,13 +713,15 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
             </div>
 
             <div className="pt-4 border-t border-border flex items-center justify-between gap-3">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => setExistingFinAidStatus(null)}
-                className="px-4 py-2 rounded-xl border border-input text-foreground text-xs font-semibold hover:bg-muted cursor-pointer"
+                className="rounded-xl text-xs font-semibold"
               >
                 {"Nộp bài luận mới"}
-              </button>
+              </Button>
               <Link
                 href="/financial-aid"
                 className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-all flex items-center gap-1.5"
@@ -734,12 +753,12 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   "Hãy giải thích lý do bạn xin hỗ trợ tài chính, dự định học tập và việc hoàn thành khóa học này sẽ giúp ích thế nào cho sự nghiệp của bạn."
                 }
               </p>
-              <textarea
+              <Textarea
                 rows={8}
                 value={finAidEssay}
                 onChange={(e) => setFinAidEssay(e.target.value)}
                 placeholder={"Tôi xin nộp đơn xin hỗ trợ tài chính cho khóa học này vì…"}
-                className="w-full p-4 rounded-2xl border border-input bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-sm leading-relaxed"
+                className="p-4 rounded-2xl bg-card text-sm leading-relaxed"
                 required
               />
               <div className="w-full bg-muted h-2 rounded-full mt-3 overflow-hidden">
@@ -770,22 +789,25 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 {"Xem danh sách các đơn đã gửi →"}
               </Link>
               <div className="flex gap-3">
-                <button
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => setIsFinAidModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-input text-foreground text-xs font-semibold hover:bg-muted cursor-pointer"
+                  className="rounded-xl text-xs font-semibold"
                 >
                   {"Hủy"}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  variant="primary"
+                  size="sm"
                   disabled={submittingFinAid || !isFinAidEnoughWords}
-                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold shadow-lg disabled:opacity-50 cursor-pointer"
+                  isLoading={submittingFinAid}
+                  className="rounded-xl text-xs font-bold shadow-lg"
                 >
-                  <span aria-live="polite">
-                    {submittingFinAid ? "Đang gửi đơn…" : "Gửi đơn xin Hỗ trợ"}
-                  </span>
-                </button>
+                  {"Gửi đơn xin Hỗ trợ"}
+                </Button>
               </div>
             </div>
           </form>

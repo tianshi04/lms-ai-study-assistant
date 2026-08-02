@@ -8,7 +8,9 @@ import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { useUserProfileQuery } from "@/lib/query_hooks";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
-
+import { Input } from "@/components/ui/Input";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { getAvatarDataUri } from "@/lib/avatar";
 
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -92,7 +94,7 @@ export default function ProfilePage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12 w-full flex-1">
-      <div className="bg-card border border-border rounded-3xl p-8 shadow-xl">
+      <Card className="rounded-3xl p-8 shadow-xl">
         {/* User Banner */}
         <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-border">
           <Image
@@ -113,23 +115,26 @@ export default function ProfilePage() {
             </h1>
             <p className="text-sm text-muted-foreground mb-3">{user?.email}</p>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-info/10 text-info border border-info/20">
+              <Badge
+                variant="outline"
+                className="bg-info/10 text-info border-info/20 px-3 py-1 font-bold"
+              >
                 Vai trò:{" "}
                 {user?.role === 1
                   ? "Learner (Học viên)"
                   : user?.role === 2
                     ? "Instructor (Giảng viên)"
                     : "TA / Admin"}
-              </span>
+              </Badge>
               {user?.isIdentityVerified ? (
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20">
+                <Badge variant="success" className="gap-1 px-3 py-1 font-bold">
                   <Check className="w-3.5 h-3.5 text-success" aria-hidden="true" />
                   Đã xác minh KYC
-                </span>
+                </Badge>
               ) : (
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20">
+                <Badge variant="warning" className="gap-1 px-3 py-1 font-bold">
                   Chưa xác minh KYC
-                </span>
+                </Badge>
               )}
             </div>
           </div>
@@ -184,14 +189,14 @@ export default function ProfilePage() {
           </p>
 
           <form onSubmit={handleAssignKey} className="flex flex-col sm:flex-row gap-4">
-            <input
+            <Input
               type="text"
               value={enterpriseKey}
               onChange={(e) => setEnterpriseKey(e.target.value)}
               placeholder="Nhập mã Enterprise Key (ví dụ: ENT-UNI-2026-X99)"
               autoComplete="off"
               spellCheck={false}
-              className="flex-1 px-4 py-3 rounded-xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors text-sm font-mono"
+              className="flex-1 py-3 rounded-xl text-sm font-mono bg-muted"
             />
             <Button
               type="submit"
@@ -204,7 +209,7 @@ export default function ProfilePage() {
             </Button>
           </form>
         </div>
-      </div>
+      </Card>
     </main>
   );
 }
