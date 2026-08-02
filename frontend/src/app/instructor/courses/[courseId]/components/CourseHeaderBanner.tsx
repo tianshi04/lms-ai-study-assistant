@@ -11,6 +11,7 @@ import {
   BarChart2,
   Megaphone,
   Plus,
+  Users,
 } from "lucide-react";
 import { CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 
@@ -25,6 +26,7 @@ interface CourseHeaderBannerProps {
   onExportScorm: () => void;
   onImportScormFile: (file: File) => void;
   onAddWeek: () => void;
+  onOpenCollaboratorsModal?: () => void;
 }
 
 export function CourseHeaderBanner({
@@ -38,6 +40,7 @@ export function CourseHeaderBanner({
   onExportScorm,
   onImportScormFile,
   onAddWeek,
+  onOpenCollaboratorsModal,
 }: CourseHeaderBannerProps) {
   return (
     <div className="space-y-4">
@@ -186,6 +189,17 @@ export function CourseHeaderBanner({
             <Megaphone className="w-4 h-4" aria-hidden="true" />
             <span>{"Đăng Thông báo"}</span>
           </Link>
+
+          {onOpenCollaboratorsModal && (
+            <button
+              type="button"
+              onClick={onOpenCollaboratorsModal}
+              className="px-4 py-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Users className="w-4 h-4" aria-hidden="true" />
+              <span>{"Người hợp tác"}</span>
+            </button>
+          )}
 
           {isInstructorOrAdmin && (
             <button

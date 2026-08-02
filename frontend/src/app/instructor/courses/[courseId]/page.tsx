@@ -25,6 +25,7 @@ import { WeekFormModal } from "./components/modals/WeekFormModal";
 import { LessonFormModal } from "./components/modals/LessonFormModal";
 import { LearningItemFormModal } from "./components/modals/LearningItemFormModal";
 import { ScormReviewModal } from "./components/modals/ScormReviewModal";
+import { CourseCollaboratorsModal } from "@/components/course/CourseCollaboratorsModal";
 
 export default function InstructorCourseBuilderPage({
   params,
@@ -45,6 +46,7 @@ export default function InstructorCourseBuilderPage({
   const [showWeekModal, setShowWeekModal] = useState(false);
   const [showLessonModal, setShowLessonModal] = useState<string | null>(null); // weekModuleId
   const [showItemModal, setShowItemModal] = useState<string | null>(null); // lessonId
+  const [showCollaboratorsModal, setShowCollaboratorsModal] = useState(false);
 
   const [editingWeek, setEditingWeek] = useState<WeekModule | null>(null);
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
@@ -174,6 +176,7 @@ export default function InstructorCourseBuilderPage({
             onExportScorm={scorm.handleExportScorm}
             onImportScormFile={scorm.handleImportScormFile}
             onAddWeek={() => setShowWeekModal(true)}
+            onOpenCollaboratorsModal={() => setShowCollaboratorsModal(true)}
           />
         )}
 
@@ -285,6 +288,14 @@ export default function InstructorCourseBuilderPage({
         courseId={courseId}
         scormImporting={scorm.scormImporting}
         onConfirmImport={handleConfirmScormImport}
+      />
+
+      {/* Modal: Course Collaborators Management */}
+      <CourseCollaboratorsModal
+        isOpen={showCollaboratorsModal}
+        onClose={() => setShowCollaboratorsModal(false)}
+        courseId={courseId}
+        courseTitle={builder.course?.title}
       />
     </div>
   );

@@ -260,3 +260,19 @@ class ICatalogRepository(ABC):
         self, course_id: str, lesson_id: str, ordered_item_ids: list[str]
     ) -> bool:
         pass
+
+    @abstractmethod
+    async def add_course_collaborator(
+        self, course_id: str, user_id: str, role: str = "co_instructor"
+    ) -> bool:
+        pass
+
+    @abstractmethod
+    async def remove_course_collaborator(self, course_id: str, user_id: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def list_course_collaborators_with_details(
+        self, course_id: str
+    ) -> list[dict]:
+        pass

@@ -892,3 +892,93 @@ class CatalogHandler(CatalogService):
             course=pb_course,
             imported_item=pb_item,
         )
+
+    async def add_course_collaborator(
+        self,
+        request: pb.AddCourseCollaboratorRequest,
+        ctx: RequestContext[
+            pb.AddCourseCollaboratorRequest,
+            pb.AddCourseCollaboratorResponse,
+        ],
+    ) -> pb.AddCourseCollaboratorResponse:
+        user = require_current_user()
+        try:
+            res = await self.use_case.add_course_collaborator(
+                course_id=request.course_id.strip(),
+                email=request.email.strip(),
+                role=request.role.strip(),
+                current_user=user,
+            )
+            c = res["collaborator"]
+            detail = pb.CourseCollaboratorDetail(
+                collaborator_id=c["collaborator_id"],
+                user_id=c["user_id"],
+                email=c["email"],
+                full_name=c["full_name"],
+                avatar_url=c["avatar_url"],
+                role=c["role"],
+                added_at=c["added_at"],
+            )
+            return pb.AddCourseCollaboratorResponse(
+                collaborator=detail,
+                co_instructor_ids=res["co_instructor_ids"],
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
+    async def list_course_collaborators(
+        self,
+        request: pb.ListCourseCollaboratorsRequest,
+        ctx: RequestContext[
+            pb.ListCourseCollaboratorsRequest,
+            pb.ListCourseCollaboratorsResponse,
+        ],
+    ) -> pb.ListCourseCollaboratorsResponse:
+        user = require_current_user()
+        try:
+            collabs = await self.use_case.list_course_collaborators(
+                course_id=request.course_id.strip(), current_user=user
+            )
+            pb_collabs = [
+                pb.CourseCollaboratorDetail(
+                    collaborator_id=c["collaborator_id"],
+                    user_id=c["user_id"],
+                    email=c["email"],
+                    full_name=c["full_name"],
+                    avatar_url=c["avatar_url"],
+                    role=c["role"],
+                    added_at=c["added_at"],
+                )
+                for c in collabs
+            ]
+            return pb.ListCourseCollaboratorsResponse(collaborators=pb_collabs)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
+    async def remove_course_collaborator(
+        self,
+        request: pb.RemoveCourseCollaboratorRequest,
+        ctx: RequestContext[
+            pb.RemoveCourseCollaboratorRequest,
+            pb.RemoveCourseCollaboratorResponse,
+        ],
+    ) -> pb.RemoveCourseCollaboratorResponse:
+        user = require_current_user()
+        try:
+            res = await self.use_case.remove_course_collaborator(
+                course_id=request.course_id.strip(),
+                user_id=request.user_id.strip(),
+                current_user=user,
+            )
+            return pb.RemoveCourseCollaboratorResponse(
+                success=res["success"],
+                co_instructor_ids=res["co_instructor_ids"],
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
