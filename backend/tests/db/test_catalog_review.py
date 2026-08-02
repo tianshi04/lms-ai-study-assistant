@@ -43,6 +43,21 @@ async def test_submit_and_list_course_review():
                 comment_text="Khóa học tôi dạy rất hay!",
             )
 
+        # 1d. Check BR_REVIEW_004: Another instructor (not owner) CAN review this course
+        await learning_uc.mark_item_complete(
+            "inst_other", course.id, "item_1", total_course_items=1
+        )
+        inst_review = await usecase.submit_course_review(
+            user_id="inst_other",
+            user_name="Dr. Smith",
+            course_id=course.id,
+            rating_stars=5,
+            comment_text="Khóa học này từ đồng nghiệp rất tuyệt vời!",
+            user_role="INSTRUCTOR",
+        )
+        assert inst_review is not None
+        assert inst_review.comment_text == "Khóa học này từ đồng nghiệp rất tuyệt vời!"
+
         # Mark 100% progress for user_test_01
         await learning_uc.mark_item_complete(
             "user_test_01", course.id, "item_1", total_course_items=1

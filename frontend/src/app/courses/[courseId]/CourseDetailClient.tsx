@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -44,7 +44,7 @@ interface CourseDetailClientProps {
 }
 
 export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
-  const { isAuthenticated, isInstructorOrAdmin } = useAuth();
+  const { isAuthenticated, isInstructorOrAdmin, userId, userName } = useAuth();
   const locale = "vi";
   const queryClient = useQueryClient();
 
@@ -53,6 +53,16 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
     isLoading: loadingCourse,
     error: courseErr,
   } = useCourseDetailQuery(courseId);
+
+  const isOwnCourse = useMemo(() => {
+    if (!course) return false;
+    if (userId && course.ownerId && course.ownerId === userId) return true;
+    if (userId && course.coInstructorIds && course.coInstructorIds.includes(userId)) return true;
+    if (userName && course.instructorNames && course.instructorNames.includes(userName))
+      return true;
+    return false;
+  }, [course, userId, userName]);
+
   const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(courseId);
 
   const { data: myCertificates = [], isLoading: loadingCerts } = useMyCertificatesQuery();
@@ -480,20 +490,22 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   </div>
                 </div>
               )}
-              <button
-                type="button"
-                onClick={() => {
-                  if (!isAuthenticated) {
-                    window.location.href = `/auth/login?redirect=/courses/${courseId}`;
-                    return;
-                  }
-                  setIsReviewModalOpen(true);
-                }}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold shadow-sm transition-all cursor-pointer"
-              >
-                <SquarePen className="w-4 h-4" />
-                <span>{"Viết / Sửa đánh giá"}</span>
-              </button>
+              {!isOwnCourse && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      window.location.href = `/auth/login?redirect=/courses/${courseId}`;
+                      return;
+                    }
+                    setIsReviewModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold shadow-sm transition-all cursor-pointer"
+                >
+                  <SquarePen className="w-4 h-4" />
+                  <span>{"Viết / Sửa đánh giá"}</span>
+                </button>
+              )}
             </div>
           </div>
 

@@ -6,6 +6,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useCourseDetailQuery } from "@/lib/query_hooks";
 import { Trophy, AlertTriangle, CheckCircle2, Check, Pencil, Star } from "lucide-react";
 
 export interface CourseCompletionModalProps {
@@ -130,7 +131,15 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
     fetchCert();
   }, [isOpen, courseId]);
 
-  const { userId: authUserId } = useAuth();
+  const { userId: authUserId, userName } = useAuth();
+  const { data: course } = useCourseDetailQuery(courseId);
+
+  const isOwnCourse = !!(
+    course &&
+    ((authUserId && course.ownerId === authUserId) ||
+      (authUserId && course.coInstructorIds?.includes(authUserId)) ||
+      (userName && course.instructorNames?.includes(userName)))
+  );
 
   // Fetch existing review if any
   useEffect(() => {
@@ -229,100 +238,106 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
       </div>
 
       {/* Course Review & Rating Section */}
-      <div className="p-6 bg-card space-y-5">
-        <div>
-          <h3 className="text-base font-bold text-foreground">
-            {"Đánh giá & Nhận xét từ Học viên"}
-          </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {"Các nhận xét thực tế từ học viên đã tham gia khóa học này"}
-          </p>
-        </div>
-
-        {submitted ? (
-          <div className="bg-success/10 border border-success/30 p-4 rounded-xl text-center space-y-2">
-            <div className="w-10 h-10 bg-success/20 rounded-full flex items-center justify-center mx-auto text-success">
-              <Check className="w-6 h-6" aria-hidden="true" />
-            </div>
-            <h4 className="text-sm font-bold text-success">{"Đã gửi đánh giá thành công!"}</h4>
-            <p className="text-xs text-success">{"Cảm ơn bạn đã phản hồi ý kiến cho khóa học."}</p>
-            <div className="pt-2">
-              <button
-                type="button"
-                onClick={() => setSubmitted(false)}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline transition-colors cursor-pointer"
-              >
-                <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{"Viết / Sửa đánh giá"}</span>
-              </button>
-            </div>
+      {!isOwnCourse && (
+        <div className="p-6 bg-card space-y-5">
+          <div>
+            <h3 className="text-base font-bold text-foreground">
+              {"Đánh giá & Nhận xét từ Học viên"}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {"Các nhận xét thực tế từ học viên đã tham gia khóa học này"}
+            </p>
           </div>
-        ) : (
-          <form onSubmit={handleSubmitReview} className="space-y-4">
-            {/* Interactive 1-5 Star Picker */}
-            <div className="flex flex-col items-center justify-center p-3 bg-muted rounded-xl border border-border">
-              <span className="text-xs font-semibold text-muted-foreground mb-2">
-                {"Chọn số sao đánh giá:"} ({hoverRating || rating}/5)
-              </span>
-              <div className="flex items-center gap-1.5">
-                {[1, 2, 3, 4, 5].map((star) => {
-                  const active = star <= (hoverRating || rating);
-                  return (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setRating(star)}
-                      onMouseEnter={() => setHoverRating(star)}
-                      onMouseLeave={() => setHoverRating(0)}
-                      className="p-1 cursor-pointer transition-transform hover:scale-110 focus:outline-none"
-                    >
-                      <Star
-                        className={`w-8 h-8 transition-colors ${
-                          active ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40"
-                        }`}
-                        aria-hidden="true"
-                      />
-                    </button>
-                  );
-                })}
+
+          {submitted ? (
+            <div className="bg-success/10 border border-success/30 p-4 rounded-xl text-center space-y-2">
+              <div className="w-10 h-10 bg-success/20 rounded-full flex items-center justify-center mx-auto text-success">
+                <Check className="w-6 h-6" aria-hidden="true" />
+              </div>
+              <h4 className="text-sm font-bold text-success">{"Đã gửi đánh giá thành công!"}</h4>
+              <p className="text-xs text-success">
+                {"Cảm ơn bạn đã phản hồi ý kiến cho khóa học."}
+              </p>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setSubmitted(false)}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline transition-colors cursor-pointer"
+                >
+                  <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>{"Viết / Sửa đánh giá"}</span>
+                </button>
               </div>
             </div>
+          ) : (
+            <form onSubmit={handleSubmitReview} className="space-y-4">
+              {/* Interactive 1-5 Star Picker */}
+              <div className="flex flex-col items-center justify-center p-3 bg-muted rounded-xl border border-border">
+                <span className="text-xs font-semibold text-muted-foreground mb-2">
+                  {"Chọn số sao đánh giá:"} ({hoverRating || rating}/5)
+                </span>
+                <div className="flex items-center gap-1.5">
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const active = star <= (hoverRating || rating);
+                    return (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setRating(star)}
+                        onMouseEnter={() => setHoverRating(star)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        className="p-1 cursor-pointer transition-transform hover:scale-110 focus:outline-none"
+                      >
+                        <Star
+                          className={`w-8 h-8 transition-colors ${
+                            active ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40"
+                          }`}
+                          aria-hidden="true"
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-            {/* Comment Textarea */}
-            <div>
-              <label className="block text-xs font-semibold text-foreground mb-1.5">
-                {"Nội dung nhận xét:"}
-              </label>
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder={"Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng…"}
-                rows={3}
-                className="w-full text-xs p-3 rounded-xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent focus-visible:outline-none transition-all resize-none"
-              />
-            </div>
+              {/* Comment Textarea */}
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1.5">
+                  {"Nội dung nhận xét:"}
+                </label>
+                <textarea
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder={"Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng…"}
+                  rows={3}
+                  className="w-full text-xs p-3 rounded-xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent focus-visible:outline-none transition-all resize-none"
+                />
+              </div>
 
-            {errorMessage && <p className="text-xs text-destructive font-medium">{errorMessage}</p>}
+              {errorMessage && (
+                <p className="text-xs text-destructive font-medium">{errorMessage}</p>
+              )}
 
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
-              >
-                {"Hủy"}
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-xs font-semibold shadow-sm transition-colors cursor-pointer"
-              >
-                <span aria-live="polite">{submitting ? "Đang gửi…" : "Gửi đánh giá"}</span>
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
+                >
+                  {"Hủy"}
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+                >
+                  <span aria-live="polite">{submitting ? "Đang gửi…" : "Gửi đánh giá"}</span>
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
     </Modal>
   );
 };

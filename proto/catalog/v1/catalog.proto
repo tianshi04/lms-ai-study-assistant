@@ -90,6 +90,8 @@ message Course {
   CourseStatus status = 14;
   string rejection_reason = 15;
   string organization_id = 16;
+  string owner_id = 17;
+  repeated string co_instructor_ids = 18;
 }
 
 // Specialization messages
