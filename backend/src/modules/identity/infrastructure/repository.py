@@ -218,6 +218,26 @@ class OrganizationRepository:
 
         return role_name, permissions
 
+    async def get_member(
+        self, user_id: str, org_id: str
+    ) -> Optional[OrganizationMember]:
+        stmt = select(OrganizationMemberModel).where(
+            OrganizationMemberModel.user_id == user_id,
+            OrganizationMemberModel.organization_id == org_id,
+        )
+        result = await self._session.execute(stmt)
+        existing = result.scalar_one_or_none()
+        if not existing:
+            return None
+        return OrganizationMember(
+            id=existing.id,
+            user_id=existing.user_id,
+            organization_id=existing.organization_id,
+            role_id=existing.role_id,
+            status=existing.status,
+            joined_at=existing.joined_at or "",
+        )
+
     async def add_member(
         self,
         user_id: str,
@@ -261,6 +281,50 @@ class OrganizationRepository:
             role_id=model.role_id,
             status=model.status,
         )
+
+    async def list_members_with_details(self, org_id: str) -> list[dict]:
+        stmt = (
+            select(OrganizationMemberModel, UserModel, OrganizationRoleModel)
+            .join(UserModel, UserModel.id == OrganizationMemberModel.user_id)
+            .outerjoin(
+                OrganizationRoleModel,
+                OrganizationRoleModel.id == OrganizationMemberModel.role_id,
+            )
+            .where(OrganizationMemberModel.organization_id == org_id)
+        )
+        result = await self._session.execute(stmt)
+        rows = result.all()
+        members = []
+        for member_model, user_model, role_model in rows:
+            members.append(
+                {
+                    "member_id": member_model.id,
+                    "user_id": user_model.id,
+                    "email": user_model.email,
+                    "full_name": user_model.full_name,
+                    "avatar_url": user_model.avatar_url or "",
+                    "role_id": member_model.role_id,
+                    "role_name": role_model.name
+                    if role_model
+                    else member_model.role_id,
+                    "status": member_model.status,
+                    "joined_at": member_model.joined_at or "",
+                }
+            )
+        return members
+
+    async def remove_member(self, user_id: str, org_id: str) -> bool:
+        stmt = select(OrganizationMemberModel).where(
+            OrganizationMemberModel.user_id == user_id,
+            OrganizationMemberModel.organization_id == org_id,
+        )
+        result = await self._session.execute(stmt)
+        existing = result.scalar_one_or_none()
+        if not existing:
+            return False
+        await self._session.delete(existing)
+        await self._session.flush()
+        return True
 
 
 class InstructorApplicationRepository:

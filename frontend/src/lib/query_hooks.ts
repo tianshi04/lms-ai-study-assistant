@@ -60,6 +60,7 @@ import {
   type User,
   type EnterpriseSeat,
   type InstructorApplication,
+  type OrganizationMemberDetail,
 } from "@/gen/identity/v1/identity_pb";
 import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
 import {
@@ -916,6 +917,84 @@ export function useSubscribeCourseraPlusMutation(
       queryClient.invalidateQueries({ queryKey: ["paymentAccess"] });
       queryClient.invalidateQueries({ queryKey: ["userProfile"] });
       queryClient.invalidateQueries({ queryKey: ["enrolledCourses"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
+// --- Organization Member Hooks ---
+
+export function useOrganizationMembersQuery(
+  organizationId: string = "org_default",
+  options?: Partial<UseQueryOptions<OrganizationMemberDetail[], Error>>,
+) {
+  return useQuery<OrganizationMemberDetail[], Error>({
+    queryKey: ["organizationMembers", organizationId],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.listOrganizationMembers({ organizationId });
+      return res.members || [];
+    },
+    enabled: !!organizationId,
+    ...options,
+  });
+}
+
+export function useAddOrganizationMemberMutation(
+  options?: Partial<
+    UseMutationOptions<
+      OrganizationMemberDetail,
+      Error,
+      { email: string; roleId: string; organizationId?: string }
+    >
+  >,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<
+    OrganizationMemberDetail,
+    Error,
+    { email: string; roleId: string; organizationId?: string }
+  >({
+    mutationFn: async ({ email, roleId, organizationId = "org_default" }) => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.addOrganizationMember({
+        email,
+        roleId,
+        organizationId,
+      });
+      if (!res.member) {
+        throw new Error("Không thể thêm thành viên");
+      }
+      return res.member;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      const orgId = variables.organizationId || "org_default";
+      queryClient.invalidateQueries({ queryKey: ["organizationMembers", orgId] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
+export function useRemoveOrganizationMemberMutation(
+  options?: Partial<
+    UseMutationOptions<boolean, Error, { userId: string; organizationId?: string }>
+  >,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<boolean, Error, { userId: string; organizationId?: string }>({
+    mutationFn: async ({ userId, organizationId = "org_default" }) => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.removeOrganizationMember({
+        userId,
+        organizationId,
+      });
+      return res.success;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      const orgId = variables.organizationId || "org_default";
+      queryClient.invalidateQueries({ queryKey: ["organizationMembers", orgId] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
   });

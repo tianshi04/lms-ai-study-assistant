@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useCoursesQuery } from "@/lib/query_hooks";
 import { CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
+import { OrganizationMembersModal } from "@/components/identity/OrganizationMembersModal";
 import {
   Plus,
   Users,
@@ -12,9 +14,11 @@ import {
   Layers,
   UserCheck,
   CircleDollarSign,
+  UserPlus,
 } from "lucide-react";
 
 export function InstructorDashboard({ userName }: { userName: string }) {
+  const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
   const { data: courses = [], isLoading: loading } = useCoursesQuery();
 
   const publishedCourses = courses.filter((c: Course) => c.status === CourseStatus.PUBLISHED);
@@ -55,6 +59,13 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setIsOrgModalOpen(true)}
+              className="px-5 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg transition-all flex items-center gap-2 cursor-pointer border border-border"
+            >
+              <UserPlus className="w-5 h-5 text-primary" aria-hidden="true" />
+              Thành viên Organization
+            </button>
             <Link
               href="/instructor/courses/new"
               className="px-6 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg transition-all flex items-center gap-2 cursor-pointer border border-border"
@@ -246,6 +257,8 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           )}
         </div>
       </main>
+
+      <OrganizationMembersModal isOpen={isOrgModalOpen} onClose={() => setIsOrgModalOpen(false)} />
     </div>
   );
 }
