@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.modules.identity.domain.entities import (
     User,
     UserRole,
-    SystemRole,
     Organization,
     OrganizationMember,
     InstructorApplication,
@@ -48,7 +47,6 @@ class IdentityRepository:
                 email=user.email,
                 full_name=user.full_name,
                 role=user.role,
-                system_role=user.system_role,
                 avatar_url=user.avatar_url,
                 enterprise_seat_key=user.enterprise_seat_key,
                 seat_assigned_at=user.seat_assigned_at,
@@ -62,7 +60,6 @@ class IdentityRepository:
             model.email = user.email
             model.full_name = user.full_name
             model.role = user.role
-            model.system_role = user.system_role
             model.avatar_url = user.avatar_url
             model.enterprise_seat_key = user.enterprise_seat_key
             model.seat_assigned_at = user.seat_assigned_at
@@ -90,18 +87,11 @@ class IdentityRepository:
         )
 
     def _to_entity(self, model: UserModel) -> User:
-        raw_sys_role = getattr(model, "system_role", None)
-        system_role = (
-            SystemRole(raw_sys_role)
-            if raw_sys_role and raw_sys_role in SystemRole.__members__.values()
-            else SystemRole.USER
-        )
         return User(
             id=model.id,
             email=model.email,
             full_name=model.full_name,
             role=UserRole(model.role),
-            system_role=system_role,
             avatar_url=model.avatar_url,
             enterprise_seat_key=model.enterprise_seat_key,
             seat_assigned_at=model.seat_assigned_at,

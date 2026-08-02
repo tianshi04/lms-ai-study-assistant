@@ -211,6 +211,7 @@ class CatalogHandler(CatalogService):
             subject=request.subject,
             level=request.level,
             sort_by=request.sort_by,
+            organization_id=getattr(request, "organization_id", None) or None,
             status_filter=pb.CourseStatus.PUBLISHED,
         )
         return pb.ListCoursesResponse(
@@ -232,7 +233,7 @@ class CatalogHandler(CatalogService):
         else:
             status_filter_val = str(status_filter)
 
-        instructor_id = "" if current_user.is_admin() else current_user.id
+        instructor_id = "" if current_user.is_admin else current_user.id
 
         courses, next_token = await self.use_case.list_instructor_courses(
             instructor_id=instructor_id,
@@ -320,7 +321,7 @@ class CatalogHandler(CatalogService):
 
     def _verify_instructor_permission(self) -> CurrentUser:
         user = require_current_user()
-        if not user.is_staff():
+        if not user.is_instructor and not user.is_admin:
             raise ConnectError(
                 Code.PERMISSION_DENIED,
                 "Chỉ tài khoản Giảng viên (Instructor) hoặc Quản trị viên mới có quyền tạo và chỉnh sửa khóa học.",
@@ -472,7 +473,6 @@ class CatalogHandler(CatalogService):
                 course_id=request.course_id,
                 rating_stars=request.rating_stars,
                 comment_text=request.comment_text,
-                user_role=current_user.role,
             )
             return pb.SubmitCourseReviewResponse(review=_to_pb_review(review))
         except ValueError as e:
@@ -507,10 +507,10 @@ class CatalogHandler(CatalogService):
 
     def _verify_super_admin(self) -> None:
         user = require_current_user()
-        if not user.is_system_admin():
+        if not user.is_admin:
             raise ConnectError(
                 Code.PERMISSION_DENIED,
-                "Chỉ Super Admin mới có quyền thực hiện thao tác này.",
+                "Yêu cầu quyền Quản trị viên hệ thống để thực hiện thao tác này",
             )
 
     async def list_categories(

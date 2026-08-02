@@ -12,11 +12,13 @@ export class ForumPage {
   constructor(page: Page) {
     this.page = page;
     this.openModalButton = page.getByRole('button', { name: /^(Tạo chủ đề thảo luận mới|Tạo Thảo Luận Mới|Create New Discussion Thread|New Thread)$/i });
-    this.modalTitleInput = page.locator('input[placeholder*="Loss Function"], input[placeholder*="Title"], input[placeholder*="Tiêu đề"]');
-    this.modalContentInput = page.locator('textarea[placeholder*="Mô tả"], textarea[placeholder*="Write"], textarea[placeholder*="Content"], textarea[placeholder*="Nội dung thắc mắc"]').last();
-    this.modalSubmitButton = page.getByRole('button', { name: /^(Đăng bài|Đăng Thảo Luận|Post Thread|Post)$/i });
-    this.replyInput = page.locator('textarea[placeholder*="Nội dung thắc mắc"], textarea[placeholder*="Nhập câu trả lời"], textarea[placeholder*="Write"], input[placeholder*="Trả lời"]').first();
-    this.submitReplyButton = page.getByRole('button', { name: /Đăng bài|Post Thread|Gửi Phản Hồi|Gửi|Reply/i }).first();
+    this.modalTitleInput = page.locator('.fixed.inset-0 input[placeholder*="Tiêu đề"], input[placeholder*="Tiêu đề"], input[placeholder*="Title"]').first();
+    this.modalContentInput = page.locator('.fixed.inset-0 textarea, textarea[placeholder*="Nội dung thắc mắc"]').first();
+    this.modalSubmitButton = page.locator('.fixed.inset-0 button').filter({ hasText: /^Đăng bài$/ }).first();
+    this.replyInput = page
+      .locator('textarea[placeholder*="Nội dung thắc mắc"], textarea[placeholder*="thảo luận"], input[placeholder*="Trả lời"]')
+      .first();
+    this.submitReplyButton = page.getByRole('button', { name: /Đăng bài|Gửi phản hồi|Post Reply|Gửi/i }).first();
   }
 
   async goto() {
@@ -41,7 +43,10 @@ export class ForumPage {
 
   async postFirstReply(replyContent: string) {
     if (!(await this.replyInput.isVisible())) {
-      const replyTrigger = this.page.locator('button').filter({ hasText: /Nội dung thắc mắc|Write your detailed question/i }).first();
+      const replyTrigger = this.page
+        .locator('button')
+        .filter({ hasText: /Nội dung thắc mắc|thảo luận chi tiết|Write your detailed question/i })
+        .first();
       if (await replyTrigger.isVisible()) {
         await replyTrigger.click();
       }

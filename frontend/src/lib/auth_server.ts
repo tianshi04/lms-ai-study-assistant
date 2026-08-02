@@ -8,7 +8,6 @@ export interface ServerUserAuth {
   userName: string | null;
   userEmail: string | null;
   userRole: string | null;
-  systemRole: string | null;
 }
 
 /**
@@ -27,7 +26,6 @@ export async function getAuthServer(): Promise<ServerUserAuth> {
       userName: null,
       userEmail: null,
       userRole: null,
-      systemRole: null,
     };
   }
 
@@ -40,7 +38,6 @@ export async function getAuthServer(): Promise<ServerUserAuth> {
       userName: null,
       userEmail: null,
       userRole: null,
-      systemRole: null,
     };
   }
 
@@ -51,7 +48,6 @@ export async function getAuthServer(): Promise<ServerUserAuth> {
     userName: payload.full_name || payload.email || null,
     userEmail: payload.email || null,
     userRole: normalizeUserRole(payload.role),
-    systemRole: payload.system_role || null,
   };
 }
 

@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 export default function BecomeAnInstructorPage() {
-  const { userName, userRole } = useAuth();
+  const { userName, isInstructorOrAdmin } = useAuth();
   const [title, setTitle] = useState("");
   const [bio, setBio] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
@@ -50,7 +50,7 @@ export default function BecomeAnInstructorPage() {
     },
   });
 
-  const isInstructor = userRole === "2" || userRole === "4" || userRole === "5";
+  const isInstructor = isInstructorOrAdmin;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

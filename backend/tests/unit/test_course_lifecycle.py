@@ -66,9 +66,38 @@ def test_submit_for_launch_success_and_review_flow():
     assert course.status == CourseStatus.PENDING_REVIEW
 
     # 2. Reject
-    course.reject(reason="Thiếu mô tả bài đọc")
+    course.reject(reason="Nội dung chưa đủ chất lượng")
     assert course.status == CourseStatus.REJECTED
-    assert course.rejection_reason == "Thiếu mô tả bài đọc"
+    assert course.rejection_reason == "Nội dung chưa đủ chất lượng"
+
+
+def test_course_can_edit_permissions():
+    from src.shared.auth import CurrentUserContext
+
+    admin = CurrentUserContext(id="admin", role="USER_ROLE_ADMIN")
+    owner = CurrentUserContext(id="inst-1", role="USER_ROLE_INSTRUCTOR")
+    co_inst = CurrentUserContext(id="inst-2", role="USER_ROLE_INSTRUCTOR")
+    stranger = CurrentUserContext(id="inst-3", role="USER_ROLE_INSTRUCTOR")
+
+    course = Course(
+        id="c1",
+        title="Test",
+        slug="test",
+        owner_id="inst-1",
+        co_instructor_ids=["inst-2"],
+        status=CourseStatus.DRAFT,
+    )
+
+    assert course.can_edit(admin) is True
+    assert course.can_edit(owner) is True
+    assert course.can_edit(co_inst) is True
+    assert course.can_edit(stranger) is False
+
+    # Pending review locks editing for instructors unless allow_read_only_pending is True
+    course.status = CourseStatus.PENDING_REVIEW
+    assert course.can_edit(owner) is False
+    assert course.can_edit(owner, allow_read_only_pending=True) is True
+    assert course.can_edit(admin) is True
 
     # 3. Approve
     course.approve()

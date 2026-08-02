@@ -1,3 +1,4 @@
+from typing import Any
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
@@ -12,17 +13,18 @@ from src.shared.auth import require_current_user
 ROLE_MAP = {
     "USER_ROLE_LEARNER": "Learner",
     "USER_ROLE_INSTRUCTOR": "Instructor",
-    "USER_ROLE_TA": "Teaching Assistant",
+    "USER_ROLE_ADMIN": "Admin",
     "1": "Learner",
     "2": "Instructor",
-    "3": "Teaching Assistant",
+    "3": "Admin",
 }
 
 
-def _format_author_role(role: str) -> str:
-    if not role:
+def _format_author_role(role_or_user: Any) -> str:
+    if not role_or_user:
         return "Learner"
-    return ROLE_MAP.get(role, role)
+    role_val = getattr(role_or_user, "role", role_or_user)
+    return ROLE_MAP.get(str(role_val), str(role_val))
 
 
 def _to_pb_reply(reply: ForumReplyEntity) -> pb.ForumReply:
@@ -101,7 +103,7 @@ class ForumHandler(ForumService):
             content=request.content,
             author_user_id=current_user.id,
             author_name=author_name,
-            author_role=_format_author_role(current_user.role),
+            author_role=_format_author_role(current_user),
         )
         return pb.CreateThreadResponse(thread=_to_pb_thread(thread))
 
@@ -125,7 +127,7 @@ class ForumHandler(ForumService):
             content=request.content,
             author_user_id=current_user.id,
             author_name=author_name,
-            author_role=_format_author_role(current_user.role),
+            author_role=_format_author_role(current_user),
         )
         return pb.PostReplyResponse(reply=_to_pb_reply(reply))
 
@@ -149,18 +151,11 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.PinStaffAnswerRequest, pb.PinStaffAnswerResponse],
     ) -> pb.PinStaffAnswerResponse:
         current_user = require_current_user()
-        role = current_user.role
 
-        normalized_role = str(role).lower()
-        is_staff = current_user.is_staff() or any(
-            r in normalized_role
-            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
-        )
-
-        if not is_staff:
+        if not current_user.is_staff:
             raise ConnectError(
                 Code.PERMISSION_DENIED,
-                "Chỉ Trợ giảng (TA) hoặc Giảng viên mới có quyền ghim câu trả lời chính thức.",
+                "Chỉ Trợ giảng hoặc Giảng viên mới có quyền ghim câu trả lời chính thức.",
             )
 
         success = await self.use_case.pin_staff_answer(
@@ -174,7 +169,7 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.UpdateThreadRequest, pb.UpdateThreadResponse],
     ) -> pb.UpdateThreadResponse:
         current_user = require_current_user()
-        is_staff = current_user.is_staff()
+        is_staff = current_user.is_staff
         try:
             thread = await self.use_case.update_thread(
                 thread_id=request.thread_id,
@@ -197,7 +192,7 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.DeleteThreadRequest, pb.DeleteThreadResponse],
     ) -> pb.DeleteThreadResponse:
         current_user = require_current_user()
-        is_staff = current_user.is_staff()
+        is_staff = current_user.is_staff
         try:
             success = await self.use_case.delete_thread(
                 thread_id=request.thread_id,
@@ -215,7 +210,7 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.UpdateReplyRequest, pb.UpdateReplyResponse],
     ) -> pb.UpdateReplyResponse:
         current_user = require_current_user()
-        is_staff = current_user.is_staff()
+        is_staff = current_user.is_staff
         try:
             reply = await self.use_case.update_reply(
                 reply_id=request.reply_id,
@@ -237,7 +232,7 @@ class ForumHandler(ForumService):
         ctx: RequestContext[pb.DeleteReplyRequest, pb.DeleteReplyResponse],
     ) -> pb.DeleteReplyResponse:
         current_user = require_current_user()
-        is_staff = current_user.is_staff()
+        is_staff = current_user.is_staff
         try:
             success = await self.use_case.delete_reply(
                 reply_id=request.reply_id,

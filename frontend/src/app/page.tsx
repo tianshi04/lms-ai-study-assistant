@@ -11,7 +11,6 @@ async function AuthenticatedHomeSwitch() {
       initialToken={session.accessToken || undefined}
       initialUserName={session.userName || undefined}
       initialUserRole={session.userRole || undefined}
-      initialSystemRole={session.systemRole || undefined}
     />
   );
 }

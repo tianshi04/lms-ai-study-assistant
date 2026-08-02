@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 from enum import Enum
 from src.shared.domain.base import Entity, ValueObject
 
@@ -19,6 +20,21 @@ class CourseStatus(str, Enum):
     PENDING_REVIEW = "PENDING_REVIEW"
     PUBLISHED = "PUBLISHED"
     REJECTED = "REJECTED"
+
+
+class CourseRole(str, Enum):
+    PRIMARY_INSTRUCTOR = "PRIMARY_INSTRUCTOR"
+    CO_INSTRUCTOR = "CO_INSTRUCTOR"
+    COURSE_TA = "COURSE_TA"
+
+
+@dataclass
+class CourseCollaborator:
+    id: str
+    course_id: str
+    user_id: str
+    role: CourseRole
+    created_at: str = ""
 
 
 @dataclass(frozen=True)
@@ -221,6 +237,22 @@ class Course(Entity):
             raise ValueError("Lý do từ chối không được để trống.")
         self.status = CourseStatus.REJECTED
         self.rejection_reason = reason.strip()
+
+    def can_edit(
+        self,
+        user: Any,
+        allow_read_only_pending: bool = False,
+    ) -> bool:
+        if not user or not getattr(user, "id", None):
+            return False
+        if getattr(user, "is_admin", False):
+            return True
+        if not allow_read_only_pending and self.status == CourseStatus.PENDING_REVIEW:
+            return False
+        return bool(
+            (self.owner_id and user.id == self.owner_id)
+            or (self.co_instructor_ids and user.id in self.co_instructor_ids)
+        )
 
 
 class Specialization(Entity):

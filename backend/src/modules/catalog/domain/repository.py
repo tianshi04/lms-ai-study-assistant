@@ -26,6 +26,7 @@ class ICatalogRepository(ABC):
         level: str = "",
         sort_by: str = "",
         status_filter: str | CourseStatus = "",
+        organization_id: str | None = None,
     ) -> tuple[list[Course], str]:
         pass
 

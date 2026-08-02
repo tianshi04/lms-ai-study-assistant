@@ -4,29 +4,19 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { logoutAction } from "@/app/auth/actions";
 
 // Static Sets computed once at module level for O(1) role lookups
-const INSTRUCTOR_ADMIN_ROLE_IDS = new Set([
-  "2",
-  "4",
-  "5",
-  "USER_ROLE_INSTRUCTOR",
-  "USER_ROLE_SUPER_ADMIN",
-]);
+const INSTRUCTOR_ADMIN_ROLE_IDS = new Set(["2", "3", "USER_ROLE_INSTRUCTOR", "USER_ROLE_ADMIN"]);
 const INSTRUCTOR_ADMIN_ROLE_NAMES = new Set([
   "instructor",
   "admin",
-  "super_admin",
   "user_role_instructor",
-  "user_role_super_admin",
+  "user_role_admin",
 ]);
-const STAFF_EXTRA_ROLE_IDS = new Set(["3", "USER_ROLE_TA"]);
-const STAFF_EXTRA_ROLE_NAMES = new Set(["ta", "teaching assistant", "user_role_ta"]);
 
 export interface UserAuth {
   userId: string | null;
   userName: string | null;
   userEmail: string | null;
   userRole: string | null;
-  systemRole?: string | null;
 }
 
 interface AuthContextType extends UserAuth {
@@ -45,7 +35,6 @@ const EMPTY_AUTH: UserAuth = {
   userName: null,
   userEmail: null,
   userRole: null,
-  systemRole: null,
 };
 
 /**
@@ -81,13 +70,7 @@ export function AuthProvider({
     if (initialAuth.userId || initialAuth.userRole) {
       setAuthState(initialAuth);
     }
-  }, [
-    initialAuth.userId,
-    initialAuth.userEmail,
-    initialAuth.userName,
-    initialAuth.userRole,
-    initialAuth.systemRole,
-  ]);
+  }, [initialAuth.userId, initialAuth.userEmail, initialAuth.userName, initialAuth.userRole]);
 
   const setAuth = useCallback((newAuth: UserAuth) => {
     setAuthState(newAuth);
@@ -101,24 +84,23 @@ export function AuthProvider({
       userName: null,
       userEmail: null,
       userRole: null,
-      systemRole: null,
     });
     window.location.href = "/auth/login";
   }, []);
 
   const isAuthenticated = Boolean(auth.userId || auth.userEmail);
-  const isSuperAdmin =
-    auth.systemRole === "SUPER_ADMIN" ||
-    auth.systemRole === "SYSTEM_ROLE_SUPER_ADMIN" ||
-    auth.systemRole === "2";
+  const isSuperAdmin = Boolean(
+    auth.userRole === "3" ||
+    auth.userRole === "USER_ROLE_ADMIN" ||
+    auth.userRole?.toUpperCase().includes("ADMIN"),
+  );
   const roleId = String(auth.userRole ?? "");
   const roleStr = roleId.toLowerCase();
   const isInstructorOrAdmin =
     isSuperAdmin ||
     INSTRUCTOR_ADMIN_ROLE_IDS.has(roleId) ||
     INSTRUCTOR_ADMIN_ROLE_NAMES.has(roleStr);
-  const isStaff =
-    isInstructorOrAdmin || STAFF_EXTRA_ROLE_IDS.has(roleId) || STAFF_EXTRA_ROLE_NAMES.has(roleStr);
+  const isStaff = isInstructorOrAdmin;
 
   const contextValue = useMemo(
     () => ({

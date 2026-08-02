@@ -2,15 +2,17 @@ import { test, expect } from '@playwright/test';
 import { QuestionBankPage } from '../pages';
 
 test.describe('Full System Blackbox - Question Bank & Exam Matrix Flows (POM)', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test('should navigate to question bank page and verify loaded state', async ({ page }) => {
     const questionBankPage = new QuestionBankPage(page);
-    await questionBankPage.goto('course-1');
+    await questionBankPage.goto('course-python-ai');
     await questionBankPage.verifyPageLoaded();
   });
 
   test('should allow instructor to open modal and create a new Question Bank', async ({ page }) => {
     const questionBankPage = new QuestionBankPage(page);
-    await questionBankPage.goto('course-1');
+    await questionBankPage.goto('course-python-ai');
     await questionBankPage.verifyPageLoaded();
 
     const bankTitle = `Bank E2E ${Date.now()}`;
@@ -21,7 +23,7 @@ test.describe('Full System Blackbox - Question Bank & Exam Matrix Flows (POM)', 
 
   test('should allow instructor to add a question to selected bank', async ({ page }) => {
     const questionBankPage = new QuestionBankPage(page);
-    await questionBankPage.goto('course-1');
+    await questionBankPage.goto('course-python-ai');
     await questionBankPage.verifyPageLoaded();
 
     const firstBank = questionBankPage.bankCards.first();

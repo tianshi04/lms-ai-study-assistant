@@ -5,13 +5,11 @@ import { Plus, Building2, Eye, Pencil, Trash2, PenTool, Users, X } from "lucide-
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { type Partner } from "@/gen/partner/v1/partner_pb";
-import { SystemRole } from "@/gen/identity/v1/identity_pb";
 import {
   usePartnersQuery,
   useCreatePartnerMutation,
   useUpdatePartnerMutation,
   useDeletePartnerMutation,
-  useUserProfileQuery,
 } from "@/lib/query_hooks";
 import { Modal, ConfirmDialog } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
@@ -35,10 +33,8 @@ import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function AdminPartnersPage() {
   const router = useRouter();
-  const { userId: authUserId } = useAuth();
-  const userId = authUserId || "";
-  const { data: userProfile, isLoading: profileLoading } = useUserProfileQuery(userId);
-  const isAdmin = userProfile?.systemRole === SystemRole.SUPER_ADMIN;
+  const { isSuperAdmin } = useAuth();
+  const isAdmin = isSuperAdmin;
 
   const {
     data: partners = [],
@@ -81,7 +77,7 @@ export default function AdminPartnersPage() {
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [adminErrorMsg, setAdminErrorMsg] = useState("");
 
-  if (profileLoading || partnersLoading) {
+  if (partnersLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-muted-foreground">

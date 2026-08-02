@@ -37,10 +37,18 @@ from src.modules.assessment.infrastructure.sandbox_service import (
 from src.shared.access_policy import require_paid_access
 from src.shared.infrastructure.database import async_session_scope
 
+from src.shared.auth import CurrentUser
+
 logger = logging.getLogger(__name__)
 
 
 class AssessmentUseCase:
+    def _verify_staff(self, current_user: Optional[CurrentUser]) -> None:
+        if current_user is not None and not current_user.is_staff:
+            raise PermissionError(
+                "Chỉ Trợ giảng (TA) hoặc Giảng viên mới có quyền quản lý đánh giá."
+            )
+
     def __init__(
         self,
         repository: Optional[AssessmentRepositoryInterface] = None,
@@ -677,8 +685,13 @@ class AssessmentUseCase:
         return True, msg
 
     async def regrade_peer_submission_by_staff(
-        self, submission_id: str, staff_user_id: str, ta_score: float
+        self,
+        submission_id: str,
+        staff_user_id: str,
+        ta_score: float,
+        current_user: Optional[CurrentUser] = None,
     ) -> tuple[bool, str]:
+        self._verify_staff(current_user)
         """TA / Staff Regrade Override (BR_PEER_002, BR_PEER_003).
         Overriding final_score 100% with TA score and resolving Grade Appeal if present.
         """
@@ -798,8 +811,14 @@ class AssessmentUseCase:
             )
 
     async def create_question_bank(
-        self, course_id: str, title: str, category: str, description: str
+        self,
+        course_id: str,
+        title: str,
+        category: str,
+        description: str,
+        current_user: Optional[CurrentUser] = None,
     ) -> QuestionBank:
+        self._verify_staff(current_user)
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             return await repo.create_question_bank(
@@ -822,7 +841,9 @@ class AssessmentUseCase:
         difficulty: str,
         explanation: str,
         options_data: list[dict],
+        current_user: Optional[CurrentUser] = None,
     ) -> Question:
+        self._verify_staff(current_user)
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             return await repo.add_question_to_bank(
@@ -846,7 +867,9 @@ class AssessmentUseCase:
         shuffle_options: bool,
         max_attempts: int,
         cooldown_hours: int,
+        current_user: Optional[CurrentUser] = None,
     ) -> QuizMatrix:
+        self._verify_staff(current_user)
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             return await repo.configure_quiz_matrix(
@@ -867,7 +890,10 @@ class AssessmentUseCase:
             repo = await self._get_repo(session)
             return await repo.get_quiz_matrix(item_id=item_id)
 
-    async def delete_question(self, question_id: str) -> bool:
+    async def delete_question(
+        self, question_id: str, current_user: Optional[CurrentUser] = None
+    ) -> bool:
+        self._verify_staff(current_user)
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             return await repo.delete_question(question_id=question_id)
@@ -880,7 +906,9 @@ class AssessmentUseCase:
         difficulty: str,
         explanation: str,
         options_data: list[dict],
+        current_user: Optional[CurrentUser] = None,
     ) -> Question:
+        self._verify_staff(current_user)
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             return await repo.update_question(

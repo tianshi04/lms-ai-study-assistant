@@ -125,10 +125,10 @@ service CertificateService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ListFinancialAidApplications(ListFinancialAidApplicationsRequest) returns (ListFinancialAidApplicationsResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ReviewFinancialAidApplication(ReviewFinancialAidApplicationRequest) returns (ReviewFinancialAidApplicationResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc GetVerifiedCertificate(GetVerifiedCertificateRequest) returns (GetVerifiedCertificateResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
@@ -137,7 +137,7 @@ service CertificateService {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
   }
   rpc RevokeCertificate(RevokeCertificateRequest) returns (RevokeCertificateResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc IssueSpecializationCertificate(IssueSpecializationCertificateRequest) returns (IssueSpecializationCertificateResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;

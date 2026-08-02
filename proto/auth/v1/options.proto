@@ -8,8 +8,6 @@ enum AuthPolicy {
   AUTH_POLICY_UNSPECIFIED = 0;
   AUTH_POLICY_PUBLIC = 1;
   AUTH_POLICY_AUTHENTICATED = 2;
-  AUTH_POLICY_ADMIN = 3;
-  AUTH_POLICY_INTERNAL = 4;
 }
 
 extend google.protobuf.MethodOptions {

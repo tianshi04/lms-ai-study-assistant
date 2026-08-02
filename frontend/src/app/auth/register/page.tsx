@@ -277,9 +277,7 @@ export default function RegisterPage() {
                             ? "Học viên (Learner)"
                             : field.state.value === UserRole.INSTRUCTOR
                               ? "Giảng viên (Instructor)"
-                              : field.state.value === UserRole.TA
-                                ? "Trợ giảng (TA)"
-                                : ""}
+                              : ""}
                         </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
@@ -289,7 +287,6 @@ export default function RegisterPage() {
                         <SelectItem value={String(UserRole.INSTRUCTOR)}>
                           {"Giảng viên (Instructor)"}
                         </SelectItem>
-                        <SelectItem value={String(UserRole.TA)}>{"Trợ giảng (TA)"}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

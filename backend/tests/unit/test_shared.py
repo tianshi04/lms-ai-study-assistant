@@ -36,16 +36,15 @@ def test_entity_equality():
 
 
 def test_role_helpers_exact_match():
-    from src.shared.auth import is_admin_role, is_staff_role
+    from src.shared.auth import CurrentUserContext
 
-    assert is_admin_role("ADMIN") is True
-    assert is_admin_role("SUPER_ADMIN") is True
-    assert is_admin_role("NON_ADMIN") is False
-    assert is_admin_role("READONLY_ADMIN") is False
+    admin_user = CurrentUserContext(id="admin", role="USER_ROLE_ADMIN")
+    instructor_user = CurrentUserContext(id="inst", role="USER_ROLE_INSTRUCTOR")
+    learner_user = CurrentUserContext(id="user", role="USER_ROLE_LEARNER")
 
-    assert is_staff_role("INSTRUCTOR") is True
-    assert is_staff_role("TA") is True
-    assert is_staff_role("DATA_ANALYST") is False
+    assert admin_user.role == "USER_ROLE_ADMIN"
+    assert instructor_user.role == "USER_ROLE_INSTRUCTOR"
+    assert learner_user.role == "USER_ROLE_LEARNER"
 
 
 def test_health_endpoint():

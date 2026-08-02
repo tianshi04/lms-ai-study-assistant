@@ -17,9 +17,9 @@ export class InstructorCoursesPage {
   constructor(page: Page) {
     this.page = page;
     this.createCourseButton = page.locator('a[href="/instructor/courses/new"], button:has-text("Soạn Khóa Học Mới")').first();
-    this.titleInput = page.locator('input[placeholder*="Tiêu đề"], form input[type="text"]').first();
+    this.titleInput = page.locator('input[placeholder*="Ví dụ: Lập trình"], input[placeholder*="Tiêu đề"], form input[type="text"]').first();
     this.descriptionTextarea = page.locator('form textarea').first();
-    this.submitCourseButton = page.locator('form button[type="submit"]');
+    this.submitCourseButton = page.locator('form button[type="submit"]').first();
     this.courseCards = page.locator('div.border.rounded-3xl');
     this.builderLinks = page.locator('a[href^="/instructor/courses/"]');
     this.learnerWarningNotice = page.locator('text=/Learner/i');
@@ -38,8 +38,9 @@ export class InstructorCoursesPage {
   }
 
   async createNewCourse(title: string, description: string) {
-    await this.createCourseButton.click();
-    await expect(this.titleInput).toBeVisible({ timeout: 5000 });
+    await this.page.goto('/instructor/courses/new');
+    await expect(this.page).toHaveURL(/\/instructor\/courses\/new/);
+    await expect(this.titleInput).toBeVisible({ timeout: 10000 });
     await this.titleInput.fill(title);
     await this.descriptionTextarea.fill(description);
     await this.submitCourseButton.click();

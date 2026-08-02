@@ -3,16 +3,11 @@ from enum import Enum
 from typing import Optional
 
 
-class SystemRole(str, Enum):
-    SUPER_ADMIN = "SUPER_ADMIN"
-    USER = "USER"
-
-
 class UserRole(str, Enum):
     UNSPECIFIED = "USER_ROLE_UNSPECIFIED"
     LEARNER = "USER_ROLE_LEARNER"
     INSTRUCTOR = "USER_ROLE_INSTRUCTOR"
-    TA = "USER_ROLE_TA"
+    ADMIN = "USER_ROLE_ADMIN"
 
 
 class ApplicationStatus(str, Enum):
@@ -74,7 +69,6 @@ class User:
     email: str
     full_name: str
     role: UserRole
-    system_role: SystemRole = SystemRole.USER
     avatar_url: str = ""
     enterprise_seat_key: Optional[str] = None
     seat_assigned_at: Optional[str] = None

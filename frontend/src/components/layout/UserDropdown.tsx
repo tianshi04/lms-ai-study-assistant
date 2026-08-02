@@ -32,7 +32,14 @@ import {
 } from "@/components/ui/DropdownMenu";
 
 export function UserDropdown() {
-  const { userName, userEmail, userRole, logout: handleLogout } = useAuth();
+  const {
+    userName,
+    userEmail,
+    userRole,
+    isInstructorOrAdmin,
+    isSuperAdmin,
+    logout: handleLogout,
+  } = useAuth();
   const pathname = usePathname();
 
   const avatarSrc = useMemo(() => getAvatarDataUri(userEmail || "user"), [userEmail]);
@@ -42,20 +49,13 @@ export function UserDropdown() {
     return userName.replace(/\s*\([^)]*\)/g, "").trim();
   }, [userName]);
 
-  const isInstructorOrAdmin = userRole === "2" || userRole === "4";
-  const isAdmin = userRole === "4";
   const roleLabel = useMemo(() => {
-    switch (userRole) {
-      case "2":
-        return "Giảng viên";
-      case "3":
-        return "Trợ giảng";
-      case "4":
-        return "Quản trị viên hệ thống";
-      default:
-        return "Học viên";
-    }
-  }, [userRole]);
+    if (isSuperAdmin) return "Quản trị viên hệ thống";
+    const r = String(userRole || "").toUpperCase();
+    if (r === "2" || r.includes("INSTRUCTOR")) return "Giảng viên";
+    if (r === "TA" || r.includes("TA")) return "Trợ giảng";
+    return "Học viên";
+  }, [userRole, isSuperAdmin]);
 
   const isActive = (path: string) => {
     if (path === "/") return pathname === "/";
@@ -189,7 +189,7 @@ export function UserDropdown() {
           </>
         )}
 
-        {(userRole === "5" || userRole === "4") && (
+        {isSuperAdmin && (
           <DropdownMenuItem
             render={<Link href="/partner/settings" />}
             className={getItemClasses("/partner/settings")}
@@ -201,7 +201,7 @@ export function UserDropdown() {
           </DropdownMenuItem>
         )}
 
-        {isAdmin && (
+        {isSuperAdmin && (
           <>
             <DropdownMenuItem
               render={<Link href="/admin/dashboard" />}

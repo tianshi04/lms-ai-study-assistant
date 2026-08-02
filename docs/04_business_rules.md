@@ -10,17 +10,17 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * **Khai báo Phân quyền Declarative ở Tầng Contract (Protobuf Custom Options):**
     * Tất cả các phương thức RPC trong file `.proto` được gán nhãn khai báo cấp độ bảo mật qua Protobuf Custom Option `(auth.v1.policy) = ...` (Option `50001` trên `google.protobuf.MethodOptions`, với enum `AuthPolicy`: `PUBLIC = 1`, `AUTHENTICATED = 2`, `ADMIN = 3`, `INTERNAL = 4`).
     * Lớp `AuthPolicyRegistry` tự động quét Protobuf Descriptors khi ứng dụng ASGI khởi chạy (Eager Pre-initialization), xây dựng bảng ánh xạ $O(1)$ phục vụ cho `AuthInterceptor`.
-  * **Cơ chế Truyền Ngữ cảnh Đa Tổ chức (Multi-Org Header `x-organization-id`):**
-    * Client đính kèm Header `x-organization-id: <org_id>` trong Metadata của các API Request. `AuthInterceptor` trích xuất Header này làm Nguồn chính (Primary), fallback về claim `active_org_id` trong JWT Access Token.
-    * Giải quyết triệt để vấn đề xung đột ngữ cảnh khi người dùng mở nhiều tab trình duyệt thuộc nhiều Tổ chức khác nhau (Chi tiết tại [07_authentication_and_authorization_architecture.md](07_authentication_and_authorization_architecture.md)).
+  * **Cơ chế Truyền Ngữ cảnh Đa Tổ chức & Resource-Based AuthZ:**
+    * Với thao tác trên tài sản có ID (`course_id`, `submission_id`), Backend tự động trích xuất `organization_id` hoặc danh sách `course_collaborators` trực tiếp từ Database.
+    * Với các API xem danh sách (như `ListCoursesRequest`), client truyền trực tiếp `organization_id` trong Request Payload message. Header `x-organization-id` đóng vai trò là nguồn dự phòng (Fallback) khi payload ID không được cung cấp.
   * **Kiến trúc Phân quyền Phân lớp 3 Tầng (Hybrid PBAC & SQL Scope Pushdown):**
     * **Tầng 1 (API Method Policy & Multi-Org Context):** Do `AuthInterceptor` & `AuthPolicyRegistry` đảm nhiệm. Tự động kiểm tra JWT Bearer Token, trích xuất Header `x-organization-id`, inject `CurrentUserContext` vào Request Context.
     * **Tầng 2 (SQL Scope Pushdown & ABAC Level):** Sử dụng hàm `apply_organization_scope()` đẩy trực tiếp điều kiện lọc SQL `WHERE organization_id = :active_org_id OR organization_id = 'partner_community'` xuống PostgreSQL cho các query danh sách. Các decorator như `@require_paid_access` thực thi quy chế Paid Mode vs Audit Mode (`BR_ACCESS_001`).
-    * **Tầng 3 (Domain Resource & Ownership Level):** Do các Application Use Cases (như `CatalogUseCase._verify_ownership`) và `CurrentUserContext.require_permission()` đảm nhiệm. Kiểm tra quyền sở hữu đối tượng domain (`owner_id`, `co_instructor_ids`) hoặc permission granular.
-  * **Quản lý Vai trò & Quyền Hạn Tập trung (Centralized Role & Permission Context):**
-    * Đưa hằng số `ADMIN_ROLES`, `STAFF_ROLES` và `CurrentUserContext` (`has_permission()`, `require_permission()`, `require_org_context()`) tập trung vào `src/shared/auth.py`, loại bỏ hoàn toàn các câu lệnh so sánh chuỗi vai trò rải rác.
-    * **Vai trò ở cấp Tổ chức (`Organization Roles`):** Mỗi Tổ chức hỗ trợ 3 vai trò quản trị/nghiệp vụ chính: `Organization Admin`, `Organization Instructor`, và `Teaching Assistant (TA)`.
-    * **Phân biệt Member vs Enterprise Seat Holder:** Thành viên Tổ chức (`Organization Member`) đại diện cho vị trí hành chính/phân quyền (`org_role`), trong khi Suất học (`Enterprise Seat Holder`) đại diện cho bản quyền học tập trả phí (**Paid Mode**) do Tổ chức tài trợ cho Học viên (`Learner`).
+    * **Tầng 3 (Domain Resource & Ownership Level):** Do các Application Use Cases (như `CatalogUseCase._verify_ownership`) và `enforce_course_ownership()` đảm nhiệm. Kiểm tra quyền sở hữu đối tượng domain (`owner_id`, `co_instructor_ids`).
+  * **Quản lý Định danh & Quyền Hạn Tập trung (Single Identity Direct PBAC):**
+    * Người dùng có danh tính duy nhất (`UserRole`: `LEARNER`, `INSTRUCTOR`, `ADMIN`).
+    * **Cộng tác Khóa học (`co_instructor_ids`):** Quản lý danh sách giảng viên đồng phụ trách khóa học (`co_instructor_ids`). Giảng viên phụ trách có quyền xem và chỉnh sửa nội dung bài giảng.
+    * **Phân biệt Member vs Enterprise Seat Holder:** Thành viên Tổ chức (`Organization Member`) đại diện cho vị trí hành chính/phân quyền, trong khi Suất học (`Enterprise Seat Holder`) đại diện cho bản quyền học tập trả phí (**Paid Mode**) do Tổ chức tài trợ cho Học viên (`Learner`).
 
 
 * **BR_AUTH_002 (Cơ chế Refresh Token Rotation):**

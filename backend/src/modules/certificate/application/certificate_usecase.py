@@ -17,6 +17,7 @@ from src.modules.certificate.domain.entities import (
 )
 from src.modules.certificate.domain.repositories import ICertificateRepository
 from src.modules.certificate.infrastructure.repository import CertificateRepository
+from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,12 @@ logger = logging.getLogger(__name__)
 class CertificateUseCase:
     def __init__(self, repo: Optional[ICertificateRepository] = None) -> None:
         self._repo = repo
+
+    def _verify_admin(self, current_user: Optional[CurrentUser]) -> None:
+        if current_user is not None and not current_user.is_admin:
+            raise PermissionError(
+                "Yêu cầu quyền Quản trị viên (Admin) để thực hiện thao tác này."
+            )
 
     def _get_repo(self, session: Any) -> ICertificateRepository:
         return self._repo if self._repo is not None else CertificateRepository(session)
@@ -120,8 +127,12 @@ class CertificateUseCase:
             return checked_apps
 
     async def list_financial_aid_applications(
-        self, course_id: Optional[str] = None, status: Optional[str] = None
+        self,
+        course_id: Optional[str] = None,
+        status: Optional[str] = None,
+        current_user: Optional[CurrentUser] = None,
     ) -> list[FinancialAidApplication]:
+        self._verify_admin(current_user)
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             apps = await repo.list_financial_aids(course_id=course_id, status=status)
@@ -133,8 +144,12 @@ class CertificateUseCase:
             return checked_apps
 
     async def review_financial_aid_application(
-        self, application_id: str, is_approved: bool
+        self,
+        application_id: str,
+        is_approved: bool,
+        current_user: Optional[CurrentUser] = None,
     ) -> tuple[Optional[FinancialAidApplication], str]:
+        self._verify_admin(current_user)
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             app = await repo.get_financial_aid_by_id(application_id)
@@ -282,8 +297,12 @@ class CertificateUseCase:
             return saved_cert, ""
 
     async def revoke_certificate(
-        self, certificate_id: str, reason: str = ""
+        self,
+        certificate_id: str,
+        reason: str = "",
+        current_user: Optional[CurrentUser] = None,
     ) -> tuple[bool, str]:
+        self._verify_admin(current_user)
         """Revokes a certificate by setting is_revoked=True (BR_CERT_004).
         Only Super Admin should call this endpoint.
         """

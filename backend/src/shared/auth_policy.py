@@ -92,10 +92,3 @@ class AuthPolicyRegistry:
             raise ConnectError(
                 Code.UNAUTHENTICATED, "Vui lòng đăng nhập để thực hiện thao tác này"
             )
-
-        if policy == options_pb.AuthPolicy.ADMIN:
-            if not user.is_admin():
-                raise ConnectError(
-                    Code.PERMISSION_DENIED,
-                    "Bạn không có quyền thực hiện thao tác quản trị này",
-                )

@@ -201,12 +201,7 @@ class AssessmentHandler(AssessmentService):
         ],
     ) -> pb.RegradePeerSubmissionByStaffResponse:
         current_user = require_current_user()
-        role = (current_user.role or "").lower()
-        is_staff = current_user.is_staff() or any(
-            r in role
-            for r in ("ta", "teaching assistant", "instructor", "staff", "admin")
-        )
-        if not is_staff:
+        if not current_user.is_staff:
             raise ConnectError(
                 Code.PERMISSION_DENIED,
                 "Chỉ Trợ giảng (TA) hoặc Giảng viên mới có quyền chấm điểm trực tiếp bài nộp của học viên.",
@@ -216,12 +211,13 @@ class AssessmentHandler(AssessmentService):
             submission_id=request.submission_id,
             staff_user_id=current_user.id,
             ta_score=request.ta_score,
+            current_user=current_user,
         )
         return pb.RegradePeerSubmissionByStaffResponse(success=success, message=msg)
 
     def _verify_instructor_permission(self) -> CurrentUser:
         user = require_current_user()
-        if not user.is_staff():
+        if not user.is_staff:
             raise ConnectError(
                 Code.PERMISSION_DENIED,
                 "Chỉ tài khoản Giảng viên (Instructor) hoặc Quản trị viên mới có quyền quản lý Ngân hàng câu hỏi và Ma trận đề thi.",
@@ -235,12 +231,13 @@ class AssessmentHandler(AssessmentService):
             pb.CreateQuestionBankRequest, pb.CreateQuestionBankResponse
         ],
     ) -> pb.CreateQuestionBankResponse:
-        self._verify_instructor_permission()
+        user = self._verify_instructor_permission()
         bank = await self.use_case.create_question_bank(
             course_id=request.course_id,
             title=request.title,
             category=request.category,
             description=request.description,
+            current_user=user,
         )
         return pb.CreateQuestionBankResponse(
             bank=pb.QuestionBank(
@@ -304,7 +301,7 @@ class AssessmentHandler(AssessmentService):
         request: pb.AddQuestionToBankRequest,
         ctx: RequestContext[pb.AddQuestionToBankRequest, pb.AddQuestionToBankResponse],
     ) -> pb.AddQuestionToBankResponse:
-        self._verify_instructor_permission()
+        user = self._verify_instructor_permission()
         options_data = [
             {"option_text": opt.option_text, "is_correct": opt.is_correct}
             for opt in request.options
@@ -316,6 +313,7 @@ class AssessmentHandler(AssessmentService):
             difficulty=request.difficulty,
             explanation=request.explanation,
             options_data=options_data,
+            current_user=user,
         )
         pb_options = [
             pb.QuestionOption(
@@ -347,7 +345,7 @@ class AssessmentHandler(AssessmentService):
             pb.ConfigureQuizMatrixRequest, pb.ConfigureQuizMatrixResponse
         ],
     ) -> pb.ConfigureQuizMatrixResponse:
-        self._verify_instructor_permission()
+        user = self._verify_instructor_permission()
         matrix = await self.use_case.configure_quiz_matrix(
             item_id=request.item_id,
             bank_id=request.bank_id,
@@ -359,6 +357,7 @@ class AssessmentHandler(AssessmentService):
             shuffle_options=request.shuffle_options,
             max_attempts=request.max_attempts,
             cooldown_hours=request.cooldown_hours,
+            current_user=user,
         )
         return pb.ConfigureQuizMatrixResponse(
             matrix=pb.QuizMatrix(
@@ -406,7 +405,7 @@ class AssessmentHandler(AssessmentService):
         request: pb.UpdateQuestionRequest,
         ctx: RequestContext[pb.UpdateQuestionRequest, pb.UpdateQuestionResponse],
     ) -> pb.UpdateQuestionResponse:
-        self._verify_instructor_permission()
+        user = self._verify_instructor_permission()
         options_data = [
             {"option_text": opt.option_text, "is_correct": opt.is_correct}
             for opt in request.options
@@ -418,6 +417,7 @@ class AssessmentHandler(AssessmentService):
             difficulty=request.difficulty,
             explanation=request.explanation,
             options_data=options_data,
+            current_user=user,
         )
         pb_options = [
             pb.QuestionOption(
@@ -447,8 +447,10 @@ class AssessmentHandler(AssessmentService):
         request: pb.DeleteQuestionRequest,
         ctx: RequestContext[pb.DeleteQuestionRequest, pb.DeleteQuestionResponse],
     ) -> pb.DeleteQuestionResponse:
-        self._verify_instructor_permission()
-        success = await self.use_case.delete_question(question_id=request.question_id)
+        user = self._verify_instructor_permission()
+        success = await self.use_case.delete_question(
+            question_id=request.question_id, current_user=user
+        )
         msg = (
             "Deleted successfully"
             if success

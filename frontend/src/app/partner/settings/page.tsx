@@ -4,12 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { type Partner } from "@/gen/partner/v1/partner_pb";
-import { SystemRole } from "@/gen/identity/v1/identity_pb";
+
 import {
   usePartnersQuery,
   useUpdatePartnerMutation,
   useRotatePartnerKeyPairMutation,
-  useUserProfileQuery,
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -619,10 +618,8 @@ function PartnerSettingsForm({
 export default function PartnerSettingsPage() {
   const router = useRouter();
 
-  const { userId: authUserId } = useAuth();
-  const userId = authUserId || "";
-  const { data: userProfile, isLoading: profileLoading } = useUserProfileQuery(userId);
-  const isPartnerAdmin = userProfile?.systemRole === SystemRole.SUPER_ADMIN;
+  const { isSuperAdmin } = useAuth();
+  const isPartnerAdmin = isSuperAdmin;
 
   const {
     data: partners = [],
@@ -633,7 +630,7 @@ export default function PartnerSettingsPage() {
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>("");
   const activePartner = partners.find((p) => p.id === selectedPartnerId) || partners[0];
 
-  if (profileLoading || partnersLoading) {
+  if (partnersLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-muted-foreground">

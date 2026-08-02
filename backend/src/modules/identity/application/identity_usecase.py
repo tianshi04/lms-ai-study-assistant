@@ -34,7 +34,12 @@ from src.modules.identity.application.review_application_usecase import (
 
 
 from src.modules.learning.domain.repository import ILearningRepository
-from src.shared.auth import create_access_token, create_refresh_token, decode_token
+from src.shared.auth import (
+    CurrentUser,
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+)
 from src.shared.infrastructure.database import async_session_scope
 
 logger = logging.getLogger(__name__)
@@ -77,6 +82,12 @@ class IdentityUseCase:
             learning_repo_factory or _default_learning_repo_factory
         )
 
+    def _verify_admin(self, current_user: Optional[CurrentUser]) -> None:
+        if current_user is not None and not current_user.is_admin:
+            raise PermissionError(
+                "Yêu cầu quyền Quản trị viên (Admin) để thực hiện thao tác này."
+            )
+
     async def login(
         self, email: str, password: str
     ) -> tuple[Optional[User], str, str, str]:
@@ -94,11 +105,10 @@ class IdentityUseCase:
 
             logger.info("User %s successfully logged in", user.id)
             access_token = create_access_token(
-                user.id,
-                user.email,
-                user.role.value,
+                user_id=user.id,
+                email=user.email,
                 full_name=user.full_name,
-                system_role=user.system_role.value,
+                role=str(user.role),
             )
             refresh_token = create_refresh_token(user.id)
             return user, access_token, refresh_token, ""
@@ -120,11 +130,10 @@ class IdentityUseCase:
                 return "", "", "Không tìm thấy người dùng sở hữu token"
 
             new_access_token = create_access_token(
-                user.id,
-                user.email,
-                user.role.value,
+                user_id=user.id,
+                email=user.email,
                 full_name=user.full_name,
-                system_role=user.system_role.value,
+                role=str(user.role),
             )
             new_refresh_token = create_refresh_token(user.id)
             return new_access_token, new_refresh_token, ""
@@ -165,14 +174,27 @@ class IdentityUseCase:
             )
             return saved_user, ""
 
-    async def get_user_profile(self, user_id: str) -> Optional[User]:
+    async def get_user_profile(
+        self, user_id: str, current_user: Optional[CurrentUser] = None
+    ) -> Optional[User]:
+        if current_user and user_id != current_user.id and not current_user.is_admin:
+            raise PermissionError(
+                "Bạn không có quyền xem hồ sơ cá nhân của người dùng khác."
+            )
         async with async_session_scope() as session:
             repo = IdentityRepository(session)
             return await repo.get_by_id(user_id)
 
     async def assign_enterprise_seat(
-        self, user_id: str, enterprise_seat_key: str
+        self,
+        user_id: str,
+        enterprise_seat_key: str,
+        current_user: Optional[CurrentUser] = None,
     ) -> tuple[bool, str]:
+        if current_user and user_id != current_user.id and not current_user.is_admin:
+            raise PermissionError(
+                "Bạn không có quyền gán suất Enterprise Seat cho người dùng khác."
+            )
         async with async_session_scope() as session:
             repo = IdentityRepository(session)
             user = await repo.get_by_id(user_id)
@@ -255,7 +277,12 @@ class IdentityUseCase:
                 f"Kích hoạt thành công suất học từ đối tác {license_model.partner_name}!",
             )
 
-    async def list_enterprise_seats(self, partner_name: str = "") -> list[dict]:
+    async def list_enterprise_seats(
+        self,
+        partner_name: str = "",
+        current_user: Optional[CurrentUser] = None,
+    ) -> list[dict]:
+        self._verify_admin(current_user)
         async with async_session_scope() as session:
             stmt = select(EnterpriseLicenseModel)
             if partner_name:
@@ -290,7 +317,9 @@ class IdentityUseCase:
         seat_key: str,
         scope_type: str = "ALL_COURSES",
         allowed_course_ids: Optional[list[str]] = None,
+        current_user: Optional[CurrentUser] = None,
     ) -> dict:
+        self._verify_admin(current_user)
         async with async_session_scope() as session:
             clean_key = seat_key.strip() or f"KEY-{uuid.uuid4().hex[:8].upper()}"
             clean_scope = (
@@ -338,8 +367,12 @@ class IdentityUseCase:
             return True, "Xác minh danh tính sinh trắc học & CCCD thành công!"
 
     async def revoke_enterprise_seat(
-        self, user_id: str, course_id: str = ""
+        self,
+        user_id: str,
+        course_id: str = "",
+        current_user: Optional[CurrentUser] = None,
     ) -> tuple[bool, str]:
+        self._verify_admin(current_user)
         """Revokes enterprise seat from user if BR_ACCESS_003 conditions are met.
 
         Conditions (BR_ACCESS_003):
@@ -448,15 +481,23 @@ class IdentityUseCase:
             return await repo.get_latest_by_user_id(user_id)
 
     async def list_instructor_applications(
-        self, status_filter: str = ""
+        self,
+        status_filter: str = "",
+        current_user: Optional[CurrentUser] = None,
     ) -> list[InstructorApplication]:
+        self._verify_admin(current_user)
         async with async_session_scope() as session:
             repo = InstructorApplicationRepository(session)
             return await repo.list_applications(status_filter)
 
     async def review_instructor_application(
-        self, application_id: str, approve: bool, rejection_reason: str = ""
+        self,
+        application_id: str,
+        approve: bool,
+        rejection_reason: str = "",
+        current_user: Optional[CurrentUser] = None,
     ) -> InstructorApplication:
+        self._verify_admin(current_user)
         async with async_session_scope() as session:
             app_repo = InstructorApplicationRepository(session)
             identity_repo = IdentityRepository(session)

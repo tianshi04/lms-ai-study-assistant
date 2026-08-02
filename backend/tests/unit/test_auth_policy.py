@@ -20,7 +20,7 @@ def test_auth_policy_authenticated_success():
     )
     AuthPolicyRegistry._initialized = True
 
-    user = CurrentUser(id="123", role="LEARNER")
+    user = CurrentUser(id="123")
     AuthPolicyRegistry.authorize("/mock/AuthRoute", user)
 
 
@@ -34,26 +34,3 @@ def test_auth_policy_authenticated_fail():
         AuthPolicyRegistry.authorize("/mock/AuthRoute", None)
 
     assert "Vui lòng đăng nhập" in str(exc_info.value)
-
-
-def test_auth_policy_admin_blocks_instructor():
-    AuthPolicyRegistry._policy_map["/mock/AdminRoute"] = options_pb.AuthPolicy.ADMIN
-    AuthPolicyRegistry._initialized = True
-
-    # User is an instructor (staff), but NOT an admin
-    user = CurrentUser(id="123", role="INSTRUCTOR")
-
-    with pytest.raises(ConnectError) as exc_info:
-        AuthPolicyRegistry.authorize("/mock/AdminRoute", user)
-
-    assert "Bạn không có quyền thực hiện thao tác quản trị này" in str(exc_info.value)
-
-
-def test_auth_policy_admin_allows_super_admin():
-    AuthPolicyRegistry._policy_map["/mock/AdminRoute"] = options_pb.AuthPolicy.ADMIN
-    AuthPolicyRegistry._initialized = True
-
-    user = CurrentUser(id="123", role="SUPER_ADMIN")
-
-    # Should not raise error
-    AuthPolicyRegistry.authorize("/mock/AdminRoute", user)

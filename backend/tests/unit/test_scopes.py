@@ -6,24 +6,15 @@ from src.shared.infrastructure.scopes import apply_organization_scope
 
 
 def test_apply_organization_scope_super_admin() -> None:
-    ctx = CurrentUserContext(id="usr_admin", system_role="SUPER_ADMIN")
+    ctx = CurrentUserContext(id="usr_admin", role="USER_ROLE_ADMIN")
     stmt = select(CourseModel)
     scoped = apply_organization_scope(stmt, CourseModel, ctx)
     # Super Admin statement should remain unmodified
     assert str(scoped) == str(stmt)
 
 
-def test_apply_organization_scope_with_active_org() -> None:
-    ctx = CurrentUserContext(id="usr_1", active_org_id="org_abc")
-    stmt = select(CourseModel)
-    scoped = apply_organization_scope(stmt, CourseModel, ctx)
-    sql_str = str(scoped)
-    assert "courses.organization_id = :organization_id_1" in sql_str
-    assert "courses.organization_id = :organization_id_2" in sql_str
-
-
-def test_apply_organization_scope_without_active_org() -> None:
-    ctx = CurrentUserContext(id="usr_learner", active_org_id=None)
+def test_apply_organization_scope_learner() -> None:
+    ctx = CurrentUserContext(id="usr_learner")
     stmt = select(CourseModel)
     scoped = apply_organization_scope(stmt, CourseModel, ctx)
     sql_str = str(scoped)

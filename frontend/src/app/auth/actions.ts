@@ -51,7 +51,6 @@ export async function loginAction(email: string, password: string) {
         fullName: res.user.fullName,
         email: res.user.email,
         role: normalizeUserRole(String(res.user.role)),
-        systemRole: String(res.user.systemRole),
       },
     };
   } catch (err: unknown) {

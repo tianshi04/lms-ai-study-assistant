@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { SystemRole, UserRole } from "@/gen/identity/v1/identity_pb";
+import { UserRole } from "@/gen/identity/v1/identity_pb";
 import { useUserProfileQuery, useUpdateInstructorProfileMutation } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 
@@ -21,10 +21,8 @@ export default function InstructorProfilePage() {
     refetch: refetchProfile,
   } = useUserProfileQuery(userId);
 
-  const isInstructorOrTA =
-    userProfile?.role === UserRole.INSTRUCTOR ||
-    userProfile?.role === UserRole.TA ||
-    userProfile?.systemRole === SystemRole.SUPER_ADMIN;
+  const { isInstructorOrAdmin } = useAuth();
+  const isInstructorOrTA = isInstructorOrAdmin;
 
   const updateMutation = useUpdateInstructorProfileMutation();
 
@@ -54,8 +52,7 @@ export default function InstructorProfilePage() {
       <div className="max-w-md mx-auto my-16 p-8 bg-destructive/10 border border-destructive/30 rounded-2xl text-center">
         <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
         <p className="text-muted-foreground text-sm">
-          Trang này chỉ dành cho Giảng viên (Instructor) hoặc Trợ giảng (TA) thiết lập hồ sơ và chữ
-          ký tay điện tử.
+          Trang này chỉ dành cho Giảng viên (Instructor) thiết lập hồ sơ và chữ ký tay điện tử.
         </p>
         <Button onClick={() => router.push("/")} className="mt-4" variant="outline">
           Về trang chủ
@@ -155,11 +152,7 @@ export default function InstructorProfilePage() {
             <h2 className="text-xl font-bold text-foreground">{userProfile?.fullName}</h2>
             <p className="text-xs text-muted-foreground">{userProfile?.email}</p>
             <span className="inline-block mt-1.5 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider rounded-md bg-info/10 text-info border border-info/20">
-              {userProfile?.role === UserRole.INSTRUCTOR
-                ? "Giảng viên"
-                : userProfile?.role === UserRole.TA
-                  ? "Trợ giảng"
-                  : "Quản trị viên"}
+              {userProfile?.role === UserRole.INSTRUCTOR ? "Giảng viên" : "Quản trị viên / Nhân sự"}
             </span>
           </div>
         </div>

@@ -8,6 +8,8 @@ import {
 } from '../pages';
 
 test.describe('Full System Blackbox - Instructor Flows (POM)', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test('should load instructor courses list page', async ({ page }) => {
     const instructorPage = new InstructorCoursesPage(page);
     await instructorPage.goto();

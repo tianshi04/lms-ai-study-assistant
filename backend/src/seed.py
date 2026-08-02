@@ -61,7 +61,7 @@ from src.modules.forum.infrastructure.models import (
     ForumVoteORM,
 )
 from src.modules.identity.application.identity_usecase import hash_password
-from src.modules.identity.domain.entities import UserRole, SystemRole
+from src.modules.identity.domain.entities import UserRole
 from src.modules.identity.infrastructure.models import (
     EnterpriseLicenseModel,
     UserModel,
@@ -110,6 +110,13 @@ def build_categories() -> list[CategoryModel]:
             id="cat-subj-ai",
             name="Artificial Intelligence",
             slug="ai",
+            type="SUBJECT",
+            created_at="2026-07-20T00:00:00Z",
+        ),
+        CategoryModel(
+            id="cat-subj-it",
+            name="Information Technology",
+            slug="information-technology",
             type="SUBJECT",
             created_at="2026-07-20T00:00:00Z",
         ),
@@ -672,7 +679,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             id="user_ta_01",
             email="ta@coursera.ai",
             full_name="ThS. Nguyễn Hoàng Nam",
-            role=UserRole.TA,
+            role=UserRole.INSTRUCTOR,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=ta@coursera.ai",
             enterprise_seat_key="",
             password_hash=default_pw_hash,
@@ -682,8 +689,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             id="user_admin_01",
             email="admin@coursera.ai",
             full_name="Platform Admin",
-            role=UserRole.LEARNER,
-            system_role=SystemRole.SUPER_ADMIN,
+            role=UserRole.ADMIN,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=admin@coursera.ai",
             enterprise_seat_key="",
             password_hash=default_pw_hash,
@@ -699,9 +705,14 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             password_hash=default_pw_hash,
         )
 
+        org_role_system_admin = OrganizationRoleModel(
+            id="role_system_super_admin",
+            name="System Super Admin",
+            permissions=["system:*"],
+        )
         org_role_admin = OrganizationRoleModel(
-            id="role_org_admin",
-            name="Organization Admin",
+            id="role_org_owner",
+            name="Organization Owner",
             permissions=[
                 "org:manage",
                 "members:manage",
@@ -720,6 +731,12 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             permissions=["forum:moderate", "grading:review"],
         )
 
+        org_internal = OrganizationModel(
+            id="org_system_internal",
+            name="System Internal Organization",
+            slug="system-internal",
+            avatar_url="",
+        )
         org_stanford = OrganizationModel(
             id="partner_stanford",
             name="Stanford University",
@@ -733,11 +750,18 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             avatar_url="",
         )
 
+        org_member_admin = OrganizationMemberModel(
+            id="member_admin_01",
+            user_id="user_admin_01",
+            organization_id="partner_community",
+            role_id="role_system_super_admin",
+            status="ACTIVE",
+        )
         org_member_partner = OrganizationMemberModel(
             id="member_partner_01",
             user_id="user_partner_01",
             organization_id="partner_stanford",
-            role_id="role_org_admin",
+            role_id="role_org_owner",
             status="ACTIVE",
         )
         org_member_instructor = OrganizationMemberModel(
@@ -762,11 +786,14 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         await session.merge(ta_user)
         await session.merge(admin_user)
         await session.merge(partner_user)
+        await session.merge(org_role_system_admin)
         await session.merge(org_role_admin)
         await session.merge(org_role_instructor)
         await session.merge(org_role_ta)
+        await session.merge(org_internal)
         await session.merge(org_stanford)
         await session.merge(org_community)
+        await session.merge(org_member_admin)
         await session.merge(org_member_partner)
         await session.merge(org_member_instructor)
         await session.merge(org_member_ta)
@@ -905,7 +932,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         appeal1 = GradeAppealModel(
             id="appeal_demo_01",
             user_id="user_learner_03",
-            submission_id="peer_sub_demo_02",
+            submission_id="peer_sub_demo_01",
             appeal_reason="The reviewer marked point deduction for missing documentation, but inline comments were included in code blocks.",
             status="PENDING",
             created_at="2026-07-22T14:00:00Z",
@@ -924,7 +951,11 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             issue_date="22/07/2026",
             verification_url="/verify/CERT-DEMO12345",
             qr_code_url="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=CERT-DEMO12345",
-            open_badges_json_ld='{"@context":"https://w3id.org/openbadges/v2","type":"BadgeClass","name":"Supervised Machine Learning Verified Certificate"}',
+            open_badges_json_ld={
+                "@context": "https://w3id.org/openbadges/v2",
+                "type": "BadgeClass",
+                "name": "Supervised Machine Learning Verified Certificate",
+            },
         )
         demo_cert2 = CertificateModel(
             certificate_id="CERT-DEMO67890",
@@ -937,7 +968,11 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             issue_date="23/07/2026",
             verification_url="/verify/CERT-DEMO67890",
             qr_code_url="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=CERT-DEMO67890",
-            open_badges_json_ld='{"@context":"https://w3id.org/openbadges/v2","type":"BadgeClass","name":"Fullstack Web Development Verified Certificate"}',
+            open_badges_json_ld={
+                "@context": "https://w3id.org/openbadges/v2",
+                "type": "BadgeClass",
+                "name": "Fullstack Web Development Verified Certificate",
+            },
         )
         await session.merge(demo_cert1)
         await session.merge(demo_cert2)
@@ -984,7 +1019,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             item_id="item-ml-intro-video",
             title="Làm thế nào để chọn Learning Rate (Alpha) tối ưu cho Gradient Descent?",
             author_name="Lê Minh Trí",
-            author_role="Student",
+            author_role="USER_ROLE_LEARNER",
             author_user_id="user_learner_demo",
             created_at="2026-07-22T10:15:00Z",
             upvote_count=5,
@@ -994,7 +1029,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             id="reply-ml-01-1",
             thread_id="thread-ml-01",
             author_name="ThS. Nguyễn Hoàng Nam",
-            author_role="Teaching Assistant",
+            author_role="USER_ROLE_INSTRUCTOR",
             author_user_id="user_ta_01",
             content="Chào bạn Trí! Bạn nên thử các giá trị theo quy tắc lũy thừa của 10 như 0.001, 0.01, 0.1 và vẽ đồ thị Cost Function theo từng Iteration. Nếu Cost Function tăng dần nghĩa là Alpha quá lớn!",
             is_staff_answer=True,
@@ -1005,12 +1040,12 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             id="reply-ml-01-2",
             thread_id="thread-ml-01",
             author_name="Trần Thu Hà",
-            author_role="Student",
+            author_role="USER_ROLE_LEARNER",
             author_user_id="user_learner_02",
             content="Cảm ơn thầy Nam, em cũng thử vẽ plot J(theta) theo lời khuyên của thầy và thấy học rất nhanh!",
             is_staff_answer=False,
             upvote_count=3,
-            created_at="2026-07-22T11:05:00Z",
+            created_at="2026-07-22T10:30:00Z",
         )
 
         thread2 = ForumThreadORM(
@@ -1019,7 +1054,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             item_id="item-web-video-1",
             title="Thắc mắc về ưu điểm của ConnectRPC so với REST API truyền thống",
             author_name="Phạm Quốc Bảo",
-            author_role="Student",
+            author_role="USER_ROLE_LEARNER",
             author_user_id="user_learner_03",
             created_at="2026-07-22T12:00:00Z",
             upvote_count=8,
@@ -1029,7 +1064,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             id="reply-web-01-1",
             thread_id="thread-web-01",
             author_name="ThS. Nguyễn Hoàng Nam",
-            author_role="Teaching Assistant",
+            author_role="USER_ROLE_INSTRUCTOR",
             author_user_id="user_ta_01",
             content="ConnectRPC sinh mã nguồn Type-Safe stubs tự động cho cả Frontend lẫn Backend từ tệp .proto, giúp hạn chế lỗi runtime gõ sai tên trường API và tối ưu tốc độ nhờ Protobuf binary serialization!",
             is_staff_answer=True,
@@ -1043,7 +1078,7 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             item_id="item-dl-video-1",
             title="[Thông báo] Tài liệu hướng dẫn cài đặt PyTorch và CUDA 12 cho bài thực hành Neural Networks",
             author_name="Prof. Andrew Ng",
-            author_role="Instructor",
+            author_role="USER_ROLE_INSTRUCTOR",
             author_user_id="user_instructor_01",
             created_at="2026-07-23T08:00:00Z",
             upvote_count=24,

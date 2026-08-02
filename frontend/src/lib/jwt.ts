@@ -1,10 +1,8 @@
 export interface JwtPayload {
   sub: string; // user_id
   email: string;
-  role: string;
-  system_role: string;
+  role?: string;
   full_name?: string;
-  active_org_id?: string;
   exp: number;
   iat: number;
   type: string;
@@ -14,9 +12,7 @@ export function normalizeUserRole(role: string | null | undefined): string {
   if (!role) return "1";
   const r = String(role).toUpperCase();
   if (r === "2" || r.includes("INSTRUCTOR")) return "2";
-  if (r === "3" || r.includes("TA")) return "3";
-  if (r === "4" || r.includes("ADMIN")) return "4";
-  if (r === "5" || r.includes("PARTNER")) return "5";
+  if (r === "3" || r.includes("ADMIN")) return "3";
   return "1";
 }
 

@@ -37,7 +37,7 @@ export class QuestionBankPage {
     this.questionCards = page.locator('div.p-5.rounded-2xl');
   }
 
-  async goto(courseId: string = 'course-1') {
+  async goto(courseId: string = 'course-python-ai') {
     await this.page.goto(`/instructor/courses/${courseId}/question-bank`);
   }
 

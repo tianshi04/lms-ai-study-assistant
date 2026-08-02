@@ -25,7 +25,21 @@ import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
-import { X, ChevronLeft, ChevronDown, ChevronUp, CheckCircle2, Check, Lock } from "lucide-react";
+import {
+  X,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  Check,
+  Lock,
+  Menu,
+  FileText,
+  MessageSquare,
+  Clock,
+  AlignLeft,
+} from "lucide-react";
 
 function getItemTypeName(type: number): string {
   switch (type) {
@@ -572,9 +586,9 @@ function CoursePlayerContent() {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-slate-500 dark:text-slate-400">
+      <div className="min-h-screen bg-background text-muted-foreground flex items-center justify-center">
         <div className="flex items-center gap-3">
-          <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           <span>Đang mở Trình phát bài học...</span>
         </div>
       </div>
@@ -659,19 +673,7 @@ function CoursePlayerContent() {
                 className="w-12 py-2.5 px-1 rounded-xl flex flex-col items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer"
                 title="Mở Lộ trình Bài học"
               >
-                <svg
-                  className="w-5 h-5 mb-1 text-primary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 10h16M4 14h16M4 18h16"
-                  />
-                </svg>
+                <Menu className="w-5 h-5 mb-1 text-primary" aria-hidden="true" />
                 <span className="text-[10px] tracking-tight leading-none font-semibold">
                   Lộ trình
                 </span>
@@ -691,19 +693,7 @@ function CoursePlayerContent() {
                   className="w-6 h-6 inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
                   title="Ẩn Lộ trình Bài học"
                 >
-                  <svg
-                    className="w-3.5 h-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  <X className="w-3.5 h-3.5" aria-hidden="true" />
                 </button>
               </div>
 
@@ -907,19 +897,7 @@ function CoursePlayerContent() {
                       className="px-5 py-2.5 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground transition-all shadow-md flex items-center gap-2 cursor-pointer"
                     >
                       <span>{"Bài tiếp theo"}</span>
-                      <svg
-                        className="w-4 h-4 shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
+                      <ChevronRight className="w-4 h-4 shrink-0" aria-hidden="true" />
                     </button>
                   ) : (
                     <span className="text-xs text-muted-foreground font-semibold">
@@ -952,19 +930,7 @@ function CoursePlayerContent() {
                         className="w-7 h-7 inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
                         title="Đóng bảng công cụ"
                       >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
+                        <X className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </div>
 
@@ -1017,19 +983,7 @@ function CoursePlayerContent() {
                     }`}
                     title="Phụ đề"
                   >
-                    <svg
-                      className="w-5 h-5 mb-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 6h16M4 12h16m-7 6h7"
-                      />
-                    </svg>
+                    <AlignLeft className="w-5 h-5 mb-1" aria-hidden="true" />
                     <span className="text-[10px] tracking-tight leading-none">Phụ đề</span>
                   </button>
                 )}
@@ -1047,19 +1001,7 @@ function CoursePlayerContent() {
                         }`}
                         title="Ghi chú"
                       >
-                        <svg
-                          className="w-5 h-5 mb-1"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                          />
-                        </svg>
+                        <FileText className="w-5 h-5 mb-1" aria-hidden="true" />
                         <span className="text-[10px] tracking-tight leading-none">Ghi chú</span>
                       </button>
                     )}
@@ -1075,19 +1017,7 @@ function CoursePlayerContent() {
                         }`}
                         title="Thảo luận"
                       >
-                        <svg
-                          className="w-5 h-5 mb-1"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
-                          />
-                        </svg>
+                        <MessageSquare className="w-5 h-5 mb-1" aria-hidden="true" />
                         <span className="text-[10px] tracking-tight leading-none">Thảo luận</span>
                       </button>
                     )}
@@ -1102,19 +1032,7 @@ function CoursePlayerContent() {
                       }`}
                       title="Deadlines"
                     >
-                      <svg
-                        className="w-5 h-5 mb-1"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
+                      <Clock className="w-5 h-5 mb-1" aria-hidden="true" />
                       <span className="text-[10px] tracking-tight leading-none">Deadlines</span>
                     </button>
                   </>

@@ -53,7 +53,6 @@ async def test_submit_and_list_course_review():
             course_id=course.id,
             rating_stars=5,
             comment_text="Khóa học này từ đồng nghiệp rất tuyệt vời!",
-            user_role="INSTRUCTOR",
         )
         assert inst_review is not None
         assert inst_review.comment_text == "Khóa học này từ đồng nghiệp rất tuyệt vời!"

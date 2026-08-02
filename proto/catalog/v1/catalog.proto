@@ -121,6 +121,7 @@ message ListCoursesRequest {
   string subject = 4;
   string level = 5;
   string sort_by = 6;
+  string organization_id = 7;
 }
 
 message ListCoursesResponse {

@@ -25,7 +25,6 @@ from src.modules.learning.domain.repository import ILearningRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.s3_storage import get_s3_storage_service
-from src.shared.permissions import enforce_course_ownership
 
 
 def _default_learning_repo_factory(session: Any) -> ILearningRepository:
@@ -65,16 +64,9 @@ class CatalogUseCase:
         if user and course_id:
             course = await repo.get_course_detail(course_id)
             if course:
-                enforce_course_ownership(
-                    course.owner_id, course.co_instructor_ids, user, action_name
-                )
-                if (
-                    not allow_read_only_pending
-                    and course.status == CourseStatus.PENDING_REVIEW
-                    and not user.is_admin()
-                ):
+                if not course.can_edit(user, allow_read_only_pending):
                     raise PermissionError(
-                        "Khóa học đang ở trạng thái chờ kiểm duyệt (PENDING_REVIEW) và ở chế độ Chỉ đọc. Không thể chỉnh sửa."
+                        f"Bạn không có quyền {action_name} này vì bạn không phải là chủ sở hữu hoặc giảng viên phụ trách."
                     )
 
     async def submit_course_for_launch(
@@ -106,9 +98,9 @@ class CatalogUseCase:
         rejection_reason: str = "",
         current_user: CurrentUser | None = None,
     ) -> Course:
-        if current_user and not current_user.is_admin():
+        if not current_user or not current_user.is_admin:
             raise PermissionError(
-                "Chỉ Quản trị viên Tổ chức hoặc Super Admin mới có quyền phê duyệt/từ chối khóa học."
+                "Chỉ Quản trị viên hệ thống mới có quyền phê duyệt/từ chối khóa học."
             )
 
         async with async_session_scope() as session:
@@ -138,6 +130,7 @@ class CatalogUseCase:
         subject: str = "",
         level: str = "",
         sort_by: str = "",
+        organization_id: str | None = None,
         status_filter: Any = "",
     ) -> tuple[list[Course], str]:
         async with async_session_scope() as session:
@@ -150,6 +143,7 @@ class CatalogUseCase:
                 level,
                 sort_by,
                 status_filter,
+                organization_id=organization_id,
             )
 
     async def list_instructor_courses(
@@ -338,7 +332,6 @@ class CatalogUseCase:
         course_id: str,
         rating_stars: int,
         comment_text: str,
-        user_role: str = "",
     ):
         if rating_stars < MIN_RATING_STARS or rating_stars > MAX_RATING_STARS:
             logger.warning(
@@ -377,10 +370,6 @@ class CatalogUseCase:
                 ):
                     is_own_course = True
                 elif instructor_names and user_name in instructor_names:
-                    is_own_course = True
-                elif user_id.startswith("inst_") and (
-                    not course_detail.owner_id or course_detail.owner_id == user_id
-                ):
                     is_own_course = True
             elif instructor_names and user_name in instructor_names:
                 is_own_course = True

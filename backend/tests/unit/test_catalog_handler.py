@@ -34,6 +34,7 @@ async def test_handler_list_courses():
         subject="AI_ML",
         level="BEGINNER",
         sort_by="newest",
+        organization_id=None,
         status_filter=pb.CourseStatus.PUBLISHED,
     )
 
@@ -60,6 +61,7 @@ async def test_handler_list_courses_unspecified():
         subject="",
         level="",
         sort_by="",
+        organization_id=None,
         status_filter=pb.CourseStatus.PUBLISHED,
     )
 
@@ -75,9 +77,7 @@ async def test_handler_list_instructor_courses():
     request = pb.ListInstructorCoursesRequest(page_size=50)
     context_mock = MagicMock()
 
-    set_current_user(
-        CurrentUser(id="inst-123", email="inst@test.com", role="INSTRUCTOR")
-    )
+    set_current_user(CurrentUser(id="inst-123", email="inst@test.com"))
     try:
         response = await handler.list_instructor_courses(request, context_mock)
         assert response is not None

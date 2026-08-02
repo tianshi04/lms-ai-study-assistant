@@ -25,6 +25,7 @@ from src.modules.catalog.domain.entities import (
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.models import (
     CourseAnnouncementModel,
+    CourseCollaboratorModel,
     CourseModel,
     CourseReviewModel,
     InVideoQuizModel,
@@ -116,7 +117,7 @@ def _model_to_domain_course(model: CourseModel) -> Course:
         subject=model.subject or "",
         level=model.level or "",
         owner_id=getattr(model, "owner_id", ""),
-        co_instructor_ids=getattr(model, "co_instructor_ids", None) or [],
+        co_instructor_ids=[c.user_id for c in getattr(model, "collaborators", [])],
         status=getattr(model, "status", CourseStatus.DRAFT) or CourseStatus.DRAFT,
         rejection_reason=getattr(model, "rejection_reason", "") or "",
         organization_id=getattr(model, "organization_id", "partner_community")
@@ -193,6 +194,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         level: str = "",
         sort_by: str = "",
         status_filter: str | CourseStatus = "",
+        organization_id: str | None = None,
     ) -> tuple[list[Course], str]:
         stmt = select(CourseModel).options(
             selectinload(CourseModel.week_modules)
@@ -205,7 +207,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             .selectinload(LearningItemModel.in_video_quizzes),
         )
 
-        stmt = apply_organization_scope(stmt, CourseModel, get_current_user())
+        if organization_id:
+            stmt = stmt.where(CourseModel.organization_id == organization_id)
+        else:
+            stmt = apply_organization_scope(stmt, CourseModel, get_current_user())
 
         if search_query:
             pattern = f"%{search_query}%"
@@ -249,7 +254,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         page_token: str = "",
         status_filter: str | CourseStatus | None = None,
     ) -> tuple[list[Course], str]:
-        from sqlalchemy import cast, String
 
         stmt = select(CourseModel).options(
             selectinload(CourseModel.week_modules)
@@ -263,9 +267,17 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         )
 
         if instructor_id:
-            instructor_cond = (CourseModel.owner_id == instructor_id) | (
-                cast(CourseModel.co_instructor_ids, String).contains(instructor_id)
+            collab_stmt = select(CourseCollaboratorModel.course_id).where(
+                CourseCollaboratorModel.user_id == instructor_id
             )
+            collab_res = await self.session.execute(collab_stmt)
+            collab_course_ids = list(collab_res.scalars().all())
+
+            instructor_cond = CourseModel.owner_id == instructor_id
+            if collab_course_ids:
+                instructor_cond = instructor_cond | CourseModel.id.in_(
+                    collab_course_ids
+                )
             stmt = stmt.where(instructor_cond)
 
         parsed_status = _parse_status_filter(status_filter)
@@ -376,13 +388,35 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             subject=subject,
             level=level,
             owner_id=owner_id,
-            co_instructor_ids=co_instructor_ids or [],
             financial_aid_enabled=financial_aid_enabled,
             organization_id=clean_org_id,
             status=CourseStatus.DRAFT,
             rejection_reason="",
         )
         self.session.add(model)
+
+        if owner_id:
+            owner_collab = CourseCollaboratorModel(
+                id=f"collab_owner_{course_id}_{owner_id}",
+                course_id=course_id,
+                user_id=owner_id,
+                role="PRIMARY_INSTRUCTOR",
+                created_at=datetime.now(timezone.utc).isoformat(),
+            )
+            self.session.add(owner_collab)
+
+        if co_instructor_ids:
+            for co_id in co_instructor_ids:
+                if co_id != owner_id:
+                    co_collab = CourseCollaboratorModel(
+                        id=f"collab_co_{course_id}_{co_id}",
+                        course_id=course_id,
+                        user_id=co_id,
+                        role="CO_INSTRUCTOR",
+                        created_at=datetime.now(timezone.utc).isoformat(),
+                    )
+                    self.session.add(co_collab)
+
         await self.session.commit()
         c_detail = await self.get_course_detail(course_id)
         return c_detail if c_detail else _model_to_domain_course(model)

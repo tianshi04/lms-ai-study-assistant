@@ -41,7 +41,6 @@ function LoginFormContent() {
             userName: res.user.fullName,
             userEmail: res.user.email,
             userRole: res.user.role,
-            systemRole: res.user.systemRole,
           });
 
           router.push(redirectTarget);

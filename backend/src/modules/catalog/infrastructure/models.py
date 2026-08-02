@@ -70,9 +70,6 @@ class CourseModel(Base):
         String(32), nullable=False, server_default="UNSPECIFIED"
     )
     owner_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
-    co_instructor_ids: Mapped[list[str]] = mapped_column(
-        ARRAY(String(64)), nullable=False, default=list
-    )
     average_rating: Mapped[float] = mapped_column(
         Float, nullable=False, server_default="0.0"
     )
@@ -106,6 +103,11 @@ class CourseModel(Base):
         back_populates="course",
         cascade="all, delete-orphan",
         order_by="WeekModuleModel.week_number",
+    )
+    collaborators: Mapped[list["CourseCollaboratorModel"]] = relationship(
+        "CourseCollaboratorModel",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
 
@@ -272,3 +274,28 @@ class CourseAnnouncementModel(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class CourseCollaboratorModel(Base):
+    __tablename__ = "course_collaborators"
+    __table_args__ = (
+        UniqueConstraint(
+            "course_id", "user_id", name="uq_course_collaborators_course_user"
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    course_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("courses.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    user_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    role: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")

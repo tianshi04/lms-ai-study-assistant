@@ -39,7 +39,6 @@ async function AsyncAuthProvider({ children }: { children: React.ReactNode }) {
     userName: session.userName,
     userEmail: session.userEmail,
     userRole: session.userRole,
-    systemRole: session.systemRole,
   };
 
   return <AuthProvider initialAuth={initialAuth}>{children}</AuthProvider>;

@@ -23,9 +23,9 @@ class PartnerUseCase:
         )
 
     def _verify_admin(self, current_user: Optional[CurrentUser]) -> None:
-        if not current_user or not current_user.is_admin():
+        if not current_user or not current_user.is_admin:
             raise PermissionError(
-                "Quyền truy cập bị từ chối: Yêu cầu quyền quản trị viên"
+                "Yêu cầu quyền Quản trị viên (Admin) để thực hiện thao tác này"
             )
 
     async def create_partner(
@@ -119,7 +119,6 @@ class PartnerUseCase:
         current_user: Optional[CurrentUser] = None,
     ) -> Partner:
         self._verify_admin(current_user)
-
         async with async_session_scope() as session:
             repo = self._get_repo(session)
             partner = await repo.get_by_id(partner_id)

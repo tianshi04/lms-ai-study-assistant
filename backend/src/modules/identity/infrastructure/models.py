@@ -5,15 +5,17 @@ from sqlalchemy import (
     Enum as SQLEnum,
     ForeignKey,
     Integer,
+    JSON,
     String,
     Text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.modules.identity.domain.constants import (
     DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS,
 )
-from src.modules.identity.domain.entities import UserRole, SystemRole
+from src.modules.identity.domain.entities import UserRole
 from src.shared.infrastructure.database import Base
 
 
@@ -33,12 +35,6 @@ class UserModel(Base):
         ),
         nullable=False,
         default=UserRole.LEARNER,
-    )
-    system_role: Mapped[SystemRole] = mapped_column(
-        SQLEnum(SystemRole, native_enum=False),
-        nullable=False,
-        default=SystemRole.USER,
-        server_default="USER",
     )
     avatar_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
     enterprise_seat_key: Mapped[Optional[str]] = mapped_column(
@@ -84,7 +80,10 @@ class OrganizationRoleModel(Base):
         nullable=True,
     )
     permissions: Mapped[list[str]] = mapped_column(
-        ARRAY(String(100)), nullable=False, default=list, server_default="{}"
+        JSONB().with_variant(JSON, "sqlite"),
+        nullable=False,
+        default=list,
+        server_default="[]",
     )
 
 

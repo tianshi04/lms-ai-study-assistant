@@ -47,8 +47,8 @@ def test_partner_entity_update_details():
 @pytest.mark.asyncio
 async def test_usecase_create_partner_permission_denied():
     usecase = PartnerUseCase()
-    non_admin = CurrentUser(id="u1", role="LEARNER")
-    with pytest.raises(PermissionError, match="Quyền truy cập bị từ chối"):
+    non_admin = CurrentUser(id="u1", role="USER_ROLE_LEARNER")
+    with pytest.raises(PermissionError, match=r"Quản trị viên"):
         await usecase.create_partner(
             name="New Partner", slug="new-partner", current_user=non_admin
         )
@@ -61,7 +61,7 @@ async def test_usecase_create_partner_success():
     mock_repo.create.side_effect = lambda p: p
 
     usecase = PartnerUseCase(repo=mock_repo)
-    admin = CurrentUser(id="admin1", role="SUPER_ADMIN")
+    admin = CurrentUser(id="admin1", role="USER_ROLE_ADMIN")
     test_slug = f"stanford-test-{uuid.uuid4().hex[:6]}"
 
     res = await usecase.create_partner(
@@ -82,7 +82,7 @@ async def test_usecase_create_partner_duplicate_slug():
     mock_repo.get_by_slug.return_value = existing_p
 
     usecase = PartnerUseCase(repo=mock_repo)
-    admin = CurrentUser(id="admin1", role="SUPER_ADMIN")
+    admin = CurrentUser(id="admin1", role="USER_ROLE_ADMIN")
 
     with pytest.raises(ValueError, match="đã tồn tại trong hệ thống"):
         await usecase.create_partner(
@@ -96,7 +96,7 @@ async def test_usecase_update_partner_not_found():
     mock_repo.get_by_id.return_value = None
 
     usecase = PartnerUseCase(repo=mock_repo)
-    admin = CurrentUser(id="admin1", role="SUPER_ADMIN")
+    admin = CurrentUser(id="admin1", role="USER_ROLE_ADMIN")
 
     with pytest.raises(KeyError, match="Không tìm thấy đối tác"):
         await usecase.update_partner(
@@ -113,7 +113,7 @@ async def test_usecase_update_partner_duplicate_slug():
     mock_repo.get_by_slug.return_value = p2
 
     usecase = PartnerUseCase(repo=mock_repo)
-    admin = CurrentUser(id="admin1", role="SUPER_ADMIN")
+    admin = CurrentUser(id="admin1", role="USER_ROLE_ADMIN")
 
     with pytest.raises(ValueError, match="đã tồn tại trong hệ thống"):
         await usecase.update_partner(
@@ -131,7 +131,7 @@ async def test_usecase_get_and_list_and_delete_partner():
     mock_repo.delete.return_value = True
 
     usecase = PartnerUseCase(repo=mock_repo)
-    admin = CurrentUser(id="admin1", role="SUPER_ADMIN")
+    admin = CurrentUser(id="admin1", role="USER_ROLE_ADMIN")
 
     got = await usecase.get_partner("p1")
     assert got.id == "p1"
@@ -162,7 +162,7 @@ async def test_partner_handler():
     handler = PartnerHandler(use_case=mock_usecase)
     mock_ctx = MagicMock()
 
-    admin = CurrentUser(id="admin1", role="SUPER_ADMIN")
+    admin = CurrentUser(id="admin1", role="USER_ROLE_ADMIN")
     set_current_user(admin)
     try:
         # Create
@@ -219,7 +219,7 @@ async def test_usecase_rotate_key_pair_success():
     mock_repo.update.side_effect = lambda p: p
 
     usecase = PartnerUseCase(repo=mock_repo)
-    admin = CurrentUser(id="admin1", role="SUPER_ADMIN")
+    admin = CurrentUser(id="admin1", role="USER_ROLE_ADMIN")
 
     new_pem = await usecase.rotate_key_pair("p1", current_user=admin)
     assert new_pem.startswith("-----BEGIN PUBLIC KEY-----")
@@ -247,9 +247,7 @@ async def test_usecase_rotate_key_pair_auto_resolve_domain():
     org_admin = CurrentUser(
         id="p_admin1",
         email="alice@stanford.edu",
-        role="INSTRUCTOR",
-        active_org_id="partner_stanford",
-        org_role="Organization Admin",
+        role="USER_ROLE_ADMIN",
     )
 
     new_pem = await usecase.rotate_key_pair("", current_user=org_admin)

@@ -10,7 +10,6 @@ from src.modules.identity.application.identity_usecase import IdentityUseCase
 from src.modules.identity.domain.entities import (
     User,
     UserRole,
-    SystemRole,
     InstructorApplication,
     ApplicationStatus,
 )
@@ -49,7 +48,7 @@ def _to_pb_user_role(role: UserRole) -> pb.UserRole:
         UserRole.UNSPECIFIED: pb.UserRole.UNSPECIFIED,
         UserRole.LEARNER: pb.UserRole.LEARNER,
         UserRole.INSTRUCTOR: pb.UserRole.INSTRUCTOR,
-        UserRole.TA: pb.UserRole.TA,
+        UserRole.ADMIN: pb.UserRole.ADMIN,
     }
     return mapping.get(role, pb.UserRole.UNSPECIFIED)
 
@@ -59,21 +58,15 @@ def _pb_role_to_domain_str(role_val: Any) -> str:
         pb.UserRole.UNSPECIFIED: "USER_ROLE_UNSPECIFIED",
         pb.UserRole.LEARNER: "USER_ROLE_LEARNER",
         pb.UserRole.INSTRUCTOR: "USER_ROLE_INSTRUCTOR",
-        pb.UserRole.TA: "USER_ROLE_TA",
+        pb.UserRole.ADMIN: "USER_ROLE_ADMIN",
         0: "USER_ROLE_UNSPECIFIED",
         1: "USER_ROLE_LEARNER",
         2: "USER_ROLE_INSTRUCTOR",
-        3: "USER_ROLE_TA",
+        3: "USER_ROLE_ADMIN",
     }
     if role_val not in mapping:
         raise ConnectError(Code.INVALID_ARGUMENT, f"Vai trò '{role_val}' không hợp lệ")
     return mapping[role_val]
-
-
-def _to_pb_system_role(sys_role: SystemRole) -> pb.SystemRole:
-    if sys_role == SystemRole.SUPER_ADMIN:
-        return pb.SystemRole.SUPER_ADMIN
-    return pb.SystemRole.USER
 
 
 def _to_pb_user(user: User) -> pb.User:
@@ -87,7 +80,6 @@ def _to_pb_user(user: User) -> pb.User:
         signature_image_url=user.signature_image_url,
         title=user.title,
         is_identity_verified=user.is_identity_verified,
-        system_role=_to_pb_system_role(user.system_role),
     )
 
 
@@ -154,12 +146,14 @@ class IdentityHandler(IdentityService):
         current_user = require_current_user()
         target_user_id = request.user_id or current_user.id
         if target_user_id != current_user.id:
-            if not current_user.is_staff():
+            if not current_user.is_admin:
                 raise ConnectError(
                     Code.PERMISSION_DENIED,
                     "Bạn không có quyền xem hồ sơ cá nhân của người dùng khác.",
                 )
-        user = await self._use_case.get_user_profile(target_user_id)
+        user = await self._use_case.get_user_profile(
+            target_user_id, current_user=current_user
+        )
         if not user:
             raise ConnectError(Code.NOT_FOUND, "Không tìm thấy người dùng")
         return pb.GetUserProfileResponse(user=_to_pb_user(user))
@@ -174,13 +168,13 @@ class IdentityHandler(IdentityService):
         current_user = require_current_user()
         target_user_id = request.user_id or current_user.id
         if target_user_id != current_user.id:
-            if not current_user.is_admin():
+            if not current_user.is_admin:
                 raise ConnectError(
                     Code.PERMISSION_DENIED,
                     "Bạn không có quyền gán suất Enterprise Seat cho người dùng khác.",
                 )
         success, msg = await self._use_case.assign_enterprise_seat(
-            target_user_id, request.enterprise_seat_key
+            target_user_id, request.enterprise_seat_key, current_user=current_user
         )
         return pb.AssignEnterpriseSeatResponse(success=success, message=msg)
 
@@ -192,12 +186,14 @@ class IdentityHandler(IdentityService):
         ],
     ) -> pb.ListEnterpriseSeatsResponse:
         current_user = require_current_user()
-        if not current_user.is_admin():
+        if not current_user.is_admin:
             raise ConnectError(
                 Code.PERMISSION_DENIED,
                 "Chỉ Quản trị viên mới có quyền xem danh sách Enterprise Seats.",
             )
-        items = await self._use_case.list_enterprise_seats(request.partner_name)
+        items = await self._use_case.list_enterprise_seats(
+            request.partner_name, current_user=current_user
+        )
         pb_seats = [
             pb.EnterpriseSeat(
                 id=item["id"],
@@ -222,16 +218,16 @@ class IdentityHandler(IdentityService):
         ],
     ) -> pb.CreateEnterpriseSeatResponse:
         current_user = require_current_user()
-        if not current_user.is_admin():
+        if not current_user.is_admin:
             raise ConnectError(
-                Code.PERMISSION_DENIED,
-                "Chỉ Quản trị viên mới có quyền tạo Enterprise Seat key.",
+                Code.PERMISSION_DENIED, "Yêu cầu quyền quản lý Suất học Enterprise"
             )
         item = await self._use_case.create_enterprise_seat(
             partner_name=request.partner_name,
             seat_key=request.seat_key,
             scope_type=request.scope_type or "ALL_COURSES",
             allowed_course_ids=list(request.allowed_course_ids),
+            current_user=current_user,
         )
         pb_seat = pb.EnterpriseSeat(
             id=item["id"],
@@ -254,13 +250,12 @@ class IdentityHandler(IdentityService):
         ],
     ) -> pb.RevokeEnterpriseSeatResponse:
         current_user = require_current_user()
-        if not current_user.is_admin():
+        if not current_user.is_admin:
             raise ConnectError(
-                Code.PERMISSION_DENIED,
-                "Chỉ Quản trị viên mới có quyền thu hồi Enterprise Seat.",
+                Code.PERMISSION_DENIED, "Yêu cầu quyền quản lý Suất học Enterprise"
             )
         success, msg = await self._use_case.revoke_enterprise_seat(
-            request.user_id, request.course_id
+            request.user_id, request.course_id, current_user=current_user
         )
         return pb.RevokeEnterpriseSeatResponse(success=success, message=msg)
 
@@ -340,12 +335,13 @@ class IdentityHandler(IdentityService):
         ],
     ) -> pb.ListInstructorApplicationsResponse:
         current_user = require_current_user()
-        if not current_user.is_admin():
+        if not current_user.is_admin:
             raise ConnectError(
-                Code.PERMISSION_DENIED,
-                "Chỉ Quản trị viên hệ thống mới có quyền xem danh sách đơn thẩm định.",
+                Code.PERMISSION_DENIED, "Yêu cầu quyền Quản trị viên hệ thống"
             )
-        apps = await self._use_case.list_instructor_applications(request.status_filter)
+        apps = await self._use_case.list_instructor_applications(
+            request.status_filter, current_user=current_user
+        )
         return pb.ListInstructorApplicationsResponse(
             applications=[_to_pb_application(a) for a in apps]
         )
@@ -359,16 +355,16 @@ class IdentityHandler(IdentityService):
         ],
     ) -> pb.ReviewInstructorApplicationResponse:
         current_user = require_current_user()
-        if not current_user.is_admin():
+        if not current_user.is_admin:
             raise ConnectError(
-                Code.PERMISSION_DENIED,
-                "Chỉ Quản trị viên hệ thống mới có quyền duyệt đơn Giảng viên.",
+                Code.PERMISSION_DENIED, "Yêu cầu quyền Quản trị viên hệ thống"
             )
         try:
             app = await self._use_case.review_instructor_application(
                 application_id=request.application_id,
                 approve=request.approve,
                 rejection_reason=request.rejection_reason,
+                current_user=current_user,
             )
             return pb.ReviewInstructorApplicationResponse(
                 application=_to_pb_application(app)

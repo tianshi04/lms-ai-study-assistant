@@ -103,14 +103,16 @@ class CertificateHandler(CertificateService):
         ],
     ) -> pb.ListFinancialAidApplicationsResponse:
         current_user = require_current_user()
-        if not current_user.is_admin():
+        if not current_user.is_admin:
             raise ConnectError(
                 Code.PERMISSION_DENIED,
-                "Chỉ Quản trị viên hệ thống mới có quyền xem danh sách đơn Hỗ trợ tài chính.",
+                "Yêu cầu quyền Quản trị viên để xem danh sách hỗ trợ tài chính.",
             )
 
         apps = await self._use_case.list_financial_aid_applications(
-            course_id=request.course_id or None, status=request.status or None
+            course_id=request.course_id or None,
+            status=request.status or None,
+            current_user=current_user,
         )
         return pb.ListFinancialAidApplicationsResponse(
             applications=[_to_pb_financial_aid(a) for a in apps]
@@ -125,14 +127,15 @@ class CertificateHandler(CertificateService):
         ],
     ) -> pb.ReviewFinancialAidApplicationResponse:
         current_user = require_current_user()
-        if not current_user.is_admin():
+        if not current_user.is_admin:
             raise ConnectError(
-                Code.PERMISSION_DENIED,
-                "Chỉ Quản trị viên hệ thống mới có quyền xét duyệt đơn Hỗ trợ tài chính.",
+                Code.PERMISSION_DENIED, "Yêu cầu quyền Quản trị viên hệ thống"
             )
 
         app, err = await self._use_case.review_financial_aid_application(
-            application_id=request.application_id, is_approved=request.is_approved
+            application_id=request.application_id,
+            is_approved=request.is_approved,
+            current_user=current_user,
         )
         if err or not app:
             raise ConnectError(Code.INVALID_ARGUMENT, err or "Xét duyệt thất bại")
@@ -183,14 +186,12 @@ class CertificateHandler(CertificateService):
         ctx: RequestContext[pb.RevokeCertificateRequest, pb.RevokeCertificateResponse],
     ) -> pb.RevokeCertificateResponse:
         current_user = require_current_user()
-
-        if not current_user.is_system_admin():
+        if not current_user.is_admin:
             raise ConnectError(
-                Code.PERMISSION_DENIED,
-                "Chỉ Super Admin mới có quyền thu hồi chứng chỉ.",
+                Code.PERMISSION_DENIED, "Yêu cầu quyền Quản trị viên hệ thống"
             )
         success, msg = await self._use_case.revoke_certificate(
-            request.certificate_id, request.reason
+            request.certificate_id, request.reason, current_user=current_user
         )
         return pb.RevokeCertificateResponse(success=success, message=msg)
 

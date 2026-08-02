@@ -8,13 +8,7 @@ enum UserRole {
   USER_ROLE_UNSPECIFIED = 0;
   USER_ROLE_LEARNER = 1;
   USER_ROLE_INSTRUCTOR = 2;
-  USER_ROLE_TA = 3;
-}
-
-enum SystemRole {
-  SYSTEM_ROLE_UNSPECIFIED = 0;
-  SYSTEM_ROLE_USER = 1;
-  SYSTEM_ROLE_SUPER_ADMIN = 2;
+  USER_ROLE_ADMIN = 3;
 }
 
 message User {
@@ -22,7 +16,6 @@ message User {
   string email = 2;
   string full_name = 3;
   UserRole role = 4;
-  SystemRole system_role = 5;
   string avatar_url = 6;
   string title = 7;
   bool is_identity_verified = 8;
@@ -210,19 +203,19 @@ service IdentityService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc AssignEnterpriseSeat(AssignEnterpriseSeatRequest) returns (AssignEnterpriseSeatResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ListEnterpriseSeats(ListEnterpriseSeatsRequest) returns (ListEnterpriseSeatsResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc CreateEnterpriseSeat(CreateEnterpriseSeatRequest) returns (CreateEnterpriseSeatResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
   }
   rpc RevokeEnterpriseSeat(RevokeEnterpriseSeatRequest) returns (RevokeEnterpriseSeatResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc VerifyIdentity(VerifyIdentityRequest) returns (VerifyIdentityResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
@@ -234,9 +227,9 @@ service IdentityService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ListInstructorApplications(ListInstructorApplicationsRequest) returns (ListInstructorApplicationsResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ReviewInstructorApplication(ReviewInstructorApplicationRequest) returns (ReviewInstructorApplicationResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }

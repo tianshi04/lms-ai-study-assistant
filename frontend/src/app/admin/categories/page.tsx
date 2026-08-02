@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { type Category } from "@/gen/catalog/v1/catalog_pb";
-import { SystemRole } from "@/gen/identity/v1/identity_pb";
+
 import {
   useCategoriesQuery,
   useCreateCategoryMutation,
   useDeleteCategoryMutation,
-  useUserProfileQuery,
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -71,10 +70,8 @@ const CategoryList = ({
 export default function AdminCategoriesPage() {
   const router = useRouter();
 
-  const { userId: authUserId } = useAuth();
-  const userId = authUserId || "";
-  const { data: userProfile, isLoading: profileLoading } = useUserProfileQuery(userId);
-  const isAdmin = userProfile?.systemRole === SystemRole.SUPER_ADMIN;
+  const { isSuperAdmin } = useAuth();
+  const isAdmin = isSuperAdmin;
 
   const { data: subjects = [], refetch: refetchSubjects } = useCategoriesQuery("SUBJECT");
   const { data: levels = [], refetch: refetchLevels } = useCategoriesQuery("LEVEL");
@@ -86,12 +83,6 @@ export default function AdminCategoriesPage() {
   const [newType, setNewType] = useState<"SUBJECT" | "LEVEL">("SUBJECT");
   const [errorMsg, setErrorMsg] = useState("");
 
-  if (profileLoading)
-    return (
-      <div aria-live="polite" className="p-8 text-center text-muted-foreground">
-        {"Đang tải…"}
-      </div>
-    );
   if (!isAdmin)
     return <div className="p-8 text-center text-destructive font-bold">{"Từ chối truy cập"}</div>;
 

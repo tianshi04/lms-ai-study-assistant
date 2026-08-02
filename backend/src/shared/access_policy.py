@@ -8,7 +8,7 @@ from connectrpc.errors import ConnectError
 
 from src.modules.certificate.domain.entities import FinancialAidStatus
 from src.modules.certificate.domain.repositories import ICertificateRepository
-from src.shared.auth import is_staff_role
+from src.modules.identity.domain.entities import UserRole
 from src.shared.infrastructure.database import async_session_scope
 
 
@@ -33,12 +33,7 @@ class AccessPolicyService:
         if not user_entity:
             return False, "Tài khoản không tồn tại hoặc đã bị xóa."
 
-        role_val = (
-            user_entity.role.value
-            if hasattr(user_entity.role, "value")
-            else str(user_entity.role)
-        )
-        if is_staff_role(role_val):
+        if user_entity.role in (UserRole.INSTRUCTOR, UserRole.ADMIN):
             return True, ""
 
         # 2. Enterprise Seat Key attribute & Scope Filtering (BR_ACCESS_002)

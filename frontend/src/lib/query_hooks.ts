@@ -859,6 +859,7 @@ export function usePurchaseCourseMutation(
     >
   >,
 ) {
+  const queryClient = useQueryClient();
   return useMutation<
     { success: boolean; message: string; purchase?: CoursePurchase },
     Error,
@@ -874,6 +875,12 @@ export function usePurchaseCourseMutation(
       };
     },
     ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["paymentAccess"] });
+      queryClient.invalidateQueries({ queryKey: ["enrolledCourses"] });
+      queryClient.invalidateQueries({ queryKey: ["myCourses"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
   });
 }
 
@@ -886,6 +893,7 @@ export function useSubscribeCourseraPlusMutation(
     >
   >,
 ) {
+  const queryClient = useQueryClient();
   return useMutation<
     { success: boolean; message: string; subscription?: UserSubscription },
     Error,
@@ -904,5 +912,11 @@ export function useSubscribeCourseraPlusMutation(
       };
     },
     ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["paymentAccess"] });
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+      queryClient.invalidateQueries({ queryKey: ["enrolledCourses"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
   });
 }

@@ -91,10 +91,10 @@ message RotatePartnerKeyPairResponse {
 
 service PartnerService {
   rpc CreatePartner(CreatePartnerRequest) returns (CreatePartnerResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc UpdatePartner(UpdatePartnerRequest) returns (UpdatePartnerResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc GetPartner(GetPartnerRequest) returns (GetPartnerResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
@@ -103,9 +103,9 @@ service PartnerService {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
   }
   rpc DeletePartner(DeletePartnerRequest) returns (DeletePartnerResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc RotatePartnerKeyPair(RotatePartnerKeyPairRequest) returns (RotatePartnerKeyPairResponse) {
-    option (auth.v1.policy) = AUTH_POLICY_ADMIN;
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }

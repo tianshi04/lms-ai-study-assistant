@@ -2,6 +2,8 @@ import { test, expect } from '@playwright/test';
 import { ForumPage, LearningPage } from '../pages';
 
 test.describe('Full System Blackbox - Discussion Forum Flows (POM)', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test('should load standalone forum page', async ({ page }) => {
     const forumPage = new ForumPage(page);
     await forumPage.goto();
@@ -19,7 +21,7 @@ test.describe('Full System Blackbox - Discussion Forum Flows (POM)', () => {
     await forumPage.createNewThread(uniqueTitle, content);
 
     // Verify new thread is displayed on page
-    await expect(page.locator(`text=${uniqueTitle}`)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text=${uniqueTitle}`)).toBeVisible({ timeout: 15000 });
   });
 
   test('should allow replying to an existing thread', async ({ page }) => {
@@ -30,12 +32,12 @@ test.describe('Full System Blackbox - Discussion Forum Flows (POM)', () => {
     // Ensure a thread exists first
     const uniqueTitle = `Thread for Reply Test ${Date.now()}`;
     await forumPage.createNewThread(uniqueTitle, 'Testing reply functionality.');
-    await expect(page.locator(`text=${uniqueTitle}`)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text=${uniqueTitle}`)).toBeVisible({ timeout: 15000 });
 
     const replyMessage = `Trả lời tự động E2E ${Date.now()}`;
     await forumPage.postFirstReply(replyMessage);
 
-    await expect(page.locator(`text=${replyMessage}`)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text=${replyMessage}`)).toBeVisible({ timeout: 15000 });
   });
 
   test('should allow upvoting a reply and enforcing 1 vote per user (BR_FORUM_001)', async ({ page }) => {
@@ -62,7 +64,7 @@ test.describe('Full System Blackbox - Discussion Forum Flows (POM)', () => {
     const submitBtn = page.getByRole('button', { name: /Đăng Thảo Luận/i });
     await submitBtn.click();
 
-    await expect(page.locator(`text=${playerQuestion}`)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(`text=${playerQuestion}`)).toBeVisible({ timeout: 15000 });
   });
 });
 

@@ -11,7 +11,7 @@ import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { Button } from "@/components/ui/Button";
 
 export function Navbar() {
-  const { userName, userRole, isInstructorOrAdmin } = useAuth();
+  const { userName, isInstructorOrAdmin, isSuperAdmin } = useAuth();
 
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -94,7 +94,7 @@ export function Navbar() {
           )}
 
           {/* Render Admin Enterprise Dashboard Link */}
-          {(userRole === "4" || userRole === "5" || isInstructorOrAdmin) && (
+          {isSuperAdmin && (
             <Link
               href="/admin/dashboard"
               className={`${getLinkClasses("/admin")} flex items-center gap-1.5`}
@@ -210,7 +210,7 @@ export function Navbar() {
               </span>
             </Link>
           )}
-          {(userRole === "4" || userRole === "5" || isInstructorOrAdmin) && (
+          {isSuperAdmin && (
             <Link
               href="/admin/dashboard"
               onClick={() => setMobileMenuOpen(false)}

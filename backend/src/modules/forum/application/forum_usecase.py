@@ -7,7 +7,7 @@ from src.modules.forum.domain.constants import DEFAULT_FORUM_AUTHOR_ROLE
 from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
 from src.modules.forum.domain.repository import IForumRepository
 from src.modules.forum.infrastructure.repository import ForumRepository
-from src.shared.auth import CurrentUser, is_staff_role
+from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 
 
@@ -105,7 +105,13 @@ class ForumUseCase:
         created_at = utc_now_str()
 
         # Determine if author is Staff/TA
-        is_staff = is_staff_role(author_role)
+        is_staff = author_role.upper() in (
+            "INSTRUCTOR",
+            "TEACHER",
+            "TA",
+            "STAFF",
+            "ADMIN",
+        )
 
         reply_entity = ForumReplyEntity(
             id=reply_id,
@@ -274,7 +280,7 @@ async def _verify_staff_course_moderation(
 ) -> None:
     if not user:
         return
-    if user.is_admin():
+    if user.is_admin:
         return
     if course_id:
         from src.modules.catalog.domain.repository import ICatalogRepository
@@ -285,11 +291,7 @@ async def _verify_staff_course_moderation(
         catalog_repo: ICatalogRepository = SQLAlchemyCatalogRepository(session)
         course = await catalog_repo.get_course_detail(course_id)
         if course:
-            from src.shared.permissions import enforce_course_ownership
-
-            enforce_course_ownership(
-                course.owner_id,
-                course.co_instructor_ids,
-                user,
-                "kiểm duyệt diễn đàn khóa học",
-            )
+            if not course.can_edit(user, allow_read_only_pending=True):
+                raise PermissionError(
+                    "Bạn không có quyền kiểm duyệt diễn đàn khóa học này."
+                )
