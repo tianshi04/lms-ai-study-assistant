@@ -127,6 +127,9 @@ This file provides rules, architectural conventions, and workspace instructions 
   - **Design System First**: Interactive UI controls, form elements, and structural data layouts (e.g., buttons, text inputs, selects, textareas, modals, badges, data tables) **MUST** prefer reusable design system primitives in `frontend/src/components/ui/` over custom ad-hoc raw HTML markup.
   - **Semantic Token & Accessibility Consistency**: Custom primitives in `components/ui/` serve as the single source of truth for 3-tier semantic design tokens, focus states, and WAI-ARIA accessibility across the application.
   - **Pragmatic Flexibility**: Native HTML tags remain appropriate for hidden utility controls (e.g., hidden file inputs), rich canvas/media runners, specialized text editors, or low-level layout overrides where design system wrapping would introduce unnecessary styling overhead.
+- **Unstyled Base UI Primitive Rule (`@base-ui/react`)**:
+  - When building or extending reusable UI primitive components in `frontend/src/components/ui/` (e.g., Modals, Selects, Tabs, Menus, Checkboxes, RadioGroups, Tooltips, Accordions, Fields/Inputs, Buttons, Avatars, ProgressBars, Toasts), developers and agents **MUST** leverage unstyled primitives from **Base UI (`@base-ui/react`)** whenever supported.
+  - Custom visual styling MUST be applied via 3-tier Semantic Design Tokens, leaving unstyled accessibility, focus states, keyboard navigation, and WAI-ARIA behavior management to Base UI primitives.
 - API Client calls are made by importing service schemas from the generated stubs (e.g. `import { CatalogService } from "@/gen/catalog/v1/catalog_pb"`) and using the `@connectrpc/connect` client.
 
 ---
