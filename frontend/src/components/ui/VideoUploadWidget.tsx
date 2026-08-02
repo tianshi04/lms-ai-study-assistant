@@ -180,7 +180,13 @@ export function VideoUploadWidget({
           <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => {
+                if (activeTab === "upload") {
+                  fileInputRef.current?.click();
+                } else {
+                  onChange("");
+                }
+              }}
               className="px-2.5 py-1 rounded-lg text-xs font-bold bg-card text-foreground hover:bg-muted border border-border transition-colors cursor-pointer"
             >
               Thay đổi
