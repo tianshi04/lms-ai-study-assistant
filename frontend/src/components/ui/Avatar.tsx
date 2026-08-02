@@ -48,10 +48,7 @@ export function Avatar({ name, src, size = "md", className = "", ref, ...props }
           width={dim}
           height={dim}
           unoptimized
-          className={cn(
-            avatarVariants({ size: selectedSize }),
-            "border border-slate-200 dark:border-slate-700",
-          )}
+          className={cn(avatarVariants({ size: selectedSize }), "border border-border")}
         />
       </div>
     );
@@ -64,7 +61,7 @@ export function Avatar({ name, src, size = "md", className = "", ref, ...props }
       aria-label={name}
       className={cn(
         avatarVariants({ size: selectedSize }),
-        "bg-gradient-to-tr from-blue-600 to-indigo-600 font-bold text-white flex items-center justify-center shadow-sm",
+        "bg-primary font-bold text-primary-foreground flex items-center justify-center shadow-sm",
         className,
       )}
       {...props}

@@ -66,11 +66,7 @@ export function Section({
   return (
     <section
       ref={ref}
-      className={cn(
-        spacingClasses[spacing],
-        bordered && "border-b border-slate-200 dark:border-slate-800",
-        className,
-      )}
+      className={cn(spacingClasses[spacing], bordered && "border-b border-border", className)}
       {...props}
     />
   );
@@ -102,25 +98,21 @@ export function PageHeader({
     <div
       ref={ref}
       className={cn(
-        "flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800/80 mb-6",
+        "flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-border mb-6",
         className,
       )}
       {...props}
     >
       <div className="space-y-1.5">
-        {breadcrumbs && (
-          <div className="text-xs text-slate-500 dark:text-slate-400 mb-2">{breadcrumbs}</div>
-        )}
+        {breadcrumbs && <div className="text-xs text-muted-foreground mb-2">{breadcrumbs}</div>}
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white text-balance">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground text-balance">
             {title}
           </h1>
           {badge && <div>{badge}</div>}
         </div>
         {description && (
-          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
-            {description}
-          </p>
+          <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">{description}</p>
         )}
       </div>
       {actions && <div className="flex items-center gap-3 shrink-0 flex-wrap">{actions}</div>}

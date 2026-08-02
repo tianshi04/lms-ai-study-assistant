@@ -19,12 +19,12 @@ test.describe('Full System Blackbox - Admin Instructor Applications Moderation (
     await adminAppsPage.verifyPageLoaded();
 
     await adminAppsPage.filterByStatus('pending');
-    await expect(adminAppsPage.pendingTab).toHaveClass(/bg-blue-600/);
+    await expect(adminAppsPage.pendingTab).toHaveClass(/bg-primary/);
 
     await adminAppsPage.filterByStatus('approved');
-    await expect(adminAppsPage.approvedTab).toHaveClass(/bg-blue-600/);
+    await expect(adminAppsPage.approvedTab).toHaveClass(/bg-primary/);
 
     await adminAppsPage.filterByStatus('all');
-    await expect(adminAppsPage.allTab).toHaveClass(/bg-blue-600/);
+    await expect(adminAppsPage.allTab).toHaveClass(/bg-primary/);
   });
 });

@@ -127,27 +127,27 @@ export default function TAGradingPage() {
   };
 
   return (
-    <div className="w-full flex-1 bg-slate-50 dark:bg-slate-950 min-h-screen">
+    <div className="w-full flex-1 bg-background min-h-screen">
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
         {/* Header Navigation */}
-        <div className="flex items-center gap-3 text-xs font-semibold text-slate-500">
-          <Link href="/" className="hover:text-slate-900 dark:hover:text-white transition-colors">
+        <div className="flex items-center gap-3 text-xs font-semibold text-muted-foreground">
+          <Link href="/" className="hover:text-foreground transition-colors">
             Trang chủ
           </Link>
           <span>/</span>
-          <span className="text-sky-600 dark:text-sky-400">Trợ giảng - Chấm bài</span>
+          <span className="text-primary">Trợ giảng - Chấm bài</span>
         </div>
 
         {/* Title Banner */}
-        <div className="bg-gradient-to-r from-slate-900 via-sky-950 to-indigo-950 rounded-3xl p-8 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="bg-gradient-to-r from-primary to-primary-hover rounded-3xl p-8 text-primary-foreground shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-500/20 text-sky-300 border border-sky-500/30">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-primary-foreground/20 text-primary-foreground border border-primary-foreground/30">
               Hàng Chờ Chấm Bài Tự Luận (TA Grading Queue)
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-balance">
               Quản Lý Chấm Điểm & Kháng Nghị Bài Tập
             </h1>
-            <p className="text-sm text-slate-300 max-w-2xl">
+            <p className="text-sm text-primary-foreground/80 max-w-2xl">
               Chấm điểm bài luận, đánh giá thực hành và xem xét lại các đơn kháng nghị điểm số từ
               học viên.
             </p>
@@ -155,7 +155,7 @@ export default function TAGradingPage() {
         </div>
 
         {/* Filter Tabs & Stats */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
           <div className="flex flex-wrap items-center gap-2">
             {[
               { id: "ALL", label: "Tất cả bài nộp" },
@@ -168,8 +168,8 @@ export default function TAGradingPage() {
                 onClick={() => setFilterStatus(tab.id as typeof filterStatus)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   filterStatus === tab.id
-                    ? "bg-sky-600 text-white shadow-md shadow-sky-600/20"
-                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700"
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
               >
                 {tab.label}
@@ -177,22 +177,22 @@ export default function TAGradingPage() {
             ))}
           </div>
 
-          <span className="text-xs font-mono text-slate-500">
+          <span className="text-xs font-mono text-muted-foreground">
             Hiển thị: <strong>{filteredSubmissions.length}</strong> bài nộp
           </span>
         </div>
 
         {/* Submissions Table */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm">
+        <div className="bg-card border border-border rounded-3xl p-6 shadow-sm">
           {filteredSubmissions.length === 0 ? (
-            <div className="py-16 text-center text-slate-400 space-y-2">
+            <div className="py-16 text-center text-muted-foreground space-y-2">
               <p className="text-sm font-semibold">Không có bài nộp nào trong mục này</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 dark:border-slate-800 text-slate-400 uppercase tracking-wider font-bold">
+                  <tr className="border-b border-border text-muted-foreground uppercase tracking-wider font-bold">
                     <th className="py-3 px-4">Học viên</th>
                     <th className="py-3 px-4">Bài tập / Khóa học</th>
                     <th className="py-3 px-4">Thời gian nộp</th>
@@ -202,45 +202,42 @@ export default function TAGradingPage() {
                     <th className="py-3 px-4 text-right">Thao tác</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                <tbody className="divide-y divide-border">
                   {filteredSubmissions.map((sub) => (
-                    <tr
-                      key={sub.id}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
-                    >
+                    <tr key={sub.id} className="hover:bg-muted/50 transition-colors">
                       <td className="py-4 px-4">
-                        <div className="font-bold text-slate-900 dark:text-white">
-                          {sub.studentName}
-                        </div>
-                        <div className="text-[10px] text-slate-500 font-mono">
+                        <div className="font-bold text-foreground">{sub.studentName}</div>
+                        <div className="text-[10px] text-muted-foreground font-mono">
                           {sub.studentEmail}
                         </div>
                       </td>
                       <td className="py-4 px-4 max-w-xs">
-                        <div className="font-bold text-slate-900 dark:text-white truncate">
-                          {sub.itemTitle}
+                        <div className="font-bold text-foreground truncate">{sub.itemTitle}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">
+                          {sub.courseTitle}
                         </div>
-                        <div className="text-[10px] text-slate-500 truncate">{sub.courseTitle}</div>
                       </td>
-                      <td className="py-4 px-4 font-mono text-slate-500">{sub.submittedAt}</td>
-                      <td className="py-4 px-4 font-mono font-bold text-slate-700 dark:text-slate-300">
+                      <td className="py-4 px-4 font-mono text-muted-foreground">
+                        {sub.submittedAt}
+                      </td>
+                      <td className="py-4 px-4 font-mono font-bold text-foreground">
                         {sub.peerScore}%
                       </td>
                       <td className="py-4 px-4 font-mono font-bold">
                         {sub.taScore !== null ? (
-                          <span className="text-sky-600 dark:text-sky-400">{sub.taScore}%</span>
+                          <span className="text-primary">{sub.taScore}%</span>
                         ) : (
-                          <span className="text-slate-400 font-normal">Chưa chấm</span>
+                          <span className="text-muted-foreground font-normal">Chưa chấm</span>
                         )}
                       </td>
                       <td className="py-4 px-4">
                         <span
                           className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
                             sub.status === "GRADED"
-                              ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"
+                              ? "bg-success/10 text-success"
                               : sub.status === "APPEALED"
-                                ? "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 animate-pulse"
-                                : "bg-sky-100 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300"
+                                ? "bg-warning/10 text-warning animate-pulse"
+                                : "bg-info/10 text-info"
                           }`}
                         >
                           {sub.status === "GRADED"
@@ -253,7 +250,7 @@ export default function TAGradingPage() {
                       <td className="py-4 px-4 text-right">
                         <button
                           onClick={() => handleOpenGradeModal(sub)}
-                          className="px-3.5 py-1.5 rounded-xl bg-sky-50 dark:bg-sky-500/10 text-sky-600 dark:text-sky-400 font-bold hover:bg-sky-100 transition-colors cursor-pointer"
+                          className="px-3.5 py-1.5 rounded-xl bg-primary/10 text-primary font-bold hover:bg-primary/20 transition-colors cursor-pointer"
                         >
                           {sub.status === "GRADED" ? "Xem & Sửa điểm" : "Chấm điểm ngay"}
                         </button>
@@ -275,17 +272,17 @@ export default function TAGradingPage() {
         >
           {selectedSubmission && (
             <form onSubmit={handleGradingSubmit} className="space-y-6">
-              <div className="space-y-2 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+              <div className="space-y-2 p-4 rounded-2xl bg-muted border border-border">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                    <h3 className="font-bold text-sm text-foreground">
                       {selectedSubmission.itemTitle}
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Học viên: {selectedSubmission.studentName} ({selectedSubmission.studentEmail})
                     </p>
                   </div>
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700">
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-card text-foreground">
                     Điểm Peer gốc: {selectedSubmission.peerScore}%
                   </span>
                 </div>
@@ -293,17 +290,17 @@ export default function TAGradingPage() {
 
               {/* Submission Content Text */}
               <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Nội dung bài làm của học viên
                 </label>
-                <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-mono text-slate-800 dark:text-slate-200 leading-relaxed max-h-48 overflow-y-auto">
+                <div className="p-4 rounded-2xl bg-card border border-border text-xs font-mono text-foreground leading-relaxed max-h-48 overflow-y-auto">
                   {selectedSubmission.textContent}
                 </div>
               </div>
 
               {/* Input TA Score */}
               <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Điểm Trợ Giảng Chấm (Thang điểm 0 - 100%)
                 </label>
                 <div className="flex items-center gap-4">
@@ -313,10 +310,10 @@ export default function TAGradingPage() {
                     max={100}
                     value={inputScore}
                     onChange={(e) => setInputScore(Number(e.target.value))}
-                    className="w-32 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-bold text-lg text-sky-600 dark:text-sky-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                    className="w-32 px-4 py-2.5 rounded-xl border border-input bg-muted font-mono font-bold text-lg text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     required
                   />
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-muted-foreground">
                     {inputScore >= 80
                       ? "Đạt loại Giỏi"
                       : inputScore >= 60
@@ -328,7 +325,7 @@ export default function TAGradingPage() {
 
               {/* Feedback Note */}
               <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Nhận xét & Ghi chú hướng dẫn cho Học viên
                 </label>
                 <textarea
@@ -336,23 +333,23 @@ export default function TAGradingPage() {
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   placeholder="Nhập nhận xét chi tiết về bài làm, điểm mạnh và các điểm cần sửa đổi…"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                  className="w-full px-4 py-3 rounded-xl border border-input bg-muted text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
 
               {/* Actions */}
-              <div className="flex justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex justify-end gap-3 pt-2 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setSelectedSubmission(null)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 transition-colors"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-6 py-2.5 rounded-xl text-xs font-bold bg-sky-600 text-white shadow-lg shadow-sky-600/30 hover:bg-sky-500 transition-all disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl text-xs font-bold bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:bg-primary-hover transition-all disabled:opacity-50"
                 >
                   <span aria-live="polite">
                     {submitting ? "Đang cập nhật…" : "Lưu & Xác Nhận Điểm Trợ Giảng"}

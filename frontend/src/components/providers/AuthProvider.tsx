@@ -40,17 +40,47 @@ interface AuthContextType extends UserAuth {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const EMPTY_AUTH: UserAuth = {
+  userId: null,
+  userName: null,
+  userEmail: null,
+  userRole: null,
+  systemRole: null,
+};
+
+/**
+ * Clears user session data and transient application state from localStorage
+ * while preserving global non-sensitive UI preferences (e.g. theme, language).
+ */
+function clearSessionStorageData() {
+  if (typeof window === "undefined") return;
+
+  const PERSISTENT_PREFERENCE_KEYS = new Set(["theme", "language"]);
+  const keysToRemove: string[] = [];
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && !PERSISTENT_PREFERENCE_KEYS.has(key)) {
+      keysToRemove.push(key);
+    }
+  }
+
+  keysToRemove.forEach((key) => localStorage.removeItem(key));
+}
+
 export function AuthProvider({
   children,
-  initialAuth,
+  initialAuth = EMPTY_AUTH,
 }: {
   children: React.ReactNode;
-  initialAuth: UserAuth;
+  initialAuth?: UserAuth;
 }) {
   const [auth, setAuthState] = useState<UserAuth>(initialAuth);
 
   useEffect(() => {
-    setAuthState(initialAuth);
+    if (initialAuth.userId || initialAuth.userRole) {
+      setAuthState(initialAuth);
+    }
   }, [
     initialAuth.userId,
     initialAuth.userEmail,
@@ -65,9 +95,7 @@ export function AuthProvider({
 
   const logout = useCallback(async () => {
     await logoutAction();
-    if (typeof window !== "undefined") {
-      localStorage.clear();
-    }
+    clearSessionStorageData();
     setAuthState({
       userId: null,
       userName: null,

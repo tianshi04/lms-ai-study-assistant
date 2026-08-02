@@ -9,6 +9,15 @@ import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
 import { useToast } from "@/components/ui/Toast";
+import { revalidateCoursesCache } from "@/app/actions/revalidate";
+import { Building2 } from "lucide-react";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 
 const emptySubscribe = () => () => {};
 
@@ -116,6 +125,7 @@ export default function NewCoursePage() {
       });
 
       toast.success("Khởi tạo khóa học mới thành công!");
+      await revalidateCoursesCache(res.course?.id);
       if (res.course?.id) {
         router.push(`/instructor/courses/${res.course.id}`);
       } else {
@@ -131,86 +141,73 @@ export default function NewCoursePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-10 px-4 sm:px-6 lg:px-8 transition-colors">
+    <div className="min-h-screen bg-background py-10 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header Breadcrumbs & Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <Link href="/instructor/courses" className="hover:underline">
                 Giao diện Giảng viên
               </Link>
               <span>/</span>
-              <span className="font-semibold text-slate-700 dark:text-slate-200">
-                Soạn khóa học mới
-              </span>
+              <span className="font-semibold text-foreground">Soạn khóa học mới</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight text-balance">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight text-balance">
               Khởi Tạo Khóa Học Mới
             </h1>
           </div>
 
           <Link
             href="/instructor/courses"
-            className="self-start sm:self-auto px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="self-start sm:self-auto px-4 py-2 rounded-xl bg-card border border-border text-xs font-semibold text-foreground hover:bg-muted transition-colors"
           >
             ← Quay lại Danh sách
           </Link>
         </div>
 
         {/* Live Preview Card */}
-        <div className="bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden space-y-4">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="bg-card text-foreground border border-border rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden space-y-4">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="flex items-center justify-between">
-            <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold uppercase tracking-wider border border-blue-400/20">
+            <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider border border-primary/20">
               Live Badge Preview
             </span>
-            <span className="text-xs text-slate-400 font-mono">Bản nháp DRAFT</span>
+            <span className="text-xs text-muted-foreground font-mono">Bản nháp DRAFT</span>
           </div>
 
           <div className="space-y-2">
             {/* Offered by Partner Badge */}
-            <div className="flex items-center gap-2 text-xs text-blue-200 font-semibold">
-              <svg
-                className="w-4 h-4 text-blue-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v12a2 2 0 01-2 2"
-                />
-              </svg>
+            <div className="flex items-center gap-2 text-xs text-primary font-semibold">
+              <Building2 className="w-4 h-4 text-primary" aria-hidden="true" />
               <span>
                 Offered by{" "}
-                <strong className="text-white underline decoration-blue-400 decoration-2">
+                <strong className="text-foreground underline decoration-primary decoration-2">
                   {partnerDisplayName}
                 </strong>
               </span>
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               {title.trim() || "Tiêu đề Khóa học của bạn sẽ hiển thị ở đây…"}
             </h2>
           </div>
 
           {/* Taught by Instructor */}
-          <div className="pt-4 border-t border-white/10 flex items-center gap-3">
+          <div className="pt-4 border-t border-border flex items-center gap-3">
             <Image
               src={userAvatar}
               alt={userName}
               width={40}
               height={40}
               unoptimized
-              className="w-10 h-10 rounded-full border border-white/20 bg-slate-800 object-cover"
+              className="w-10 h-10 rounded-full border border-border bg-muted object-cover"
             />
             <div>
-              <p className="text-xs text-slate-300 font-medium">Taught by</p>
-              <p className="text-sm font-bold text-white">
-                {userName} <span className="text-xs font-normal text-slate-400">({userTitle})</span>
+              <p className="text-xs text-muted-foreground font-medium">Taught by</p>
+              <p className="text-sm font-bold text-foreground">
+                {userName}{" "}
+                <span className="text-xs font-normal text-muted-foreground">({userTitle})</span>
               </p>
             </div>
           </div>
@@ -219,35 +216,48 @@ export default function NewCoursePage() {
         {/* Main Form */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-lg border border-slate-200 dark:border-slate-800 space-y-6"
+          className="bg-card rounded-3xl p-6 sm:p-8 shadow-lg border border-border space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Organization / Partner Scoping Selection */}
             <div className="md:col-span-2 space-y-2">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Partner / Tổ Chức Đại Diện Bảo Chứng <span className="text-rose-500">*</span>
+              <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                Partner / Tổ Chức Đại Diện Bảo Chứng <span className="text-destructive">*</span>
               </label>
               {loadingOrgs ? (
-                <div className="h-10 bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />
+                <div className="h-10 bg-muted rounded-xl animate-pulse" />
               ) : (
-                <select
+                <Select
                   value={selectedOrgId}
-                  onChange={(e) => setSelectedOrgId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                  onValueChange={(val) => {
+                    if (val) setSelectedOrgId(val as string);
+                  }}
                 >
-                  <option value="partner_community">
-                    🌐 Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)
-                  </option>
-                  {partners
-                    .filter((p) => p.id !== "partner_community")
-                    .map((p) => (
-                      <option key={p.id} value={p.id}>
-                        🏛️ {p.name} ({p.slug})
-                      </option>
-                    ))}
-                </select>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn Partner / Tổ chức">
+                      {selectedOrgId === "partner_community"
+                        ? "🌐 Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)"
+                        : (() => {
+                            const p = partners.find((p) => p.id === selectedOrgId);
+                            return p ? `🏛️ ${p.name} (${p.slug})` : selectedOrgId;
+                          })()}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="partner_community">
+                      {"🌐 Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)"}
+                    </SelectItem>
+                    {partners
+                      .filter((p) => p.id !== "partner_community")
+                      .map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {`🏛️ ${p.name} (${p.slug})`}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               )}
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 100% khóa học bắt buộc phải gắn liền với 1 Partner Organization đại diện bảo chứng.
                 Nếu bạn là giảng viên tự do, hệ thống tự động gán dưới tên bảo chứng{" "}
                 <strong>Coursera Project Network</strong>.
@@ -256,8 +266,8 @@ export default function NewCoursePage() {
 
             {/* Course Title */}
             <div className="space-y-2 md:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Tên Khóa Học <span className="text-rose-500">*</span>
+              <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                Tên Khóa Học <span className="text-destructive">*</span>
               </label>
               <input
                 type="text"
@@ -265,17 +275,17 @@ export default function NewCoursePage() {
                 value={title}
                 onChange={handleTitleChange}
                 placeholder="Ví dụ: Lập trình Python Căn Bản Cho Người Mới Bắt Đầu"
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-card border border-input text-sm font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               />
             </div>
 
             {/* Course Slug */}
             <div className="space-y-2 md:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                Đường dẫn tĩnh (Slug) <span className="text-rose-500">*</span>
+              <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                Đường dẫn tĩnh (Slug) <span className="text-destructive">*</span>
               </label>
-              <div className="flex items-center rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden">
-                <span className="px-4 py-3 text-xs text-slate-400 bg-slate-100 dark:bg-slate-800/80 border-r border-slate-200 dark:border-slate-700">
+              <div className="flex items-center rounded-xl bg-card border border-input overflow-hidden">
+                <span className="px-4 py-3 text-xs text-muted-foreground bg-muted border-r border-border">
                   /courses/
                 </span>
                 <input
@@ -284,48 +294,68 @@ export default function NewCoursePage() {
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   placeholder="lap-trinh-python-can-ban"
-                  className="w-full px-4 py-3 bg-transparent text-sm font-mono text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="w-full px-4 py-3 bg-transparent text-sm font-mono text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
             </div>
 
             {/* Subject */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
                 Lĩnh Vực Chuyên Môn
               </label>
-              <select
+              <Select
                 value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                onValueChange={(val) => {
+                  if (val) setSubject(val as string);
+                }}
               >
-                <option value="Khoa học Máy tính">Khoa học Máy tính</option>
-                <option value="Trí tuệ Nhân tạo & AI">Trí tuệ Nhân tạo & AI</option>
-                <option value="Khoa học Dữ liệu">Khoa học Dữ liệu</option>
-                <option value="Kinh doanh & Quản trị">Kinh doanh & Quản trị</option>
-                <option value="Thiết kế & Đồ họa">Thiết kế & Đồ họa</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn lĩnh vực">{subject}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Khoa học Máy tính">{"Khoa học Máy tính"}</SelectItem>
+                  <SelectItem value="Trí tuệ Nhân tạo & AI">{"Trí tuệ Nhân tạo & AI"}</SelectItem>
+                  <SelectItem value="Khoa học Dữ liệu">{"Khoa học Dữ liệu"}</SelectItem>
+                  <SelectItem value="Kinh doanh & Quản trị">{"Kinh doanh & Quản trị"}</SelectItem>
+                  <SelectItem value="Thiết kế & Đồ họa">{"Thiết kế & Đồ họa"}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Level */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
                 Trình Độ Yêu Cầu
               </label>
-              <select
+              <Select
                 value={level}
-                onChange={(e) => setLevel(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-semibold text-slate-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                onValueChange={(val) => {
+                  if (val) setLevel(val as string);
+                }}
               >
-                <option value="Sơ cấp">Sơ cấp (Beginner)</option>
-                <option value="Trung cấp">Trung cấp (Intermediate)</option>
-                <option value="Nâng cao">Nâng cao (Advanced)</option>
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn trình độ">
+                    {level === "Sơ cấp"
+                      ? "Sơ cấp (Beginner)"
+                      : level === "Trung cấp"
+                        ? "Trung cấp (Intermediate)"
+                        : level === "Nâng cao"
+                          ? "Nâng cao (Advanced)"
+                          : level}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Sơ cấp">{"Sơ cấp (Beginner)"}</SelectItem>
+                  <SelectItem value="Trung cấp">{"Trung cấp (Intermediate)"}</SelectItem>
+                  <SelectItem value="Nâng cao">{"Nâng cao (Advanced)"}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Description */}
             <div className="space-y-2 md:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
                 Mô Tả Tổng Quan Khóa Học
               </label>
               <textarea
@@ -333,17 +363,17 @@ export default function NewCoursePage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Tóm tắt những kiến thức trọng tâm, mục tiêu đạt được sau khóa học…"
-                className="w-full px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                className="w-full px-4 py-3 rounded-xl bg-card border border-input text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               />
             </div>
 
             {/* Financial Aid Switch */}
-            <div className="md:col-span-2 p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 flex items-center justify-between">
+            <div className="md:col-span-2 p-4 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-between">
               <div>
-                <span className="text-sm font-bold text-slate-900 dark:text-white block">
+                <span className="text-sm font-bold text-foreground block">
                   Cho phép Học viên Nộp Đơn Hỗ Trợ Tài Chính (Financial Aid)
                 </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400">
+                <span className="text-xs text-muted-foreground">
                   Học viên có hoàn cảnh khó khăn có thể viết bài luận xin cấp học bổng theo học khóa
                   học này.
                 </span>
@@ -352,27 +382,27 @@ export default function NewCoursePage() {
                 type="checkbox"
                 checked={financialAidEnabled}
                 onChange={(e) => setFinancialAidEnabled(e.target.checked)}
-                className="w-5 h-5 text-blue-600 rounded border-slate-300 focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
+                className="w-5 h-5 text-primary rounded border-input focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
               />
             </div>
           </div>
 
           {/* Submit Actions */}
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+          <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
             <Link
               href="/instructor/courses"
-              className="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 transition-colors"
+              className="px-5 py-2.5 rounded-xl bg-muted text-xs font-bold text-foreground hover:bg-muted/80 transition-colors"
             >
               Hủy bỏ
             </Link>
             <button
               type="submit"
               disabled={submitting}
-              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-blue-500/25 transition-all flex items-center gap-2 disabled:opacity-50"
+              className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold shadow-lg shadow-primary/25 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               {submitting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
                   <span aria-live="polite">Đang khởi tạo…</span>
                 </>
               ) : (

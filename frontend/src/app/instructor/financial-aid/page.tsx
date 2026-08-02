@@ -9,6 +9,7 @@ import {
   type FinancialAidApplication,
 } from "@/gen/certificate/v1/certificate_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { ArrowLeft, Check, X, AlertTriangle, FileText } from "lucide-react";
 
 const emptySubscribe = () => () => {};
 
@@ -114,51 +115,39 @@ export default function InstructorFinancialAidPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors">
+    <div className="min-h-screen bg-background text-foreground flex flex-col transition-colors">
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Breadcrumb & Navigation */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-            <Link
-              href="/instructor/courses"
-              className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            >
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Link href="/instructor/courses" className="hover:text-primary transition-colors">
               Giảng viên
             </Link>
             <span>/</span>
-            <span className="font-semibold text-slate-800 dark:text-slate-200">
-              Xét duyệt Hỗ trợ tài chính
-            </span>
+            <span className="font-semibold text-foreground">Xét duyệt Hỗ trợ tài chính</span>
           </div>
 
           <Link
             href="/instructor/courses"
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 border border-border"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-              />
-            </svg>
+            <ArrowLeft className="w-4 h-4" />
             <span>Quản lý Khóa học</span>
           </Link>
         </div>
 
         {/* Header Title Banner */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 sm:p-8 text-white shadow-xl shadow-blue-500/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 text-foreground shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-white/20 backdrop-blur-md uppercase tracking-wider text-blue-100">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
                 Instructor Portal
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-balance">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-balance text-foreground">
               Xét duyệt Đơn Hỗ trợ Tài chính (Financial Aid)
             </h1>
-            <p className="text-sm text-blue-100/90 max-w-2xl">
+            <p className="text-sm text-muted-foreground max-w-2xl">
               Quản lý và thẩm định các bài luận xin học bổng 150 từ của học viên. Duyệt hoặc từ chối
               để cấp quyền truy cập khóa học trả phí.
             </p>
@@ -170,70 +159,32 @@ export default function InstructorFinancialAidPage() {
           <div
             className={`p-4 rounded-xl text-sm font-semibold flex items-center justify-between shadow-md transition-all ${
               toastMessage.type === "success"
-                ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20"
-                : "bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/20"
+                ? "bg-success/10 text-success border border-success/30"
+                : "bg-destructive/10 text-destructive border border-destructive/30"
             }`}
           >
             <div className="flex items-center gap-2">
               {toastMessage.type === "success" ? (
-                <svg
-                  className="w-5 h-5 text-emerald-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
+                <Check className="w-5 h-5 text-success" />
               ) : (
-                <svg
-                  className="w-5 h-5 text-rose-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <X className="w-5 h-5 text-destructive" />
               )}
               <span>{toastMessage.text}</span>
             </div>
             <button
               onClick={() => setToastMessage(null)}
-              className="p-1 rounded-md opacity-60 hover:opacity-100 transition-opacity"
+              className="p-1 rounded-md opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <X className="w-4 h-4" />
             </button>
           </div>
         )}
 
         {/* Role Access Guard Alert */}
         {isMounted && !isInstructorOrAdmin && (
-          <div className="p-6 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-300">
+          <div className="p-6 rounded-2xl bg-warning/10 border border-warning/30 text-warning">
             <h2 className="font-bold text-base flex items-center gap-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
+              <AlertTriangle className="w-5 h-5" />
               Quyền truy cập bị hạn chế
             </h2>
             <p className="text-sm mt-1">
@@ -244,7 +195,7 @@ export default function InstructorFinancialAidPage() {
         )}
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3 overflow-x-auto">
+        <div className="flex items-center gap-2 border-b border-border pb-3 overflow-x-auto">
           {(["ALL", "PENDING", "APPROVED", "REJECTED"] as const).map((tab) => {
             const labels = {
               ALL: "Tất cả đơn",
@@ -258,8 +209,8 @@ export default function InstructorFinancialAidPage() {
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                   activeTab === tab
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                    : "bg-card text-muted-foreground hover:text-foreground border border-border"
                 }`}
               >
                 {labels[tab]}
@@ -271,30 +222,18 @@ export default function InstructorFinancialAidPage() {
         {/* Application Cards List */}
         {loading ? (
           <div className="py-16 text-center space-y-3">
-            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-            <p aria-live="polite" className="text-sm font-medium text-slate-500">
+            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+            <p aria-live="polite" className="text-sm font-medium text-muted-foreground">
               Đang tải danh sách đơn Hỗ trợ tài chính…
             </p>
           </div>
         ) : filteredApps.length === 0 ? (
-          <div className="py-16 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-8">
-            <svg
-              className="w-12 h-12 mx-auto text-slate-400 mb-3"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            <p className="text-base font-bold text-slate-700 dark:text-slate-300">
+          <div className="py-16 text-center bg-card rounded-2xl border border-border p-8">
+            <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+            <p className="text-base font-bold text-foreground">
               Không có đơn nộp nào trong danh mục này
             </p>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Các đơn Hỗ trợ tài chính mới từ học viên sẽ xuất hiện ở đây.
             </p>
           </div>
@@ -303,46 +242,41 @@ export default function InstructorFinancialAidPage() {
             {filteredApps.map((app) => (
               <div
                 key={app.id}
-                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm hover:shadow-md transition-all space-y-4"
+                className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-md transition-all space-y-4 text-foreground"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                      <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
                         ID: {app.id}
                       </span>
-                      <span className="text-xs font-semibold text-slate-500">
-                        Khóa học:{" "}
-                        <span className="font-bold text-slate-800 dark:text-slate-200">
-                          {app.courseId}
-                        </span>
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        Khóa học: <span className="font-bold text-foreground">{app.courseId}</span>
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Học viên (User ID):{" "}
-                      <span className="font-mono text-slate-700 dark:text-slate-300">
-                        {app.userId}
-                      </span>
+                      <span className="font-mono text-foreground">{app.userId}</span>
                     </p>
                   </div>
 
                   <div className="flex items-center gap-3">
                     {/* Status Badge */}
                     {app.status === "PENDING" && (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/30 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-warning animate-pulse" />
                         Chờ duyệt ({app.reviewDeadlineDaysLeft} ngày còn lại)
                       </span>
                     )}
                     {app.status === "APPROVED" && (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-success/10 text-success border border-success/30 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-success" />
                         Đã Phê Duyệt
                       </span>
                     )}
                     {app.status === "REJECTED" && (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-rose-500" />
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-destructive/10 text-destructive border border-destructive/30 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-destructive" />
                         Đã Từ Chối
                       </span>
                     )}
@@ -351,10 +285,10 @@ export default function InstructorFinancialAidPage() {
 
                 {/* Essay Content Section */}
                 <div className="space-y-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Bài luận xin học bổng 150 từ (Financial Aid Essay)
                   </h3>
-                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-sans whitespace-pre-wrap">
+                  <div className="p-4 rounded-xl bg-muted/40 border border-border text-sm text-foreground leading-relaxed font-sans whitespace-pre-wrap">
                     {app.essay150Words}
                   </div>
                 </div>
@@ -365,41 +299,17 @@ export default function InstructorFinancialAidPage() {
                     <button
                       onClick={() => handleReview(app.id, false)}
                       disabled={processingId === app.id}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-100 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-destructive bg-destructive/10 border border-destructive/30 hover:bg-destructive/20 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      <X className="w-4 h-4" />
                       <span>{processingId === app.id ? "Đang xử lý…" : "Từ chối đơn"}</span>
                     </button>
                     <button
                       onClick={() => handleReview(app.id, true)}
                       disabled={processingId === app.id}
-                      className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      className="px-5 py-2 rounded-xl text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover shadow-md shadow-primary/20 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                     >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      <Check className="w-4 h-4" />
                       <span>{processingId === app.id ? "Đang xử lý…" : "Phê duyệt đơn"}</span>
                     </button>
                   </div>

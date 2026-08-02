@@ -4,12 +4,12 @@ export function CourseGridSkeleton() {
       {[1, 2, 3, 4, 5, 6].map((n) => (
         <div
           key={n}
-          className="bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-6 animate-pulse shadow-sm"
+          className="bg-card border border-border rounded-2xl p-6 animate-pulse shadow-sm"
         >
-          <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4 mb-4" />
-          <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2 mb-6" />
-          <div className="h-16 bg-slate-100 dark:bg-slate-800/60 rounded mb-6" />
-          <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="h-6 bg-muted rounded w-3/4 mb-4" />
+          <div className="h-4 bg-muted rounded w-1/2 mb-6" />
+          <div className="h-16 bg-muted rounded mb-6" />
+          <div className="h-10 bg-muted rounded" />
         </div>
       ))}
     </div>

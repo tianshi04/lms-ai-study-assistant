@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { decodeJwtPayload, normalizeUserRole } from "@/lib/jwt";
 
 // Routes that require authentication
 const PROTECTED_ROUTES = [
@@ -13,68 +14,21 @@ const PROTECTED_ROUTES = [
 const INSTRUCTOR_ROUTES = ["/instructor"];
 const ADMIN_ROUTES = ["/admin"];
 
-function extractSystemRoleFromToken(token?: string): string | null {
-  if (!token) return null;
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const base64Url = parts[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join(""),
-    );
-    const payload = JSON.parse(jsonPayload);
-    return payload.system_role ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function extractRoleFromToken(token?: string): number | null {
-  if (!token) return null;
-  try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const base64Url = parts[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join(""),
-    );
-    const payload = JSON.parse(jsonPayload);
-
-    const roleMap: Record<string, number> = {
-      USER_ROLE_LEARNER: 1,
-      LEARNER: 1,
-      USER_ROLE_INSTRUCTOR: 2,
-      INSTRUCTOR: 2,
-      USER_ROLE_TA: 3,
-      TA: 3,
-    };
-    if (typeof payload.role === "number") return payload.role;
-    if (typeof payload.role === "string") {
-      return roleMap[payload.role.toUpperCase()] ?? (parseInt(payload.role, 10) || null);
-    }
-  } catch {
-    return null;
-  }
-  return null;
-}
-
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("access_token")?.value;
-  const roleFromJwt = extractRoleFromToken(token);
-  const systemRoleFromJwt = extractSystemRoleFromToken(token);
-  const roleStr = request.cookies.get("user_role")?.value;
-  const role = roleFromJwt ?? (roleStr ? parseInt(roleStr, 10) : null);
+  const payload = token ? decodeJwtPayload(token) : null;
+  const roleStr = payload
+    ? normalizeUserRole(payload.role)
+    : request.cookies.get("user_role")?.value;
+  const role = roleStr ? parseInt(roleStr, 10) : null;
   const isSuperAdmin =
-    systemRoleFromJwt === "SUPER_ADMIN" || systemRoleFromJwt === "SYSTEM_ROLE_SUPER_ADMIN";
+    payload?.system_role === "SUPER_ADMIN" || payload?.system_role === "SYSTEM_ROLE_SUPER_ADMIN";
+
+  const requestHeaders = new Headers(request.headers);
+  if (token && !requestHeaders.has("authorization")) {
+    requestHeaders.set("authorization", `Bearer ${token}`);
+  }
 
   // 1. Check Protected User Routes
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
@@ -111,7 +65,11 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {

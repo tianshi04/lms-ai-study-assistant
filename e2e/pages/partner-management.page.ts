@@ -157,8 +157,8 @@ export class PartnerShowcasePage {
     this.partnerNameHeading = page.locator('h1').first();
     this.partnerLogo = page.locator('img[alt*="Logo"], img[alt*="Partner"]').first();
     this.partnerBanner = page.locator('img[alt*="Banner"]').first();
-    this.signerName = page.locator('p.font-bold.text-slate-900, p.font-bold.text-white').first();
-    this.signerTitle = page.locator('p.text-xs.text-slate-500').first();
+    this.signerName = page.locator('p.font-bold.text-foreground, p.font-bold.text-slate-900, p.font-bold.text-white').first();
+    this.signerTitle = page.locator('p.text-xs.text-muted-foreground, p.text-xs.text-slate-500').first();
     this.signatureImage = page.locator('img[alt*="Chữ ký"]').first();
     this.coursesList = page.locator('h2:has-text("Các khóa học do")');
   }

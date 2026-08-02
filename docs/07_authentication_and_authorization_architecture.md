@@ -12,12 +12,31 @@ Hệ thống áp dụng mô hình **Hybrid PBAC (Permission-Based Access Control
   * **AuthN**: Đăng nhập, verify JWT Access Token, trích xuất `user_id` và `system_role`.
   * **AuthZ**: Kiểm tra quyền truy cập tài nguyên dựa trên ngữ cảnh Tổ chức (`active_org_id`) và tập hợp Quyền hạn (`permissions`).
 * **Mô hình BFF (Backend For Frontend) & Bảo mật HttpOnly Cookie**:
-  * **Browser ➔ Backend (ConnectRPC)**: Browser tự động gửi `HttpOnly` cookie (`access_token`) bằng `credentials: "include"`. Tuyệt đối không lưu token trong JavaScript, `localStorage` hay `document.cookie` (chống lỗ hổng XSS).
-  * **Next.js Server ➔ Backend (SSR)**: Trích xuất `access_token` từ Cookie context và chuyển đổi thành header `Authorization: Bearer <token>` khi thực hiện lệnh gọi ConnectRPC từ server (Server Components).
+  * **Browser ➔ BFF Gateway (Client-side)**: Trình duyệt tự động gửi `HttpOnly` cookie (`access_token`) bằng `credentials: "include"`. Tuyệt đối không lưu token trong JavaScript, `localStorage` hay `document.cookie` (chống lỗ hổng XSS).
+  * **Next.js Edge Proxy (`src/proxy.ts`)**: Đóng vai trò làm tầng chuyển tiếp bảo mật. Khi request từ trình duyệt đi qua tuyến `/api/rpc/:path*`, Next.js Proxy tự động đọc Cookie `access_token`, chuyển đổi thành header `Authorization: Bearer <token>` và proxy nguyên vẹn tới Backend Python (Port 8000) qua Next.js Native `rewrites()`.
+  * **Next.js Server ➔ Backend (SSR - `server_connect_client.ts`)**: Trích xuất `access_token` từ `cookies()` context và tự động đính kèm header `Authorization: Bearer <token>` khi thực hiện lệnh gọi ConnectRPC từ Server Components.
   * **Server Actions (BFF Gateway)**: Quản lý đăng nhập (`loginAction`), làm mới token (`refreshSessionAction`) và đăng xuất (`logoutAction`), thiết lập cookie `HttpOnly; Secure; SameSite=Lax`.
 * **Backend Token Resolver Chain (Strategy Pattern)**:
-  * Backend hỗ trợ trích xuất JWT thông qua chuỗi chiến lược `TokenResolverChain` (`backend/src/shared/infrastructure/auth/token_resolvers.py`): ưu tiên `BearerTokenResolver` (SSR/Mobile/Third-party) và `CookieTokenResolver` (Browser Direct).
+  * Backend hỗ trợ trích xuất JWT thông qua chuỗi chiến lược `TokenResolverChain` (`backend/src/shared/infrastructure/auth/token_resolvers.py`): ưu tiên `BearerTokenResolver` (SSR/Proxy/Mobile) và `CookieTokenResolver` (Fallback).
 * **Không phụ thuộc thư viện phân quyền bên ngoài**: Triển khai 100% bằng thư viện chuẩn Python (`contextvars`, `dataclasses`) và tính năng có sẵn của `SQLAlchemy 2.0`.
+
+### 1.1. Luồng truyền nhận Token qua Tầng BFF Proxy (Sequence Diagram)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Browser as Trình duyệt Web (Client-side)
+    participant Proxy as Next.js 16 Edge Proxy (src/proxy.ts)
+    participant Rewrite as Next.js Rewrites (next.config.ts)
+    participant BE as Backend Python (Port 8000)
+
+    Browser->>Proxy: 1. POST /api/rpc/learning... (Kèm Cookie: access_token=...)
+    Note over Proxy: Đọc Cookie access_token<br/>Chèn Header: Authorization: Bearer <token>
+    Proxy->>Rewrite: 2. Forward request với Headers mới
+    Rewrite->>BE: 3. Forward sang http://127.0.0.1:8000/learning...
+    Note over BE: AuthInterceptor giải mã<br/>BearerTokenResolver trích xuất JWT payload
+    BE-->>Browser: 4. Trả về kết quả 200 OK (ConnectRPC Response)
+```
 
 ---
 
@@ -146,23 +165,7 @@ def apply_organization_scope(stmt: Select, model_cls: Any, ctx: Optional[Current
 
 ---
 
-## 6. Yêu Cầu Nghiệp Vụ Chuyển Đổi (Business Migration Requirements)
-
-### A. Định hướng Nghiệp vụ
-Loại bỏ hoàn toàn khái niệm vai trò quản trị viên đối tác ở cấp độ tài khoản toàn cục (`Partner Admin`), chuyển dịch 100% việc quản trị tổ chức về vai trò **Quản trị viên Tổ chức (`Organization Admin`)** theo Ngữ cảnh Tổ chức (`Organization Context`).
-
-### B. Danh mục Yêu cầu Nghiệp vụ cần Thực hiện (Business TODO List)
-1. **[BR-MIGRATION-01] Loại bỏ Vai trò Quản trị viên Toàn cục của Đối tác**:
-   * Hệ thống không cấp vai trò quản trị đối tác ở cấp độ tài khoản toàn sàn. Tách biệt hoàn toàn giữa định danh cá nhân người dùng và chức vụ quản lý trong từng tổ chức.
-2. **[BR-MIGRATION-02] Chuyển đổi Quyền Quản trị về Cấp Tổ chức**:
-   * Chuyển toàn bộ tài khoản đang quản lý đối tác sang vai trò **Quản trị viên Tổ chức (`Organization Admin`)** thuộc Tổ chức tương ứng.
-   * Đảm bảo giữ nguyên các quyền hạn nghiệp vụ: Quản lý thành viên, Quản lý suất học Enterprise, Quản lý danh mục khóa học và Cài đặt thông tin tổ chức.
-3. **[BR-MIGRATION-03] Chuẩn hóa Phân quyền 3 Vai trò Tầng Tổ chức**:
-   * Áp dụng thống nhất mô hình 3 vai trò cấp Tổ chức trên toàn hệ thống: **Quản trị viên Tổ chức (`Organization Admin`)**, **Giảng viên Tổ chức (`Organization Instructor`)**, và **Trợ giảng Tổ chức (`Teaching Assistant`)**.
-
----
-
-## 7. Ranh giới Thẩm quyền Xét duyệt (Single-Tenant Authorization Scope Boundary)
+## 6. Ranh giới Thẩm quyền Xét duyệt (Single-Tenant Authorization Scope Boundary)
 
 * **Phân định Rõ ràng giữa Super Admin & Organization Admin**:
   * 👑 **Super Admin (Platform Admin)**: Sở hữu thẩm quyền toàn sàn (Platform-wide Authority). Thực hiện thẩm định và phê duyệt các yêu cầu/đơn đăng ký toàn hệ thống (VD: Đơn đăng ký Giảng viên cá nhân `SubmitInstructorApplication`, Đơn Hỗ trợ Tài chính `FinancialAidApplication`, Khởi tạo Partner B2B mới).

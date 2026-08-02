@@ -5,6 +5,16 @@ import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { HonorCodeModal } from "./HonorCodeModal";
 import { useAuth } from "@/components/providers/AuthProvider";
+import {
+  CheckCircle2,
+  AlertCircle,
+  AlertTriangle,
+  Check,
+  ShieldCheck,
+  Clock,
+  X,
+  Send,
+} from "lucide-react";
 
 interface QuizSessionQuestionOption {
   optionIndex: number;
@@ -248,10 +258,10 @@ export function GradedQuizRunner({
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary">
           <span className="sr-only">Đang tải...</span>
         </div>
-        <p aria-live="polite" className="text-sm text-slate-500 font-semibold">
+        <p aria-live="polite" className="text-sm text-muted-foreground font-semibold">
           Đang tạo phiên làm bài và tải câu hỏi…
         </p>
       </div>
@@ -267,38 +277,14 @@ export function GradedQuizRunner({
         <div
           className={`max-w-4xl mx-auto p-8 rounded-2xl text-center space-y-4 shadow-sm border ${
             isPassed
-              ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50 text-emerald-950 dark:text-emerald-200"
-              : "bg-rose-50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/50 text-rose-950 dark:text-rose-200"
+              ? "bg-success/10 border-success/30 text-success"
+              : "bg-destructive/10 border-destructive/30 text-destructive"
           }`}
         >
           {isPassed ? (
-            <svg
-              className="w-12 h-12 text-emerald-500 mx-auto"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            <CheckCircle2 className="w-12 h-12 text-success mx-auto" />
           ) : (
-            <svg
-              className="w-12 h-12 text-rose-500 mx-auto"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 15v2m0-8v6m0 4h.01M3 12a9 9 0 1118 0 9 9 0 01-18 0z"
-              />
-            </svg>
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
           )}
           <h3 className="text-lg font-bold">
             {isPassed ? "Bài Thi Đã Hoàn Thành" : "Bài Thi Bị Khóa"}
@@ -309,22 +295,10 @@ export function GradedQuizRunner({
     }
 
     return (
-      <div className="max-w-4xl mx-auto p-8 rounded-2xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 text-rose-950 dark:text-rose-200 text-center space-y-3 shadow-xs">
-        <svg
-          className="w-10 h-10 text-rose-500 mx-auto"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-          />
-        </svg>
+      <div className="max-w-4xl mx-auto p-8 rounded-2xl bg-destructive/10 border border-destructive/30 text-destructive text-center space-y-3 shadow-xs">
+        <AlertTriangle className="w-10 h-10 text-destructive mx-auto" />
         <p className="text-sm font-bold">{error}</p>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-muted-foreground">
           Vui lòng liên hệ giảng viên hoặc thiết lập cấu hình Ma trận đề thi cho bài thi này.
         </p>
       </div>
@@ -333,8 +307,8 @@ export function GradedQuizRunner({
 
   if (questions.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto p-8 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-center space-y-3">
-        <p className="text-slate-500 text-sm font-medium">
+      <div className="max-w-4xl mx-auto p-8 rounded-2xl border border-dashed border-border text-center space-y-3">
+        <p className="text-muted-foreground text-sm font-medium">
           Kho đề thi chưa có câu hỏi nào hoặc thiết lập không khớp.
         </p>
       </div>
@@ -342,46 +316,38 @@ export function GradedQuizRunner({
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+    <div className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 bg-card border border-border rounded-2xl shadow-sm">
       {/* Header Info */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-5">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
           <div className="flex items-center gap-2">
             {isPreviewMode ? (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-900/50">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
                 CHẾ ĐỘ XEM TRƯỚC (PREVIEW)
               </span>
             ) : (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20">
                 BÀI THI CÓ TÍNH ĐIỂM
               </span>
             )}
-            <span className="text-xs text-slate-400 tabular-nums">
+            <span className="text-xs text-muted-foreground tabular-nums">
               Điểm đạt: {passingThreshold}% • Thời gian: {timeLimit} phút • Lượt làm bài tối đa:{" "}
               {maxAttempts} • Thời gian chờ: {cooldownHours} giờ
             </span>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1">
+          <h2 className="text-xl font-bold text-foreground mt-1">
             {title || "Bài thi trắc nghiệm"}
           </h2>
         </div>
 
         <div className="flex items-center gap-3">
           {isPreviewMode ? (
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-900/55">
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
               Bypass Honor Code & Cooldown
             </span>
           ) : isHonorAgreed ? (
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center gap-1 border border-emerald-200 dark:border-emerald-900/50">
-              <svg
-                className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-success/10 text-success flex items-center gap-1 border border-success/20">
+              <Check className="w-3.5 h-3.5 text-success" />
               <span>Đã xác nhận Cam kết Trung thực</span>
             </span>
           ) : (
@@ -390,22 +356,10 @@ export function GradedQuizRunner({
                 setPendingSubmit(false);
                 setIsHonorModalOpen(true);
               }}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-xs flex items-center gap-1.5"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-warning hover:opacity-90 text-warning-foreground transition-colors shadow-xs flex items-center gap-1.5"
             >
               <span>Xác nhận Cam kết Trung thực</span>
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
+              <ShieldCheck className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
@@ -413,29 +367,17 @@ export function GradedQuizRunner({
 
       {/* Active Cooldown Banner */}
       {cooldownCountdown > 0 && !isPreviewMode && (
-        <div className="p-5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-900 dark:text-rose-200 space-y-2">
+        <div className="p-5 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive space-y-2">
           <div className="flex items-center justify-between">
             <h4 className="font-bold text-sm flex items-center gap-2">
-              <svg
-                className="w-4 h-4 text-rose-600 dark:text-rose-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+              <Clock className="w-4 h-4 text-destructive" />
               <span>Thời gian chờ {cooldownHours} giờ đang kích hoạt</span>
             </h4>
-            <span className="font-mono font-bold text-lg px-3 py-1 bg-rose-100 dark:bg-rose-900/60 rounded-xl">
+            <span className="font-mono font-bold text-lg px-3 py-1 bg-destructive/20 rounded-xl">
               {formatCooldown(cooldownCountdown)}
             </span>
           </div>
-          <p className="text-xs text-rose-700 dark:text-rose-300">
+          <p className="text-xs text-destructive/90">
             Bạn đã sử dụng hết {maxAttempts} lượt làm bài. Vui lòng xem lại tài liệu học tập và thử
             lại sau khi thời gian chờ kết thúc.
           </p>
@@ -447,9 +389,9 @@ export function GradedQuizRunner({
         {questions.map((q, qIdx) => (
           <div
             key={q.questionId}
-            className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 space-y-3"
+            className="p-5 rounded-2xl border border-border bg-muted/50 space-y-3"
           >
-            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+            <h4 className="text-sm font-bold text-foreground">
               Câu {qIdx + 1}. {q.text}
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -462,15 +404,15 @@ export function GradedQuizRunner({
                     onClick={() => handleOptionSelect(qIdx, optIdx)}
                     className={`p-3.5 rounded-xl text-xs text-left font-medium transition-all border flex items-center gap-2.5 ${
                       isSelected
-                        ? "bg-blue-50 dark:bg-blue-950/60 border-blue-500 text-blue-900 dark:text-blue-200 font-bold shadow-xs"
-                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-300"
+                        ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
+                        : "bg-card border-border hover:border-primary/50 text-foreground"
                     }`}
                   >
                     <span
                       className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
                         isSelected
-                          ? "bg-blue-600 text-white"
-                          : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
                       }`}
                     >
                       {String.fromCharCode(65 + optIdx)}
@@ -489,33 +431,17 @@ export function GradedQuizRunner({
         <div
           className={`p-6 rounded-2xl border ${
             quizResult.passed
-              ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-200"
-              : "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-900 dark:text-rose-200"
+              ? "bg-success/10 border-success/30 text-success"
+              : "bg-destructive/10 border-destructive/30 text-destructive"
           }`}
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full flex items-center justify-center bg-current/10">
                 {quizResult.passed ? (
-                  <svg
-                    className="w-5 h-5 text-emerald-600 dark:text-emerald-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Check className="w-5 h-5 text-success" />
                 ) : (
-                  <svg
-                    className="w-5 h-5 text-rose-600 dark:text-rose-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2.5}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="w-5 h-5 text-destructive" />
                 )}
               </div>
               <div>
@@ -550,29 +476,21 @@ export function GradedQuizRunner({
 
       {/* Submission Error Banner */}
       {submitError && (
-        <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-200 text-xs font-semibold flex items-center justify-between shadow-xs">
+        <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs font-semibold flex items-center justify-between shadow-xs">
           <span>{submitError}</span>
           <button
             onClick={() => setSubmitError(null)}
-            className="text-rose-500 hover:text-rose-700 p-1 rounded-lg transition-colors ml-2"
+            className="text-destructive hover:opacity-80 p-1 rounded-lg transition-colors ml-2"
             aria-label="Close error message"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {/* Action Footer */}
-      <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
-        <p className="text-xs text-slate-400">
+      <div className="flex items-center justify-between pt-4 border-t border-border">
+        <p className="text-xs text-muted-foreground">
           {isPreviewMode
             ? "Chế độ xem trước (kết quả không lưu vào học bạ)."
             : "Điểm số cao nhất sẽ được lưu làm kết quả chính thức."}
@@ -582,7 +500,7 @@ export function GradedQuizRunner({
           {isPreviewMode && quizResult && (
             <button
               onClick={handleResetPreview}
-              className="px-5 py-2.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all"
+              className="px-5 py-2.5 text-xs font-bold text-foreground bg-muted hover:bg-muted/80 border border-border rounded-xl transition-all"
             >
               Làm lại bài thi (Reset)
             </button>
@@ -591,7 +509,7 @@ export function GradedQuizRunner({
             <button
               onClick={handleRetryQuiz}
               disabled={loading}
-              className="px-5 py-2.5 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300 dark:hover:bg-blue-900/60 rounded-xl transition-all flex items-center gap-2"
+              className="px-5 py-2.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 dark:bg-primary/20 dark:text-primary dark:hover:bg-primary/30 rounded-xl transition-all flex items-center gap-2"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -603,24 +521,10 @@ export function GradedQuizRunner({
             <button
               onClick={handleSubmitQuiz}
               disabled={isSubmitting || (cooldownCountdown > 0 && !isPreviewMode)}
-              className="px-6 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-xs transition-all flex items-center gap-2"
+              className="px-6 py-2.5 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover disabled:opacity-50 rounded-xl shadow-xs transition-all flex items-center gap-2"
             >
               <span aria-live="polite">{isSubmitting ? "Đang chấm điểm…" : "Nộp bài thi"}</span>
-              {!isSubmitting && (
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 12L3 21l18-9L3 3l3 9zm0 0h75"
-                  />
-                </svg>
-              )}
+              {!isSubmitting && <Send className="w-4 h-4" />}
             </button>
           )}
         </div>

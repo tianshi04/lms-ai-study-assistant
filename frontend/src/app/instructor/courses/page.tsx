@@ -2,10 +2,23 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { revalidateCoursesCache } from "@/app/actions/revalidate";
+import {
+  FileText,
+  Plus,
+  AlertTriangle,
+  Pencil,
+  BarChart2,
+  Megaphone,
+  Trash2,
+  ArrowRight,
+  X,
+} from "lucide-react";
 
 const emptySubscribe = () => () => {};
 
@@ -13,31 +26,31 @@ function getStatusBadge(status: CourseStatus) {
   switch (status) {
     case CourseStatus.DRAFT:
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
+        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20">
           Bản nháp
         </span>
       );
     case CourseStatus.PENDING_REVIEW:
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 animate-pulse">
+        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20 animate-pulse">
           Chờ kiểm duyệt
         </span>
       );
     case CourseStatus.PUBLISHED:
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20">
           Đã xuất bản
         </span>
       );
     case CourseStatus.REJECTED:
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20">
+        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-destructive/10 text-destructive border border-destructive/20">
           Từ chối
         </span>
       );
     default:
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-muted text-muted-foreground">
           Đã xuất bản
         </span>
       );
@@ -173,6 +186,7 @@ export default function InstructorCoursesPage() {
           toast.success(
             `${"Cập Nhật Khóa Học".replace("Cập Nhật ", "")} "${res.course.title}" ${"Tạo khóa học mới thành công!".split(" ").slice(-2).join(" ")}`,
           );
+          await revalidateCoursesCache(res.course.id);
           setShowModal(false);
           await refreshCourses();
         }
@@ -190,6 +204,7 @@ export default function InstructorCoursesPage() {
 
         if (res.course) {
           toast.success("Tạo khóa học mới thành công!");
+          await revalidateCoursesCache(res.course.id);
           setShowModal(false);
           await refreshCourses();
         }
@@ -224,18 +239,18 @@ export default function InstructorCoursesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <DirectionalTransition>
+      <div className="w-full max-w-7xl mx-auto px-6 py-12 flex-1">
         {/* Top Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-border">
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-semibold uppercase tracking-wider mb-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-2">
               {"Instructor Portal"}
             </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white text-balance">
+            <h1 className="text-3xl font-extrabold text-foreground text-balance">
               {"Quản lý Khóa học Giảng dạy"}
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {
                 "Soạn thảo, quản lý bài giảng, xem thống kê và đăng thông báo cho các khóa học trên nền tảng Coursera AI."
               }
@@ -245,36 +260,17 @@ export default function InstructorCoursesPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/instructor/financial-aid"
-              className="px-4 py-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold text-sm transition-all flex items-center gap-2"
+              className="px-4 py-3 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-sm transition-all flex items-center gap-2"
             >
-              <svg
-                className="w-5 h-5 text-indigo-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
+              <FileText className="w-5 h-5 text-primary" aria-hidden="true" />
               <span>{"Duyệt Financial Aid"}</span>
             </Link>
 
             <Link
               href="/instructor/courses/new"
-              className="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 cursor-pointer"
+              className="px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/20 transition-all flex items-center gap-2 cursor-pointer"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
+              <Plus className="w-5 h-5" aria-hidden="true" />
               <span>{"Soạn Khóa Học Mới"}</span>
             </Link>
           </div>
@@ -282,20 +278,8 @@ export default function InstructorCoursesPage() {
 
         {/* Role Warning Banner if user is Learner */}
         {isMounted && userRole && !isInstructorOrAdmin && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-300 text-sm flex items-center gap-3">
-            <svg
-              className="w-5 h-5 flex-shrink-0"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
+          <div className="mb-6 p-4 rounded-2xl bg-warning/10 border border-warning/20 text-warning text-sm flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
             <span>
               <strong>{"Lưu ý Phân quyền:"}</strong>{" "}
               {
@@ -307,16 +291,16 @@ export default function InstructorCoursesPage() {
 
         {/* Courses Table / Cards */}
         {loading ? (
-          <div className="flex items-center justify-center py-20 text-slate-500">
-            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mr-3" />
+          <div className="flex items-center justify-center py-20 text-muted-foreground">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-3" />
             <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
           </div>
         ) : courses.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800">
-            <p className="text-slate-500 mb-4">{"Chưa có khóa học nào được tạo."}</p>
+          <div className="text-center py-16 bg-card rounded-3xl border border-border">
+            <p className="text-muted-foreground mb-4">{"Chưa có khóa học nào được tạo."}</p>
             <button
               onClick={handleOpenCreateModal}
-              className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold cursor-pointer"
             >
               {"Tạo khóa học đầu tiên"}
             </button>
@@ -326,11 +310,11 @@ export default function InstructorCoursesPage() {
             {courses.map((course) => (
               <div
                 key={course.id}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+                className="bg-card border border-border rounded-3xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between h-full"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
+                    <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
                       {course.partnerName}
                     </span>
                     <div className="flex items-center gap-2">
@@ -338,149 +322,77 @@ export default function InstructorCoursesPage() {
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                           course.financialAidEnabled
-                            ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700"
+                            ? "bg-success/10 text-success border border-success/20"
+                            : "bg-muted text-muted-foreground border border-input"
                         }`}
                       >
                         {course.financialAidEnabled ? "FinAid: ON" : "FinAid: OFF"}
                       </span>
-                      <span className="text-xs text-slate-400 font-mono">
+                      <span className="text-xs text-muted-foreground font-mono">
                         {course.weekModules.length} {"Tuần học"}
                       </span>
                     </div>
                   </div>
                   <Link href={`/instructor/courses/${course.id}`} className="block">
-                    <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2 line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                    <h3 className="font-bold text-lg text-foreground mb-2 line-clamp-2 hover:text-primary transition-colors">
                       {course.title}
                     </h3>
                   </Link>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 mb-4 leading-relaxed">
+                  <p className="text-xs text-muted-foreground line-clamp-3 mb-4 leading-relaxed">
                     {course.description}
                   </p>
 
                   <div className="flex items-center gap-2 mb-4">
                     <Link
                       href={`/instructor/courses/${course.id}`}
-                      className="px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-xs font-bold hover:bg-blue-100 transition-colors flex items-center gap-1"
+                      className="px-3 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center gap-1"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
+                      <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{"Biên soạn"}</span>
                     </Link>
 
                     <Link
                       href={`/instructor/courses/${course.id}/analytics`}
-                      className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-xs font-semibold hover:bg-emerald-100 transition-colors flex items-center gap-1"
+                      className="px-2.5 py-1 rounded-lg bg-success/10 text-success border border-success/20 text-xs font-semibold hover:bg-success/20 transition-colors flex items-center gap-1"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                        />
-                      </svg>
+                      <BarChart2 className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{"Thống kê"}</span>
                     </Link>
 
                     <Link
                       href={`/instructor/courses/${course.id}/announcements`}
-                      className="px-2.5 py-1 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-200 dark:border-purple-500/20 text-xs font-semibold hover:bg-purple-100 transition-colors flex items-center gap-1"
+                      className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-semibold hover:bg-primary/20 transition-colors flex items-center gap-1"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                        />
-                      </svg>
+                      <Megaphone className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{"Thông báo"}</span>
                     </Link>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+                <div className="pt-4 border-t border-border flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleOpenEditModal(course)}
-                      className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors flex items-center gap-1.5 cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-xs font-semibold text-foreground transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
+                      <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{"Sửa thông tin"}</span>
                     </button>
 
                     <button
                       onClick={() => handleDeleteCourse(course.id, course.title)}
-                      className="px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20 text-xs font-semibold hover:bg-rose-100 transition-colors flex items-center gap-1 cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
+                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                       <span>{"Xóa"}</span>
                     </button>
 
                     <Link
                       href={`/courses/${course.id}`}
-                      className="text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-1 ml-auto"
+                      className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 ml-auto"
                     >
                       <span>{"Xem bài giảng"}</span>
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M14 5l7 7m0 0l-7 7m7-7H3"
-                        />
-                      </svg>
+                      <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
                     </Link>
                   </div>
                 </div>
@@ -491,30 +403,23 @@ export default function InstructorCoursesPage() {
 
         {/* Modal Soạn / Chỉnh Sửa Khóa Học */}
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 max-w-xl w-full shadow-2xl">
-              <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+            <div className="bg-card border border-border rounded-3xl p-8 max-w-xl w-full shadow-2xl">
+              <div className="flex justify-between items-center mb-6 pb-4 border-b border-border">
+                <h2 className="text-xl font-bold text-foreground">
                   {editingCourseId ? "Chỉnh Sửa Khóa Học" : "Soạn Thảo Khóa Học Mới"}
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                  className="p-1 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
                 >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  <X className="w-5 h-5" aria-hidden="true" />
                 </button>
               </div>
 
               <form onSubmit={handleSaveCourse} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                     {"Tên Khóa Học *"}
                   </label>
                   <input
@@ -522,14 +427,14 @@ export default function InstructorCoursesPage() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder={"Ví dụ: Natural Language Processing with Transformers"}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     required
                   />
                 </div>
 
                 {!editingCourseId && (
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                       {"Slug URL"}
                     </label>
                     <input
@@ -537,13 +442,13 @@ export default function InstructorCoursesPage() {
                       value={slug}
                       onChange={(e) => setSlug(e.target.value)}
                       placeholder={"course-nlp-transformers (Tự tạo nếu để trống)"}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 font-mono"
+                      className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring font-mono"
                     />
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                     {"Mô Tả Nội Dung *"}
                   </label>
                   <textarea
@@ -551,76 +456,76 @@ export default function InstructorCoursesPage() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder={"Tóm tắt tổng quan kiến thức và kỹ năng đạt được sau khóa học…"}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     required
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                       {"Đối Tác Phát Hành"}
                     </label>
                     <input
                       type="text"
                       value={partnerName}
                       onChange={(e) => setPartnerName(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                      className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                       {"Logo URL Đối Tác"}
                     </label>
                     <input
                       type="text"
                       value={partnerLogoUrl}
                       onChange={(e) => setPartnerLogoUrl(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 font-mono text-xs"
+                      className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring font-mono text-xs"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
                     {"Giảng Viên (cách nhau bởi dấu phẩy)"}
                   </label>
                   <input
                     type="text"
                     value={instructorNames}
                     onChange={(e) => setInstructorNames(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                 </div>
 
-                <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-muted border border-border">
                   <input
                     type="checkbox"
                     id="financialAidToggle"
                     checked={financialAidEnabled}
                     onChange={(e) => setFinancialAidEnabled(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer"
+                    className="w-4 h-4 text-primary rounded focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                   />
                   <label
                     htmlFor="financialAidToggle"
-                    className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                    className="text-xs font-bold text-foreground cursor-pointer"
                   >
                     {"Cho phép xin Hỗ trợ Tài chính (Financial Aid available)"}
                   </label>
                 </div>
 
-                <div className="pt-4 flex justify-end gap-3 border-t border-slate-200 dark:border-slate-800">
+                <div className="pt-4 flex justify-end gap-3 border-t border-border">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800"
+                    className="px-4 py-2.5 rounded-xl border border-input text-foreground text-sm font-semibold hover:bg-muted cursor-pointer"
                   >
                     {"Hủy"}
                   </button>
                   <button
                     type="submit"
                     disabled={saving}
-                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold shadow-lg shadow-blue-500/20 disabled:opacity-50"
+                    className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold shadow-lg shadow-primary/20 disabled:opacity-50 cursor-pointer"
                   >
                     <span aria-live="polite">
                       {saving
@@ -635,7 +540,7 @@ export default function InstructorCoursesPage() {
             </div>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </DirectionalTransition>
   );
 }

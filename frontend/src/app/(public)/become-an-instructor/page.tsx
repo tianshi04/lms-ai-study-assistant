@@ -8,6 +8,18 @@ import {
   useMyInstructorApplicationQuery,
 } from "@/lib/query_hooks";
 import { InstructorApplicationStatus } from "@/gen/identity/v1/identity_pb";
+import {
+  GraduationCap,
+  CheckCircle2,
+  ArrowRight,
+  Lock,
+  Info,
+  XCircle,
+  FileEdit,
+  FileText,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 
 export default function BecomeAnInstructorPage() {
   const { userName, userRole } = useAuth();
@@ -76,37 +88,24 @@ export default function BecomeAnInstructorPage() {
   const isRejected = activeApp?.status === InstructorApplicationStatus.REJECTED;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 transition-colors">
+    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header Hero Section */}
-        <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-xl border border-slate-200 dark:border-slate-800 text-center relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mt-12 -mr-12 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-4 border border-blue-200 dark:border-blue-500/20">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 14l9-5-9-5-9 5 9 5z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
-              />
-            </svg>
+        <div className="bg-card rounded-3xl p-8 sm:p-10 shadow-xl border border-border text-center relative overflow-hidden">
+          <div className="absolute top-0 right-0 -mt-12 -mr-12 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-info/10 text-info text-xs font-bold uppercase tracking-wider mb-4 border border-info/20">
+            <GraduationCap className="w-4 h-4" aria-hidden="true" />
             <span>Dành cho Chuyên gia & Đào tạo Cá nhân</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight text-balance">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight text-balance">
             Nộp Đơn Xin Cấp Quyền{" "}
-            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-info bg-clip-text text-transparent">
               Giảng Viên Cá Nhân
             </span>
           </h1>
 
-          <p className="mt-3 text-slate-600 dark:text-slate-300 max-w-2xl mx-auto text-base sm:text-lg">
+          <p className="mt-3 text-muted-foreground max-w-2xl mx-auto text-base sm:text-lg">
             Trở thành Giảng viên trên nền tảng Coursera AI, chia sẻ tri thức chuyên môn đến hàng
             ngàn học viên và khẳng định thương hiệu cá nhân của bạn.
           </p>
@@ -114,82 +113,56 @@ export default function BecomeAnInstructorPage() {
 
         {/* Loading Spinner */}
         {isLoadingApp ? (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 text-center border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="inline-block animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mb-3" />
-            <p
-              aria-live="polite"
-              className="text-slate-500 dark:text-slate-400 text-sm font-medium"
-            >
+          <div className="bg-card rounded-3xl p-12 text-center border border-border shadow-sm">
+            <div className="inline-block animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-3" />
+            <p aria-live="polite" className="text-muted-foreground text-sm font-medium">
               Đang kiểm tra hồ sơ đăng ký của bạn…
             </p>
           </div>
         ) : isInstructor ? (
           /* View for already instructor */
-          <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-3xl p-8 text-center space-y-4 shadow-sm">
-            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
-              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+          <div className="bg-success/10 border border-success/30 rounded-3xl p-8 text-center space-y-4 shadow-sm">
+            <div className="w-16 h-16 bg-success/20 text-success rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+              <CheckCircle2 className="w-8 h-8" aria-hidden="true" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+            <h2 className="text-2xl font-bold text-foreground">
               Tài khoản của bạn đã sở hữu vai trò Giảng viên!
             </h2>
-            <p className="text-slate-600 dark:text-slate-300 max-w-lg mx-auto">
+            <p className="text-muted-foreground max-w-lg mx-auto">
               Bạn có thể truy cập ngay Cổng Giảng viên (Instructor Portal) để bắt đầu biên soạn và
               đăng tải các khóa học mới.
             </p>
             <div className="pt-2">
               <Link
                 href="/instructor/courses"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/25 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold shadow-lg transition-all"
               >
                 <span>Truy cập Cổng Giảng viên</span>
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M14 5l7 7m0 0l-7 7m7-7H3"
-                  />
-                </svg>
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
               </Link>
             </div>
           </div>
         ) : !userName ? (
           /* View for not logged in */
-          <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-3xl p-8 text-center space-y-4 shadow-sm">
-            <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400 rounded-2xl flex items-center justify-center mx-auto">
-              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                />
-              </svg>
+          <div className="bg-warning/10 border border-warning/30 rounded-3xl p-8 text-center space-y-4 shadow-sm">
+            <div className="w-16 h-16 bg-warning/20 text-warning rounded-2xl flex items-center justify-center mx-auto">
+              <Lock className="w-8 h-8" aria-hidden="true" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Vui lòng Đăng nhập để Nộp Đơn
-            </h2>
-            <p className="text-slate-600 dark:text-slate-300 max-w-lg mx-auto">
+            <h2 className="text-2xl font-bold text-foreground">Vui lòng Đăng nhập để Nộp Đơn</h2>
+            <p className="text-muted-foreground max-w-lg mx-auto">
               Bạn cần có tài khoản cá nhân trên hệ thống để gửi đơn xin cấp quyền Giảng viên và theo
               dõi kết quả thẩm định.
             </p>
             <div className="flex items-center justify-center gap-4 pt-2">
               <Link
                 href="/auth/login?redirect=/become-an-instructor"
-                className="px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/25 transition-all"
+                className="px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold shadow-lg transition-all"
               >
                 Đăng nhập ngay
               </Link>
               <Link
                 href="/auth/register"
-                className="px-6 py-3 rounded-2xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-bold transition-all"
+                className="px-6 py-3 rounded-2xl bg-card text-foreground border border-border hover:bg-muted font-bold transition-all"
               >
                 Đăng ký tài khoản
               </Link>
@@ -197,38 +170,26 @@ export default function BecomeAnInstructorPage() {
           </div>
         ) : isPending ? (
           /* View for Pending Application */
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-xl border border-slate-200 dark:border-slate-800 space-y-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+          <div className="bg-card rounded-3xl p-8 sm:p-10 shadow-xl border border-border space-y-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-border pb-6">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                <h2 className="text-2xl font-bold text-foreground">
                   Đơn Đăng Ký Đang Được Thẩm Định
                 </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Mã đơn: <span className="font-mono">{existingApp?.id || "PENDING"}</span>
                 </p>
               </div>
-              <span className="px-4 py-1.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-bold border border-amber-200 dark:border-amber-500/30 uppercase tracking-wider">
+              <span className="px-4 py-1.5 rounded-full bg-warning/10 text-warning text-xs font-bold border border-warning/30 uppercase tracking-wider">
                 Chờ Thẩm Định (PENDING_REVIEW)
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-sm flex items-start gap-3">
-              <svg
-                className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
+            <div className="p-4 rounded-2xl bg-warning/10 border border-warning/30 text-foreground text-sm flex items-start gap-3">
+              <Info className="w-5 h-5 text-warning shrink-0 mt-0.5" aria-hidden="true" />
               <div>
                 <p className="font-bold">Hồ sơ của bạn đã được ghi nhận thành công.</p>
-                <p className="mt-0.5">
+                <p className="mt-0.5 text-muted-foreground">
                   Ban Quản trị nền tảng (Super Admin) đang tiến hành thẩm định thông tin năng lực
                   chuyên môn và video demo. Kết quả sẽ được tự động cập nhật ngay trên trang này.
                 </p>
@@ -237,23 +198,19 @@ export default function BecomeAnInstructorPage() {
 
             {existingApp && (
               <div className="space-y-4 pt-2 text-sm">
-                <h3 className="font-bold text-slate-900 dark:text-white text-base">
-                  Thông tin đã nộp:
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <h3 className="font-bold text-foreground text-base">Thông tin đã nộp:</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted p-4 rounded-2xl border border-border">
                   <div>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium">
+                    <span className="text-xs text-muted-foreground block font-medium">
                       Chức danh đăng ký:
                     </span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">
-                      {existingApp.title}
-                    </span>
+                    <span className="font-bold text-foreground">{existingApp.title}</span>
                   </div>
                   <div>
-                    <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium">
+                    <span className="text-xs text-muted-foreground block font-medium">
                       Thời gian nộp:
                     </span>
-                    <span className="font-medium text-slate-800 dark:text-slate-200">
+                    <span className="font-medium text-foreground">
                       {existingApp.createdAt
                         ? new Date(existingApp.createdAt).toLocaleString("vi-VN")
                         : "Gần đây"}
@@ -261,14 +218,14 @@ export default function BecomeAnInstructorPage() {
                   </div>
                   {existingApp.linkedinUrl && (
                     <div>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium">
+                      <span className="text-xs text-muted-foreground block font-medium">
                         LinkedIn/Portfolio:
                       </span>
                       <a
                         href={existingApp.linkedinUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-blue-600 dark:text-blue-400 hover:underline font-medium truncate block"
+                        className="text-primary hover:underline font-medium truncate block"
                       >
                         {existingApp.linkedinUrl}
                       </a>
@@ -276,14 +233,14 @@ export default function BecomeAnInstructorPage() {
                   )}
                   {existingApp.cvUrl && (
                     <div>
-                      <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium">
+                      <span className="text-xs text-muted-foreground block font-medium">
                         File CV (.pdf):
                       </span>
                       <a
                         href={existingApp.cvUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-blue-600 dark:text-blue-400 hover:underline font-medium truncate block"
+                        className="text-primary hover:underline font-medium truncate block"
                       >
                         {existingApp.cvUrl}
                       </a>
@@ -292,10 +249,10 @@ export default function BecomeAnInstructorPage() {
                 </div>
 
                 <div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 block font-medium mb-1">
+                  <span className="text-xs text-muted-foreground block font-medium mb-1">
                     Tiểu sử năng lực:
                   </span>
-                  <p className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 leading-relaxed whitespace-pre-line">
+                  <p className="bg-muted p-4 rounded-2xl border border-border text-foreground leading-relaxed whitespace-pre-line">
                     {existingApp.bio}
                   </p>
                 </div>
@@ -304,39 +261,25 @@ export default function BecomeAnInstructorPage() {
           </div>
         ) : isRejected && !isReapplying ? (
           /* View for Rejected Application */
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-xl border border-slate-200 dark:border-slate-800 space-y-6">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+          <div className="bg-card rounded-3xl p-8 sm:p-10 shadow-xl border border-border space-y-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-border pb-6">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-                  Kết Quả Thẩm Định Hồ Sơ
-                </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <h2 className="text-2xl font-bold text-foreground">Kết Quả Thẩm Định Hồ Sơ</h2>
+                <p className="text-sm text-muted-foreground mt-1">
                   Đơn nộp ngày:{" "}
                   {existingApp?.createdAt
                     ? new Date(existingApp.createdAt).toLocaleDateString("vi-VN")
                     : "Trước"}
                 </p>
               </div>
-              <span className="px-4 py-1.5 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300 text-xs font-bold border border-rose-200 dark:border-rose-500/30 uppercase tracking-wider">
+              <span className="px-4 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs font-bold border border-destructive/30 uppercase tracking-wider">
                 Từ Chối (REJECTED)
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200 text-sm space-y-2">
+            <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/30 text-destructive text-sm space-y-2">
               <div className="flex items-center gap-2 font-bold text-base">
-                <svg
-                  className="w-5 h-5 text-rose-600 dark:text-rose-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+                <XCircle className="w-5 h-5 text-destructive" aria-hidden="true" />
                 <span>Hồ sơ chưa được phê duyệt</span>
               </div>
               <p>
@@ -345,7 +288,7 @@ export default function BecomeAnInstructorPage() {
               </p>
             </div>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-muted-foreground">
               Bạn có thể chỉnh sửa lại các thông tin bằng cách bổ sung thêm kinh nghiệm, làm rõ
               thành tựu hoặc cập nhật CV/Video demo mới để nộp lại đơn.
             </p>
@@ -354,16 +297,9 @@ export default function BecomeAnInstructorPage() {
               <button
                 type="button"
                 onClick={handleStartReapply}
-                className="px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/25 transition-all flex items-center gap-2 text-sm"
+                className="px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold shadow-lg transition-all flex items-center gap-2 text-sm"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
+                <FileEdit className="w-4 h-4" aria-hidden="true" />
                 <span>Chỉnh Sửa & Nộp Lại Đơn Mới</span>
               </button>
             </div>
@@ -372,23 +308,11 @@ export default function BecomeAnInstructorPage() {
           /* Application Form */
           <form
             onSubmit={handleSubmit}
-            className="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-xl border border-slate-200 dark:border-slate-800 space-y-6"
+            className="bg-card rounded-3xl p-8 sm:p-10 shadow-xl border border-border space-y-6"
           >
-            <div className="border-b border-slate-100 dark:border-slate-800 pb-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <svg
-                  className="w-5 h-5 text-blue-600 dark:text-blue-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
+            <div className="border-b border-border pb-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" aria-hidden="true" />
                 <span>
                   {isReapplying ? "Soạn Lại Đơn Đăng Ký Mới" : "Thông tin Hồ sơ Thẩm định"}
                 </span>
@@ -397,7 +321,7 @@ export default function BecomeAnInstructorPage() {
                 <button
                   type="button"
                   onClick={() => setIsReapplying(false)}
-                  className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-semibold underline"
+                  className="text-xs text-muted-foreground hover:text-foreground font-semibold underline"
                 >
                   Quay lại xem lý do từ chối
                 </button>
@@ -405,7 +329,7 @@ export default function BecomeAnInstructorPage() {
             </div>
 
             {isReapplying && (
-              <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs">
+              <div className="p-4 rounded-2xl bg-warning/10 border border-warning/30 text-warning text-xs">
                 <span className="font-bold block mb-1">Đang soạn đơn đăng ký lại:</span>
                 <span>
                   Vui lòng bổ sung hoặc điều chỉnh thông tin dựa trên lý do từ chối trước đó (
@@ -415,38 +339,26 @@ export default function BecomeAnInstructorPage() {
             )}
 
             {errorMessage && (
-              <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-sm font-semibold flex items-center gap-3">
-                <svg
-                  className="w-5 h-5 shrink-0"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+              <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/30 text-destructive text-sm font-semibold flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 shrink-0" aria-hidden="true" />
                 <span>{errorMessage}</span>
               </div>
             )}
 
             {/* Title Field */}
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-800 dark:text-slate-200">
-                Chức danh Chuyên môn / Học hàm <span className="text-rose-500">*</span>
+              <label className="block text-sm font-bold text-foreground">
+                Chức danh Chuyên môn / Học hàm <span className="text-destructive">*</span>
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Ví dụ: Chuyên gia AI & Khoa học Dữ liệu, Tiến sĩ Công nghệ Thông tin"
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors text-sm"
+                className="w-full px-4 py-3 rounded-2xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors text-sm"
                 required
               />
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-muted-foreground">
                 Chức danh này sẽ hiển thị bên cạnh tên của bạn trên các khóa học sau khi được phê
                 duyệt.
               </p>
@@ -454,22 +366,22 @@ export default function BecomeAnInstructorPage() {
 
             {/* Bio Field */}
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-800 dark:text-slate-200">
-                Bài viết Tiểu sử Năng lực & Kinh nghiệm <span className="text-rose-500">*</span>
+              <label className="block text-sm font-bold text-foreground">
+                Bài viết Tiểu sử Năng lực & Kinh nghiệm <span className="text-destructive">*</span>
               </label>
               <textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 rows={5}
                 placeholder="Mô tả quá trình công tác, thành tựu chuyên môn, các dự án thực tế và định hướng giảng dạy của bạn…"
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors text-sm resize-none"
+                className="w-full px-4 py-3 rounded-2xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors text-sm resize-none"
                 required
               />
             </div>
 
             {/* Portfolio / LinkedIn Link */}
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-800 dark:text-slate-200">
+              <label className="block text-sm font-bold text-foreground">
                 Đường dẫn Trang cá nhân LinkedIn / Website Portfolio
               </label>
               <input
@@ -478,13 +390,13 @@ export default function BecomeAnInstructorPage() {
                 onChange={(e) => setLinkedinUrl(e.target.value)}
                 placeholder="https://linkedin.com/in/username hoặc https://yourportfolio.com"
                 spellCheck={false}
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors text-sm"
+                className="w-full px-4 py-3 rounded-2xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors text-sm"
               />
             </div>
 
             {/* CV PDF Link */}
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-800 dark:text-slate-200">
+              <label className="block text-sm font-bold text-foreground">
                 Đường dẫn File Hồ sơ Năng lực CV (.pdf)
               </label>
               <input
@@ -493,13 +405,13 @@ export default function BecomeAnInstructorPage() {
                 onChange={(e) => setCvUrl(e.target.value)}
                 placeholder="https://drive.google.com/file/d/… hoặc link file PDF"
                 spellCheck={false}
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors text-sm"
+                className="w-full px-4 py-3 rounded-2xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors text-sm"
               />
             </div>
 
             {/* Demo Video Link */}
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-800 dark:text-slate-200">
+              <label className="block text-sm font-bold text-foreground">
                 Đường dẫn Link Video Giảng thử Demo
               </label>
               <input
@@ -508,7 +420,7 @@ export default function BecomeAnInstructorPage() {
                 onChange={(e) => setDemoVideoUrl(e.target.value)}
                 placeholder="https://youtube.com/watch?v=… hoặc link Video giới thiệu bài giảng"
                 spellCheck={false}
-                className="w-full px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 transition-colors text-sm"
+                className="w-full px-4 py-3 rounded-2xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors text-sm"
               />
             </div>
 
@@ -517,42 +429,20 @@ export default function BecomeAnInstructorPage() {
               <button
                 type="submit"
                 disabled={submitMutation.isPending}
-                className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-500/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+                className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
               >
                 {submitMutation.isPending ? (
                   <>
-                    <svg
-                      className="animate-spin w-4 h-4 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
+                    <Loader2
+                      className="animate-spin w-4 h-4 text-primary-foreground"
+                      aria-hidden="true"
+                    />
                     <span aria-live="polite">Đang gửi đơn…</span>
                   </>
                 ) : (
                   <>
                     <span>Gửi đơn xin cấp quyền Giảng viên</span>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M14 5l7 7m0 0l-7 7m7-7H3"
-                      />
-                    </svg>
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
                   </>
                 )}
               </button>

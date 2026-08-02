@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { Pin, ChevronUp } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import {
@@ -254,8 +255,8 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
 
   if (loading) {
     return (
-      <div className="p-4 text-xs text-slate-500 flex items-center justify-center gap-2">
-        <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="p-4 text-xs text-muted-foreground flex items-center justify-center gap-2">
+        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         <span aria-live="polite">Đang tải bài thảo luận…</span>
       </div>
     );
@@ -266,14 +267,14 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
       {/* Create New Quick Question Form */}
       <form
         onSubmit={handleCreateThread}
-        className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 space-y-2"
+        className="bg-card border border-border rounded-xl p-3 space-y-2"
       >
         <input
           type="text"
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Đặt câu hỏi thảo luận cho bài học này…"
-          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
+          className="w-full bg-card border border-input rounded-lg p-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
         {newTitle.trim() && (
           <div className="flex gap-2 items-center">
@@ -282,12 +283,12 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
               onChange={(e) => setNewContent(e.target.value)}
               placeholder="Chi tiết câu hỏi (nếu có)…"
               rows={2}
-              className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
+              className="flex-1 bg-card border border-input rounded-lg p-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             />
             <button
               type="submit"
               disabled={submitting || !newTitle.trim()}
-              className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold shrink-0 cursor-pointer"
+              className="px-3 py-2 bg-primary hover:bg-primary-hover text-primary-foreground rounded-lg text-xs font-semibold shrink-0 cursor-pointer"
             >
               <span aria-live="polite">{submitting ? "Đang gửi…" : "Đăng Thảo Luận"}</span>
             </button>
@@ -297,7 +298,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
 
       {/* Threads List */}
       {threads.length === 0 ? (
-        <div className="text-center py-6 text-xs text-slate-400">
+        <div className="text-center py-6 text-xs text-muted-foreground">
           Chưa có câu hỏi thảo luận nào cho bài học này. Hãy gửi thắc mắc đầu tiên của bạn!
         </div>
       ) : (
@@ -310,38 +311,30 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
             return (
               <div
                 key={thread.id}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs space-y-2"
+                className="bg-card border border-border rounded-xl p-3 text-xs space-y-2"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
                       {thread.isStaffPinned && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-500/20">
-                          <svg
-                            className="w-3 h-3 text-amber-600 dark:text-amber-400"
-                            fill="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5v6l1 1 1-1v-6h5v-2l-2-2z" />
-                          </svg>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-warning bg-warning/10 px-1.5 py-0.5 rounded border border-warning/20">
+                          <Pin className="w-3 h-3 text-warning" />
                           Staff Pinned
                         </span>
                       )}
-                      <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        {thread.authorName}
-                      </span>
-                      <span className="text-[10px] text-slate-400">
+                      <span className="font-semibold text-foreground">{thread.authorName}</span>
+                      <span className="text-[10px] text-muted-foreground">
                         ({formatRoleName(thread.authorRole)})
                       </span>
                       {thread.isEdited && (
-                        <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium italic">
+                        <span className="text-[10px] text-warning font-medium italic">
                           {"(Đã chỉnh sửa)"}
                         </span>
                       )}
                       {isThreadAuthor && (
                         <button
                           onClick={() => startEditThread(thread)}
-                          className="text-[10px] font-semibold text-slate-400 hover:text-blue-500 cursor-pointer ml-1"
+                          className="text-[10px] font-semibold text-muted-foreground hover:text-primary cursor-pointer ml-1"
                         >
                           {"Sửa"}
                         </button>
@@ -349,7 +342,7 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                       {canDeleteThread && (
                         <button
                           onClick={() => handleDeleteThread(thread.id)}
-                          className="text-[10px] font-semibold text-slate-400 hover:text-red-500 cursor-pointer ml-1"
+                          className="text-[10px] font-semibold text-muted-foreground hover:text-destructive cursor-pointer ml-1"
                         >
                           {"Xóa"}
                         </button>
@@ -362,61 +355,55 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                           type="text"
                           value={editThreadTitle}
                           onChange={(e) => setEditThreadTitle(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs font-bold focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
+                          className="w-full bg-card border border-input rounded px-2 py-1 text-xs font-bold text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                         />
                         <textarea
                           value={editThreadContent}
                           onChange={(e) => setEditThreadContent(e.target.value)}
                           placeholder="Chi tiết câu hỏi (nếu có)…"
                           rows={2}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
+                          className="w-full bg-card border border-input rounded px-2 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                         />
                         <div className="flex justify-end gap-1">
                           <button
                             onClick={() => setEditingThreadId(null)}
-                            className="px-2 py-1 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 rounded text-[11px]"
+                            className="px-2 py-1 border border-input text-muted-foreground rounded text-[11px]"
                           >
                             {"Hủy"}
                           </button>
                           <button
                             onClick={() => handleUpdateThread(thread.id)}
                             disabled={submittingEditThread || !editThreadTitle.trim()}
-                            className="px-2 py-1 bg-blue-600 text-white rounded text-[11px] font-semibold hover:bg-blue-500"
+                            className="px-2 py-1 bg-primary text-primary-foreground rounded text-[11px] font-semibold hover:bg-primary-hover"
                           >
                             {"Lưu thay đổi"}
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                        {thread.title}
-                      </h4>
+                      <h4 className="font-bold text-foreground text-sm">{thread.title}</h4>
                     )}
                   </div>
 
                   <button
                     onClick={() => handleVote(thread.id, true)}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold border transition-all ${
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold border transition-all cursor-pointer ${
                       thread.isUpvotedByMe
-                        ? "bg-blue-600 border-blue-600 text-white"
-                        : "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+                        ? "bg-primary border-primary text-primary-foreground"
+                        : "bg-card border-border text-foreground hover:bg-muted"
                     }`}
                     title={thread.isUpvotedByMe ? "Đã Upvote (Bấm để Hủy)" : "Upvote"}
                   >
-                    <svg
-                      className={`w-3 h-3 ${thread.isUpvotedByMe ? "text-white" : "text-blue-500"}`}
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M12 4l-8 8h5v8h6v-8h5z" />
-                    </svg>
+                    <ChevronUp
+                      className={`w-3 h-3 ${thread.isUpvotedByMe ? "text-primary-foreground" : "text-primary"}`}
+                    />
                     <span>{thread.upvoteCount}</span>
                   </button>
                 </div>
 
                 {/* Replies */}
                 {thread.replies.length > 0 && (
-                  <div className="pl-3 border-l-2 border-slate-200 dark:border-slate-800 space-y-2 pt-1">
+                  <div className="pl-3 border-l-2 border-border space-y-2 pt-1">
                     {thread.replies.map((reply) => (
                       <ForumReplyItem
                         key={reply.id}
@@ -446,12 +433,12 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                       setReplyInputs((prev) => ({ ...prev, [thread.id]: e.target.value }))
                     }
                     placeholder="Trả lời…"
-                    className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2.5 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-500"
+                    className="flex-1 bg-card border border-input rounded px-2.5 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   />
                   <button
                     onClick={() => handlePostReply(thread.id)}
                     disabled={!(replyInputs[thread.id] || "").trim()}
-                    className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded text-xs font-medium cursor-pointer"
+                    className="px-2.5 py-1 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground rounded text-xs font-medium cursor-pointer"
                   >
                     Gửi
                   </button>

@@ -16,7 +16,7 @@ export class AdminApplicationsPage {
     this.pendingTab = page.locator('button', { hasText: 'Chờ thẩm định' });
     this.approvedTab = page.locator('button', { hasText: 'Đã phê duyệt' });
     this.rejectedTab = page.locator('button', { hasText: 'Đã từ chối' });
-    this.applicationCards = page.locator('div.bg-white.dark\\:bg-slate-900.rounded-3xl');
+    this.applicationCards = page.locator('div.bg-card.rounded-3xl');
   }
 
   async goto() {

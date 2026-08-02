@@ -4,6 +4,14 @@
 import React, { useState, useEffect } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
+import { Check, X } from "lucide-react";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 
 interface AutoGradedLabRunnerProps {
   itemId: string;
@@ -94,34 +102,46 @@ export function AutoGradedLabRunner({
   };
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto p-4 sm:p-6 bg-slate-900 text-slate-100 border border-slate-800 rounded-2xl shadow-xl">
+    <div className="space-y-4 max-w-5xl mx-auto p-4 sm:p-6 bg-card text-foreground border border-border rounded-2xl shadow-xl">
       {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-900/60 text-purple-300 border border-purple-800">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
               SANDBOX LAB
             </span>
-            <span className="text-xs text-slate-400">Timeout: 30s • Memory: 512MB</span>
+            <span className="text-xs text-muted-foreground">Timeout: 30s • Memory: 512MB</span>
           </div>
-          <h3 className="text-lg font-bold text-white mt-1">
+          <h3 className="text-lg font-bold text-foreground mt-1">
             {title || "Auto-Graded Coding Assignment"}
           </h3>
         </div>
 
         <div className="flex items-center gap-3">
-          <select
+          <Select
             value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-xs text-slate-200 font-mono font-medium focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:outline-none"
+            onValueChange={(val) => {
+              if (val) setLanguage(val as string);
+            }}
           >
-            <option value="python">Python 3.12</option>
-            <option value="javascript">JavaScript (Node.js)</option>
-          </select>
+            <SelectTrigger className="w-[170px] text-xs font-mono font-medium">
+              <SelectValue placeholder="Ngôn ngữ">
+                {language === "python"
+                  ? "Python 3.12"
+                  : language === "javascript"
+                    ? "JavaScript (Node.js)"
+                    : language}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="python">{"Python 3.12"}</SelectItem>
+              <SelectItem value="javascript">{"JavaScript (Node.js)"}</SelectItem>
+            </SelectContent>
+          </Select>
           <button
             onClick={handleRunCode}
             disabled={isRunning}
-            className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2"
+            className="px-5 py-2 rounded-xl bg-success hover:bg-success-hover disabled:opacity-50 text-success-foreground font-bold text-xs shadow-md transition-all flex items-center gap-2"
           >
             <span aria-live="polite">
               {isRunning ? "Executing in Sandbox…" : "Run & Submit Code"}
@@ -134,7 +154,7 @@ export function AutoGradedLabRunner({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Code Editor TextArea */}
         <div className="lg:col-span-7 space-y-2">
-          <div className="flex items-center justify-between px-2 text-xs text-slate-400 font-mono">
+          <div className="flex items-center justify-between px-2 text-xs text-muted-foreground font-mono">
             <span>solution.py</span>
             <span>UTF-8</span>
           </div>
@@ -143,13 +163,13 @@ export function AutoGradedLabRunner({
             onChange={(e) => setSourceCode(e.target.value)}
             rows={14}
             spellCheck={false}
-            className="w-full p-4 rounded-xl bg-slate-950 border border-slate-800 text-emerald-400 font-mono text-xs focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none resize-y leading-relaxed shadow-inner"
+            className="w-full p-4 rounded-xl bg-muted border border-input text-success font-mono text-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none resize-y leading-relaxed shadow-inner"
           />
         </div>
 
         {/* Output Console & Test Results */}
         <div className="lg:col-span-5 flex flex-col space-y-2">
-          <div className="flex items-center justify-between px-2 text-xs text-slate-400 font-mono">
+          <div className="flex items-center justify-between px-2 text-xs text-muted-foreground font-mono">
             <span>Sandbox Output Console</span>
             <span>
               {labResult
@@ -158,17 +178,17 @@ export function AutoGradedLabRunner({
             </span>
           </div>
 
-          <div className="flex-1 p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 min-h-[280px] overflow-y-auto space-y-3">
+          <div className="flex-1 p-4 rounded-xl bg-muted border border-border font-mono text-xs text-foreground min-h-[280px] overflow-y-auto space-y-3">
             {!labResult && !isRunning && (
-              <p className="text-slate-500 italic">
+              <p className="text-muted-foreground italic">
                 Press &quot;Run &amp; Submit Code&quot; to execute tests against your implementation
                 in the Sandbox container.
               </p>
             )}
 
             {isRunning && (
-              <div className="flex items-center gap-2 text-amber-400 animate-pulse">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+              <div className="flex items-center gap-2 text-warning animate-pulse">
+                <span className="w-2 h-2 rounded-full bg-warning animate-ping"></span>
                 <span aria-live="polite">Compiling &amp; executing test cases in Sandbox…</span>
               </div>
             )}
@@ -178,39 +198,19 @@ export function AutoGradedLabRunner({
                 <div
                   className={`p-3 rounded-lg border flex items-center justify-between ${
                     labResult.passed
-                      ? "bg-emerald-950/40 border-emerald-800 text-emerald-300"
-                      : "bg-rose-950/40 border-rose-800 text-rose-300"
+                      ? "bg-success/10 border-success/30 text-success"
+                      : "bg-destructive/10 border-destructive/30 text-destructive"
                   }`}
                 >
                   <span className="font-bold flex items-center gap-1.5">
                     {labResult.passed ? (
                       <>
-                        <svg
-                          className="w-4 h-4 text-emerald-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2.5}
-                        >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
+                        <Check className="w-4 h-4 text-success" aria-hidden="true" />
                         PASSED
                       </>
                     ) : (
                       <>
-                        <svg
-                          className="w-4 h-4 text-rose-400"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2.5}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
+                        <X className="w-4 h-4 text-destructive" aria-hidden="true" />
                         FAILED
                       </>
                     )}
@@ -219,10 +219,10 @@ export function AutoGradedLabRunner({
                 </div>
 
                 <div>
-                  <h5 className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                  <h5 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
                     Execution Logs:
                   </h5>
-                  <pre className="p-3 rounded-lg bg-slate-900 text-xs font-mono text-slate-200 border border-slate-800 whitespace-pre-wrap">
+                  <pre className="p-3 rounded-lg bg-card text-xs font-mono text-foreground border border-border whitespace-pre-wrap">
                     {labResult.testLogs}
                   </pre>
                 </div>

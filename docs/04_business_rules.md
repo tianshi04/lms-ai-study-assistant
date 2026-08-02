@@ -21,7 +21,6 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
     * Đưa hằng số `ADMIN_ROLES`, `STAFF_ROLES` và `CurrentUserContext` (`has_permission()`, `require_permission()`, `require_org_context()`) tập trung vào `src/shared/auth.py`, loại bỏ hoàn toàn các câu lệnh so sánh chuỗi vai trò rải rác.
     * **Vai trò ở cấp Tổ chức (`Organization Roles`):** Mỗi Tổ chức hỗ trợ 3 vai trò quản trị/nghiệp vụ chính: `Organization Admin`, `Organization Instructor`, và `Teaching Assistant (TA)`.
     * **Phân biệt Member vs Enterprise Seat Holder:** Thành viên Tổ chức (`Organization Member`) đại diện cho vị trí hành chính/phân quyền (`org_role`), trong khi Suất học (`Enterprise Seat Holder`) đại diện cho bản quyền học tập trả phí (**Paid Mode**) do Tổ chức tài trợ cho Học viên (`Learner`).
-    * **[Yêu cầu Nghiệp vụ Chuyển đổi - BR-MIGRATION]:** Tinh giản và loại bỏ hoàn toàn vai trò quản trị đối tác legacy ở cấp toàn cục (`Partner Admin`), chuyển dịch 100% việc quản trị về vai trò `Organization Admin` thuộc từng Tổ chức (Chi tiết tại Mục 6 của [07_authentication_and_authorization_architecture.md](07_authentication_and_authorization_architecture.md)).
 
 
 * **BR_AUTH_002 (Cơ chế Refresh Token Rotation):**
