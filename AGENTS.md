@@ -123,6 +123,10 @@ This file provides rules, architectural conventions, and workspace instructions 
   - We strictly use **`lucide-react`** as the standard icon library for all UI components and pages in `frontend/src/`.
   - Do NOT write raw inline SVGs for standard UI icons.
   - Decorative icons MUST include `aria-hidden="true"`, and icon-only buttons MUST have `aria-label` on their interactive parent element.
+- **Standardized UI Component & Primitive Reuse Protocol**:
+  - **Design System First**: Interactive UI controls, form elements, and structural data layouts (e.g., buttons, text inputs, selects, textareas, modals, badges, data tables) **MUST** prefer reusable design system primitives in `frontend/src/components/ui/` over custom ad-hoc raw HTML markup.
+  - **Semantic Token & Accessibility Consistency**: Custom primitives in `components/ui/` serve as the single source of truth for 3-tier semantic design tokens, focus states, and WAI-ARIA accessibility across the application.
+  - **Pragmatic Flexibility**: Native HTML tags remain appropriate for hidden utility controls (e.g., hidden file inputs), rich canvas/media runners, specialized text editors, or low-level layout overrides where design system wrapping would introduce unnecessary styling overhead.
 - API Client calls are made by importing service schemas from the generated stubs (e.g. `import { CatalogService } from "@/gen/catalog/v1/catalog_pb"`) and using the `@connectrpc/connect` client.
 
 ---
