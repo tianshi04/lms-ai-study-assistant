@@ -13,6 +13,9 @@ interface VideoUploadWidgetProps {
   accept?: string;
   label?: string;
   placeholder?: string;
+  compact?: boolean;
+  dropText?: string;
+  fileTypesHint?: string;
 }
 
 export function VideoUploadWidget({
@@ -20,9 +23,19 @@ export function VideoUploadWidget({
   onChange,
   folder = "videos",
   accept = "video/mp4,video/webm,video/quicktime",
-  label = "Đường dẫn hoặc Upload Tệp Video",
+  label = "Đường dẫn hoặc Upload Video",
   placeholder = "https://…",
+  compact = false,
+  dropText,
+  fileTypesHint,
 }: VideoUploadWidgetProps) {
+  const isSubtitle = folder === "subtitles" || accept.includes("vtt");
+  const defaultDropText = isSubtitle
+    ? "Kéo & thả tệp Phụ đề vào đây hoặc"
+    : "Kéo & thả tệp Video vào đây hoặc";
+  const defaultFileTypesHint = isSubtitle
+    ? "Hỗ trợ tệp .VTT (Max 500MB)"
+    : "Hỗ trợ tệp MP4, WebM, MOV (Max 500MB)";
   const [activeTab, setActiveTab] = useState<"upload" | "url">("upload");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -161,7 +174,9 @@ export function VideoUploadWidget({
               if (file) handleFileSelect(file);
             }}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+            className={`border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+              compact ? "p-3 sm:p-4" : "p-6"
+            } ${
               dragOver
                 ? "border-primary bg-primary/10 scale-[1.01]"
                 : "border-border bg-card hover:border-primary"
@@ -178,16 +193,20 @@ export function VideoUploadWidget({
               }}
             />
 
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3 border border-primary/20 shadow-xs">
-              <Upload className="w-6 h-6" />
+            <div
+              className={`rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shadow-xs ${
+                compact ? "w-8 h-8 mb-2" : "w-12 h-12 mb-3"
+              }`}
+            >
+              <Upload className={compact ? "w-4 h-4" : "w-6 h-6"} />
             </div>
 
             <p className="text-xs font-bold text-foreground">
-              Kéo & thả tệp Video/Phụ đề vào đây hoặc{" "}
+              {dropText || defaultDropText}{" "}
               <span className="text-primary underline">bấm để chọn tệp</span>
             </p>
-            <p className="text-[11px] text-muted-foreground mt-1 font-mono">
-              Hỗ trợ tệp MP4, WebM, MOV, VTT (Max 500MB)
+            <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">
+              {fileTypesHint || defaultFileTypesHint}
             </p>
           </div>
 
