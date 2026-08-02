@@ -25,6 +25,11 @@ from src.modules.identity.infrastructure.repository import (
     InstructorApplicationRepository,
     OrganizationRepository,
 )
+from src.shared.permissions import (
+    OrgPermission,
+    OrgRole,
+    enforce_organization_permission,
+)
 from src.modules.identity.application.submit_application_usecase import (
     SubmitInstructorApplicationUseCase,
 )
@@ -528,39 +533,15 @@ class IdentityUseCase:
 
     async def _verify_org_admin_permission(
         self,
-        org_repo: OrganizationRepository,
+        session: Any,
         user: Optional[CurrentUser],
         organization_id: str,
     ) -> None:
-        if not user:
-            raise PermissionError("Vui lòng đăng nhập để tiếp tục.")
-        if user.is_admin:
-            return
-        role_name, perms = await org_repo.get_effective_permissions(
-            user.id, organization_id
-        )
-        if not role_name:
-            member = await org_repo.get_member(user.id, organization_id)
-            if member and member.role_id in ("role_org_admin", "role_org_owner"):
-                return
-            user_orgs = await org_repo.list_user_organizations(user.id)
-            if not user_orgs:
-                raise PermissionError(
-                    "Bạn hiện chưa thuộc hoặc chưa có quyền Quản trị viên/Owner của Tổ chức nào để mời thành viên."
-                )
-            raise PermissionError(
-                "Bạn không thuộc Organization này hoặc không có quyền quản lý thành viên."
-            )
-        if "org:manage_members" in perms or role_name in (
-            "Admin",
-            "Owner",
-            "Quản trị viên Org",
-            "role_org_admin",
-            "role_org_owner",
-        ):
-            return
-        raise PermissionError(
-            "Bạn không có quyền quản lý thành viên trong Organization này."
+        await enforce_organization_permission(
+            session,
+            user,
+            organization_id,
+            required_permission=OrgPermission.MANAGE_MEMBERS,
         )
 
     async def add_organization_member(
@@ -577,14 +558,18 @@ class IdentityUseCase:
                 org_repo, current_user, organization_id
             )
             await self._verify_org_admin_permission(
-                org_repo, current_user, target_org_id
+                session, current_user, target_org_id
             )
 
             target_user = await identity_repo.get_by_email(email.strip())
             if not target_user:
                 raise ValueError(f"Không tìm thấy người dùng với email '{email}'")
 
-            target_role = "role_org_instructor"
+            target_role = (
+                role_id.strip()
+                if role_id and role_id.strip()
+                else OrgRole.INSTRUCTOR.value
+            )
 
             member = await org_repo.add_member(
                 user_id=target_user.id,
@@ -633,6 +618,6 @@ class IdentityUseCase:
         async with async_session_scope() as session:
             org_repo = OrganizationRepository(session)
             await self._verify_org_admin_permission(
-                org_repo, current_user, organization_id
+                session, current_user, organization_id
             )
             return await org_repo.remove_member(user_id=user_id, org_id=organization_id)

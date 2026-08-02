@@ -25,6 +25,12 @@ from src.modules.learning.domain.repository import ILearningRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.s3_storage import get_s3_storage_service
+from src.shared.permissions import (
+    CoursePermission,
+    OrgPermission,
+    enforce_course_ownership,
+    enforce_organization_permission,
+)
 
 
 def _default_learning_repo_factory(session: Any) -> ILearningRepository:
@@ -60,14 +66,18 @@ class CatalogUseCase:
         user: CurrentUser | None,
         action_name: str = "quản lý khóa học",
         allow_read_only_pending: bool = False,
+        required_permission: CoursePermission | None = None,
     ) -> None:
         if user and course_id:
             course = await repo.get_course_detail(course_id)
             if course:
-                if not course.can_edit(user, allow_read_only_pending):
-                    raise PermissionError(
-                        f"Bạn không có quyền {action_name} này vì bạn không phải là chủ sở hữu hoặc giảng viên phụ trách."
-                    )
+                enforce_course_ownership(
+                    course,
+                    user,
+                    required_permission=required_permission,
+                    action_name=action_name,
+                    allow_read_only_pending=allow_read_only_pending,
+                )
 
     async def submit_course_for_launch(
         self, course_id: str, current_user: CurrentUser | None = None
@@ -192,8 +202,16 @@ class CatalogUseCase:
         owner_id: str = "",
         financial_aid_enabled: bool = True,
         organization_id: str = "partner_community",
+        current_user: CurrentUser | None = None,
     ) -> Course:
         async with async_session_scope() as session:
+            if current_user and organization_id:
+                await enforce_organization_permission(
+                    session,
+                    current_user,
+                    organization_id,
+                    required_permission=OrgPermission.CREATE_COURSE,
+                )
             repo = self.repo_factory(session)
             course = await repo.create_course(
                 title=title,

@@ -10,6 +10,7 @@ import {
   useAddCourseCollaboratorMutation,
   useRemoveCourseCollaboratorMutation,
 } from "@/lib/query_hooks";
+import { mapConnectError } from "@/lib/connect_error_mapper";
 import { UserPlus, Trash2, Mail, Loader2, UserCheck, GraduationCap } from "lucide-react";
 
 interface CourseCollaboratorsModalProps {
@@ -45,7 +46,7 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
       setEmail("");
     },
     onError: (err) => {
-      setErrorMsg(err.message || "Không thể mời người hợp tác vào khóa học.");
+      setErrorMsg(mapConnectError(err, "Không thể mời người hợp tác vào khóa học."));
       setSuccessMsg("");
     },
   });
@@ -56,7 +57,7 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
       setErrorMsg("");
     },
     onError: (err) => {
-      setErrorMsg(err.message || "Không thể xóa người hợp tác.");
+      setErrorMsg(mapConnectError(err, "Không thể xóa người hợp tác."));
       setSuccessMsg("");
     },
   });

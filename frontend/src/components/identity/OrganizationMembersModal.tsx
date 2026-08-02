@@ -9,6 +9,7 @@ import {
   useAddOrganizationMemberMutation,
   useRemoveOrganizationMemberMutation,
 } from "@/lib/query_hooks";
+import { mapConnectError } from "@/lib/connect_error_mapper";
 import { UserPlus, Trash2, Shield, Mail, Loader2, UserCheck } from "lucide-react";
 
 interface OrganizationMembersModalProps {
@@ -20,7 +21,7 @@ interface OrganizationMembersModalProps {
 export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> = ({
   isOpen,
   onClose,
-  organizationId = "org_default",
+  organizationId = "partner_community",
 }) => {
   const [email, setEmail] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -30,18 +31,20 @@ export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> =
     data: members = [],
     isLoading,
     isError,
+    refetch,
   } = useOrganizationMembersQuery(organizationId, {
     enabled: isOpen,
   });
 
   const addMemberMutation = useAddOrganizationMemberMutation({
-    onSuccess: () => {
-      setSuccessMsg("Đã thêm thành viên vào tổ chức thành công!");
+    onSuccess: (data) => {
+      setSuccessMsg(`Đã thêm ${data.email || "thành viên"} vào tổ chức thành công!`);
       setErrorMsg("");
       setEmail("");
+      refetch();
     },
     onError: (err) => {
-      setErrorMsg(err.message || "Không thể thêm thành viên. Vui lòng kiểm tra lại email.");
+      setErrorMsg(mapConnectError(err, "Không thể thêm thành viên vào tổ chức."));
       setSuccessMsg("");
     },
   });
@@ -50,9 +53,10 @@ export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> =
     onSuccess: () => {
       setSuccessMsg("Đã xóa thành viên khỏi tổ chức thành công!");
       setErrorMsg("");
+      refetch();
     },
     onError: (err) => {
-      setErrorMsg(err.message || "Không thể xóa thành viên.");
+      setErrorMsg(mapConnectError(err, "Không thể xóa thành viên."));
       setSuccessMsg("");
     },
   });
@@ -67,7 +71,7 @@ export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> =
     setSuccessMsg("");
     addMemberMutation.mutate({
       email: email.trim(),
-      roleId: "role_org_instructor",
+      roleId: "INSTRUCTOR",
       organizationId,
     });
   };
@@ -81,23 +85,26 @@ export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> =
   };
 
   const getRoleBadge = (role: string) => {
-    switch (role) {
-      case "role_org_admin":
-      case "role_org_owner":
-      case "Quản trị viên Org":
-      case "Quản trị viên":
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-            <Shield className="w-3 h-3" aria-hidden="true" /> Quản trị viên Tổ chức
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20">
-            <UserCheck className="w-3 h-3" aria-hidden="true" /> Giảng viên Tổ chức
-          </span>
-        );
+    const r = (role || "").toUpperCase();
+    if (r.includes("OWNER") || r.includes("ADMIN")) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+          <Shield className="w-3 h-3" aria-hidden="true" /> Chủ sở hữu / Quản trị viên
+        </span>
+      );
     }
+    if (r.includes("TA")) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">
+          <UserCheck className="w-3 h-3" aria-hidden="true" /> Trợ giảng Tổ chức
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
+        <UserCheck className="w-3 h-3" aria-hidden="true" /> Giảng viên Tổ chức
+      </span>
+    );
   };
 
   return (

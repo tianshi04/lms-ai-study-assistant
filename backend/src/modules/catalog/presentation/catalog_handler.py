@@ -346,6 +346,7 @@ class CatalogHandler(CatalogService):
             owner_id=user.id,
             financial_aid_enabled=request.financial_aid_enabled,
             organization_id=request.organization_id,
+            current_user=user,
         )
         return pb.CreateCourseResponse(course=_to_pb_course(course))
 

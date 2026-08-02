@@ -12,11 +12,10 @@ from src.modules.identity.domain.entities import (
     ApplicationStatus,
 )
 from src.modules.identity.infrastructure.models import (
-    UserModel,
-    OrganizationModel,
-    OrganizationRoleModel,
-    OrganizationMemberModel,
     InstructorApplicationModel,
+    OrganizationMemberModel,
+    OrganizationModel,
+    UserModel,
 )
 
 
@@ -176,47 +175,29 @@ class OrganizationRepository:
     async def get_effective_permissions(
         self, user_id: str, org_id: str
     ) -> tuple[Optional[str], set[str]]:
-        """Resolves member's role and calculates effective permission set across role hierarchy."""
-        stmt = (
-            select(OrganizationMemberModel, OrganizationRoleModel)
-            .join(
-                OrganizationRoleModel,
-                OrganizationRoleModel.id == OrganizationMemberModel.role_id,
-            )
-            .where(
-                OrganizationMemberModel.user_id == user_id,
-                OrganizationMemberModel.organization_id == org_id,
-                OrganizationMemberModel.status == "ACTIVE",
-            )
+        """Resolves member's role and calculates effective permission set from code-hardcoded matrix."""
+        stmt = select(OrganizationMemberModel).where(
+            OrganizationMemberModel.user_id == user_id,
+            OrganizationMemberModel.organization_id == org_id,
+            OrganizationMemberModel.status == "ACTIVE",
         )
         result = await self._session.execute(stmt)
-        row = result.first()
-        if not row:
+        member = result.scalar_one_or_none()
+        if not member:
             return None, set()
 
-        member, role = row
-        role_name = role.name
-        permissions = set(role.permissions or [])
+        role_str = str(member.role_id).upper()
+        from src.shared.permissions import ROLE_PERMISSIONS, OrgRole
 
-        # Traverse parent role hierarchy if parent_role_id exists
-        current_role = role
-        visited_role_ids = {role.id}
-        while (
-            current_role.parent_role_id
-            and current_role.parent_role_id not in visited_role_ids
-        ):
-            visited_role_ids.add(current_role.parent_role_id)
-            parent_stmt = select(OrganizationRoleModel).where(
-                OrganizationRoleModel.id == current_role.parent_role_id
-            )
-            parent_result = await self._session.execute(parent_stmt)
-            parent_role = parent_result.scalar_one_or_none()
-            if not parent_role:
-                break
-            permissions.update(parent_role.permissions or [])
-            current_role = parent_role
+        perms: set[str] = set()
+        if "OWNER" in role_str:
+            perms = {p.value for p in ROLE_PERMISSIONS[OrgRole.OWNER]}
+        elif "INSTRUCTOR" in role_str:
+            perms = {p.value for p in ROLE_PERMISSIONS[OrgRole.INSTRUCTOR]}
+        elif "TA" in role_str:
+            perms = {p.value for p in ROLE_PERMISSIONS[OrgRole.TA]}
 
-        return role_name, permissions
+        return member.role_id, perms
 
     async def get_member(
         self, user_id: str, org_id: str
@@ -284,18 +265,14 @@ class OrganizationRepository:
 
     async def list_members_with_details(self, org_id: str) -> list[dict]:
         stmt = (
-            select(OrganizationMemberModel, UserModel, OrganizationRoleModel)
+            select(OrganizationMemberModel, UserModel)
             .join(UserModel, UserModel.id == OrganizationMemberModel.user_id)
-            .outerjoin(
-                OrganizationRoleModel,
-                OrganizationRoleModel.id == OrganizationMemberModel.role_id,
-            )
             .where(OrganizationMemberModel.organization_id == org_id)
         )
         result = await self._session.execute(stmt)
         rows = result.all()
         members = []
-        for member_model, user_model, role_model in rows:
+        for member_model, user_model in rows:
             members.append(
                 {
                     "member_id": member_model.id,
@@ -304,9 +281,7 @@ class OrganizationRepository:
                     "full_name": user_model.full_name,
                     "avatar_url": user_model.avatar_url or "",
                     "role_id": member_model.role_id,
-                    "role_name": role_model.name
-                    if role_model
-                    else member_model.role_id,
+                    "role_name": member_model.role_id,
                     "status": member_model.status,
                     "joined_at": member_model.joined_at or "",
                 }

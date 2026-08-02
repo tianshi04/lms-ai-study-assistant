@@ -16,7 +16,7 @@ export class NewCoursePage {
   constructor(page: Page) {
     this.page = page;
     this.partnerSelect = page.locator('select, button:has-text("Coursera"), button:has-text("Bảo chứng"), [role="combobox"]').first();
-    this.titleInput = page.locator('input[placeholder*="Lập trình Python"]').first();
+    this.titleInput = page.locator('input[placeholder*="Ví dụ: Lập trình"], input[placeholder*="Lập trình Python"]').first();
     this.slugInput = page.locator('input[placeholder*="lap-trinh-python"]').first();
     this.descriptionTextarea = page.locator('textarea').first();
     this.subjectSelect = page.locator('select, button:has-text("Khoa học"), button:has-text("lĩnh vực")').first();
@@ -37,6 +37,8 @@ export class NewCoursePage {
   }
 
   async fillAndSubmitCourse(title: string, description: string, partnerOrgId?: string) {
+    await expect(this.titleInput).toBeVisible({ timeout: 10000 });
+    await this.titleInput.click();
     await this.titleInput.fill(title);
     if (partnerOrgId) {
       const selectCount = await this.page.locator('select').count();
@@ -52,7 +54,9 @@ export class NewCoursePage {
         }
       }
     }
+    await this.descriptionTextarea.click();
     await this.descriptionTextarea.fill(description);
+    await expect(this.submitButton).toBeVisible({ timeout: 10000 });
     await this.submitButton.click();
   }
 }
