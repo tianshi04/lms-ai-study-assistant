@@ -8,6 +8,7 @@ import { Menu, X } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { UserDropdown } from "@/components/layout/UserDropdown";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
+import { NotificationBell } from "@/components/notification/NotificationBell";
 import { Button } from "@/components/ui/Button";
 
 export function Navbar() {
@@ -116,7 +117,10 @@ export function Navbar() {
           <ThemeToggle />
 
           {userName ? (
-            <UserDropdown />
+            <div className="flex items-center gap-2">
+              <NotificationBell />
+              <UserDropdown />
+            </div>
           ) : (
             <div className="flex items-center gap-2">
               <Button

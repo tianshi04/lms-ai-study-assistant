@@ -12,11 +12,13 @@ import {
   type ForumReply,
 } from "@/gen/forum/v1/forum_pb";
 import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
+import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 interface ForumTabProps {
   courseId: string;
   itemId: string;
+  targetThreadId?: string;
 }
 
 function formatRoleName(role: string): string {
@@ -28,7 +30,7 @@ function formatRoleName(role: string): string {
   return role;
 }
 
-export function ForumTab({ courseId, itemId }: ForumTabProps) {
+export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
   const [threads, setThreads] = useState<ForumThread[]>([]);
   const [loading, setLoading] = useState(true);
   const [newTitle, setNewTitle] = useState("");
@@ -87,6 +89,21 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
       cancelled = true;
     };
   }, [courseId, itemId]);
+
+  const [selectedModalThreadId, setSelectedModalThreadId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (targetThreadId && !loading && threads.length > 0) {
+      setSelectedModalThreadId(targetThreadId);
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`thread-${targetThreadId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [targetThreadId, loading, threads]);
 
   const fetchThreads = useCallback(() => fetchThreadsRef.current(), []);
 
@@ -305,15 +322,26 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
             const isThreadAuthor = Boolean(currentUserId && thread.authorUserId === currentUserId);
             const canDeleteThread = isThreadAuthor || isStaffOrAdmin;
             const isEditingThisThread = editingThreadId === thread.id;
+            const isTarget = targetThreadId === thread.id;
 
             return (
               <div
                 key={thread.id}
-                className="bg-card border border-border rounded-xl p-3 text-xs space-y-2"
+                id={`thread-${thread.id}`}
+                className={`bg-card border ${
+                  isTarget
+                    ? "border-primary ring-2 ring-primary/50 shadow-lg bg-primary/5"
+                    : "border-border"
+                } rounded-xl p-3.5 text-xs space-y-2 transition-all duration-300`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
+                      {isTarget && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
+                          📌 Thảo luận từ thông báo
+                        </span>
+                      )}
                       {thread.isStaffPinned && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-warning bg-warning/10 px-1.5 py-0.5 rounded border border-warning/20">
                           <Pin className="w-3 h-3 text-warning" />
@@ -379,7 +407,13 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
                         </div>
                       </div>
                     ) : (
-                      <h4 className="font-bold text-foreground text-sm">{thread.title}</h4>
+                      <h4
+                        onClick={() => setSelectedModalThreadId(thread.id)}
+                        className="font-bold text-foreground text-sm hover:text-primary transition-colors cursor-pointer"
+                        title="Bấm để mở rộng bài viết"
+                      >
+                        {thread.title}
+                      </h4>
                     )}
                   </div>
 
@@ -446,6 +480,24 @@ export function ForumTab({ courseId, itemId }: ForumTabProps) {
           })}
         </div>
       )}
+
+      {/* Thread Detail Modal (Facebook Post Style) */}
+      <ThreadDetailModal
+        isOpen={Boolean(selectedModalThreadId)}
+        onClose={() => setSelectedModalThreadId(null)}
+        thread={threads.find((t) => t.id === selectedModalThreadId) || null}
+        currentUserId={currentUserId}
+        isStaffOrAdmin={isStaffOrAdmin}
+        onVote={handleVote}
+        onPostReply={async (threadId, content) => {
+          const client = getRpcClient(ForumService);
+          await client.postReply({ threadId, content });
+          fetchThreads();
+        }}
+        onDeleteThread={handleDeleteThread}
+        onDeleteReply={handleDeleteReply}
+        isNotificationTarget={targetThreadId === selectedModalThreadId}
+      />
     </div>
   );
 }

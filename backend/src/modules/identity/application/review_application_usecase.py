@@ -67,4 +67,35 @@ class ReviewInstructorApplicationUseCase:
                 or "Hồ sơ chưa đáp ứng tiêu chuẩn thẩm định năng lực giảng dạy."
             )
 
-        return await self._application_repo.save(application)
+        saved_app = await self._application_repo.save(application)
+
+        # Trigger notification
+        try:
+            from src.modules.notification.application.use_cases import (
+                NotificationUseCase,
+            )
+            from src.modules.notification.domain.constants import NotificationCategory
+
+            notif_uc = NotificationUseCase()
+            if approve:
+                await notif_uc.send_notification(
+                    recipient_id=application.user_id,
+                    category=NotificationCategory.SYSTEM,
+                    title="Đơn đăng ký Giảng viên đã được phê duyệt",
+                    content="Chúc mừng! Tài khoản của bạn đã được nâng cấp lên vai trò Giảng viên và gán vào Coursera Project Network.",
+                    action_url="/instructor/courses",
+                )
+            else:
+                await notif_uc.send_notification(
+                    recipient_id=application.user_id,
+                    category=NotificationCategory.SYSTEM,
+                    title="Đơn đăng ký Giảng viên chưa được chấp thuận",
+                    content=f"Lý do: {application.rejection_reason}",
+                    action_url="/become-an-instructor",
+                )
+        except Exception as e:
+            import logging
+
+            logging.getLogger(__name__).warning("Failed to send notification: %s", e)
+
+        return saved_app

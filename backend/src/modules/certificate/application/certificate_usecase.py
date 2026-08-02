@@ -163,6 +163,28 @@ class CertificateUseCase:
                 application_id,
                 is_approved,
             )
+
+            # Trigger ACADEMIC notification to user
+            try:
+                from src.modules.notification.application.use_cases import (
+                    NotificationUseCase,
+                )
+                from src.modules.notification.domain.constants import (
+                    NotificationCategory,
+                )
+
+                status_str = "chấp thuận" if is_approved else "chưa được duyệt"
+                notif_uc = NotificationUseCase()
+                await notif_uc.send_notification(
+                    recipient_id=app.user_id,
+                    category=NotificationCategory.ACADEMIC,
+                    title=f"Đơn Hỗ trợ Tài chính đã được {status_str}",
+                    content="Đơn nộp học bổng cho khóa học của bạn đã được quản trị viên xem xét.",
+                    action_url=f"/learn/{app.course_id}",
+                )
+            except Exception as e:
+                logger.warning("Failed to send financial aid notification: %s", e)
+
             return updated_app, ""
 
     async def get_verified_certificate(
@@ -294,6 +316,27 @@ class CertificateUseCase:
                 cert_id,
                 real_course_id,
             )
+
+            # Trigger CERTIFICATE notification
+            try:
+                from src.modules.notification.application.use_cases import (
+                    NotificationUseCase,
+                )
+                from src.modules.notification.domain.constants import (
+                    NotificationCategory,
+                )
+
+                notif_uc = NotificationUseCase()
+                await notif_uc.send_notification(
+                    recipient_id=user_id,
+                    category=NotificationCategory.ACADEMIC,
+                    title="Chúc mừng! Chứng chỉ xác minh của bạn đã được cấp",
+                    content=f'Bạn đã hoàn thành 100% khóa học "{course_title}". Bấm để xem và chia sẻ chứng chỉ.',
+                    action_url=f"/verify/{cert_id}",
+                )
+            except Exception as e:
+                logger.warning("Failed to send certificate notification: %s", e)
+
             return saved_cert, ""
 
     async def revoke_certificate(

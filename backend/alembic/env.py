@@ -11,6 +11,7 @@ import src.modules.certificate.infrastructure.models  # noqa: F401
 import src.modules.forum.infrastructure.models  # noqa: F401
 import src.modules.identity.infrastructure.models  # noqa: F401
 import src.modules.learning.infrastructure.models  # noqa: F401
+import src.modules.notification.infrastructure.models  # noqa: F401
 import src.modules.partner.infrastructure.models  # noqa: F401
 import src.modules.payment.infrastructure.models  # noqa: F401
 from src.shared.config import settings

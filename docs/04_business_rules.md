@@ -246,4 +246,34 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Giảng viên/Admin được phép sắp xếp lại thứ tự của Tuần học (`ReorderWeekModules`), Bài học (`ReorderLessons`) và Học liệu (`ReorderLearningItems`) bằng giao diện Kéo thả (Drag & Drop) hoặc Nút di chuyển Nhanh (Up/Down).
   - Thứ tự vị trí mới được cập nhật đồng bộ trong 1 DB Transaction Atomic và duy trì chỉ số `order_index` cố định để hiển thị đồng nhất cho cả Học viên và Giảng viên.
 
+---
+
+## 9. Quy tắc Hệ thống Thông báo (BR_NOTIF)
+
+* **BR_NOTIF_001 (Định danh & Phân loại Danh mục Thông báo):**
+  * Mọi bản ghi thông báo phải thuộc 1 trong các danh mục chính (`NotificationCategory`): `ANNOUNCEMENT` (thông báo khóa học), `COMMUNITY` (phản hồi diễn đàn), `SYSTEM` (duyệt giảng viên), `ACADEMIC` (duyệt Financial Aid).
+* **BR_NOTIF_002 (Bảo mật & Cô lập Ngữ cảnh Người nhận):**
+  * Người dùng chỉ được phép truy xuất, đọc và cập nhật các thông báo được gửi trực tiếp đến `user_id` của mình (`recipient_id == current_user.id`). Enforce bảo mật 3 tầng (`AUTH_POLICY_AUTHENTICATED`, SQL scope filter `WHERE recipient_id = :current_user_id`).
+* **BR_NOTIF_003 (Cấu trúc Thẻ Thông báo & Deep Linking Payload):**
+  * Thông báo chứa payload chuẩn gồm: `id`, `recipient_id`, `category`, `title`, `content`, `action_url`, `actor_avatar_url`, `is_read`, `read_at`, `created_at`.
+* **BR_NOTIF_004 (Cơ chế Broadcast Thông báo Khóa học Course Announcement Fan-out):**
+  * Khi Giảng viên đăng thông báo khóa học (`CreateCourseAnnouncement`), hệ thống tự động nhân bản/tạo bản ghi thông báo cho toàn bộ Học viên có trạng thái ghi danh `ACTIVE` trong khóa học đó.
+* **BR_NOTIF_005 (Cơ chế Khử trùng lặp & Giới hạn Tần suất):**
+  * Chống ngập thông báo: Các sự kiện lặp lại tạo tối đa 1 thông báo/sự kiện/ngày hoặc tự động gộp nội dung.
+* **BR_NOTIF_006 (Cấu hình Tùy chọn Nhận Thông báo User Preferences):**
+  * Người dùng có quyền bật/tắt nhận thông báo cho từng danh mục (`ANNOUNCEMENT`, `COMMUNITY`, `ACADEMIC`) và kênh (`IN_APP`, `EMAIL`) qua RPC `UpdateNotificationPreferences`. Các thông báo quan trọng thuộc danh mục `SYSTEM` (duyệt giảng viên) là BẮT BUỘC và luôn được phát không chịu ảnh hưởng bởi cài đặt tùy chọn.
+* **BR_NOTIF_007 (Đánh dấu Đã đọc Đơn lẻ & Trạng thái Time-stamp):**
+  * Khi người dùng nhấp vào thông báo hoặc nút "Đã đọc", cờ `is_read` lập tức được cập nhật thành `true` và lưu lại thời điểm `read_at = UTC NOW`. Số đếm `unread_count` giảm tương ứng.
+* **BR_NOTIF_008 (Đánh dấu Tất cả Đã đọc Mark All as Read Scope):**
+  * Thao tác "Đánh dấu tất cả đã đọc" chỉ được phép tác động lên các bản ghi thông báo thuộc quyền sở hữu của chính người dùng hiện tại (`recipient_id == current_user.id`) và có thể lọc theo danh mục `category_filter`.
+* **BR_NOTIF_009 (Thứ tự Hiển thị & Sắp xếp Thời gian):**
+  * Danh sách thông báo BẮT BUỘC được sắp xếp giảm dần theo mốc thời gian tạo `created_at DESC` (thông báo mới nhất hiển thị trên cùng).
+* **BR_NOTIF_010 (Phân trang Tải dữ liệu Pagination):**
+  * Hệ thống áp dụng cơ chế phân trang dựa trên token (`page_token`, `page_size`, mặc định 20, tối đa 50) để tối ưu hiệu năng và tránh tải toàn bộ dữ liệu khi danh sách lớn.
+* **BR_NOTIF_011 (Chính sách Lưu trữ & Xóa tự động Retention Policy):**
+  * Các thông báo cũ quá 90 ngày (đã đọc) hoặc 365 ngày (chưa đọc) sẽ được hệ thống định kỳ lưu trữ (archive) hoặc xóa sạch để giải phóng dung lượng cơ sở dữ liệu.
+* **BR_NOTIF_012 (Tính Nguyên tử Giao dịch Nguồn Atomic Event Transaction):**
+  * Thông báo CHỈ ĐƯỢC TẠO khi sự kiện nguồn (ví dụ: duyệt giảng viên, đăng thông báo khóa học, cấp chứng chỉ) đã thực hiện thành công và commit giao dịch cơ sở dữ liệu; nếu giao dịch nguồn rollback/thất bại thì tuyệt đối không sinh thông báo mồ côi.
+
+
 

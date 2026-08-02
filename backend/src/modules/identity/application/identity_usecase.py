@@ -172,6 +172,29 @@ class IdentityUseCase:
             logger.info(
                 "Successfully registered new user %s with email %s", new_id, email
             )
+
+            # Trigger welcome SYSTEM notification
+            try:
+                from src.modules.notification.application.use_cases import (
+                    NotificationUseCase,
+                )
+                from src.modules.notification.domain.constants import (
+                    NotificationCategory,
+                )
+
+                notif_uc = NotificationUseCase()
+                await notif_uc.send_notification(
+                    recipient_id=new_id,
+                    category=NotificationCategory.SYSTEM,
+                    title="Chào mừng bạn đến với Hệ thống Đào tạo LMS!",
+                    content="Tài khoản của bạn đã được đăng ký thành công. Hãy khám phá danh mục khóa học ngay!",
+                    action_url="",
+                )
+            except Exception as e:
+                logger.warning(
+                    "Failed to send welcome notification to user %s: %s", new_id, e
+                )
+
             return saved_user, ""
 
     async def get_user_profile(
@@ -272,6 +295,27 @@ class IdentityUseCase:
             logger.info(
                 "User %s successfully assigned enterprise seat %s", user_id, clean_key
             )
+
+            # Trigger SYSTEM notification
+            try:
+                from src.modules.notification.application.use_cases import (
+                    NotificationUseCase,
+                )
+                from src.modules.notification.domain.constants import (
+                    NotificationCategory,
+                )
+
+                notif_uc = NotificationUseCase()
+                await notif_uc.send_notification(
+                    recipient_id=user_id,
+                    category=NotificationCategory.SYSTEM,
+                    title="Kích hoạt Suất học Doanh nghiệp thành công",
+                    content=f"Tài khoản của bạn đã được liên kết với suất học đối tác {license_model.partner_name}.",
+                    action_url="/courses",
+                )
+            except Exception as e:
+                logger.warning("Failed to send enterprise seat notification: %s", e)
+
             return (
                 True,
                 f"Kích hoạt thành công suất học từ đối tác {license_model.partner_name}!",

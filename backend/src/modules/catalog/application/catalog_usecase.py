@@ -578,13 +578,53 @@ class CatalogUseCase:
             await self._verify_ownership(
                 repo, course_id, current_user, "đăng thông báo khóa học"
             )
-            return await repo.create_course_announcement(
+            ann = await repo.create_course_announcement(
                 course_id=course_id,
                 author_id=author_id,
                 author_name=author_name,
                 title=title,
                 content=content,
             )
+
+            # Trigger batch notification to enrolled learners
+            try:
+                from sqlalchemy import select
+                from src.modules.learning.infrastructure.models import (
+                    LearningProgressModel,
+                )
+                from src.modules.notification.application.use_cases import (
+                    NotificationUseCase,
+                )
+                from src.modules.notification.domain.constants import (
+                    NotificationCategory,
+                )
+
+                real_id, _ = await repo.get_course_id_by_slug_or_id(course_id)
+                target_ids = list({course_id, real_id})
+
+                enrolled_stmt = select(LearningProgressModel.user_id).where(
+                    LearningProgressModel.course_id.in_(target_ids)
+                )
+                enrolled_res = await session.execute(enrolled_stmt)
+                student_ids = list(enrolled_res.scalars().all())
+
+                if student_ids:
+                    notif_uc = NotificationUseCase()
+                    await notif_uc.send_batch_notifications(
+                        recipient_ids=student_ids,
+                        category=NotificationCategory.ANNOUNCEMENT,
+                        title=f"Thông báo mới từ Giảng viên {author_name}",
+                        content=f"{title}: {content[:100]}...",
+                        action_url=f"/learn/{course_id}",
+                    )
+            except Exception as e:
+                import logging
+
+                logging.getLogger(__name__).warning(
+                    "Failed to send course announcement notifications: %s", e
+                )
+
+            return ann
 
     async def list_course_announcements(self, course_id: str):
         async with async_session_scope() as session:
