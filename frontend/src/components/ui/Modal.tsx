@@ -26,13 +26,14 @@ export function DialogBackdrop({
   );
 }
 
-export type ModalSize = "sm" | "md" | "lg" | "xl" | "full";
+export type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl" | "full";
 
 const sizeClasses: Record<ModalSize, string> = {
   sm: "max-w-sm",
   md: "max-w-lg",
   lg: "max-w-2xl",
   xl: "max-w-4xl",
+  "2xl": "max-w-5xl",
   full: "max-w-[95vw] max-h-[90vh] overflow-y-auto",
 };
 

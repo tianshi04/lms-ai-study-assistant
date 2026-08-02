@@ -8,8 +8,10 @@ import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, UserRole } from "@/gen/identity/v1/identity_pb";
 import { useToast } from "@/components/ui/Toast";
 
-import { User, Mail, Lock, Eye, EyeOff, Users, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { User, Mail, Lock, Eye, EyeOff, Users } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Card } from "@/components/ui/Card";
 import {
   Select,
   SelectTrigger,
@@ -62,7 +64,7 @@ export default function RegisterPage() {
   return (
     <main className="flex-1 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="bg-card border border-border rounded-3xl p-8 shadow-xl transition-colors">
+        <Card className="rounded-3xl p-8 shadow-xl transition-colors">
           <div className="text-center mb-8">
             <Link href="/" prefetch={true} className="inline-flex items-center gap-3 group mb-6">
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
@@ -116,10 +118,10 @@ export default function RegisterPage() {
                       {"Họ và tên"}
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground z-10">
                         <User className="w-5 h-5" />
                       </div>
-                      <input
+                      <Input
                         id={field.name}
                         name={field.name}
                         type="text"
@@ -128,20 +130,11 @@ export default function RegisterPage() {
                         onChange={(e) => field.handleChange(e.target.value)}
                         placeholder={"Nguyễn Văn A"}
                         autoComplete="name"
-                        className={cn(
-                          "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-all bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2",
-                          hasError
-                            ? "border-destructive focus-visible:ring-destructive/50 focus-visible:border-destructive"
-                            : "border-input focus-visible:ring-ring focus-visible:border-ring",
-                        )}
+                        error={hasError ? String(field.state.meta.errors[0]) : undefined}
+                        className="pl-10 py-3 rounded-xl bg-muted"
                         required
                       />
                     </div>
-                    {hasError && (
-                      <p className="text-xs text-destructive font-medium">
-                        {String(field.state.meta.errors[0])}
-                      </p>
-                    )}
                   </div>
                 );
               }}
@@ -173,10 +166,10 @@ export default function RegisterPage() {
                       {"Địa chỉ Email"}
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground z-10">
                         <Mail className="w-5 h-5" />
                       </div>
-                      <input
+                      <Input
                         id={field.name}
                         name={field.name}
                         type="email"
@@ -186,20 +179,11 @@ export default function RegisterPage() {
                         placeholder="learner@example.com"
                         autoComplete="email"
                         spellCheck={false}
-                        className={cn(
-                          "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-colors bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2",
-                          hasError
-                            ? "border-destructive focus-visible:ring-destructive/50 focus-visible:border-destructive"
-                            : "border-input focus-visible:ring-ring focus-visible:border-ring",
-                        )}
+                        error={hasError ? String(field.state.meta.errors[0]) : undefined}
+                        className="pl-10 py-3 rounded-xl bg-muted"
                         required
                       />
                     </div>
-                    {hasError && (
-                      <p className="text-xs text-destructive font-medium">
-                        {String(field.state.meta.errors[0])}
-                      </p>
-                    )}
                   </div>
                 );
               }}
@@ -231,10 +215,10 @@ export default function RegisterPage() {
                       {"Mật khẩu"}
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground z-10">
                         <Lock className="w-5 h-5" />
                       </div>
-                      <input
+                      <Input
                         id={field.name}
                         name={field.name}
                         type={showPassword ? "text" : "password"}
@@ -243,32 +227,25 @@ export default function RegisterPage() {
                         onChange={(e) => field.handleChange(e.target.value)}
                         placeholder="••••••••"
                         autoComplete="new-password"
-                        className={cn(
-                          "w-full pl-10 pr-11 py-3 rounded-xl border text-sm transition-all bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2",
-                          hasError
-                            ? "border-destructive focus-visible:ring-destructive/50 focus-visible:border-destructive"
-                            : "border-input focus-visible:ring-ring focus-visible:border-ring",
-                        )}
+                        error={hasError ? String(field.state.meta.errors[0]) : undefined}
+                        className="pl-10 pr-11 py-3 rounded-xl bg-muted"
                         required
                       />
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setShowPassword(!showPassword)}
                         aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
-                        className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
                         {showPassword ? (
                           <EyeOff className="w-5 h-5" />
                         ) : (
                           <Eye className="w-5 h-5" />
                         )}
-                      </button>
+                      </Button>
                     </div>
-                    {hasError && (
-                      <p className="text-xs text-destructive font-medium">
-                        {String(field.state.meta.errors[0])}
-                      </p>
-                    )}
                   </div>
                 );
               }}
@@ -323,20 +300,15 @@ export default function RegisterPage() {
             {/* Submit Button */}
             <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
               {([canSubmit]) => (
-                <button
+                <Button
                   type="submit"
                   disabled={submitting || !canSubmit}
-                  className="w-full py-3.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                  isLoading={submitting}
+                  variant="primary"
+                  className="w-full py-3.5 rounded-xl font-semibold text-sm shadow-lg"
                 >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="animate-spin h-4 w-4 text-primary-foreground" />
-                      <span aria-live="polite">{"Đang tạo tài khoản…"}</span>
-                    </>
-                  ) : (
-                    <span>{"Đăng ký ngay"}</span>
-                  )}
-                </button>
+                  {"Đăng ký ngay"}
+                </Button>
               )}
             </form.Subscribe>
           </form>
@@ -349,7 +321,7 @@ export default function RegisterPage() {
               </Link>
             </p>
           </div>
-        </div>
+        </Card>
       </div>
     </main>
   );

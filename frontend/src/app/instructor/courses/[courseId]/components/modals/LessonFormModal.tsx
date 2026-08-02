@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Modal } from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 
 interface LessonFormModalProps {
   isOpen: boolean;
@@ -50,12 +52,12 @@ export function LessonFormModal({
           <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
             {"Tên Bài học"}
           </label>
-          <input
+          <Input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={"Ví dụ: 1.1 Khái niệm cơ bản về Perceptron"}
-            className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="py-2.5 rounded-xl bg-card text-sm"
             required
           />
         </div>
@@ -64,33 +66,36 @@ export function LessonFormModal({
           <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
             {"Thời lượng ước tính (Phút)"}
           </label>
-          <input
+          <Input
             type="number"
             min={1}
             value={minutes}
             onChange={(e) => setMinutes(parseInt(e.target.value) || 1)}
-            className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="py-2.5 rounded-xl bg-card text-sm"
             required
           />
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-muted text-foreground hover:bg-muted/80 transition-colors cursor-pointer"
+            className="rounded-xl text-xs font-bold"
           >
             {"Hủy"}
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
+            variant="primary"
+            size="sm"
             disabled={saving}
-            className="px-5 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground shadow-md transition-all disabled:opacity-50 cursor-pointer"
+            isLoading={saving}
+            className="rounded-xl text-xs font-bold shadow-md"
           >
-            <span aria-live="polite">
-              {saving ? "Đang lưu…" : isEdit ? "Cập nhật Bài học" : "Xác nhận tạo Bài học"}
-            </span>
-          </button>
+            {isEdit ? "Cập nhật Bài học" : "Xác nhận tạo Bài học"}
+          </Button>
         </div>
       </form>
     </Modal>

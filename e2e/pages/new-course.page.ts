@@ -15,12 +15,12 @@ export class NewCoursePage {
 
   constructor(page: Page) {
     this.page = page;
-    this.partnerSelect = page.locator('select').first();
+    this.partnerSelect = page.locator('select, button:has-text("Coursera"), button:has-text("Bảo chứng"), [role="combobox"]').first();
     this.titleInput = page.locator('input[placeholder*="Lập trình Python"]').first();
     this.slugInput = page.locator('input[placeholder*="lap-trinh-python"]').first();
     this.descriptionTextarea = page.locator('textarea').first();
-    this.subjectSelect = page.locator('select').nth(1);
-    this.levelSelect = page.locator('select').nth(2);
+    this.subjectSelect = page.locator('select, button:has-text("Khoa học"), button:has-text("lĩnh vực")').first();
+    this.levelSelect = page.locator('select, button:has-text("Sơ cấp"), button:has-text("trình độ")').first();
     this.financialAidCheckbox = page.locator('input[type="checkbox"]').first();
     this.submitButton = page.getByRole('button', { name: /Bắt Đầu Tạo Khóa Học|Tạo Khóa Học/i });
     this.cancelButton = page.getByRole('link', { name: /Hủy bỏ/i });
@@ -39,7 +39,18 @@ export class NewCoursePage {
   async fillAndSubmitCourse(title: string, description: string, partnerOrgId?: string) {
     await this.titleInput.fill(title);
     if (partnerOrgId) {
-      await this.partnerSelect.selectOption(partnerOrgId);
+      const selectCount = await this.page.locator('select').count();
+      if (selectCount > 0) {
+        await this.page.locator('select').first().selectOption(partnerOrgId);
+      } else {
+        if (await this.partnerSelect.isVisible()) {
+          await this.partnerSelect.click();
+          const option = this.page.locator('[role="option"]').filter({ hasText: partnerOrgId }).first();
+          if (await option.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await option.click();
+          }
+        }
+      }
     }
     await this.descriptionTextarea.fill(description);
     await this.submitButton.click();

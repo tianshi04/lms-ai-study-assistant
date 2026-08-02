@@ -21,6 +21,10 @@ import {
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
+import { Badge } from "@/components/ui/Badge";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 
 function FinancialAidContent() {
   const searchParams = useSearchParams();
@@ -222,31 +226,28 @@ function FinancialAidContent() {
 
                   <div className="flex items-center gap-3 shrink-0">
                     {app.status === "PENDING" && (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20 flex items-center gap-1.5">
+                      <Badge variant="warning" className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-warning animate-pulse" />
                         {`Chờ duyệt (${app.reviewDeadlineDaysLeft}d left)`}
-                      </span>
+                      </Badge>
                     )}
                     {app.status === "APPROVED" && (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20 flex items-center gap-1.5">
+                      <Badge variant="success" className="flex items-center gap-1.5">
                         <Check className="w-3.5 h-3.5 text-success" />
                         {"Đã Phê Duyệt"}
-                      </span>
+                      </Badge>
                     )}
                     {app.status === "REJECTED" && (
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-destructive/10 text-destructive border border-destructive/20 flex items-center gap-1.5">
+                      <Badge variant="danger" className="flex items-center gap-1.5">
                         <X className="w-3.5 h-3.5 text-destructive" />
                         {"Chưa được duyệt"}
-                      </span>
+                      </Badge>
                     )}
 
-                    <button
-                      type="button"
-                      className="px-3.5 py-1.5 rounded-xl bg-muted hover:bg-muted/80 text-xs font-bold text-foreground transition-all flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>{"Xem chi tiết"}</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </button>
+                    <Button type="button" variant="ghost" size="sm">
+                      {"Xem chi tiết"}
+                      <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                    </Button>
                   </div>
                 </div>
               );
@@ -276,22 +277,22 @@ function FinancialAidContent() {
               </div>
 
               {selectedApp.status === "PENDING" && (
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20 flex items-center gap-1.5">
+                <Badge variant="warning" className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-warning animate-pulse" />
                   {"Đang xét duyệt (Pending)"}
-                </span>
+                </Badge>
               )}
               {selectedApp.status === "APPROVED" && (
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20 flex items-center gap-1.5">
+                <Badge variant="success" className="flex items-center gap-1.5">
                   <Check className="w-4 h-4 text-success" />
                   {"Đã Phê Duyệt"}
-                </span>
+                </Badge>
               )}
               {selectedApp.status === "REJECTED" && (
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-destructive/10 text-destructive border border-destructive/20 flex items-center gap-1.5">
+                <Badge variant="danger" className="flex items-center gap-1.5">
                   <X className="w-4 h-4 text-destructive" />
                   {"Chưa được duyệt"}
-                </span>
+                </Badge>
               )}
             </div>
 
@@ -343,18 +344,19 @@ function FinancialAidContent() {
 
             <div className="pt-4 border-t border-border flex items-center justify-between gap-3">
               {selectedApp.status === "REJECTED" && (
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={() => {
                     setSelectedCourseId(selectedApp.courseId);
                     setSelectedApp(null);
                     setIsReApplying(true);
                     setShowCreateModal(true);
                   }}
-                  className="px-4 py-2.5 rounded-xl bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-xs shadow-md transition-all cursor-pointer"
                 >
                   {"Nộp lại bài luận mới"}
-                </button>
+                </Button>
               )}
 
               <Link
@@ -405,58 +407,47 @@ function FinancialAidContent() {
                 <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   {"Bài luận giải trình hoàn cảnh & Mục tiêu (Tối thiểu 150 từ)"}
                 </label>
-                <span
-                  className={`text-xs font-bold font-mono px-2.5 py-1 rounded-md ${
-                    isEnoughWords
-                      ? "bg-success/10 text-success border border-success/20"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
+                <Badge variant={isEnoughWords ? "success" : "default"}>
                   {wordCount} / 150 {"từ"}
-                </span>
+                </Badge>
               </div>
-              <textarea
+              <Textarea
                 rows={8}
                 value={essay}
                 onChange={(e) => setEssay(e.target.value)}
                 placeholder={"Tôi xin nộp đơn xin hỗ trợ tài chính cho khóa học này vì…"}
-                className="w-full p-4 rounded-2xl border border-input bg-card text-foreground placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-sm leading-relaxed"
                 required
               />
-              <div className="w-full bg-muted h-2 rounded-full mt-3 overflow-hidden">
-                <div
-                  className={`h-full transition-all duration-300 ${isEnoughWords ? "bg-success" : "bg-primary"}`}
-                  style={{ width: `${Math.min(100, (wordCount / 150) * 100)}%` }}
+              <div className="mt-3">
+                <ProgressBar
+                  progress={Math.min(100, (wordCount / 150) * 100)}
+                  color={isEnoughWords ? "emerald" : "blue"}
                 />
               </div>
             </div>
 
             <div className="pt-4 flex justify-end gap-3 border-t border-border">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   setShowCreateModal(false);
                   setIsReApplying(false);
                 }}
-                className="px-4 py-2.5 rounded-xl border border-input text-foreground text-xs font-semibold hover:bg-muted cursor-pointer"
               >
                 {"Hủy"}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
-                disabled={
-                  submitting || !isEnoughWords || selectedCourse?.financialAidEnabled === false
-                }
-                className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold shadow-lg disabled:opacity-50 cursor-pointer"
+                isLoading={submitting}
+                disabled={!isEnoughWords || selectedCourse?.financialAidEnabled === false}
+                size="sm"
               >
-                <span aria-live="polite">
-                  {submitting
-                    ? "Đang gửi đơn…"
-                    : selectedCourse?.financialAidEnabled === false
-                      ? "Khóa học này đã tắt FinAid"
-                      : "Gửi đơn Hỗ trợ"}
-                </span>
-              </button>
+                {selectedCourse?.financialAidEnabled === false
+                  ? "Khóa học này đã tắt FinAid"
+                  : "Gửi đơn Hỗ trợ"}
+              </Button>
             </div>
           </form>
         </Modal>

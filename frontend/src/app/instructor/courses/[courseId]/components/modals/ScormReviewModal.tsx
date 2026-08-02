@@ -1,6 +1,8 @@
 "use client";
 
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { ItemType, type Course } from "@/gen/catalog/v1/catalog_pb";
 
 interface ScormReviewModalProps {
@@ -29,9 +31,9 @@ export function ScormReviewModal({
         <div className="space-y-4">
           <div className="bg-success/10 p-4 rounded-2xl border border-success/20 space-y-2">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-success text-success-foreground">
+              <Badge variant="success" className="px-2.5 py-0.5 text-xs font-bold">
                 Full Fidelity Native
-              </span>
+              </Badge>
               <span className="text-[10px] font-mono text-muted-foreground">Level 1 Support</span>
             </div>
             <h4 className="text-sm font-bold text-success">
@@ -69,9 +71,12 @@ export function ScormReviewModal({
                             className="text-xs text-muted-foreground flex items-center justify-between bg-card p-2 rounded-lg border border-border"
                           >
                             <span>📄 {item.title}</span>
-                            <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] uppercase font-mono px-2 py-0.5"
+                            >
                               {ItemType[item.type] || "SCORM"}
-                            </span>
+                            </Badge>
                           </div>
                         ))}
                       </div>
@@ -84,28 +89,26 @@ export function ScormReviewModal({
         </div>
 
         <div className="flex justify-end gap-3 pt-2">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-muted text-foreground hover:bg-muted/80 cursor-pointer"
+            className="rounded-xl text-xs font-bold"
           >
             {"Hủy"}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="primary"
+            size="sm"
             onClick={() => onConfirmImport(scormObjectKey, courseId)}
             disabled={scormImporting}
-            className="px-5 py-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground shadow-md transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+            isLoading={scormImporting}
+            className="rounded-xl text-xs font-bold shadow-md"
           >
-            {scormImporting ? (
-              <>
-                <div className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
-                <span aria-live="polite">Đang Import…</span>
-              </>
-            ) : (
-              <span>{"Xác nhận Import"}</span>
-            )}
-          </button>
+            {"Xác nhận Import"}
+          </Button>
         </div>
       </div>
     </Modal>

@@ -1,9 +1,9 @@
 import * as React from "react";
-import Image from "next/image";
+import { Avatar as BaseAvatar } from "@base-ui/react/avatar";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-export const avatarVariants = cva("rounded-full object-cover shrink-0", {
+export const avatarVariants = cva("rounded-full object-cover shrink-0 select-none", {
   variants: {
     size: {
       sm: "w-7 h-7 text-xs",
@@ -16,14 +16,8 @@ export const avatarVariants = cva("rounded-full object-cover shrink-0", {
   },
 });
 
-const pixelSizes = {
-  sm: 28,
-  md: 36,
-  lg: 48,
-};
-
 export interface AvatarProps
-  extends React.ComponentProps<"div">, VariantProps<typeof avatarVariants> {
+  extends React.ComponentProps<typeof BaseAvatar.Root>, VariantProps<typeof avatarVariants> {
   name: string;
   src?: string;
 }
@@ -38,35 +32,20 @@ export function Avatar({ name, src, size = "md", className = "", ref, ...props }
 
   const selectedSize = size || "md";
 
-  if (src) {
-    const dim = pixelSizes[selectedSize];
-    return (
-      <div ref={ref} className={cn("inline-block shrink-0", className)} {...props}>
-        <Image
-          src={src}
-          alt={name}
-          width={dim}
-          height={dim}
-          unoptimized
-          className={cn(avatarVariants({ size: selectedSize }), "border border-border")}
-        />
-      </div>
-    );
-  }
-
   return (
-    <div
+    <BaseAvatar.Root
       ref={ref}
-      role="img"
-      aria-label={name}
       className={cn(
         avatarVariants({ size: selectedSize }),
-        "bg-primary font-bold text-primary-foreground flex items-center justify-center shadow-sm",
+        "inline-flex items-center justify-center overflow-hidden border border-border bg-primary text-primary-foreground font-bold shadow-sm",
         className,
       )}
       {...props}
     >
-      {initials}
-    </div>
+      {src && <BaseAvatar.Image src={src} alt={name} className="h-full w-full object-cover" />}
+      <BaseAvatar.Fallback className="flex h-full w-full items-center justify-center font-bold">
+        {initials}
+      </BaseAvatar.Fallback>
+    </BaseAvatar.Root>
   );
 }

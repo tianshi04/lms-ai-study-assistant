@@ -5,6 +5,15 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
 import { Users } from "lucide-react";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/Table";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 
 export default function InstructorAnalyticsPage({
   params,
@@ -131,7 +140,7 @@ export default function InstructorAnalyticsPage({
             </div>
 
             {/* Enrolled Students Table */}
-            <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden space-y-4 p-6">
+            <div className="bg-card rounded-3xl border border-border shadow-sm space-y-4 p-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                   <Users className="w-5 h-5 text-success" aria-hidden="true" />
@@ -144,61 +153,59 @@ export default function InstructorAnalyticsPage({
                   Chưa có dữ liệu học viên tham gia khóa học này.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-sm">
-                    <thead>
-                      <tr className="border-b border-border text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        <th className="py-3 px-4">Tên / Email</th>
-                        <th className="py-3 px-4">Mã Học Viên</th>
-                        <th className="py-3 px-4 text-center">Tiến Độ Học Tập</th>
-                        <th className="py-3 px-4 text-right">Trạng Thái</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {analytics.students.map((student) => (
-                        <tr key={student.userId} className="hover:bg-muted/50 transition-colors">
-                          <td className="py-3.5 px-4 font-semibold text-foreground">
-                            <div>{student.userName}</div>
-                            <div className="text-xs font-mono font-normal text-muted-foreground">
-                              {student.userEmail || "Learner"}
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Tên / Email</TableHead>
+                      <TableHead>Mã Học Viên</TableHead>
+                      <TableHead className="text-center">Tiến Độ Học Tập</TableHead>
+                      <TableHead className="text-right">Trạng Thái</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {analytics.students.map((student) => (
+                      <TableRow key={student.userId}>
+                        <TableCell className="font-semibold">
+                          <div>{student.userName}</div>
+                          <div className="text-xs font-mono font-normal text-muted-foreground">
+                            {student.userEmail || "Learner"}
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-muted-foreground">
+                          {student.userId}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-3">
+                            <div className="w-32">
+                              <ProgressBar
+                                progress={Math.min(100, student.progressPercent)}
+                                color="emerald"
+                              />
                             </div>
-                          </td>
-                          <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground">
-                            {student.userId}
-                          </td>
-                          <td className="py-3.5 px-4 text-center">
-                            <div className="flex items-center justify-center gap-3">
-                              <div className="w-32 bg-muted rounded-full h-2 overflow-hidden">
-                                <div
-                                  className="bg-success h-full rounded-full transition-all"
-                                  style={{ width: `${Math.min(100, student.progressPercent)}%` }}
-                                />
-                              </div>
-                              <span className="text-xs font-bold text-foreground font-mono">
-                                {student.progressPercent.toFixed(1)}%
-                              </span>
-                            </div>
-                          </td>
-                          <td className="py-3.5 px-4 text-right">
-                            {student.progressPercent >= 100 ? (
-                              <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-success/10 text-success">
-                                HOÀN THÀNH
-                              </span>
-                            ) : student.progressPercent > 0 ? (
-                              <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-primary/10 text-primary">
-                                ĐANG HỌC
-                              </span>
-                            ) : (
-                              <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-muted text-muted-foreground">
-                                MỚI GHI DANH
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                            <span className="text-xs font-bold text-foreground font-mono">
+                              {student.progressPercent.toFixed(1)}%
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {student.progressPercent >= 100 ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-success/10 text-success">
+                              HOÀN THÀNH
+                            </span>
+                          ) : student.progressPercent > 0 ? (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-primary/10 text-primary">
+                              ĐANG HỌC
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-muted text-muted-foreground">
+                              MỚI GHI DANH
+                            </span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               )}
             </div>
           </div>

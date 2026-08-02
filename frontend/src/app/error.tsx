@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 
 export default function ErrorPage({
   error,
@@ -20,10 +22,10 @@ export default function ErrorPage({
     <main className="flex-1 flex items-center justify-center min-h-[70vh] px-6 py-16 text-center">
       <div className="space-y-8 max-w-2xl mx-auto">
         {/* Badge */}
-        <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-destructive/10 border border-destructive/20 text-destructive text-xs font-semibold uppercase tracking-wider">
-          <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+        <Badge variant="danger" className="uppercase tracking-wider">
+          <span className="w-2 h-2 rounded-full bg-destructive animate-pulse mr-2" />
           <span>{"Đã xảy ra sự cố hệ thống"}</span>
-        </div>
+        </Badge>
 
         {/* Graphical Illustration */}
         <div className="relative flex items-center justify-center my-4">
@@ -49,19 +51,13 @@ export default function ErrorPage({
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-          <button
-            onClick={() => reset()}
-            className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/20 transition-all duration-200"
-          >
+          <Button type="button" onClick={() => reset()} className="w-full sm:w-auto">
             <RefreshCw className="w-4 h-4 mr-2" />
             {"Thử lại trang"}
-          </button>
-          <Link
-            href="/"
-            className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-sm transition-all duration-200"
-          >
-            {"Về Trang Chủ"}
-          </Link>
+          </Button>
+          <Button asChild variant="secondary" className="w-full sm:w-auto">
+            <Link href="/">{"Về Trang Chủ"}</Link>
+          </Button>
         </div>
       </div>
     </main>

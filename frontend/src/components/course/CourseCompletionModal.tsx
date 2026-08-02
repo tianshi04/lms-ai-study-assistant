@@ -8,6 +8,8 @@ import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useCourseDetailQuery } from "@/lib/query_hooks";
 import { Trophy, AlertTriangle, CheckCircle2, Check, Pencil, Star } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
 
 export interface CourseCompletionModalProps {
   isOpen: boolean;
@@ -227,13 +229,13 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
             <span className="opacity-90 leading-relaxed block">{certError}</span>
           </div>
         ) : (
-          <button
+          <Button
             onClick={handleClaimCertificate}
-            className="relative z-20 mt-5 inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-sm shadow-lg transition-all transform active:scale-95 cursor-pointer"
+            className="relative z-20 mt-5 bg-warning hover:bg-warning-hover text-warning-foreground shadow-lg"
           >
-            <CheckCircle2 className="w-5 h-5 text-warning-foreground" aria-hidden="true" />
+            <CheckCircle2 className="w-5 h-5 mr-1.5" aria-hidden="true" />
             <span>{"Xem Chứng Chỉ"}</span>
-          </button>
+          </Button>
         )}
       </div>
 
@@ -259,14 +261,16 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                 {"Cảm ơn bạn đã phản hồi ý kiến cho khóa học."}
               </p>
               <div className="pt-2">
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setSubmitted(false)}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline transition-colors cursor-pointer"
+                  className="text-primary"
                 >
-                  <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+                  <Pencil className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
                   <span>{"Viết / Sửa đánh giá"}</span>
-                </button>
+                </Button>
               </div>
             </div>
           ) : (
@@ -302,15 +306,12 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
 
               {/* Comment Textarea */}
               <div>
-                <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  {"Nội dung nhận xét:"}
-                </label>
-                <textarea
+                <Textarea
+                  label="Nội dung nhận xét:"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   placeholder={"Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng…"}
                   rows={3}
-                  className="w-full text-xs p-3 rounded-xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-transparent focus-visible:outline-none transition-all resize-none"
                 />
               </div>
 
@@ -319,20 +320,12 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
               )}
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 text-xs font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
-                >
+                <Button type="button" variant="outline" size="sm" onClick={onClose}>
                   {"Hủy"}
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground text-xs font-semibold shadow-sm transition-colors cursor-pointer"
-                >
-                  <span aria-live="polite">{submitting ? "Đang gửi…" : "Gửi đánh giá"}</span>
-                </button>
+                </Button>
+                <Button type="submit" isLoading={submitting} size="sm">
+                  {"Gửi đánh giá"}
+                </Button>
               </div>
             </form>
           )}

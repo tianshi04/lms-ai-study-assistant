@@ -33,7 +33,7 @@ export class AssessmentPage {
     this.peerTab = page.getByRole('button', { name: /Peer Review & Appeal/i });
 
     this.confirmHonorButton = page.locator('button').filter({ hasText: /Confirm Honor Code|Cam kết/i }).first();
-    this.honorAgreedBadge = page.locator('span').filter({ hasText: /Đã xác nhận Cam kết|Honor Code Agreed/i }).first();
+    this.honorAgreedBadge = page.getByText(/Đã xác nhận Cam kết|Honor Code Agreed/i).first();
     this.submitQuizButton = page.getByRole('button', { name: /Submit Graded Quiz|Nộp bài thi/i });
     this.honorCheckbox = page.locator('.fixed.inset-0 input[type="checkbox"]').first();
     this.agreeAndContinueButton = page.locator('.fixed.inset-0 button').filter({ hasText: /Tôi đồng ý & Tiếp tục|I Agree & Continue|Submitting/i }).first();
@@ -78,6 +78,7 @@ export class AssessmentPage {
     // Wait for the submit button to be enabled then click
     await this.agreeAndContinueButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.agreeAndContinueButton.click();
+    await this.page.waitForTimeout(500);
   }
 
   async submitQuiz() {

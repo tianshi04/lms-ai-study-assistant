@@ -6,10 +6,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
 import { loginAction } from "@/app/auth/actions";
 import { useToast } from "@/components/ui/Toast";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 
-import { Mail, Lock, Eye, EyeOff, Loader2, Zap } from "lucide-react";
+import { Eye, EyeOff, Zap } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { cn } from "@/lib/utils";
 
 function LoginFormContent() {
   const router = useRouter();
@@ -112,40 +113,20 @@ function LoginFormContent() {
               const hasError = field.state.meta.isTouched && field.state.meta.errors.length > 0;
               return (
                 <div className="space-y-1.5">
-                  <label
-                    htmlFor={field.name}
-                    className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                  >
-                    {"Địa chỉ Email"}
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
-                      <Mail className="w-5 h-5" />
-                    </div>
-                    <input
-                      id={field.name}
-                      name={field.name}
-                      type="email"
-                      value={field.state.value}
-                      onBlur={field.handleBlur}
-                      onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="learner@example.com"
-                      autoComplete="email"
-                      spellCheck={false}
-                      className={cn(
-                        "w-full pl-10 pr-4 py-3 rounded-xl border text-sm transition-colors bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2",
-                        hasError
-                          ? "border-destructive focus-visible:ring-destructive/50 focus-visible:border-destructive"
-                          : "border-input focus-visible:ring-ring focus-visible:border-ring",
-                      )}
-                      required
-                    />
-                  </div>
-                  {hasError && (
-                    <p className="text-xs text-destructive font-medium">
-                      {String(field.state.meta.errors[0])}
-                    </p>
-                  )}
+                  <Input
+                    label="Địa chỉ Email"
+                    id={field.name}
+                    name={field.name}
+                    type="email"
+                    value={field.state.value}
+                    onBlur={field.handleBlur}
+                    onChange={(e) => field.handleChange(e.target.value)}
+                    placeholder="learner@example.com"
+                    autoComplete="email"
+                    spellCheck={false}
+                    error={hasError ? String(field.state.meta.errors[0]) : undefined}
+                    required
+                  />
                 </div>
               );
             }}
@@ -167,19 +148,9 @@ function LoginFormContent() {
               const hasError = field.state.meta.isTouched && field.state.meta.errors.length > 0;
               return (
                 <div className="space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <label
-                      htmlFor={field.name}
-                      className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                    >
-                      {"Mật khẩu"}
-                    </label>
-                  </div>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground">
-                      <Lock className="w-5 h-5" />
-                    </div>
-                    <input
+                    <Input
+                      label="Mật khẩu"
                       id={field.name}
                       name={field.name}
                       type={showPassword ? "text" : "password"}
@@ -188,28 +159,20 @@ function LoginFormContent() {
                       onChange={(e) => field.handleChange(e.target.value)}
                       placeholder="••••••••"
                       autoComplete="current-password"
-                      className={cn(
-                        "w-full pl-10 pr-11 py-3 rounded-xl border text-sm transition-all bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2",
-                        hasError
-                          ? "border-destructive focus-visible:ring-destructive/50 focus-visible:border-destructive"
-                          : "border-input focus-visible:ring-ring focus-visible:border-ring",
-                      )}
+                      error={hasError ? String(field.state.meta.errors[0]) : undefined}
                       required
                     />
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
-                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-muted-foreground hover:text-foreground transition-colors"
+                      className="absolute right-2 top-8 text-muted-foreground hover:text-foreground h-8 w-8"
                     >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
                   </div>
-                  {hasError && (
-                    <p className="text-xs text-destructive font-medium">
-                      {String(field.state.meta.errors[0])}
-                    </p>
-                  )}
                 </div>
               );
             }}
@@ -218,20 +181,15 @@ function LoginFormContent() {
           {/* Submit Button */}
           <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
             {([canSubmit]) => (
-              <button
+              <Button
                 type="submit"
-                disabled={submitting || !canSubmit}
-                className="w-full py-3.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                isLoading={submitting}
+                disabled={!canSubmit}
+                size="lg"
+                className="w-full shadow-lg"
               >
-                {submitting ? (
-                  <>
-                    <Loader2 className="animate-spin h-4 w-4 text-primary-foreground" />
-                    <span aria-live="polite">{"Đang đăng nhập…"}</span>
-                  </>
-                ) : (
-                  <span>{"Đăng nhập ngay"}</span>
-                )}
-              </button>
+                {"Đăng nhập ngay"}
+              </Button>
             )}
           </form.Subscribe>
         </form>

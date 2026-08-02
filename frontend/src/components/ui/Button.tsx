@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Button as BaseButton } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,7 +32,7 @@ export const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ComponentProps<"button">, VariantProps<typeof buttonVariants> {
+  extends React.ComponentProps<typeof BaseButton>, VariantProps<typeof buttonVariants> {
   isLoading?: boolean;
   asChild?: boolean;
 }
@@ -61,7 +62,7 @@ export function Button({
   }
 
   return (
-    <button
+    <BaseButton
       ref={ref}
       className={compClasses}
       disabled={disabled || isLoading}
@@ -76,6 +77,6 @@ export function Button({
       ) : (
         children
       )}
-    </button>
+    </BaseButton>
   );
 }
