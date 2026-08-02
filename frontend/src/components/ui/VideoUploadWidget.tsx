@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Upload } from "lucide-react";
+import { Upload, CheckCircle2 } from "lucide-react";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
@@ -13,6 +13,9 @@ interface VideoUploadWidgetProps {
   accept?: string;
   label?: string;
   placeholder?: string;
+  compact?: boolean;
+  dropText?: string;
+  fileTypesHint?: string;
 }
 
 export function VideoUploadWidget({
@@ -20,9 +23,19 @@ export function VideoUploadWidget({
   onChange,
   folder = "videos",
   accept = "video/mp4,video/webm,video/quicktime",
-  label = "Đường dẫn hoặc Upload Tệp Video",
+  label = "Đường dẫn hoặc Upload Video",
   placeholder = "https://…",
+  compact = false,
+  dropText,
+  fileTypesHint,
 }: VideoUploadWidgetProps) {
+  const isSubtitle = folder === "subtitles" || accept.includes("vtt");
+  const defaultDropText = isSubtitle
+    ? "Kéo & thả tệp Phụ đề vào đây hoặc"
+    : "Kéo & thả tệp Video vào đây hoặc";
+  const defaultFileTypesHint = isSubtitle
+    ? "Hỗ trợ tệp .VTT (Max 500MB)"
+    : "Hỗ trợ tệp MP4, WebM, MOV (Max 500MB)";
   const [activeTab, setActiveTab] = useState<"upload" | "url">("upload");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -116,6 +129,19 @@ export function VideoUploadWidget({
 
   return (
     <div className="space-y-3">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileSelect(file);
+          // Reset value so selecting the exact same file again will trigger onChange
+          e.target.value = "";
+        }}
+      />
+
       <div className="flex items-center justify-between">
         <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {label}
@@ -146,7 +172,48 @@ export function VideoUploadWidget({
         </div>
       </div>
 
-      {activeTab === "upload" ? (
+      {value && !isUploading ? (
+        <div className="p-3 rounded-2xl bg-success/10 border border-success/30 flex items-center justify-between gap-3 animate-in fade-in duration-150 shadow-2xs">
+          <div className="flex items-center gap-2.5 overflow-hidden text-xs min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-success/20 text-success flex items-center justify-center shrink-0 border border-success/30">
+              <CheckCircle2 className="w-4.5 h-4.5" aria-hidden="true" />
+            </div>
+            <div className="overflow-hidden min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md bg-success text-success-foreground font-bold text-[10px] uppercase tracking-wider shrink-0">
+                  {isSubtitle ? "Đã chọn Phụ đề" : "Đã chọn Video"}
+                </span>
+                <span className="font-mono text-foreground text-xs truncate font-semibold">
+                  {value.split("/").pop() || value}
+                </span>
+              </div>
+              <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5">{value}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                if (activeTab === "upload") {
+                  fileInputRef.current?.click();
+                } else {
+                  onChange("");
+                }
+              }}
+              className="px-2.5 py-1 rounded-lg text-xs font-bold bg-card text-foreground hover:bg-muted border border-border transition-colors cursor-pointer"
+            >
+              Thay đổi
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="px-2.5 py-1 rounded-lg text-xs font-bold text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+            >
+              Gỡ bỏ
+            </button>
+          </div>
+        </div>
+      ) : activeTab === "upload" ? (
         <div className="space-y-3">
           <div
             onDragOver={(e) => {
@@ -161,33 +228,28 @@ export function VideoUploadWidget({
               if (file) handleFileSelect(file);
             }}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+            className={`border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+              compact ? "p-3 sm:p-4" : "p-6"
+            } ${
               dragOver
                 ? "border-primary bg-primary/10 scale-[1.01]"
                 : "border-border bg-card hover:border-primary"
             }`}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={accept}
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileSelect(file);
-              }}
-            />
-
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3 border border-primary/20 shadow-xs">
-              <Upload className="w-6 h-6" />
+            <div
+              className={`rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shadow-xs ${
+                compact ? "w-8 h-8 mb-2" : "w-12 h-12 mb-3"
+              }`}
+            >
+              <Upload className={compact ? "w-4 h-4" : "w-6 h-6"} />
             </div>
 
             <p className="text-xs font-bold text-foreground">
-              Kéo & thả tệp Video/Phụ đề vào đây hoặc{" "}
+              {dropText || defaultDropText}{" "}
               <span className="text-primary underline">bấm để chọn tệp</span>
             </p>
-            <p className="text-[11px] text-muted-foreground mt-1 font-mono">
-              Hỗ trợ tệp MP4, WebM, MOV, VTT (Max 500MB)
+            <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">
+              {fileTypesHint || defaultFileTypesHint}
             </p>
           </div>
 
@@ -215,24 +277,6 @@ export function VideoUploadWidget({
             placeholder={placeholder}
             className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
-        </div>
-      )}
-
-      {value && (
-        <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 overflow-hidden text-xs">
-            <span className="px-2 py-0.5 rounded bg-primary text-primary-foreground font-bold text-[10px] uppercase tracking-wider shrink-0">
-              Video Đang Chọn
-            </span>
-            <span className="font-mono text-foreground truncate font-semibold">{value}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => onChange("")}
-            className="text-xs text-destructive hover:underline font-bold shrink-0 cursor-pointer"
-          >
-            Gỡ bỏ Video
-          </button>
         </div>
       )}
     </div>
