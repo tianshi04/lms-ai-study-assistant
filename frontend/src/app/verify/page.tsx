@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { GraduationCap } from "lucide-react";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 
 export default function VerifyPortalPage() {
   const router = useRouter();
@@ -34,33 +36,35 @@ export default function VerifyPortalPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3 pt-2">
-          <input
-            type="text"
-            value={certId}
-            onChange={(e) => setCertId(e.target.value)}
-            placeholder={"Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)…"}
-            autoComplete="off"
-            spellCheck={false}
-            className="flex-1 px-4 py-3 rounded-xl border border-input bg-card text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring font-mono"
-            required
-          />
-          <button
-            type="submit"
-            className="px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm shadow-lg shadow-primary/20 transition-colors cursor-pointer"
-          >
+        <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-end gap-3 pt-2">
+          <div className="flex-1 w-full">
+            <Input
+              type="text"
+              value={certId}
+              onChange={(e) => setCertId(e.target.value)}
+              placeholder={"Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)…"}
+              autoComplete="off"
+              spellCheck={false}
+              className="font-mono"
+              required
+            />
+          </div>
+          <Button type="submit" size="md">
             {"Tra cứu Chứng chỉ"}
-          </button>
+          </Button>
         </form>
 
         <div className="pt-4 border-t border-border flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <span>Demo Certificate Code:</span>
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => router.push("/verify/CERT-DEMO12345")}
-            className="font-mono text-primary hover:underline font-bold cursor-pointer"
+            className="font-mono text-primary font-bold"
           >
             CERT-DEMO12345
-          </button>
+          </Button>
         </div>
       </div>
     </main>

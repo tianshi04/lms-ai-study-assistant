@@ -8,6 +8,10 @@ import {
   useMyInstructorApplicationQuery,
 } from "@/lib/query_hooks";
 import { InstructorApplicationStatus } from "@/gen/identity/v1/identity_pb";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Badge } from "@/components/ui/Badge";
 import {
   GraduationCap,
   CheckCircle2,
@@ -18,7 +22,6 @@ import {
   FileEdit,
   FileText,
   AlertCircle,
-  Loader2,
 } from "lucide-react";
 
 export default function BecomeAnInstructorPage() {
@@ -180,9 +183,9 @@ export default function BecomeAnInstructorPage() {
                   Mã đơn: <span className="font-mono">{existingApp?.id || "PENDING"}</span>
                 </p>
               </div>
-              <span className="px-4 py-1.5 rounded-full bg-warning/10 text-warning text-xs font-bold border border-warning/30 uppercase tracking-wider">
+              <Badge variant="warning" className="uppercase tracking-wider">
                 Chờ Thẩm Định (PENDING_REVIEW)
-              </span>
+              </Badge>
             </div>
 
             <div className="p-4 rounded-2xl bg-warning/10 border border-warning/30 text-foreground text-sm flex items-start gap-3">
@@ -272,9 +275,9 @@ export default function BecomeAnInstructorPage() {
                     : "Trước"}
                 </p>
               </div>
-              <span className="px-4 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs font-bold border border-destructive/30 uppercase tracking-wider">
+              <Badge variant="danger" className="uppercase tracking-wider">
                 Từ Chối (REJECTED)
-              </span>
+              </Badge>
             </div>
 
             <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/30 text-destructive text-sm space-y-2">
@@ -294,14 +297,10 @@ export default function BecomeAnInstructorPage() {
             </p>
 
             <div className="pt-2 flex justify-start">
-              <button
-                type="button"
-                onClick={handleStartReapply}
-                className="px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold shadow-lg transition-all flex items-center gap-2 text-sm"
-              >
-                <FileEdit className="w-4 h-4" aria-hidden="true" />
-                <span>Chỉnh Sửa & Nộp Lại Đơn Mới</span>
-              </button>
+              <Button type="button" onClick={handleStartReapply}>
+                <FileEdit className="w-4 h-4 mr-2" aria-hidden="true" />
+                Chỉnh Sửa & Nộp Lại Đơn Mới
+              </Button>
             </div>
           </div>
         ) : (
@@ -318,13 +317,15 @@ export default function BecomeAnInstructorPage() {
                 </span>
               </h2>
               {isReapplying && (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setIsReapplying(false)}
-                  className="text-xs text-muted-foreground hover:text-foreground font-semibold underline"
+                  className="underline"
                 >
                   Quay lại xem lý do từ chối
-                </button>
+                </Button>
               )}
             </div>
 
@@ -346,106 +347,72 @@ export default function BecomeAnInstructorPage() {
             )}
 
             {/* Title Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-foreground">
-                Chức danh Chuyên môn / Học hàm <span className="text-destructive">*</span>
-              </label>
-              <input
+            <div>
+              <Input
+                label="Chức danh Chuyên môn / Học hàm *"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Ví dụ: Chuyên gia AI & Khoa học Dữ liệu, Tiến sĩ Công nghệ Thông tin"
-                className="w-full px-4 py-3 rounded-2xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors text-sm"
+                helperText="Chức danh này sẽ hiển thị bên cạnh tên của bạn trên các khóa học sau khi được phê duyệt."
                 required
               />
-              <p className="text-xs text-muted-foreground">
-                Chức danh này sẽ hiển thị bên cạnh tên của bạn trên các khóa học sau khi được phê
-                duyệt.
-              </p>
             </div>
 
             {/* Bio Field */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-foreground">
-                Bài viết Tiểu sử Năng lực & Kinh nghiệm <span className="text-destructive">*</span>
-              </label>
-              <textarea
+            <div>
+              <Textarea
+                label="Bài viết Tiểu sử Năng lực & Kinh nghiệm *"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 rows={5}
                 placeholder="Mô tả quá trình công tác, thành tựu chuyên môn, các dự án thực tế và định hướng giảng dạy của bạn…"
-                className="w-full px-4 py-3 rounded-2xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors text-sm resize-none"
                 required
               />
             </div>
 
             {/* Portfolio / LinkedIn Link */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-foreground">
-                Đường dẫn Trang cá nhân LinkedIn / Website Portfolio
-              </label>
-              <input
+            <div>
+              <Input
+                label="Đường dẫn Trang cá nhân LinkedIn / Website Portfolio"
                 type="url"
                 value={linkedinUrl}
                 onChange={(e) => setLinkedinUrl(e.target.value)}
                 placeholder="https://linkedin.com/in/username hoặc https://yourportfolio.com"
                 spellCheck={false}
-                className="w-full px-4 py-3 rounded-2xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors text-sm"
               />
             </div>
 
             {/* CV PDF Link */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-foreground">
-                Đường dẫn File Hồ sơ Năng lực CV (.pdf)
-              </label>
-              <input
+            <div>
+              <Input
+                label="Đường dẫn File Hồ sơ Năng lực CV (.pdf)"
                 type="url"
                 value={cvUrl}
                 onChange={(e) => setCvUrl(e.target.value)}
                 placeholder="https://drive.google.com/file/d/… hoặc link file PDF"
                 spellCheck={false}
-                className="w-full px-4 py-3 rounded-2xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors text-sm"
               />
             </div>
 
             {/* Demo Video Link */}
-            <div className="space-y-2">
-              <label className="block text-sm font-bold text-foreground">
-                Đường dẫn Link Video Giảng thử Demo
-              </label>
-              <input
+            <div>
+              <Input
+                label="Đường dẫn Link Video Giảng thử Demo"
                 type="url"
                 value={demoVideoUrl}
                 onChange={(e) => setDemoVideoUrl(e.target.value)}
                 placeholder="https://youtube.com/watch?v=… hoặc link Video giới thiệu bài giảng"
                 spellCheck={false}
-                className="w-full px-4 py-3 rounded-2xl border border-input bg-muted text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors text-sm"
               />
             </div>
 
             {/* Submit Button */}
             <div className="pt-4 flex justify-end">
-              <button
-                type="submit"
-                disabled={submitMutation.isPending}
-                className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold shadow-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
-              >
-                {submitMutation.isPending ? (
-                  <>
-                    <Loader2
-                      className="animate-spin w-4 h-4 text-primary-foreground"
-                      aria-hidden="true"
-                    />
-                    <span aria-live="polite">Đang gửi đơn…</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Gửi đơn xin cấp quyền Giảng viên</span>
-                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                  </>
-                )}
-              </button>
+              <Button type="submit" isLoading={submitMutation.isPending} size="lg">
+                Gửi đơn xin cấp quyền Giảng viên
+                <ArrowRight className="w-4 h-4 ml-2" aria-hidden="true" />
+              </Button>
             </div>
           </form>
         )}

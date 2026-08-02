@@ -15,6 +15,8 @@ import {
   X,
   Send,
 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 
 interface QuizSessionQuestionOption {
   optionIndex: number;
@@ -291,13 +293,9 @@ export function GradedQuizRunner({
         <div>
           <div className="flex items-center gap-2">
             {isPreviewMode ? (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
-                CHẾ ĐỘ XEM TRƯỚC (PREVIEW)
-              </span>
+              <Badge variant="verified">CHẾ ĐỘ XEM TRƯỚC (PREVIEW)</Badge>
             ) : (
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20">
-                BÀI THI CÓ TÍNH ĐIỂM
-              </span>
+              <Badge variant="warning">BÀI THI CÓ TÍNH ĐIỂM</Badge>
             )}
             <span className="text-xs text-muted-foreground tabular-nums">
               Điểm đạt: {passingThreshold}% • Thời gian: {timeLimit} phút • Lượt làm bài tối đa:{" "}
@@ -311,22 +309,17 @@ export function GradedQuizRunner({
 
         <div className="flex items-center gap-3">
           {isPreviewMode ? (
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-              Bypass Honor Code & Cooldown
-            </span>
+            <Badge variant="verified">Bypass Honor Code & Cooldown</Badge>
           ) : isHonorAgreed ? (
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-success/10 text-success flex items-center gap-1 border border-success/20">
+            <Badge variant="success" className="flex items-center gap-1">
               <Check className="w-3.5 h-3.5 text-success" />
               <span>Đã xác nhận Cam kết Trung thực</span>
-            </span>
+            </Badge>
           ) : (
-            <button
-              onClick={() => setIsHonorModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-warning hover:opacity-90 text-warning-foreground transition-colors shadow-xs flex items-center gap-1.5"
-            >
+            <Button onClick={() => setIsHonorModalOpen(true)} variant="primary" size="sm">
               <span>Xác nhận Cam kết Trung thực</span>
-              <ShieldCheck className="w-3.5 h-3.5" />
-            </button>
+              <ShieldCheck className="w-3.5 h-3.5 ml-1.5" />
+            </Button>
           )}
         </div>
       </div>
@@ -368,7 +361,7 @@ export function GradedQuizRunner({
                     key={optIdx}
                     disabled={cooldownCountdown > 0 && !isPreviewMode}
                     onClick={() => handleOptionSelect(qIdx, optIdx)}
-                    className={`p-3.5 rounded-xl text-xs text-left font-medium transition-all border flex items-center gap-2.5 ${
+                    className={`p-3.5 rounded-xl text-xs text-left font-medium transition-all border flex items-center gap-2.5 cursor-pointer ${
                       isSelected
                         ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
                         : "bg-card border-border hover:border-primary/50 text-foreground"
@@ -444,13 +437,16 @@ export function GradedQuizRunner({
       {submitError && (
         <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs font-semibold flex items-center justify-between shadow-xs">
           <span>{submitError}</span>
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => setSubmitError(null)}
-            className="text-destructive hover:opacity-80 p-1 rounded-lg transition-colors ml-2"
+            className="text-destructive hover:text-destructive p-1 h-auto w-auto"
             aria-label="Close error message"
           >
             <X className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       )}
 
@@ -464,21 +460,20 @@ export function GradedQuizRunner({
 
         <div className="flex items-center gap-3">
           {isPreviewMode && quizResult && (
-            <button
-              onClick={handleResetPreview}
-              className="px-5 py-2.5 text-xs font-bold text-foreground bg-muted hover:bg-muted/80 border border-border rounded-xl transition-all"
-            >
+            <Button type="button" variant="outline" size="sm" onClick={handleResetPreview}>
               Làm lại bài thi (Reset)
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            type="button"
             onClick={handleSubmitQuiz}
-            disabled={isSubmitting || (cooldownCountdown > 0 && !isPreviewMode)}
-            className="px-6 py-2.5 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover disabled:opacity-50 rounded-xl shadow-xs transition-all flex items-center gap-2"
+            isLoading={isSubmitting}
+            disabled={cooldownCountdown > 0 && !isPreviewMode}
+            size="sm"
           >
-            <span aria-live="polite">{isSubmitting ? "Đang chấm điểm…" : "Nộp bài thi"}</span>
-            {!isSubmitting && <Send className="w-4 h-4" />}
-          </button>
+            {isSubmitting ? "Đang chấm điểm…" : "Nộp bài thi"}
+            {!isSubmitting && <Send className="w-4 h-4 ml-1.5" />}
+          </Button>
         </div>
       </div>
 

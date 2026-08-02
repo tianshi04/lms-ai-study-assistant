@@ -6,6 +6,10 @@ import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Check, Lock, AlertTriangle, Info, Send, ExternalLink, Scale } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Badge } from "@/components/ui/Badge";
 
 interface PeerAssignmentWorkspaceProps {
   itemId: string;
@@ -223,9 +227,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div>
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary/10 text-primary border border-primary/20">
-            PEER REVIEW ASSIGNMENT
-          </span>
+          <Badge variant="verified">PEER REVIEW ASSIGNMENT</Badge>
           <h2 className="text-xl font-bold text-foreground mt-1">
             {title || "Bài tập nộp chấm chéo"}
           </h2>
@@ -233,45 +235,40 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
 
         {/* Tabs */}
         <div className="flex items-center gap-1 bg-muted p-1 rounded-xl">
-          <button
+          <Button
+            type="button"
+            variant={activeTab === "submit" ? "secondary" : "ghost"}
+            size="sm"
             onClick={() => handleTabClick("submit")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
-              activeTab === "submit"
-                ? "bg-card text-primary shadow-xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
+            className="flex items-center gap-1"
           >
             <span>1. My Submission</span>
             {hasSubmitted && <Check className="w-3.5 h-3.5 text-success" />}
-          </button>
+          </Button>
 
-          <button
+          <Button
+            type="button"
+            variant={activeTab === "grade" ? "secondary" : "ghost"}
+            size="sm"
+            disabled={!hasSubmitted}
             onClick={() => handleTabClick("grade")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
-              activeTab === "grade"
-                ? "bg-card text-primary shadow-xs"
-                : !hasSubmitted
-                  ? "opacity-50 text-muted-foreground cursor-not-allowed"
-                  : "text-muted-foreground hover:text-foreground"
-            }`}
+            className="flex items-center gap-1"
           >
             <span>2. Grade Peers (3/3)</span>
             {!hasSubmitted && <Lock className="w-3 h-3 text-muted-foreground" />}
-          </button>
+          </Button>
 
-          <button
+          <Button
+            type="button"
+            variant={activeTab === "appeal" ? "secondary" : "ghost"}
+            size="sm"
+            disabled={!hasSubmitted}
             onClick={() => handleTabClick("appeal")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
-              activeTab === "appeal"
-                ? "bg-card text-primary shadow-xs"
-                : !hasSubmitted
-                  ? "opacity-50 text-muted-foreground cursor-not-allowed"
-                  : "text-muted-foreground hover:text-foreground"
-            }`}
+            className="flex items-center gap-1"
           >
             <span>3. Grade Appeal</span>
             {!hasSubmitted && <Lock className="w-3 h-3 text-muted-foreground" />}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -298,29 +295,20 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
           </div>
 
           <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-1">
-                Project Repository / Submission URL
-              </label>
-              <input
-                type="text"
-                value={submissionUrl}
-                onChange={(e) => setSubmissionUrl(e.target.value)}
-                className="w-full p-3 rounded-xl border border-input bg-muted text-xs font-mono text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-              />
-            </div>
+            <Input
+              label="Project Repository / Submission URL"
+              type="text"
+              value={submissionUrl}
+              onChange={(e) => setSubmissionUrl(e.target.value)}
+              className="font-mono text-xs"
+            />
 
-            <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-1">
-                Project Executive Summary &amp; Methodology
-              </label>
-              <textarea
-                value={textContent}
-                onChange={(e) => setTextContent(e.target.value)}
-                rows={4}
-                className="w-full p-3 rounded-xl border border-input bg-muted text-xs text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-              />
-            </div>
+            <Textarea
+              label="Project Executive Summary & Methodology"
+              value={textContent}
+              onChange={(e) => setTextContent(e.target.value)}
+              rows={4}
+            />
 
             {submitStatus && (
               <p className="p-3 rounded-xl bg-success/10 border border-success/30 text-xs font-bold text-success flex items-center gap-1.5">
@@ -329,16 +317,15 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
               </p>
             )}
 
-            <button
+            <Button
+              type="button"
               onClick={handleSubmitAssignment}
-              disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs transition-all shadow-xs flex items-center gap-2"
+              isLoading={isSubmitting}
+              size="sm"
             >
-              <span aria-live="polite">
-                {isSubmitting ? "Submitting…" : "Submit Peer Assignment"}
-              </span>
-              <Send className="w-4 h-4" />
-            </button>
+              {isSubmitting ? "Submitting…" : "Submit Peer Assignment"}
+              <Send className="w-4 h-4 ml-1.5" />
+            </Button>
           </div>
         </div>
       )}
@@ -408,12 +395,9 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
               </div>
 
               <div className="flex justify-end pt-2">
-                <button
-                  onClick={() => handleSubmitPeerGrade(pIdx)}
-                  className="px-4 py-2 rounded-xl bg-success text-success-foreground hover:opacity-90 font-bold text-xs shadow-xs transition-colors"
-                >
+                <Button type="button" onClick={() => handleSubmitPeerGrade(pIdx)} size="sm">
                   Submit Grade for Peer #{pIdx + 1}
-                </button>
+                </Button>
               </div>
             </div>
           ))}
@@ -436,18 +420,13 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
           </div>
 
           <div className="space-y-3">
-            <div>
-              <label className="block text-xs font-bold text-muted-foreground mb-1">
-                Reason for Appeal &amp; Justification
-              </label>
-              <textarea
-                value={appealReason}
-                onChange={(e) => setAppealReason(e.target.value)}
-                rows={4}
-                placeholder="Explain why the peer review grade should be reviewed by a TA…"
-                className="w-full p-3 rounded-xl border border-input bg-muted text-xs text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-              />
-            </div>
+            <Textarea
+              label="Reason for Appeal & Justification"
+              value={appealReason}
+              onChange={(e) => setAppealReason(e.target.value)}
+              rows={4}
+              placeholder="Explain why the peer review grade should be reviewed by a TA…"
+            />
 
             {appealStatus && (
               <p className="p-3 rounded-xl bg-warning/10 border border-warning/30 text-xs font-bold text-warning">
@@ -455,13 +434,9 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
               </p>
             )}
 
-            <button
-              onClick={handleSubmitAppeal}
-              disabled={!appealReason}
-              className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground font-bold text-xs transition-colors shadow-xs"
-            >
+            <Button type="button" onClick={handleSubmitAppeal} disabled={!appealReason} size="sm">
               Submit Appeal to TA
-            </button>
+            </Button>
           </div>
         </div>
       )}

@@ -5,6 +5,9 @@ import React, { useState, useEffect } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { Check, X } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
+import { Badge } from "@/components/ui/Badge";
 import {
   Select,
   SelectTrigger,
@@ -107,9 +110,7 @@ export function AutoGradedLabRunner({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
-              SANDBOX LAB
-            </span>
+            <Badge variant="verified">SANDBOX LAB</Badge>
             <span className="text-xs text-muted-foreground">Timeout: 30s • Memory: 512MB</span>
           </div>
           <h3 className="text-lg font-bold text-foreground mt-1">
@@ -138,15 +139,9 @@ export function AutoGradedLabRunner({
               <SelectItem value="javascript">{"JavaScript (Node.js)"}</SelectItem>
             </SelectContent>
           </Select>
-          <button
-            onClick={handleRunCode}
-            disabled={isRunning}
-            className="px-5 py-2 rounded-xl bg-success hover:bg-success-hover disabled:opacity-50 text-success-foreground font-bold text-xs shadow-md transition-all flex items-center gap-2"
-          >
-            <span aria-live="polite">
-              {isRunning ? "Executing in Sandbox…" : "Run & Submit Code"}
-            </span>
-          </button>
+          <Button onClick={handleRunCode} isLoading={isRunning} size="sm">
+            {isRunning ? "Executing in Sandbox…" : "Run & Submit Code"}
+          </Button>
         </div>
       </div>
 
@@ -158,12 +153,12 @@ export function AutoGradedLabRunner({
             <span>solution.py</span>
             <span>UTF-8</span>
           </div>
-          <textarea
+          <Textarea
             value={sourceCode}
             onChange={(e) => setSourceCode(e.target.value)}
             rows={14}
             spellCheck={false}
-            className="w-full p-4 rounded-xl bg-muted border border-input text-success font-mono text-xs focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none resize-y leading-relaxed shadow-inner"
+            className="font-mono text-xs text-success bg-muted resize-y"
           />
         </div>
 

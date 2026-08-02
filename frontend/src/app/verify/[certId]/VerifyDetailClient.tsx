@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Search, Check, X } from "lucide-react";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 
 interface VerifiedCertPayload {
   isValid: boolean;
@@ -78,23 +81,22 @@ export function VerifyDetailClient({
           }
         </p>
 
-        <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            value={searchCertId}
-            onChange={(e) => setSearchCertId(e.target.value)}
-            placeholder={"Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)…"}
-            spellCheck={false}
-            autoComplete="off"
-            className="flex-1 px-4 py-3 rounded-xl border border-input bg-muted text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring font-mono transition-colors"
-          />
-          <button
-            type="submit"
-            className="px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm shadow-md shadow-primary/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Search className="w-4 h-4" />
+        <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row items-end gap-3">
+          <div className="flex-1 w-full">
+            <Input
+              type="text"
+              value={searchCertId}
+              onChange={(e) => setSearchCertId(e.target.value)}
+              placeholder={"Nhập mã chứng chỉ (ví dụ: CERT-DEMO12345)…"}
+              spellCheck={false}
+              autoComplete="off"
+              className="font-mono"
+            />
+          </div>
+          <Button type="submit" size="md">
+            <Search className="w-4 h-4 mr-1.5" />
             <span>{"Tra cứu Chứng chỉ"}</span>
-          </button>
+          </Button>
         </form>
       </div>
 
@@ -102,7 +104,7 @@ export function VerifyDetailClient({
         <div className="space-y-8">
           {/* Status Verification Badge */}
           <div className="bg-success/10 border border-success/20 rounded-2xl p-4 flex items-center gap-3 text-success">
-            <div className="w-8 h-8 rounded-full bg-success text-success-foreground flex items-center justify-center font-bold flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-success text-success-foreground flex items-center justify-center font-bold shrink-0">
               <Check className="w-5 h-5" />
             </div>
             <div>
@@ -123,10 +125,13 @@ export function VerifyDetailClient({
             {/* Top Partner Branding */}
             <div className="flex items-center justify-between border-b border-border pb-8 mb-8">
               <div>
-                <span className="text-xs font-bold font-mono text-primary uppercase tracking-widest block mb-1">
+                <Badge
+                  variant="verified"
+                  className="font-mono text-primary uppercase tracking-widest block mb-1"
+                >
                   COURSERA VERIFIED SPECIALIZATION CERTIFICATE
-                </span>
-                <h2 className="text-2xl font-black text-foreground tracking-tight">
+                </Badge>
+                <h2 className="text-2xl font-black text-foreground tracking-tight mt-1">
                   {cert.partnerName}
                 </h2>
               </div>
@@ -231,25 +236,19 @@ export function VerifyDetailClient({
               </div>
 
               <div className="flex items-center gap-3">
-                <button
-                  onClick={handleCopyLink}
-                  className="px-4 py-2.5 rounded-xl border border-border hover:bg-muted text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
-                >
+                <Button type="button" variant="outline" size="sm" onClick={handleCopyLink}>
                   {copied ? (
                     <>
-                      <Check className="w-4 h-4 text-success" />
+                      <Check className="w-4 h-4 text-success mr-1" />
                       <span>Copied Link</span>
                     </>
                   ) : (
                     <span>Copy Verification Link</span>
                   )}
-                </button>
-                <button
-                  onClick={handleDownloadBadge}
-                  className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-semibold shadow-lg shadow-primary/20 transition-all cursor-pointer"
-                >
+                </Button>
+                <Button type="button" size="sm" onClick={handleDownloadBadge}>
                   Download Badge (JSON)
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -263,15 +262,15 @@ export function VerifyDetailClient({
           <p className="text-sm text-muted-foreground max-w-md mx-auto">
             {statusMsg || `${"Không tìm thấy chứng chỉ với mã đã nhập"} #${certId}`}
           </p>
-          <button
+          <Button
+            type="button"
             onClick={() => {
               setSearchCertId("CERT-DEMO12345");
               router.push("/verify/CERT-DEMO12345");
             }}
-            className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-block cursor-pointer"
           >
             Demo Code: CERT-DEMO12345
-          </button>
+          </Button>
         </div>
       )}
     </main>

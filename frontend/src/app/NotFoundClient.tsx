@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Home, BookOpen, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 
 export function NotFoundClient() {
   const router = useRouter();
@@ -15,10 +17,10 @@ export function NotFoundClient() {
       <main className="flex-1 relative z-10 flex items-center justify-center max-w-4xl mx-auto px-6 py-16 text-center">
         <div className="space-y-8 w-full">
           {/* Badge */}
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-info/10 border border-info/20 text-info text-xs font-semibold uppercase tracking-wider">
-            <span className="w-2 h-2 rounded-full bg-info animate-pulse" />
+          <Badge variant="outline" className="uppercase tracking-wider">
+            <span className="w-2 h-2 rounded-full bg-info animate-pulse mr-2" />
             <span>{"Lỗi 404 - Không tìm thấy trang"}</span>
-          </div>
+          </Badge>
 
           {/* Graphical 404 Hero Illustration */}
           <div className="relative flex items-center justify-center my-4">
@@ -49,35 +51,32 @@ export function NotFoundClient() {
           {/* Action Buttons */}
           <div className="space-y-4 pt-4">
             <div className="flex flex-wrap items-center justify-center gap-4">
-              <Link
-                id="btn-notfound-home"
-                href="/"
-                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
-              >
-                <Home className="w-5 h-5" aria-hidden="true" />
-                <span>{"Về trang chủ"}</span>
-              </Link>
+              <Button id="btn-notfound-home" asChild size="lg">
+                <Link href="/">
+                  <Home className="w-5 h-5 mr-2" aria-hidden="true" />
+                  <span>{"Về trang chủ"}</span>
+                </Link>
+              </Button>
 
-              <Link
-                id="btn-notfound-catalog"
-                href="/courses"
-                className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-card border border-border text-foreground font-semibold shadow-sm hover:bg-muted hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
-              >
-                <BookOpen className="w-5 h-5 text-primary" aria-hidden="true" />
-                <span>{"Khám phá khóa học"}</span>
-              </Link>
+              <Button id="btn-notfound-catalog" asChild variant="outline" size="lg">
+                <Link href="/courses">
+                  <BookOpen className="w-5 h-5 text-primary mr-2" aria-hidden="true" />
+                  <span>{"Khám phá khóa học"}</span>
+                </Link>
+              </Button>
             </div>
 
             <div className="flex justify-center pt-2">
-              <button
+              <Button
                 id="btn-notfound-goback"
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => router.back()}
-                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary font-semibold transition-colors duration-200 cursor-pointer"
               >
-                <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+                <ArrowLeft className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 <span>{"Quay lại"}</span>
-              </button>
+              </Button>
             </div>
           </div>
         </div>
