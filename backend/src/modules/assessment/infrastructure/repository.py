@@ -135,21 +135,24 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         )
 
     async def save_quiz_cooldown(self, cooldown: QuizCooldown) -> None:
-        model = await self.session.get(QuizCooldownModel, cooldown.id)
-        if model:
-            model.failed_attempts_count = cooldown.failed_attempts_count
-            model.last_attempt_at = cooldown.last_attempt_at
-            model.cooldown_until = cooldown.cooldown_until
-        else:
-            model = QuizCooldownModel(
-                id=cooldown.id,
-                user_id=cooldown.user_id,
-                item_id=cooldown.item_id,
-                failed_attempts_count=cooldown.failed_attempts_count,
-                last_attempt_at=cooldown.last_attempt_at,
-                cooldown_until=cooldown.cooldown_until,
-            )
-            self.session.add(model)
+        from sqlalchemy.dialects.postgresql import insert
+        stmt = insert(QuizCooldownModel).values(
+            id=cooldown.id,
+            user_id=cooldown.user_id,
+            item_id=cooldown.item_id,
+            failed_attempts_count=cooldown.failed_attempts_count,
+            last_attempt_at=cooldown.last_attempt_at,
+            cooldown_until=cooldown.cooldown_until,
+        )
+        stmt = stmt.on_conflict_do_update(
+            index_elements=['id'],
+            set_={
+                'failed_attempts_count': stmt.excluded.failed_attempts_count,
+                'last_attempt_at': stmt.excluded.last_attempt_at,
+                'cooldown_until': stmt.excluded.cooldown_until,
+            }
+        )
+        await self.session.execute(stmt)
         await self.session.commit()
 
     async def get_quiz_active_session(
