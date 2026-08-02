@@ -6,7 +6,7 @@ import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
 import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
 import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentWorkspace";
-import { FileText, Check, Eye, ArrowRight } from "lucide-react";
+import { FileText, Check, Eye, ArrowRight, BookOpen } from "lucide-react";
 
 interface VideoPlayerProps {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -178,7 +178,7 @@ export function VideoPlayer({
   // 4. Peer Review Item
   if (activeItem.type === 6) {
     return (
-      <div className="w-full h-full overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950">
+      <div className="w-full h-full overflow-y-auto p-6 bg-background">
         <PeerAssignmentWorkspace itemId={activeItem.id} title={activeItem.title} userId={userId} />
       </div>
     );
@@ -187,32 +187,22 @@ export function VideoPlayer({
   // SCORM Package Learning Item
   if ((activeItem.type as unknown as number) === 7) {
     return (
-      <div className="w-full h-full flex flex-col bg-white dark:bg-slate-900 transition-colors duration-200">
+      <div className="w-full h-full flex flex-col bg-card transition-colors duration-200">
         {/* Header toolbar */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <div className="space-y-1">
-            <h2 className="text-lg font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-              <svg
-                className="w-5 h-5 text-amber-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                />
-              </svg>
+            <h2 className="text-lg font-extrabold text-foreground flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-warning" aria-hidden="true" />
               <span>{activeItem.title}</span>
               {isPreviewMode && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 animate-pulse">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-warning/10 text-warning border border-warning/20 animate-pulse">
                   {"Xem trước"}
                 </span>
               )}
             </h2>
-            <p className="text-xs text-slate-500">{"Trình phát học liệu tương tác SCORM 1.2"}</p>
+            <p className="text-xs text-muted-foreground">
+              {"Trình phát học liệu tương tác SCORM 1.2"}
+            </p>
           </div>
           {!isPreviewMode && (
             <button
@@ -220,35 +210,28 @@ export function VideoPlayer({
               disabled={isCompleted}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                 isCompleted
-                  ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 cursor-default"
-                  : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/20"
+                  ? "bg-success/10 text-success border border-success/20 cursor-default"
+                  : "bg-success hover:bg-success/90 text-success-foreground shadow-md"
               }`}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2.5}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
+              <Check className="w-4 h-4" aria-hidden="true" />
               {isCompleted ? "Đã Hoàn Thành" : "Đánh dấu Hoàn Thành"}
             </button>
           )}
         </div>
 
         {/* Iframe Viewport */}
-        <div className="flex-1 w-full h-full min-h-[500px] relative bg-slate-100 dark:bg-slate-950 p-2">
+        <div className="flex-1 w-full h-full min-h-[500px] relative bg-muted/50 p-2">
           {(activeItem as any).scormEntryHtml ? (
             <iframe
               key={activeItem.id}
               src={(activeItem as any).scormEntryHtml}
-              className="w-full h-full border-0 rounded-2xl bg-white dark:bg-slate-900 shadow-lg"
+              className="w-full h-full border-0 rounded-2xl bg-card shadow-lg"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-rose-500 font-bold bg-white dark:bg-slate-900 rounded-2xl">
+            <div className="w-full h-full flex items-center justify-center text-destructive font-bold bg-card rounded-2xl">
               {"Lỗi: Không tìm thấy tệp entry chạy chính của gói SCORM."}
             </div>
           )}
