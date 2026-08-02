@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Upload } from "lucide-react";
+import { Upload, CheckCircle2 } from "lucide-react";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
@@ -159,7 +159,42 @@ export function VideoUploadWidget({
         </div>
       </div>
 
-      {activeTab === "upload" ? (
+      {value && !isUploading ? (
+        <div className="p-3 rounded-2xl bg-success/10 border border-success/30 flex items-center justify-between gap-3 animate-in fade-in duration-150 shadow-2xs">
+          <div className="flex items-center gap-2.5 overflow-hidden text-xs min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-success/20 text-success flex items-center justify-center shrink-0 border border-success/30">
+              <CheckCircle2 className="w-4.5 h-4.5" aria-hidden="true" />
+            </div>
+            <div className="overflow-hidden min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md bg-success text-success-foreground font-bold text-[10px] uppercase tracking-wider shrink-0">
+                  {isSubtitle ? "Đã chọn Phụ đề" : "Đã chọn Video"}
+                </span>
+                <span className="font-mono text-foreground text-xs truncate font-semibold">
+                  {value.split("/").pop() || value}
+                </span>
+              </div>
+              <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5">{value}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="px-2.5 py-1 rounded-lg text-xs font-bold bg-card text-foreground hover:bg-muted border border-border transition-colors cursor-pointer"
+            >
+              Thay đổi
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange("")}
+              className="px-2.5 py-1 rounded-lg text-xs font-bold text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+            >
+              Gỡ bỏ
+            </button>
+          </div>
+        </div>
+      ) : activeTab === "upload" ? (
         <div className="space-y-3">
           <div
             onDragOver={(e) => {
@@ -234,24 +269,6 @@ export function VideoUploadWidget({
             placeholder={placeholder}
             className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
-        </div>
-      )}
-
-      {value && (
-        <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 overflow-hidden text-xs">
-            <span className="px-2 py-0.5 rounded bg-primary text-primary-foreground font-bold text-[10px] uppercase tracking-wider shrink-0">
-              Video Đang Chọn
-            </span>
-            <span className="font-mono text-foreground truncate font-semibold">{value}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => onChange("")}
-            className="text-xs text-destructive hover:underline font-bold shrink-0 cursor-pointer"
-          >
-            Gỡ bỏ Video
-          </button>
         </div>
       )}
     </div>
