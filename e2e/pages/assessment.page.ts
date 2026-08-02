@@ -78,7 +78,7 @@ export class AssessmentPage {
     // Wait for the submit button to be enabled then click
     await this.agreeAndContinueButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.agreeAndContinueButton.click();
-    await this.page.waitForTimeout(500);
+    await this.confirmHonorButton.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => null);
   }
 
   async submitQuiz() {
@@ -92,8 +92,8 @@ export class AssessmentPage {
   async submitPeerAssignment() {
     await this.submitPeerAssignmentButton.scrollIntoViewIfNeeded();
     await this.submitPeerAssignmentButton.click();
-    // Wait for async RPC call + setHasSubmitted(true) state update to settle
-    await this.page.waitForTimeout(1500);
+    // Wait for submit button to hide or submission confirmation to appear
+    await this.submitPeerAssignmentButton.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => null);
   }
 
   async gradeFirstPeer() {
@@ -112,23 +112,20 @@ export class AssessmentPage {
     if (await this.submitPeerAssignmentButton.isVisible()) {
       await this.submitPeerAssignment();
     }
+
+    // Wait for BR_PEER_001 lock notice to detach if assignment was just submitted
+    await this.page.locator('text=/BR_PEER_001/i').first().waitFor({ state: 'detached', timeout: 5000 }).catch(() => null);
+
     await this.gradeAppealTab.scrollIntoViewIfNeeded();
     await this.gradeAppealTab.click({ force: true });
-
-    // If still locked (BR_PEER_001), assignment state hasn't settled yet — retry once
-    if (await this.page.locator('text=/BR_PEER_001/i').first().isVisible()) {
-      await this.page.waitForTimeout(1000);
-      await this.gradeAppealTab.click({ force: true });
-    }
 
     const textarea = this.page.locator('textarea[placeholder*="Explain why"], textarea[placeholder*="reviewed by a TA"]').first();
     await expect(textarea).toBeVisible({ timeout: 10000 });
     await textarea.fill(reason);
     const submitBtn = this.page.getByRole('button', { name: /Submit Appeal to TA/i });
+    await expect(submitBtn).toBeVisible({ timeout: 10000 });
     await submitBtn.scrollIntoViewIfNeeded();
     await submitBtn.click({ force: true });
-    // Wait for appeal status state to update and render
-    await this.page.waitForTimeout(1000);
   }
 }
 

@@ -52,7 +52,6 @@ export class CourseCatalogPage {
   async sortBy(sortValue: string) {
     const responsePromise = this.page.waitForResponse(response => response.url().includes('ListCourses'));
     await this.page.getByRole('combobox').click();
-    await this.page.waitForTimeout(300);
     const labelMap: Record<string, RegExp> = {
       '': /Mặc định|Default/i,
       'rating': /Đánh giá cao nhất|Highest Rating/i,
@@ -60,7 +59,9 @@ export class CourseCatalogPage {
       'newest': /Mới nhất|Newest/i,
     };
     const optionMatcher = labelMap[sortValue] || new RegExp(sortValue, 'i');
-    await this.page.getByRole('option', { name: optionMatcher }).click();
+    const optionLocator = this.page.getByRole('option', { name: optionMatcher });
+    await optionLocator.waitFor({ state: 'visible', timeout: 5000 });
+    await optionLocator.click();
     await responsePromise;
   }
 }
