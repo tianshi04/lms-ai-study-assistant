@@ -129,6 +129,19 @@ export function VideoUploadWidget({
 
   return (
     <div className="space-y-3">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFileSelect(file);
+          // Reset value so selecting the exact same file again will trigger onChange
+          e.target.value = "";
+        }}
+      />
+
       <div className="flex items-center justify-between">
         <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {label}
@@ -223,17 +236,6 @@ export function VideoUploadWidget({
                 : "border-border bg-card hover:border-primary"
             }`}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={accept}
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleFileSelect(file);
-              }}
-            />
-
             <div
               className={`rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shadow-xs ${
                 compact ? "w-8 h-8 mb-2" : "w-12 h-12 mb-3"
