@@ -246,12 +246,12 @@ export function VideoPlayer({
 
     return (
       <div className="w-full flex flex-col gap-3">
-        <div className="w-full h-full max-h-[60vh] 2xl:max-h-[680px] relative flex items-center justify-center bg-muted/50 border border-border/60 rounded-xl overflow-hidden transition-colors duration-200 shadow-sm">
+        <div className="w-full h-full max-h-[60vh] 2xl:max-h-[680px] relative flex items-center justify-center bg-transparent rounded-2xl overflow-hidden transition-colors duration-200">
           {youtubeEmbedUrl ? (
             <iframe
               key={activeItem.id}
               src={youtubeEmbedUrl}
-              className="w-full h-full max-h-[60vh] 2xl:max-h-[680px] border-0 rounded-xl shadow-md"
+              className="w-full h-full max-h-[60vh] 2xl:max-h-[680px] border-0 rounded-2xl shadow-md"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
@@ -264,7 +264,7 @@ export function VideoPlayer({
               onTimeUpdate={onTimeUpdate}
               onSeeking={onSeeking}
               onEnded={() => onMarkComplete?.(activeItem.id)}
-              className="max-h-[60vh] 2xl:max-h-[680px] w-auto max-w-full object-contain shadow-md rounded-xl border border-border/40"
+              className="max-h-[60vh] 2xl:max-h-[680px] w-auto max-w-full object-contain rounded-2xl"
             />
           )}
 

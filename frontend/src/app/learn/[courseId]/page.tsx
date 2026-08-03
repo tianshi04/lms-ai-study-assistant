@@ -603,14 +603,14 @@ function CoursePlayerContent() {
 
   return (
     <DirectionalTransition>
-      <div className="h-screen h-dvh bg-background text-foreground flex flex-col overflow-hidden transition-colors duration-200">
-        {/* Top Player Navbar */}
-        <header className="h-14 bg-card border-b border-border px-6 flex items-center justify-between flex-shrink-0 z-30">
+      <div className="h-screen h-dvh bg-surface text-on-surface flex flex-col overflow-hidden transition-colors duration-200">
+        {/* Top Player Navbar - Seamless Borderless Header */}
+        <header className="h-14 bg-surface-container-low px-6 flex items-center justify-between flex-shrink-0 z-30">
           <div className="flex items-center gap-4 min-w-0">
             {isPreviewMode ? (
               <button
                 onClick={() => window.close()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-bold transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-bold transition-colors cursor-pointer"
                 title="Đóng trình xem trước"
               >
                 <X className="w-4 h-4" />
@@ -619,21 +619,21 @@ function CoursePlayerContent() {
             ) : (
               <Link
                 href={`/courses/${course.id}`}
-                className="p-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground transition-colors"
+                className="p-2 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors"
                 title="Quay lại khóa học"
               >
                 <ChevronLeft className="w-4 h-4" />
               </Link>
             )}
-            <span className="font-bold text-sm text-foreground truncate max-w-md">
+            <span className="font-bold text-sm text-on-surface truncate max-w-md">
               {isPreviewMode ? `Xem trước: ${activeItem?.title || course.title}` : course.title}
             </span>
           </div>
 
           <div className="flex items-center gap-4">
             {!isPreviewMode && progress && (
-              <div className="flex items-center gap-3 bg-muted px-3 py-1.5 rounded-lg border border-border">
-                <div className="w-24 h-2 bg-background rounded-full overflow-hidden">
+              <div className="flex items-center gap-3 bg-surface-container px-3.5 py-1.5 rounded-full">
+                <div className="w-24 h-2 bg-surface-container-high rounded-full overflow-hidden">
                   <div
                     className="h-full bg-primary rounded-full transition-all duration-500"
                     style={{ width: `${progress.overallProgressPercent}%` }}
@@ -651,7 +651,7 @@ function CoursePlayerContent() {
                 progress.completedItemIds.length >= totalCourseItems) && (
                 <button
                   onClick={() => setShowCompletionModal(true)}
-                  className="px-3.5 py-1.5 rounded-lg bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-xs shadow-sm hover:shadow transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="px-4 py-1.5 rounded-full bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-xs shadow-xs hover:shadow transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4 text-warning-foreground" />
                   <span>{"Xem Chứng Chỉ"}</span>
@@ -659,7 +659,7 @@ function CoursePlayerContent() {
               )}
 
             {isPreviewMode && (
-              <span className="px-2.5 py-1 rounded-full text-xs font-extrabold uppercase bg-warning/10 text-warning border border-warning/20 animate-pulse">
+              <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-warning/10 text-warning border border-warning/20 animate-pulse">
                 {"Xem trước học liệu"}
               </span>
             )}
@@ -673,13 +673,13 @@ function CoursePlayerContent() {
         <div className="flex-1 flex overflow-hidden">
           {/* Left Sidebar Icon Strip when collapsed */}
           {!isSidebarOpen && !isPreviewMode && (
-            <div className="w-14 bg-card border-r border-border flex flex-col items-center py-4 shrink-0 z-20 select-none">
+            <div className="w-14 bg-surface-container-low flex flex-col items-center py-4 shrink-0 z-20 select-none">
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="w-12 py-2.5 px-1 rounded-xl flex flex-col items-center justify-center text-muted-foreground hover:bg-muted hover:text-foreground transition-all cursor-pointer"
+                className="w-12 py-2.5 px-1 rounded-2xl flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all cursor-pointer"
                 title="Mở Lộ trình Bài học"
               >
-                <Menu className="w-5 h-5 mb-1 text-primary" aria-hidden="true" />
+                <Menu className="w-5 h-5 mb-1" aria-hidden="true" />
                 <span className="text-[10px] tracking-tight leading-none font-semibold">
                   Lộ trình
                 </span>
@@ -687,16 +687,16 @@ function CoursePlayerContent() {
             </div>
           )}
 
-          {/* Left Sidebar - Course Content Navigation Tree */}
+          {/* Left Sidebar - Seamless MD3 Tonal Surface Drawer */}
           {isSidebarOpen && !isPreviewMode && (
-            <aside className="w-80 bg-card/95 border-r border-border overflow-y-auto flex-shrink-0 flex flex-col transition-all duration-300">
-              <div className="p-4 border-b border-border bg-muted/50 sticky top-0 z-10 flex items-center justify-between">
-                <h2 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+            <aside className="w-80 bg-surface-container-low overflow-y-auto flex-shrink-0 flex flex-col transition-all duration-300">
+              <div className="p-4 bg-surface-container-low sticky top-0 z-10 flex items-center justify-between">
+                <h2 className="font-bold text-xs uppercase tracking-wider text-on-surface-variant">
                   {"Lộ trình Bài học"}
                 </h2>
                 <button
                   onClick={() => setIsSidebarOpen(false)}
-                  className="w-6 h-6 inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
+                  className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer"
                   title="Ẩn Lộ trình Bài học"
                 >
                   <X className="w-3.5 h-3.5" aria-hidden="true" />
@@ -718,24 +718,24 @@ function CoursePlayerContent() {
                       <button
                         type="button"
                         onClick={() => toggleWeek(week.id)}
-                        className="w-full text-left flex items-center justify-between p-2 rounded-xl hover:bg-muted/60 transition-colors group cursor-pointer"
+                        className="w-full text-left flex items-center justify-between p-2.5 rounded-2xl hover:bg-surface-container-high/60 transition-colors group cursor-pointer"
                       >
                         <div className="flex-1 min-w-0 pr-2">
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-bold tracking-wide text-muted-foreground group-hover:text-primary transition-colors">
+                            <span className="text-[11px] font-bold tracking-wide text-on-surface-variant group-hover:text-primary transition-colors">
                               {`Module ${week.weekNumber}`}
                             </span>
                             {!unlocked && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-muted-foreground bg-muted border border-border px-2 py-0.5 rounded-full">
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">
                                 <Lock className="w-3 h-3" /> Bị khóa
                               </span>
                             )}
                           </div>
-                          <div className="text-sm font-extrabold text-foreground group-hover:text-primary transition-colors leading-snug truncate">
+                          <div className="text-sm font-extrabold text-on-surface group-hover:text-primary transition-colors leading-snug truncate">
                             {displayWeekTitle}
                           </div>
                         </div>
-                        <div className="text-muted-foreground group-hover:text-foreground transition-colors p-1 shrink-0">
+                        <div className="text-on-surface-variant group-hover:text-on-surface transition-colors p-1 shrink-0">
                           {isCollapsed ? (
                             <ChevronDown className="w-4 h-4" />
                           ) : (
@@ -756,7 +756,7 @@ function CoursePlayerContent() {
                             return (
                               <div key={lesson.id} className="space-y-1.5">
                                 {/* Lesson Subheading */}
-                                <div className="text-xs font-bold text-muted-foreground px-2 pt-1">
+                                <div className="text-xs font-bold text-on-surface-variant px-2 pt-1">
                                   {displayLessonTitle}
                                 </div>
 
@@ -781,26 +781,26 @@ function CoursePlayerContent() {
                                           setActiveItem(item);
                                           setActiveQuiz(null);
                                         }}
-                                        className={`w-full text-left p-3 rounded-2xl flex items-start gap-3 transition-all cursor-pointer ${
+                                        className={`w-full text-left px-3.5 py-2.5 rounded-2xl flex items-center gap-3 transition-all cursor-pointer ${
                                           !unlocked
                                             ? "opacity-60 cursor-not-allowed hover:bg-transparent"
                                             : isActive
-                                              ? "bg-primary/10 border border-primary/20 text-foreground shadow-2xs"
-                                              : "hover:bg-muted/60 text-foreground"
+                                              ? "bg-primary-container text-on-primary-container shadow-xs font-bold"
+                                              : "hover:bg-surface-container-high/60 text-on-surface"
                                         }`}
                                       >
                                         {/* Status Icon */}
-                                        <div className="shrink-0 mt-0.5">
+                                        <div className="shrink-0">
                                           {!unlocked ? (
-                                            <div className="w-5 h-5 rounded-full bg-muted border border-border flex items-center justify-center">
-                                              <Lock className="w-3 h-3 text-muted-foreground" />
+                                            <div className="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center">
+                                              <Lock className="w-3 h-3 text-on-surface-variant" />
                                             </div>
                                           ) : isDone ? (
-                                            <div className="w-5 h-5 rounded-full bg-success flex items-center justify-center">
+                                            <div className="w-5 h-5 rounded-full bg-success text-success-foreground flex items-center justify-center shadow-2xs">
                                               <Check className="w-3.5 h-3.5 text-success-foreground stroke-[3]" />
                                             </div>
                                           ) : (
-                                            <div className="w-5 h-5 rounded-full bg-muted border border-border" />
+                                            <div className="w-5 h-5 rounded-full bg-surface-container" />
                                           )}
                                         </div>
 
@@ -809,15 +809,21 @@ function CoursePlayerContent() {
                                           <div
                                             className={`text-xs leading-snug truncate ${
                                               isActive
-                                                ? "font-bold text-foreground"
+                                                ? "font-bold text-on-primary-container"
                                                 : isDone
-                                                  ? "font-medium text-foreground"
-                                                  : "font-normal text-muted-foreground"
+                                                  ? "font-medium text-on-surface"
+                                                  : "font-normal text-on-surface-variant"
                                             }`}
                                           >
                                             {item.title}
                                           </div>
-                                          <div className="text-[11px] text-muted-foreground mt-0.5 font-normal">
+                                          <div
+                                            className={`text-[11px] mt-0.5 font-normal ${
+                                              isActive
+                                                ? "text-on-primary-container/80"
+                                                : "text-on-surface-variant"
+                                            }`}
+                                          >
                                             {!unlocked
                                               ? `Bị khóa • Hoàn thành Tuần ${weekIndex}`
                                               : `${getItemTypeName(item.type)} • ${item.estimatedMinutes || 5} min`}
@@ -840,10 +846,10 @@ function CoursePlayerContent() {
           )}
 
           {/* Center Workspace & Bottom Panels */}
-          <main className="flex-1 flex flex-col bg-background overflow-hidden relative text-foreground min-w-0 sm:min-w-[360px]">
+          <main className="flex-1 flex flex-col bg-surface-container-low overflow-hidden relative text-on-surface min-w-0 sm:min-w-[360px]">
             {/* Lock Notice Banner */}
             {lockNotice && (
-              <div className="p-3 bg-warning/10 border-b border-warning/30 text-warning text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-200">
+              <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-200">
                 <span>{lockNotice}</span>
                 <button
                   onClick={() => setLockNotice("")}
@@ -854,10 +860,10 @@ function CoursePlayerContent() {
               </div>
             )}
 
-            {/* Center Video & Side Tool Panel Layout - Locked 3-Frame Row */}
+            {/* Center Video & Side Tool Panel Layout */}
             <div className="flex-1 flex flex-row overflow-x-auto overflow-y-hidden relative min-h-0">
-              {/* Left/Center Video / Reading Media Viewer Column */}
-              <div className="flex-1 min-w-0 sm:min-w-[360px] bg-card flex flex-col items-center justify-between relative overflow-y-auto transition-colors duration-200 min-h-0">
+              {/* Left/Center Video Media Viewer Canvas - Top Rounded Stage */}
+              <div className="flex-1 min-w-0 sm:min-w-[360px] bg-surface-container-lowest rounded-t-3xl sm:rounded-t-[28px] shadow-xs overflow-hidden flex flex-col items-center justify-between relative overflow-y-auto transition-colors duration-200 min-h-0">
                 <div className="w-full flex-1 flex items-start justify-center p-2 sm:p-3 pt-1 min-h-0 overflow-y-auto">
                   <VideoPlayer
                     videoRef={videoRef}
@@ -878,53 +884,45 @@ function CoursePlayerContent() {
                   />
                 </div>
 
-                {/* Coursera-style Bottom Control Navigation Footer Bar */}
-                <div className="w-full h-14 border-t border-border px-4 sm:px-6 flex items-center justify-between bg-muted/30 shrink-0 z-10">
-                  <div />
-
-                  {/* Right: Next Item Button - Clean Text Only */}
-                  {nextItem ? (
-                    <button
-                      onClick={() => {
-                        if (!nextItem || !course) return;
-                        const nextWeekIndex = course.weekModules.findIndex((wm) =>
-                          wm.lessons.some((l) => l.items.some((i) => i.id === nextItem.id)),
+                {/* Floating MD3 Extended FAB: Next Lesson Button */}
+                {nextItem && (
+                  <button
+                    onClick={() => {
+                      if (!nextItem || !course) return;
+                      const nextWeekIndex = course.weekModules.findIndex((wm) =>
+                        wm.lessons.some((l) => l.items.some((i) => i.id === nextItem.id)),
+                      );
+                      if (nextWeekIndex !== -1 && !isWeekUnlocked(nextWeekIndex)) {
+                        setLockNotice(
+                          `Bạn cần hoàn thành tất cả các bài học ở Tuần ${nextWeekIndex} để mở khóa Tuần ${nextWeekIndex + 1}.`,
                         );
-                        if (nextWeekIndex !== -1 && !isWeekUnlocked(nextWeekIndex)) {
-                          setLockNotice(
-                            `Bạn cần hoàn thành tất cả các bài học ở Tuần ${nextWeekIndex} để mở khóa Tuần ${nextWeekIndex + 1}.`,
-                          );
-                          return;
-                        }
-                        setLockNotice("");
-                        setActiveItem(nextItem);
-                        setActiveQuiz(null);
-                      }}
-                      className="px-5 py-2.5 rounded-xl text-xs font-bold bg-primary hover:bg-primary-hover text-primary-foreground transition-all shadow-md flex items-center gap-2 cursor-pointer"
-                    >
-                      <span>{"Bài tiếp theo"}</span>
-                      <ChevronRight className="w-4 h-4 shrink-0" aria-hidden="true" />
-                    </button>
-                  ) : (
-                    <span className="text-xs text-muted-foreground font-semibold">
-                      {"Đã đến bài học cuối cùng"}
-                    </span>
-                  )}
-                </div>
+                        return;
+                      }
+                      setLockNotice("");
+                      setActiveItem(nextItem);
+                      setActiveQuiz(null);
+                    }}
+                    className="absolute bottom-6 right-6 z-30 px-6 py-3 rounded-full text-xs font-bold bg-primary hover:bg-primary-hover text-on-primary shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95"
+                    title="Chuyển sang bài học tiếp theo"
+                  >
+                    <span>{"Bài tiếp theo"}</span>
+                    <ChevronRight className="w-4.5 h-4.5 shrink-0" aria-hidden="true" />
+                  </button>
+                )}
               </div>
 
-              {/* Coursera-style Expandable Side Drawer Panel - Locked Width Column */}
+              {/* Seamless Side Drawer Panel - Unified Surface Container Color */}
               {isPanelOpen &&
                 ((activeTab === "transcript" && isVideoItem) ||
                   ((activeTab === "notes" || activeTab === "forum") &&
                     isLectureItem &&
                     !isPreviewMode) ||
                   (activeTab === "deadlines" && !isPreviewMode)) && (
-                  <aside className="w-80 xl:w-96 bg-card border-l border-border flex flex-col shrink-0 h-full overflow-hidden shadow-xs z-10 transition-all duration-300">
+                  <aside className="w-80 xl:w-96 bg-surface-container-low flex flex-col shrink-0 h-full overflow-hidden shadow-xs z-10 transition-all duration-300">
                     {/* Drawer Header */}
-                    <div className="h-12 border-b border-border px-4 flex items-center justify-between bg-muted/40 shrink-0">
+                    <div className="h-12 px-4 flex items-center justify-between bg-surface-container-low shrink-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs text-foreground uppercase tracking-wider">
+                        <span className="font-bold text-xs text-on-surface uppercase tracking-wider">
                           {activeTab === "transcript" && "Phụ đề Tương tác"}
                           {activeTab === "forum" && "Thảo luận Bài học"}
                           {activeTab === "notes" && "Ghi chú Cá nhân"}
@@ -933,15 +931,15 @@ function CoursePlayerContent() {
                       </div>
                       <button
                         onClick={() => setIsPanelOpen(false)}
-                        className="w-7 h-7 inline-flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
+                        className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer"
                         title="Đóng bảng công cụ"
                       >
                         <X className="w-4 h-4" aria-hidden="true" />
                       </button>
                     </div>
 
-                    {/* Tab Body Content */}
-                    <div className="flex-1 overflow-y-auto p-4 bg-background min-h-0 flex flex-col">
+                    {/* Tab Body Content - Unified Background */}
+                    <div className="flex-1 overflow-y-auto p-4 bg-surface-container-low min-h-0 flex flex-col">
                       {activeTab === "transcript" && isVideoItem && (
                         <TranscriptPanel
                           activeItem={activeItem}
@@ -980,21 +978,33 @@ function CoursePlayerContent() {
                   </aside>
                 )}
 
-              {/* Coursera-style Vertical Icon Action Bar (Far Right Strip - Rigid Vertical Column) */}
-              <div className="w-16 lg:w-20 bg-card border-l border-border flex flex-col items-center justify-start py-4 gap-4 shrink-0 h-full z-20 select-none">
+              {/* Vertical Icon Action Bar - Seamless MD3 Navigation Rail */}
+              <div className="w-16 lg:w-20 bg-surface-container-low flex flex-col items-center justify-start py-5 gap-5 shrink-0 h-full z-20 select-none">
                 {/* Transcript Button: Only for Video Items */}
                 {isVideoItem && (
                   <button
                     onClick={() => handleTabClick("transcript")}
-                    className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
-                      isPanelOpen && activeTab === "transcript"
-                        ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
+                    className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
                     title="Phụ đề"
                   >
-                    <AlignLeft className="w-5 h-5 mb-1" aria-hidden="true" />
-                    <span className="text-[10px] tracking-tight leading-none">Phụ đề</span>
+                    <div
+                      className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
+                        isPanelOpen && activeTab === "transcript"
+                          ? "bg-primary-container text-on-primary-container font-bold"
+                          : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                      }`}
+                    >
+                      <AlignLeft className="w-4 h-4" aria-hidden="true" />
+                    </div>
+                    <span
+                      className={`text-[10px] tracking-tight leading-none ${
+                        isPanelOpen && activeTab === "transcript"
+                          ? "text-primary font-bold"
+                          : "text-on-surface-variant"
+                      }`}
+                    >
+                      Phụ đề
+                    </span>
                   </button>
                 )}
 
@@ -1004,15 +1014,27 @@ function CoursePlayerContent() {
                     {isLectureItem && (
                       <button
                         onClick={() => handleTabClick("notes")}
-                        className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
-                          isPanelOpen && activeTab === "notes"
-                            ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        }`}
+                        className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
                         title="Ghi chú"
                       >
-                        <FileText className="w-5 h-5 mb-1" aria-hidden="true" />
-                        <span className="text-[10px] tracking-tight leading-none">Ghi chú</span>
+                        <div
+                          className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
+                            isPanelOpen && activeTab === "notes"
+                              ? "bg-primary-container text-on-primary-container font-bold"
+                              : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                          }`}
+                        >
+                          <FileText className="w-4 h-4" aria-hidden="true" />
+                        </div>
+                        <span
+                          className={`text-[10px] tracking-tight leading-none ${
+                            isPanelOpen && activeTab === "notes"
+                              ? "text-primary font-bold"
+                              : "text-on-surface-variant"
+                          }`}
+                        >
+                          Ghi chú
+                        </span>
                       </button>
                     )}
 
@@ -1020,30 +1042,54 @@ function CoursePlayerContent() {
                     {isLectureItem && (
                       <button
                         onClick={() => handleTabClick("forum")}
-                        className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
-                          isPanelOpen && activeTab === "forum"
-                            ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
-                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        }`}
+                        className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
                         title="Thảo luận"
                       >
-                        <MessageSquare className="w-5 h-5 mb-1" aria-hidden="true" />
-                        <span className="text-[10px] tracking-tight leading-none">Thảo luận</span>
+                        <div
+                          className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
+                            isPanelOpen && activeTab === "forum"
+                              ? "bg-primary-container text-on-primary-container font-bold"
+                              : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                          }`}
+                        >
+                          <MessageSquare className="w-4 h-4" aria-hidden="true" />
+                        </div>
+                        <span
+                          className={`text-[10px] tracking-tight leading-none ${
+                            isPanelOpen && activeTab === "forum"
+                              ? "text-primary font-bold"
+                              : "text-on-surface-variant"
+                          }`}
+                        >
+                          Thảo luận
+                        </span>
                       </button>
                     )}
 
                     {/* Deadlines Button */}
                     <button
                       onClick={() => handleTabClick("deadlines")}
-                      className={`w-14 lg:w-16 py-2 px-1 rounded-xl flex flex-col items-center justify-center transition-all cursor-pointer ${
-                        isPanelOpen && activeTab === "deadlines"
-                          ? "bg-primary/10 text-primary font-bold shadow-2xs border border-primary/20"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
+                      className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
                       title="Deadlines"
                     >
-                      <Clock className="w-5 h-5 mb-1" aria-hidden="true" />
-                      <span className="text-[10px] tracking-tight leading-none">Deadlines</span>
+                      <div
+                        className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
+                          isPanelOpen && activeTab === "deadlines"
+                            ? "bg-primary-container text-on-primary-container font-bold"
+                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                        }`}
+                      >
+                        <Clock className="w-4 h-4" aria-hidden="true" />
+                      </div>
+                      <span
+                        className={`text-[10px] tracking-tight leading-none ${
+                          isPanelOpen && activeTab === "deadlines"
+                            ? "text-primary font-bold"
+                            : "text-on-surface-variant"
+                        }`}
+                      >
+                        Deadlines
+                      </span>
                     </button>
                   </>
                 )}

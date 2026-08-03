@@ -108,7 +108,7 @@ export default function ProfilePage() {
             className="w-24 h-24 rounded-full border-4 border-primary-container bg-surface-container-high shadow-xs object-cover"
           />
           <div className="text-center sm:text-left">
-            <h1 className="text-2xl font-black text-on-surface mb-1 text-balance">
+            <h1 className="text-2xl font-bold text-on-surface mb-1 text-balance">
               {user?.fullName}
             </h1>
             <p className="text-sm font-medium text-on-surface-variant mb-3">{user?.email}</p>
@@ -171,7 +171,7 @@ export default function ProfilePage() {
                   isLoading={verifyingIdentity}
                   variant="primary"
                   size="sm"
-                  className="rounded-full px-6 py-2.5 bg-success hover:bg-success-hover text-white font-bold border-none shadow-xs hover:shadow-md transition-all"
+                  className="rounded-full px-6 py-2.5 bg-primary hover:bg-primary-hover text-on-primary font-bold shadow-xs hover:shadow-md transition-all"
                 >
                   Giả lập Xác minh KYC (Mock Verification)
                 </Button>
@@ -191,7 +191,10 @@ export default function ProfilePage() {
             mở khóa 100% tài nguyên học tập trả phí.
           </p>
 
-          <form onSubmit={handleAssignKey} className="flex flex-col sm:flex-row gap-3">
+          <form
+            onSubmit={handleAssignKey}
+            className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center"
+          >
             <Input
               type="text"
               value={enterpriseKey}
@@ -199,7 +202,7 @@ export default function ProfilePage() {
               placeholder="Nhập mã Enterprise Key (ví dụ: ENT-UNI-2026-X99)"
               autoComplete="off"
               spellCheck={false}
-              className="flex-1 py-3 px-4 rounded-full text-sm font-mono bg-surface-container-lowest border border-outline-variant text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary"
+              className="flex-1 py-3 px-4 rounded-2xl text-sm font-mono bg-surface-container-lowest border border-outline-variant text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary"
             />
             <Button
               type="submit"

@@ -282,28 +282,28 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
       {/* Create New Quick Question Form */}
       <form
         onSubmit={handleCreateThread}
-        className="bg-card border border-border rounded-xl p-3 space-y-2"
+        className="bg-surface-container-low border border-outline-variant rounded-2xl p-3.5 space-y-2.5 shadow-xs"
       >
         <input
           type="text"
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Đặt câu hỏi thảo luận cho bài học này…"
-          className="w-full bg-card border border-input rounded-lg p-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          className="w-full bg-surface-container-lowest border border-outline-variant rounded-xl p-2.5 text-xs text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
         />
         {newTitle.trim() && (
-          <div className="flex gap-2 items-center">
+          <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
             <textarea
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
               placeholder="Chi tiết câu hỏi (nếu có)…"
               rows={2}
-              className="flex-1 bg-card border border-input rounded-lg p-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-xl p-2.5 text-xs text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
             />
             <button
               type="submit"
               disabled={submitting || !newTitle.trim()}
-              className="px-3 py-2 bg-primary hover:bg-primary-hover text-primary-foreground rounded-lg text-xs font-semibold shrink-0 cursor-pointer"
+              className="px-4 py-2 bg-primary hover:bg-primary-hover text-on-primary rounded-full text-xs font-bold shrink-0 cursor-pointer transition-all shadow-xs hover:shadow-md"
             >
               <span aria-live="polite">{submitting ? "Đang gửi…" : "Đăng Thảo Luận"}</span>
             </button>
@@ -313,7 +313,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
 
       {/* Threads List */}
       {threads.length === 0 ? (
-        <div className="text-center py-6 text-xs text-muted-foreground">
+        <div className="text-center py-6 text-xs text-on-surface-variant bg-surface-container-low border border-outline-variant p-6 rounded-2xl">
           Chưa có câu hỏi thảo luận nào cho bài học này. Hãy gửi thắc mắc đầu tiên của bạn!
         </div>
       ) : (
@@ -328,28 +328,28 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
               <div
                 key={thread.id}
                 id={`thread-${thread.id}`}
-                className={`bg-card border ${
+                className={`bg-surface-container-low border ${
                   isTarget
-                    ? "border-primary ring-2 ring-primary/50 shadow-lg bg-primary/5"
-                    : "border-border"
-                } rounded-xl p-3.5 text-xs space-y-2 transition-all duration-300`}
+                    ? "border-primary ring-2 ring-primary/50 shadow-md bg-primary-container/20"
+                    : "border-outline-variant"
+                } rounded-2xl p-4 text-xs space-y-2.5 transition-all duration-300 shadow-xs`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
                       {isTarget && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded border border-primary/20">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-primary-container px-2 py-0.5 rounded-full border border-primary/20">
                           📌 Thảo luận từ thông báo
                         </span>
                       )}
                       {thread.isStaffPinned && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-warning bg-warning/10 px-1.5 py-0.5 rounded border border-warning/20">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-warning bg-warning/10 px-2 py-0.5 rounded-full border border-warning/20">
                           <Pin className="w-3 h-3 text-warning" />
                           Staff Pinned
                         </span>
                       )}
-                      <span className="font-semibold text-foreground">{thread.authorName}</span>
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="font-bold text-on-surface">{thread.authorName}</span>
+                      <span className="text-[10px] text-on-surface-variant">
                         ({formatRoleName(thread.authorRole)})
                       </span>
                       {thread.isEdited && (
@@ -360,7 +360,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                       {isThreadAuthor && (
                         <button
                           onClick={() => startEditThread(thread)}
-                          className="text-[10px] font-semibold text-muted-foreground hover:text-primary cursor-pointer ml-1"
+                          className="text-[10px] font-bold text-on-surface-variant hover:text-primary cursor-pointer ml-1"
                         >
                           {"Sửa"}
                         </button>
@@ -368,7 +368,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                       {canDeleteThread && (
                         <button
                           onClick={() => handleDeleteThread(thread.id)}
-                          className="text-[10px] font-semibold text-muted-foreground hover:text-destructive cursor-pointer ml-1"
+                          className="text-[10px] font-bold text-on-surface-variant hover:text-destructive cursor-pointer ml-1"
                         >
                           {"Xóa"}
                         </button>
@@ -381,26 +381,26 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                           type="text"
                           value={editThreadTitle}
                           onChange={(e) => setEditThreadTitle(e.target.value)}
-                          className="w-full bg-card border border-input rounded px-2 py-1 text-xs font-bold text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          className="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-3 py-1.5 text-xs font-bold text-on-surface focus:border-primary outline-none"
                         />
                         <textarea
                           value={editThreadContent}
                           onChange={(e) => setEditThreadContent(e.target.value)}
                           placeholder="Chi tiết câu hỏi (nếu có)…"
                           rows={2}
-                          className="w-full bg-card border border-input rounded px-2 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          className="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-3 py-1.5 text-xs text-on-surface focus:border-primary outline-none"
                         />
-                        <div className="flex justify-end gap-1">
+                        <div className="flex justify-end gap-1.5">
                           <button
                             onClick={() => setEditingThreadId(null)}
-                            className="px-2 py-1 border border-input text-muted-foreground rounded text-[11px]"
+                            className="px-3 py-1 border border-outline-variant text-on-surface-variant rounded-full text-[11px]"
                           >
                             {"Hủy"}
                           </button>
                           <button
                             onClick={() => handleUpdateThread(thread.id)}
                             disabled={submittingEditThread || !editThreadTitle.trim()}
-                            className="px-2 py-1 bg-primary text-primary-foreground rounded text-[11px] font-semibold hover:bg-primary-hover"
+                            className="px-3 py-1 bg-primary text-on-primary rounded-full text-[11px] font-bold hover:bg-primary-hover"
                           >
                             {"Lưu thay đổi"}
                           </button>
@@ -409,7 +409,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                     ) : (
                       <h4
                         onClick={() => setSelectedModalThreadId(thread.id)}
-                        className="font-bold text-foreground text-sm hover:text-primary transition-colors cursor-pointer"
+                        className="font-bold text-on-surface text-sm hover:text-primary transition-colors cursor-pointer"
                         title="Bấm để mở rộng bài viết"
                       >
                         {thread.title}
@@ -419,15 +419,15 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
 
                   <button
                     onClick={() => handleVote(thread.id, true)}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs font-semibold border transition-all cursor-pointer ${
+                    className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border transition-all cursor-pointer ${
                       thread.isUpvotedByMe
-                        ? "bg-primary border-primary text-primary-foreground"
-                        : "bg-card border-border text-foreground hover:bg-muted"
+                        ? "bg-primary-container border-primary/30 text-on-primary-container"
+                        : "bg-surface-container-lowest border-outline-variant text-on-surface hover:bg-surface-container-high"
                     }`}
                     title={thread.isUpvotedByMe ? "Đã Upvote (Bấm để Hủy)" : "Upvote"}
                   >
                     <ChevronUp
-                      className={`w-3 h-3 ${thread.isUpvotedByMe ? "text-primary-foreground" : "text-primary"}`}
+                      className={`w-3.5 h-3.5 ${thread.isUpvotedByMe ? "text-on-primary-container" : "text-primary"}`}
                     />
                     <span>{thread.upvoteCount}</span>
                   </button>
@@ -435,7 +435,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
 
                 {/* Replies */}
                 {thread.replies.length > 0 && (
-                  <div className="pl-3 border-l-2 border-border space-y-2 pt-1">
+                  <div className="pl-3 border-l-2 border-outline-variant space-y-2 pt-1">
                     {thread.replies.map((reply) => (
                       <ForumReplyItem
                         key={reply.id}
@@ -465,12 +465,12 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                       setReplyInputs((prev) => ({ ...prev, [thread.id]: e.target.value }))
                     }
                     placeholder="Trả lời…"
-                    className="flex-1 bg-card border border-input rounded px-2.5 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-full px-3.5 py-1.5 text-xs text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary outline-none"
                   />
                   <button
                     onClick={() => handlePostReply(thread.id)}
                     disabled={!(replyInputs[thread.id] || "").trim()}
-                    className="px-2.5 py-1 bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground rounded text-xs font-medium cursor-pointer"
+                    className="px-3.5 py-1.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-on-primary rounded-full text-xs font-bold cursor-pointer transition-all shadow-xs"
                   >
                     Gửi
                   </button>

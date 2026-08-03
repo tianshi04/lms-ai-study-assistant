@@ -198,13 +198,13 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Tìm kiếm nội dung bài giảng…"
-          className="w-full pl-9 pr-8 py-2 text-xs rounded-xl border border-input bg-card text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-colors"
+          className="w-full pl-9 pr-8 py-2.5 text-xs rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
         />
-        <Search className="w-4 h-4 text-muted-foreground absolute left-3 top-2.5" />
+        <Search className="w-4 h-4 text-on-surface-variant absolute left-3 top-3" />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-2 text-muted-foreground hover:text-foreground text-xs font-bold cursor-pointer"
+            className="absolute right-3 top-2.5 text-on-surface-variant hover:text-on-surface text-xs font-bold cursor-pointer"
           >
             ✕
           </button>
@@ -217,7 +217,7 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
         className="space-y-4 overflow-y-auto flex-1 pr-1 scrollbar-thin min-h-0"
       >
         {filteredBlocks.length === 0 ? (
-          <p className="text-xs text-muted-foreground text-center py-6">
+          <p className="text-xs text-on-surface-variant text-center py-6">
             {"Không tìm thấy dòng phụ đề khớp với từ khóa"}
           </p>
         ) : (
@@ -227,7 +227,7 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
               <div className="flex items-center gap-2 pt-2 pb-0.5">
                 <button
                   onClick={() => onSeekVideo(block.startTime)}
-                  className="font-mono text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/30 px-2.5 py-0.5 rounded-lg cursor-pointer transition-colors shadow-2xs"
+                  className="font-mono text-[11px] font-bold text-on-primary-container bg-primary-container hover:bg-primary-container/80 border border-primary/20 px-3 py-0.5 rounded-full cursor-pointer transition-colors shadow-xs"
                   title="Nhảy đến mốc thời gian này"
                 >
                   {formatTime(block.startTime)}
@@ -235,7 +235,7 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
               </div>
 
               {/* Continuous Flowing Paragraph Text */}
-              <p className="text-[13px] sm:text-sm text-foreground/90 leading-relaxed sm:leading-7 font-sans">
+              <p className="text-[13px] sm:text-sm text-on-surface/90 leading-relaxed sm:leading-7 font-sans">
                 {block.cues.map((cue) => {
                   const isActive = cue.originalIndex === activeIndex;
 
@@ -244,10 +244,10 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
                       key={cue.originalIndex}
                       id={`transcript-cue-${cue.originalIndex}`}
                       onClick={() => onSeekVideo(cue.startTime)}
-                      className={`transition-all duration-200 cursor-pointer rounded px-1.5 py-0.5 mx-0.5 inline-inline ${
+                      className={`transition-all duration-200 cursor-pointer inline box-decoration-clone rounded-md px-1 py-0.5 ${
                         isActive
-                          ? "bg-primary/20 text-primary font-medium border-b-2 border-b-primary shadow-2xs ring-1 ring-primary/30"
-                          : "text-foreground/80 hover:text-foreground hover:bg-muted/80"
+                          ? "bg-primary-container text-on-primary-container font-bold shadow-xs ring-1 ring-primary/30"
+                          : "text-on-surface/80 hover:text-on-surface hover:bg-surface-container-high"
                       }`}
                     >
                       {renderHighlightedText(cue.text, searchQuery)}{" "}
