@@ -31,7 +31,7 @@ A state-of-the-art **Coursera-style Online Learning Management System (LMS)** bu
 - [Helper Commands & Scripts](#-helper-commands--scripts)
   - [Root Commands (Makefile)](#root-commands-makefile)
   - [Backend Commands (Makefile)](#backend-commands-makefile)
-  - [Frontend Commands (NPM)](#frontend-commands-npm)
+  - [Frontend Commands (PNPM)](#frontend-commands-pnpm)
   - [End-to-End (E2E) Testing](#end-to-end-e2e-testing-e2epackagejson)
 - [Development Rules & Conventions](#-development-rules--conventions)
 - [Documentation](#-documentation)
@@ -42,7 +42,9 @@ A state-of-the-art **Coursera-style Online Learning Management System (LMS)** bu
 
 - 🎓 **Structured Learning Hierarchy:** Specialization → Course → Module/Week → Lesson → Learning Items.
 - 🏢 **Multi-Tenant Organization & Partner Scoping:** Organization Admin (`ORG OWNER`) role management, partner organization onboarding, instructor application submission & approval portal, and course organization binding.
+- 👥 **Course Collaborators & ReBAC Access Control:** Support for primary instructors, co-instructors, and Teaching Assistants (TAs) managed via centralized ReBAC permission matrices.
 - 🔒 **3-Layer Security Architecture:** Method-level policy declaration `(auth.v1.policy)`, PostgreSQL SQL scope pushdown (`apply_organization_scope`), and strict domain resource ownership verification (`enforce_course_ownership`).
+- 🔔 **In-App Notifications & Preference Management:** Real-time in-app notification center and customizable preferences for course announcements, forum replies, and assignment grading feedback.
 - 🎥 **Interactive Video Player & Transcripts:** VTT subtitle support, scrolling interactive transcript panel with jump-to-timestamp capabilities, in-video quiz checkpoints, and light/dark theme adaptation.
 - 📊 **Dynamic Learning Progress:** Automatic video completion tracking ($\ge 80\%$ watch time), lesson checkboxes, real-time course percentage progress, and flexible deadline resetting.
 - 📝 **Assessments & Auto-Grading:** Practice quizzes, graded exams (pass grade threshold, cooldowns), auto-graded coding lab sandboxes, and rubric-based peer reviews.
@@ -73,7 +75,7 @@ The project follows a **Contract-First Modular Monolith** pattern:
                   │  ├──────────┼───────────┼──────────────┤ │
                   │  │ Forum    │ Identity  │ Certificate  │ │
                   │  ├──────────┼───────────┼──────────────┤ │
-                  │  │ Partner  │ Payment   │              │ │
+                  │  │ Partner  │ Payment   │ Notification │ │
                   │  └──────────┴───────────┴──────────────┘ │
                   └────────┬─────────────────────┬───────────┘
                            │                     │
@@ -101,8 +103,8 @@ The system enforces a strict 3-layer authorization model across all API endpoint
 2. **Layer 2 — Database SQL Scope Pushdown (`apply_organization_scope`):**
    Organization-scoped entity queries automatically execute `apply_organization_scope(stmt, Model, current_user)` at the repository layer. Multi-tenant filtering (`WHERE organization_id = active_org_id OR organization_id = INTERNAL_SYSTEM_ORG_ID`) is pushed directly down to the PostgreSQL execution plan. In-memory filtering is strictly prohibited.
 
-3. **Layer 3 — Domain Ownership & State Verification:**
-   Application Use Cases verify resource ownership (`owner_id`, `co_instructor_ids`) via `enforce_course_ownership()`, enforce lifecycle state restrictions (e.g. `PENDING_REVIEW` read-only lock), and check granular permissions via `CurrentUserContext`.
+3. **Layer 3 — Domain Ownership & Centralized ReBAC Authorization:**
+   Application Use Cases verify resource ownership (`owner_id`, `co_instructor_ids`) via `enforce_course_ownership()` / central permission guards (`src/shared/permissions`), enforce lifecycle state restrictions (e.g. `PENDING_REVIEW` read-only lock), and check granular permissions via `CurrentUserContext`.
 
 ---
 
@@ -112,7 +114,7 @@ The system enforces a strict 3-layer authorization model across all API endpoint
 - **Runtime:** Python 3.13+
 - **API Protocol:** ConnectRPC (`@connectrpc/connect`) compiled via Protocol Buffers
 - **ORM & Database:** Async SQLAlchemy 2.0, Alembic for schema migrations
-- **Security & Authorization:** `AuthInterceptor`, Custom Policy Registry, SQL Scope Pushdown (`apply_organization_scope`)
+- **Security & Authorization:** `AuthInterceptor`, Custom Policy Registry, SQL Scope Pushdown (`apply_organization_scope`), ReBAC Matrices
 - **Package Management:** [`uv`](https://github.com/astral-sh/uv) (fast Python package installer)
 - **Code Quality:** `ruff` (linter & formatter), `ty` (static type checker), `pytest` (test suite)
 
@@ -123,7 +125,7 @@ The system enforces a strict 3-layer authorization model across all API endpoint
 - **UI Primitives:** Base UI (`@base-ui/react`) for accessible unstyled components
 - **State & Data Management:** TanStack Query (`@tanstack/react-query`), TanStack Table, TanStack Form
 - **Styling:** Tailwind CSS v4 & `next-themes` (Dark/Light mode)
-- **Package Manager:** `npm`
+- **Package Manager:** [`pnpm`](https://pnpm.io/)
 
 ### **Infrastructure & API Schema**
 - **Database:** PostgreSQL 17 with `pgvector` extension for vector similarity search
@@ -148,9 +150,10 @@ The system enforces a strict 3-layer authorization model across all API endpoint
 │   │   │   ├── forum/        # Discussion forum bounded context
 │   │   │   ├── identity/     # Identity, auth & instructor applications context
 │   │   │   ├── certificate/  # Certificate verification bounded context
+│   │   │   ├── notification/ # In-app notifications & preferences context
 │   │   │   ├── partner/      # Organization & partner management bounded context
 │   │   │   └── payment/      # Payments & subscriptions bounded context
-│   │   ├── shared/           # Shared kernel (Auth, Scope Pushdown, Base Entity, DB)
+│   │   ├── shared/           # Shared kernel (Auth, Scope Pushdown, Permissions, DB)
 │   │   ├── main.py           # Uvicorn server entrypoint & RequestIDMiddleware
 │   │   └── seed.py           # Database seeding script (Upsert & Reset modes)
 │   ├── tests/                # Pytest test suite & code quality tests
@@ -159,11 +162,12 @@ The system enforces a strict 3-layer authorization model across all API endpoint
 │   └── pyproject.toml        # Project dependencies (managed via uv)
 ├── frontend/                 # Next.js TypeScript frontend
 │   ├── src/
-│   │   ├── app/              # App router pages (/courses, /learn, /partner, /instructor, /admin, etc.)
+│   │   ├── app/              # App router pages (/courses, /learn, /notifications, /partner, /instructor, /ta, /admin, etc.)
 │   │   ├── components/       # Reusable UI component library (Base UI + Tailwind v4)
 │   │   ├── lib/              # ConnectRPC client & TanStack Query hooks
 │   │   └── gen/              # Auto-generated TypeScript stubs (DO NOT EDIT)
-│   └── package.json          # NPM package specification
+│   ├── package.json          # Package dependencies & scripts specification
+│   └── pnpm-lock.yaml        # PNPM lockfile
 ├── e2e/                      # Playwright End-to-End test suite (Page Object Model)
 ├── proto/                    # Central Protocol Buffer shared contracts
 │   ├── assessment/           # Assessment & Quiz RPC schemas
@@ -173,6 +177,7 @@ The system enforces a strict 3-layer authorization model across all API endpoint
 │   ├── forum/                # Discussion forum RPC schemas
 │   ├── identity/             # Identity & Instructor Application RPC schemas
 │   ├── learning/             # Learning progress RPC schemas
+│   ├── notification/         # Notification & Preference RPC schemas
 │   ├── partner/              # Organization & Partner RPC schemas
 │   └── payment/              # Payment & Subscription RPC schemas
 ├── docs/                     # Architectural & Business specifications
@@ -186,9 +191,10 @@ The system enforces a strict 3-layer authorization model across all API endpoint
 | Phân hệ (Track) | Bounded Context | Backend Source (`backend/src/modules/`) | Frontend Route (`frontend/src/app/`) |
 | :--- | :--- | :--- | :--- |
 | **Catalog & Learning** | `catalog`, `learning` | `modules/catalog/`<br>`modules/learning/` | `/courses`<br>`/learn/[courseId]`<br>`/my-courses` |
-| **Assessments & Authoring** | `assessment` | `modules/assessment/` | `/assessments`<br>`/peer-review`<br>`/instructor` |
+| **Assessments & Authoring** | `assessment` | `modules/assessment/` | `/assessments`<br>`/peer-review`<br>`/instructor`<br>`/ta` |
 | **Discussion Forum** | `forum` | `modules/forum/` | `/forum` |
 | **Identity & Certificates**| `identity`, `certificate` | `modules/identity/`<br>`modules/certificate/` | `/auth`<br>`/financial-aid`<br>`/certificates`<br>`/verify/[certId]` |
+| **Notifications** | `notification` | `modules/notification/` | `/notifications` |
 | **Organization & Partners**| `partner` | `modules/partner/` | `/partner`<br>`/partners`<br>`/admin` |
 | **Payment & Subscriptions**| `payment` | `modules/payment/` | `/checkout`<br>`/subscriptions` |
 
@@ -200,7 +206,7 @@ The system enforces a strict 3-layer authorization model across all API endpoint
 
 Ensure you have the following installed on your machine:
 - **Docker Desktop** (with Docker Compose v2)
-- **Node.js 20+** and `npm`
+- **Node.js 20+** and [`pnpm`](https://pnpm.io/)
 - **Python 3.13+**
 - [`uv`](https://docs.astral.sh/uv/getting-started/installation/) (`pip install uv` or `curl -sSf https://astral.sh/uv/install.sh | sh`)
 - [`buf` CLI](https://buf.build/docs/installation) *(optional, for compiling proto files locally)*
@@ -235,7 +241,7 @@ make gen
 
 # Generate TypeScript frontend stubs
 cd ../frontend
-npm run gen
+pnpm run gen
 ```
 
 ---
@@ -288,8 +294,8 @@ In a separate terminal, from the `frontend/` directory:
 
 ```bash
 cd frontend
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 Open your browser and navigate to `http://localhost:3000`.
 
@@ -359,13 +365,15 @@ Run these commands from the `frontend/` directory:
 
 | Command | Description |
 | :--- | :--- |
-| `npm run gen` | Compile Protocol Buffers in `proto/` into `frontend/src/gen/` |
-| `npm run dev` | Start Next.js development server (port 3000) |
-| `npm run lint` | Run Oxlint static code analysis |
-| `npm run lint:fix` | Run Oxlint and automatically fix linting issues |
-| `npm run type-check` | Run fast standalone TypeScript type-checking (`tsc --noEmit`) |
-| `npm run check` | Run comprehensive check (type-check + lint) |
-| `npm run build` | Compile Next.js production build |
+| `pnpm run gen` | Compile Protocol Buffers in `proto/` into `frontend/src/gen/` |
+| `pnpm run dev` | Start Next.js development server (port 3000) |
+| `pnpm run lint` | Run Oxlint static code analysis |
+| `pnpm run lint:fix` | Run Oxlint and automatically fix linting issues |
+| `pnpm run format` | Format code with Oxfmt (`oxfmt --write .`) |
+| `pnpm run fix` | Single command to auto-fix linting and format all code (`oxlint --fix && oxfmt --write .`) |
+| `pnpm run type-check` | Fast standalone TypeScript type-checking (`tsc --noEmit`) |
+| `pnpm run check` | Comprehensive quality check (type-check, lint, and format verification) |
+| `pnpm run build` | Compile Next.js production build |
 
 ---
 
@@ -375,12 +383,12 @@ Run these commands from the `e2e/` directory:
 
 | Command | Description |
 | :--- | :--- |
-| `npm install` | Install Playwright testing framework dependencies |
+| `pnpm install` | Install Playwright testing framework dependencies |
 | `npx playwright install` | Download Playwright browser binaries (Chromium, Firefox, WebKit) |
-| `npm test` | Run full blackbox E2E test suite in headless mode |
-| `npm run test:all` | Run full cross-browser test suite |
-| `npm run test:ui` | Run Playwright test runner with interactive UI |
-| `npm run test:report` | Show HTML test execution report |
+| `pnpm test` | Run full blackbox E2E test suite in headless mode |
+| `pnpm run test:all` | Run full cross-browser test suite |
+| `pnpm run test:ui` | Run Playwright test runner with interactive UI |
+| `pnpm run test:report` | Show HTML test execution report |
 
 ---
 
