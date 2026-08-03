@@ -45,7 +45,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
 
       <main className="relative max-w-7xl mx-auto px-6 py-12 space-y-12">
         {/* Header Greeting */}
-        <header className="animate-in fade-in slide-in-from-bottom-4 duration-300 ease-m3-emphasized">
+        <header className="animate-in fade-in duration-300 ease-m3-emphasized">
           <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-foreground mb-2 text-balance">
             {getGreeting()}, <span className="text-primary">{userName}</span>!
           </h1>
@@ -55,9 +55,20 @@ export function LearningDashboard({ userName }: { userName: string }) {
         </header>
 
         {loading ? (
-          <div aria-live="polite" className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
-            <div className="col-span-1 md:col-span-2 h-64 bg-card rounded-3xl border border-border" />
-            <div className="h-64 bg-card rounded-3xl border border-border" />
+          <div aria-live="polite" className="space-y-8 animate-pulse">
+            {/* Top Row Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 h-[340px] bg-card rounded-3xl border border-border" />
+              <div className="flex flex-col gap-4">
+                <div className="h-[162px] bg-card rounded-3xl border border-border" />
+                <div className="h-[162px] bg-card rounded-3xl border border-border" />
+              </div>
+            </div>
+            {/* Bottom Row Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 pt-4">
+              <div className="lg:col-span-1 h-64 bg-card rounded-3xl border border-border" />
+              <div className="lg:col-span-3 h-64 bg-card rounded-3xl border border-border" />
+            </div>
           </div>
         ) : error ? (
           <div className="bg-destructive/10 text-destructive p-6 rounded-2xl border border-destructive/20 text-center">
@@ -68,7 +79,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
             {/* Top Row: Continue Learning & Quick Stats */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Continue Learning (Premium Glassmorphism Card) */}
-              <div className="lg:col-span-2 relative rounded-3xl overflow-hidden group border border-border shadow-xl bg-card animate-in fade-in slide-in-from-bottom-8 duration-300 ease-m3-emphasized delay-100">
+              <div className="lg:col-span-2 relative rounded-3xl overflow-hidden group border border-border shadow-xl bg-card">
                 {/* Decorative background blob */}
                 <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-300 ease-m3-emphasized" />
 
@@ -137,7 +148,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
               </div>
 
               {/* Quick Stats Column */}
-              <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-8 duration-300 ease-m3-emphasized delay-200">
+              <div className="flex flex-col gap-4">
                 <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
                   <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
                     <Layers className="w-7 h-7" aria-hidden="true" />
@@ -169,7 +180,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
             </div>
 
             {/* Bottom Row: AI Tutor & Active Courses */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 pt-4 animate-in fade-in slide-in-from-bottom-8 duration-300 ease-m3-emphasized delay-300">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 pt-4">
               {/* AI Tutor Card (Call to Action) */}
               <div className="lg:col-span-1 bg-gradient-to-br from-primary to-primary-hover rounded-3xl p-6 text-primary-foreground shadow-lg relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:scale-110 group-hover:opacity-40 transition-all duration-500">
