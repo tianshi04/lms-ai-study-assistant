@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
@@ -16,6 +16,16 @@ export function Navbar() {
 
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const isActive = (path: string) => {
     if (path === "/") return pathname === "/";
@@ -25,21 +35,25 @@ export function Navbar() {
   const getLinkClasses = (path: string) => {
     const active = isActive(path);
     return active
-      ? "relative text-primary font-bold px-1 pb-0.5 border-b-2 border-primary transition-all"
-      : "relative text-muted-foreground hover:text-foreground px-1 pb-0.5 border-b-2 border-transparent hover:border-border transition-all";
+      ? "relative text-primary font-bold px-3 py-1.5 rounded-full bg-primary/12 transition-all shadow-2xs"
+      : "relative text-muted-foreground hover:text-foreground px-3 py-1.5 rounded-full hover:bg-muted/60 transition-all";
   };
 
   const getMobileLinkClasses = (path: string) => {
     const active = isActive(path);
     return active
-      ? "block px-3.5 py-2.5 rounded-xl text-sm font-bold text-primary border-l-2 border-primary bg-primary/10 pl-4"
-      : "block px-3.5 py-2.5 rounded-xl text-sm font-semibold text-muted-foreground border-l-2 border-transparent hover:bg-muted pl-4";
+      ? "block px-4 py-2.5 rounded-full text-sm font-bold text-primary bg-primary/12 transition-all"
+      : "block px-4 py-2.5 rounded-full text-sm font-semibold text-muted-foreground hover:bg-muted/60 transition-all";
   };
 
   return (
     <header
       style={{ viewTransitionName: "site-navbar" }}
-      className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-sticky transition-colors"
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? "bg-card border-b border-border shadow-md"
+          : "bg-background border-b border-transparent shadow-none"
+      }`}
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand Logo */}
