@@ -413,6 +413,17 @@ input::-ms-clear {
   background: transparent;
 }
 
+/* Utility to completely hide scrollbars across all browsers */
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 /* Layout Keyframe Animations */
 @keyframes fadeIn {
   from {
