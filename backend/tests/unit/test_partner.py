@@ -60,16 +60,23 @@ async def test_usecase_create_partner_success():
     mock_repo.get_by_slug.return_value = None
     mock_repo.create.side_effect = lambda p: p
 
+    mock_session = AsyncMock()
+    mock_res = MagicMock()
+    mock_res.scalars.return_value.first.return_value = None
+    mock_session.execute.return_value = mock_res
+
     usecase = PartnerUseCase(repo=mock_repo)
     admin = CurrentUser(id="admin1", role="USER_ROLE_ADMIN")
     test_slug = f"stanford-test-{uuid.uuid4().hex[:6]}"
 
-    res = await usecase.create_partner(
-        name="Stanford Test Partner",
-        slug=test_slug,
-        description="Stanford Univ",
-        current_user=admin,
-    )
+    with patch("src.modules.partner.application.partner_usecase.async_session_scope") as mock_scope:
+        mock_scope.return_value.__aenter__.return_value = mock_session
+        res = await usecase.create_partner(
+            name="Stanford Test Partner",
+            slug=test_slug,
+            description="Stanford Univ",
+            current_user=admin,
+        )
     assert res.name == "Stanford Test Partner"
     assert res.slug == test_slug
     mock_repo.create.assert_called_once()

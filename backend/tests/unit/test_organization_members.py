@@ -67,17 +67,10 @@ async def test_add_organization_member_permission_denied():
     use_case = IdentityUseCase()
     learner_user = CurrentUserContext(id="learner_1", role="LEARNER")
 
-    with (
-        patch(
-            "src.modules.identity.infrastructure.repository.OrganizationRepository.get_effective_permissions",
-            new_callable=AsyncMock,
-            return_value=(None, set()),
-        ),
-        patch(
-            "src.modules.identity.infrastructure.repository.OrganizationRepository.get_member",
-            new_callable=AsyncMock,
-            return_value=None,
-        ),
+    with patch(
+        "src.modules.identity.application.identity_usecase.enforce_organization_permission",
+        new_callable=AsyncMock,
+        side_effect=PermissionError("Bạn chưa thuộc tổ chức này"),
     ):
         with pytest.raises(PermissionError, match="chưa thuộc"):
             await use_case.add_organization_member(
