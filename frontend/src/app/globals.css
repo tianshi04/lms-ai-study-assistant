@@ -261,8 +261,8 @@
   --radius-3xl: 1.75rem;
   --radius-full: 9999px;
 
-  --scrollbar-thumb: oklch(0.869 0.005 252.88);
-  --scrollbar-thumb-hover: oklch(0.707 0.015 254.624);
+  --scrollbar-thumb: var(--outline-variant);
+  --scrollbar-thumb-hover: var(--outline);
   --scrollbar-track: transparent;
 }
 
@@ -359,8 +359,8 @@
   --input: var(--outline);
   --ring: oklch(0.55 0.214 259.815);
 
-  --scrollbar-thumb: oklch(0.269 0 0);
-  --scrollbar-thumb-hover: oklch(0.334 0 0);
+  --scrollbar-thumb: var(--outline-variant);
+  --scrollbar-thumb-hover: var(--outline);
   --scrollbar-track: transparent;
 }
 
