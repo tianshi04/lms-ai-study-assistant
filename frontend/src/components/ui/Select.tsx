@@ -42,7 +42,7 @@ export function SelectContent({
         <BaseSelect.Popup
           ref={ref}
           className={cn(
-            "min-w-[180px] overflow-hidden rounded-2xl bg-surface-container-high text-foreground p-1.5 shadow-lg border border-outline-variant animate-in fade-in zoom-in-95 duration-150 ease-m3-emphasized",
+            "min-w-[180px] overflow-hidden rounded-2xl bg-surface-container-high text-on-surface p-1.5 shadow-md border border-outline-variant animate-in fade-in zoom-in-95 duration-150 ease-m3-emphasized",
             className,
           )}
           {...props}
@@ -64,13 +64,13 @@ export function SelectItem({
     <BaseSelect.Item
       ref={ref}
       className={cn(
-        "relative flex cursor-pointer select-none items-center justify-between gap-2 rounded-xl px-3 py-2 text-xs font-semibold outline-none transition-colors hover:bg-surface-container-highest text-foreground data-[highlighted]:bg-surface-container-highest data-[selected]:text-primary",
+        "relative flex cursor-pointer select-none items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold outline-none transition-colors text-on-surface data-[highlighted]:bg-surface-container-highest data-[selected]:bg-secondary-container data-[selected]:text-on-secondary-container data-[selected]:font-bold",
         className,
       )}
       {...props}
     >
       <BaseSelect.ItemText>{children}</BaseSelect.ItemText>
-      <BaseSelect.ItemIndicator className="text-primary">
+      <BaseSelect.ItemIndicator className="text-on-secondary-container shrink-0">
         <Check className="w-3.5 h-3.5" />
       </BaseSelect.ItemIndicator>
     </BaseSelect.Item>
