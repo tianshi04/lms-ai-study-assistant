@@ -10,10 +10,13 @@ import {
   AlertCircle,
   AlertTriangle,
   Check,
-  ShieldCheck,
   Clock,
   X,
   Send,
+  RotateCcw,
+  CircleDot,
+  CheckSquare,
+  HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -47,8 +50,7 @@ export function GradedQuizRunner({
 }: GradedQuizRunnerProps) {
   const { userId: authUserId } = useAuth();
   const effectiveUserId = userId || authUserId || "user-demo-1";
-  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([]);
-  const [isHonorAgreed, setIsHonorAgreed] = useState(isPreviewMode);
+  const [selectedAnswers, setSelectedAnswers] = useState<number[][]>([]);
   const [isHonorModalOpen, setIsHonorModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -62,6 +64,7 @@ export function GradedQuizRunner({
   const [error, setError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [maxAttempts, setMaxAttempts] = useState<number>(3);
+  const [attemptsLeft, setAttemptsLeft] = useState<number>(3);
   const [cooldownHours, setCooldownHours] = useState<number>(8);
 
   const [quizResult, setQuizResult] = useState<{
@@ -74,15 +77,6 @@ export function GradedQuizRunner({
 
   const [cooldownCountdown, setCooldownCountdown] = useState<number>(0);
 
-  // Keep isHonorAgreed updated when in preview mode
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (isPreviewMode) {
-      setIsHonorAgreed(true);
-    }
-  }, [isPreviewMode]);
-  /* eslint-enable react-hooks/set-state-in-effect */
-
   // Fetch quiz session questions on load
   useEffect(() => {
     let ignore = false;
@@ -91,7 +85,11 @@ export function GradedQuizRunner({
       setError(null);
       try {
         const client = getRpcClient(AssessmentService);
-        const res = await client.startGradedQuizSession({ itemId, preview: isPreviewMode });
+        const res = await client.startGradedQuizSession({
+          itemId,
+          preview: isPreviewMode,
+          forceNew: false,
+        });
         if (!ignore) {
           setQuestions(res.questions || []);
           setSessionSeed(res.sessionSeed);
@@ -99,19 +97,39 @@ export function GradedQuizRunner({
           setTimeLimit(res.timeLimitMinutes || 45);
           setPassingThreshold(res.passingThresholdPercent || 80.0);
           setMaxAttempts(res.maxAttempts || 3);
+          setAttemptsLeft(res.attemptsLeft ?? res.maxAttempts ?? 3);
           setCooldownHours(res.cooldownHours || 8);
-          setSelectedAnswers(Array.from({ length: res.questions?.length || 0 }, () => -1));
+          setSelectedAnswers(Array.from({ length: res.questions?.length || 0 }, () => []));
+
           if ((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft) {
             setCooldownCountdown((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft!);
           }
+
+          // Restore previous result state if available
+          if (res.hasPreviousResult && res.previousResult) {
+            setQuizResult({
+              scorePercent: res.previousResult.scorePercent,
+              passed: res.previousResult.passed,
+              attemptsLeft: res.previousResult.attemptsLeft,
+              cooldownSecondsLeft: res.previousResult.cooldownSecondsLeft,
+              explanations: res.previousResult.answerExplanations,
+            });
+          }
         }
       } catch (err: unknown) {
-        console.error("Failed to start graded quiz session:", err);
         if (!ignore) {
-          const errMsg =
-            err instanceof Error
-              ? err.message
-              : "Không thể khởi động bài thi hoặc chưa cấu hình Ma trận đề.";
+          const rawMsg = err instanceof Error ? err.message : "";
+          const isDomainNotice =
+            rawMsg.includes("vượt qua") ||
+            rawMsg.includes("hết lượt") ||
+            rawMsg.includes("làm bài") ||
+            rawMsg.includes("quay lại sau");
+
+          if (!isDomainNotice) {
+            console.error("Failed to start graded quiz session:", err);
+          }
+          const cleanMsg = rawMsg.replace(/^\[[a-z_]+\]\s*/i, "");
+          const errMsg = cleanMsg || "Không thể khởi động bài thi hoặc chưa cấu hình Ma trận đề.";
           setError(errMsg);
         }
       } finally {
@@ -124,7 +142,7 @@ export function GradedQuizRunner({
     return () => {
       ignore = true;
     };
-  }, [itemId, isPreviewMode]);
+  }, [itemId, isPreviewMode, onComplete]);
 
   useEffect(() => {
     if (cooldownCountdown <= 0) return;
@@ -141,20 +159,36 @@ export function GradedQuizRunner({
     return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  const handleOptionSelect = (qIdx: number, optIdx: number) => {
+  const handleOptionSelect = (qIdx: number, optIdx: number, isMultipleChoice: boolean) => {
+    const currentSelected = selectedAnswers[qIdx] || [];
+    let updatedSelected: number[];
+
+    if (isMultipleChoice) {
+      if (currentSelected.includes(optIdx)) {
+        updatedSelected = currentSelected.filter((i) => i !== optIdx);
+      } else {
+        updatedSelected = [...currentSelected, optIdx].sort((a, b) => a - b);
+      }
+    } else {
+      updatedSelected = [optIdx];
+    }
+
     const updated = [...selectedAnswers];
-    updated[qIdx] = optIdx;
+    updated[qIdx] = updatedSelected;
     setSelectedAnswers(updated);
   };
 
   const handleResetPreview = async () => {
     setQuizResult(null);
     setSubmitError(null);
-    setSelectedAnswers(Array.from({ length: questions.length }, () => -1));
     setLoading(true);
     try {
       const client = getRpcClient(AssessmentService);
-      const res = await client.startGradedQuizSession({ itemId, preview: true });
+      const res = await client.startGradedQuizSession({
+        itemId,
+        preview: true,
+        forceNew: true,
+      });
       setQuestions(res.questions || []);
       setSessionSeed(res.sessionSeed);
       setStartTimeIso(res.startTimeIso);
@@ -162,7 +196,7 @@ export function GradedQuizRunner({
       setPassingThreshold(res.passingThresholdPercent || 80.0);
       setMaxAttempts(res.maxAttempts || 3);
       setCooldownHours(res.cooldownHours || 8);
-      setSelectedAnswers(Array.from({ length: res.questions?.length || 0 }, () => -1));
+      setSelectedAnswers(Array.from({ length: res.questions?.length || 0 }, () => []));
       setCooldownCountdown(0);
     } catch (err) {
       console.error("Failed to reset preview session:", err);
@@ -172,15 +206,66 @@ export function GradedQuizRunner({
     }
   };
 
+  const handleRetryQuiz = async () => {
+    setQuizResult(null);
+    setSubmitError(null);
+    setLoading(true);
+    try {
+      const client = getRpcClient(AssessmentService);
+      const res = await client.startGradedQuizSession({
+        itemId,
+        preview: isPreviewMode,
+        forceNew: true,
+      });
+      setQuestions(res.questions || []);
+      setSessionSeed(res.sessionSeed);
+      setStartTimeIso(res.startTimeIso);
+      setTimeLimit(res.timeLimitMinutes || 45);
+      setPassingThreshold(res.passingThresholdPercent || 80.0);
+      setMaxAttempts(res.maxAttempts || 3);
+      setAttemptsLeft(res.attemptsLeft ?? res.maxAttempts ?? 3);
+      setCooldownHours(res.cooldownHours || 8);
+      setSelectedAnswers(Array.from({ length: res.questions?.length || 0 }, () => []));
+      if ((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft) {
+        setCooldownCountdown((res as { cooldownSecondsLeft?: number }).cooldownSecondsLeft!);
+      }
+    } catch (err: unknown) {
+      const rawMsg = err instanceof Error ? err.message : "";
+      const isDomainNotice =
+        rawMsg.includes("vượt qua") ||
+        rawMsg.includes("hết lượt") ||
+        rawMsg.includes("làm bài") ||
+        rawMsg.includes("quay lại sau");
+
+      if (!isDomainNotice) {
+        console.error("Failed to retry graded quiz session:", err);
+      }
+      const cleanMsg = rawMsg.replace(/^\[[a-z_]+\]\s*/i, "");
+      const errMsg = cleanMsg || "Không thể khởi động lại bài thi. Vui lòng thử lại sau.";
+      setError(errMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const executeSubmit = async () => {
     setIsSubmitting(true);
     setSubmitError(null);
+
+    const questionAnswersPayload = selectedAnswers.map((indices) => ({
+      selectedOptionIndexes: indices,
+    }));
+
+    const legacySelectedOptionIndexes = selectedAnswers.map((indices) =>
+      indices.length > 0 ? indices[0] : -1,
+    );
 
     try {
       const client = getRpcClient(AssessmentService);
       const res = await client.submitGradedQuiz({
         itemId,
-        selectedOptionIndexes: selectedAnswers,
+        selectedOptionIndexes: legacySelectedOptionIndexes,
+        questionAnswers: questionAnswersPayload,
         sessionSeed,
         startTimeIso,
         preview: isPreviewMode,
@@ -196,6 +281,9 @@ export function GradedQuizRunner({
         });
         if (res.result.maxAttempts) {
           setMaxAttempts(res.result.maxAttempts);
+        }
+        if (res.result.attemptsLeft !== undefined) {
+          setAttemptsLeft(res.result.attemptsLeft);
         }
         if (res.result.cooldownHours) {
           setCooldownHours(res.result.cooldownHours);
@@ -220,12 +308,8 @@ export function GradedQuizRunner({
     }
   };
 
-  const handleSubmitQuiz = async () => {
-    if (!isHonorAgreed && !isPreviewMode) {
-      setIsHonorModalOpen(true);
-      return;
-    }
-    await executeSubmit();
+  const handleSubmitQuiz = () => {
+    setIsHonorModalOpen(true);
   };
 
   if (loading) {
@@ -241,7 +325,10 @@ export function GradedQuizRunner({
 
   if (error) {
     const isBlocked =
-      error.includes("vượt qua") || error.includes("hết lượt") || error.includes("làm bài");
+      error.includes("vượt qua") ||
+      error.includes("hết lượt") ||
+      error.includes("làm bài") ||
+      error.includes("quay lại sau");
     if (isBlocked) {
       const isPassed = error.includes("vượt qua");
       return (
@@ -291,40 +378,28 @@ export function GradedQuizRunner({
       {/* Header Info */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {isPreviewMode ? (
               <Badge variant="verified">CHẾ ĐỘ XEM TRƯỚC (PREVIEW)</Badge>
             ) : (
               <Badge variant="warning">BÀI THI CÓ TÍNH ĐIỂM</Badge>
             )}
+            {!isPreviewMode && (
+              <Badge
+                variant={attemptsLeft <= 1 ? "danger" : "outline"}
+                className="text-xs font-semibold"
+              >
+                Lượt làm còn lại: {attemptsLeft}/{maxAttempts}
+              </Badge>
+            )}
             <span className="text-xs text-muted-foreground tabular-nums">
-              Điểm đạt: {passingThreshold}% • Thời gian: {timeLimit} phút • Lượt làm bài tối đa:{" "}
-              {maxAttempts} • Thời gian chờ: {cooldownHours} giờ
+              Điểm đạt: {passingThreshold}% • Thời gian: {timeLimit} phút • Thời gian chờ:{" "}
+              {cooldownHours} giờ
             </span>
           </div>
           <h2 className="text-xl font-bold text-foreground mt-1">
             {title || "Bài thi trắc nghiệm"}
           </h2>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {isPreviewMode ? (
-            <Badge variant="verified">Bypass Honor Code & Cooldown</Badge>
-          ) : isHonorAgreed ? (
-            <Badge
-              variant="success"
-              className="flex items-center gap-1"
-              data-testid="honor-agreed-badge"
-            >
-              <Check className="w-3.5 h-3.5 text-success" />
-              <span>Đã xác nhận Cam kết Trung thực</span>
-            </Badge>
-          ) : (
-            <Button onClick={() => setIsHonorModalOpen(true)} variant="primary" size="sm">
-              <span>Xác nhận Cam kết Trung thực</span>
-              <ShieldCheck className="w-3.5 h-3.5 ml-1.5" />
-            </Button>
-          )}
         </div>
       </div>
 
@@ -349,44 +424,81 @@ export function GradedQuizRunner({
 
       {/* Quiz Questions List */}
       <div className="space-y-6">
-        {questions.map((q, qIdx) => (
-          <div
-            key={q.questionId}
-            className="p-5 rounded-2xl border border-border bg-muted/50 space-y-3"
-          >
-            <h4 className="text-sm font-bold text-foreground">
-              Câu {qIdx + 1}. {q.text}
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {q.options.map((opt, optIdx) => {
-                const isSelected = selectedAnswers[qIdx] === optIdx;
-                return (
-                  <button
-                    key={optIdx}
-                    disabled={cooldownCountdown > 0 && !isPreviewMode}
-                    onClick={() => handleOptionSelect(qIdx, optIdx)}
-                    className={`p-3.5 rounded-xl text-xs text-left font-medium transition-all border flex items-center gap-2.5 cursor-pointer ${
-                      isSelected
-                        ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
-                        : "bg-card border-border hover:border-primary/50 text-foreground"
-                    }`}
+        {questions.map((q, qIdx) => {
+          const isMultipleChoice = q.questionType === "MULTIPLE_CHOICE";
+          const currentAnswers = selectedAnswers[qIdx] || [];
+
+          return (
+            <div
+              key={q.questionId}
+              className="p-5 rounded-2xl border border-border bg-card space-y-3"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <h4 className="text-sm font-bold text-foreground">
+                  Câu {qIdx + 1}. {q.text}
+                </h4>
+                {q.questionType === "MULTIPLE_CHOICE" ? (
+                  <Badge
+                    variant="warning"
+                    className="text-[10px] py-0.5 px-2.5 font-bold shrink-0 flex items-center gap-1"
                   >
-                    <span
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                    <CheckSquare className="w-3 h-3" />
+                    Chọn nhiều đáp án
+                  </Badge>
+                ) : q.questionType === "TRUE_FALSE" ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-info/15 text-info border border-info/30 shrink-0">
+                    <HelpCircle className="w-3 h-3" />
+                    Đúng / Sai
+                  </span>
+                ) : (
+                  <Badge
+                    variant="default"
+                    className="text-[10px] py-0.5 px-2.5 font-medium text-muted-foreground shrink-0 flex items-center gap-1"
+                  >
+                    <CircleDot className="w-3 h-3" />
+                    Chọn 1 đáp án
+                  </Badge>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {q.options.map((opt, optIdx) => {
+                  const isSelected = currentAnswers.includes(optIdx);
+                  return (
+                    <button
+                      key={optIdx}
+                      type="button"
+                      disabled={(cooldownCountdown > 0 && !isPreviewMode) || quizResult !== null}
+                      onClick={() => handleOptionSelect(qIdx, optIdx, isMultipleChoice)}
+                      className={`p-3.5 rounded-xl text-xs text-left font-medium transition-all border flex items-center gap-2.5 cursor-pointer ${
                         isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
+                          ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
+                          : "bg-card border-border hover:border-primary/50 text-foreground"
                       }`}
                     >
-                      {String.fromCharCode(65 + optIdx)}
-                    </span>
-                    {opt.optionText}
-                  </button>
-                );
-              })}
+                      <span
+                        className={`w-5 h-5 ${
+                          isMultipleChoice ? "rounded-md" : "rounded-full"
+                        } flex items-center justify-center text-[10px] font-bold transition-colors ${
+                          isSelected
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {isMultipleChoice && isSelected ? (
+                          <Check className="w-3 h-3 text-primary-foreground" />
+                        ) : (
+                          String.fromCharCode(65 + optIdx)
+                        )}
+                      </span>
+                      <span className="flex-1">{opt.optionText}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Quiz Results Panel */}
@@ -409,13 +521,15 @@ export function GradedQuizRunner({
               </div>
               <div>
                 <h3 className="text-lg font-bold">
-                  {quizResult.passed ? "Chúc mừng! Bạn đã vượt qua bài thi" : "Kết quả: Chưa đạt"}
+                  {quizResult.passed
+                    ? "Chúc mừng! Bạn đã vượt qua bài thi"
+                    : "Kết quả lần làm trước: Chưa đạt"}
                 </h3>
                 <p className="text-xs opacity-80">
                   Điểm số: {quizResult.scorePercent}% (Yêu cầu: {passingThreshold}%){" "}
                   {isPreviewMode
                     ? "(Xem trước)"
-                    : `• Lượt làm bài còn lại: ${quizResult.attemptsLeft}`}
+                    : `• Lượt làm bài còn lại: ${quizResult.attemptsLeft}/${maxAttempts}`}
                 </p>
               </div>
             </div>
@@ -428,9 +542,13 @@ export function GradedQuizRunner({
                 Phản hồi & Giải thích đáp án:
               </h5>
               <ul className="list-disc list-inside space-y-1">
-                {quizResult.explanations.map((exp, idx) => (
-                  <li key={idx}>{exp}</li>
-                ))}
+                {quizResult.explanations.map((exp, idx) => {
+                  const formattedExp = exp
+                    .replace(/Đã đạt/g, "Đúng")
+                    .replace(/Chưa đạt/g, "Sai")
+                    .replace(/\s*\(\d+(\.\d+)?%\)\.?,?/g, "");
+                  return <li key={idx}>{formattedExp}</li>;
+                })}
               </ul>
             </div>
           )}
@@ -465,19 +583,28 @@ export function GradedQuizRunner({
         <div className="flex items-center gap-3">
           {isPreviewMode && quizResult && (
             <Button type="button" variant="outline" size="sm" onClick={handleResetPreview}>
+              <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
               Làm lại bài thi (Reset)
             </Button>
           )}
-          <Button
-            type="button"
-            onClick={handleSubmitQuiz}
-            isLoading={isSubmitting}
-            disabled={cooldownCountdown > 0 && !isPreviewMode}
-            size="sm"
-          >
-            {isSubmitting ? "Đang chấm điểm…" : "Nộp bài thi"}
-            {!isSubmitting && <Send className="w-4 h-4 ml-1.5" />}
-          </Button>
+          {!isPreviewMode && quizResult && cooldownCountdown === 0 && attemptsLeft > 0 && (
+            <Button type="button" variant="outline" size="sm" onClick={handleRetryQuiz}>
+              <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+              Làm lại bài thi (Cải thiện điểm)
+            </Button>
+          )}
+          {!quizResult && (
+            <Button
+              type="button"
+              onClick={handleSubmitQuiz}
+              isLoading={isSubmitting}
+              disabled={cooldownCountdown > 0 && !isPreviewMode}
+              size="sm"
+            >
+              {isSubmitting ? "Đang chấm điểm…" : "Nộp bài thi"}
+              {!isSubmitting && <Send className="w-4 h-4 ml-1.5" />}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -485,10 +612,9 @@ export function GradedQuizRunner({
         itemId={itemId}
         userId={effectiveUserId}
         isOpen={isHonorModalOpen}
-        onAgreed={async () => {
-          setIsHonorAgreed(true);
-          // short delay to ensure badge appears before modal closes
-          await new Promise((resolve) => setTimeout(resolve, 100));
+        isSubmitting={isSubmitting}
+        onAgreedAndSubmit={async () => {
+          await executeSubmit();
           setIsHonorModalOpen(false);
         }}
         onClose={() => setIsHonorModalOpen(false)}

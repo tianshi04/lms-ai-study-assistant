@@ -619,7 +619,7 @@ function CoursePlayerContent() {
             ) : (
               <Link
                 href={`/courses/${course.id}`}
-                className="p-1.5 rounded-lg bg-muted hover:bg-muted/80 text-foreground transition-colors"
+                className="p-1.5 rounded-lg bg-background hover:bg-accent border border-border/60 text-foreground transition-colors"
                 title="Quay lại khóa học"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -632,8 +632,8 @@ function CoursePlayerContent() {
 
           <div className="flex items-center gap-4">
             {!isPreviewMode && progress && (
-              <div className="flex items-center gap-3 bg-muted px-3 py-1.5 rounded-lg border border-border">
-                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+              <div className="flex items-center gap-3 bg-background px-3 py-1.5 rounded-xl border border-border/80 shadow-2xs">
+                <div className="w-24 h-2 bg-muted/60 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-primary rounded-full transition-all duration-500"
                     style={{ width: `${progress.overallProgressPercent}%` }}
@@ -690,7 +690,7 @@ function CoursePlayerContent() {
           {/* Left Sidebar - Course Content Navigation Tree */}
           {isSidebarOpen && !isPreviewMode && (
             <aside className="w-80 bg-card/95 border-r border-border overflow-y-auto flex-shrink-0 flex flex-col transition-all duration-300">
-              <div className="p-4 border-b border-border bg-muted/50 sticky top-0 z-10 flex items-center justify-between">
+              <div className="p-4 border-b border-border bg-card sticky top-0 z-10 flex items-center justify-between">
                 <h2 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
                   {"Lộ trình Bài học"}
                 </h2>
@@ -879,7 +879,7 @@ function CoursePlayerContent() {
                 </div>
 
                 {/* Coursera-style Bottom Control Navigation Footer Bar */}
-                <div className="w-full h-14 border-t border-border px-4 sm:px-6 flex items-center justify-between bg-muted/30 shrink-0 z-10">
+                <div className="w-full h-14 border-t border-border px-4 sm:px-6 flex items-center justify-between bg-card shrink-0 z-10">
                   <div />
 
                   {/* Right: Next Item Button - Clean Text Only */}
@@ -922,7 +922,7 @@ function CoursePlayerContent() {
                   (activeTab === "deadlines" && !isPreviewMode)) && (
                   <aside className="w-80 xl:w-96 bg-card border-l border-border flex flex-col shrink-0 h-full overflow-hidden shadow-xs z-10 transition-all duration-300">
                     {/* Drawer Header */}
-                    <div className="h-12 border-b border-border px-4 flex items-center justify-between bg-muted/40 shrink-0">
+                    <div className="h-12 border-b border-border px-4 flex items-center justify-between bg-card shrink-0">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs text-foreground uppercase tracking-wider">
                           {activeTab === "transcript" && "Phụ đề Tương tác"}

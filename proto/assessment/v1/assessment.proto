@@ -14,12 +14,17 @@ message SubmitHonorCodeResponse {
   string message = 2;
 }
 
+message QuizQuestionAnswer {
+  repeated int32 selected_option_indexes = 1;
+}
+
 message SubmitGradedQuizRequest {
   string item_id = 1;
   repeated int32 selected_option_indexes = 2;
   int32 session_seed = 3;
   string start_time_iso = 4;
   bool preview = 5;
+  repeated QuizQuestionAnswer question_answers = 6;
 }
 
 message QuizResult {
@@ -306,6 +311,7 @@ service AssessmentService {
 message StartGradedQuizSessionRequest {
   string item_id = 1;
   bool preview = 2;
+  bool force_new = 3;
 }
 
 message QuizSessionQuestionOption {
@@ -331,4 +337,6 @@ message StartGradedQuizSessionResponse {
   int32 attempts_left = 8;
   int32 max_attempts = 9;
   int32 cooldown_hours = 10;
+  bool has_previous_result = 11;
+  QuizResult previous_result = 12;
 }

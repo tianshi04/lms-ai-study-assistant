@@ -10,16 +10,14 @@ test.describe('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () 
     await assessmentPage.verifyPageLoaded();
   });
 
-  test('should display honor code modal, allow agreeing and update status badge', async ({ page }) => {
+  test('should display integrated honor code submit modal and submit quiz', async ({ page }) => {
     const assessmentPage = new AssessmentPage(page);
     await assessmentPage.goto();
     await assessmentPage.verifyPageLoaded();
 
-    await assessmentPage.agreeHonorCode();
-    const statusBadgeOrLocked = assessmentPage.honorAgreedBadge.or(
-      page.locator('text=/Bài Thi Bị Khóa|dùng hết số lượt/i').first()
-    );
-    await expect(statusBadgeOrLocked).toBeVisible({ timeout: 10000 });
+    await assessmentPage.submitQuiz();
+    const resultOrQuizState = page.locator('text=/Score:|Điểm số:|Required:|Kết quả|Bài Thi/i').first();
+    await expect(resultOrQuizState).toBeVisible({ timeout: 10000 });
   });
 
   test('should submit graded quiz and display score result', async ({ page }) => {

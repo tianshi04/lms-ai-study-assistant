@@ -85,13 +85,13 @@
   --animate-scale-up: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
   /* Stacking & Layer Tokens */
-  --z-deep: -1;
-  --z-base: 0;
-  --z-sticky: 100;
-  --z-dropdown: 200;
-  --z-widget: 300;
-  --z-modal: 1000;
-  --z-toast: 2000;
+  --z-index-deep: -1;
+  --z-index-base: 0;
+  --z-index-sticky: 100;
+  --z-index-dropdown: 200;
+  --z-index-widget: 300;
+  --z-index-modal: 1000;
+  --z-index-toast: 2000;
 }
 
 :root {

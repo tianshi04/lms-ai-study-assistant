@@ -41,7 +41,7 @@ export default function AssessmentsPage() {
             }`}
           >
             <FileText className="w-4 h-4 text-primary" />
-            Graded Quiz (80% Pass)
+            Graded Quiz
           </button>
           <button
             onClick={() => setActiveAssessment("lab")}

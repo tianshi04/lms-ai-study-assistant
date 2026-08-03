@@ -45,7 +45,7 @@ export function VideoPlayer({
 }: VideoPlayerProps) {
   if (!activeItem) {
     return (
-      <div className="w-full h-full flex items-center justify-center text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900">
+      <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-card">
         {"Chọn bài học từ danh sách bên trái để bắt đầu."}
       </div>
     );
@@ -56,7 +56,7 @@ export function VideoPlayer({
   // 1. Reading Item
   if (activeItem.type === 2) {
     return (
-      <div className="w-full h-full overflow-y-auto p-8 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
+      <div className="w-full h-full overflow-y-auto p-8 bg-card text-foreground transition-colors duration-200">
         <div className="max-w-3xl mx-auto space-y-6">
           {/* Reading Header */}
           <div className="pb-4 border-b border-border">
@@ -147,7 +147,7 @@ export function VideoPlayer({
   // 2. Graded / Practice Quiz Item
   if (activeItem.type === 3 || activeItem.type === 4) {
     return (
-      <div className="w-full h-full overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950">
+      <div className="w-full h-full overflow-y-auto p-6 bg-background">
         <GradedQuizRunner
           itemId={activeItem.id}
           title={activeItem.title}
@@ -290,39 +290,35 @@ export function VideoPlayer({
 
           {/* In-Video Quiz Overlay */}
           {activeQuiz && (
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-30 flex items-center justify-center p-6 animate-in fade-in duration-200">
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                  <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-md z-30 flex items-center justify-center p-6 animate-in fade-in duration-200">
+              <div className="bg-popover text-popover-foreground border border-border rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <span className="text-xs font-extrabold text-primary uppercase tracking-wider">
                     In-Video Quiz ({activeQuiz.timestampSeconds}s)
                   </span>
-                  <span className="text-[10px] text-slate-500 font-mono">
+                  <span className="text-[10px] text-muted-foreground font-mono">
                     {"Dừng video để kiểm tra"}
                   </span>
                 </div>
 
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  {activeQuiz.question}
-                </h3>
+                <h3 className="text-base font-bold text-foreground">{activeQuiz.question}</h3>
 
                 <div className="space-y-2">
                   {activeQuiz.options.map((option, idx) => {
                     const isSelected = selectedOption === idx;
                     const isCorrect = idx === activeQuiz.correctOptionIndex;
-                    let optionStyle =
-                      "border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 text-slate-700 dark:text-slate-300";
+                    let optionStyle = "border-border hover:border-primary text-foreground";
 
                     if (quizSubmitted) {
                       if (isCorrect) {
                         optionStyle =
-                          "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 font-bold";
+                          "border-success bg-success/10 text-success-foreground font-bold";
                       } else if (isSelected && !isCorrect) {
                         optionStyle =
-                          "border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-300 font-bold";
+                          "border-destructive bg-destructive/10 text-destructive-foreground font-bold";
                       }
                     } else if (isSelected) {
-                      optionStyle =
-                        "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 font-bold";
+                      optionStyle = "border-primary bg-primary/10 text-primary font-bold";
                     }
 
                     return (
@@ -330,7 +326,7 @@ export function VideoPlayer({
                         key={idx}
                         disabled={quizSubmitted}
                         onClick={() => onSelectOption(idx)}
-                        className={`w-full text-left p-3 rounded-xl border text-xs transition-all flex items-center justify-between ${optionStyle}`}
+                        className={`w-full text-left p-3 rounded-xl border text-xs transition-all flex items-center justify-between cursor-pointer ${optionStyle}`}
                       >
                         <span>{option}</span>
                         {quizSubmitted && isCorrect && <Check className="w-4 h-4 text-success" />}
@@ -340,10 +336,8 @@ export function VideoPlayer({
                 </div>
 
                 {quizSubmitted && (
-                  <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1">
-                    <span className="font-bold text-blue-600 dark:text-blue-400">
-                      {"Giải thích: "}
-                    </span>
+                  <div className="p-3 rounded-xl bg-muted text-xs text-muted-foreground space-y-1">
+                    <span className="font-bold text-primary">{"Giải thích: "}</span>
                     <span>{activeQuiz.explanation}</span>
                   </div>
                 )}
@@ -353,14 +347,14 @@ export function VideoPlayer({
                     <button
                       onClick={onSubmitQuiz}
                       disabled={selectedOption === null}
-                      className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg transition-all"
+                      className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground font-bold text-xs shadow-lg transition-all cursor-pointer"
                     >
                       {"Kiểm Tra Đáp Án"}
                     </button>
                   ) : (
                     <button
                       onClick={onContinueVideo}
-                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition-all flex items-center gap-2"
+                      className="px-5 py-2.5 rounded-xl bg-success hover:bg-success-hover text-success-foreground font-bold text-xs shadow-lg transition-all flex items-center gap-2 cursor-pointer"
                     >
                       {"Tiếp Tục Xem Video"}
                       <ArrowRight className="w-4 h-4" />
@@ -390,7 +384,7 @@ export function VideoPlayer({
   }
 
   return (
-    <div className="w-full h-full flex items-center justify-center text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900">
+    <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-card">
       {"Chọn bài học từ danh sách bên trái để bắt đầu."}
     </div>
   );
