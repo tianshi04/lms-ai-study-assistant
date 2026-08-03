@@ -564,7 +564,6 @@ class CatalogHandler(CatalogService):
         wm = await self.use_case.update_week_module(
             id=request.id,
             course_id=request.course_id,
-            week_number=request.week_number,
             title=request.title,
             summary=request.summary,
             current_user=user,

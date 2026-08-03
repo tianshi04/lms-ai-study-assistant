@@ -843,14 +843,13 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         return True
 
     async def update_week_module(
-        self, id: str, course_id: str, week_number: int, title: str, summary: str
+        self, id: str, course_id: str, title: str, summary: str
     ) -> WeekModule | None:
         stmt = select(WeekModuleModel).where(WeekModuleModel.id == id)
         res = await self.session.execute(stmt)
         wm = res.scalar_one_or_none()
         if not wm:
             return None
-        wm.week_number = week_number
         wm.title = title
         wm.summary = summary
         await self.session.commit()

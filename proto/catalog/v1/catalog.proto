@@ -201,9 +201,8 @@ message CreateWeekModuleResponse {
 message UpdateWeekModuleRequest {
   string id = 1;
   string course_id = 2;
-  int32 week_number = 3;
-  string title = 4;
-  string summary = 5;
+  string title = 3;
+  string summary = 4;
 }
 
 message UpdateWeekModuleResponse {

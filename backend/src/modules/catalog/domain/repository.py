@@ -157,7 +157,7 @@ class ICatalogRepository(ABC):
 
     @abstractmethod
     async def update_week_module(
-        self, id: str, course_id: str, week_number: int, title: str, summary: str
+        self, id: str, course_id: str, title: str, summary: str
     ):
         pass
 

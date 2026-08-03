@@ -474,7 +474,6 @@ class CatalogUseCase:
         self,
         id: str,
         course_id: str,
-        week_number: int,
         title: str,
         summary: str,
         current_user: CurrentUser | None = None,
@@ -487,7 +486,6 @@ class CatalogUseCase:
             return await repo.update_week_module(
                 id=id,
                 course_id=course_id,
-                week_number=week_number,
                 title=title,
                 summary=summary,
             )

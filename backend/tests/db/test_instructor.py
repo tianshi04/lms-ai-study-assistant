@@ -94,12 +94,12 @@ async def test_instructor_create_lesson_structure():
         updated_week = await usecase.update_week_module(
             id=week.id,
             course_id=course.id,
-            week_number=1,
             title="Week 1: Updated Self-Attention Mechanism",
             summary="Updated Summary",
         )
         assert updated_week is not None
         assert updated_week.title == "Week 1: Updated Self-Attention Mechanism"
+        assert updated_week.week_number == 1
 
         # 5. Update Lesson
         updated_lesson = await usecase.update_lesson(
