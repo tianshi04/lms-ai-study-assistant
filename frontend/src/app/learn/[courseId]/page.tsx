@@ -603,7 +603,7 @@ function CoursePlayerContent() {
 
   return (
     <DirectionalTransition>
-      <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden transition-colors duration-200">
+      <div className="h-screen h-dvh bg-background text-foreground flex flex-col overflow-hidden transition-colors duration-200">
         {/* Top Player Navbar */}
         <header className="h-14 bg-card border-b border-border px-6 flex items-center justify-between flex-shrink-0 z-30">
           <div className="flex items-center gap-4 min-w-0">
@@ -632,8 +632,8 @@ function CoursePlayerContent() {
 
           <div className="flex items-center gap-4">
             {!isPreviewMode && progress && (
-              <div className="flex items-center gap-3 bg-background px-3 py-1.5 rounded-xl border border-border/80 shadow-2xs">
-                <div className="w-24 h-2 bg-muted/60 rounded-full overflow-hidden">
+              <div className="flex items-center gap-3 bg-muted px-3 py-1.5 rounded-lg border border-border">
+                <div className="w-24 h-2 bg-background rounded-full overflow-hidden">
                   <div
                     className="h-full bg-primary rounded-full transition-all duration-500"
                     style={{ width: `${progress.overallProgressPercent}%` }}
@@ -840,7 +840,7 @@ function CoursePlayerContent() {
           )}
 
           {/* Center Workspace & Bottom Panels */}
-          <main className="flex-1 flex flex-col bg-background overflow-hidden relative text-foreground min-w-[360px]">
+          <main className="flex-1 flex flex-col bg-background overflow-hidden relative text-foreground min-w-0 sm:min-w-[360px]">
             {/* Lock Notice Banner */}
             {lockNotice && (
               <div className="p-3 bg-warning/10 border-b border-warning/30 text-warning text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-200">
@@ -857,7 +857,7 @@ function CoursePlayerContent() {
             {/* Center Video & Side Tool Panel Layout - Locked 3-Frame Row */}
             <div className="flex-1 flex flex-row overflow-x-auto overflow-y-hidden relative min-h-0">
               {/* Left/Center Video / Reading Media Viewer Column */}
-              <div className="flex-1 min-w-[360px] bg-card flex flex-col items-center justify-between relative overflow-y-auto transition-colors duration-200 min-h-0">
+              <div className="flex-1 min-w-0 sm:min-w-[360px] bg-card flex flex-col items-center justify-between relative overflow-y-auto transition-colors duration-200 min-h-0">
                 <div className="w-full flex-1 flex items-start justify-center p-2 sm:p-3 pt-1 min-h-0 overflow-y-auto">
                   <VideoPlayer
                     videoRef={videoRef}

@@ -18,7 +18,7 @@ export function DialogBackdrop({
     <BaseDialog.Backdrop
       ref={ref}
       className={cn(
-        "fixed inset-0 z-modal z-[1000] bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-150",
+        "fixed inset-0 z-[1000] bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-150",
         className,
       )}
       {...props}
@@ -55,7 +55,7 @@ export function DialogContent({
         <BaseDialog.Popup
           ref={ref}
           className={cn(
-            "bg-popover text-popover-foreground rounded-2xl shadow-xl w-full p-6 border border-border animate-in fade-in zoom-in-95 duration-150 relative my-8",
+            "bg-surface-container-high text-foreground rounded-3xl shadow-2xl w-full p-6 border border-outline-variant animate-in fade-in zoom-in-95 duration-200 ease-m3-emphasized relative my-8",
             sizeClasses[size],
             className,
           )}
@@ -70,7 +70,7 @@ export function DialogContent({
 
 export const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("flex flex-col space-y-1.5 pb-4 border-b border-border", className)}
+    className={cn("flex flex-col space-y-1.5 pb-4 border-b border-outline-variant", className)}
     {...props}
   />
 );
@@ -79,7 +79,7 @@ DialogHeader.displayName = "DialogHeader";
 export const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4 border-t border-border gap-2 sm:gap-0",
+      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4 border-t border-outline-variant gap-2 sm:gap-0",
       className,
     )}
     {...props}
@@ -148,7 +148,7 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <DialogContent size={size} className={className}>
         {(title || showCloseButton) && (
-          <div className="flex items-start justify-between pb-4 border-b border-border">
+          <div className="flex items-start justify-between pb-4 border-b border-outline-variant">
             <div>
               {title && <DialogTitle>{title}</DialogTitle>}
               {description && <DialogDescription>{description}</DialogDescription>}

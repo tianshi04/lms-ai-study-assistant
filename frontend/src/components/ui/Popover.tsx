@@ -28,7 +28,7 @@ export function PopoverContent({
         <BasePopover.Popup
           ref={ref}
           className={cn(
-            "w-80 sm:w-96 rounded-2xl bg-card text-card-foreground border border-border shadow-2xl overflow-hidden outline-none animate-in fade-in-0 zoom-in-95 duration-150",
+            "w-80 sm:w-96 rounded-3xl bg-surface-container-high text-foreground border border-outline-variant shadow-2xl overflow-hidden outline-none animate-in fade-in-0 zoom-in-95 duration-200 ease-m3-emphasized",
             className,
           )}
           {...props}

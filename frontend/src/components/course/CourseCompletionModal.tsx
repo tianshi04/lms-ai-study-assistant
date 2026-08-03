@@ -206,7 +206,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
         <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-10" />
 
         {/* Trophy SVG Icon */}
-        <div className="relative z-20 mx-auto w-16 h-16 bg-black/10 dark:bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-primary-foreground/20 shadow-inner">
+        <div className="relative z-20 mx-auto w-16 h-16 bg-primary-foreground/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-primary-foreground/20 shadow-inner">
           <Trophy className="w-9 h-9 text-warning" aria-hidden="true" />
         </div>
 
@@ -216,7 +216,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
         </p>
 
         {loadingCert ? (
-          <div className="relative z-20 mt-5 mx-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-black/10 dark:bg-white/15 text-primary-foreground text-xs font-semibold backdrop-blur-sm border border-primary-foreground/10">
+          <div className="relative z-20 mt-5 mx-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-foreground/15 text-primary-foreground text-xs font-semibold backdrop-blur-sm border border-primary-foreground/10">
             <div className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
             <span aria-live="polite">{"Đang tải…"}</span>
           </div>
@@ -291,12 +291,13 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(0)}
                         className="p-1 cursor-pointer transition-transform hover:scale-110 focus:outline-none"
+                        aria-label={`Đánh giá ${star} sao`}
                       >
                         <Star
+                          aria-hidden="true"
                           className={`w-8 h-8 transition-colors ${
                             active ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40"
                           }`}
-                          aria-hidden="true"
                         />
                       </button>
                     );

@@ -6,17 +6,26 @@ export interface TextareaProps extends React.ComponentProps<"textarea"> {
   label?: string;
   error?: string;
   helperText?: string;
+  variant?: "outlined" | "filled";
 }
 
 export function Textarea({
   label,
   error,
   helperText,
+  variant = "outlined",
   className = "",
   id,
   ref,
   ...props
 }: TextareaProps) {
+  const variantStyles = {
+    outlined:
+      "bg-background border border-input rounded-xl focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary",
+    filled:
+      "bg-surface-container-highest border-b-2 border-input rounded-t-xl rounded-b-none focus-visible:ring-0 focus-visible:border-primary",
+  };
+
   return (
     <BaseField.Root invalid={!!error} className="w-full space-y-1.5">
       {label && (
@@ -32,7 +41,8 @@ export function Textarea({
             {...controlProps}
             {...props}
             className={cn(
-              "w-full px-3.5 py-2 text-sm bg-background border text-foreground placeholder:text-muted-foreground rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:border-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[80px] border-input data-[invalid]:border-destructive data-[invalid]:focus-visible:ring-destructive/50 data-[invalid]:focus-visible:border-destructive",
+              "w-full px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground transition-all duration-200 ease-m3-emphasized disabled:opacity-50 disabled:cursor-not-allowed min-h-[80px] data-[invalid]:border-destructive data-[invalid]:focus-visible:ring-destructive/50 data-[invalid]:focus-visible:border-destructive",
+              variantStyles[variant],
               className,
             )}
           />

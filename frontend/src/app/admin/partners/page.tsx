@@ -285,7 +285,7 @@ export default function AdminPartnersPage() {
           onClick={handleOpenCreate}
           className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-xl px-5 py-2.5 shadow-sm"
         >
-          <Plus className="w-5 h-5 mr-2 -ml-1" />
+          <Plus className="w-5 h-5 mr-2 -ml-1" aria-hidden="true" />
           Thêm đối tác mới
         </Button>
       </div>
@@ -294,7 +294,10 @@ export default function AdminPartnersPage() {
       <div className="mt-8 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
         {partners.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">
-            <Building2 className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-50" />
+            <Building2
+              className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-50"
+              aria-hidden="true"
+            />
             <p className="text-lg font-medium text-foreground">Chưa có đối tác nào được tạo</p>
             <p className="text-sm text-muted-foreground mt-1">
               Bấm nút &quot;Thêm đối tác mới&quot; để thiết lập đối tác phát hành chứng chỉ đầu
@@ -378,11 +381,11 @@ export default function AdminPartnersPage() {
                       onClick={() => router.push(`/partners/${partner.slug}`)}
                       title="Xem trang công khai"
                     >
-                      <Eye className="w-3.5 h-3.5 mr-1" />
+                      <Eye className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
                       Xem
                     </Button>
                     <Button variant="secondary" size="sm" onClick={() => handleOpenEdit(partner)}>
-                      <Pencil className="w-3.5 h-3.5 mr-1" />
+                      <Pencil className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
                       Sửa
                     </Button>
                     <Button
@@ -390,7 +393,7 @@ export default function AdminPartnersPage() {
                       size="sm"
                       onClick={() => setDeletingPartnerId(partner.id)}
                     >
-                      <Trash2 className="w-3.5 h-3.5 mr-1" />
+                      <Trash2 className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
                       Xoá
                     </Button>
                   </TableCell>
@@ -513,7 +516,7 @@ export default function AdminPartnersPage() {
           {/* Section: Thông tin Người ký mặc định */}
           <div className="border-t border-border pt-4">
             <h3 className="text-xs font-bold uppercase text-foreground mb-3 flex items-center gap-1.5">
-              <PenTool className="w-4 h-4 text-primary" />
+              <PenTool className="w-4 h-4 text-primary" aria-hidden="true" />
               Thông tin Người ký đại diện Mặc định
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -559,7 +562,7 @@ export default function AdminPartnersPage() {
           {/* Section: Quản lý Quản trị viên Tổ chức (Organization Admin) */}
           <div className="border-t border-border pt-4 space-y-3">
             <h3 className="text-xs font-bold uppercase text-foreground flex items-center gap-1.5">
-              <Users className="w-4 h-4 text-primary" />
+              <Users className="w-4 h-4 text-primary" aria-hidden="true" />
               Quản trị viên Tổ chức (Organization Admin)
             </h3>
 
@@ -595,10 +598,11 @@ export default function AdminPartnersPage() {
                     <button
                       type="button"
                       onClick={() => handleRemovePartnerAdmin(admin.id)}
-                      className="text-destructive hover:opacity-80 p-1"
+                      className="text-destructive hover:opacity-80 p-1 cursor-pointer"
                       title="Gỡ Quản trị viên"
+                      aria-label="Gỡ Quản trị viên"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-4 h-4" aria-hidden="true" />
                     </button>
                   </div>
                 ))
@@ -626,7 +630,7 @@ export default function AdminPartnersPage() {
                 onClick={handleAddPartnerAdmin}
                 className="sm:col-span-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold py-1.5 px-3 rounded-xl border border-primary/20 transition-colors flex items-center justify-center gap-1"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                 Gán
               </button>
             </div>

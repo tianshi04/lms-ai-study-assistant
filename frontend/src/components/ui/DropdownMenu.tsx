@@ -18,7 +18,7 @@ export function DropdownMenuContent({
         <BaseMenu.Popup
           ref={ref}
           className={cn(
-            "min-w-[150px] overflow-hidden rounded-2xl bg-popover text-popover-foreground p-1.5 shadow-xl border border-border animate-in fade-in zoom-in-95 duration-150",
+            "min-w-[160px] overflow-hidden rounded-2xl bg-surface-container-high text-foreground p-1.5 shadow-lg border border-outline-variant animate-in fade-in zoom-in-95 duration-200 ease-m3-emphasized",
             className,
           )}
           {...props}
@@ -39,7 +39,7 @@ export function DropdownMenuItem({
     <BaseMenu.Item
       ref={ref}
       className={cn(
-        "relative flex cursor-pointer select-none items-center justify-start gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium outline-none transition-colors hover:bg-muted text-foreground data-[highlighted]:bg-muted/70",
+        "relative flex cursor-pointer select-none items-center justify-start gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium outline-none transition-all duration-200 ease-m3-emphasized hover:bg-surface-container-highest text-foreground data-[highlighted]:bg-surface-container-highest",
         className,
       )}
       {...props}

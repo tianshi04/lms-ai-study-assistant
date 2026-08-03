@@ -58,7 +58,7 @@ const VariantIcons: Record<ToastType, React.ReactNode> = {
 };
 
 const toastBorderVariants: Record<ToastType, string> = {
-  default: "border-border",
+  default: "border-outline-variant",
   success: "border-success/30",
   error: "border-destructive/30",
   warning: "border-warning/30",
@@ -79,8 +79,8 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast }) => {
     <BaseToast.Root
       toast={toast}
       className={cn(
-        "pointer-events-auto relative flex w-full items-start justify-between gap-3 overflow-hidden rounded-xl border p-4 shadow-lg transition-all duration-200 ease-out",
-        "bg-card/95 backdrop-blur-md text-card-foreground",
+        "pointer-events-auto relative flex w-full items-start justify-between gap-3 overflow-hidden rounded-2xl border p-4 shadow-xl transition-all duration-200 ease-m3-emphasized",
+        "bg-surface-container-high/95 backdrop-blur-md text-foreground",
         "data-[ending]:animate-out data-[ending]:fade-out-0 data-[ending]:slide-out-to-right-full data-[ending]:duration-150",
         "data-[starting]:animate-in data-[starting]:fade-in-0 data-[starting]:slide-in-from-top-5 data-[starting]:duration-200",
         toastBorderVariants[type],
@@ -126,7 +126,7 @@ function ToastViewportList() {
 
   return (
     <BaseToast.Portal>
-      <BaseToast.Viewport className="fixed top-4 right-4 z-toast flex flex-col gap-2.5 max-w-sm w-full pointer-events-none p-4 sm:p-0">
+      <BaseToast.Viewport className="fixed top-20 right-4 sm:right-6 z-toast flex flex-col gap-2.5 max-w-sm w-full pointer-events-none p-4 sm:p-0">
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} />
         ))}

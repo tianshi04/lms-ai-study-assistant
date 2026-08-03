@@ -18,25 +18,25 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
         return {
           label: "Hệ thống",
           icon: Bell,
-          bgClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+          bgClass: "bg-info/10 text-info border-info/20",
         };
       case NotificationCategory.ACADEMIC:
         return {
           label: "Học tập",
           icon: BookOpen,
-          bgClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+          bgClass: "bg-success/10 text-success border-success/20",
         };
       case NotificationCategory.COMMUNITY:
         return {
           label: "Diễn đàn",
           icon: MessageSquare,
-          bgClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+          bgClass: "bg-tertiary-container text-on-tertiary-container border-outline-variant",
         };
       case NotificationCategory.ANNOUNCEMENT:
         return {
           label: "Thông báo",
           icon: Megaphone,
-          bgClass: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
+          bgClass: "bg-destructive/10 text-destructive border-destructive/20",
         };
       default:
         return {

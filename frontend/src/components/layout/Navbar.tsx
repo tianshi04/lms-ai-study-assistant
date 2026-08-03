@@ -39,7 +39,7 @@ export function Navbar() {
   return (
     <header
       style={{ viewTransitionName: "site-navbar" }}
-      className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-dropdown transition-colors"
+      className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-sticky transition-colors"
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand Logo */}
