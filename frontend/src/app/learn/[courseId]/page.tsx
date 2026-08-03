@@ -69,6 +69,8 @@ function CoursePlayerContent() {
   const searchParams = useSearchParams();
   const previewItemId = searchParams?.get("itemId") || null;
   const isPreviewMode = searchParams?.get("preview") === "true";
+  const urlTab = searchParams?.get("tab");
+  const urlThreadId = searchParams?.get("threadId");
 
   const [userId, setUserId] = useState<string>("");
 
@@ -77,7 +79,11 @@ function CoursePlayerContent() {
   const [progress, setProgress] = useState<LearningProgress | null>(null);
   const [notes, setNotes] = useState<PersonalNote[]>([]);
   const [activeTab, setActiveTab] = useState<"transcript" | "forum" | "notes" | "deadlines">(
-    "transcript",
+    urlThreadId || urlTab === "forum"
+      ? "forum"
+      : urlTab && ["transcript", "notes", "deadlines"].includes(urlTab)
+        ? (urlTab as "transcript" | "notes" | "deadlines")
+        : "transcript",
   );
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -166,7 +172,7 @@ function CoursePlayerContent() {
       } else {
         setActiveTab("deadlines");
       }
-    } else if ((activeTab === "notes" || activeTab === "forum") && !isLectureItem) {
+    } else if (activeTab === "notes" && !isLectureItem) {
       setActiveTab("deadlines");
     }
   }, [activeItem, activeTab, isVideoItem, isLectureItem]);
@@ -944,8 +950,12 @@ function CoursePlayerContent() {
                         />
                       )}
 
-                      {!isPreviewMode && activeTab === "forum" && isLectureItem && (
-                        <ForumTab courseId={courseId} itemId={activeItem?.id || ""} />
+                      {!isPreviewMode && activeTab === "forum" && (
+                        <ForumTab
+                          courseId={courseId}
+                          itemId={activeItem?.id || ""}
+                          targetThreadId={urlThreadId || undefined}
+                        />
                       )}
 
                       {!isPreviewMode && activeTab === "notes" && isLectureItem && (

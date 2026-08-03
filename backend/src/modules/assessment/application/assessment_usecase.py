@@ -415,6 +415,59 @@ class AssessmentUseCase:
                 )
                 await repo.save_quiz_submission(submission)
 
+                # Trigger ASSESSMENT notification
+                try:
+                    from src.modules.notification.application.use_cases import (
+                        NotificationUseCase,
+                    )
+                    from src.modules.notification.domain.constants import (
+                        NotificationCategory,
+                    )
+
+                    status_str = (
+                        "ĐẠT (PASSED)"
+                        if score_percent >= passing_threshold
+                        else "CHƯA ĐẠT"
+                    )
+                    target_course_id = ""
+                    try:
+                        from sqlalchemy import select
+                        from src.modules.catalog.infrastructure.models import (
+                            LearningItemModel,
+                            LessonModel,
+                            WeekModuleModel,
+                        )
+
+                        cid_stmt = (
+                            select(WeekModuleModel.course_id)
+                            .join(
+                                LessonModel,
+                                LessonModel.week_module_id == WeekModuleModel.id,
+                            )
+                            .join(
+                                LearningItemModel,
+                                LearningItemModel.lesson_id == LessonModel.id,
+                            )
+                            .where(LearningItemModel.id == item_id)
+                        )
+                        cid_res = await session.execute(cid_stmt)
+                        found_cid = cid_res.scalar_one_or_none()
+                        if found_cid:
+                            target_course_id = found_cid
+                    except Exception:
+                        pass
+
+                    notif_uc = NotificationUseCase()
+                    await notif_uc.send_notification(
+                        recipient_id=user_id,
+                        category=NotificationCategory.ACADEMIC,
+                        title=f"Kết quả bài kiểm tra: {score_percent}% - {status_str}",
+                        content=f"Bạn đã hoàn thành bài thi lần {attempt_number} với số điểm {score_percent}%.",
+                        action_url=f"/learn/{target_course_id}?itemId={item_id}",
+                    )
+                except Exception as e:
+                    logger.warning("Failed to send quiz result notification: %s", e)
+
                 # Update Cooldown entity
                 new_cooldown = QuizCooldown(
                     user_id=user_id,

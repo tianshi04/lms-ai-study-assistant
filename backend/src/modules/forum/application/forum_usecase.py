@@ -134,6 +134,49 @@ class ForumUseCase:
                 reply_id,
                 thread_id,
             )
+
+            # Trigger COMMUNITY notification to thread author
+            try:
+                thread = await repo.get_thread_by_id(thread_id)
+                if thread:
+                    recipient_id = thread.author_user_id
+                    if not recipient_id and thread.author_name:
+                        # Fallback lookup by author_name/email prefix
+                        from sqlalchemy import select
+                        from src.modules.identity.infrastructure.models import UserModel
+
+                        res_user = await session.execute(
+                            select(UserModel.id).where(
+                                (UserModel.email.ilike(f"{thread.author_name}%"))
+                                | (UserModel.id == thread.author_name)
+                            )
+                        )
+                        recipient_id = res_user.scalar_one_or_none() or ""
+
+                    if recipient_id and recipient_id != author_user_id:
+                        from src.modules.notification.application.use_cases import (
+                            NotificationUseCase,
+                        )
+                        from src.modules.notification.domain.constants import (
+                            NotificationCategory,
+                        )
+
+                        action_url = (
+                            f"/learn/{thread.course_id}?itemId={thread.item_id}&tab=forum&threadId={thread_id}"
+                            if thread.item_id
+                            else f"/forum?courseId={thread.course_id}&threadId={thread_id}"
+                        )
+                        notif_uc = NotificationUseCase()
+                        await notif_uc.send_notification(
+                            recipient_id=recipient_id,
+                            category=NotificationCategory.COMMUNITY,
+                            title=f"{author_name} đã phản hồi bài viết của bạn",
+                            content=f'"{content[:100]}..."',
+                            action_url=action_url,
+                        )
+            except Exception as e:
+                logger.warning("Failed to send forum reply notification: %s", e)
+
             return reply
 
     async def vote_post(

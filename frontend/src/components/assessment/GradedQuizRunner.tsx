@@ -311,7 +311,11 @@ export function GradedQuizRunner({
           {isPreviewMode ? (
             <Badge variant="verified">Bypass Honor Code & Cooldown</Badge>
           ) : isHonorAgreed ? (
-            <Badge variant="success" className="flex items-center gap-1">
+            <Badge
+              variant="success"
+              className="flex items-center gap-1"
+              data-testid="honor-agreed-badge"
+            >
               <Check className="w-3.5 h-3.5 text-success" />
               <span>Đã xác nhận Cam kết Trung thực</span>
             </Badge>
@@ -481,10 +485,11 @@ export function GradedQuizRunner({
         itemId={itemId}
         userId={effectiveUserId}
         isOpen={isHonorModalOpen}
-        onAgreed={() => {
+        onAgreed={async () => {
           setIsHonorAgreed(true);
+          // short delay to ensure badge appears before modal closes
+          await new Promise((resolve) => setTimeout(resolve, 100));
           setIsHonorModalOpen(false);
-          executeSubmit();
         }}
         onClose={() => setIsHonorModalOpen(false)}
       />

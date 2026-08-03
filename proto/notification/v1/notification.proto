@@ -1,0 +1,111 @@
+syntax = "proto3";
+
+package notification.v1;
+
+import "auth/v1/options.proto";
+
+enum NotificationCategory {
+  NOTIFICATION_CATEGORY_UNSPECIFIED = 0;
+  NOTIFICATION_CATEGORY_SYSTEM = 1;
+  NOTIFICATION_CATEGORY_ACADEMIC = 2;
+  NOTIFICATION_CATEGORY_COMMUNITY = 3;
+  NOTIFICATION_CATEGORY_ANNOUNCEMENT = 4;
+}
+
+message NotificationItem {
+  string id = 1;
+  string recipient_id = 2;
+  NotificationCategory category = 3;
+  string title = 4;
+  string content = 5;
+  string action_url = 6;
+  string actor_avatar_url = 7;
+  bool is_read = 8;
+  string read_at = 9;
+  string created_at = 10;
+}
+
+message ListNotificationsRequest {
+  NotificationCategory category_filter = 1;
+  bool unread_only = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListNotificationsResponse {
+  repeated NotificationItem notifications = 1;
+  int32 unread_count = 2;
+  string next_page_token = 3;
+}
+
+message GetUnreadCountRequest {}
+
+message GetUnreadCountResponse {
+  int32 unread_count = 1;
+}
+
+message MarkAsReadRequest {
+  repeated string notification_ids = 1;
+}
+
+message MarkAsReadResponse {
+  bool success = 1;
+  int32 updated_count = 2;
+}
+
+message MarkAllAsReadRequest {
+  NotificationCategory category_filter = 1;
+}
+
+message MarkAllAsReadResponse {
+  bool success = 1;
+  int32 updated_count = 2;
+}
+
+message NotificationPreferences {
+  bool enable_in_app = 1;
+  bool enable_email = 2;
+  bool enable_academic_reminders = 3;
+  bool enable_community_replies = 4;
+  bool enable_announcements = 5;
+}
+
+message GetNotificationPreferencesRequest {}
+
+message GetNotificationPreferencesResponse {
+  NotificationPreferences preferences = 1;
+}
+
+message UpdateNotificationPreferencesRequest {
+  NotificationPreferences preferences = 1;
+}
+
+message UpdateNotificationPreferencesResponse {
+  NotificationPreferences preferences = 1;
+}
+
+service NotificationService {
+  rpc ListNotifications(ListNotificationsRequest) returns (ListNotificationsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+
+  rpc GetUnreadCount(GetUnreadCountRequest) returns (GetUnreadCountResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+
+  rpc MarkAsRead(MarkAsReadRequest) returns (MarkAsReadResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+
+  rpc MarkAllAsRead(MarkAllAsReadRequest) returns (MarkAllAsReadResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+
+  rpc GetNotificationPreferences(GetNotificationPreferencesRequest) returns (GetNotificationPreferencesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+
+  rpc UpdateNotificationPreferences(UpdateNotificationPreferencesRequest) returns (UpdateNotificationPreferencesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+}

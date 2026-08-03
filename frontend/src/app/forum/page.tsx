@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { MessageSquare, Plus, Pin, ChevronUp, ChevronDown, Reply } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
@@ -20,6 +21,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import {
   Select,
   SelectTrigger,
@@ -37,7 +39,7 @@ function formatRoleName(role: string): string {
   return role;
 }
 
-export default function ForumPage() {
+function ForumPageContent() {
   const locale = "vi";
   const toast = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
@@ -135,6 +137,32 @@ export default function ForumPage() {
       cancelled = true;
     };
   }, [selectedCourseId]);
+
+  const searchParams = useSearchParams();
+  const urlCourseId = searchParams?.get("courseId") || "";
+  const urlThreadId = searchParams?.get("threadId") || "";
+
+  const [selectedModalThreadId, setSelectedModalThreadId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (urlCourseId && !selectedCourseId) {
+      setSelectedCourseId(urlCourseId);
+    }
+  }, [urlCourseId, selectedCourseId]);
+
+  useEffect(() => {
+    if (urlThreadId && !loading && threads.length > 0) {
+      setSelectedModalThreadId(urlThreadId);
+      setExpandedThreads((prev) => ({ ...prev, [urlThreadId]: true }));
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`thread-${urlThreadId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [urlThreadId, loading, threads]);
 
   const fetchThreads = useCallback(() => fetchThreadsRef.current(), []);
 
@@ -439,16 +467,27 @@ export default function ForumPage() {
                 currentUserId && thread.authorUserId === currentUserId,
               );
               const canDeleteThread = isThreadAuthor || isStaffOrAdmin;
+              const isTargetThread = urlThreadId === thread.id;
 
               return (
                 <Card
                   key={thread.id}
-                  className="rounded-2xl p-6 transition-all shadow-sm hover:border-accent-hover"
+                  id={`thread-${thread.id}`}
+                  className={`rounded-2xl p-6 transition-all shadow-sm ${
+                    isTargetThread
+                      ? "border-primary ring-2 ring-primary/50 shadow-lg bg-primary/5"
+                      : "hover:border-accent-hover"
+                  }`}
                 >
                   {/* Thread Header */}
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-2">
+                        {isTargetThread && (
+                          <Badge variant="verified" className="gap-1 px-3 py-1 shadow-xs font-bold">
+                            <span>📌 Bài viết từ thông báo</span>
+                          </Badge>
+                        )}
                         {thread.isStaffPinned && (
                           <Badge variant="warning" className="gap-1.5 px-3 py-1 shadow-xs">
                             <Pin className="w-3.5 h-3.5 text-warning shrink-0" />
@@ -500,7 +539,11 @@ export default function ForumPage() {
                         )}
                       </div>
 
-                      <h2 className="text-xl font-bold text-foreground leading-snug">
+                      <h2
+                        onClick={() => setSelectedModalThreadId(thread.id)}
+                        className="text-xl font-bold text-foreground leading-snug hover:text-primary transition-colors cursor-pointer"
+                        title="Bấm để mở rộng xem thảo luận riêng"
+                      >
                         {thread.title}
                       </h2>
                     </div>
@@ -867,6 +910,42 @@ export default function ForumPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Thread Detail Modal (Facebook Post Style) */}
+      <ThreadDetailModal
+        isOpen={Boolean(selectedModalThreadId)}
+        onClose={() => setSelectedModalThreadId(null)}
+        thread={threads.find((t) => t.id === selectedModalThreadId) || null}
+        currentUserId={currentUserId}
+        isStaffOrAdmin={isStaffOrAdmin}
+        onVote={handleVote}
+        onPostReply={async (threadId, content) => {
+          const client = getRpcClient(ForumService);
+          await client.postReply({ threadId, content });
+          fetchThreads();
+        }}
+        onDeleteThread={handleDeleteThread}
+        onDeleteReply={handleDeleteReply}
+        onPinStaffAnswer={handlePinStaffAnswer}
+        isNotificationTarget={urlThreadId === selectedModalThreadId}
+      />
     </>
+  );
+}
+
+export default function ForumPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[60vh] flex items-center justify-center text-muted-foreground">
+          <div className="flex items-center gap-3">
+            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <span aria-live="polite">Đang tải diễn đàn…</span>
+          </div>
+        </div>
+      }
+    >
+      <ForumPageContent />
+    </Suspense>
   );
 }

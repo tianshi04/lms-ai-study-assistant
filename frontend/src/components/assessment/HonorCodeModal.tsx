@@ -37,14 +37,14 @@ export function HonorCodeModal({ itemId, isOpen, onAgreed, onClose }: HonorCodeM
       });
 
       if (res.success) {
-        onAgreed();
+        await onAgreed();
       } else {
         setErrorMsg(res.message || "Không thể xác nhận Quy tắc Liêm chính.");
       }
     } catch (err) {
       // Fallback for offline demo mode
       console.warn("RPC submitHonorCode failed, using local fallback:", err);
-      onAgreed();
+      await onAgreed();
     } finally {
       setIsSubmitting(false);
     }

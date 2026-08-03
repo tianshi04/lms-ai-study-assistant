@@ -15,6 +15,9 @@ from src.gen.certificate.v1.certificate_connect import CertificateServiceASGIApp
 from src.gen.forum.v1.forum_connect import ForumServiceASGIApplication
 from src.gen.identity.v1.identity_connect import IdentityServiceASGIApplication
 from src.gen.learning.v1.learning_connect import LearningServiceASGIApplication
+from src.gen.notification.v1.notification_connect import (
+    NotificationServiceASGIApplication,
+)
 from src.gen.partner.v1.partner_connect import PartnerServiceASGIApplication
 from src.gen.payment.v1.payment_connect import PaymentServiceASGIApplication
 from src.modules.assessment.application.assessment_usecase import AssessmentUseCase
@@ -29,6 +32,10 @@ from src.modules.identity.application.identity_usecase import IdentityUseCase
 from src.modules.identity.presentation.identity_handler import IdentityHandler
 from src.modules.learning.application.learning_usecase import LearningUseCase
 from src.modules.learning.presentation.learning_handler import LearningHandler
+from src.modules.notification.application.use_cases import NotificationUseCase
+from src.modules.notification.presentation.notification_handler import (
+    NotificationHandler,
+)
 from src.modules.partner.application.partner_usecase import PartnerUseCase
 from src.modules.partner.presentation.partner_handler import PartnerHandler
 from src.modules.payment.application.payment_usecase import PaymentUseCase
@@ -163,6 +170,12 @@ payment_usecase = PaymentUseCase()
 payment_handler = PaymentHandler(use_case=payment_usecase)
 payment_app = PaymentServiceASGIApplication(payment_handler, interceptors=interceptors)
 
+notification_usecase = NotificationUseCase()
+notification_handler = NotificationHandler(use_case=notification_usecase)
+notification_app = NotificationServiceASGIApplication(
+    notification_handler, interceptors=interceptors
+)
+
 
 async def proxy_media(request):
     path = request.path_params["path"]
@@ -238,6 +251,7 @@ routes = [
     Mount("/forum.v1.ForumService", app=cast(Any, forum_app)),
     Mount("/partner.v1.PartnerService", app=cast(Any, partner_app)),
     Mount("/payment.v1.PaymentService", app=cast(Any, payment_app)),
+    Mount("/notification.v1.NotificationService", app=cast(Any, notification_app)),
     Route(
         "/coursera-assets/{path:path}",
         endpoint=proxy_media,

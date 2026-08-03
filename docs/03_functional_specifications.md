@@ -191,6 +191,37 @@ flowchart TD
   * RPC `SubmitCourseReview` gửi thông tin đánh giá về Backend lưu trữ, phân loại cờ `is_verified_completer` và cập nhật trực tiếp cache CSAT trên `CourseModel` (`BR_REVIEW_002`).
   * Trang thông tin khóa học `/courses/[courseId]` tự động tổng hợp và hiển thị điểm sao trung bình (ví dụ: `4.8 ★ (1,250 lượt đánh giá)`) cùng danh sách các nhận xét của học viên khác kèm badge phân loại (`Verified Completer` vs `Active Learner Review`).
 
+### 3.8. Phân hệ Thông báo Thời gian thực (Notification Sub-system)
+* **Biểu tượng Quả chuông (`NotificationBell`):** Hiển thị trên thanh điều hướng Navbar với huy hiệu đếm số thông báo chưa đọc (`unread_count`), tự động cập nhật định kỳ bất đồng bộ (Polling 15 giây/lần qua RPC `GetUnreadCount`) và mở danh sách Popover chứa các thông báo mới nhất.
+* **Trung tâm Thông báo (`/notifications`):** Màn hình quản lý tập trung hỗ trợ phân loại 4 loại thông báo thiết yếu, lọc chưa đọc, tính năng "Đánh dấu tất cả đã đọc" (`MarkAllAsRead`) và Deep Link chuyển hướng tới nội dung liên quan.
+* **Ma trận & Tinh gọn 4 Luồng Thông báo Lõi (Notification Matrix Breakdown):**
+  | Danh mục | Tên Tiếng Việt | Luồng nghiệp vụ phát sinh | Ví dụ nội dung thực tế |
+  | :--- | :--- | :--- | :--- |
+  | 📣 `ANNOUNCEMENT` | **Thông báo Khóa học** | **Giảng viên đăng thông báo lớp**: Cập nhật lịch livestream, dời hạn nộp bài, bài giảng mới. | *"Giảng viên đăng thông báo: Lịch Q&A tuần này dời sang tối thứ 6"*. |
+  | 💬 `COMMUNITY` | **Thảo luận Diễn đàn** | **Có phản hồi bài viết/câu hỏi**: Giảng viên hoặc học viên khác trả lời câu hỏi thảo luận. | *"Giảng viên Andrew Ng đã phản hồi câu hỏi thảo luận của bạn"*. |
+  | 🔔 `SYSTEM` | **Duyệt Giảng viên** | **Phê duyệt Hồ sơ Giảng viên**: Super Admin duyệt quyền đăng ký làm Giảng viên. | *"Chúc mừng! Hồ sơ thẩm định năng lực giảng dạy của bạn đã được Super Admin phê duyệt"*. |
+  | 📖 `ACADEMIC` | **Duyệt Hỗ trợ Tài chính** | **Kết quả duyệt Financial Aid**: Yêu cầu trợ cấp học bổng được chấp thuận. | *"Yêu cầu xin trợ cấp học bổng 100% cho khóa học Machine Learning đã được chấp thuận"*. |
+* **Vòng đời Thông báo (Notification Lifecycle & Retention):**
+  * *Khởi tạo:* Gắn liền với sự kiện nguồn và CHỈ ĐƯỢC TẠO khi giao dịch cơ sở dữ liệu gốc commit thành công (`BR_NOTIF_012`). Khởi tạo với `is_read = false`, `read_at = NULL`.
+  * *Chưa đọc -> Đã đọc:* Khi người dùng nhấp vào thẻ thông báo hoặc nút "Đã đọc", cờ `is_read` cập nhật thành `true` và lưu lại thời điểm `read_at = UTC NOW` (`BR_NOTIF_007`).
+  * *Lưu trữ & Tự động Xóa (Retention Policy):* Các thông báo đã đọc cũ hơn 90 ngày hoặc thông báo chưa đọc quá 365 ngày sẽ được hệ thống định kỳ lưu trữ (archive) hoặc xóa sạch để bảo đảm hiệu năng database (`BR_NOTIF_011`).
+* **Quy tắc Đánh dấu Đã đọc (Read Rules):**
+  * *Đơn lẻ:* Đánh dấu đọc từng thông báo trực tiếp qua `MarkAsRead(notification_ids)`.
+  * *Hàng loạt:* Đánh dấu đọc tất cả `MarkAllAsRead(category_filter)` chỉ tác động lên các thông báo thuộc quyền sở hữu của chính người dùng hiện tại (`recipient_id == current_user.id`) (`BR_NOTIF_008`).
+* **Quy tắc Hiển thị & Phân trang:**
+  * *Sắp xếp:* Danh sách thông báo BẮT BUỘC hiển thị giảm dần theo thời gian tạo `created_at DESC` (mới nhất hiển thị trên cùng) (`BR_NOTIF_009`).
+  * *Phân trang Token-based:* Tải dữ liệu theo trang qua con trỏ `page_token` và `page_size` (mặc định 20, tối đa 50) để tối ưu trải nghiệm và tải dữ liệu siêu tốc (`BR_NOTIF_010`).
+* **Quy tắc Điều hướng Deep Link & An toàn liên kết:**
+  * Mỗi thông báo chứa đường dẫn `action_url` trỏ chính xác tới đối tượng / bài duyệt gốc:
+    * 📣 `ANNOUNCEMENT`: `/courses/[courseId]` (Trang tổng quan khóa học).
+    * 💬 `COMMUNITY`: `/learn/[courseId]?tab=forum&threadId=[threadId]` (Bài viết thảo luận trên diễn đàn).
+    * 🔔 `SYSTEM`: `/become-an-instructor` (Trang xem kết quả Phê duyệt Hồ sơ Giảng viên).
+    * 📖 `ACADEMIC`: `/financial-aid` (Trang quản lý & xem Đơn xin Hỗ trợ Tài chính đã được chấp thuận).
+  * *Xử lý liên kết hỏng (Broken Link Graceful Fallback):* Nếu nội dung gốc đã bị gỡ bỏ hoặc xóa khỏi hệ thống, Frontend tự động điều hướng về màn hình danh sách tổng tương ứng kèm thông báo cảnh báo Toast: *"Nội dung này không còn tồn tại hoặc đã bị gỡ bỏ."*
+* **Chính sách Ưu tiên & Cài đặt Tùy chọn Nhận Thông báo (User Preferences):**
+  * *Thông báo Bắt buộc (Mandatory):* Thông báo hệ thống `SYSTEM` (duyệt giảng viên) là BẮT BUỘC, luôn được phát tới người dùng mà không bị ảnh hưởng bởi tùy chọn cá nhân.
+  * *Thông báo Tùy chọn (Configurable):* Người dùng có quyền bật/tắt nhận thông báo cho các danh mục `ANNOUNCEMENT`, `COMMUNITY`, `ACADEMIC` trên từng kênh (Nội sàn In-App, Email) thông qua Modal `NotificationPreferencesModal` (`BR_NOTIF_006`).
+
 ---
 
 ## 4. VAI TRÒ: ĐỐI TÁC PHÁT HÀNH (PARTNER / ORGANIZATION ADMIN)
