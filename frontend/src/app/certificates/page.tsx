@@ -164,7 +164,7 @@ export default function MyCertificatesPage() {
           {filteredCertificates.map((cert) => (
             <div
               key={cert.certificateId}
-              className="group relative hover:z-20 bg-card text-card-foreground border border-border hover:border-primary/50 rounded-3xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
+              className="group relative bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized flex flex-col justify-between"
             >
               <div className="p-6 rounded-t-3xl">
                 {/* Header Badge & Partner */}

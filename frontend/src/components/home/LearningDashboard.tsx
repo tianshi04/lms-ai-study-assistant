@@ -138,7 +138,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
 
               {/* Quick Stats Column */}
               <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-8 duration-300 ease-m3-emphasized delay-200">
-                <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
+                <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
                   <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
                     <Layers className="w-7 h-7" aria-hidden="true" />
                   </div>
@@ -148,7 +148,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
                   </div>
                 </div>
 
-                <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
+                <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
                   <div className="w-14 h-14 rounded-2xl bg-success/10 flex items-center justify-center text-success shrink-0">
                     <Award className="w-7 h-7" aria-hidden="true" />
                   </div>
