@@ -20,7 +20,7 @@ test.describe('Full System Blackbox - Course Catalog & Discovery (POM)', () => {
     expect(initialCount).toBeGreaterThan(0);
 
     await catalogPage.search('Python');
-    await page.waitForTimeout(300);
+    await expect(catalogPage.courseCards.first()).toBeVisible({ timeout: 5000 });
 
     const filteredCount = await catalogPage.getCourseCardsCount();
     expect(filteredCount).toBeGreaterThan(0);
@@ -33,9 +33,8 @@ test.describe('Full System Blackbox - Course Catalog & Discovery (POM)', () => {
     await catalogPage.verifyPageLoaded();
 
     await catalogPage.search('NonExistentCourseXYZ123');
-    await page.waitForTimeout(300);
 
-    await expect(catalogPage.emptyStateMessage).toBeVisible();
+    await expect(catalogPage.emptyStateMessage).toBeVisible({ timeout: 5000 });
     const count = await catalogPage.getCourseCardsCount();
     expect(count).toBe(0);
   });

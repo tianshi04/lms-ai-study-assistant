@@ -16,10 +16,10 @@ test.describe('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () 
     await assessmentPage.verifyPageLoaded();
 
     await assessmentPage.agreeHonorCode();
-    const isAgreedOrLocked =
-      (await assessmentPage.honorAgreedBadge.isVisible().catch(() => false)) ||
-      (await page.locator('text=/Bài Thi Bị Khóa|dùng hết số lượt/i').first().isVisible().catch(() => false));
-    expect(isAgreedOrLocked).toBeTruthy();
+    const statusBadgeOrLocked = assessmentPage.honorAgreedBadge.or(
+      page.locator('text=/Bài Thi Bị Khóa|dùng hết số lượt/i').first()
+    );
+    await expect(statusBadgeOrLocked).toBeVisible({ timeout: 10000 });
   });
 
   test('should submit graded quiz and display score result', async ({ page }) => {
@@ -34,10 +34,10 @@ test.describe('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () 
     await assessmentPage.submitQuiz();
 
     // Result panel showing score or quiz state should appear
-    const hasResultOrQuizState =
-      (await page.locator('text=/Score:|Điểm số:|Required:|Kết quả|Bài Thi/i').first().isVisible().catch(() => false)) ||
-      (await page.locator('button').filter({ hasText: /Submit Graded Quiz|Nộp bài thi/i }).first().isVisible().catch(() => false));
-    expect(hasResultOrQuizState).toBeTruthy();
+    const resultOrQuizState = page.locator('text=/Score:|Điểm số:|Required:|Kết quả|Bài Thi/i').first().or(
+      page.locator('button').filter({ hasText: /Submit Graded Quiz|Nộp bài thi/i }).first()
+    );
+    await expect(resultOrQuizState).toBeVisible({ timeout: 10000 });
   });
 
   test('should execute auto-graded lab in sandbox and show test case results', async ({ page }) => {
