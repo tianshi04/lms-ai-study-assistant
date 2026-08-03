@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Bell, CheckCheck, Settings, ArrowRight, Loader2 } from "lucide-react";
 import {
@@ -11,11 +11,11 @@ import {
 } from "@/lib/query_hooks";
 import { NotificationItem } from "./NotificationItem";
 import { NotificationPreferencesModal } from "./NotificationPreferencesModal";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover";
 
 export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [isPrefModalOpen, setIsPrefModalOpen] = useState(false);
-  const popoverRef = useRef<HTMLDivElement>(null);
 
   const { data: unreadCount = 0 } = useUnreadCountQuery();
   const { data, isLoading } = useNotificationsQuery(undefined, false, 5);
@@ -23,21 +23,6 @@ export function NotificationBell() {
   const markAllAsReadMutation = useMarkAllAsReadMutation();
 
   const notifications = data?.notifications || [];
-
-  // Close popover on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
 
   const handleMarkAsRead = (id: string) => {
     markAsReadMutation.mutate([id]);
@@ -48,25 +33,22 @@ export function NotificationBell() {
   };
 
   return (
-    <div className="relative" ref={popoverRef}>
-      {/* Bell Icon Button */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        aria-label={`Thông báo (${unreadCount} chưa đọc)`}
-      >
-        <Bell className="w-5 h-5" aria-hidden="true" />
-        {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-black text-primary-foreground bg-primary rounded-full animate-in zoom-in-50 shadow-md">
-            {unreadCount > 99 ? "99+" : unreadCount}
-          </span>
-        )}
-      </button>
+    <>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger
+          type="button"
+          className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+          aria-label={`Thông báo (${unreadCount} chưa đọc)`}
+        >
+          <Bell className="w-5 h-5" aria-hidden="true" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-black text-primary-foreground bg-primary rounded-full animate-in zoom-in-50 shadow-md">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
+        </PopoverTrigger>
 
-      {/* Popover Dropdown */}
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-card border border-border rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in-0 slide-in-from-top-2">
+        <PopoverContent align="end" sideOffset={8}>
           {/* Popover Header */}
           <div className="p-3.5 border-b border-border flex items-center justify-between bg-muted/30">
             <div className="flex items-center gap-2">
@@ -84,7 +66,7 @@ export function NotificationBell() {
                   type="button"
                   onClick={handleMarkAllAsRead}
                   disabled={markAllAsReadMutation.isPending}
-                  className="p-1.5 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors flex items-center gap-1"
+                  className="p-1.5 rounded-lg text-xs font-semibold text-primary hover:bg-primary/10 transition-colors flex items-center gap-1 cursor-pointer"
                   title="Đánh dấu tất cả đã đọc"
                 >
                   <CheckCheck className="w-3.5 h-3.5" aria-hidden="true" />
@@ -98,7 +80,7 @@ export function NotificationBell() {
                   setIsOpen(false);
                   setIsPrefModalOpen(true);
                 }}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                 title="Cài đặt thông báo"
               >
                 <Settings className="w-4 h-4" aria-hidden="true" />
@@ -146,14 +128,14 @@ export function NotificationBell() {
               <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
             </Link>
           </div>
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
 
       {/* Preferences Modal */}
       <NotificationPreferencesModal
         isOpen={isPrefModalOpen}
         onClose={() => setIsPrefModalOpen(false)}
       />
-    </div>
+    </>
   );
 }
