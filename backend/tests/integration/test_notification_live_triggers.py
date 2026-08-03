@@ -14,7 +14,6 @@ from src.modules.identity.application.review_application_usecase import (
 from src.modules.identity.domain.entities import (
     User,
     UserRole,
-    SystemRole,
     InstructorApplication,
     ApplicationStatus,
 )
@@ -40,7 +39,6 @@ async def test_live_instructor_approval_trigger():
             email=f"{test_user_id}@coursera.org",
             full_name="Test Applicant",
             role=UserRole.LEARNER,
-            system_role=SystemRole.USER,
         )
         await identity_repo.save(user)
 
@@ -127,7 +125,6 @@ async def test_live_quiz_submission_trigger():
             email=f"{learner_id}@coursera.org",
             full_name="Quiz Test Learner",
             role=UserRole.LEARNER,
-            system_role=SystemRole.USER,
         )
         await identity_repo.save(user)
 
