@@ -429,7 +429,7 @@ class AssessmentUseCase:
                         if score_percent >= passing_threshold
                         else "CHƯA ĐẠT"
                     )
-                    target_course_id = "course-python-ai"
+                    target_course_id = ""
                     try:
                         from sqlalchemy import select
                         from src.modules.catalog.infrastructure.models import (
