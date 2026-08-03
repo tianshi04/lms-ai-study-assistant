@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { FileText, Code2, Users } from "lucide-react";
+import { Input } from "@/components/ui/Input";
 import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
 import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
 import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentWorkspace";
@@ -40,7 +41,7 @@ export default function AssessmentsPage() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <FileText className="w-4 h-4 text-primary" />
+            <FileText className="w-4 h-4 text-primary" aria-hidden="true" />
             Graded Quiz (80% Pass)
           </button>
           <button
@@ -51,7 +52,7 @@ export default function AssessmentsPage() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Code2 className="w-4 h-4 text-accent-foreground" />
+            <Code2 className="w-4 h-4 text-accent-foreground" aria-hidden="true" />
             Auto-Graded Lab
           </button>
           <button
@@ -62,7 +63,7 @@ export default function AssessmentsPage() {
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Users className="w-4 h-4 text-success" />
+            <Users className="w-4 h-4 text-success" aria-hidden="true" />
             Peer Review &amp; Appeal
           </button>
         </div>
@@ -75,10 +76,10 @@ export default function AssessmentsPage() {
         >
           Current Item ID:
         </label>
-        <input
+        <Input
           id="itemId"
           type="text"
-          className="flex-1 max-w-sm px-3 py-1.5 bg-card border border-input rounded-lg text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-foreground transition-colors"
+          className="flex-1 max-w-sm"
           value={
             activeAssessment === "quiz"
               ? quizItemId

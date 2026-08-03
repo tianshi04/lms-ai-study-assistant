@@ -23,7 +23,7 @@ export function TabsTrigger({
     <BaseTabs.Tab
       ref={ref}
       className={cn(
-        "pb-3 text-sm font-semibold transition-colors border-b-2 -mb-px flex items-center gap-2 cursor-pointer border-transparent text-muted-foreground hover:text-foreground data-[selected]:border-primary data-[selected]:text-primary focus:outline-none",
+        "pb-3 pt-2 text-sm font-medium transition-all duration-200 ease-m3-emphasized border-b-2 -mb-px flex items-center gap-2 cursor-pointer border-transparent text-muted-foreground hover:text-foreground data-[selected]:border-primary data-[selected]:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
         className,
       )}
       {...props}
@@ -66,10 +66,10 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
               {tab.count !== undefined && (
                 <span
                   className={cn(
-                    "text-xs px-2 py-0.5 rounded-full font-medium transition-colors",
+                    "text-xs px-2 py-0.5 rounded-full font-medium transition-all duration-200 ease-m3-emphasized",
                     isActive
-                      ? "bg-accent text-accent-foreground"
-                      : "bg-muted text-muted-foreground",
+                      ? "bg-primary-container text-on-primary-container"
+                      : "bg-surface-container-highest text-muted-foreground",
                   )}
                 >
                   {tab.count}

@@ -204,7 +204,7 @@ export function CourseHeaderBanner({
           {isInstructorOrAdmin && (
             <button
               onClick={onAddWeek}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
+              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
             >
               <Plus className="w-5 h-5" aria-hidden="true" />
               <span>{"Thêm Tuần học"}</span>

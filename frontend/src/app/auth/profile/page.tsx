@@ -94,7 +94,7 @@ export default function ProfilePage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12 w-full flex-1">
-      <Card className="rounded-3xl p-8 shadow-xl">
+      <Card className="rounded-3xl p-8">
         {/* User Banner */}
         <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-border">
           <Image
@@ -107,7 +107,7 @@ export default function ProfilePage() {
             width={96}
             height={96}
             unoptimized
-            className="w-24 h-24 rounded-full border-4 border-primary/20 shadow-inner bg-muted"
+            className="w-24 h-24 rounded-full border-4 border-primary/20 bg-muted"
           />
           <div className="text-center sm:text-left">
             <h1 className="text-2xl font-bold text-foreground mb-1 text-balance">

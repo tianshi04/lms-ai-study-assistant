@@ -64,10 +64,10 @@ export default function RegisterPage() {
   return (
     <main className="flex-1 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <Card className="rounded-3xl p-8 shadow-xl transition-colors">
+        <Card className="rounded-3xl p-8 transition-colors">
           <div className="text-center mb-8">
             <Link href="/" prefetch={true} className="inline-flex items-center gap-3 group mb-6">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl group-hover:scale-105 transition-transform">
                 C
               </div>
               <div className="text-left">
@@ -240,9 +240,9 @@ export default function RegisterPage() {
                         className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                       >
                         {showPassword ? (
-                          <EyeOff className="w-5 h-5" />
+                          <EyeOff className="w-5 h-5" aria-hidden="true" />
                         ) : (
-                          <Eye className="w-5 h-5" />
+                          <Eye className="w-5 h-5" aria-hidden="true" />
                         )}
                       </Button>
                     </div>

@@ -45,7 +45,7 @@ export function VideoPlayer({
 }: VideoPlayerProps) {
   if (!activeItem) {
     return (
-      <div className="w-full h-full flex items-center justify-center text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900">
+      <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-surface-container-low">
         {"Chọn bài học từ danh sách bên trái để bắt đầu."}
       </div>
     );
@@ -56,7 +56,7 @@ export function VideoPlayer({
   // 1. Reading Item
   if (activeItem.type === 2) {
     return (
-      <div className="w-full h-full overflow-y-auto p-8 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-200">
+      <div className="w-full h-full overflow-y-auto p-8 bg-background text-foreground transition-colors duration-200">
         <div className="max-w-3xl mx-auto space-y-6">
           {/* Reading Header */}
           <div className="pb-4 border-b border-border">
@@ -64,7 +64,7 @@ export function VideoPlayer({
               <FileText className="w-7 h-7 text-success" />
               <span>{activeItem.title}</span>
               {isPreviewMode && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 animate-pulse">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-warning/10 text-warning border border-warning/20 animate-pulse">
                   {"Xem trước"}
                 </span>
               )}
@@ -76,43 +76,33 @@ export function VideoPlayer({
             <ReactMarkdown
               components={{
                 h1: ({ children }) => (
-                  <h1 className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">
-                    {children}
-                  </h1>
+                  <h1 className="text-xl font-bold text-foreground mt-6 mb-3">{children}</h1>
                 ),
                 h2: ({ children }) => (
-                  <h2 className="text-lg font-bold text-blue-600 dark:text-blue-400 mt-5 mb-2">
-                    {children}
-                  </h2>
+                  <h2 className="text-lg font-bold text-primary mt-5 mb-2">{children}</h2>
                 ),
                 h3: ({ children }) => (
-                  <h3 className="text-base font-bold text-slate-800 dark:text-slate-200 mt-4 mb-2">
-                    {children}
-                  </h3>
+                  <h3 className="text-base font-bold text-foreground mt-4 mb-2">{children}</h3>
                 ),
                 p: ({ children }) => (
-                  <p className="text-slate-700 dark:text-slate-300 leading-relaxed my-2">
-                    {children}
-                  </p>
+                  <p className="text-foreground/90 leading-relaxed my-2">{children}</p>
                 ),
                 ul: ({ children }) => (
-                  <ul className="list-disc pl-6 space-y-1 my-3 text-slate-700 dark:text-slate-300">
-                    {children}
-                  </ul>
+                  <ul className="list-disc pl-6 space-y-1 my-3 text-foreground/90">{children}</ul>
                 ),
                 ol: ({ children }) => (
-                  <ol className="list-decimal pl-6 space-y-1 my-3 text-slate-700 dark:text-slate-300">
+                  <ol className="list-decimal pl-6 space-y-1 my-3 text-foreground/90">
                     {children}
                   </ol>
                 ),
                 li: ({ children }) => <li className="leading-relaxed">{children}</li>,
                 blockquote: ({ children }) => (
-                  <blockquote className="border-l-4 border-emerald-500 pl-4 py-2 italic bg-emerald-50/60 dark:bg-slate-950/60 my-4 text-emerald-900 dark:text-emerald-300 rounded-r-lg border border-slate-200 dark:border-slate-800">
+                  <blockquote className="border-l-4 border-success pl-4 py-2 italic bg-success/10 my-4 text-success rounded-r-lg border border-border">
                     {children}
                   </blockquote>
                 ),
                 code: ({ children }) => (
-                  <code className="bg-slate-200 dark:bg-slate-950 text-slate-900 dark:text-amber-300 px-2 py-0.5 rounded font-mono text-xs border border-slate-300 dark:border-slate-800">
+                  <code className="bg-surface-container-highest text-foreground px-2 py-0.5 rounded font-mono text-xs border border-border">
                     {children}
                   </code>
                 ),
@@ -124,14 +114,14 @@ export function VideoPlayer({
 
           {/* Coursera-Style Bottom Mark as Complete Action Banner */}
           {!isPreviewMode && (
-            <div className="pt-8 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+            <div className="pt-8 border-t border-border flex justify-end">
               <button
                 onClick={() => onMarkComplete?.(activeItem.id)}
                 disabled={isCompleted}
-                className={`px-6 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+                className={`px-6 py-3 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
                   isCompleted
-                    ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30 cursor-default"
-                    : "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20"
+                    ? "bg-success/10 text-success border border-success/30 cursor-default"
+                    : "bg-success hover:bg-success-hover text-success-foreground shadow-md"
                 }`}
               >
                 <Check className="w-4 h-4" />
@@ -147,7 +137,7 @@ export function VideoPlayer({
   // 2. Graded / Practice Quiz Item
   if (activeItem.type === 3 || activeItem.type === 4) {
     return (
-      <div className="w-full h-full overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950">
+      <div className="w-full h-full overflow-y-auto p-6 bg-surface-container-low">
         <GradedQuizRunner
           itemId={activeItem.id}
           title={activeItem.title}
@@ -162,7 +152,7 @@ export function VideoPlayer({
   // 3. Auto-Graded Lab Item
   if (activeItem.type === 5) {
     return (
-      <div className="w-full h-full overflow-y-auto p-6 bg-slate-950">
+      <div className="w-full h-full overflow-y-auto p-6 bg-surface-container-lowest">
         <AutoGradedLabRunner
           itemId={activeItem.id}
           title={activeItem.title}
@@ -291,38 +281,35 @@ export function VideoPlayer({
           {/* In-Video Quiz Overlay */}
           {activeQuiz && (
             <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-30 flex items-center justify-center p-6 animate-in fade-in duration-200">
-              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
-                  <span className="text-xs font-extrabold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+              <div className="bg-surface-container-high border border-outline-variant rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 text-foreground">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <span className="text-xs font-extrabold text-primary uppercase tracking-wider">
                     In-Video Quiz ({activeQuiz.timestampSeconds}s)
                   </span>
-                  <span className="text-[10px] text-slate-500 font-mono">
+                  <span className="text-[10px] text-muted-foreground font-mono">
                     {"Dừng video để kiểm tra"}
                   </span>
                 </div>
 
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                  {activeQuiz.question}
-                </h3>
+                <h3 className="text-base font-bold text-foreground">{activeQuiz.question}</h3>
 
                 <div className="space-y-2">
                   {activeQuiz.options.map((option, idx) => {
                     const isSelected = selectedOption === idx;
                     const isCorrect = idx === activeQuiz.correctOptionIndex;
                     let optionStyle =
-                      "border-slate-200 dark:border-slate-800 hover:border-blue-500 dark:hover:border-blue-500 text-slate-700 dark:text-slate-300";
+                      "border-border hover:border-primary text-foreground bg-background";
 
                     if (quizSubmitted) {
                       if (isCorrect) {
-                        optionStyle =
-                          "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 font-bold";
+                        optionStyle = "border-success bg-success/15 text-success font-bold";
                       } else if (isSelected && !isCorrect) {
                         optionStyle =
-                          "border-rose-500 bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-300 font-bold";
+                          "border-destructive bg-destructive/15 text-destructive font-bold";
                       }
                     } else if (isSelected) {
                       optionStyle =
-                        "border-blue-500 bg-blue-50 dark:bg-blue-950/40 text-blue-900 dark:text-blue-300 font-bold";
+                        "border-primary bg-primary-container text-on-primary-container font-bold";
                     }
 
                     return (
@@ -340,10 +327,8 @@ export function VideoPlayer({
                 </div>
 
                 {quizSubmitted && (
-                  <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1">
-                    <span className="font-bold text-blue-600 dark:text-blue-400">
-                      {"Giải thích: "}
-                    </span>
+                  <div className="p-3 rounded-xl bg-surface-container-highest text-xs text-foreground space-y-1">
+                    <span className="font-bold text-primary">{"Giải thích: "}</span>
                     <span>{activeQuiz.explanation}</span>
                   </div>
                 )}
@@ -353,14 +338,14 @@ export function VideoPlayer({
                     <button
                       onClick={onSubmitQuiz}
                       disabled={selectedOption === null}
-                      className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold text-xs shadow-lg transition-all"
+                      className="px-5 py-2.5 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground font-bold text-xs shadow-md transition-all cursor-pointer"
                     >
                       {"Kiểm Tra Đáp Án"}
                     </button>
                   ) : (
                     <button
                       onClick={onContinueVideo}
-                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg transition-all flex items-center gap-2"
+                      className="px-5 py-2.5 rounded-full bg-success hover:bg-success-hover text-success-foreground font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer"
                     >
                       {"Tiếp Tục Xem Video"}
                       <ArrowRight className="w-4 h-4" />
@@ -390,7 +375,7 @@ export function VideoPlayer({
   }
 
   return (
-    <div className="w-full h-full flex items-center justify-center text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900">
+    <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-surface-container-low">
       {"Chọn bài học từ danh sách bên trái để bắt đầu."}
     </div>
   );

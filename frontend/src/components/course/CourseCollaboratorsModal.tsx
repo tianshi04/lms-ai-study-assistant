@@ -240,6 +240,7 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
                     onClick={() => handleRemoveCollaborator(c.userId, c.fullName || c.email)}
                     isLoading={removeCollaboratorMutation.isPending}
                     title="Xóa khỏi khóa học"
+                    aria-label="Xóa khỏi khóa học"
                   >
                     <Trash2 className="w-4 h-4" aria-hidden="true" />
                   </Button>

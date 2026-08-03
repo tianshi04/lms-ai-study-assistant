@@ -82,6 +82,7 @@ export function NotificationBell() {
                 }}
                 className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                 title="Cài đặt thông báo"
+                aria-label="Cài đặt thông báo"
               >
                 <Settings className="w-4 h-4" aria-hidden="true" />
               </button>

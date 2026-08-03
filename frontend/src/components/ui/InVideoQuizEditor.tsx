@@ -312,6 +312,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                       onClick={() => handleRemoveOption(idx)}
                       className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
                       title="Xóa phương án này"
+                      aria-label="Xóa phương án này"
                     >
                       <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                     </button>
@@ -384,6 +385,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                     onClick={() => handleEditQuiz(idx)}
                     className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                     title="Sửa mốc câu hỏi"
+                    aria-label="Sửa mốc câu hỏi"
                   >
                     <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>
@@ -392,6 +394,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                     onClick={() => handleDeleteQuiz(idx)}
                     className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors cursor-pointer"
                     title="Xóa mốc câu hỏi"
+                    aria-label="Xóa mốc câu hỏi"
                   >
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                   </button>

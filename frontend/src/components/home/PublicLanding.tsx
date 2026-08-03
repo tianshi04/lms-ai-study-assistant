@@ -3,7 +3,7 @@ import { ArrowRight, BookOpen, PlayCircle, CircleDollarSign, GraduationCap } fro
 
 export function PublicLanding() {
   return (
-    <div className="flex-1 flex flex-col justify-between w-full relative animate-in fade-in duration-700">
+    <div className="flex-1 flex flex-col justify-between w-full relative animate-in fade-in duration-300 ease-m3-emphasized">
       {/* Background decoration */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(14,165,233,0.1),transparent_40%),radial-gradient(circle_at_70%_80%,rgba(99,102,241,0.1),transparent_40%)] pointer-events-none" />
 

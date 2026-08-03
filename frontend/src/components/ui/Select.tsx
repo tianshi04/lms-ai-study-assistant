@@ -17,7 +17,7 @@ export function SelectTrigger({
     <BaseSelect.Trigger
       ref={ref}
       className={cn(
-        "w-full bg-background border border-input rounded-xl px-4 py-3 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 appearance-none shadow-sm cursor-pointer hover:border-ring transition-colors flex items-center justify-between gap-2",
+        "w-full bg-background border border-input rounded-xl px-4 py-2.5 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary appearance-none cursor-pointer hover:border-ring transition-all duration-200 ease-m3-emphasized flex items-center justify-between gap-2",
         className,
       )}
       {...props}
@@ -42,7 +42,7 @@ export function SelectContent({
         <BaseSelect.Popup
           ref={ref}
           className={cn(
-            "min-w-[180px] overflow-hidden rounded-2xl bg-popover text-popover-foreground p-1.5 shadow-xl border border-border animate-in fade-in zoom-in-95 duration-150",
+            "min-w-[180px] overflow-hidden rounded-2xl bg-surface-container-high text-foreground p-1.5 shadow-lg border border-outline-variant animate-in fade-in zoom-in-95 duration-150 ease-m3-emphasized",
             className,
           )}
           {...props}
@@ -64,7 +64,7 @@ export function SelectItem({
     <BaseSelect.Item
       ref={ref}
       className={cn(
-        "relative flex cursor-pointer select-none items-center justify-between gap-2 rounded-xl px-3 py-2 text-xs font-semibold outline-none transition-colors hover:bg-accent text-foreground data-[highlighted]:bg-accent data-[selected]:text-primary",
+        "relative flex cursor-pointer select-none items-center justify-between gap-2 rounded-xl px-3 py-2 text-xs font-semibold outline-none transition-colors hover:bg-surface-container-highest text-foreground data-[highlighted]:bg-surface-container-highest data-[selected]:text-primary",
         className,
       )}
       {...props}

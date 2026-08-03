@@ -17,7 +17,7 @@ export function AccordionTrigger({
       <BaseAccordion.Trigger
         ref={ref}
         className={cn(
-          "flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline text-foreground cursor-pointer group text-left",
+          "flex flex-1 items-center justify-between py-4 font-medium transition-all duration-200 ease-m3-emphasized hover:no-underline text-foreground cursor-pointer group text-left",
           className,
         )}
         {...props}

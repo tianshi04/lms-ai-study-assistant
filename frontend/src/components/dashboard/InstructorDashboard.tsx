@@ -45,7 +45,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
         {/* Header Banner */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-primary text-primary-foreground rounded-3xl p-8 shadow-xl">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-black/10 dark:bg-white/10 text-primary-foreground border border-primary-foreground/20">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-primary-foreground/10 text-primary-foreground border border-primary-foreground/20">
               <span className="w-2 h-2 rounded-full bg-primary-foreground animate-ping" />
               Bảng Điều Khiển Giảng Viên
             </div>
