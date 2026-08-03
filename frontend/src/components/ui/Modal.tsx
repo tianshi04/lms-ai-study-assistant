@@ -51,7 +51,7 @@ export function DialogContent({
   return (
     <DialogPortal>
       <DialogBackdrop />
-      <div className="fixed inset-0 z-modal z-[1000] flex items-center justify-center p-4 overflow-y-auto">
+      <div className="fixed inset-0 z-modal flex items-center justify-center p-4 overflow-y-auto">
         <BaseDialog.Popup
           ref={ref}
           className={cn(

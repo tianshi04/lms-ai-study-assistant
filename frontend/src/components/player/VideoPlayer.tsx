@@ -317,7 +317,7 @@ export function VideoPlayer({
                         key={idx}
                         disabled={quizSubmitted}
                         onClick={() => onSelectOption(idx)}
-                        className={`w-full text-left p-3 rounded-xl border text-xs transition-all flex items-center justify-between cursor-pointer ${optionStyle}`}
+                        className={`w-full text-left p-3 rounded-xl border text-xs transition-all flex items-center justify-between ${optionStyle}`}
                       >
                         <span>{option}</span>
                         {quizSubmitted && isCorrect && <Check className="w-4 h-4 text-success" />}
