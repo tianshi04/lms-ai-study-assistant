@@ -23,12 +23,12 @@ export function TooltipContent({
       <BaseTooltip.Positioner sideOffset={sideOffset} ref={ref} {...props}>
         <BaseTooltip.Popup
           className={cn(
-            "z-dropdown overflow-hidden rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 transition-all",
+            "z-dropdown overflow-hidden rounded-md bg-inverse-surface px-3 py-1.5 text-xs font-medium text-inverse-on-surface shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 transition-all",
             className,
           )}
         >
           {children}
-          <BaseTooltip.Arrow className="fill-foreground" />
+          <BaseTooltip.Arrow className="fill-inverse-surface" />
         </BaseTooltip.Popup>
       </BaseTooltip.Positioner>
     </BaseTooltip.Portal>

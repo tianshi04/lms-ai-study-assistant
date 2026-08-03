@@ -4,24 +4,32 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const primaryStyle = "bg-primary text-primary-foreground hover:bg-primary-hover";
+const outlineStyle = "border border-outline text-primary hover:bg-primary/10";
+const textStyle = "hover:bg-primary/10 text-primary";
+
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer",
+  "inline-flex items-center justify-center font-medium rounded-full transition-all duration-200 ease-m3-emphasized focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer",
   {
     variants: {
       variant: {
-        primary: "bg-primary text-primary-foreground hover:bg-primary-hover focus:ring-ring",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-muted focus:ring-ring",
-        outline:
-          "border border-border text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-ring",
+        primary: primaryStyle,
+        filled: primaryStyle,
+        tonal: "bg-primary-container text-on-primary-container hover:brightness-95",
+        secondary: "bg-secondary-container text-on-secondary-container hover:brightness-95",
+        outline: outlineStyle,
+        outlined: outlineStyle,
+        elevated: "bg-surface-container-low text-primary shadow-sm hover:shadow-md",
         danger:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive",
-        ghost: "hover:bg-accent hover:text-accent-foreground text-foreground focus:ring-ring",
+          "bg-destructive text-destructive-foreground hover:bg-destructive-hover focus-visible:ring-destructive/50",
+        ghost: textStyle,
+        text: textStyle,
       },
       size: {
         sm: "px-3 py-1.5 text-xs",
         md: "px-4 py-2 text-sm",
         lg: "px-6 py-3 text-base",
-        icon: "h-9 w-9 p-0",
+        icon: "h-9 w-9 p-0 rounded-full",
       },
     },
     defaultVariants: {

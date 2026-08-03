@@ -8,6 +8,7 @@ import { Award, Search, ArrowRight, Check, Eye } from "lucide-react";
 import { getRpcClient } from "@/lib/connect_client";
 import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Input } from "@/components/ui/Input";
 
 const emptySubscribe = () => () => {};
 
@@ -89,7 +90,7 @@ export default function MyCertificatesPage() {
 
         {!loading && (
           <div className="flex items-center gap-3">
-            <div className="bg-card border border-border rounded-2xl px-5 py-3 shadow-sm flex items-center gap-3">
+            <div className="bg-card border border-border rounded-2xl px-5 py-3 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
                 {certificates.length}
               </div>
@@ -107,14 +108,14 @@ export default function MyCertificatesPage() {
         <div className="mb-8">
           <div className="relative max-w-md">
             <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
+            <Input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={"Tìm kiếm chứng chỉ…"}
               autoComplete="off"
               spellCheck={false}
-              className="w-full pl-11 pr-4 py-3 rounded-2xl bg-card border border-input text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-sm transition-colors shadow-sm"
+              className="w-full pl-11 pr-4 py-3 rounded-2xl"
             />
           </div>
         </div>
@@ -126,7 +127,7 @@ export default function MyCertificatesPage() {
           {[1, 2, 3].map((n) => (
             <div
               key={n}
-              className="bg-card border border-border rounded-3xl p-6 animate-pulse shadow-sm h-72 flex flex-col justify-between"
+              className="bg-card border border-border rounded-3xl p-6 animate-pulse h-72 flex flex-col justify-between"
             >
               <div>
                 <div className="h-4 bg-muted rounded w-1/3 mb-4" />
@@ -142,7 +143,7 @@ export default function MyCertificatesPage() {
           <p className="font-semibold">{error}</p>
         </div>
       ) : filteredCertificates.length === 0 ? (
-        <div className="bg-card border border-border p-12 rounded-3xl text-center text-muted-foreground shadow-sm">
+        <div className="bg-card border border-border p-12 rounded-3xl text-center text-muted-foreground">
           <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center text-primary mb-6">
             <Award className="w-10 h-10" />
           </div>
@@ -152,7 +153,7 @@ export default function MyCertificatesPage() {
           </p>
           <Link
             href="/courses"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm transition-all shadow-lg shadow-primary/20"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm transition-all"
           >
             <span>{"Khám phá khóa học"}</span>
             <ArrowRight className="w-4 h-4" />
@@ -163,7 +164,7 @@ export default function MyCertificatesPage() {
           {filteredCertificates.map((cert) => (
             <div
               key={cert.certificateId}
-              className="group relative hover:z-20 bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between"
+              className="group relative bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized flex flex-col justify-between"
             >
               <div className="p-6 rounded-t-3xl">
                 {/* Header Badge & Partner */}
@@ -217,7 +218,7 @@ export default function MyCertificatesPage() {
               <div className="p-4 border-t border-border bg-muted/50 flex items-center gap-2 rounded-b-3xl">
                 <Link
                   href={cert.verificationUrl || `/verify/${cert.certificateId}`}
-                  className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-all shadow-md shadow-primary/10 cursor-pointer"
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-all cursor-pointer"
                 >
                   <Eye className="w-4 h-4" />
                   <span>{"Xem chứng chỉ"}</span>

@@ -10,7 +10,7 @@ import {
   InstructorApplicationStatus,
   type InstructorApplication,
 } from "@/gen/identity/v1/identity_pb";
-import { FileText, ExternalLink, PlayCircle, Check } from "lucide-react";
+import { FileText, ExternalLink, PlayCircle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 
@@ -98,7 +98,7 @@ export default function AdminInstructorApplicationsPage() {
               aria-label="Đóng thông báo"
               className="text-success hover:text-success h-6 w-6"
             >
-              ✕
+              <X className="w-4 h-4" aria-hidden="true" />
             </Button>
           </div>
         )}
@@ -150,7 +150,7 @@ export default function AdminInstructorApplicationsPage() {
               return (
                 <div
                   key={app.id}
-                  className="bg-card rounded-3xl p-6 sm:p-8 shadow-lg border border-border space-y-6"
+                  className="bg-card rounded-3xl p-6 sm:p-8 border border-border space-y-6"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
                     <div>

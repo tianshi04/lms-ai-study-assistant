@@ -147,7 +147,7 @@ export function NotificationPreferencesModal({
 
               <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-background">
                 <div className="flex items-center gap-3">
-                  <BookOpen className="w-4 h-4 text-emerald-500" aria-hidden="true" />
+                  <BookOpen className="w-4 h-4 text-success" aria-hidden="true" />
                   <div>
                     <p className="text-sm font-semibold text-foreground">Học tập & Hạn nộp bài</p>
                     <p className="text-xs text-muted-foreground">
@@ -165,7 +165,7 @@ export function NotificationPreferencesModal({
 
               <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-background">
                 <div className="flex items-center gap-3">
-                  <MessageSquare className="w-4 h-4 text-purple-500" aria-hidden="true" />
+                  <MessageSquare className="w-4 h-4 text-accent-foreground" aria-hidden="true" />
                   <div>
                     <p className="text-sm font-semibold text-foreground">Diễn đàn & Tương tác</p>
                     <p className="text-xs text-muted-foreground">
@@ -183,7 +183,7 @@ export function NotificationPreferencesModal({
 
               <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-background">
                 <div className="flex items-center gap-3">
-                  <Megaphone className="w-4 h-4 text-rose-500" aria-hidden="true" />
+                  <Megaphone className="w-4 h-4 text-destructive" aria-hidden="true" />
                   <div>
                     <p className="text-sm font-semibold text-foreground">Thông báo từ Khóa học</p>
                     <p className="text-xs text-muted-foreground">

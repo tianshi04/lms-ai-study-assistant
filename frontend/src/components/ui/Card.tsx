@@ -1,12 +1,23 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export function Card({ className, ref, ...props }: React.ComponentProps<"div">) {
+export interface CardProps extends React.ComponentProps<"div"> {
+  variant?: "elevated" | "filled" | "outlined";
+}
+
+export function Card({ className, variant = "elevated", ref, ...props }: CardProps) {
+  const variantStyles = {
+    elevated: "bg-surface-container-low text-foreground shadow-sm border-none",
+    filled: "bg-surface-container-highest text-foreground border-none",
+    outlined: "bg-card text-card-foreground border border-outline-variant",
+  };
+
   return (
     <div
       ref={ref}
       className={cn(
-        "bg-card text-card-foreground rounded-xl border border-border shadow-sm p-6",
+        "rounded-2xl transition-all duration-200 ease-m3-emphasized p-6",
+        variantStyles[variant],
         className,
       )}
       {...props}
@@ -43,7 +54,7 @@ export function CardFooter({ className, ref, ...props }: React.ComponentProps<"d
   return (
     <div
       ref={ref}
-      className={cn("flex items-center pt-4 border-t border-border", className)}
+      className={cn("flex items-center pt-4 border-t border-outline-variant", className)}
       {...props}
     />
   );

@@ -11,6 +11,8 @@ import {
 } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
 import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
 import { Eye } from "lucide-react";
@@ -165,46 +167,34 @@ export default function CourseReviewerPortalPage() {
 
         {/* Status Tabs */}
         <div className="flex items-center gap-2 border-b border-border mb-6 pb-2 overflow-x-auto">
-          <button
+          <Button
+            size="sm"
+            variant={activeTab === CourseStatus.PENDING_REVIEW ? "primary" : "outline"}
             onClick={() => setActiveTab(CourseStatus.PENDING_REVIEW)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === CourseStatus.PENDING_REVIEW
-                ? "bg-primary text-primary-foreground shadow-md"
-                : "bg-card text-foreground border border-border hover:bg-muted"
-            }`}
           >
             {"Chờ kiểm duyệt (PENDING_REVIEW)"}
-          </button>
-          <button
+          </Button>
+          <Button
+            size="sm"
+            variant={activeTab === CourseStatus.PUBLISHED ? "primary" : "outline"}
             onClick={() => setActiveTab(CourseStatus.PUBLISHED)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === CourseStatus.PUBLISHED
-                ? "bg-success text-success-foreground shadow-md"
-                : "bg-card text-foreground border border-border hover:bg-muted"
-            }`}
           >
             {"Đã xuất bản (PUBLISHED)"}
-          </button>
-          <button
+          </Button>
+          <Button
+            size="sm"
+            variant={activeTab === CourseStatus.DRAFT ? "primary" : "outline"}
             onClick={() => setActiveTab(CourseStatus.DRAFT)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === CourseStatus.DRAFT
-                ? "bg-warning text-warning-foreground shadow-md"
-                : "bg-card text-foreground border border-border hover:bg-muted"
-            }`}
           >
             {"Bản nháp (DRAFT)"}
-          </button>
-          <button
+          </Button>
+          <Button
+            size="sm"
+            variant={activeTab === CourseStatus.REJECTED ? "danger" : "outline"}
             onClick={() => setActiveTab(CourseStatus.REJECTED)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === CourseStatus.REJECTED
-                ? "bg-destructive text-destructive-foreground shadow-md"
-                : "bg-card text-foreground border border-border hover:bg-muted"
-            }`}
           >
             {"Từ chối (REJECTED)"}
-          </button>
+          </Button>
         </div>
 
         {/* Content */}
@@ -262,21 +252,23 @@ export default function CourseReviewerPortalPage() {
 
                   {activeTab === CourseStatus.PENDING_REVIEW && (
                     <>
-                      <button
+                      <Button
+                        size="sm"
+                        variant="danger"
                         onClick={() => setRejectingCourseId(course.id)}
                         disabled={submitting}
-                        className="px-4 py-2 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 text-xs font-bold hover:bg-destructive/20 transition-colors cursor-pointer disabled:opacity-50"
                       >
                         {"Từ chối (Reject)"}
-                      </button>
+                      </Button>
 
-                      <button
+                      <Button
+                        size="sm"
+                        variant="primary"
                         onClick={() => handleApprove(course.id, course.title)}
                         disabled={submitting}
-                        className="px-4 py-2 rounded-xl bg-success text-success-foreground hover:opacity-90 text-xs font-bold shadow-md transition-all cursor-pointer disabled:opacity-50"
                       >
                         {"Phê duyệt & Phát hành"}
-                      </button>
+                      </Button>
                     </>
                   )}
                 </div>
@@ -303,30 +295,31 @@ export default function CourseReviewerPortalPage() {
               <label className="block text-xs font-bold mb-1 text-foreground">
                 {"Lý do từ chối / Feedback Log *"}
               </label>
-              <textarea
+              <Textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 rows={4}
                 placeholder="Ví dụ: Bài giảng tuần 2 thiếu phụ đề VTT, bài kiểm tra graded quiz chưa được chọn ma trận…"
-                className="w-full px-3 py-2 rounded-xl border border-input bg-muted text-foreground text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => setRejectingCourseId(null)}
-                className="px-4 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold"
               >
                 {"Hủy"}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="danger"
+                size="sm"
                 onClick={handleConfirmReject}
                 disabled={submitting || !rejectionReason.trim()}
-                className="px-4 py-2 rounded-xl bg-destructive text-destructive-foreground text-xs font-bold shadow-md disabled:opacity-50 cursor-pointer"
               >
                 <span aria-live="polite">{submitting ? "Đang xử lý…" : "Xác nhận Từ chối"}</span>
-              </button>
+              </Button>
             </div>
           </div>
         </Modal>

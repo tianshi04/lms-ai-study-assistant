@@ -3,19 +3,22 @@ import { Progress as BaseProgress } from "@base-ui/react/progress";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-export const progressBarVariants = cva("h-full transition-all duration-300 ease-out", {
-  variants: {
-    color: {
-      blue: "bg-primary",
-      emerald: "bg-success",
-      amber: "bg-warning",
-      danger: "bg-destructive",
+export const progressBarVariants = cva(
+  "h-full transition-all duration-500 ease-m3-emphasized rounded-full",
+  {
+    variants: {
+      color: {
+        blue: "bg-primary",
+        emerald: "bg-success",
+        amber: "bg-warning",
+        danger: "bg-destructive",
+      },
+    },
+    defaultVariants: {
+      color: "blue",
     },
   },
-  defaultVariants: {
-    color: "blue",
-  },
-});
+);
 
 export interface ProgressBarProps
   extends
@@ -44,12 +47,12 @@ export function ProgressBar({
       {...props}
     >
       {showLabel && (
-        <div className="flex justify-between text-xs font-semibold text-muted-foreground">
+        <div className="flex justify-between text-xs font-medium text-muted-foreground">
           <span>Tiến độ</span>
           <span className="font-mono">{Math.round(normalizedProgress)}%</span>
         </div>
       )}
-      <BaseProgress.Track className="w-full h-2 bg-muted rounded-full overflow-hidden block">
+      <BaseProgress.Track className="w-full h-2 bg-secondary-container rounded-full overflow-hidden block">
         <BaseProgress.Indicator
           className={cn(progressBarVariants({ color }))}
           style={{ width: `${normalizedProgress}%` }}

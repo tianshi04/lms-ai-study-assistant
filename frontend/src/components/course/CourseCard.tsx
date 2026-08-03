@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { User, BookOpen, ArrowRight } from "lucide-react";
+import { User, BookOpen, ArrowRight, Building2 } from "lucide-react";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
 import { getRpcClient } from "@/lib/connect_client";
 
@@ -29,25 +28,26 @@ export function CourseCard({ course }: { course: Course }) {
   return (
     <div
       onMouseEnter={handlePrefetch}
-      className="group relative hover:z-10 bg-card text-card-foreground border border-border hover:border-primary/50 rounded-2xl p-6 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/5 flex flex-col justify-between"
+      className="group relative hover:z-10 bg-surface-container-low text-on-surface border border-outline-variant hover:border-outline hover:bg-surface-container rounded-3xl p-6 transition-all duration-300 shadow-xs hover:shadow-md flex flex-col justify-between"
     >
       <div>
         {/* Partner Header */}
         <div className="flex items-center justify-between gap-3 mb-4 h-7">
           <div className="flex items-center gap-3 min-w-0">
             {!imgError && course.partnerLogoUrl ? (
-              <Image
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
                 src={course.partnerLogoUrl}
                 alt={course.partnerName}
-                width={140}
-                height={24}
-                unoptimized
                 onError={() => setImgError(true)}
                 className="h-6 max-w-[140px] w-auto object-contain dark:brightness-200 dark:contrast-200 transition-opacity"
               />
-            ) : (
-              <span className="text-xs font-bold font-mono text-info bg-info/10 px-2.5 py-1 rounded-md border border-info/20">
-                {course.partnerName}
+            ) : null}
+
+            {(imgError || !course.partnerLogoUrl) && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-on-primary-container bg-primary-container px-3 py-1 rounded-full border border-primary/20 shadow-xs">
+                <Building2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                {course.partnerName || "Coursera Partner"}
               </span>
             )}
           </div>
@@ -55,24 +55,24 @@ export function CourseCard({ course }: { course: Course }) {
 
         {/* Title & Description */}
         <Link href={`/courses/${course.id}`} prefetch={true} className="block">
-          <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors mb-3 line-clamp-2">
+          <h3 className="text-xl font-bold text-on-surface group-hover:text-primary transition-colors mb-3 line-clamp-2">
             {course.title}
           </h3>
         </Link>
-        <p className="text-sm text-muted-foreground mb-6 line-clamp-3 leading-relaxed">
+        <p className="text-sm text-on-surface-variant mb-6 line-clamp-3 leading-relaxed">
           {course.description}
         </p>
       </div>
 
       <div>
         {/* Instructors & Modules Count */}
-        <div className="pt-4 border-t border-border mb-6 flex items-center justify-between text-xs text-muted-foreground">
+        <div className="pt-4 border-t border-outline-variant mb-6 flex items-center justify-between text-xs text-on-surface-variant font-medium">
           <span className="flex items-center gap-1.5 truncate max-w-[160px]">
-            <User className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" aria-hidden="true" />
+            <User className="w-3.5 h-3.5 text-on-surface-variant shrink-0" aria-hidden="true" />
             {course.instructorNames.join(", ") || "Giảng viên Coursera"}
           </span>
           <span className="flex items-center gap-1.5">
-            <BookOpen className="w-3.5 h-3.5 text-muted-foreground" aria-hidden="true" />
+            <BookOpen className="w-3.5 h-3.5 text-on-surface-variant" aria-hidden="true" />
             {course.weekModules.length} {"Tuần học"}
           </span>
         </div>
@@ -81,7 +81,7 @@ export function CourseCard({ course }: { course: Course }) {
         <Link
           href={`/courses/${course.id}`}
           transitionTypes={["nav-forward"]}
-          className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-all shadow-lg"
+          className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 rounded-full bg-primary hover:bg-primary-hover text-on-primary text-sm font-bold transition-all shadow-xs hover:shadow-md"
         >
           {"Xem Chi Tiết Khóa Học"}
           <ArrowRight

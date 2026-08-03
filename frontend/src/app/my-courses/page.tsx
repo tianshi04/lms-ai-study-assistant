@@ -7,6 +7,8 @@ import { DirectionalTransition } from "@/components/transitions/DirectionalTrans
 
 import { getRpcClient } from "@/lib/connect_client";
 import { LearningService, type EnrolledCourseSummary } from "@/gen/learning/v1/learning_pb";
+import { Tabs } from "@/components/ui/Tabs";
+import { Badge } from "@/components/ui/Badge";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 type Tab = "ALL" | "IN_PROGRESS" | "COMPLETED";
@@ -85,34 +87,25 @@ export default function MyCoursesPage() {
         </div>
 
         {/* Tabs */}
-        <div className="w-full flex items-center gap-2 mb-8 border-b border-border">
-          {[
-            { id: "ALL", label: "Tất cả" },
-            { id: "IN_PROGRESS", label: "Đang học" },
-            { id: "COMPLETED", label: "Hoàn thành" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as Tab)}
-              className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors cursor-pointer ${
-                activeTab === tab.id
-                  ? "border-primary text-primary font-bold"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {tab.label}
-              <span className="ml-2 text-xs py-0.5 px-2 rounded-full bg-muted text-muted-foreground border border-border">
-                {tab.id === "ALL"
-                  ? courses.length
-                  : tab.id === "IN_PROGRESS"
-                    ? courses.filter(
-                        (c) => c.status === "IN_PROGRESS" || c.status === "NOT_STARTED",
-                      ).length
-                    : courses.filter((c) => c.status === "COMPLETED").length}
-              </span>
-            </button>
-          ))}
-        </div>
+        <Tabs
+          tabs={[
+            { id: "ALL", label: "Tất cả", count: courses.length },
+            {
+              id: "IN_PROGRESS",
+              label: "Đang học",
+              count: courses.filter((c) => c.status === "IN_PROGRESS" || c.status === "NOT_STARTED")
+                .length,
+            },
+            {
+              id: "COMPLETED",
+              label: "Hoàn thành",
+              count: courses.filter((c) => c.status === "COMPLETED").length,
+            },
+          ]}
+          activeTab={activeTab}
+          onChange={(id) => setActiveTab(id as Tab)}
+          className="mb-8"
+        />
 
         {/* Content Section */}
         {loading ? (
@@ -163,7 +156,7 @@ export default function MyCoursesPage() {
             {filteredCourses.map((course) => (
               <div
                 key={course.courseId}
-                className="group relative hover:z-20 bg-card text-card-foreground border border-border rounded-2xl shadow-md hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col h-full"
+                className="group relative bg-card text-card-foreground border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized flex flex-col h-full"
               >
                 <div className="p-6 flex-1 rounded-t-2xl">
                   <div className="flex items-center justify-between mb-3">
@@ -171,17 +164,17 @@ export default function MyCoursesPage() {
                       {course.partnerName}
                     </span>
                     {course.status === "COMPLETED" ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-success/10 text-success border border-success/30">
+                      <Badge variant="success" className="text-[10px]">
                         ✓ {"Hoàn thành"}
-                      </span>
+                      </Badge>
                     ) : course.status === "IN_PROGRESS" ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+                      <Badge variant="primary" className="text-[10px]">
                         {"Đang học"}
-                      </span>
+                      </Badge>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-muted text-muted-foreground border border-border">
+                      <Badge variant="secondary" className="text-[10px]">
                         {"Chưa bắt đầu"}
-                      </span>
+                      </Badge>
                     )}
                   </div>
                   <Link

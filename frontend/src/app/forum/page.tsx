@@ -552,9 +552,11 @@ function ForumPageContent() {
                     <Button
                       variant={thread.isUpvotedByMe ? "primary" : "outline"}
                       onClick={() => handleVote(thread.id, true)}
+                      aria-label="Tăng điểm thảo luận"
                       className="group flex-col h-auto px-3.5 py-2.5 rounded-xl min-w-[54px]"
                     >
                       <ChevronUp
+                        aria-hidden="true"
                         className={`w-4 h-4 transition-transform duration-200 group-hover:-translate-y-0.5 ${
                           thread.isUpvotedByMe
                             ? "text-primary-foreground"
@@ -581,6 +583,7 @@ function ForumPageContent() {
                           : `Show (${thread.replies.length}) ${"phản hồi"}`}
                       </span>
                       <ChevronDown
+                        aria-hidden="true"
                         className={`w-3.5 h-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                       />
                     </Button>

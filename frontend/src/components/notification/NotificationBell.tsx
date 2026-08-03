@@ -37,7 +37,7 @@ export function NotificationBell() {
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger
           type="button"
-          className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+          className="relative p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
           aria-label={`Thông báo (${unreadCount} chưa đọc)`}
         >
           <Bell className="w-5 h-5" aria-hidden="true" />
@@ -82,6 +82,7 @@ export function NotificationBell() {
                 }}
                 className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
                 title="Cài đặt thông báo"
+                aria-label="Cài đặt thông báo"
               >
                 <Settings className="w-4 h-4" aria-hidden="true" />
               </button>

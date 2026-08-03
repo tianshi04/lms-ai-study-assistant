@@ -5,7 +5,6 @@ import { CourseCard } from "@/components/course/CourseCard";
 import { CourseGridSkeleton } from "@/components/course/CourseGridSkeleton";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
 import {
   Select,
   SelectTrigger,
@@ -44,35 +43,35 @@ export function CourseCatalogClient() {
   const { data: levels = [] } = useCategoriesQuery("LEVEL");
   const error = queryError ? queryError.message : null;
 
-  const getCategoryTranslation = (slug: string, fallback: string) => {
+  const getCategoryTranslation = (_slug: string, fallback: string) => {
     return fallback;
   };
 
   return (
-    <main className="w-full max-w-7xl mx-auto px-6 py-12 min-h-[65vh]">
+    <main className="w-full max-w-7xl mx-auto px-6 py-12 min-h-[65vh] bg-surface text-on-surface">
       <div className="mb-10 text-center md:text-left max-w-5xl">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-4">
-          <GraduationCap className="w-3.5 h-3.5" aria-hidden="true" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-container border border-primary/20 text-on-primary-container text-xs font-bold uppercase tracking-wider mb-4 shadow-xs">
+          <GraduationCap className="w-4 h-4 text-primary" aria-hidden="true" />
           {"Coursera-Style Specializations & Courses"}
         </div>
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4 text-balance">
+        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-on-surface mb-4 text-balance">
           {"Khám phá Khóa học & Lộ trình Học tập"}
         </h1>
-        <p className="text-muted-foreground text-lg leading-relaxed">
+        <p className="text-on-surface-variant text-lg leading-relaxed">
           {
             "Học tập với bài giảng video tương tác, phụ đề cuộn thông minh, bài tập thực hành nâng cao và thảo luận cộng đồng."
           }
         </p>
       </div>
 
-      {/* Controls Section: Search & Filters */}
-      <Card className="w-full mb-8 p-4 md:p-5 rounded-2xl shadow-xs space-y-3.5">
+      {/* Controls Section: Search & Filters (MD3 Surface Container) */}
+      <div className="w-full mb-10 p-5 md:p-6 rounded-3xl bg-surface-container-low border border-outline-variant space-y-5 shadow-xs">
         {/* Top Toolbar: Search Bar + Controls */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pb-3 border-b border-border">
-          {/* Search Bar (Spans remaining space smoothly) */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-4 border-b border-outline-variant">
+          {/* Search Bar (MD3 Pill Input) */}
           <div className="relative flex-1">
             <Search
-              className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none z-10"
+              className="w-4.5 h-4.5 absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none z-10"
               aria-hidden="true"
             />
             <Input
@@ -80,7 +79,7 @@ export function CourseCatalogClient() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={"Tìm kiếm khóa học theo tên hoặc từ khóa…"}
-              className="w-full pl-9 pr-8 py-1.5 text-xs sm:text-sm bg-muted rounded-xl"
+              className="w-full pl-11 pr-9 py-2.5 text-xs sm:text-sm bg-surface-container-lowest border border-outline-variant rounded-full text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary"
             />
             {searchQuery && (
               <Button
@@ -89,7 +88,7 @@ export function CourseCatalogClient() {
                 size="icon"
                 onClick={() => setSearchQuery("")}
                 aria-label="Xóa tìm kiếm"
-                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-xs font-bold text-muted-foreground hover:text-foreground"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-xs font-bold text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-full"
               >
                 ✕
               </Button>
@@ -97,9 +96,10 @@ export function CourseCatalogClient() {
           </div>
 
           {/* Action Controls: Reset Filters + Sort Dropdown */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             {subject || level || searchQuery || sortBy ? (
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => {
@@ -108,7 +108,7 @@ export function CourseCatalogClient() {
                   setSearchQuery("");
                   setSortBy("");
                 }}
-                className="h-9 px-3 text-xs text-muted-foreground hover:text-destructive bg-muted hover:bg-destructive/10 rounded-xl"
+                className="h-10 px-4 text-xs font-bold text-error bg-error-container/30 hover:bg-error-container/60 rounded-full border border-error/20"
               >
                 <RotateCcw className="w-3.5 h-3.5 mr-1.5" aria-hidden="true" />
                 <span>{"Xóa bộ lọc"}</span>
@@ -116,9 +116,9 @@ export function CourseCatalogClient() {
             ) : null}
 
             {/* Sort Dropdown */}
-            <div className="w-40 sm:w-44">
+            <div className="w-44 sm:w-48">
               <Select value={sortBy} onValueChange={(val) => setSortBy((val as string) || "")}>
-                <SelectTrigger className="w-full h-9 text-xs">
+                <SelectTrigger className="w-full h-10 text-xs font-bold bg-surface-container-lowest border border-outline-variant rounded-full px-4 text-on-surface">
                   <SelectValue placeholder={"Mặc định"}>
                     {sortBy === "rating"
                       ? "Đánh giá cao nhất"
@@ -129,7 +129,7 @@ export function CourseCatalogClient() {
                           : "Mặc định"}
                   </SelectValue>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-surface-container-high border border-outline-variant rounded-2xl shadow-lg">
                   <SelectItem value="">{"Mặc định"}</SelectItem>
                   <SelectItem value="rating">{"Đánh giá cao nhất"}</SelectItem>
                   <SelectItem value="popular">{"Phổ biến nhất"}</SelectItem>
@@ -140,28 +140,38 @@ export function CourseCatalogClient() {
           </div>
         </div>
 
-        {/* Filter Chips Section */}
-        <div className="space-y-2.5">
+        {/* Filter Chips Section (MD3 Filter Chips using Design System Button Primitive) */}
+        <div className="space-y-3">
           {/* Subject Chips */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider w-16 shrink-0 hidden md:inline-block">
+            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider w-16 shrink-0 hidden md:inline-block">
               {"Chủ đề"}
             </span>
             <Button
-              variant={subject === "" ? "primary" : "secondary"}
+              type="button"
+              variant={subject === "" ? "secondary" : "outline"}
               size="sm"
               onClick={() => setSubject("")}
-              className="rounded-full text-xs"
+              className={`rounded-full text-xs font-bold ${
+                subject === ""
+                  ? "bg-secondary-container text-on-secondary-container border-secondary-container shadow-xs"
+                  : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-outline hover:text-on-surface"
+              }`}
             >
               {"Tất cả chủ đề"}
             </Button>
             {subjects.map((s) => (
               <Button
                 key={s.id}
-                variant={subject === s.id ? "primary" : "secondary"}
+                type="button"
+                variant={subject === s.id ? "secondary" : "outline"}
                 size="sm"
                 onClick={() => setSubject(s.id)}
-                className="rounded-full text-xs"
+                className={`rounded-full text-xs font-bold ${
+                  subject === s.id
+                    ? "bg-secondary-container text-on-secondary-container border-secondary-container shadow-xs"
+                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-outline hover:text-on-surface"
+                }`}
               >
                 {getCategoryTranslation(s.slug, s.name)}
               </Button>
@@ -170,51 +180,61 @@ export function CourseCatalogClient() {
 
           {/* Level Chips */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider w-16 shrink-0 hidden md:inline-block">
+            <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider w-16 shrink-0 hidden md:inline-block">
               {"Cấp độ"}
             </span>
             <Button
-              variant={level === "" ? "primary" : "secondary"}
+              type="button"
+              variant={level === "" ? "secondary" : "outline"}
               size="sm"
               onClick={() => setLevel("")}
-              className="rounded-full text-xs"
+              className={`rounded-full text-xs font-bold ${
+                level === ""
+                  ? "bg-secondary-container text-on-secondary-container border-secondary-container shadow-xs"
+                  : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-outline hover:text-on-surface"
+              }`}
             >
               {"Tất cả cấp độ"}
             </Button>
             {levels.map((l) => (
               <Button
                 key={l.id}
-                variant={level === l.id ? "primary" : "secondary"}
+                type="button"
+                variant={level === l.id ? "secondary" : "outline"}
                 size="sm"
                 onClick={() => setLevel(l.id)}
-                className="rounded-full text-xs"
+                className={`rounded-full text-xs font-bold ${
+                  level === l.id
+                    ? "bg-secondary-container text-on-secondary-container border-secondary-container shadow-xs"
+                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-outline hover:text-on-surface"
+                }`}
               >
                 {getCategoryTranslation(l.slug, l.name)}
               </Button>
             ))}
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Content Section: Course Cards Grid */}
       {loading ? (
         <CourseGridSkeleton />
       ) : error ? (
-        <div className="bg-destructive/10 border border-destructive/20 text-destructive p-6 rounded-2xl text-center">
-          <p className="font-semibold">{error}</p>
+        <div className="bg-error-container text-on-error-container border border-error/20 p-6 rounded-3xl text-center">
+          <p className="font-bold">{error}</p>
           <p className="text-xs opacity-80 mt-2">
             {"Vui lòng kiểm tra kết nối mạng hoặc thử lại sau."}
           </p>
         </div>
       ) : courses.length === 0 ? (
-        <div className="w-full min-h-[360px] flex flex-col items-center justify-center text-center p-8 bg-muted/50 rounded-3xl border border-dashed border-border">
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-muted-foreground mb-4 shadow-inner">
+        <div className="w-full min-h-[360px] flex flex-col items-center justify-center text-center p-8 bg-surface-container-low rounded-3xl border border-dashed border-outline-variant">
+          <div className="w-16 h-16 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center mb-4">
             <Search className="w-8 h-8" aria-hidden="true" />
           </div>
-          <h3 className="text-lg font-bold text-foreground mb-1">
+          <h3 className="text-lg font-bold text-on-surface mb-1">
             {"Không tìm thấy khóa học phù hợp"}
           </h3>
-          <p className="text-sm text-muted-foreground max-w-md mb-6 leading-relaxed">
+          <p className="text-sm text-on-surface-variant max-w-md mb-6 leading-relaxed">
             {
               "Chúng tôi không tìm thấy kết quả nào khớp với từ khóa tìm kiếm của bạn. Vui lòng thử từ khóa khác."
             }
@@ -229,7 +249,7 @@ export function CourseCatalogClient() {
                 setSearchQuery("");
                 setSortBy("");
               }}
-              className="rounded-xl shadow-md flex items-center gap-2"
+              className="rounded-full px-6 shadow-xs flex items-center gap-2 font-bold"
             >
               <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{"Xóa bộ lọc"}</span>
@@ -238,7 +258,7 @@ export function CourseCatalogClient() {
         </div>
       ) : (
         <div
-          className={`w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6 transition-opacity duration-200 ${isFetching ? "opacity-60 pointer-events-none" : "opacity-100"}`}
+          className={`w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-opacity duration-200 ${isFetching ? "opacity-60 pointer-events-none" : "opacity-100"}`}
         >
           {courses.map((course) => (
             <CourseCard key={course.id} course={course} />

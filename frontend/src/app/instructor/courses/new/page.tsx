@@ -172,7 +172,7 @@ export default function NewCoursePage() {
         </div>
 
         {/* Live Preview Card */}
-        <Card className="rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden space-y-4">
+        <Card className="rounded-3xl p-6 sm:p-8 border border-border relative overflow-hidden space-y-4">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="flex items-center justify-between">
             <Badge
@@ -224,7 +224,7 @@ export default function NewCoursePage() {
         {/* Main Form */}
         <form
           onSubmit={handleSubmit}
-          className="bg-card rounded-3xl p-6 sm:p-8 shadow-lg border border-border space-y-6"
+          className="bg-card rounded-3xl p-6 sm:p-8 border border-border space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Organization / Partner Scoping Selection */}
@@ -408,7 +408,7 @@ export default function NewCoursePage() {
               variant="primary"
               disabled={submitting}
               isLoading={submitting}
-              className="px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-primary/25"
+              className="px-6 py-2.5 rounded-xl text-xs font-bold"
             >
               <span>🚀 Bắt Đầu Tạo Khóa Học</span>
             </Button>

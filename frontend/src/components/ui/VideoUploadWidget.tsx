@@ -259,7 +259,7 @@ export function VideoUploadWidget({
                 <span aria-live="polite">Đang tải tệp lên Cloud Storage…</span>
                 <span>{uploadProgress}%</span>
               </div>
-              <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+              <div className="w-full bg-secondary-container rounded-full h-2 overflow-hidden">
                 <div
                   className="bg-primary h-full transition-all duration-300 rounded-full"
                   style={{ width: `${uploadProgress}%` }}

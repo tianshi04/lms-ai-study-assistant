@@ -45,7 +45,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
         {/* Header Banner */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-primary text-primary-foreground rounded-3xl p-8 shadow-xl">
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-black/10 dark:bg-white/10 text-primary-foreground border border-primary-foreground/20">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-primary-foreground/10 text-primary-foreground border border-primary-foreground/20">
               <span className="w-2 h-2 rounded-full bg-primary-foreground animate-ping" />
               Bảng Điều Khiển Giảng Viên
             </div>
@@ -78,7 +78,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
         {/* Dynamic KPI Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
               <Users className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -90,7 +90,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0">
               <BadgeCheck className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -104,7 +104,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
               <Clock className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -118,7 +118,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:-translate-y-1 transition-transform">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center shrink-0">
               <FileEdit className="w-7 h-7" aria-hidden="true" />
             </div>

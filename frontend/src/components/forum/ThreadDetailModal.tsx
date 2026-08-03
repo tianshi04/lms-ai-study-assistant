@@ -87,7 +87,7 @@ export function ThreadDetailModal({
       description="Xem thông tin câu hỏi và toàn bộ thảo luận"
       className="p-6 max-h-[90vh] flex flex-col"
     >
-      <div className="flex-1 overflow-y-auto pr-1 space-y-5 max-h-[60vh] custom-scrollbar">
+      <div className="flex-1 overflow-y-auto pr-1 space-y-5 max-h-[60vh]">
         {/* Header Badges & Deep Link Navigation */}
         <div className="space-y-3 pb-4 border-b border-border">
           <div className="flex items-center justify-between gap-2 flex-wrap">

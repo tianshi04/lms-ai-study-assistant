@@ -94,7 +94,7 @@ export default function BecomeAnInstructorPage() {
     <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header Hero Section */}
-        <div className="bg-card rounded-3xl p-8 sm:p-10 shadow-xl border border-border text-center relative overflow-hidden">
+        <div className="bg-card rounded-3xl p-8 sm:p-10 border border-border text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 -mt-12 -mr-12 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-info/10 text-info text-xs font-bold uppercase tracking-wider mb-4 border border-info/20">
             <GraduationCap className="w-4 h-4" aria-hidden="true" />
@@ -116,7 +116,7 @@ export default function BecomeAnInstructorPage() {
 
         {/* Loading Spinner */}
         {isLoadingApp ? (
-          <div className="bg-card rounded-3xl p-12 text-center border border-border shadow-sm">
+          <div className="bg-card rounded-3xl p-12 text-center border border-border">
             <div className="inline-block animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-3" />
             <p aria-live="polite" className="text-muted-foreground text-sm font-medium">
               Đang kiểm tra hồ sơ đăng ký của bạn…
@@ -124,8 +124,8 @@ export default function BecomeAnInstructorPage() {
           </div>
         ) : isInstructor ? (
           /* View for already instructor */
-          <div className="bg-success/10 border border-success/30 rounded-3xl p-8 text-center space-y-4 shadow-sm">
-            <div className="w-16 h-16 bg-success/20 text-success rounded-2xl flex items-center justify-center mx-auto shadow-inner">
+          <div className="bg-success/10 border border-success/30 rounded-3xl p-8 text-center space-y-4">
+            <div className="w-16 h-16 bg-success/20 text-success rounded-2xl flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-8 h-8" aria-hidden="true" />
             </div>
             <h2 className="text-2xl font-bold text-foreground">
@@ -138,7 +138,7 @@ export default function BecomeAnInstructorPage() {
             <div className="pt-2">
               <Link
                 href="/instructor/courses"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold shadow-lg transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold transition-all"
               >
                 <span>Truy cập Cổng Giảng viên</span>
                 <ArrowRight className="w-4 h-4" aria-hidden="true" />
@@ -147,7 +147,7 @@ export default function BecomeAnInstructorPage() {
           </div>
         ) : !userName ? (
           /* View for not logged in */
-          <div className="bg-warning/10 border border-warning/30 rounded-3xl p-8 text-center space-y-4 shadow-sm">
+          <div className="bg-warning/10 border border-warning/30 rounded-3xl p-8 text-center space-y-4">
             <div className="w-16 h-16 bg-warning/20 text-warning rounded-2xl flex items-center justify-center mx-auto">
               <Lock className="w-8 h-8" aria-hidden="true" />
             </div>
@@ -159,7 +159,7 @@ export default function BecomeAnInstructorPage() {
             <div className="flex items-center justify-center gap-4 pt-2">
               <Link
                 href="/auth/login?redirect=/become-an-instructor"
-                className="px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold shadow-lg transition-all"
+                className="px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold transition-all"
               >
                 Đăng nhập ngay
               </Link>
@@ -173,7 +173,7 @@ export default function BecomeAnInstructorPage() {
           </div>
         ) : isPending ? (
           /* View for Pending Application */
-          <div className="bg-card rounded-3xl p-8 sm:p-10 shadow-xl border border-border space-y-6">
+          <div className="bg-card rounded-3xl p-8 sm:p-10 border border-border space-y-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-border pb-6">
               <div>
                 <h2 className="text-2xl font-bold text-foreground">
@@ -264,7 +264,7 @@ export default function BecomeAnInstructorPage() {
           </div>
         ) : isRejected && !isReapplying ? (
           /* View for Rejected Application */
-          <div className="bg-card rounded-3xl p-8 sm:p-10 shadow-xl border border-border space-y-6">
+          <div className="bg-card rounded-3xl p-8 sm:p-10 border border-border space-y-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-border pb-6">
               <div>
                 <h2 className="text-2xl font-bold text-foreground">Kết Quả Thẩm Định Hồ Sơ</h2>
@@ -307,7 +307,7 @@ export default function BecomeAnInstructorPage() {
           /* Application Form */
           <form
             onSubmit={handleSubmit}
-            className="bg-card rounded-3xl p-8 sm:p-10 shadow-xl border border-border space-y-6"
+            className="bg-card rounded-3xl p-8 sm:p-10 border border-border space-y-6"
           >
             <div className="border-b border-border pb-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-foreground flex items-center gap-2">

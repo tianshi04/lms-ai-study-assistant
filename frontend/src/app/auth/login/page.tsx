@@ -62,10 +62,10 @@ function LoginFormContent() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="bg-card border border-border rounded-3xl p-8 shadow-xl transition-colors">
+      <div className="bg-card border border-border rounded-3xl p-8 transition-colors">
         <div className="text-center mb-8">
           <Link href="/" prefetch={true} className="inline-flex items-center gap-3 group mb-6">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl group-hover:scale-105 transition-transform">
               C
             </div>
             <div className="text-left">
@@ -169,7 +169,11 @@ function LoginFormContent() {
                       aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
                       className="absolute right-2 top-8 text-muted-foreground hover:text-foreground h-8 w-8"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" aria-hidden="true" />
+                      ) : (
+                        <Eye className="w-4 h-4" aria-hidden="true" />
+                      )}
                     </Button>
                   </div>
                 </div>

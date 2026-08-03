@@ -298,8 +298,11 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
             </div>
           </div>
 
-          {/* Enrollment Card */}
-          <div className="bg-card border border-border p-6 rounded-2xl shadow-xl space-y-6">
+          {/* Enrollment Card (M3 Elevated & Glassmorphism Container Item 1.3) */}
+          <div className="relative overflow-hidden bg-card/90 backdrop-blur-xl border border-primary/20 p-6 rounded-3xl shadow-xl shadow-primary/5 space-y-6 transition-all hover:border-primary/30">
+            {/* M3 Top Gradient Accent Bar */}
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-primary/80 to-accent" />
+
             <div>
               <h3 aria-live="polite" className="text-2xl font-bold text-foreground">
                 {loadingAccess
@@ -326,14 +329,14 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <div className="space-y-3">
                 <Link
                   href={`/verify/${certId}`}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-sm transition-all shadow-lg cursor-pointer"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-sm transition-all shadow-lg cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4 text-warning-foreground" />
                   <span>{"Xem Chứng Chỉ"}</span>
                 </Link>
                 <Link
                   href={`/learn/${course.id}`}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-sm font-semibold transition-all cursor-pointer"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-full bg-muted hover:bg-muted/80 text-foreground text-sm font-semibold transition-all cursor-pointer"
                 >
                   <span>{"Vào Học Lại"}</span>
                 </Link>
@@ -342,7 +345,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <div className="space-y-3">
                 <Link
                   href={`/learn/${course.id}`}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-all shadow-lg cursor-pointer"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-all shadow-lg cursor-pointer"
                 >
                   <span>{"Vào Học Ngay (Paid Mode)"}</span>
                   <ArrowRight className="w-4 h-4" />
@@ -352,7 +355,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <div className="space-y-3">
                 <Link
                   href={`/learn/${course.id}`}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-all shadow-lg cursor-pointer"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-all shadow-lg cursor-pointer"
                 >
                   <span>{"Vào Học Ngay (Audit Mode)"}</span>
                   <ArrowRight className="w-4 h-4" />
@@ -361,7 +364,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   type="button"
                   variant="outline"
                   onClick={() => setIsPaymentModalOpen(true)}
-                  className="w-full py-3 px-6 rounded-xl bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary font-semibold text-sm justify-center gap-2"
+                  className="w-full py-3 px-6 rounded-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary font-semibold text-sm justify-center gap-2"
                 >
                   <CreditCard className="w-4 h-4 text-primary" />
                   <span>{"Nâng Cấp Paid Mode / Coursera Plus"}</span>
@@ -420,7 +423,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                     {"Tuần"} {week.weekNumber}
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {week.lessons.reduce((sum, l) => sum + l.items.length, 0)} {"Items bài học"}
+                    {week.lessons.reduce((sum, l) => sum + l.items.length, 0)} {"bài học"}
                   </span>
                 </div>
                 <h3 className="text-xl font-bold text-foreground mb-2">{week.title}</h3>
