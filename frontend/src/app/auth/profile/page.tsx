@@ -9,12 +9,10 @@ import { useUserProfileQuery } from "@/lib/query_hooks";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { getAvatarDataUri } from "@/lib/avatar";
 
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Loader2, ShieldCheck, KeyRound, UserCheck, AlertCircle } from "lucide-react";
 
 export default function ProfilePage() {
   const { userId: authUserId } = useAuth();
@@ -81,10 +79,10 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="flex items-center gap-3 text-muted-foreground">
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <div className="flex items-center gap-3 text-on-surface-variant">
           <Loader2 className="animate-spin h-6 w-6 text-primary" aria-hidden="true" />
-          <span aria-live="polite" className="text-sm font-medium">
+          <span aria-live="polite" className="text-sm font-bold">
             Đang tải hồ sơ…
           </span>
         </div>
@@ -93,10 +91,10 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-12 w-full flex-1">
-      <Card className="rounded-3xl p-8">
+    <main className="max-w-4xl mx-auto px-4 py-12 w-full flex-1 bg-surface text-on-surface">
+      <div className="rounded-3xl p-6 sm:p-8 bg-surface-container-low border border-outline-variant shadow-xs">
         {/* User Banner */}
-        <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-border">
+        <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-outline-variant">
           <Image
             src={
               !user?.avatarUrl || user.avatarUrl.includes("api.dicebear.com")
@@ -107,61 +105,65 @@ export default function ProfilePage() {
             width={96}
             height={96}
             unoptimized
-            className="w-24 h-24 rounded-full border-4 border-primary/20 bg-muted"
+            className="w-24 h-24 rounded-full border-4 border-primary-container bg-surface-container-high shadow-xs object-cover"
           />
           <div className="text-center sm:text-left">
-            <h1 className="text-2xl font-bold text-foreground mb-1 text-balance">
+            <h1 className="text-2xl font-black text-on-surface mb-1 text-balance">
               {user?.fullName}
             </h1>
-            <p className="text-sm text-muted-foreground mb-3">{user?.email}</p>
+            <p className="text-sm font-medium text-on-surface-variant mb-3">{user?.email}</p>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <Badge
-                variant="outline"
-                className="bg-info/10 text-info border-info/20 px-3 py-1 font-bold"
-              >
-                Vai trò:{" "}
-                {user?.role === 1
-                  ? "Learner (Học viên)"
-                  : user?.role === 2
-                    ? "Instructor (Giảng viên)"
-                    : "TA / Admin"}
-              </Badge>
+              <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-primary-container border border-primary/20 text-on-primary-container text-xs font-bold shadow-xs">
+                <UserCheck className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                <span>
+                  Vai trò:{" "}
+                  {user?.role === 1
+                    ? "Learner (Học viên)"
+                    : user?.role === 2
+                      ? "Instructor (Giảng viên)"
+                      : "TA / Admin"}
+                </span>
+              </span>
+
               {user?.isIdentityVerified ? (
-                <Badge variant="success" className="gap-1 px-3 py-1 font-bold">
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-success/15 border border-success/30 text-success text-xs font-bold shadow-xs">
                   <Check className="w-3.5 h-3.5 text-success" aria-hidden="true" />
-                  Đã xác minh KYC
-                </Badge>
+                  <span>Đã xác minh KYC</span>
+                </span>
               ) : (
-                <Badge variant="warning" className="gap-1 px-3 py-1 font-bold">
-                  Chưa xác minh KYC
-                </Badge>
+                <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-warning/15 border border-warning/30 text-warning text-xs font-bold shadow-xs">
+                  <AlertCircle className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
+                  <span>Chưa xác minh KYC</span>
+                </span>
               )}
             </div>
           </div>
         </div>
 
         {/* Identity Verification (KYC Mock) Section */}
-        <div className="mt-8 pb-8 border-b border-border">
+        <div className="mt-8 pb-8 border-b border-outline-variant">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-lg font-bold text-foreground mb-1">
-                Xác minh Danh tính Sinh trắc học (KYC Verification)
+              <h2 className="text-lg font-bold text-on-surface mb-1 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-primary" aria-hidden="true" />
+                <span>Xác minh Danh tính Sinh trắc học (KYC Verification)</span>
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-on-surface-variant leading-relaxed">
                 {user?.isIdentityVerified
-                  ? "Tài khoản của bạn đã hoàn tất xác minh danh tính CCCD/Hộ chiếu. Bạn đủ điều kiện cấp Verified Certificate."
+                  ? "Tài khoản của bạn đã hoàn tất xác minh danh tính CCCD/Hộ chiếu. Bạn đủ điều kiện nhận Chứng chỉ Verified Certificate."
                   : "Yêu cầu hoàn tất xác minh danh tính bằng CCCD/Hộ chiếu trước khi nhận Chứng chỉ Verified Certificate lần đầu tiên."}
               </p>
             </div>
-            <div>
+            <div className="shrink-0">
               {user?.isIdentityVerified ? (
                 <Button
                   disabled
                   variant="outline"
                   size="sm"
-                  className="bg-success/10 text-success border-success/20 cursor-default"
+                  className="rounded-full bg-success/10 text-success border-success/20 font-bold cursor-default px-4"
                 >
-                  Đã xác minh
+                  <Check className="w-4 h-4 mr-1.5 text-success" aria-hidden="true" />
+                  <span>Đã xác minh</span>
                 </Button>
               ) : (
                 <Button
@@ -169,7 +171,7 @@ export default function ProfilePage() {
                   isLoading={verifyingIdentity}
                   variant="primary"
                   size="sm"
-                  className="bg-success hover:bg-success-hover text-success-foreground border-none shadow-md"
+                  className="rounded-full px-6 py-2.5 bg-success hover:bg-success-hover text-white font-bold border-none shadow-xs hover:shadow-md transition-all"
                 >
                   Giả lập Xác minh KYC (Mock Verification)
                 </Button>
@@ -180,15 +182,16 @@ export default function ProfilePage() {
 
         {/* Enterprise Seat Key Section */}
         <div className="mt-8">
-          <h2 className="text-lg font-bold text-foreground mb-2">
-            Suất học Doanh nghiệp / Đối tác (Enterprise License)
+          <h2 className="text-lg font-bold text-on-surface mb-2 flex items-center gap-2">
+            <KeyRound className="w-5 h-5 text-primary" aria-hidden="true" />
+            <span>Suất học Doanh nghiệp / Đối tác (Enterprise License)</span>
           </h2>
-          <p className="text-sm text-muted-foreground mb-6">
+          <p className="text-sm text-on-surface-variant mb-6 leading-relaxed">
             Nhập mã kích hoạt (Enterprise Seat Key) được cấp bởi trường đại học hoặc doanh nghiệp để
             mở khóa 100% tài nguyên học tập trả phí.
           </p>
 
-          <form onSubmit={handleAssignKey} className="flex flex-col sm:flex-row gap-4">
+          <form onSubmit={handleAssignKey} className="flex flex-col sm:flex-row gap-3">
             <Input
               type="text"
               value={enterpriseKey}
@@ -196,7 +199,7 @@ export default function ProfilePage() {
               placeholder="Nhập mã Enterprise Key (ví dụ: ENT-UNI-2026-X99)"
               autoComplete="off"
               spellCheck={false}
-              className="flex-1 py-3 rounded-xl text-sm font-mono bg-muted"
+              className="flex-1 py-3 px-4 rounded-full text-sm font-mono bg-surface-container-lowest border border-outline-variant text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary"
             />
             <Button
               type="submit"
@@ -204,12 +207,13 @@ export default function ProfilePage() {
               disabled={!enterpriseKey}
               variant="primary"
               size="md"
+              className="rounded-full px-8 font-bold shadow-xs hover:shadow-md transition-all"
             >
               Kích hoạt mã
             </Button>
           </form>
         </div>
-      </Card>
+      </div>
     </main>
   );
 }
