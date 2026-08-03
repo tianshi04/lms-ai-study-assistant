@@ -22,6 +22,7 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
         self.honor_codes: dict[str, HonorCodeAgreement] = {}
         self.quiz_submissions: list[QuizSubmission] = []
         self.cooldowns: dict[str, QuizCooldown] = {}
+        self.active_sessions: dict[str, Any] = {}
         self.lab_submissions: list[LabSubmission] = []
         self.peer_submissions: list[PeerAssignmentSubmission] = []
         self.peer_reviews: list[PeerReview] = []
@@ -55,6 +56,12 @@ class InMemoryAssessmentRepository(AssessmentRepositoryInterface):
 
     async def save_quiz_cooldown(self, cooldown: QuizCooldown) -> None:
         self.cooldowns[cooldown.id] = cooldown
+
+    async def get_quiz_active_session(self, user_id: str, item_id: str) -> Any | None:
+        return self.active_sessions.get(f"{user_id}:{item_id}")
+
+    async def save_quiz_active_session(self, session: Any) -> None:
+        self.active_sessions[session.id] = session
 
     async def save_lab_submission(self, submission: LabSubmission) -> None:
         self.lab_submissions.append(submission)
@@ -295,11 +302,11 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     # 2. Agree Honor Code
     await usecase.submit_honor_code(user_id, item_id, True)
 
-    # 3. Submit Perfect Score -> 100% Pass
+    # 3. Submit Perfect Score -> 100% Pass (still deducts 1 attempt)
     res_pass = await usecase.submit_graded_quiz(user_id, item_id, correct_answers)
     assert res_pass["score_percent"] == 100.0
     assert res_pass["passed"] is True
-    assert res_pass["attempts_left"] == 3
+    assert res_pass["attempts_left"] == 2
     assert res_pass["cooldown_seconds_left"] == 0
 
     # 4. Fail 3 consecutive attempts to trigger 8h Cooldown
@@ -310,6 +317,14 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     r1 = await usecase.submit_graded_quiz(user_fail, item_id, wrong_answers)
     assert r1["passed"] is False
     assert r1["attempts_left"] == 2
+
+    # Verify session start with force_new=False returns previous failed result & attempts_left
+    sess_fail = await usecase.start_graded_quiz_session(
+        user_fail, item_id, force_new=False
+    )
+    assert sess_fail.get("has_previous_result") is True
+    assert sess_fail["previous_result"]["passed"] is False
+    assert sess_fail["previous_result"]["attempts_left"] == 2
 
     # Attempt 2 (Fail)
     r2 = await usecase.submit_graded_quiz(user_fail, item_id, wrong_answers)
@@ -333,9 +348,12 @@ async def test_graded_quiz_pass_and_cooldown_logic():
         await usecase.start_graded_quiz_session(user_fail, item_id)
     assert "quay lại sau" in str(exc_info.value)
 
-    # Verify session start is NOT blocked because user has already passed (BR_QUIZ_001)
-    res_pass = await usecase.start_graded_quiz_session(user_id, item_id)
-    assert len(res_pass["questions"]) > 0
+    # Verify starting new session for user_id who passed still allows remaining attempts (force_new=True)
+    res_pass_new = await usecase.start_graded_quiz_session(
+        user_id, item_id, force_new=True
+    )
+    assert len(res_pass_new["questions"]) > 0
+    assert res_pass_new["attempts_left"] == 1
 
 
 @pytest.mark.asyncio
@@ -667,3 +685,35 @@ async def test_graded_quiz_preview_mode():
     assert res["cooldown_seconds_left"] == 0
     # Verify attempts_left is max_attempts
     assert res["attempts_left"] == res["max_attempts"]
+
+
+@pytest.mark.asyncio
+async def test_anti_cheat_feedback_hidden_on_failure():
+    repo = InMemoryAssessmentRepository()
+    usecase = AssessmentUseCase(repository=repo)
+    user_id = "learner-test-1"
+    item_id = "item-quiz-anti-cheat"
+    await repo.save_honor_code(
+        HonorCodeAgreement(user_id=user_id, item_id=item_id, is_agreed=True)
+    )
+
+    # 1. Start quiz session
+    sess = await usecase.start_graded_quiz_session(user_id, item_id)
+    assert sess["session_id"] is not None
+    # Active session saved atomically
+    active = await repo.get_quiz_active_session(user_id, item_id)
+    assert active is not None
+    assert active.session_seed == sess["session_seed"]
+
+    # 2. Submit wrong answers (fail quiz)
+    res = await usecase.submit_graded_quiz(
+        user_id,
+        item_id,
+        [-1, -1, -1, -1, -1],
+        session_seed=sess["session_seed"],
+    )
+    assert res["passed"] is False
+    # Anti-cheat check: explanations must NOT reveal the correct option text or correct index
+    for exp in res["answer_explanations"]:
+        assert "đáp án đúng là" not in exp
+    assert len(repo.quiz_submissions) == 1

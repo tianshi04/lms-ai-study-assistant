@@ -5,86 +5,83 @@ import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Send } from "lucide-react";
 
 interface HonorCodeModalProps {
   itemId: string;
   userId?: string;
   isOpen: boolean;
-  onAgreed: () => void;
+  isSubmitting?: boolean;
+  onAgreedAndSubmit: () => Promise<void>;
   onClose: () => void;
 }
 
-export function HonorCodeModal({ itemId, isOpen, onAgreed, onClose }: HonorCodeModalProps) {
+export function HonorCodeModal({
+  itemId,
+  isOpen,
+  isSubmitting = false,
+  onAgreedAndSubmit,
+  onClose,
+}: HonorCodeModalProps) {
   const [isChecked, setIsChecked] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   const handleSubmit = async () => {
     if (!isChecked) {
-      setErrorMsg("Bạn phải đồng ý với Quy tắc Liêm chính Học thuật để tiếp tục.");
+      setErrorMsg("Bạn phải tích chọn đồng ý với Quy tắc Liêm chính Học thuật để nộp bài.");
       return;
     }
 
-    setIsSubmitting(true);
     setErrorMsg("");
 
     try {
       const client = getRpcClient(AssessmentService);
-      const res = await client.submitHonorCode({
+      await client.submitHonorCode({
         itemId,
         isAgreed: true,
       });
-
-      if (res.success) {
-        await onAgreed();
-      } else {
-        setErrorMsg(res.message || "Không thể xác nhận Quy tắc Liêm chính.");
-      }
     } catch (err) {
-      // Fallback for offline demo mode
       console.warn("RPC submitHonorCode failed, using local fallback:", err);
-      await onAgreed();
-    } finally {
-      setIsSubmitting(false);
     }
+
+    await onAgreedAndSubmit();
   };
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Quy tắc Liêm chính Học thuật"
-      description="Cam kết trung thực học tập"
+      title="Xác nhận Nộp bài & Cam kết Trung thực"
+      description="Vui lòng kiểm tra kỹ bài làm và cam kết liêm chính học thuật trước khi nộp."
       size="md"
     >
       <div className="space-y-4 text-sm text-muted-foreground">
-        <p>
-          Bằng việc nộp bài kiểm tra này, tôi xác nhận tất cả nội dung làm bài đều là kết quả làm
+        <p className="text-foreground font-medium">
+          Bằng việc nộp bài kiểm tra này, tôi xác nhận tất cả nội dung trả lời đều là kết quả làm
           việc trung thực của chính tôi.
         </p>
 
         <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 text-foreground space-y-2">
           <h4 className="font-semibold text-xs uppercase tracking-wider flex items-center gap-1.5 text-warning">
             <AlertTriangle className="w-4 h-4 text-warning shrink-0" aria-hidden="true" />
-            <span>Quy định liêm chính nghiêm ngặt:</span>
+            <span>Quy định liêm chính học thuật:</span>
           </h4>
           <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground">
             <li>Tôi không sao chép mã nguồn, bài viết hoặc đáp án từ nguồn bên ngoài.</li>
             <li>Tôi không chia sẻ đáp án lên các diễn đàn công cộng hoặc công cụ AI.</li>
-            <li>Tôi hiểu rằng các vi phạm có thể dẫn đến việc hủy bỏ chứng chỉ.</li>
+            <li>Tôi hiểu rằng các vi phạm có thể dẫn đến việc hủy bỏ kết quả bài thi.</li>
           </ul>
         </div>
 
-        <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl hover:bg-muted border border-border transition-colors">
+        <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl bg-background hover:bg-accent/40 border border-border transition-colors">
           <input
             type="checkbox"
             checked={isChecked}
             onChange={(e) => setIsChecked(e.target.checked)}
             className="mt-0.5 w-4 h-4 rounded text-primary focus-visible:ring-2 focus-visible:ring-ring border-input"
           />
-          <span className="text-xs font-medium text-foreground leading-snug">
-            Tôi hiểu và đồng ý tuân thủ Quy tắc Liêm chính Học thuật.
+          <span className="text-xs font-semibold text-foreground leading-snug">
+            Tôi xác nhận các đáp án trên và đồng ý tuân thủ Quy tắc Liêm chính Học thuật.
           </span>
         </label>
 
@@ -95,16 +92,17 @@ export function HonorCodeModal({ itemId, isOpen, onAgreed, onClose }: HonorCodeM
         )}
 
         <div className="pt-4 border-t border-border flex justify-end gap-3">
-          <Button variant="outline" onClick={onClose}>
-            Hủy
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Hủy / Kiểm tra lại
           </Button>
           <Button
             variant="primary"
             onClick={handleSubmit}
-            disabled={!isChecked}
+            disabled={!isChecked || isSubmitting}
             isLoading={isSubmitting}
           >
-            Tôi đồng ý & Tiếp tục
+            {isSubmitting ? "Đang chấm điểm…" : "Đồng ý & Nộp bài ngay"}
+            {!isSubmitting && <Send className="w-3.5 h-3.5 ml-1.5" />}
           </Button>
         </div>
       </div>

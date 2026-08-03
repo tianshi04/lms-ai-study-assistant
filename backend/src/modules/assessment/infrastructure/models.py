@@ -222,3 +222,17 @@ class QuizSessionModel(Base):
     time_limit_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
     passing_threshold_percent: Mapped[float] = mapped_column(Float, nullable=False)
     submitted_at: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
+
+class QuizActiveSessionModel(Base):
+    """Stores the active quiz attempt session to prevent race conditions and cheat exploits."""
+
+    __tablename__ = "quiz_active_sessions"
+
+    id: Mapped[str] = mapped_column(String(128), primary_key=True)  # user_id:item_id
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    session_seed: Mapped[int] = mapped_column(Integer, nullable=False)
+    questions_json: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False)
+    started_at: Mapped[str] = mapped_column(String(64), nullable=False)
+    expires_at: Mapped[str] = mapped_column(String(64), nullable=False)

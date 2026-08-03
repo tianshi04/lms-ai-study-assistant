@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -14,6 +15,7 @@ from src.modules.assessment.domain.entities import (
     Question,
     QuestionBank,
     QuestionOption,
+    QuizActiveSession,
     QuizCooldown,
     QuizMatrix,
     QuizSubmission,
@@ -29,6 +31,7 @@ from src.modules.assessment.infrastructure.models import (
     QuestionBankModel,
     QuestionModel,
     QuestionOptionModel,
+    QuizActiveSessionModel,
     QuizCooldownModel,
     QuizMatrixModel,
     QuizSubmissionModel,
@@ -133,21 +136,65 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         )
 
     async def save_quiz_cooldown(self, cooldown: QuizCooldown) -> None:
-        model = await self.session.get(QuizCooldownModel, cooldown.id)
-        if model:
-            model.failed_attempts_count = cooldown.failed_attempts_count
-            model.last_attempt_at = cooldown.last_attempt_at
-            model.cooldown_until = cooldown.cooldown_until
-        else:
-            model = QuizCooldownModel(
-                id=cooldown.id,
-                user_id=cooldown.user_id,
-                item_id=cooldown.item_id,
-                failed_attempts_count=cooldown.failed_attempts_count,
-                last_attempt_at=cooldown.last_attempt_at,
-                cooldown_until=cooldown.cooldown_until,
-            )
-            self.session.add(model)
+        stmt = pg_insert(QuizCooldownModel).values(
+            id=cooldown.id,
+            user_id=cooldown.user_id,
+            item_id=cooldown.item_id,
+            failed_attempts_count=cooldown.failed_attempts_count,
+            last_attempt_at=cooldown.last_attempt_at,
+            cooldown_until=cooldown.cooldown_until,
+        )
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[QuizCooldownModel.id],
+            set_={
+                "failed_attempts_count": cooldown.failed_attempts_count,
+                "last_attempt_at": cooldown.last_attempt_at,
+                "cooldown_until": cooldown.cooldown_until,
+            },
+        )
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+    async def get_quiz_active_session(
+        self, user_id: str, item_id: str
+    ) -> Optional[QuizActiveSession]:
+        stmt = select(QuizActiveSessionModel).where(
+            QuizActiveSessionModel.user_id == user_id,
+            QuizActiveSessionModel.item_id == item_id,
+        )
+        res = await self.session.execute(stmt)
+        model = res.scalar_one_or_none()
+        if not model:
+            return None
+        return QuizActiveSession(
+            user_id=model.user_id,
+            item_id=model.item_id,
+            session_seed=model.session_seed,
+            questions_json=model.questions_json,
+            started_at=model.started_at,
+            expires_at=model.expires_at,
+        )
+
+    async def save_quiz_active_session(self, session: QuizActiveSession) -> None:
+        stmt = pg_insert(QuizActiveSessionModel).values(
+            id=session.id,
+            user_id=session.user_id,
+            item_id=session.item_id,
+            session_seed=session.session_seed,
+            questions_json=session.questions_json,
+            started_at=session.started_at,
+            expires_at=session.expires_at,
+        )
+        stmt = stmt.on_conflict_do_update(
+            index_elements=[QuizActiveSessionModel.id],
+            set_={
+                "session_seed": session.session_seed,
+                "questions_json": session.questions_json,
+                "started_at": session.started_at,
+                "expires_at": session.expires_at,
+            },
+        )
+        await self.session.execute(stmt)
         await self.session.commit()
 
     async def save_lab_submission(self, submission: LabSubmission) -> None:

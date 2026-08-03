@@ -36,11 +36,18 @@ class AssessmentHandler(AssessmentService):
         ctx: RequestContext[pb.SubmitGradedQuizRequest, pb.SubmitGradedQuizResponse],
     ) -> pb.SubmitGradedQuizResponse:
         current_user = require_current_user()
+        qa_list = (
+            [list(qa.selected_option_indexes) for qa in request.question_answers]
+            if request.question_answers
+            else None
+        )
+
         try:
             res = await self.use_case.submit_graded_quiz(
                 user_id=current_user.id,
                 item_id=request.item_id,
                 selected_option_indexes=list(request.selected_option_indexes),
+                question_answers=qa_list,
                 session_seed=request.session_seed or None,
                 start_time_iso=request.start_time_iso or None,
                 preview=request.preview,
@@ -471,6 +478,7 @@ class AssessmentHandler(AssessmentService):
                 user_id=current_user.id,
                 item_id=request.item_id,
                 preview=request.preview,
+                force_new=request.force_new,
             )
         except ValueError as e:
             raise ConnectError(Code.FAILED_PRECONDITION, str(e))
@@ -495,6 +503,19 @@ class AssessmentHandler(AssessmentService):
                 )
             )
 
+        pb_prev_result = None
+        if res.get("has_previous_result") and res.get("previous_result"):
+            pr = res["previous_result"]
+            pb_prev_result = pb.QuizResult(
+                score_percent=pr["score_percent"],
+                passed=pr["passed"],
+                attempts_left=pr["attempts_left"],
+                cooldown_seconds_left=pr["cooldown_seconds_left"],
+                answer_explanations=pr["answer_explanations"],
+                max_attempts=pr.get("max_attempts", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
+                cooldown_hours=pr.get("cooldown_hours", 8),
+            )
+
         return pb.StartGradedQuizSessionResponse(
             session_id=res["session_id"],
             time_limit_minutes=res["duration_minutes"],
@@ -508,4 +529,6 @@ class AssessmentHandler(AssessmentService):
             attempts_left=res.get("attempts_left", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
             max_attempts=res.get("max_attempts", MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN),
             cooldown_hours=res.get("cooldown_hours", 8),
+            has_previous_result=res.get("has_previous_result", False),
+            previous_result=pb_prev_result,
         )

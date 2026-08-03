@@ -1,5 +1,6 @@
 import logging
 import random
+import re
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Optional
@@ -22,6 +23,7 @@ from src.modules.assessment.domain.entities import (
     PeerReview,
     Question,
     QuestionBank,
+    QuizActiveSession,
     QuizCooldown,
     QuizMatrix,
     QuizSubmission,
@@ -40,6 +42,33 @@ from src.shared.infrastructure.database import async_session_scope
 from src.shared.auth import CurrentUser
 
 logger = logging.getLogger(__name__)
+
+
+def _clean_explanation(raw_exp: Optional[str]) -> str:
+    if not raw_exp:
+        return ""
+    cleaned = raw_exp.strip()
+    cleaned = re.sub(r"Đã đạt|Chưa đạt", "", cleaned)
+    cleaned = re.sub(r"\s*\(\d+(\.\d+)?%\)\.?,?", "", cleaned).strip()
+    if len(cleaned) <= 3 or cleaned.lower() in (
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "t",
+        "f",
+        "true",
+        "false",
+        "correct",
+        "incorrect",
+        "option_1",
+        "option_2",
+        "option_3",
+        "option_4",
+    ):
+        return ""
+    return cleaned
 
 
 class AssessmentUseCase:
@@ -149,11 +178,10 @@ class AssessmentUseCase:
             # Build final options list and correct index
             options_text = [opt["option_text"] for opt in opts_data]
 
-            correct_idx = 0
-            for idx, opt in enumerate(opts_data):
-                if opt["is_correct"]:
-                    correct_idx = idx
-                    break
+            correct_indices = [
+                idx for idx, opt in enumerate(opts_data) if opt["is_correct"]
+            ]
+            correct_idx = correct_indices[0] if correct_indices else 0
 
             result.append(
                 {
@@ -161,6 +189,8 @@ class AssessmentUseCase:
                     "text": q.text,
                     "options": options_text,
                     "shuffled_correct_index": correct_idx,
+                    "shuffled_correct_indices": correct_indices,
+                    "explanation": q.explanation or "",
                     "question_type": q.question_type,
                     "difficulty": q.difficulty,
                 }
@@ -174,6 +204,7 @@ class AssessmentUseCase:
         item_id: str,
         duration_minutes: int = DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
         preview: bool = False,
+        force_new: bool = False,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
@@ -192,10 +223,12 @@ class AssessmentUseCase:
             max_attempts = (
                 matrix.max_attempts if matrix else MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN
             )
+
             # Check Cooldown status
             cooldown = await repo.get_quiz_cooldown(user_id, item_id)
             cooldown_seconds_left = 0
-            attempts_left = max_attempts
+            attempts_count = cooldown.failed_attempts_count if cooldown else 0
+
             if cooldown and not preview:
                 if cooldown.cooldown_until:
                     until_dt = datetime.fromisoformat(cooldown.cooldown_until)
@@ -213,26 +246,134 @@ class AssessmentUseCase:
                             f"Bạn đã dùng hết số lượt làm bài. Vui lòng quay lại sau {time_str}."
                         )
                     else:
-                        attempts_left = max(
-                            0,
-                            max_attempts - cooldown.failed_attempts_count,
-                        )
-                else:
-                    attempts_left = max(
-                        0,
-                        max_attempts - cooldown.failed_attempts_count,
-                    )
+                        attempts_count = 0
 
-            if attempts_left <= 0:
+            attempts_left = max(0, max_attempts - attempts_count)
+
+            # Check previous submissions for state persistence
+            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
+            has_passed = (
+                any(s.passed for s in prev_submissions) if prev_submissions else False
+            )
+
+            if prev_submissions and not force_new and not preview:
+                questions = await self.generate_quiz_session_questions(
+                    repo, item_id, seed=42
+                )
+                target_sub = (
+                    max(prev_submissions, key=lambda s: s.score_percent)
+                    if has_passed
+                    else max(prev_submissions, key=lambda s: s.created_at)
+                )
+                explanations = []
+                for idx, q in enumerate(questions):
+                    corr_indices = set(
+                        q.get(
+                            "shuffled_correct_indices",
+                            [q.get("shuffled_correct_index", 0)],
+                        )
+                    )
+                    user_ans_idx = (
+                        target_sub.selected_option_indexes[idx]
+                        if target_sub
+                        and target_sub.selected_option_indexes
+                        and idx < len(target_sub.selected_option_indexes)
+                        else -1
+                    )
+                    is_corr = bool(user_ans_idx >= 0 and {user_ans_idx} == corr_indices)
+                    clean_exp = _clean_explanation(q.get("explanation"))
+                    exp_suffix = f" — {clean_exp}" if clean_exp else ""
+                    if is_corr:
+                        explanations.append(f"Câu {idx + 1}: Đúng{exp_suffix}")
+                    else:
+                        explanations.append(f"Câu {idx + 1}: Sai{exp_suffix}")
+
+                prev_result = {
+                    "score_percent": target_sub.score_percent,
+                    "passed": has_passed,
+                    "attempts_left": attempts_left,
+                    "cooldown_seconds_left": 0,
+                    "answer_explanations": explanations,
+                    "max_attempts": max_attempts,
+                    "cooldown_hours": matrix.cooldown_hours
+                    if matrix
+                    else QUIZ_COOLDOWN_HOURS,
+                }
+
+                return {
+                    "session_id": f"qsess-prev-{uuid.uuid4().hex[:8]}",
+                    "start_time_iso": now.isoformat(),
+                    "expires_at_iso": expires_at.isoformat(),
+                    "duration_minutes": duration_minutes,
+                    "passing_threshold_percent": passing_threshold,
+                    "session_seed": 42,
+                    "questions": questions,
+                    "cooldown_seconds_left": 0,
+                    "attempts_left": attempts_left,
+                    "max_attempts": max_attempts,
+                    "cooldown_hours": matrix.cooldown_hours
+                    if matrix
+                    else QUIZ_COOLDOWN_HOURS,
+                    "has_previous_result": True,
+                    "previous_result": prev_result,
+                }
+
+            if attempts_left <= 0 and not preview:
+                cooldown_hours = (
+                    matrix.cooldown_hours if matrix else QUIZ_COOLDOWN_HOURS
+                )
+                cooldown_until_dt = now + timedelta(hours=cooldown_hours)
+                cooldown_until_iso = cooldown_until_dt.isoformat()
+                new_cooldown = QuizCooldown(
+                    user_id=user_id,
+                    item_id=item_id,
+                    failed_attempts_count=attempts_count,
+                    last_attempt_at=now.isoformat(),
+                    cooldown_until=cooldown_until_iso,
+                )
+                await repo.save_quiz_cooldown(new_cooldown)
                 raise ValueError("Bạn đã hết lượt làm bài thi này.")
 
+            # Deduct attempt upon starting a new session (whether pass or fail, reload or navigate away)
+            if not preview:
+                attempts_count += 1
+                attempts_left = max(0, max_attempts - attempts_count)
+                cooldown_until_iso = None
+                if attempts_count >= max_attempts:
+                    cooldown_hours = (
+                        matrix.cooldown_hours if matrix else QUIZ_COOLDOWN_HOURS
+                    )
+                    cooldown_until_dt = now + timedelta(hours=cooldown_hours)
+                    cooldown_until_iso = cooldown_until_dt.isoformat()
+
+                new_cooldown = QuizCooldown(
+                    user_id=user_id,
+                    item_id=item_id,
+                    failed_attempts_count=attempts_count,
+                    last_attempt_at=now.isoformat(),
+                    cooldown_until=cooldown_until_iso,
+                )
+                await repo.save_quiz_cooldown(new_cooldown)
+
             # BR_QUIZ_002: Generate N-sampled and option-shuffled questions using unique user/attempt seed
-            seed_val = abs(hash(f"{user_id}:{item_id}:{now.isoformat()[:16]}")) % (
-                2**31
+            seed_val = (
+                abs(hash(f"{user_id}:{item_id}:{now.isoformat()}:{uuid.uuid4().hex}"))
+                % (2**31 - 1)
+                + 1
             )
             questions = await self.generate_quiz_session_questions(
                 repo, item_id, seed=seed_val
             )
+
+            active_session = QuizActiveSession(
+                user_id=user_id,
+                item_id=item_id,
+                session_seed=seed_val,
+                questions_json=questions,
+                started_at=now.isoformat(),
+                expires_at=expires_at.isoformat(),
+            )
+            await repo.save_quiz_active_session(active_session)
 
             return {
                 "session_id": f"qsess-{uuid.uuid4().hex[:8]}",
@@ -255,11 +396,12 @@ class AssessmentUseCase:
         self,
         user_id: str,
         item_id: str,
-        selected_option_indexes: list[int],
+        selected_option_indexes: Optional[list[int]] = None,
         start_time_iso: Optional[str] = None,
         duration_minutes: int = DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
         session_seed: Optional[int] = None,
         preview: bool = False,
+        question_answers: Optional[list[list[int]]] = None,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
@@ -330,25 +472,68 @@ class AssessmentUseCase:
             generated_qs = await self.generate_quiz_session_questions(
                 repo, item_id, seed=session_seed
             )
-            correct_answers = [q["shuffled_correct_index"] for q in generated_qs]
 
-            total_questions = len(correct_answers)
+            total_questions = len(generated_qs)
             correct_count = 0
-            explanations: list[str] = []
 
-            for idx, corr in enumerate(correct_answers):
-                user_ans = (
-                    selected_option_indexes[idx]
-                    if idx < len(selected_option_indexes)
-                    else -1
-                )
-                if user_ans == corr:
-                    correct_count += 1
-                    explanations.append(f"Câu {idx + 1}: Đúng!")
-                else:
-                    explanations.append(
-                        f"Câu {idx + 1}: Chưa chính xác. Bạn đã chọn đáp án {chr(65 + user_ans) if user_ans >= 0 else 'Chưa chọn'}, đáp án đúng là {chr(65 + corr)}."
+            for idx, q in enumerate(generated_qs):
+                corr_indices = set(
+                    q.get(
+                        "shuffled_correct_indices", [q.get("shuffled_correct_index", 0)]
                     )
+                )
+                if question_answers and idx < len(question_answers):
+                    user_ans_set = set(question_answers[idx])
+                elif selected_option_indexes and idx < len(selected_option_indexes):
+                    val = selected_option_indexes[idx]
+                    user_ans_set = {val} if val >= 0 else set()
+                else:
+                    user_ans_set = set()
+
+                if user_ans_set and user_ans_set == corr_indices:
+                    correct_count += 1
+
+            if total_questions == 0:
+                score_percent = 0.0
+            else:
+                score_percent = round((correct_count / total_questions) * 100.0, 2)
+
+            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
+            all_scores = [sub.score_percent for sub in prev_submissions] + [
+                score_percent
+            ]
+            highest_score = max(all_scores)
+            passed = highest_score >= passing_threshold
+
+            explanations: list[str] = []
+            if total_questions == 0:
+                explanations.append(
+                    "Kho câu hỏi rỗng hoặc chưa được cấu hình câu hỏi cho bài thi này."
+                )
+            else:
+                for idx, q in enumerate(generated_qs):
+                    corr_indices = set(
+                        q.get(
+                            "shuffled_correct_indices",
+                            [q.get("shuffled_correct_index", 0)],
+                        )
+                    )
+                    if question_answers and idx < len(question_answers):
+                        user_ans_set = set(question_answers[idx])
+                    elif selected_option_indexes and idx < len(selected_option_indexes):
+                        val = selected_option_indexes[idx]
+                        user_ans_set = {val} if val >= 0 else set()
+                    else:
+                        user_ans_set = set()
+
+                    is_corr = bool(user_ans_set and user_ans_set == corr_indices)
+                    clean_exp = _clean_explanation(q.get("explanation"))
+                    exp_suffix = f" — {clean_exp}" if clean_exp else ""
+
+                    if is_corr:
+                        explanations.append(f"Câu {idx + 1}: Đúng{exp_suffix}")
+                    else:
+                        explanations.append(f"Câu {idx + 1}: Sai{exp_suffix}")
 
             if start_time_iso:
                 try:
@@ -361,42 +546,32 @@ class AssessmentUseCase:
                 except ValueError:
                     pass
 
-            if total_questions == 0:
-                score_percent = 0.0
-                explanations.append(
-                    "Kho câu hỏi rỗng hoặc chưa được cấu hình câu hỏi cho bài thi này."
-                )
-            else:
-                score_percent = round((correct_count / total_questions) * 100.0, 2)
-
-            prev_submissions = await repo.get_quiz_submissions(user_id, item_id)
-            all_scores = [sub.score_percent for sub in prev_submissions] + [
-                score_percent
-            ]
-            highest_score = max(all_scores)
-            passed = highest_score >= passing_threshold
-
             # 4. Handle Cooldown & Attempts tracking
-            failed_count = cooldown.failed_attempts_count if cooldown else 0
-            attempts_left = (
-                max_attempts - failed_count - 1 if not passed else max_attempts
-            )
-
-            if passed:
-                failed_count = 0
-                cooldown_until_iso = None
-                seconds_left = 0
+            cd_count = cooldown.failed_attempts_count if cooldown else 0
+            if cd_count > len(prev_submissions):
+                failed_count = cd_count
             else:
-                failed_count += 1
-                if failed_count >= max_attempts:
-                    # Activate Cooldown
+                failed_count = max(cd_count, len(prev_submissions)) + 1
+
+            attempts_left = max(0, max_attempts - failed_count)
+
+            if failed_count >= max_attempts and not preview:
+                if cooldown and cooldown.cooldown_until:
+                    until_dt = datetime.fromisoformat(cooldown.cooldown_until)
+                    if now < until_dt:
+                        seconds_left = int((until_dt - now).total_seconds())
+                    else:
+                        cooldown_until_dt = now + timedelta(hours=cooldown_hours)
+                        cooldown_until_iso = cooldown_until_dt.isoformat()
+                        seconds_left = int(cooldown_hours * 3600)
+                else:
                     cooldown_until_dt = now + timedelta(hours=cooldown_hours)
                     cooldown_until_iso = cooldown_until_dt.isoformat()
                     seconds_left = int(cooldown_hours * 3600)
-                    attempts_left = 0
-                else:
-                    cooldown_until_iso = None
-                    seconds_left = 0
+                attempts_left = 0
+            else:
+                cooldown_until_iso = cooldown.cooldown_until if cooldown else None
+                seconds_left = 0
 
             # Save submission (only if not preview)
             if not preview:
@@ -407,7 +582,7 @@ class AssessmentUseCase:
                     id=submission_id,
                     user_id=user_id,
                     item_id=item_id,
-                    selected_option_indexes=selected_option_indexes,
+                    selected_option_indexes=selected_option_indexes or [],
                     score_percent=score_percent,
                     passed=score_percent >= passing_threshold,
                     attempt_number=attempt_number,

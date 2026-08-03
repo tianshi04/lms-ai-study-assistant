@@ -36,7 +36,7 @@ export class AssessmentPage {
     this.honorAgreedBadge = page.getByTestId('honor-agreed-badge');
     this.submitQuizButton = page.getByRole('button', { name: /Submit Graded Quiz|Nộp bài thi/i });
     this.honorCheckbox = page.locator('.fixed.inset-0 input[type="checkbox"]').first();
-    this.agreeAndContinueButton = page.locator('.fixed.inset-0 button').filter({ hasText: /Tôi đồng ý \& Tiếp tục|I Agree \& Continue|Submitting/i }).first();
+    this.agreeAndContinueButton = page.locator('.fixed.inset-0 button').filter({ hasText: /Tôi đồng ý \& Tiếp tục|Đồng ý \& Nộp bài ngay|I Agree \& Continue|Submitting/i }).first();
 
     this.runLabButton = page.getByRole('button', { name: /Run & Submit Code/i });
 
@@ -65,30 +65,27 @@ export class AssessmentPage {
   }
 
   async agreeHonorCode() {
-    if (await this.honorAgreedBadge.isVisible().catch(() => false)) return;
-
-    // Click the button to open the honor code modal
-    await this.openHonorButton.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
-    if (!await this.openHonorButton.isVisible()) return;
-
-    await this.openHonorButton.click();
-
-    // Wait for modal to animate open and checkbox to appear
-    await this.honorCheckbox.waitFor({ state: 'visible', timeout: 5000 });
-    await this.honorCheckbox.click({ force: true });
-
-    // Wait for the submit button to be enabled then click
-    await this.agreeAndContinueButton.waitFor({ state: 'visible', timeout: 5000 });
-    await this.agreeAndContinueButton.click();
-    await this.honorAgreedBadge.waitFor({ state: 'visible', timeout: 10000 });
+    // Honor code is now integrated into quiz submission modal
+    if (await this.openHonorButton.isVisible().catch(() => false)) {
+      await this.openHonorButton.click();
+      await this.honorCheckbox.waitFor({ state: 'visible', timeout: 5000 });
+      await this.honorCheckbox.click({ force: true });
+      await this.agreeAndContinueButton.waitFor({ state: 'visible', timeout: 5000 });
+      await this.agreeAndContinueButton.click();
+    }
   }
 
   async submitQuiz() {
     await this.submitQuizButton.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
-    // If button is disabled (result already showing from prior session), skip click
     if (!await this.submitQuizButton.isVisible() || await this.submitQuizButton.isDisabled()) return;
     await this.submitQuizButton.scrollIntoViewIfNeeded();
     await this.submitQuizButton.click();
+
+    // Check modal checkbox and submit if confirmation modal opens
+    if (await this.honorCheckbox.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await this.honorCheckbox.click({ force: true });
+      await this.agreeAndContinueButton.click();
+    }
   }
 
   async submitPeerAssignment() {
