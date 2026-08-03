@@ -6,15 +6,26 @@ export const DropdownMenu = BaseMenu.Root;
 export const DropdownMenuTrigger = BaseMenu.Trigger;
 export const DropdownMenuPortal = BaseMenu.Portal;
 
+interface DropdownMenuContentProps extends React.ComponentProps<typeof BaseMenu.Popup> {
+  sideOffset?: number;
+  align?: "start" | "center" | "end";
+}
+
 export function DropdownMenuContent({
   className,
   children,
+  sideOffset = 12,
+  align = "end",
   ref,
   ...props
-}: React.ComponentProps<typeof BaseMenu.Popup>) {
+}: DropdownMenuContentProps) {
   return (
     <DropdownMenuPortal>
-      <BaseMenu.Positioner sideOffset={6} className="z-dropdown outline-none">
+      <BaseMenu.Positioner
+        sideOffset={sideOffset}
+        align={align}
+        className="z-dropdown outline-none"
+      >
         <BaseMenu.Popup
           ref={ref}
           className={cn(

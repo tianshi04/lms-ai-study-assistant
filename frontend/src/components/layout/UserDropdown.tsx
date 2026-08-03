@@ -66,20 +66,21 @@ export function UserDropdown() {
     const active = isActive(path);
     if (active) {
       return (
-        customActiveClasses || "bg-primary/10 text-primary font-bold justify-start gap-3 w-full"
+        customActiveClasses ||
+        "bg-primary-container text-on-primary-container font-bold justify-start gap-3 w-full rounded-xl px-3.5 py-2.5 my-0.5 transition-all shadow-xs"
       );
     }
-    return "text-foreground font-medium hover:bg-muted/70 justify-start gap-3 w-full";
+    return "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/70 font-medium justify-start gap-3 w-full rounded-xl px-3.5 py-2.5 my-0.5 transition-all";
   };
 
-  const getIconClasses = (path: string, defaultColorClass = "text-muted-foreground") => {
-    return isActive(path) ? "text-primary" : defaultColorClass;
+  const getIconClasses = (path: string) => {
+    return isActive(path) ? "text-on-primary-container" : "text-on-surface-variant";
   };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all cursor-pointer group p-0.5 border border-border hover:border-primary shrink-0"
+        className="relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all cursor-pointer group p-0.5 border border-outline-variant hover:border-primary shrink-0"
         aria-label={displayUserName}
       >
         <Image
@@ -88,26 +89,32 @@ export function UserDropdown() {
           width={36}
           height={36}
           unoptimized
-          className="w-9 h-9 rounded-full bg-primary/10 object-cover group-hover:scale-105 transition-transform"
+          className="w-9 h-9 rounded-full bg-primary-container object-cover group-hover:scale-105 transition-transform"
         />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent className="w-64 p-2 rounded-2xl shadow-2xl bg-card border border-border">
+      <DropdownMenuContent
+        sideOffset={14}
+        align="end"
+        className="w-64 p-1.5 rounded-2xl bg-card border border-outline-variant shadow-xl"
+      >
         {/* User Info Header with Avatar and Stacked Role Badge */}
-        <div className="flex items-center gap-3 px-3.5 py-3.5 border-b border-border mb-1 bg-muted/50 rounded-t-xl">
+        <div className="flex items-center gap-3.5 px-3.5 py-3 border-b border-outline-variant mb-1.5">
           <Image
             src={avatarSrc}
             alt={displayUserName}
             width={48}
             height={48}
             unoptimized
-            className="w-12 h-12 rounded-full bg-primary/10 object-cover ring-2 ring-primary/30 shrink-0"
+            className="w-11 h-11 rounded-full bg-primary-container object-cover ring-2 ring-primary/20 shrink-0"
           />
           <div className="min-w-0 flex-1 space-y-1">
-            <p className="text-sm font-bold text-foreground truncate">{displayUserName}</p>
-            <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+            <p className="text-sm font-bold text-on-surface truncate leading-snug">
+              {displayUserName}
+            </p>
+            <p className="text-xs text-on-surface-variant truncate">{userEmail}</p>
             <div>
-              <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">
+              <span className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container border border-primary/20 uppercase tracking-wider">
                 {roleLabel}
               </span>
             </div>
@@ -140,7 +147,7 @@ export function UserDropdown() {
           render={<Link href="/certificates" />}
           className={getItemClasses("/certificates")}
         >
-          <Award className={`w-4.5 h-4.5 ${getIconClasses("/certificates", "text-primary")}`} />
+          <Award className={`w-4.5 h-4.5 ${getIconClasses("/certificates")}`} />
           <span>{"Chứng chỉ của tôi"}</span>
         </DropdownMenuItem>
 
@@ -148,9 +155,7 @@ export function UserDropdown() {
           render={<Link href="/financial-aid" />}
           className={getItemClasses("/financial-aid")}
         >
-          <CircleDollarSign
-            className={`w-4.5 h-4.5 ${getIconClasses("/financial-aid", "text-success")}`}
-          />
+          <CircleDollarSign className={`w-4.5 h-4.5 ${getIconClasses("/financial-aid")}`} />
           <span>{"Đơn Hỗ trợ tài chính"}</span>
         </DropdownMenuItem>
 
@@ -159,9 +164,7 @@ export function UserDropdown() {
             render={<Link href="/become-an-instructor" />}
             className={getItemClasses("/become-an-instructor")}
           >
-            <GraduationCap
-              className={`w-4.5 h-4.5 ${getIconClasses("/become-an-instructor", "text-primary")}`}
-            />
+            <GraduationCap className={`w-4.5 h-4.5 ${getIconClasses("/become-an-instructor")}`} />
             <span className="font-semibold">{"Đăng ký làm Giảng viên"}</span>
           </DropdownMenuItem>
         )}
@@ -172,18 +175,14 @@ export function UserDropdown() {
               render={<Link href="/instructor/courses" />}
               className={getItemClasses("/instructor/courses")}
             >
-              <Layers
-                className={`w-4.5 h-4.5 ${getIconClasses("/instructor/courses", "text-primary")}`}
-              />
+              <Layers className={`w-4.5 h-4.5 ${getIconClasses("/instructor/courses")}`} />
               <span>{"Giảng Viên"}</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               render={<Link href="/instructor/profile" />}
               className={getItemClasses("/instructor/profile")}
             >
-              <Edit
-                className={`w-4.5 h-4.5 ${getIconClasses("/instructor/profile", "text-primary")}`}
-              />
+              <Edit className={`w-4.5 h-4.5 ${getIconClasses("/instructor/profile")}`} />
               <span>{"Hồ sơ & Chữ ký Giảng viên"}</span>
             </DropdownMenuItem>
           </>
@@ -194,9 +193,7 @@ export function UserDropdown() {
             render={<Link href="/partner/settings" />}
             className={getItemClasses("/partner/settings")}
           >
-            <Settings
-              className={`w-4.5 h-4.5 ${getIconClasses("/partner/settings", "text-warning")}`}
-            />
+            <Settings className={`w-4.5 h-4.5 ${getIconClasses("/partner/settings")}`} />
             <span>{"Cấu hình Đối tác"}</span>
           </DropdownMenuItem>
         )}
@@ -207,60 +204,50 @@ export function UserDropdown() {
               render={<Link href="/admin/dashboard" />}
               className={getItemClasses("/admin/dashboard")}
             >
-              <LayoutDashboard
-                className={`w-4.5 h-4.5 ${getIconClasses("/admin/dashboard", "text-primary")}`}
-              />
+              <LayoutDashboard className={`w-4.5 h-4.5 ${getIconClasses("/admin/dashboard")}`} />
               <span>{"Trang quản trị"}</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               render={<Link href="/admin/applications" />}
               className={getItemClasses("/admin/applications")}
             >
-              <CheckCircle2
-                className={`w-4.5 h-4.5 ${getIconClasses("/admin/applications", "text-success")}`}
-              />
+              <CheckCircle2 className={`w-4.5 h-4.5 ${getIconClasses("/admin/applications")}`} />
               <span>{"Duyệt đơn Giảng viên"}</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               render={<Link href="/admin/partners" />}
               className={getItemClasses("/admin/partners")}
             >
-              <Building2
-                className={`w-4.5 h-4.5 ${getIconClasses("/admin/partners", "text-primary")}`}
-              />
+              <Building2 className={`w-4.5 h-4.5 ${getIconClasses("/admin/partners")}`} />
               <span>{"Quản trị Đối tác"}</span>
             </DropdownMenuItem>
           </>
         )}
 
-        <div className="border-t border-border my-1" />
+        <div className="border-t border-outline-variant my-1.5" />
 
         <DropdownMenuItem
           render={<Link href="/partners/stanford-online" />}
           className={getItemClasses("/partners/stanford-online")}
         >
-          <Globe
-            className={`w-4.5 h-4.5 ${getIconClasses("/partners/stanford-online", "text-success")}`}
-          />
+          <Globe className={`w-4.5 h-4.5 ${getIconClasses("/partners/stanford-online")}`} />
           <span>{"Giới thiệu Đối tác"}</span>
         </DropdownMenuItem>
 
-        <div className="border-t border-border my-1" />
+        <div className="border-t border-outline-variant my-1.5" />
 
         <DropdownMenuItem render={<Link href="/landing" />} className={getItemClasses("/landing")}>
-          <ExternalLink
-            className={`w-4.5 h-4.5 ${getIconClasses("/landing", "text-muted-foreground")}`}
-          />
+          <ExternalLink className={`w-4.5 h-4.5 ${getIconClasses("/landing")}`} />
           <span>{"Xem trang công khai"}</span>
         </DropdownMenuItem>
 
-        <div className="border-t border-border my-1" />
+        <div className="border-t border-outline-variant my-1.5" />
 
         <DropdownMenuItem
           onClick={handleLogout}
-          className="text-destructive hover:bg-destructive/10 cursor-pointer px-3.5 py-2.5 text-sm font-medium justify-start gap-3 w-full"
+          className="text-error hover:bg-error-container/40 cursor-pointer px-3.5 py-2.5 text-sm font-medium justify-start gap-3 w-full rounded-xl my-0.5 transition-all"
         >
-          <LogOut className="w-4.5 h-4.5" />
+          <LogOut className="w-4.5 h-4.5 text-error" />
           <span>{"Thoát"}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
