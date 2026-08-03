@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { MessageSquare, Plus, Pin, ChevronUp, ChevronDown, Reply } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
@@ -39,7 +39,7 @@ function formatRoleName(role: string): string {
   return role;
 }
 
-export default function ForumPage() {
+function ForumPageContent() {
   const locale = "vi";
   const toast = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
@@ -930,5 +930,22 @@ export default function ForumPage() {
         isNotificationTarget={urlThreadId === selectedModalThreadId}
       />
     </>
+  );
+}
+
+export default function ForumPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[60vh] flex items-center justify-center text-muted-foreground">
+          <div className="flex items-center gap-3">
+            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <span aria-live="polite">Đang tải diễn đàn…</span>
+          </div>
+        </div>
+      }
+    >
+      <ForumPageContent />
+    </Suspense>
   );
 }

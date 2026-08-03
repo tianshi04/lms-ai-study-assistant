@@ -5,6 +5,8 @@ import { getPublicRpcServerClient } from "@/lib/server_connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CourseDetailClient } from "./CourseDetailClient";
 
+export const instant = false;
+
 /**
  * Best Practice Next.js 16 Cache Components:
  * Metadata is cached for days and invalidated on-demand via updateTag(`course-${courseId}`).
@@ -53,26 +55,37 @@ export async function generateMetadata({
  * Triggered on-demand via updateTag(`course-${courseId}`) when course content updates.
  */
 async function getInitialCourseDetailData(courseId: string) {
-  "use cache";
-  cacheLife("hours");
-  cacheTag("courses", `course-${courseId}`);
-
   const queryClient = new QueryClient();
   const client = getPublicRpcServerClient(CatalogService);
+
+  const fetchWithTimeout = async <T,>(fn: () => Promise<T>, fallback: T): Promise<T> => {
+    try {
+      const timeoutPromise = new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error("Prerender timeout")), 2000),
+      );
+      return await Promise.race([fn(), timeoutPromise]);
+    } catch {
+      return fallback;
+    }
+  };
 
   await Promise.all([
     queryClient.prefetchQuery({
       queryKey: ["courseDetail", courseId],
       queryFn: async () => {
-        const res = await client.getCourseDetail({ idOrSlug: courseId });
-        return res.course ?? null;
+        return fetchWithTimeout(async () => {
+          const res = await client.getCourseDetail({ idOrSlug: courseId });
+          return res.course ?? null;
+        }, null);
       },
     }),
     queryClient.prefetchQuery({
       queryKey: ["courseReviews", courseId],
       queryFn: async () => {
-        const res = await client.listCourseReviews({ courseId });
-        return res.reviews || [];
+        return fetchWithTimeout(async () => {
+          const res = await client.listCourseReviews({ courseId });
+          return res.reviews || [];
+        }, []);
       },
     }),
   ]);
