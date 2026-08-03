@@ -65,11 +65,13 @@ export class AssessmentPage {
   }
 
   async agreeHonorCode() {
+    if (await this.honorAgreedBadge.isVisible().catch(() => false)) return;
+
     // Click the button to open the honor code modal
     await this.openHonorButton.waitFor({ state: 'visible', timeout: 5000 }).catch(() => null);
-    if (await this.openHonorButton.isVisible()) {
-      await this.openHonorButton.click();
-    }
+    if (!await this.openHonorButton.isVisible()) return;
+
+    await this.openHonorButton.click();
 
     // Wait for modal to animate open and checkbox to appear
     await this.honorCheckbox.waitFor({ state: 'visible', timeout: 5000 });
