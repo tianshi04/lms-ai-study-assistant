@@ -59,7 +59,7 @@ export function AIChatbot() {
   });
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col items-end pointer-events-auto">
+    <div className="fixed bottom-6 right-6 z-widget flex flex-col items-end pointer-events-auto">
       {/* Floating Chat Box Window */}
       {isOpen && (
         <div className="mb-3 w-[360px] sm:w-[400px] h-[500px] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-scale-up">

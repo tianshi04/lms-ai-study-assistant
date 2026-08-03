@@ -403,7 +403,7 @@ export default function InstructorCoursesPage() {
 
         {/* Modal Soạn / Chỉnh Sửa Khóa Học */}
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-modal flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
             <div className="bg-card border border-border rounded-3xl p-8 max-w-xl w-full shadow-2xl">
               <div className="flex justify-between items-center mb-6 pb-4 border-b border-border">
                 <h2 className="text-xl font-bold text-foreground">

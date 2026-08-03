@@ -83,6 +83,15 @@
   --animate-fade-in: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-slide-in-right: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-scale-up: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  /* Stacking & Layer Tokens */
+  --z-deep: -1;
+  --z-base: 0;
+  --z-sticky: 100;
+  --z-dropdown: 200;
+  --z-widget: 300;
+  --z-modal: 1000;
+  --z-toast: 2000;
 }
 
 :root {
@@ -327,7 +336,7 @@ input::-ms-clear {
 
 /* CopilotKit Popup Positioning & Layout Fixes */
 [data-copilotkit] {
-  z-index: 9999 !important;
+  z-index: 300 !important;
 }
 
 /* Fix popup container bounds to prevent overflow off-screen */

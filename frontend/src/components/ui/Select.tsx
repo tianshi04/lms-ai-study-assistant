@@ -38,7 +38,7 @@ export function SelectContent({
 }: React.ComponentProps<typeof BaseSelect.Popup>) {
   return (
     <SelectPortal>
-      <BaseSelect.Positioner sideOffset={6} className="z-50 outline-none">
+      <BaseSelect.Positioner sideOffset={6} className="z-dropdown outline-none">
         <BaseSelect.Popup
           ref={ref}
           className={cn(

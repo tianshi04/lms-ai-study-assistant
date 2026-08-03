@@ -18,7 +18,7 @@ export function DialogBackdrop({
     <BaseDialog.Backdrop
       ref={ref}
       className={cn(
-        "fixed inset-0 z-50 bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-150",
+        "fixed inset-0 z-modal bg-black/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-150",
         className,
       )}
       {...props}
@@ -51,7 +51,7 @@ export function DialogContent({
   return (
     <DialogPortal>
       <DialogBackdrop />
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="fixed inset-0 z-modal flex items-center justify-center p-4 overflow-y-auto">
         <BaseDialog.Popup
           ref={ref}
           className={cn(

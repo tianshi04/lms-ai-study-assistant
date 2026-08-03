@@ -126,7 +126,7 @@ function ToastViewportList() {
 
   return (
     <BaseToast.Portal>
-      <BaseToast.Viewport className="fixed top-4 right-4 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none p-4 sm:p-0">
+      <BaseToast.Viewport className="fixed top-4 right-4 z-toast flex flex-col gap-2.5 max-w-sm w-full pointer-events-none p-4 sm:p-0">
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} />
         ))}

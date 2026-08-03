@@ -14,7 +14,7 @@ export function DropdownMenuContent({
 }: React.ComponentProps<typeof BaseMenu.Popup>) {
   return (
     <DropdownMenuPortal>
-      <BaseMenu.Positioner sideOffset={6} className="z-50 outline-none">
+      <BaseMenu.Positioner sideOffset={6} className="z-dropdown outline-none">
         <BaseMenu.Popup
           ref={ref}
           className={cn(
