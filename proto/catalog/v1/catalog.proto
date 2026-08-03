@@ -600,6 +600,15 @@ service CatalogService {
   rpc UploadMediaFile(UploadMediaFileRequest) returns (UploadMediaFileResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc AddCourseCollaborator(AddCourseCollaboratorRequest) returns (AddCourseCollaboratorResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListCourseCollaborators(ListCourseCollaboratorsRequest) returns (ListCourseCollaboratorsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc RemoveCourseCollaborator(RemoveCourseCollaboratorRequest) returns (RemoveCourseCollaboratorResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
 }
 
 message ParseScormPackageRequest {
@@ -655,4 +664,43 @@ message UploadMediaFileRequest {
 message UploadMediaFileResponse {
   string file_url = 1;
   string object_key = 2;
+}
+
+message CourseCollaboratorDetail {
+  string collaborator_id = 1;
+  string user_id = 2;
+  string email = 3;
+  string full_name = 4;
+  string avatar_url = 5;
+  string role = 6;
+  string added_at = 7;
+}
+
+message AddCourseCollaboratorRequest {
+  string course_id = 1;
+  string email = 2;
+  string role = 3;
+}
+
+message AddCourseCollaboratorResponse {
+  CourseCollaboratorDetail collaborator = 1;
+  repeated string co_instructor_ids = 2;
+}
+
+message ListCourseCollaboratorsRequest {
+  string course_id = 1;
+}
+
+message ListCourseCollaboratorsResponse {
+  repeated CourseCollaboratorDetail collaborators = 1;
+}
+
+message RemoveCourseCollaboratorRequest {
+  string course_id = 1;
+  string user_id = 2;
+}
+
+message RemoveCourseCollaboratorResponse {
+  bool success = 1;
+  repeated string co_instructor_ids = 2;
 }

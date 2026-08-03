@@ -13,6 +13,7 @@ import {
   type Course,
   type Category,
   type CourseReview,
+  type CourseCollaboratorDetail,
 } from "@/gen/catalog/v1/catalog_pb";
 
 /**
@@ -60,6 +61,7 @@ import {
   type User,
   type EnterpriseSeat,
   type InstructorApplication,
+  type OrganizationMemberDetail,
 } from "@/gen/identity/v1/identity_pb";
 import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
 import {
@@ -920,6 +922,161 @@ export function useSubscribeCourseraPlusMutation(
     },
   });
 }
+
+// --- Organization Member Hooks ---
+
+export function useOrganizationMembersQuery(
+  organizationId: string = "org_default",
+  options?: Partial<UseQueryOptions<OrganizationMemberDetail[], Error>>,
+) {
+  return useQuery<OrganizationMemberDetail[], Error>({
+    queryKey: ["organizationMembers", organizationId],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.listOrganizationMembers({ organizationId });
+      return res.members || [];
+    },
+    enabled: !!organizationId,
+    ...options,
+  });
+}
+
+export function useAddOrganizationMemberMutation(
+  options?: Partial<
+    UseMutationOptions<
+      OrganizationMemberDetail,
+      Error,
+      { email: string; roleId: string; organizationId?: string }
+    >
+  >,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<
+    OrganizationMemberDetail,
+    Error,
+    { email: string; roleId: string; organizationId?: string }
+  >({
+    mutationFn: async ({ email, roleId, organizationId = "org_default" }) => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.addOrganizationMember({
+        email,
+        roleId,
+        organizationId,
+      });
+      if (!res.member) {
+        throw new Error("Không thể thêm thành viên");
+      }
+      return res.member;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      const orgId = variables.organizationId || "org_default";
+      queryClient.invalidateQueries({ queryKey: ["organizationMembers", orgId] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
+export function useRemoveOrganizationMemberMutation(
+  options?: Partial<
+    UseMutationOptions<boolean, Error, { userId: string; organizationId?: string }>
+  >,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<boolean, Error, { userId: string; organizationId?: string }>({
+    mutationFn: async ({ userId, organizationId = "org_default" }) => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.removeOrganizationMember({
+        userId,
+        organizationId,
+      });
+      return res.success;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      const orgId = variables.organizationId || "org_default";
+      queryClient.invalidateQueries({ queryKey: ["organizationMembers", orgId] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
+/**
+ * Hook fetch danh sách người hợp tác (Co-Instructor & TA) của khóa học
+ */
+export function useCourseCollaboratorsQuery(
+  courseId: string,
+  options?: Partial<UseQueryOptions<CourseCollaboratorDetail[], Error>>,
+) {
+  return useQuery<CourseCollaboratorDetail[], Error>({
+    queryKey: ["courseCollaborators", courseId],
+    queryFn: async () => {
+      if (!courseId) return [];
+      const client = getRpcClient(CatalogService);
+      const res = await client.listCourseCollaborators({ courseId });
+      return res.collaborators || [];
+    },
+    enabled: !!courseId,
+    ...options,
+  });
+}
+
+/**
+ * Hook mời thêm người hợp tác (Co-Instructor hoặc TA) cho khóa học
+ */
+export function useAddCourseCollaboratorMutation(
+  options?: Partial<
+    UseMutationOptions<
+      CourseCollaboratorDetail,
+      Error,
+      { courseId: string; email: string; role: string }
+    >
+  >,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<
+    CourseCollaboratorDetail,
+    Error,
+    { courseId: string; email: string; role: string }
+  >({
+    mutationFn: async ({ courseId, email, role }) => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.addCourseCollaborator({ courseId, email, role });
+      if (!res.collaborator) throw new Error("Thao tác thêm người hợp tác thất bại.");
+      return res.collaborator;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["courseCollaborators", variables.courseId] });
+      queryClient.invalidateQueries({ queryKey: ["courseDetail", variables.courseId] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
+/**
+ * Hook xóa người hợp tác khỏi khóa học
+ */
+export function useRemoveCourseCollaboratorMutation(
+  options?: Partial<UseMutationOptions<boolean, Error, { courseId: string; userId: string }>>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<boolean, Error, { courseId: string; userId: string }>({
+    mutationFn: async ({ courseId, userId }) => {
+      const client = getRpcClient(CatalogService);
+      const res = await client.removeCourseCollaborator({ courseId, userId });
+      return res.success;
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["courseCollaborators", variables.courseId] });
+      queryClient.invalidateQueries({ queryKey: ["courseDetail", variables.courseId] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
+// --- Notification Hooks ---
 
 import {
   NotificationService,

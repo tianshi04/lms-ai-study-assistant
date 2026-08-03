@@ -5,11 +5,9 @@ from sqlalchemy import (
     Enum as SQLEnum,
     ForeignKey,
     Integer,
-    JSON,
     String,
     Text,
 )
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.modules.identity.domain.constants import (
@@ -63,30 +61,6 @@ class OrganizationModel(Base):
     created_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
 
 
-class OrganizationRoleModel(Base):
-    __tablename__ = "organization_roles"
-
-    id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    organization_id: Mapped[Optional[str]] = mapped_column(
-        String(64),
-        ForeignKey("organizations.id", ondelete="CASCADE"),
-        nullable=True,
-        index=True,
-    )
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
-    parent_role_id: Mapped[Optional[str]] = mapped_column(
-        String(64),
-        ForeignKey("organization_roles.id", ondelete="SET NULL"),
-        nullable=True,
-    )
-    permissions: Mapped[list[str]] = mapped_column(
-        JSONB().with_variant(JSON, "sqlite"),
-        nullable=False,
-        default=list,
-        server_default="[]",
-    )
-
-
 class OrganizationMemberModel(Base):
     __tablename__ = "organization_members"
 
@@ -103,11 +77,7 @@ class OrganizationMemberModel(Base):
         nullable=False,
         index=True,
     )
-    role_id: Mapped[str] = mapped_column(
-        String(64),
-        ForeignKey("organization_roles.id", ondelete="RESTRICT"),
-        nullable=False,
-    )
+    role_id: Mapped[str] = mapped_column(String(64), nullable=False, default="MEMBER")
     status: Mapped[str] = mapped_column(
         String(32), nullable=False, default="ACTIVE", server_default="ACTIVE"
     )

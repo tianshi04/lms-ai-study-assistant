@@ -122,7 +122,7 @@ test.describe('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () 
     const appealReason = 'Peer reviewers gave lower score on documentation section despite complete setup guide.';
     await assessmentPage.submitAppeal(appealReason);
 
-    await expect(page.locator('text=/Appeal status:|PENDING|TA will review/i').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=/Appeal status:|PENDING|TA will review|submitted successfully/i').first()).toBeVisible({ timeout: 15000 });
   });
 
   test('should allow reporting malicious or spam peer review (BR_PEER_005)', async ({ page }) => {

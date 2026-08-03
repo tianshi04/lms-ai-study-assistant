@@ -1177,3 +1177,66 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 item.order_index = idx
         await self.session.commit()
         return True
+
+    async def add_course_collaborator(
+        self, course_id: str, user_id: str, role: str = "co_instructor"
+    ) -> bool:
+        stmt = select(CourseCollaboratorModel).where(
+            CourseCollaboratorModel.course_id == course_id,
+            CourseCollaboratorModel.user_id == user_id,
+        )
+        res = await self.session.execute(stmt)
+        collab = res.scalar_one_or_none()
+        if collab:
+            collab.role = role
+        else:
+            collab = CourseCollaboratorModel(
+                id=f"collab_{course_id}_{user_id}",
+                course_id=course_id,
+                user_id=user_id,
+                role=role,
+                created_at=datetime.now(timezone.utc).isoformat(),
+            )
+            self.session.add(collab)
+        await self.session.commit()
+        return True
+
+    async def remove_course_collaborator(self, course_id: str, user_id: str) -> bool:
+        stmt = select(CourseCollaboratorModel).where(
+            CourseCollaboratorModel.course_id == course_id,
+            CourseCollaboratorModel.user_id == user_id,
+        )
+        res = await self.session.execute(stmt)
+        collab = res.scalar_one_or_none()
+        if not collab:
+            return False
+        await self.session.delete(collab)
+        await self.session.commit()
+        return True
+
+    async def list_course_collaborators_with_details(
+        self, course_id: str
+    ) -> list[dict]:
+        from src.modules.identity.infrastructure.models import UserModel
+
+        stmt = (
+            select(CourseCollaboratorModel, UserModel)
+            .join(UserModel, UserModel.id == CourseCollaboratorModel.user_id)
+            .where(CourseCollaboratorModel.course_id == course_id)
+        )
+        res = await self.session.execute(stmt)
+        rows = res.all()
+        result = []
+        for collab_model, user_model in rows:
+            result.append(
+                {
+                    "collaborator_id": collab_model.id,
+                    "user_id": user_model.id,
+                    "email": user_model.email,
+                    "full_name": user_model.full_name,
+                    "avatar_url": user_model.avatar_url or "",
+                    "role": collab_model.role,
+                    "added_at": collab_model.created_at or "",
+                }
+            )
+        return result

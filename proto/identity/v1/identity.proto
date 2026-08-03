@@ -189,6 +189,45 @@ message ReviewInstructorApplicationResponse {
   InstructorApplication application = 1;
 }
 
+message OrganizationMemberDetail {
+  string member_id = 1;
+  string user_id = 2;
+  string email = 3;
+  string full_name = 4;
+  string avatar_url = 5;
+  string role_id = 6;
+  string role_name = 7;
+  string status = 8;
+  string joined_at = 9;
+}
+
+message AddOrganizationMemberRequest {
+  string email = 1;
+  string role_id = 2;
+  string organization_id = 3;
+}
+
+message AddOrganizationMemberResponse {
+  OrganizationMemberDetail member = 1;
+}
+
+message ListOrganizationMembersRequest {
+  string organization_id = 1;
+}
+
+message ListOrganizationMembersResponse {
+  repeated OrganizationMemberDetail members = 1;
+}
+
+message RemoveOrganizationMemberRequest {
+  string user_id = 1;
+  string organization_id = 2;
+}
+
+message RemoveOrganizationMemberResponse {
+  bool success = 1;
+}
+
 service IdentityService {
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
@@ -230,6 +269,15 @@ service IdentityService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ReviewInstructorApplication(ReviewInstructorApplicationRequest) returns (ReviewInstructorApplicationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc AddOrganizationMember(AddOrganizationMemberRequest) returns (AddOrganizationMemberResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListOrganizationMembers(ListOrganizationMembersRequest) returns (ListOrganizationMembersResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc RemoveOrganizationMember(RemoveOrganizationMemberRequest) returns (RemoveOrganizationMemberResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }

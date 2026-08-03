@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import Optional
 from src.modules.identity.domain.constants import INTERNAL_SYSTEM_ORG_ID
+from src.shared.permissions import OrgRole
 from src.modules.identity.domain.entities import (
     ApplicationStatus,
     InstructorApplication,
@@ -57,7 +58,7 @@ class ReviewInstructorApplicationUseCase:
                 await self._org_repo.add_member(
                     user_id=application.user_id,
                     org_id=INTERNAL_SYSTEM_ORG_ID,
-                    role_id="role_org_instructor",
+                    role_id=OrgRole.INSTRUCTOR.value,
                     status="ACTIVE",
                 )
         else:

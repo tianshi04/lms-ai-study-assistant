@@ -371,3 +371,89 @@ class IdentityHandler(IdentityService):
             )
         except ValueError as e:
             raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
+    async def add_organization_member(
+        self,
+        request: pb.AddOrganizationMemberRequest,
+        ctx: RequestContext[
+            pb.AddOrganizationMemberRequest,
+            pb.AddOrganizationMemberResponse,
+        ],
+    ) -> pb.AddOrganizationMemberResponse:
+        current_user = require_current_user()
+        org_id = request.organization_id.strip()
+        try:
+            m = await self._use_case.add_organization_member(
+                email=request.email,
+                role_id=request.role_id,
+                organization_id=org_id,
+                current_user=current_user,
+            )
+            detail = pb.OrganizationMemberDetail(
+                member_id=m["member_id"],
+                user_id=m["user_id"],
+                email=m["email"],
+                full_name=m["full_name"],
+                avatar_url=m["avatar_url"],
+                role_id=m["role_id"],
+                role_name=m["role_name"],
+                status=m["status"],
+                joined_at=m["joined_at"],
+            )
+            return pb.AddOrganizationMemberResponse(member=detail)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
+    async def list_organization_members(
+        self,
+        request: pb.ListOrganizationMembersRequest,
+        ctx: RequestContext[
+            pb.ListOrganizationMembersRequest,
+            pb.ListOrganizationMembersResponse,
+        ],
+    ) -> pb.ListOrganizationMembersResponse:
+        current_user = require_current_user()
+        org_id = request.organization_id.strip()
+        try:
+            members_data = await self._use_case.list_organization_members(
+                organization_id=org_id, current_user=current_user
+            )
+            pb_members = [
+                pb.OrganizationMemberDetail(
+                    member_id=m["member_id"],
+                    user_id=m["user_id"],
+                    email=m["email"],
+                    full_name=m["full_name"],
+                    avatar_url=m["avatar_url"],
+                    role_id=m["role_id"],
+                    role_name=m["role_name"],
+                    status=m["status"],
+                    joined_at=m["joined_at"],
+                )
+                for m in members_data
+            ]
+            return pb.ListOrganizationMembersResponse(members=pb_members)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+
+    async def remove_organization_member(
+        self,
+        request: pb.RemoveOrganizationMemberRequest,
+        ctx: RequestContext[
+            pb.RemoveOrganizationMemberRequest,
+            pb.RemoveOrganizationMemberResponse,
+        ],
+    ) -> pb.RemoveOrganizationMemberResponse:
+        current_user = require_current_user()
+        org_id = request.organization_id.strip()
+        try:
+            success = await self._use_case.remove_organization_member(
+                user_id=request.user_id,
+                organization_id=org_id,
+                current_user=current_user,
+            )
+            return pb.RemoveOrganizationMemberResponse(success=success)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
