@@ -1,4 +1,5 @@
 import asyncio
+import posixpath
 from contextlib import asynccontextmanager
 from typing import Any, cast
 
@@ -48,7 +49,7 @@ from opentelemetry.instrumentation.starlette import StarletteInstrumentor
 from src.shared.config import settings
 from src.shared.infrastructure.interceptors import AuthInterceptor, ErrorInterceptor
 from src.shared.infrastructure.logging import setup_logging
-from src.shared.infrastructure.middlewares import RequestIDMiddleware
+from src.shared.infrastructure.middlewares import AssetAuthMiddleware, RequestIDMiddleware
 from src.shared.infrastructure.telemetry import setup_telemetry
 
 setup_logging()
@@ -187,63 +188,73 @@ notification_app = NotificationServiceASGIApplication(
 )
 
 
+# Allowed CORS origins for asset proxy
+_ALLOWED_ASSET_ORIGINS = {"http://localhost:3000", "http://127.0.0.1:3000"}
+
+
+def _get_cors_origin(request) -> str:
+    """Return the request origin only if it is in the allow-list, otherwise empty string."""
+    origin = request.headers.get("origin", "")
+    return origin if origin in _ALLOWED_ASSET_ORIGINS else ""
+
+
 async def proxy_media(request):
     path = request.path_params["path"]
+
+    # --- Sanitize path: chặn path traversal ("../../etc/passwd") ---
+    normalized = posixpath.normpath(path).lstrip("/")
+    if ".." in normalized or not normalized:
+        return Response(status_code=400, content="Invalid path")
+
     from src.shared.infrastructure.s3_storage import get_s3_storage_service
 
     s3 = get_s3_storage_service()
 
+    cors_origin = _get_cors_origin(request)
+
     if request.method == "OPTIONS":
-        return Response(
-            status_code=204,
-            headers={
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type, Range, Authorization",
-                "Access-Control-Expose-Headers": "Content-Range, Accept-Ranges, Content-Length",
-            },
-        )
+        resp_headers = {
+            "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Range, Authorization",
+            "Access-Control-Expose-Headers": "Content-Range, Accept-Ranges, Content-Length",
+        }
+        if cors_origin:
+            resp_headers["Access-Control-Allow-Origin"] = cors_origin
+        return Response(status_code=204, headers=resp_headers)
 
-    s3_client_ctx = s3._get_client()
-    s3_client = await s3_client_ctx.__aenter__()
+    # --- Dùng async with để đảm bảo S3 client context luôn được cleanup ---
+    async with s3._get_client() as s3_client:
+        params = {"Bucket": s3.bucket_name, "Key": normalized}
+        range_header = request.headers.get("range")
+        if range_header:
+            params["Range"] = range_header
 
-    params = {"Bucket": s3.bucket_name, "Key": path}
-    range_header = request.headers.get("range")
-    if range_header:
-        params["Range"] = range_header
-
-    try:
-        s3_resp = await s3_client.get_object(**params)
-    except Exception as e:
-        await s3_client_ctx.__aexit__(None, None, None)
-        return Response(status_code=404, content=str(e))
-
-    headers = {}
-    if "ContentType" in s3_resp:
-        headers["Content-Type"] = s3_resp["ContentType"]
-    if "ContentLength" in s3_resp:
-        headers["Content-Length"] = str(s3_resp["ContentLength"])
-    if "ContentRange" in s3_resp:
-        headers["Content-Range"] = s3_resp["ContentRange"]
-        status_code = 206
-    else:
-        status_code = 200
-
-    headers["Accept-Ranges"] = "bytes"
-    headers["Access-Control-Allow-Origin"] = "*"
-
-    async def generate():
         try:
-            body = s3_resp["Body"]
-            while True:
-                chunk = await body.read(256 * 1024)  # 256KB chunks
-                if not chunk:
-                    break
-                yield chunk
-        finally:
-            await s3_client_ctx.__aexit__(None, None, None)
+            s3_resp = await s3_client.get_object(**params)
+        except Exception as e:
+            # --- Không leak chi tiết lỗi S3 (bucket name, region) ra client ---
+            logger.warning("S3 proxy error for key '%s': %s", normalized, e)
+            return Response(status_code=404, content="File not found")
 
-    return StreamingResponse(generate(), status_code=status_code, headers=headers)
+        headers = {}
+        if "ContentType" in s3_resp:
+            headers["Content-Type"] = s3_resp["ContentType"]
+        if "ContentLength" in s3_resp:
+            headers["Content-Length"] = str(s3_resp["ContentLength"])
+        if "ContentRange" in s3_resp:
+            headers["Content-Range"] = s3_resp["ContentRange"]
+            status_code = 206
+        else:
+            status_code = 200
+
+        headers["Accept-Ranges"] = "bytes"
+        if cors_origin:
+            headers["Access-Control-Allow-Origin"] = cors_origin
+
+        # Đọc toàn bộ body trong context rồi trả về, đảm bảo client được cleanup
+        body_data = await s3_resp["Body"].read()
+
+    return Response(content=body_data, status_code=status_code, headers=headers)
 
 
 async def health_check(request):
@@ -278,6 +289,7 @@ routes = [
 
 
 middleware = [
+    Middleware(AssetAuthMiddleware),
     Middleware(RequestIDMiddleware),
     Middleware(
         CORSMiddleware,

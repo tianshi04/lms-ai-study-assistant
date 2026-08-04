@@ -717,7 +717,9 @@ class CatalogUseCase:
         await s3.ensure_bucket_exists()
         ext = filename.split(".")[-1] if "." in filename else "bin"
         safe_folder = folder.strip("/") if folder else "videos"
-        object_key = f"{safe_folder}/{uuid.uuid4().hex[:12]}.{ext}"
+        PUBLIC_FOLDERS = {"thumbnails", "banners", "avatars"}
+        prefix = "public" if safe_folder in PUBLIC_FOLDERS else "private"
+        object_key = f"{prefix}/{safe_folder}/{uuid.uuid4().hex[:12]}.{ext}"
 
         upload_url = await s3.generate_presigned_upload_url(
             object_key, content_type=content_type or "application/octet-stream"
@@ -738,7 +740,9 @@ class CatalogUseCase:
         await s3.ensure_bucket_exists()
         ext = filename.split(".")[-1] if "." in filename else "bin"
         safe_folder = folder.strip("/") if folder else "videos"
-        object_key = f"{safe_folder}/{uuid.uuid4().hex[:12]}.{ext}"
+        PUBLIC_FOLDERS = {"thumbnails", "banners", "avatars"}
+        prefix = "public" if safe_folder in PUBLIC_FOLDERS else "private"
+        object_key = f"{prefix}/{safe_folder}/{uuid.uuid4().hex[:12]}.{ext}"
 
         await s3.upload_file(
             file_bytes=file_bytes,
