@@ -8,8 +8,8 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { VideoUploadWidget } from "@/components/ui/VideoUploadWidget";
-import { InVideoQuizEditor, type InVideoQuizItem } from "@/components/ui/InVideoQuizEditor";
+import { VideoUploadWidget } from "@/components/course/VideoUploadWidget";
+import { InVideoQuizEditor, type InVideoQuizItem } from "@/components/course/InVideoQuizEditor";
 import type { LearningItemPayload } from "../../hooks/useCourseBuilder";
 import {
   Select,

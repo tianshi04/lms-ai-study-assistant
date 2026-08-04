@@ -10,7 +10,7 @@ import {
 } from "@/gen/catalog/v1/catalog_pb";
 import { AssessmentService, type QuestionBank } from "@/gen/assessment/v1/assessment_pb";
 import { useToast } from "@/components/ui/Toast";
-import type { InVideoQuizItem } from "@/components/ui/InVideoQuizEditor";
+import type { InVideoQuizItem } from "@/components/course/InVideoQuizEditor";
 
 export interface LearningItemPayload {
   lessonId: string;
