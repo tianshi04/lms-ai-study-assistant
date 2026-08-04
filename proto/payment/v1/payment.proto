@@ -25,6 +25,20 @@ enum SubscriptionStatus {
   SUBSCRIPTION_STATUS_CANCELLED = 3;
 }
 
+enum PaymentTargetType {
+  PAYMENT_TARGET_TYPE_UNSPECIFIED = 0;
+  PAYMENT_TARGET_TYPE_COURSE = 1;
+  PAYMENT_TARGET_TYPE_SYSTEM_SUBSCRIPTION = 2;
+}
+
+enum PaymentOrderStatus {
+  PAYMENT_ORDER_STATUS_UNSPECIFIED = 0;
+  PAYMENT_ORDER_STATUS_PENDING = 1;
+  PAYMENT_ORDER_STATUS_COMPLETED = 2;
+  PAYMENT_ORDER_STATUS_FAILED = 3;
+  PAYMENT_ORDER_STATUS_EXPIRED = 4;
+}
+
 message CoursePurchase {
   string id = 1;
   string user_id = 2;
@@ -68,6 +82,36 @@ message SubscribeCourseraPlusResponse {
   UserSubscription subscription = 3;
 }
 
+message CreateVNPayPaymentUrlRequest {
+  PaymentTargetType target_type = 1;
+  string target_id = 2;
+  PlanType plan_type = 3;
+}
+
+message CreateVNPayPaymentUrlResponse {
+  bool success = 1;
+  string message = 2;
+  string payment_url = 3;
+  string order_id = 4;
+  string vnp_txn_ref = 5;
+}
+
+message VerifyVNPayPaymentRequest {
+  map<string, string> query_params = 1;
+}
+
+message VerifyVNPayPaymentResponse {
+  bool success = 1;
+  string message = 2;
+  string order_id = 3;
+  PaymentTargetType target_type = 4;
+  string target_id = 5;
+  CoursePurchase purchase = 6;
+  UserSubscription subscription = 7;
+  PlanType plan_type = 8;
+}
+
+
 message GetUserPaymentAccessRequest {
   string course_id = 1;
 }
@@ -93,6 +137,12 @@ service PaymentService {
   rpc SubscribeCourseraPlus(SubscribeCourseraPlusRequest) returns (SubscribeCourseraPlusResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+  rpc CreateVNPayPaymentUrl(CreateVNPayPaymentUrlRequest) returns (CreateVNPayPaymentUrlResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc VerifyVNPayPayment(VerifyVNPayPaymentRequest) returns (VerifyVNPayPaymentResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
   rpc GetUserPaymentAccess(GetUserPaymentAccessRequest) returns (GetUserPaymentAccessResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
@@ -100,3 +150,4 @@ service PaymentService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }
+
