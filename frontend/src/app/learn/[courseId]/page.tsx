@@ -23,6 +23,7 @@ import { DeadlinesPanel } from "@/components/player/DeadlinesPanel";
 import { ForumTab } from "@/components/player/ForumTab";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
+import { UserDropdown } from "@/components/layout/UserDropdown";
 import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
 import { LearnPageAIChatbot } from "@/components/player/ai/LearnPageAIChatbot";
@@ -751,6 +752,8 @@ function CoursePlayerContent() {
                 aria-hidden="true"
               />
             </button>
+
+            <UserDropdown />
           </div>
         </header>
 

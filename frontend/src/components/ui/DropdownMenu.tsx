@@ -24,7 +24,7 @@ export function DropdownMenuContent({
       <BaseMenu.Positioner
         sideOffset={sideOffset}
         align={align}
-        className="z-dropdown outline-none"
+        className="z-[var(--z-dropdown)] outline-none"
       >
         <BaseMenu.Popup
           ref={ref}
