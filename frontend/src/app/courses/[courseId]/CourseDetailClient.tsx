@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Avatar } from "@/components/ui/Avatar";
 import { PaymentCheckoutModal } from "@/components/course/PaymentCheckoutModal";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
@@ -539,9 +540,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 <Card key={rev.id} className="rounded-2xl shadow-sm space-y-3 p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold uppercase shadow-sm">
-                        {rev.userName ? rev.userName.slice(0, 2) : "HV"}
-                      </div>
+                      <Avatar name={rev.userName || "Học viên LMS"} size="md" />
                       <div>
                         <div className="flex items-center gap-2 mb-0.5">
                           <h4 className="text-sm font-bold text-foreground leading-tight">

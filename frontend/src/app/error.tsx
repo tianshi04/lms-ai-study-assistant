@@ -25,8 +25,14 @@ export default function ErrorPage({
       <div className="w-full max-w-2xl mx-auto space-y-8">
         {/* Status Badge */}
         <div className="flex justify-center">
-          <Badge variant="danger" className="px-3.5 py-1 text-xs font-semibold uppercase tracking-wider gap-2">
-            <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" aria-hidden="true" />
+          <Badge
+            variant="danger"
+            className="px-3.5 py-1 text-xs font-semibold uppercase tracking-wider gap-2"
+          >
+            <span
+              className="w-2 h-2 rounded-full bg-destructive animate-pulse"
+              aria-hidden="true"
+            />
             <span>Sự cố hệ thống</span>
           </Badge>
         </div>
@@ -47,7 +53,8 @@ export default function ErrorPage({
             Rất tiếc, đã xảy ra lỗi ngoài dự kiến!
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground leading-relaxed text-balance">
-            Hệ thống đã gặp gián đoạn tạm thời khi xử lý yêu cầu của bạn. Bạn có thể thử làm mới lại trang hoặc quay về trang chủ.
+            Hệ thống đã gặp gián đoạn tạm thời khi xử lý yêu cầu của bạn. Bạn có thể thử làm mới lại
+            trang hoặc quay về trang chủ.
           </p>
         </div>
 
@@ -74,7 +81,9 @@ export default function ErrorPage({
               <div className="mt-2 p-4 rounded-xl bg-surface-container-lowest border border-outline-variant space-y-2 text-xs font-mono text-muted-foreground break-all animate-fade-in">
                 {error.digest && (
                   <div>
-                    <span className="font-semibold text-foreground">Mã định danh lỗi (Digest):</span>{" "}
+                    <span className="font-semibold text-foreground">
+                      Mã định danh lỗi (Digest):
+                    </span>{" "}
                     <code className="text-destructive">{error.digest}</code>
                   </div>
                 )}

@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 
 import { z } from "zod";
 import { Sparkles, X, BotMessageSquare } from "lucide-react";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 export function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -91,30 +92,28 @@ export function AIChatbot() {
       )}
 
       {/* Floating Action Circular Button */}
-      <div className="relative group flex items-center">
-        {/* Tooltip on hover */}
-        {!isOpen && (
-          <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none absolute right-16 bg-popover/90 backdrop-blur-sm text-popover-foreground text-xs font-medium px-3 py-1.5 rounded-xl shadow-lg whitespace-nowrap">
-            {"Trợ lý AI"}
-          </span>
-        )}
-
-        <button
-          onClick={() => setIsOpen((prev) => !prev)}
-          className="w-14 h-14 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 ease-m3-emphasized cursor-pointer flex items-center justify-center relative border border-border"
-          aria-label="Trợ lý AI"
-        >
-          {isOpen ? (
-            <X className="w-6 h-6 transform transition-transform duration-200" aria-hidden="true" />
-          ) : (
-            <>
-              {/* AI Chatbot Icon */}
-              <BotMessageSquare className="w-7 h-7" aria-hidden="true" />
-              {/* Active Online Status Indicator */}
-              <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-success border-2 border-background rounded-full" />
-            </>
-          )}
-        </button>
+      <div className="relative flex items-center">
+        <Tooltip content="Trợ lý AI" side="left">
+          <button
+            onClick={() => setIsOpen((prev) => !prev)}
+            className="w-14 h-14 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 ease-m3-emphasized cursor-pointer flex items-center justify-center relative border border-border"
+            aria-label="Trợ lý AI"
+          >
+            {isOpen ? (
+              <X
+                className="w-6 h-6 transform transition-transform duration-200"
+                aria-hidden="true"
+              />
+            ) : (
+              <>
+                {/* AI Chatbot Icon */}
+                <BotMessageSquare className="w-7 h-7" aria-hidden="true" />
+                {/* Active Online Status Indicator */}
+                <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-success border-2 border-background rounded-full" />
+              </>
+            )}
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

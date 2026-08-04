@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { useQueryClient } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService } from "@/gen/identity/v1/identity_pb";
@@ -9,6 +8,7 @@ import { useUserProfileQuery } from "@/lib/query_hooks";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Avatar } from "@/components/ui/Avatar";
 import { getAvatarDataUri } from "@/lib/avatar";
 
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -95,17 +95,15 @@ export default function ProfilePage() {
       <div className="rounded-3xl p-6 sm:p-8 bg-surface-container-low border border-outline-variant shadow-xs">
         {/* User Banner */}
         <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-outline-variant">
-          <Image
+          <Avatar
+            name={user?.fullName || "User Avatar"}
             src={
               !user?.avatarUrl || user.avatarUrl.includes("api.dicebear.com")
                 ? getAvatarDataUri(user?.email || "default")
                 : user.avatarUrl
             }
-            alt={user?.fullName || "User Avatar"}
-            width={96}
-            height={96}
-            unoptimized
-            className="w-24 h-24 rounded-full border-4 border-primary-container bg-surface-container-high shadow-xs object-cover"
+            size="lg"
+            className="w-24 h-24 text-xl border-4 border-primary-container shadow-xs"
           />
           <div className="text-center sm:text-left">
             <h1 className="text-2xl font-bold text-on-surface mb-1 text-balance">

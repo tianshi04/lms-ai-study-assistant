@@ -16,7 +16,10 @@ export function NotFoundClient() {
         <div className="w-full space-y-8">
           {/* Badge */}
           <div className="flex justify-center">
-            <Badge variant="outline" className="px-3.5 py-1 text-xs font-semibold uppercase tracking-wider gap-2">
+            <Badge
+              variant="outline"
+              className="px-3.5 py-1 text-xs font-semibold uppercase tracking-wider gap-2"
+            >
               <span className="w-2 h-2 rounded-full bg-info animate-pulse" aria-hidden="true" />
               <span>Lỗi 404 • Không tìm thấy trang</span>
             </Badge>
@@ -24,7 +27,10 @@ export function NotFoundClient() {
 
           {/* Graphical 404 Hero Illustration */}
           <div className="relative flex items-center justify-center my-4">
-            <div className="absolute w-64 h-64 sm:w-80 sm:h-80 bg-primary/10 rounded-full blur-3xl -z-10 animate-pulse" aria-hidden="true" />
+            <div
+              className="absolute w-64 h-64 sm:w-80 sm:h-80 bg-primary/10 rounded-full blur-3xl -z-10 animate-pulse"
+              aria-hidden="true"
+            />
             <div className="relative">
               <span className="text-7xl sm:text-9xl font-black tracking-tighter text-primary select-none drop-shadow-sm">
                 404
@@ -45,7 +51,8 @@ export function NotFoundClient() {
               Trang bạn tìm kiếm không tồn tại hoặc đã bị di chuyển
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed text-balance">
-              Đường dẫn (URL) có thể đã thay đổi, bị gỡ bỏ hoặc tạm thời không khả dụng. Bạn có thể thử kiểm tra lại hoặc quay về trang chủ.
+              Đường dẫn (URL) có thể đã thay đổi, bị gỡ bỏ hoặc tạm thời không khả dụng. Bạn có thể
+              thử kiểm tra lại hoặc quay về trang chủ.
             </p>
           </div>
 

@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
+import { Avatar } from "@/components/ui/Avatar";
 import { ForumReplyItem } from "./ForumReplyItem";
 
 interface ThreadDetailModalProps {
@@ -120,9 +121,7 @@ export function ThreadDetailModal({
 
           <div className="flex items-center justify-between gap-3 pt-1">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center text-primary font-extrabold text-sm shrink-0 shadow-xs">
-                {(thread.authorName || "U").slice(0, 2).toUpperCase()}
-              </div>
+              <Avatar name={thread.authorName || "Thành viên LMS"} size="md" />
               <div>
                 <div className="flex items-center gap-2">
                   <h4 className="font-bold text-foreground text-sm">

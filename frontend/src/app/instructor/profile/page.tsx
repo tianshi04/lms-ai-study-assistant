@@ -6,6 +6,7 @@ import Image from "next/image";
 import { UserRole } from "@/gen/identity/v1/identity_pb";
 import { useUserProfileQuery, useUpdateInstructorProfileMutation } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
+import { Avatar } from "@/components/ui/Avatar";
 
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Check, X } from "lucide-react";
@@ -134,20 +135,11 @@ export default function InstructorProfilePage() {
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         {/* User General Info Card (Read-only) */}
         <div className="bg-card rounded-2xl p-6 border border-border shadow-sm flex items-center space-x-5">
-          <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground font-bold text-2xl flex items-center justify-center overflow-hidden shrink-0 shadow-md">
-            {userProfile?.avatarUrl ? (
-              <Image
-                src={userProfile.avatarUrl}
-                alt={userProfile.fullName}
-                width={64}
-                height={64}
-                className="w-full h-full object-cover"
-                unoptimized
-              />
-            ) : (
-              <span>{userProfile?.fullName?.charAt(0).toUpperCase() || "I"}</span>
-            )}
-          </div>
+          <Avatar
+            name={userProfile?.fullName || "Giảng viên"}
+            src={userProfile?.avatarUrl}
+            size="lg"
+          />
           <div>
             <h2 className="text-xl font-bold text-foreground">{userProfile?.fullName}</h2>
             <p className="text-xs text-muted-foreground">{userProfile?.email}</p>

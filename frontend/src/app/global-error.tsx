@@ -35,7 +35,8 @@ export default function GlobalError({
               Sự cố hệ thống nghiêm trọng
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-              Ứng dụng đã gặp lỗi ngoài dự kiến ở cấp độ hệ thống. Bạn có thể thử tải lại hoặc quay về trang chủ.
+              Ứng dụng đã gặp lỗi ngoài dự kiến ở cấp độ hệ thống. Bạn có thể thử tải lại hoặc quay
+              về trang chủ.
             </p>
             {error.digest && (
               <p className="text-xs font-mono text-muted-foreground pt-1">
