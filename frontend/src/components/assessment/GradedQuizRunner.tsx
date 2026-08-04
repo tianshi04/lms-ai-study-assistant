@@ -565,7 +565,7 @@ export function GradedQuizRunner({
             size="icon"
             onClick={() => setSubmitError(null)}
             className="text-destructive hover:text-destructive p-1 h-auto w-auto"
-            aria-label="Close error message"
+            aria-label="Đóng thông báo lỗi"
           >
             <X className="w-4 h-4" />
           </Button>

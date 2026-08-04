@@ -163,7 +163,7 @@ export function Navbar() {
             size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden rounded-xl text-muted-foreground hover:bg-muted"
-            aria-label="Toggle Navigation Menu"
+            aria-label="Bật/tắt menu điều hướng"
           >
             {mobileMenuOpen ? (
               <X className="w-6 h-6" aria-hidden="true" />

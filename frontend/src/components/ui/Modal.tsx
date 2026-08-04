@@ -156,7 +156,7 @@ export const Modal: React.FC<ModalProps> = ({
             {showCloseButton && (
               <DialogClose
                 onClick={onClose}
-                aria-label="Close modal"
+                aria-label="Đóng cửa sổ"
                 className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg cursor-pointer hover:bg-accent ml-auto -mr-1 -mt-1"
               >
                 <X className="w-5 h-5" aria-hidden="true" />

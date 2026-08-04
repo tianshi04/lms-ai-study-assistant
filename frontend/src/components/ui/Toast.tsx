@@ -112,7 +112,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast }) => {
       )}
 
       <BaseToast.Close
-        aria-label="Close notification"
+        aria-label="Đóng thông báo"
         className="shrink-0 rounded-lg p-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer -mr-1 -mt-1"
       >
         <X className="h-4 w-4" aria-hidden="true" />

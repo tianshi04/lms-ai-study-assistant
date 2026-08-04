@@ -30,7 +30,7 @@ export function NavigationRail({ items = defaultNavItems, className }: Navigatio
 
   return (
     <nav
-      aria-label="Navigation Rail"
+      aria-label="Thanh điều hướng chính"
       className={cn(
         "hidden xl:flex flex-col items-center w-20 py-4 bg-surface-container-low border-r border-border sticky top-16 h-[calc(100vh-4rem)] z-sticky gap-6",
         className,
