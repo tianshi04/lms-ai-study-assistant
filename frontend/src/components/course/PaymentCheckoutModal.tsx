@@ -10,9 +10,8 @@ import {
   DialogFooter,
 } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
-import { usePurchaseCourseMutation, useSubscribeCourseraPlusMutation } from "@/lib/query_hooks";
-import { PlanType } from "@/gen/payment/v1/payment_pb";
-import { useQueryClient } from "@tanstack/react-query";
+import { useCreateVNPayPaymentUrlMutation } from "@/lib/query_hooks";
+import { PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
 import { CreditCard, Check, AlertCircle, Loader2 } from "lucide-react";
 
 interface PaymentCheckoutModalProps {
@@ -30,7 +29,6 @@ export function PaymentCheckoutModal({
   courseTitle = "Khóa học",
   priceVnd = 1190000,
 }: PaymentCheckoutModalProps) {
-  const queryClient = useQueryClient();
   const [selectedOption, setSelectedOption] = useState<"SINGLE" | "PLUS_MONTHLY" | "PLUS_YEARLY">(
     "SINGLE",
   );
@@ -39,58 +37,50 @@ export function PaymentCheckoutModal({
     text: string;
   } | null>(null);
 
-  const purchaseMutation = usePurchaseCourseMutation({
+  const vnpayMutation = useCreateVNPayPaymentUrlMutation({
     onSuccess: (data) => {
-      if (data.success) {
+      if (data.success && data.paymentUrl) {
         setFeedbackMsg({
           type: "success",
-          text: data.message || "Thanh toán mua khóa học thành công!",
+          text: "Đang chuyển hướng sang cổng thanh toán VNPay Sandbox...",
         });
-        queryClient.invalidateQueries({ queryKey: ["paymentAccess", courseId] });
-        setTimeout(() => {
-          onClose();
-          setFeedbackMsg(null);
-        }, 1500);
+        window.location.href = data.paymentUrl;
       } else {
-        setFeedbackMsg({ type: "error", text: data.message || "Thanh toán thất bại." });
+        setFeedbackMsg({
+          type: "error",
+          text: data.message || "Không thể tạo liên kết thanh toán VNPay.",
+        });
       }
     },
     onError: (err) => {
-      setFeedbackMsg({ type: "error", text: err.message || "Lỗi kết nối thanh toán." });
+      setFeedbackMsg({
+        type: "error",
+        text: err.message || "Lỗi kết nối tới cổng thanh toán VNPay.",
+      });
     },
   });
 
-  const subscribeMutation = useSubscribeCourseraPlusMutation({
-    onSuccess: (data) => {
-      if (data.success) {
-        setFeedbackMsg({
-          type: "success",
-          text: data.message || "Đăng ký Coursera Plus thành công!",
-        });
-        queryClient.invalidateQueries({ queryKey: ["paymentAccess", courseId] });
-        setTimeout(() => {
-          onClose();
-          setFeedbackMsg(null);
-        }, 1500);
-      } else {
-        setFeedbackMsg({ type: "error", text: data.message || "Đăng ký thuê bao thất bại." });
-      }
-    },
-    onError: (err) => {
-      setFeedbackMsg({ type: "error", text: err.message || "Lỗi kết nối thanh toán." });
-    },
-  });
-
-  const isLoading = purchaseMutation.isPending || subscribeMutation.isPending;
+  const isLoading = vnpayMutation.isPending;
 
   const handleCheckout = () => {
     setFeedbackMsg(null);
     if (selectedOption === "SINGLE") {
-      purchaseMutation.mutate({ courseId, paymentMethod: "MOCK" });
+      vnpayMutation.mutate({
+        targetType: PaymentTargetType.COURSE,
+        targetId: courseId,
+      });
     } else if (selectedOption === "PLUS_MONTHLY") {
-      subscribeMutation.mutate({ planType: PlanType.MONTHLY, paymentMethod: "MOCK" });
+      vnpayMutation.mutate({
+        targetType: PaymentTargetType.SYSTEM_SUBSCRIPTION,
+        targetId: "coursera_plus",
+        planType: PlanType.MONTHLY,
+      });
     } else if (selectedOption === "PLUS_YEARLY") {
-      subscribeMutation.mutate({ planType: PlanType.YEARLY, paymentMethod: "MOCK" });
+      vnpayMutation.mutate({
+        targetType: PaymentTargetType.SYSTEM_SUBSCRIPTION,
+        targetId: "coursera_plus",
+        planType: PlanType.YEARLY,
+      });
     }
   };
 
@@ -104,7 +94,7 @@ export function PaymentCheckoutModal({
           </DialogTitle>
           <DialogDescription className="text-sm text-muted-foreground mt-1">
             Mở khóa trọn vẹn bài thi tính điểm (Graded Quiz), bài tập thực hành Auto-Graded Lab,
-            chấm chéo Peer Review và nhận Chứng chỉ Xác thực.
+            chấm chéo Peer Review và nhận Chứng chỉ Xác thực qua VNPay Gateway.
           </DialogDescription>
         </DialogHeader>
 
@@ -186,7 +176,7 @@ export function PaymentCheckoutModal({
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-border">
-              <span className="text-lg font-bold text-primary">399,000 VNĐ</span>
+              <span className="text-lg font-bold text-primary">790,000 VNĐ</span>
               <span className="text-xs text-muted-foreground font-normal"> / tháng</span>
             </div>
           </div>
@@ -201,7 +191,7 @@ export function PaymentCheckoutModal({
             }`}
           >
             <span className="absolute -top-3 right-3 bg-warning text-warning-foreground text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow">
-              Tặng 2 tháng
+              Tiết kiệm hơn
             </span>
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -220,7 +210,7 @@ export function PaymentCheckoutModal({
               </p>
             </div>
             <div className="mt-4 pt-3 border-t border-border">
-              <span className="text-lg font-bold text-primary">3,990,000 VNĐ</span>
+              <span className="text-lg font-bold text-primary">5,900,000 VNĐ</span>
               <span className="text-xs text-muted-foreground font-normal"> / năm</span>
             </div>
           </div>
@@ -234,7 +224,7 @@ export function PaymentCheckoutModal({
             onClick={handleCheckout}
             disabled={isLoading}
             variant="primary"
-            className="min-w-[140px]"
+            className="min-w-[160px]"
           >
             {isLoading ? (
               <span aria-live="polite" className="flex items-center gap-2">
@@ -242,10 +232,10 @@ export function PaymentCheckoutModal({
                   className="animate-spin h-4 w-4 text-primary-foreground"
                   aria-hidden="true"
                 />
-                Đang xử lý…
+                Đang kết nối VNPay…
               </span>
             ) : (
-              "Thanh Toán Ngay"
+              "Thanh Toán VNPay"
             )}
           </Button>
         </DialogFooter>

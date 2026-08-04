@@ -1,13 +1,11 @@
 """ConnectRPC Presentation Handler for PaymentService."""
 
-from connectrpc.code import Code
-from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
 
 from src.gen.payment.v1 import payment_pb as pb
 from src.gen.payment.v1.payment_connect import PaymentService
 from src.modules.payment.application.payment_usecase import PaymentUseCase
-from src.modules.payment.domain.entities import PlanType
+from src.modules.payment.domain.entities import PaymentTargetType, PlanType
 from src.shared.access_policy import AccessPolicyService
 from src.shared.auth import require_current_user
 from src.shared.infrastructure.database import async_session_scope
@@ -23,22 +21,18 @@ class PaymentHandler(PaymentService):
         ctx: RequestContext[pb.PurchaseCourseRequest, pb.PurchaseCourseResponse],
     ) -> pb.PurchaseCourseResponse:
         current_user = require_current_user()
-        if not request.course_id:
-            raise ConnectError(
-                Code.INVALID_ARGUMENT, "Mã khóa học không được để trống."
-            )
-
-        success, msg, purchase = await self._use_case.purchase_course(
+        (
+            success,
+            msg,
+            purchase,
+        ) = await self._use_case.purchase_course(
             user_id=current_user.id,
             course_id=request.course_id,
-            payment_method=request.payment_method or "MOCK",
+            payment_method=request.payment_method,
         )
-        if not success:
-            raise ConnectError(Code.FAILED_PRECONDITION, msg)
 
-        pb_purchase = None
-        if purchase:
-            pb_purchase = pb.CoursePurchase(
+        pb_purchase = (
+            pb.CoursePurchase(
                 id=purchase.id,
                 user_id=purchase.user_id,
                 course_id=purchase.course_id,
@@ -47,9 +41,12 @@ class PaymentHandler(PaymentService):
                 payment_method=purchase.payment_method,
                 created_at=purchase.created_at,
             )
+            if purchase
+            else None
+        )
 
         return pb.PurchaseCourseResponse(
-            success=True,
+            success=success,
             message=msg,
             purchase=pb_purchase,
         )
@@ -67,28 +64,151 @@ class PaymentHandler(PaymentService):
             if request.plan_type == pb.PlanType.YEARLY
             else PlanType.MONTHLY
         )
-        success, msg, sub = await self._use_case.subscribe_coursera_plus(
+
+        (
+            success,
+            msg,
+            sub,
+        ) = await self._use_case.subscribe_coursera_plus(
             user_id=current_user.id,
             plan_type=domain_plan,
-            payment_method=request.payment_method or "MOCK",
+            payment_method=request.payment_method,
         )
-        if not success:
-            raise ConnectError(Code.FAILED_PRECONDITION, msg)
 
-        pb_sub = None
-        if sub:
-            pb_sub = pb.UserSubscription(
+        pb_sub = (
+            pb.UserSubscription(
                 id=sub.id,
                 user_id=sub.user_id,
-                plan_type=request.plan_type,
+                plan_type=pb.PlanType.YEARLY
+                if sub.plan_type == PlanType.YEARLY
+                else pb.PlanType.MONTHLY,
                 starts_at=sub.starts_at,
                 expires_at=sub.expires_at,
                 created_at=sub.created_at,
             )
+            if sub
+            else None
+        )
 
         return pb.SubscribeCourseraPlusResponse(
-            success=True,
+            success=success,
             message=msg,
+            subscription=pb_sub,
+        )
+
+    async def create_vn_pay_payment_url(
+        self,
+        request: pb.CreateVNPayPaymentUrlRequest,
+        ctx: RequestContext[
+            pb.CreateVNPayPaymentUrlRequest, pb.CreateVNPayPaymentUrlResponse
+        ],
+    ) -> pb.CreateVNPayPaymentUrlResponse:
+        current_user = require_current_user()
+
+        domain_target = PaymentTargetType.COURSE
+        if request.target_type == pb.PaymentTargetType.SYSTEM_SUBSCRIPTION:
+            domain_target = PaymentTargetType.SYSTEM_SUBSCRIPTION
+
+        domain_plan = PlanType.UNSPECIFIED
+        if request.plan_type == pb.PlanType.MONTHLY:
+            domain_plan = PlanType.MONTHLY
+        elif request.plan_type == pb.PlanType.YEARLY:
+            domain_plan = PlanType.YEARLY
+
+        (
+            success,
+            msg,
+            payment_url,
+            order_id,
+            vnp_txn_ref,
+        ) = await self._use_case.create_vnpay_payment_url(
+            user_id=current_user.id,
+            target_type=domain_target,
+            target_id=request.target_id,
+            plan_type=domain_plan,
+        )
+
+        return pb.CreateVNPayPaymentUrlResponse(
+            success=success,
+            message=msg,
+            payment_url=payment_url,
+            order_id=order_id,
+            vnp_txn_ref=vnp_txn_ref,
+        )
+
+    async def verify_vn_pay_payment(
+        self,
+        request: pb.VerifyVNPayPaymentRequest,
+        ctx: RequestContext[
+            pb.VerifyVNPayPaymentRequest, pb.VerifyVNPayPaymentResponse
+        ],
+    ) -> pb.VerifyVNPayPaymentResponse:
+        current_user = require_current_user()
+        query_dict = dict(request.query_params)
+
+        (
+            success,
+            msg,
+            order_id,
+            target_type,
+            target_id,
+            plan_type,
+            purchase,
+            sub,
+        ) = await self._use_case.verify_vnpay_payment(
+            user_id=current_user.id,
+            query_params=query_dict,
+        )
+
+        pb_purchase = (
+            pb.CoursePurchase(
+                id=purchase.id,
+                user_id=purchase.user_id,
+                course_id=purchase.course_id,
+                amount=purchase.amount,
+                currency=purchase.currency,
+                payment_method=purchase.payment_method,
+                created_at=purchase.created_at,
+            )
+            if purchase
+            else None
+        )
+
+        pb_sub = (
+            pb.UserSubscription(
+                id=sub.id,
+                user_id=sub.user_id,
+                plan_type=pb.PlanType.YEARLY
+                if sub.plan_type == PlanType.YEARLY
+                else pb.PlanType.MONTHLY,
+                starts_at=sub.starts_at,
+                expires_at=sub.expires_at,
+                created_at=sub.created_at,
+            )
+            if sub
+            else None
+        )
+
+        pb_target_type = pb.PaymentTargetType.UNSPECIFIED
+        if target_type == PaymentTargetType.COURSE:
+            pb_target_type = pb.PaymentTargetType.COURSE
+        elif target_type == PaymentTargetType.SYSTEM_SUBSCRIPTION:
+            pb_target_type = pb.PaymentTargetType.SYSTEM_SUBSCRIPTION
+
+        pb_plan_type = pb.PlanType.UNSPECIFIED
+        if plan_type == PlanType.MONTHLY:
+            pb_plan_type = pb.PlanType.MONTHLY
+        elif plan_type == PlanType.YEARLY:
+            pb_plan_type = pb.PlanType.YEARLY
+
+        return pb.VerifyVNPayPaymentResponse(
+            success=success,
+            message=msg,
+            order_id=order_id,
+            target_type=pb_target_type,
+            target_id=target_id,
+            plan_type=pb_plan_type,
+            purchase=pb_purchase,
             subscription=pb_sub,
         )
 

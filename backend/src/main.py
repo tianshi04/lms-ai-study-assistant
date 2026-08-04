@@ -240,9 +240,16 @@ async def health_check(request):
     return JSONResponse({"status": "ok"})
 
 
+async def vnpay_ipn_endpoint(request):
+    query_params = dict(request.query_params)
+    res = await payment_usecase.process_vnpay_ipn(query_params)
+    return JSONResponse(res)
+
+
 routes = [
     Route("/health", endpoint=health_check, methods=["GET"]),
     Route("/healthz", endpoint=health_check, methods=["GET"]),
+    Route("/api/v1/vnpay/ipn", endpoint=vnpay_ipn_endpoint, methods=["GET"]),
     Mount("/catalog.v1.CatalogService", app=cast(Any, catalog_app)),
     Mount("/learning.v1.LearningService", app=cast(Any, learning_app)),
     Mount("/identity.v1.IdentityService", app=cast(Any, identity_app)),

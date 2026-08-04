@@ -27,6 +27,20 @@ class SubscriptionStatus(str, Enum):
     CANCELLED = "CANCELLED"
 
 
+class PaymentTargetType(str, Enum):
+    UNSPECIFIED = "UNSPECIFIED"
+    COURSE = "COURSE"
+    SYSTEM_SUBSCRIPTION = "SYSTEM_SUBSCRIPTION"
+
+
+class PaymentOrderStatus(str, Enum):
+    UNSPECIFIED = "UNSPECIFIED"
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    EXPIRED = "EXPIRED"
+
+
 @dataclass
 class CoursePurchase:
     id: str
@@ -79,3 +93,30 @@ class UserSubscription:
             return exp_time > now
         except Exception:
             return False
+
+
+@dataclass
+class PaymentOrder:
+    id: str
+    user_id: str
+    target_type: PaymentTargetType
+    target_id: str
+    plan_type: PlanType
+    amount: float
+    currency: str
+    status: PaymentOrderStatus
+    vnp_txn_ref: str
+    created_at: str
+    updated_at: str
+
+
+@dataclass
+class PaymentTransaction:
+    id: str
+    order_id: str
+    vnp_transaction_no: str
+    vnp_response_code: str
+    vnp_bank_code: str
+    vnp_pay_date: str
+    raw_payload: str
+    created_at: str

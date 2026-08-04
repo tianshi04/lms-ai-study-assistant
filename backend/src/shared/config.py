@@ -65,6 +65,28 @@ class Settings(BaseSettings):
         description="OpenTelemetry OTLP Collector Endpoint (e.g. http://localhost:4317)",
     )
 
+    # 6. VNPay Sandbox Gateway Configuration
+    VNPAY_TMN_CODE: str = Field(
+        default="PLM6WVVN",
+        description="VNPay Merchant Terminal Code (vnp_TmnCode)",
+    )
+    VNPAY_HASH_SECRET: str = Field(
+        default="MLQIAARTMNPRIGVBPAFCRFVCASOBHRTS",
+        description="VNPay Secret Key for HMAC-SHA512 checksum calculation",
+    )
+    VNPAY_PAYMENT_URL: str = Field(
+        default="https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
+        description="VNPay Sandbox Payment Endpoint URL",
+    )
+    VNPAY_RETURN_URL: str = Field(
+        default="http://localhost:3000/payment/vnpay-return",
+        description="Default Client Return URL after VNPay transaction",
+    )
+    VNPAY_API_URL: str = Field(
+        default="https://sandbox.vnpayment.vn/merchant_webapi/api/transaction",
+        description="VNPay Merchant WebAPI Endpoint",
+    )
+
     @property
     def async_database_url(self) -> str:
         """Ensure database connection URL uses asyncpg driver format."""

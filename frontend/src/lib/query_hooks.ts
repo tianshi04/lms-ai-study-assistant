@@ -101,6 +101,7 @@ import { ForumService, type ForumThread } from "@/gen/forum/v1/forum_pb";
 import {
   PaymentService,
   PlanType,
+  PaymentTargetType,
   type CoursePurchase,
   type UserSubscription,
 } from "@/gen/payment/v1/payment_pb";
@@ -920,6 +921,51 @@ export function useSubscribeCourseraPlusMutation(
       queryClient.invalidateQueries({ queryKey: ["enrolledCourses"] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
+  });
+}
+
+export function useCreateVNPayPaymentUrlMutation(
+  options?: Partial<
+    UseMutationOptions<
+      {
+        success: boolean;
+        message: string;
+        paymentUrl: string;
+        orderId: string;
+        vnpTxnRef: string;
+      },
+      Error,
+      { targetType: PaymentTargetType; targetId: string; planType?: PlanType }
+    >
+  >,
+) {
+  return useMutation<
+    {
+      success: boolean;
+      message: string;
+      paymentUrl: string;
+      orderId: string;
+      vnpTxnRef: string;
+    },
+    Error,
+    { targetType: PaymentTargetType; targetId: string; planType?: PlanType }
+  >({
+    mutationFn: async ({ targetType, targetId, planType }) => {
+      const client = getRpcClient(PaymentService);
+      const res = await client.createVNPayPaymentUrl({
+        targetType,
+        targetId,
+        planType: planType ?? PlanType.UNSPECIFIED,
+      });
+      return {
+        success: res.success,
+        message: res.message,
+        paymentUrl: res.paymentUrl,
+        orderId: res.orderId,
+        vnpTxnRef: res.vnpTxnRef,
+      };
+    },
+    ...options,
   });
 }
 

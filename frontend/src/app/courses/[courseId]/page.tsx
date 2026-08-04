@@ -55,6 +55,10 @@ export async function generateMetadata({
  * Triggered on-demand via updateTag(`course-${courseId}`) when course content updates.
  */
 async function getInitialCourseDetailData(courseId: string) {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("courses", `course-${courseId}`);
+
   const queryClient = new QueryClient();
   const client = getPublicRpcServerClient(CatalogService);
 
