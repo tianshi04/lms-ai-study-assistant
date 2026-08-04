@@ -59,12 +59,10 @@ def _pb_role_to_domain_str(role_val: Any) -> str:
         pb.UserRole.LEARNER: "USER_ROLE_LEARNER",
         pb.UserRole.INSTRUCTOR: "USER_ROLE_INSTRUCTOR",
         pb.UserRole.ADMIN: "USER_ROLE_ADMIN",
-        pb.UserRole.TA: "USER_ROLE_TA",
         0: "USER_ROLE_UNSPECIFIED",
         1: "USER_ROLE_LEARNER",
         2: "USER_ROLE_INSTRUCTOR",
         3: "USER_ROLE_ADMIN",
-        4: "USER_ROLE_TA",
     }
     if role_val not in mapping:
         raise ConnectError(Code.INVALID_ARGUMENT, f"Vai trò '{role_val}' không hợp lệ")

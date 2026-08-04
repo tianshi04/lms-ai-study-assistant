@@ -104,9 +104,7 @@ class IdentityRepository:
             .values(used_seats=EnterpriseLicenseModel.used_seats - 1)
         )
         if getattr(result, "rowcount", 0) == 0:
-            logger.warning(
-                "Seat recycle skipped — already 0 for key %s", seat_key
-            )
+            logger.warning("Seat recycle skipped — already 0 for key %s", seat_key)
 
     def _to_entity(self, model: UserModel) -> User:
         return User(
