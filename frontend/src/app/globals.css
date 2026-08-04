@@ -578,3 +578,175 @@ input::-ms-clear {
     animation-delay: 0s !important;
   }
 }
+
+/* Custom CopilotChat Material Design 3 Theme Styling */
+:root {
+  --copilot-kit-primary-color: var(--primary);
+  --copilot-kit-contrast-color: var(--primary-foreground);
+  --copilot-kit-secondary-color: var(--surface-container-high);
+  --copilot-kit-secondary-contrast-color: var(--on-surface);
+  --copilot-kit-background-color: transparent !important;
+  --copilot-kit-font-family: var(--font-sans);
+}
+
+/* Scoped CopilotChat Font & Outer Transparent Wrapper */
+.copilot-custom-container,
+.copilot-custom-container *,
+.copilotKitChat,
+[class*="copilotKitChat"] {
+  font-family: var(--font-sans) !important;
+}
+
+.copilot-custom-container form,
+.copilot-custom-container footer,
+.copilot-custom-container [class*="footer"],
+.copilot-custom-container [class*="Footer"],
+.copilot-custom-container [class*="InputContainer"],
+.copilot-custom-container [class*="input-container"],
+.copilot-custom-container .bg-white,
+.copilot-custom-container .bg-background,
+.copilot-custom-container .bg-card {
+  background-color: transparent !important;
+  background: transparent !important;
+  border-top: none !important;
+  box-shadow: none !important;
+}
+
+/* Messages Area */
+.copilotKitMessages,
+[class*="copilotKitMessages"],
+[class*="copilot-chat-messages"] {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* User Message Bubble - M3 Primary Accent Color & Asymmetric Shape */
+.copilotKitUserMessage,
+[class*="copilotKitUserMessage"],
+[class*="UserMessage"],
+[class*="userMessage"],
+[class*="user-message"],
+[class*="copilot-chat-user-message"] {
+  background-color: var(--primary) !important;
+  color: var(--on-primary) !important;
+  border-radius: 1.25rem 1.25rem 0.25rem 1.25rem !important;
+}
+
+.copilotKitUserMessage *,
+[class*="copilotKitUserMessage"] *,
+[class*="UserMessage"] *,
+[class*="userMessage"] *,
+[class*="user-message"] *,
+[class*="copilot-chat-user-message"] * {
+  color: var(--on-primary) !important;
+}
+
+/* Assistant Message Card - M3 Surface & Text Color */
+.copilotKitAssistantMessage,
+[class*="copilotKitAssistantMessage"],
+[class*="AssistantMessage"],
+[class*="assistantMessage"],
+[class*="assistant-message"],
+[class*="copilot-chat-assistant-message"] {
+  background-color: transparent !important;
+  color: var(--on-surface) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.copilotKitAssistantMessage *,
+[class*="copilotKitAssistantMessage"] *,
+[class*="AssistantMessage"] *,
+[class*="assistantMessage"] *,
+[class*="assistant-message"] *,
+[class*="copilot-chat-assistant-message"] * {
+  color: var(--on-surface) !important;
+}
+
+.copilotKitAssistantMessage strong,
+[class*="copilotKitAssistantMessage"] strong {
+  color: var(--primary) !important;
+  font-weight: 700 !important;
+}
+
+.copilotKitAssistantMessage code,
+[class*="copilotKitAssistantMessage"] code {
+  background-color: var(--surface-container-highest) !important;
+  color: var(--primary) !important;
+  padding: 0.125rem 0.375rem !important;
+  border-radius: 0.375rem !important;
+  font-family: var(--font-mono) !important;
+}
+
+/* Input Area Box - M3 Surface Container High Color & Shape */
+.copilotKitInput,
+[class*="copilotKitInput"],
+[class*="copilot-chat-input"] {
+  background-color: var(--surface-container-high) !important;
+  border: 1px solid var(--outline-variant) !important;
+  border-radius: 9999px !important;
+}
+
+.copilotKitInput textarea,
+.copilotKitInput input,
+[class*="copilotKitInput"] textarea,
+[class*="copilotKitInput"] input {
+  color: var(--on-surface) !important;
+  background-color: transparent !important;
+}
+
+.copilotKitInput textarea::placeholder,
+.copilotKitInput input::placeholder,
+[class*="copilotKitInput"] textarea::placeholder,
+[class*="copilotKitInput"] input::placeholder {
+  color: var(--on-surface-variant) !important;
+  opacity: 0.7 !important;
+}
+
+/* Send Button - M3 Primary Circular Action Button Color */
+.copilotKitSendButton,
+[class*="copilotKitSendButton"],
+[class*="copilot-chat-send-button"] {
+  background-color: var(--primary) !important;
+  color: var(--on-primary) !important;
+  border-radius: 9999px !important;
+}
+
+/* Disclaimer Text Color */
+.copilotKitDisclaimer,
+[class*="copilotKitDisclaimer"],
+[class*="copilot-chat-disclaimer"] {
+  color: var(--on-surface-variant) !important;
+  opacity: 0.65 !important;
+  background: transparent !important;
+}
+
+/* Suggestion Chips / Pills - MD3 Expressive Tonal Chips */
+[class*="copilotKitSuggestion"],
+[class*="copilot-chat-suggestion"],
+[class*="suggestion"],
+[class*="Suggestion"],
+.copilotKitSuggestion {
+  background-color: var(--surface-container-high) !important;
+  color: var(--on-surface) !important;
+  border: 1px solid var(--outline-variant) !important;
+  border-radius: 9999px !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  padding: 0.375rem 0.75rem !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  margin: 0.25rem !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+[class*="copilotKitSuggestion"]:hover,
+[class*="copilot-chat-suggestion"]:hover,
+[class*="suggestion"]:hover,
+[class*="Suggestion"]:hover,
+.copilotKitSuggestion:hover {
+  background-color: var(--primary-container) !important;
+  color: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
