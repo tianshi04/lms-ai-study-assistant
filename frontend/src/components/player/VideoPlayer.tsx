@@ -1,12 +1,22 @@
 "use client";
 
-import { RefObject } from "react";
+import { RefObject, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
 import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
 import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentWorkspace";
-import { FileText, Check, Eye, ArrowRight, BookOpen } from "lucide-react";
+import {
+  FileText,
+  Check,
+  Eye,
+  ArrowRight,
+  BookOpen,
+  Sparkles,
+  ChevronUp,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 
 interface VideoPlayerProps {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -24,6 +34,9 @@ interface VideoPlayerProps {
   onContinueVideo: () => void;
   onMarkComplete?: (itemId: string) => void;
   isPreviewMode?: boolean;
+  onSelectAiPrompt?: (promptText: string) => void;
+  nextItem?: LearningItem | null;
+  onNextLesson?: () => void;
 }
 
 export function VideoPlayer({
@@ -42,7 +55,12 @@ export function VideoPlayer({
   onContinueVideo,
   onMarkComplete,
   isPreviewMode = false,
+  onSelectAiPrompt,
+  nextItem,
+  onNextLesson,
 }: VideoPlayerProps) {
+  const [isExpanded, setIsExpanded] = useState(true);
+
   if (!activeItem) {
     return (
       <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-surface-container-low">
@@ -61,7 +79,7 @@ export function VideoPlayer({
           {/* Reading Header */}
           <div className="pb-4 border-b border-border">
             <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
-              <FileText className="w-7 h-7 text-success" />
+              <FileText className="w-7 h-7 text-success" aria-hidden="true" />
               <span>{activeItem.title}</span>
               {isPreviewMode && (
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-warning/10 text-warning border border-warning/20 animate-pulse">
@@ -124,7 +142,7 @@ export function VideoPlayer({
                     : "bg-success hover:bg-success-hover text-success-foreground shadow-md"
                 }`}
               >
-                <Check className="w-4 h-4" />
+                <Check className="w-4 h-4" aria-hidden="true" />
                 {isCompleted ? "Đã Hoàn Thành Bài Đọc" : "Đánh dấu Hoàn Thành Bài Đọc này"}
               </button>
             </div>
@@ -245,13 +263,13 @@ export function VideoPlayer({
     const youtubeEmbedUrl = getYouTubeEmbedUrl(activeItem.videoUrl, activeItem.autoTranscribe);
 
     return (
-      <div className="w-full flex flex-col gap-3">
-        <div className="w-full h-full max-h-[60vh] 2xl:max-h-[680px] relative flex items-center justify-center bg-transparent rounded-2xl overflow-hidden transition-colors duration-200">
+      <div className="w-full h-full flex flex-col gap-3 min-h-0">
+        <div className="w-full aspect-video max-h-[62vh] relative flex items-center justify-center bg-surface-container-high dark:bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-xs transition-all duration-200">
           {youtubeEmbedUrl ? (
             <iframe
               key={activeItem.id}
               src={youtubeEmbedUrl}
-              className="w-full h-full max-h-[60vh] 2xl:max-h-[680px] border-0 rounded-2xl shadow-md"
+              className="w-full h-full border-0 rounded-2xl shadow-md"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
@@ -264,7 +282,7 @@ export function VideoPlayer({
               onTimeUpdate={onTimeUpdate}
               onSeeking={onSeeking}
               onEnded={() => onMarkComplete?.(activeItem.id)}
-              className="max-h-[60vh] 2xl:max-h-[680px] w-auto max-w-full object-contain rounded-2xl"
+              className="w-full h-full object-contain rounded-2xl"
             />
           )}
 
@@ -272,7 +290,7 @@ export function VideoPlayer({
           {isPreviewMode && (
             <div className="absolute top-4 left-4 z-20">
               <span className="px-2.5 py-1 rounded-xl text-xs font-bold bg-warning text-warning-foreground shadow-lg flex items-center gap-1.5 animate-pulse">
-                <Eye className="w-3.5 h-3.5" />
+                <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>{"Chế độ Xem trước"}</span>
               </span>
             </div>
@@ -320,7 +338,9 @@ export function VideoPlayer({
                         className={`w-full text-left p-3 rounded-xl border text-xs transition-all flex items-center justify-between ${optionStyle}`}
                       >
                         <span>{option}</span>
-                        {quizSubmitted && isCorrect && <Check className="w-4 h-4 text-success" />}
+                        {quizSubmitted && isCorrect && (
+                          <Check className="w-4 h-4 text-success" aria-hidden="true" />
+                        )}
                       </button>
                     );
                   })}
@@ -348,7 +368,7 @@ export function VideoPlayer({
                       className="px-5 py-2.5 rounded-full bg-success hover:bg-success-hover text-success-foreground font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer"
                     >
                       {"Tiếp Tục Xem Video"}
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-4 h-4" aria-hidden="true" />
                     </button>
                   )}
                 </div>
@@ -358,18 +378,74 @@ export function VideoPlayer({
         </div>
 
         {/* Video Lesson Title under video */}
-        <div className="w-full px-1 py-1 flex flex-col gap-1">
+        <div className="w-full px-1 py-1">
           <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
             {activeItem.title}
           </h1>
-          {activeItem.estimatedMinutes ? (
-            <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
-              <span>
-                {activeItem.estimatedMinutes} {"phút"}
-              </span>
-            </p>
-          ) : null}
         </div>
+
+        {/* Coursera-style AI Learning Prompts Card ("Tìm hiểu sâu hơn về chủ đề này") */}
+        <div className="w-full my-2 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 shadow-2xs transition-colors">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
+              <span className="text-xs font-bold text-on-surface">
+                Tìm hiểu sâu hơn về chủ đề này
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsExpanded((prev) => !prev)}
+              className="p-1 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
+              title={isExpanded ? "Thu gọn gợi ý AI" : "Mở rộng gợi ý AI"}
+              aria-label={isExpanded ? "Thu gọn gợi ý AI" : "Mở rộng gợi ý AI"}
+            >
+              {isExpanded ? (
+                <ChevronUp className="w-4 h-4" aria-hidden="true" />
+              ) : (
+                <ChevronDown className="w-4 h-4" aria-hidden="true" />
+              )}
+            </button>
+          </div>
+
+          {isExpanded && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {[
+                "Cho tôi câu hỏi thực hành",
+                "Giải thích chủ đề này bằng các thuật ngữ đơn giản",
+                "Cho tôi một bản tóm tắt",
+                "Cho tôi ví dụ thực tế",
+              ].map((text) => (
+                <button
+                  key={text}
+                  type="button"
+                  onClick={() => onSelectAiPrompt?.(text)}
+                  className="text-xs font-semibold px-4 py-2.5 rounded-xl bg-surface-container-high hover:bg-primary-container text-on-surface hover:text-primary border border-outline-variant/40 hover:border-primary/40 transition-all cursor-pointer shadow-2xs leading-snug w-fit hover:scale-102 active:scale-98"
+                >
+                  <span>{text}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Flex Expanding Spacer: Co dãn lấp đầy khoảng trống giữa Tìm hiểu AI & Nút Bài tiếp theo */}
+        <div className="flex-1 min-h-0" />
+
+        {/* Next Lesson Action Button natively inside VideoPlayer - MD3 Soft Tonal Variant */}
+        {nextItem && onNextLesson && (
+          <div className="w-full flex items-center justify-end pt-2 pb-1 shrink-0">
+            <button
+              type="button"
+              onClick={onNextLesson}
+              className="px-4 py-2 rounded-xl text-xs font-semibold bg-surface-container-high text-on-surface hover:bg-primary-container hover:text-primary border border-outline-variant/40 hover:border-primary/40 transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-2xs hover:scale-102 active:scale-98 shrink-0"
+              title="Chuyển sang bài học tiếp theo"
+            >
+              <span>{"Bài tiếp theo"}</span>
+              <ChevronRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            </button>
+          </div>
+        )}
       </div>
     );
   }

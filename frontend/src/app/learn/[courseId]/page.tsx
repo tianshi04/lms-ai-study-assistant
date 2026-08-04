@@ -25,10 +25,10 @@ import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
+import { LearnPageAIChatbot } from "@/components/player/ai/LearnPageAIChatbot";
 import {
   X,
   ChevronLeft,
-  ChevronRight,
   ChevronDown,
   ChevronUp,
   CheckCircle2,
@@ -39,6 +39,7 @@ import {
   MessageSquare,
   Clock,
   AlignLeft,
+  Sparkles,
 } from "lucide-react";
 
 function getItemTypeName(type: number): string {
@@ -78,11 +79,13 @@ function CoursePlayerContent() {
   const [activeItem, setActiveItem] = useState<LearningItem | null>(null);
   const [progress, setProgress] = useState<LearningProgress | null>(null);
   const [notes, setNotes] = useState<PersonalNote[]>([]);
-  const [activeTab, setActiveTab] = useState<"transcript" | "forum" | "notes" | "deadlines">(
+  const [activeTab, setActiveTab] = useState<
+    "transcript" | "forum" | "notes" | "deadlines" | "ai_assistant"
+  >(
     urlThreadId || urlTab === "forum"
       ? "forum"
-      : urlTab && ["transcript", "notes", "deadlines"].includes(urlTab)
-        ? (urlTab as "transcript" | "notes" | "deadlines")
+      : urlTab && ["transcript", "notes", "deadlines", "ai_assistant"].includes(urlTab)
+        ? (urlTab as "transcript" | "notes" | "deadlines" | "ai_assistant")
         : "transcript",
   );
   const [isPanelOpen, setIsPanelOpen] = useState(true);
@@ -133,7 +136,36 @@ function CoursePlayerContent() {
     }
   }, [activeItem, course]);
 
-  const handleTabClick = (tab: "transcript" | "forum" | "notes" | "deadlines") => {
+  const prevTabBeforeAiRef = useRef<"transcript" | "forum" | "notes" | "deadlines">("transcript");
+  const prevPanelOpenBeforeAiRef = useRef<boolean>(true);
+
+  const handleOpenAiAssistant = () => {
+    if (activeTab !== "ai_assistant") {
+      prevTabBeforeAiRef.current = activeTab as "transcript" | "forum" | "notes" | "deadlines";
+      prevPanelOpenBeforeAiRef.current = isPanelOpen;
+    }
+    setActiveTab("ai_assistant");
+    setIsPanelOpen(true);
+  };
+
+  const handleCloseAiAssistant = () => {
+    setActiveTab(prevTabBeforeAiRef.current || "transcript");
+    setIsPanelOpen(prevPanelOpenBeforeAiRef.current);
+  };
+
+  const handleToggleAiAssistant = () => {
+    if (isPanelOpen && activeTab === "ai_assistant") {
+      handleCloseAiAssistant();
+    } else {
+      handleOpenAiAssistant();
+    }
+  };
+
+  const handleTabClick = (tab: "transcript" | "forum" | "notes" | "deadlines" | "ai_assistant") => {
+    if (tab === "ai_assistant") {
+      handleToggleAiAssistant();
+      return;
+    }
     if (isPanelOpen && activeTab === tab) {
       setIsPanelOpen(false);
     } else {
@@ -141,6 +173,24 @@ function CoursePlayerContent() {
       setIsPanelOpen(true);
     }
   };
+
+  const activeModule = useMemo(() => {
+    if (!course || !activeItem) return null;
+    return course.weekModules.find((wm) =>
+      wm.lessons.some((l) => l.items.some((i) => i.id === activeItem.id)),
+    );
+  }, [course, activeItem]);
+
+  // AI được hỗ trợ cho học viên đã đăng ký ở các bài học, NGOẠI TRỪ Bài kiểm tra tính điểm (type === 4)
+  const isAiSupported = Boolean(activeItem && !isPreviewMode && activeItem.type !== 4);
+
+  useEffect(() => {
+    if (!isAiSupported && activeTab === "ai_assistant") {
+      setIsPanelOpen(false);
+      setActiveTab("transcript");
+    }
+  }, [isAiSupported, activeTab]);
+
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [certificateId, setCertificateId] = useState<string>("");
 
@@ -613,7 +663,7 @@ function CoursePlayerContent() {
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-bold transition-colors cursor-pointer"
                 title="Đóng trình xem trước"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" aria-hidden="true" />
                 <span>{"Đóng Xem trước"}</span>
               </button>
             ) : (
@@ -622,7 +672,7 @@ function CoursePlayerContent() {
                 className="p-2 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors"
                 title="Quay lại khóa học"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4" aria-hidden="true" />
               </Link>
             )}
             <span className="font-bold text-sm text-on-surface truncate max-w-md">
@@ -653,7 +703,7 @@ function CoursePlayerContent() {
                   onClick={() => setShowCompletionModal(true)}
                   className="px-4 py-1.5 rounded-full bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-xs shadow-xs hover:shadow transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
-                  <CheckCircle2 className="w-4 h-4 text-warning-foreground" />
+                  <CheckCircle2 className="w-4 h-4 text-warning-foreground" aria-hidden="true" />
                   <span>{"Xem Chứng Chỉ"}</span>
                 </button>
               )}
@@ -666,6 +716,41 @@ function CoursePlayerContent() {
 
             <LanguageToggle />
             <ThemeToggle />
+
+            {/* AI Assistant Icon Button matching ThemeToggle style with colored icon when supported */}
+            <button
+              type="button"
+              disabled={!isAiSupported}
+              onClick={handleToggleAiAssistant}
+              className={`p-2 rounded-full transition-all shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                !isAiSupported
+                  ? "text-on-surface-variant/30 opacity-40 cursor-not-allowed"
+                  : isPanelOpen && activeTab === "ai_assistant"
+                    ? "bg-primary/15 text-primary cursor-pointer"
+                    : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 cursor-pointer"
+              }`}
+              title={
+                isAiSupported
+                  ? "Trợ lý AI Học tập (Socratic)"
+                  : isPreviewMode
+                    ? "Trợ lý AI chưa hỗ trợ ở chế độ xem trước"
+                    : activeItem?.type === 4
+                      ? "Trợ lý AI tạm khóa trong bài kiểm tra tính điểm"
+                      : "Trợ lý AI chưa hỗ trợ ở trang này"
+              }
+              aria-label={
+                isAiSupported
+                  ? "Mở Trợ lý AI Học tập"
+                  : activeItem?.type === 4
+                    ? "Trợ lý AI tạm khóa trong bài kiểm tra tính điểm"
+                    : "Trợ lý AI chưa hỗ trợ ở trang này"
+              }
+            >
+              <Sparkles
+                className={`w-5 h-5 ${isAiSupported ? "text-primary" : "text-on-surface-variant/30"}`}
+                aria-hidden="true"
+              />
+            </button>
           </div>
         </header>
 
@@ -864,7 +949,7 @@ function CoursePlayerContent() {
             <div className="flex-1 flex flex-row overflow-x-auto overflow-y-hidden relative min-h-0">
               {/* Left/Center Video Media Viewer Canvas - Top Rounded Stage */}
               <div className="flex-1 min-w-0 sm:min-w-[360px] bg-surface-container-lowest rounded-t-3xl sm:rounded-t-[28px] shadow-xs overflow-hidden flex flex-col items-center justify-between relative overflow-y-auto transition-colors duration-200 min-h-0">
-                <div className="w-full flex-1 flex items-start justify-center p-2 sm:p-3 pt-1 min-h-0 overflow-y-auto">
+                <div className="w-full flex-1 flex flex-col p-3 min-h-0 overflow-y-auto">
                   <VideoPlayer
                     videoRef={videoRef}
                     activeItem={activeItem}
@@ -881,13 +966,42 @@ function CoursePlayerContent() {
                     onContinueVideo={handleContinueVideo}
                     onMarkComplete={handleMarkItemComplete}
                     isPreviewMode={isPreviewMode}
-                  />
-                </div>
-
-                {/* Floating MD3 Extended FAB: Next Lesson Button */}
-                {nextItem && (
-                  <button
-                    onClick={() => {
+                    onSelectAiPrompt={(promptText) => {
+                      setActiveTab("ai_assistant");
+                      setIsPanelOpen(true);
+                      setTimeout(() => {
+                        const inputEl = document.querySelector(
+                          'input[placeholder*="Hỏi tôi"], textarea[placeholder*="Hỏi tôi"]',
+                        ) as HTMLInputElement | HTMLTextAreaElement | null;
+                        if (inputEl) {
+                          const nativeSetter = Object.getOwnPropertyDescriptor(
+                            window.HTMLInputElement.prototype,
+                            "value",
+                          )?.set;
+                          if (nativeSetter) {
+                            nativeSetter.call(inputEl, promptText);
+                          } else {
+                            inputEl.value = promptText;
+                          }
+                          inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+                          const formEl = inputEl.closest("form");
+                          if (formEl) {
+                            if (
+                              "requestSubmit" in formEl &&
+                              typeof formEl.requestSubmit === "function"
+                            ) {
+                              formEl.requestSubmit();
+                              return;
+                            }
+                            formEl.dispatchEvent(
+                              new Event("submit", { bubbles: true, cancelable: true }),
+                            );
+                          }
+                        }
+                      }, 100);
+                    }}
+                    nextItem={nextItem}
+                    onNextLesson={() => {
                       if (!nextItem || !course) return;
                       const nextWeekIndex = course.weekModules.findIndex((wm) =>
                         wm.lessons.some((l) => l.items.some((i) => i.id === nextItem.id)),
@@ -902,25 +1016,21 @@ function CoursePlayerContent() {
                       setActiveItem(nextItem);
                       setActiveQuiz(null);
                     }}
-                    className="absolute bottom-6 right-6 z-30 px-6 py-3 rounded-full text-xs font-bold bg-primary hover:bg-primary-hover text-on-primary shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 cursor-pointer hover:scale-105 active:scale-95"
-                    title="Chuyển sang bài học tiếp theo"
-                  >
-                    <span>{"Bài tiếp theo"}</span>
-                    <ChevronRight className="w-4.5 h-4.5 shrink-0" aria-hidden="true" />
-                  </button>
-                )}
+                  />
+                </div>
               </div>
 
-              {/* Seamless Side Drawer Panel - Unified Surface Container Color */}
+              {/* Standard Side Drawer Panel for non-AI Tabs (Transcript, Notes, Forum, Deadlines) */}
               {isPanelOpen &&
+                activeTab !== "ai_assistant" &&
                 ((activeTab === "transcript" && isVideoItem) ||
                   ((activeTab === "notes" || activeTab === "forum") &&
                     isLectureItem &&
                     !isPreviewMode) ||
                   (activeTab === "deadlines" && !isPreviewMode)) && (
-                  <aside className="w-80 xl:w-96 bg-surface-container-low flex flex-col shrink-0 h-full overflow-hidden shadow-xs z-10 transition-all duration-300">
+                  <aside className="w-80 xl:w-96 bg-surface-container-low flex flex-col shrink-0 h-full overflow-hidden shadow-xs z-10 border-l border-outline-variant/30">
                     {/* Drawer Header */}
-                    <div className="h-12 px-4 flex items-center justify-between bg-surface-container-low shrink-0">
+                    <div className="h-12 px-4 flex items-center justify-between bg-surface-container-low shrink-0 border-b border-outline-variant/30">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-xs text-on-surface uppercase tracking-wider">
                           {activeTab === "transcript" && "Phụ đề Tương tác"}
@@ -978,122 +1088,153 @@ function CoursePlayerContent() {
                   </aside>
                 )}
 
-              {/* Vertical Icon Action Bar - Seamless MD3 Navigation Rail */}
-              <div className="w-16 lg:w-20 bg-surface-container-low flex flex-col items-center justify-start py-5 gap-5 shrink-0 h-full z-20 select-none">
-                {/* Transcript Button: Only for Video Items */}
-                {isVideoItem && (
-                  <button
-                    onClick={() => handleTabClick("transcript")}
-                    className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
-                    title="Phụ đề"
-                  >
-                    <div
-                      className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
-                        isPanelOpen && activeTab === "transcript"
-                          ? "bg-primary-container text-on-primary-container font-bold"
-                          : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                      }`}
-                    >
-                      <AlignLeft className="w-4 h-4" aria-hidden="true" />
-                    </div>
-                    <span
-                      className={`text-[10px] tracking-tight leading-none ${
-                        isPanelOpen && activeTab === "transcript"
-                          ? "text-primary font-bold"
-                          : "text-on-surface-variant"
-                      }`}
-                    >
-                      Phụ đề
-                    </span>
-                  </button>
-                )}
+              {/* Persistent AI Chatbot Instance (Keeps conversation history & state mounted continuously in DOM) */}
+              {isAiSupported && (
+                <div
+                  className={
+                    isPanelOpen && activeTab === "ai_assistant"
+                      ? "w-96 xl:w-[464px] h-full shrink-0 flex flex-col bg-surface-container-low z-10 border-l border-outline-variant/30 overflow-hidden"
+                      : "hidden"
+                  }
+                >
+                  <LearnPageAIChatbot
+                    courseId={courseId}
+                    courseTitle={course?.title || "Khóa học"}
+                    moduleTitle={activeModule?.title || "Module bài học"}
+                    activeItem={activeItem}
+                    currentTime={currentTime}
+                    readingMarkdown={activeItem?.readingMarkdown}
+                    onSeek={handleSeekVideo}
+                    onNextLesson={() => {
+                      if (nextItem) {
+                        setActiveItem(nextItem);
+                        setActiveQuiz(null);
+                      }
+                    }}
+                    onNoteCreated={(newNote) => setNotes((prev) => [newNote, ...prev])}
+                    onClose={handleCloseAiAssistant}
+                  />
+                </div>
+              )}
 
-                {!isPreviewMode && (
-                  <>
-                    {/* Notes Button: For Video & Reading Lecture Items */}
-                    {isLectureItem && (
-                      <button
-                        onClick={() => handleTabClick("notes")}
-                        className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
-                        title="Ghi chú"
-                      >
-                        <div
-                          className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
-                            isPanelOpen && activeTab === "notes"
-                              ? "bg-primary-container text-on-primary-container font-bold"
-                              : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                          }`}
-                        >
-                          <FileText className="w-4 h-4" aria-hidden="true" />
-                        </div>
-                        <span
-                          className={`text-[10px] tracking-tight leading-none ${
-                            isPanelOpen && activeTab === "notes"
-                              ? "text-primary font-bold"
-                              : "text-on-surface-variant"
-                          }`}
-                        >
-                          Ghi chú
-                        </span>
-                      </button>
-                    )}
-
-                    {/* Forum Button: For Video & Reading Lecture Items */}
-                    {isLectureItem && (
-                      <button
-                        onClick={() => handleTabClick("forum")}
-                        className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
-                        title="Thảo luận"
-                      >
-                        <div
-                          className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
-                            isPanelOpen && activeTab === "forum"
-                              ? "bg-primary-container text-on-primary-container font-bold"
-                              : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                          }`}
-                        >
-                          <MessageSquare className="w-4 h-4" aria-hidden="true" />
-                        </div>
-                        <span
-                          className={`text-[10px] tracking-tight leading-none ${
-                            isPanelOpen && activeTab === "forum"
-                              ? "text-primary font-bold"
-                              : "text-on-surface-variant"
-                          }`}
-                        >
-                          Thảo luận
-                        </span>
-                      </button>
-                    )}
-
-                    {/* Deadlines Button */}
+              {/* Vertical Icon Action Bar - Seamless MD3 Navigation Rail (Visible when AI Chatbot is inactive) */}
+              {(!isPanelOpen || activeTab !== "ai_assistant") && (
+                <div className="w-16 lg:w-20 bg-surface-container-low flex flex-col items-center justify-start py-5 gap-5 shrink-0 h-full z-20 select-none border-l border-outline-variant/30">
+                  {/* Transcript Button: Only for Video Items */}
+                  {isVideoItem && (
                     <button
-                      onClick={() => handleTabClick("deadlines")}
+                      onClick={() => handleTabClick("transcript")}
                       className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
-                      title="Deadlines"
+                      title="Phụ đề"
                     >
                       <div
                         className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
-                          isPanelOpen && activeTab === "deadlines"
+                          isPanelOpen && activeTab === "transcript"
                             ? "bg-primary-container text-on-primary-container font-bold"
                             : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
                         }`}
                       >
-                        <Clock className="w-4 h-4" aria-hidden="true" />
+                        <AlignLeft className="w-4 h-4" aria-hidden="true" />
                       </div>
                       <span
                         className={`text-[10px] tracking-tight leading-none ${
-                          isPanelOpen && activeTab === "deadlines"
+                          isPanelOpen && activeTab === "transcript"
                             ? "text-primary font-bold"
                             : "text-on-surface-variant"
                         }`}
                       >
-                        Deadlines
+                        Phụ đề
                       </span>
                     </button>
-                  </>
-                )}
-              </div>
+                  )}
+
+                  {!isPreviewMode && (
+                    <>
+                      {/* Notes Button: For Video & Reading Lecture Items */}
+                      {isLectureItem && (
+                        <button
+                          onClick={() => handleTabClick("notes")}
+                          className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
+                          title="Ghi chú"
+                        >
+                          <div
+                            className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
+                              isPanelOpen && activeTab === "notes"
+                                ? "bg-primary-container text-on-primary-container font-bold"
+                                : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                            }`}
+                          >
+                            <FileText className="w-4 h-4" aria-hidden="true" />
+                          </div>
+                          <span
+                            className={`text-[10px] tracking-tight leading-none ${
+                              isPanelOpen && activeTab === "notes"
+                                ? "text-primary font-bold"
+                                : "text-on-surface-variant"
+                            }`}
+                          >
+                            Ghi chú
+                          </span>
+                        </button>
+                      )}
+
+                      {/* Forum Button: For Video & Reading Lecture Items */}
+                      {isLectureItem && (
+                        <button
+                          onClick={() => handleTabClick("forum")}
+                          className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
+                          title="Thảo luận"
+                        >
+                          <div
+                            className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
+                              isPanelOpen && activeTab === "forum"
+                                ? "bg-primary-container text-on-primary-container font-bold"
+                                : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                            }`}
+                          >
+                            <MessageSquare className="w-4 h-4" aria-hidden="true" />
+                          </div>
+                          <span
+                            className={`text-[10px] tracking-tight leading-none ${
+                              isPanelOpen && activeTab === "forum"
+                                ? "text-primary font-bold"
+                                : "text-on-surface-variant"
+                            }`}
+                          >
+                            Thảo luận
+                          </span>
+                        </button>
+                      )}
+
+                      {/* Deadlines Button */}
+                      <button
+                        onClick={() => handleTabClick("deadlines")}
+                        className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
+                        title="Deadlines"
+                      >
+                        <div
+                          className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
+                            isPanelOpen && activeTab === "deadlines"
+                              ? "bg-primary-container text-on-primary-container font-bold"
+                              : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                          }`}
+                        >
+                          <Clock className="w-4 h-4" aria-hidden="true" />
+                        </div>
+                        <span
+                          className={`text-[10px] tracking-tight leading-none ${
+                            isPanelOpen && activeTab === "deadlines"
+                              ? "text-primary font-bold"
+                              : "text-on-surface-variant"
+                          }`}
+                        >
+                          Deadlines
+                        </span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </main>
 
