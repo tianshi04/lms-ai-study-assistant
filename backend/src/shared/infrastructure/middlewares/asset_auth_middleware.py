@@ -45,9 +45,9 @@ class AssetAuthMiddleware:
             return
 
         import posixpath
-        
+
         # Lấy phần path sau "/coursera-assets/" và chuẩn hóa
-        raw_asset_path = path[len(PROTECTED_ROUTE_PREFIX):]
+        raw_asset_path = path[len(PROTECTED_ROUTE_PREFIX) :]
         asset_path = posixpath.normpath(raw_asset_path).lstrip("/")
 
         # Nếu phát hiện path traversal độc hại ra khỏi root

@@ -7,7 +7,7 @@ from typing import Any, cast
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
-from starlette.responses import JSONResponse, Response, StreamingResponse
+from starlette.responses import JSONResponse, Response
 from starlette.routing import Mount, Route
 
 from src.gen.assessment.v1.assessment_connect import AssessmentServiceASGIApplication
@@ -49,7 +49,10 @@ from opentelemetry.instrumentation.starlette import StarletteInstrumentor
 from src.shared.config import settings
 from src.shared.infrastructure.interceptors import AuthInterceptor, ErrorInterceptor
 from src.shared.infrastructure.logging import setup_logging
-from src.shared.infrastructure.middlewares import AssetAuthMiddleware, RequestIDMiddleware
+from src.shared.infrastructure.middlewares import (
+    AssetAuthMiddleware,
+    RequestIDMiddleware,
+)
 from src.shared.infrastructure.telemetry import setup_telemetry
 
 setup_logging()
