@@ -118,10 +118,14 @@ export class PartnerSettingsPage {
   }
 
   async rotateKeyPair() {
+    const confirmBtn = this.page.getByRole('button', { name: /Xác nhận|Đồng ý|Tạo khóa mới|Rotate/i });
     this.page.once('dialog', async (dialog) => {
       await dialog.accept();
     });
     await this.rotateKeyPairButton.click();
+    if (await confirmBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await confirmBtn.click();
+    }
     await expect(this.page.locator('text=/Đã xoay|tạo cặp khóa|thành công/i').first()).toBeVisible({ timeout: 15000 });
   }
 

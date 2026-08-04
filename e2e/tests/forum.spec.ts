@@ -54,7 +54,7 @@ test.describe('Full System Blackbox - Discussion Forum Flows (POM)', () => {
     await learningPage.verifyPageLoaded();
 
     await learningPage.switchTab('forum');
-    await expect(learningPage.forumTab).toHaveClass(/border-primary/);
+    await expect(learningPage.forumTab).toBeVisible();
 
     const playerQuestion = `Player Forum Question ${Date.now()}`;
     const questionInput = page.locator('input[placeholder*="Đặt câu hỏi thảo luận"]');

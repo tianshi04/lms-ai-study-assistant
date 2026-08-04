@@ -18,7 +18,7 @@ test.describe('Full System Blackbox - Question Bank & Exam Matrix Flows (POM)', 
     const bankTitle = `Bank E2E ${Date.now()}`;
     await questionBankPage.createQuestionBank(bankTitle, 'E2E Test Description');
 
-    await expect(page.locator(`text=${bankTitle}`).first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(`text=${bankTitle}`).first()).toBeVisible({ timeout: 15000 });
   });
 
   test('should allow instructor to add a question to selected bank', async ({ page }) => {

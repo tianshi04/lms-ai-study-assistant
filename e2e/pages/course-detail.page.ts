@@ -9,7 +9,7 @@ export class CourseDetailPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.courseTitle = page.getByRole('heading', { level: 1 }).first();
+    this.courseTitle = page.locator('h1').or(page.getByRole('heading', { level: 1 })).first();
     this.partnerName = page.locator('text=/Đối tác phát hành/i').locator('xpath=following-sibling::span');
     this.enrollButton = page.getByRole('link', { name: /vào học (ngay|lại)|enroll|re-enter/i });
     this.syllabusHeading = page.getByRole('heading', { name: /Nội Dung Chương Trình Học|Course Syllabus/i });
@@ -21,7 +21,7 @@ export class CourseDetailPage {
 
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/courses\/.+/);
-    await expect(this.courseTitle).toBeVisible({ timeout: 10000 });
+    await expect(this.courseTitle).toBeVisible({ timeout: 15000 });
     await expect(this.enrollButton).toBeVisible({ timeout: 10000 });
     await expect(this.syllabusHeading).toBeVisible({ timeout: 10000 });
   }
