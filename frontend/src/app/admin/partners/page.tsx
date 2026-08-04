@@ -13,6 +13,8 @@ import {
 } from "@/lib/query_hooks";
 import { Modal, ConfirmDialog } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import {
   Table,
   TableHeader,
@@ -424,12 +426,11 @@ export default function AdminPartnersPage() {
               <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
                 Tên đối tác / Trường học <span className="text-destructive">*</span>
               </label>
-              <input
+              <Input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="VD: Đại học Bách Khoa TP.HCM"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 required
               />
             </div>
@@ -437,12 +438,12 @@ export default function AdminPartnersPage() {
               <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
                 Slug URL định danh <span className="text-destructive">*</span>
               </label>
-              <input
+              <Input
                 type="text"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder="VD: hcmut"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none font-mono"
+                className="font-mono"
                 required
               />
             </div>
@@ -452,12 +453,11 @@ export default function AdminPartnersPage() {
             <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
               Mô tả giới thiệu
             </label>
-            <textarea
+            <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Giới thiệu sơ lược về tổ chức đối tác…"
               rows={2}
-              className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
           </div>
 
@@ -466,36 +466,33 @@ export default function AdminPartnersPage() {
               <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
                 URL Logo đối tác
               </label>
-              <input
+              <Input
                 type="text"
                 value={logoUrl}
                 onChange={(e) => setLogoUrl(e.target.value)}
                 placeholder="https://example.com/logo.png"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               />
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
                 URL Banner bìa
               </label>
-              <input
+              <Input
                 type="text"
                 value={bannerUrl}
                 onChange={(e) => setBannerUrl(e.target.value)}
                 placeholder="https://example.com/banner.jpg"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               />
             </div>
             <div>
               <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
                 Website chính thức
               </label>
-              <input
+              <Input
                 type="text"
                 value={websiteUrl}
                 onChange={(e) => setWebsiteUrl(e.target.value)}
                 placeholder="https://hcmut.edu.vn"
-                className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               />
             </div>
           </div>
@@ -504,12 +501,11 @@ export default function AdminPartnersPage() {
             <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
               Tên miền được phép cấp chứng chỉ (Phân cách bởi dấu phẩy)
             </label>
-            <input
+            <Input
               type="text"
               value={allowedDomainsStr}
               onChange={(e) => setAllowedDomainsStr(e.target.value)}
               placeholder="hcmut.edu.vn, vnuhcm.edu.vn"
-              className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
           </div>
 
@@ -524,36 +520,33 @@ export default function AdminPartnersPage() {
                 <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
                   Họ tên người ký (signer_name)
                 </label>
-                <input
+                <Input
                   type="text"
                   value={signerName}
                   onChange={(e) => setSignerName(e.target.value)}
                   placeholder="GS.TS. Nguyễn Văn A"
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
                   Chức danh (signer_title)
                 </label>
-                <input
+                <Input
                   type="text"
                   value={signerTitle}
                   onChange={(e) => setSignerTitle(e.target.value)}
                   placeholder="Hiệu trưởng"
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
                   URL Ảnh chữ ký (signature_image_url)
                 </label>
-                <input
+                <Input
                   type="text"
                   value={signatureImageUrl}
                   onChange={(e) => setSignatureImageUrl(e.target.value)}
                   placeholder="https://example.com/signature.png"
-                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 />
               </div>
             </div>
@@ -611,28 +604,30 @@ export default function AdminPartnersPage() {
 
             {/* Add new organization admin inputs */}
             <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 pt-1">
-              <input
+              <Input
                 type="text"
                 value={newAdminName}
                 onChange={(e) => setNewAdminName(e.target.value)}
                 placeholder="Tên quản trị viên"
-                className="sm:col-span-2 px-3 py-1.5 text-xs rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="sm:col-span-2 text-xs"
               />
-              <input
+              <Input
                 type="email"
                 value={newAdminEmail}
                 onChange={(e) => setNewAdminEmail(e.target.value)}
                 placeholder="email@domain.edu.vn"
-                className="sm:col-span-2 px-3 py-1.5 text-xs rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none font-mono"
+                className="sm:col-span-2 text-xs font-mono"
               />
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={handleAddPartnerAdmin}
-                className="sm:col-span-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold py-1.5 px-3 rounded-xl border border-primary/20 transition-colors flex items-center justify-center gap-1"
+                className="sm:col-span-1 text-xs font-semibold"
               >
                 <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                 Gán
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -640,13 +635,13 @@ export default function AdminPartnersPage() {
             <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
               Public Key PEM (Khóa công khai ký số)
             </label>
-            <textarea
+            <Textarea
               value={publicKeyPem}
               onChange={(e) => setPublicKeyPem(e.target.value)}
               placeholder="-----BEGIN PUBLIC KEY-----…"
               spellCheck={false}
               rows={3}
-              className="w-full px-3.5 py-2 text-xs font-mono rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="font-mono text-xs"
             />
           </div>
 

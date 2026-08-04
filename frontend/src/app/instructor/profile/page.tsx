@@ -6,6 +6,7 @@ import Image from "next/image";
 import { UserRole } from "@/gen/identity/v1/identity_pb";
 import { useUserProfileQuery, useUpdateInstructorProfileMutation } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Avatar } from "@/components/ui/Avatar";
 
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -155,16 +156,15 @@ export default function InstructorProfilePage() {
             <label className="block text-sm font-semibold text-muted-foreground mb-1.5">
               Chức danh khoa học & Học vị
             </label>
-            <input
+            <Input
               type="text"
               value={title}
               onChange={(e) => setTitleInput(e.target.value)}
               placeholder="VD: PGS.TS, GS.TS, Giảng viên chính, Thạc sĩ Khoa học Máy tính"
-              className="w-full px-4 py-3 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Chức danh này sẽ xuất hiện bên dưới họ tên của bạn trên tất cả các Giấy chứng nhận
-              hoàn thành khóa học.
+              Chức danh này sẽ xuất hiện bên dưới họ tên của bạn trên tất me Giấy chứng nhận hoàn
+              thành khóa học.
             </p>
           </div>
 
@@ -172,12 +172,11 @@ export default function InstructorProfilePage() {
             <label className="block text-sm font-semibold text-muted-foreground mb-1.5">
               URL Ảnh Chữ ký tay Điện tử (PNG / SVG nền trong suốt)
             </label>
-            <input
+            <Input
               type="text"
               value={signatureImageUrl}
               onChange={(e) => setSignatureInput(e.target.value)}
               placeholder="https://example.com/signature.png"
-              className="w-full px-4 py-3 text-sm rounded-xl border border-input bg-muted text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
             <p className="text-xs text-muted-foreground mt-1">
               Khuyến nghị tải lên ảnh dạng nét mực chữ ký tay trên nền trong suốt (Format PNG/SVG)

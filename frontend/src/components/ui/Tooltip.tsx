@@ -44,7 +44,11 @@ export interface SimpleTooltipProps {
 export function Tooltip({ content, children, side = "top" }: SimpleTooltipProps) {
   return (
     <BaseTooltip.Root>
-      <BaseTooltip.Trigger>{children}</BaseTooltip.Trigger>
+      <BaseTooltip.Trigger
+        render={React.isValidElement(children) ? (children as React.ReactElement<any>) : undefined}
+      >
+        {React.isValidElement(children) ? undefined : children}
+      </BaseTooltip.Trigger>
       <TooltipContent side={side}>{content}</TooltipContent>
     </BaseTooltip.Root>
   );
