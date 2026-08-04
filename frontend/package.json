@@ -6,12 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "oxlint",
-    "lint:fix": "oxlint --fix",
+    "lint": "oxlint -f agent",
+    "lint:fix": "oxlint --fix -f agent",
     "format": "oxfmt --write .",
-    "fix": "oxlint --fix && oxfmt --write .",
+    "fix": "oxlint --fix -f agent && oxfmt --write .",
     "type-check": "tsc --noEmit",
-    "check": "pnpm run type-check && oxlint && oxfmt --check .",
+    "check": "pnpm run type-check && oxlint -f agent && oxfmt --check .",
     "gen": "buf generate ../proto --template buf.gen.yaml"
   },
   "dependencies": {

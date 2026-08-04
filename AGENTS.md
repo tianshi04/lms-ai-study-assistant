@@ -91,7 +91,7 @@ This file provides rules, architectural conventions, and workspace instructions 
     - **Handlers / Presentation / Stubs (30% - 50%)**: Network stubs and ConnectRPC handlers (primarily verified via E2E / Black-box integration tests).
   - Code quality tests are located in `backend/tests/test_code_quality.py`. These tests execute `ruff` and `ty` checks during the test run to ensure style consistency.
 - **Frontend (TypeScript)**:
-  - **Linter & Formatter**: We use **Oxlint** (Rust-based static code analysis) paired with **Oxfmt** (Rust-based code formatter) for maximum speed and zero-friction formatting. Execute `pnpm run fix` to automatically lint (`oxlint --fix`) and format (`oxfmt --write .`) the entire frontend workspace in a single unified command. Unused variables trigger an error and MUST be cleaned up, or prefixed with an underscore (`_`) if required by signature specs.
+  - **Linter & Formatter**: We use **Oxlint** (Rust-based static code analysis) paired with **Oxfmt** (Rust-based code formatter) for maximum speed and zero-friction formatting. Execute `pnpm run fix` to automatically lint (`oxlint --fix -f agent`) and format (`oxfmt --write .`) the entire frontend workspace in a single unified command. Unused variables trigger an error and MUST be cleaned up, or prefixed with an underscore (`_`) if required by signature specs.
   - **Type Checker & Quality Verification**: Fast standalone static type check via `tsc --noEmit` (`pnpm run type-check`). Full quality check combining type-checking, linting, and format verification is run via `pnpm run check`.
 - **End-to-End Testing (Playwright TS)**:
   - Full-system blackbox E2E tests reside in the root `/e2e` workspace following the Page Object Model (POM) architecture.
@@ -165,7 +165,7 @@ This file provides rules, architectural conventions, and workspace instructions 
 - `pnpm run lint` - Run Oxlint static code analysis.
 - `pnpm run lint:fix` - Run Oxlint auto-fixes for linting issues.
 - `pnpm run format` - Format code with Oxfmt (`oxfmt --write .`).
-- `pnpm run fix` - Combined single command to auto-fix linting and format all code (`oxlint --fix && oxfmt --write .`).
+- `pnpm run fix` - Combined single command to auto-fix linting and format all code (`oxlint --fix -f agent && oxfmt --write .`).
 - `pnpm run type-check` - Fast standalone TypeScript type-checking (`tsc --noEmit`).
 - `pnpm run check` - Comprehensive quality check combining type checking, linting, and format verification.
 - `pnpm run build` - Compile and build Next.js application for production.
