@@ -6,6 +6,9 @@ import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type CourseAnnouncement } from "@/gen/catalog/v1/catalog_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Plus, User } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 
 export default function InstructorAnnouncementsPage({
   params,
@@ -135,9 +138,9 @@ export default function InstructorAnnouncementsPage({
             }`}
           >
             <span>{message.text}</span>
-            <button onClick={() => setMessage(null)} className="text-xs font-bold underline">
+            <Button type="button" variant="ghost" size="sm" onClick={() => setMessage(null)}>
               Đóng
-            </button>
+            </Button>
           </div>
         )}
 
@@ -154,12 +157,11 @@ export default function InstructorAnnouncementsPage({
                 <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Tiêu đề thông báo *
                 </label>
-                <input
+                <Input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Ví dụ: Cập nhật hạn nộp bài tập Tuần 2 & Lịch livestream hỏi đáp"
-                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-muted text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   required
                 />
               </div>
@@ -168,24 +170,19 @@ export default function InstructorAnnouncementsPage({
                 <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
                   Nội dung chi tiết *
                 </label>
-                <textarea
+                <Textarea
                   rows={4}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder="Nhập chi tiết nội dung thông báo gửi tới học viên…"
-                  className="w-full px-4 py-2.5 rounded-xl border border-input bg-muted text-foreground text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   required
                 />
               </div>
 
               <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm shadow-md transition-all cursor-pointer disabled:opacity-50"
-                >
+                <Button type="submit" disabled={submitting} className="cursor-pointer font-bold">
                   <span aria-live="polite">{submitting ? "Đang gửi…" : "Đăng Thông báo Ngay"}</span>
-                </button>
+                </Button>
               </div>
             </form>
           </div>

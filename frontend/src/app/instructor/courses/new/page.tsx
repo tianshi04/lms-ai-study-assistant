@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Checkbox } from "@/components/ui/Checkbox";
 import {
   Select,
   SelectTrigger,
@@ -386,11 +387,10 @@ export default function NewCoursePage() {
                   học này.
                 </span>
               </div>
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={financialAidEnabled}
-                onChange={(e) => setFinancialAidEnabled(e.target.checked)}
-                className="w-5 h-5 text-primary rounded border-input focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                onCheckedChange={(checked) => setFinancialAidEnabled(Boolean(checked))}
+                aria-label="Cho phép nộp đơn hỗ trợ tài chính"
               />
             </div>
           </div>
