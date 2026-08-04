@@ -59,7 +59,28 @@ class Settings(BaseSettings):
         description="Refresh token expiration in days",
     )
 
-    # 5. OpenTelemetry & Jaeger Observability
+    # 6. VNPay Sandbox Gateway Configuration
+    VNPAY_TMN_CODE: str = Field(
+        default="PLM6WVVN",
+        description="VNPay Merchant Terminal Code (vnp_TmnCode)",
+    )
+    VNPAY_HASH_SECRET: str = Field(
+        default="MLQIAARTMNPRIGVBPAFCRFVCASOBHRTS",
+        description="VNPay Secret Key for HMAC-SHA512 checksum calculation",
+    )
+    VNPAY_PAYMENT_URL: str = Field(
+        default="https://sandbox.vnpayment.vn/paymentv2/vpcpay.html",
+        description="VNPay Sandbox Payment Endpoint URL",
+    )
+    VNPAY_RETURN_URL: str = Field(
+        default="http://localhost:3000/payment/vnpay-return",
+        description="Default Client Return URL after VNPay transaction",
+    )
+    VNPAY_API_URL: str = Field(
+        default="https://sandbox.vnpayment.vn/merchant_webapi/api/transaction",
+        description="VNPay Merchant WebAPI Endpoint",
+    )
+
     OTEL_EXPORTER_OTLP_ENDPOINT: Optional[str] = Field(
         default=None,
         description="OpenTelemetry OTLP Collector Endpoint (e.g. http://localhost:4317)",
