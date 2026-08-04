@@ -7,11 +7,16 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from src.modules.payment.application.payment_usecase import PaymentUseCase
 from src.modules.payment.domain.entities import (
     CoursePurchase,
+    PaymentOrder,
+    PaymentOrderStatus,
+    PaymentTargetType,
+    PaymentTransaction,
     UserSubscription,
     PlanType,
     PurchaseStatus,
     SubscriptionStatus,
 )
+
 from src.modules.payment.domain.repositories import IPaymentRepository
 
 
@@ -19,6 +24,8 @@ class InMemoryPaymentRepository(IPaymentRepository):
     def __init__(self):
         self.purchases: list[CoursePurchase] = []
         self.subscriptions: list[UserSubscription] = []
+        self.orders: list[PaymentOrder] = []
+        self.transactions: list[PaymentTransaction] = []
 
     async def save_purchase(self, purchase: CoursePurchase) -> CoursePurchase:
         self.purchases.append(purchase)
@@ -47,6 +54,87 @@ class InMemoryPaymentRepository(IPaymentRepository):
     async def list_user_purchases(self, user_id: str) -> list[CoursePurchase]:
         return [p for p in self.purchases if p.user_id == user_id]
 
+    async def save_order(self, order: PaymentOrder) -> PaymentOrder:
+        self.orders.append(order)
+        return order
+
+    async def get_order_by_txn_ref(self, vnp_txn_ref: str) -> PaymentOrder | None:
+        for o in self.orders:
+            if o.vnp_txn_ref == vnp_txn_ref:
+                return o
+        return None
+
+    async def get_order_by_txn_ref_for_update(
+        self, vnp_txn_ref: str
+    ) -> PaymentOrder | None:
+        return await self.get_order_by_txn_ref(vnp_txn_ref)
+
+    async def get_active_pending_order(
+        self,
+        user_id: str,
+        target_type: PaymentTargetType,
+        target_id: str,
+        plan_type: PlanType = PlanType.UNSPECIFIED,
+        reuse_ttl_minutes: int = 15,
+    ) -> PaymentOrder | None:
+        now_dt = datetime.now(timezone.utc)
+        cutoff_dt = now_dt - timedelta(minutes=reuse_ttl_minutes)
+
+        for o in reversed(self.orders):
+            if (
+                o.user_id == user_id
+                and o.target_type == target_type
+                and o.target_id == target_id
+                and o.plan_type == plan_type
+                and o.status == PaymentOrderStatus.PENDING
+            ):
+                try:
+                    c_dt = datetime.fromisoformat(o.created_at)
+                    if c_dt >= cutoff_dt:
+                        return o
+                except Exception:
+                    continue
+        return None
+
+    async def list_pending_orders_older_than(
+        self, window_minutes: int = 15, limit: int = 50
+    ) -> list[PaymentOrder]:
+        now_dt = datetime.now(timezone.utc)
+        cutoff_dt = now_dt - timedelta(minutes=window_minutes)
+
+        res = []
+        for o in self.orders:
+            if o.status == PaymentOrderStatus.PENDING:
+                try:
+                    c_dt = datetime.fromisoformat(o.created_at)
+                    if c_dt <= cutoff_dt:
+                        res.append(o)
+                except Exception:
+                    continue
+        return res[:limit]
+
+    async def get_order_by_id(self, order_id: str) -> PaymentOrder | None:
+        for o in self.orders:
+            if o.id == order_id:
+                return o
+        return None
+
+    async def update_order_status(
+        self, order_id: str, status: PaymentOrderStatus
+    ) -> PaymentOrder | None:
+        for o in self.orders:
+            if o.id == order_id:
+                o.status = status
+                o.updated_at = datetime.now(timezone.utc).isoformat()
+                return o
+        return None
+
+    async def save_transaction(
+        self, transaction: PaymentTransaction
+    ) -> PaymentTransaction:
+        self.transactions.append(transaction)
+        return transaction
+
 
 @pytest.mark.asyncio
 @patch("src.modules.payment.application.payment_usecase.async_session_scope")
@@ -56,7 +144,6 @@ async def test_purchase_course_success(mock_scope):
     mock_ctx.__aenter__.return_value = mock_session
     mock_scope.return_value = mock_ctx
 
-    # Mock DB query result
     mock_res = MagicMock()
     mock_res.scalar_one_or_none.return_value = None
     mock_session.execute.return_value = mock_res
@@ -80,13 +167,12 @@ async def test_purchase_course_success(mock_scope):
 
 @pytest.mark.asyncio
 @patch("src.modules.payment.application.payment_usecase.async_session_scope")
-async def test_purchase_course_already_purchased(mock_scope):
+async def test_create_vnpay_payment_url_success(mock_scope):
     mock_session = AsyncMock()
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
     mock_scope.return_value = mock_ctx
 
-    # Mock DB query result
     mock_res = MagicMock()
     mock_res.scalar_one_or_none.return_value = None
     mock_session.execute.return_value = mock_res
@@ -94,19 +180,26 @@ async def test_purchase_course_already_purchased(mock_scope):
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 
-    # First purchase
-    await use_case.purchase_course("user_123", "course_python")
+    from src.modules.payment.domain.entities import PaymentTargetType
 
-    # Second purchase attempt
-    success, msg, purchase = await use_case.purchase_course("user_123", "course_python")
+    success, msg, pay_url, order_id, txn_ref = await use_case.create_vnpay_payment_url(
+        user_id="user_vnp_1",
+        target_type=PaymentTargetType.COURSE,
+        target_id="course_101",
+    )
+
     assert success is True
-    assert "đã mua và sở hữu" in msg
-    assert purchase is None
+    assert "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html" in pay_url
+    assert "vnp_SecureHash=" in pay_url
+    assert txn_ref.startswith("VNP-")
+    assert len(repo.orders) == 1
+    assert repo.orders[0].vnp_txn_ref == txn_ref
+    assert repo.orders[0].status == PaymentOrderStatus.PENDING
 
 
 @pytest.mark.asyncio
 @patch("src.modules.payment.application.payment_usecase.async_session_scope")
-async def test_subscribe_coursera_plus_monthly(mock_scope):
+async def test_verify_vnpay_payment_success(mock_scope):
     mock_session = AsyncMock()
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
@@ -115,43 +208,118 @@ async def test_subscribe_coursera_plus_monthly(mock_scope):
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 
-    success, msg, sub = await use_case.subscribe_coursera_plus(
-        user_id="user_456",
+    from src.modules.payment.domain.entities import PaymentTargetType
+    from src.modules.payment.infrastructure.vnpay_service import VNPayService
+
+    success, msg, pay_url, order_id, txn_ref = await use_case.create_vnpay_payment_url(
+        user_id="user_vnp_2",
+        target_type=PaymentTargetType.COURSE,
+        target_id="course_202",
+    )
+
+    # Build simulated valid query params from VNPay
+    raw_params = {
+        "vnp_Amount": "119000000",
+        "vnp_BankCode": "NCB",
+        "vnp_Command": "pay",
+        "vnp_OrderInfo": "Thanh toan khoa hoc",
+        "vnp_PayDate": "20260804160000",
+        "vnp_ResponseCode": "00",
+        "vnp_TmnCode": "2QX02MS1",
+        "vnp_TransactionNo": "14500000",
+        "vnp_TransactionStatus": "00",
+        "vnp_TxnRef": txn_ref,
+        "vnp_Version": "2.1.0",
+    }
+
+    # Calculate valid hash
+    sorted_items = sorted(raw_params.items())
+    import urllib.parse
+
+    hash_data = "&".join(
+        f"{urllib.parse.quote_plus(k)}={urllib.parse.quote_plus(v)}"
+        for k, v in sorted_items
+    )
+    from src.shared.config import settings
+
+    sec_hash = VNPayService.calculate_hmac_sha512(settings.VNPAY_HASH_SECRET, hash_data)
+    raw_params["vnp_SecureHash"] = sec_hash
+
+    (
+        v_success,
+        v_msg,
+        v_order_id,
+        v_type,
+        v_target_id,
+        v_plan_type,
+        purchase,
+        sub,
+    ) = await use_case.verify_vnpay_payment(
+        user_id="user_vnp_2",
+        query_params=raw_params,
+    )
+
+    assert v_success is True
+    assert v_order_id == order_id
+    assert purchase is not None
+    assert purchase.course_id == "course_202"
+    assert repo.orders[0].status == PaymentOrderStatus.COMPLETED
+    assert len(repo.transactions) == 1
+
+
+@pytest.mark.asyncio
+@patch("src.modules.payment.application.payment_usecase.async_session_scope")
+async def test_process_vnpay_ipn_success(mock_scope):
+    mock_session = AsyncMock()
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    repo = InMemoryPaymentRepository()
+    use_case = PaymentUseCase(repo=repo)
+
+    from src.modules.payment.domain.entities import PaymentTargetType
+    from src.modules.payment.infrastructure.vnpay_service import VNPayService
+
+    _, _, _, _, txn_ref = await use_case.create_vnpay_payment_url(
+        user_id="user_vnp_3",
+        target_type=PaymentTargetType.SYSTEM_SUBSCRIPTION,
+        target_id="COURSERA_PLUS",
         plan_type=PlanType.MONTHLY,
     )
 
-    assert success is True
-    assert sub is not None
-    assert sub.user_id == "user_456"
-    assert sub.plan_type == PlanType.MONTHLY
-    assert sub.status == SubscriptionStatus.ACTIVE
-    assert sub.is_currently_active() is True
+    raw_params = {
+        "vnp_Amount": "79000000",
+        "vnp_BankCode": "NCB",
+        "vnp_Command": "pay",
+        "vnp_OrderInfo": "Thanh toan Coursera Plus",
+        "vnp_PayDate": "20260804160000",
+        "vnp_ResponseCode": "00",
+        "vnp_TmnCode": "2QX02MS1",
+        "vnp_TransactionNo": "14500001",
+        "vnp_TransactionStatus": "00",
+        "vnp_TxnRef": txn_ref,
+        "vnp_Version": "2.1.0",
+    }
 
-    active_sub = await repo.get_active_subscription("user_456")
-    assert active_sub is not None
-    assert active_sub.id == sub.id
+    sorted_items = sorted(raw_params.items())
+    import urllib.parse
 
-
-@pytest.mark.asyncio
-@patch("src.modules.payment.application.payment_usecase.async_session_scope")
-async def test_subscribe_coursera_plus_yearly(mock_scope):
-    mock_session = AsyncMock()
-    mock_ctx = AsyncMock()
-    mock_ctx.__aenter__.return_value = mock_session
-    mock_scope.return_value = mock_ctx
-
-    repo = InMemoryPaymentRepository()
-    use_case = PaymentUseCase(repo=repo)
-
-    success, msg, sub = await use_case.subscribe_coursera_plus(
-        user_id="user_789",
-        plan_type=PlanType.YEARLY,
+    hash_data = "&".join(
+        f"{urllib.parse.quote_plus(k)}={urllib.parse.quote_plus(v)}"
+        for k, v in sorted_items
     )
+    from src.shared.config import settings
 
-    assert success is True
-    assert sub is not None
-    assert sub.plan_type == PlanType.YEARLY
-    assert sub.is_currently_active() is True
+    sec_hash = VNPayService.calculate_hmac_sha512(settings.VNPAY_HASH_SECRET, hash_data)
+    raw_params["vnp_SecureHash"] = sec_hash
+
+    ipn_res = await use_case.process_vnpay_ipn(raw_params)
+
+    assert ipn_res == {"RspCode": "00", "Message": "Confirm Success"}
+    assert repo.orders[0].status == PaymentOrderStatus.COMPLETED
+    assert len(repo.subscriptions) == 1
+    assert repo.subscriptions[0].plan_type == PlanType.MONTHLY
 
 
 @pytest.mark.asyncio
@@ -168,3 +336,99 @@ async def test_user_subscription_expired():
     )
 
     assert sub.is_currently_active() is False
+
+
+@pytest.mark.asyncio
+@patch("src.modules.payment.application.payment_usecase.async_session_scope")
+async def test_pending_order_reuse(mock_scope):
+    mock_session = AsyncMock()
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    repo = InMemoryPaymentRepository()
+    use_case = PaymentUseCase(repo=repo)
+
+    # First call: creates new order
+    (
+        success1,
+        msg1,
+        pay_url1,
+        order_id1,
+        txn_ref1,
+    ) = await use_case.create_vnpay_payment_url(
+        user_id="user_reuse",
+        target_type=PaymentTargetType.COURSE,
+        target_id="course_reuse_101",
+    )
+    assert success1 is True
+    assert len(repo.orders) == 1
+
+    # Second call within 15 mins: reuses existing order
+    (
+        success2,
+        msg2,
+        pay_url2,
+        order_id2,
+        txn_ref2,
+    ) = await use_case.create_vnpay_payment_url(
+        user_id="user_reuse",
+        target_type=PaymentTargetType.COURSE,
+        target_id="course_reuse_101",
+    )
+    assert success2 is True
+    assert "Tái sử dụng" in msg2
+    assert order_id2 == order_id1
+    assert txn_ref2 == txn_ref1
+    assert len(repo.orders) == 1
+
+
+@pytest.mark.asyncio
+@patch("src.modules.payment.application.payment_usecase.async_session_scope")
+async def test_amount_tampering_detected(mock_scope):
+    mock_session = AsyncMock()
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    repo = InMemoryPaymentRepository()
+    use_case = PaymentUseCase(repo=repo)
+
+    _, _, _, _, txn_ref = await use_case.create_vnpay_payment_url(
+        user_id="user_tamper",
+        target_type=PaymentTargetType.COURSE,
+        target_id="course_tamper_1",
+    )
+
+    # Build simulated tamper query params with small amount (1000 VND instead of 1190000 VND)
+    raw_params = {
+        "vnp_Amount": "100000",
+        "vnp_BankCode": "NCB",
+        "vnp_Command": "pay",
+        "vnp_OrderInfo": "Thanh toan khoa hoc",
+        "vnp_PayDate": "20260804160000",
+        "vnp_ResponseCode": "00",
+        "vnp_TmnCode": "2QX02MS1",
+        "vnp_TransactionNo": "14500099",
+        "vnp_TransactionStatus": "00",
+        "vnp_TxnRef": txn_ref,
+        "vnp_Version": "2.1.0",
+    }
+
+    from src.modules.payment.infrastructure.vnpay_service import VNPayService
+    from src.shared.config import settings
+
+    sorted_items = sorted(raw_params.items())
+    import urllib.parse
+
+    hash_data = "&".join(
+        f"{urllib.parse.quote_plus(k)}={urllib.parse.quote_plus(v)}"
+        for k, v in sorted_items
+    )
+    raw_params["vnp_SecureHash"] = VNPayService.calculate_hmac_sha512(
+        settings.VNPAY_HASH_SECRET, hash_data
+    )
+
+    ipn_res = await use_case.process_vnpay_ipn(raw_params)
+    assert ipn_res == {"RspCode": "04", "Message": "Invalid Amount"}
+    assert repo.orders[0].status == PaymentOrderStatus.FAILED
