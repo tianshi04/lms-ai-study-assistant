@@ -11,7 +11,6 @@ import {
   Check,
   Eye,
   ArrowRight,
-  BookOpen,
   Sparkles,
   ChevronUp,
   ChevronDown,
@@ -209,63 +208,7 @@ export function VideoPlayer({
       );
     }
 
-    // 5. SCORM Package Learning Item
-    if ((activeItem.type as unknown as number) === 7) {
-      return (
-        <div className="w-full flex flex-col bg-card transition-colors duration-200 rounded-2xl overflow-hidden">
-          {/* Header toolbar */}
-          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-            <div className="space-y-1">
-              <h2 className="text-lg font-extrabold text-foreground flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-warning" aria-hidden="true" />
-                <span>{activeItem.title}</span>
-                {isPreviewMode && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-warning/10 text-warning border border-warning/20 animate-pulse">
-                    {"Xem trước"}
-                  </span>
-                )}
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {"Trình phát học liệu tương tác SCORM 1.2"}
-              </p>
-            </div>
-            {!isPreviewMode && (
-              <button
-                onClick={() => onMarkComplete?.(activeItem.id)}
-                disabled={isCompleted}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                  isCompleted
-                    ? "bg-success/10 text-success border border-success/20 cursor-default"
-                    : "bg-success hover:bg-success/90 text-success-foreground shadow-md cursor-pointer"
-                }`}
-              >
-                <Check className="w-4 h-4" aria-hidden="true" />
-                {isCompleted ? "Đã Hoàn Thành" : "Đánh dấu Hoàn Thành"}
-              </button>
-            )}
-          </div>
-
-          {/* Iframe Viewport */}
-          <div className="w-full min-h-[500px] relative bg-muted/50 p-2">
-            {(activeItem as any).scormEntryHtml ? (
-              <iframe
-                key={activeItem.id}
-                src={(activeItem as any).scormEntryHtml}
-                className="w-full min-h-[500px] border-0 rounded-2xl bg-card shadow-lg"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            ) : (
-              <div className="w-full h-64 flex items-center justify-center text-destructive font-bold bg-card rounded-2xl">
-                {"Lỗi: Không tìm thấy tệp entry chạy chính của gói SCORM."}
-              </div>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    // 6. Video Item Default Fallback
+    // 5. Video Item Default Fallback
     const youtubeEmbedUrl = activeItem.videoUrl
       ? getYouTubeEmbedUrl(activeItem.videoUrl, activeItem.autoTranscribe)
       : null;
