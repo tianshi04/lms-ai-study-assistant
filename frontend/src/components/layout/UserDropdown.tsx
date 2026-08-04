@@ -7,7 +7,6 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { getAvatarDataUri } from "@/lib/avatar";
 
 import {
-  User,
   BookOpen,
   CircleDollarSign,
   GraduationCap,
@@ -107,9 +106,9 @@ export function UserDropdown() {
           <span>{"Việc học của tôi"}</span>
         </DropdownMenuItem>
 
-        <DropdownMenuItem render={<Link href="/auth/profile" />} className={itemClasses}>
-          <User className={iconClasses} />
-          <span>{"Trang cá nhân"}</span>
+        <DropdownMenuItem render={<Link href="/account-settings" />} className={itemClasses}>
+          <Settings className={iconClasses} />
+          <span>{"Cài đặt"}</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem render={<Link href="/financial-aid" />} className={itemClasses}>

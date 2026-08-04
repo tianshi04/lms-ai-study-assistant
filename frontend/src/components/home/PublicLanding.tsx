@@ -169,8 +169,8 @@ export function PublicLanding() {
             <Link href="/courses" className="hover:text-primary transition-colors">
               Khóa học
             </Link>
-            <Link href="/auth/profile" className="hover:text-primary transition-colors">
-              Hồ sơ
+            <Link href="/account-settings" className="hover:text-primary transition-colors">
+              Cài đặt
             </Link>
             <Link href="/instructor/courses" className="hover:text-primary transition-colors">
               Giảng Viên

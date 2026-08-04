@@ -14,7 +14,7 @@ import { getAvatarDataUri } from "@/lib/avatar";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Check, Loader2, ShieldCheck, KeyRound, UserCheck, AlertCircle } from "lucide-react";
 
-export default function ProfilePage() {
+export default function AccountSettingsPage() {
   const { userId: authUserId } = useAuth();
   const userId = authUserId || "";
   const queryClient = useQueryClient();
@@ -83,7 +83,7 @@ export default function ProfilePage() {
         <div className="flex items-center gap-3 text-on-surface-variant">
           <Loader2 className="animate-spin h-6 w-6 text-primary" aria-hidden="true" />
           <span aria-live="polite" className="text-sm font-bold">
-            Đang tải hồ sơ…
+            {"Đang tải cài đặt tài khoản…"}
           </span>
         </div>
       </div>
@@ -114,7 +114,7 @@ export default function ProfilePage() {
               <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-primary-container border border-primary/20 text-on-primary-container text-xs font-bold shadow-xs">
                 <UserCheck className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                 <span>
-                  Vai trò:{" "}
+                  {"Vai trò: "}
                   {user?.role === 1
                     ? "Learner (Học viên)"
                     : user?.role === 2
@@ -126,12 +126,12 @@ export default function ProfilePage() {
               {user?.isIdentityVerified ? (
                 <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-success/15 border border-success/30 text-success text-xs font-bold shadow-xs">
                   <Check className="w-3.5 h-3.5 text-success" aria-hidden="true" />
-                  <span>Đã xác minh KYC</span>
+                  <span>{"Đã xác minh KYC"}</span>
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-warning/15 border border-warning/30 text-warning text-xs font-bold shadow-xs">
                   <AlertCircle className="w-3.5 h-3.5 text-warning" aria-hidden="true" />
-                  <span>Chưa xác minh KYC</span>
+                  <span>{"Chưa xác minh KYC"}</span>
                 </span>
               )}
             </div>
@@ -144,7 +144,7 @@ export default function ProfilePage() {
             <div>
               <h2 className="text-lg font-bold text-on-surface mb-1 flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-primary" aria-hidden="true" />
-                <span>Xác minh Danh tính Sinh trắc học (KYC Verification)</span>
+                <span>{"Xác minh Danh tính Sinh trắc học (KYC Verification)"}</span>
               </h2>
               <p className="text-sm text-on-surface-variant leading-relaxed">
                 {user?.isIdentityVerified
@@ -161,7 +161,7 @@ export default function ProfilePage() {
                   className="rounded-full bg-success/10 text-success border-success/20 font-bold cursor-default px-4"
                 >
                   <Check className="w-4 h-4 mr-1.5 text-success" aria-hidden="true" />
-                  <span>Đã xác minh</span>
+                  <span>{"Đã xác minh"}</span>
                 </Button>
               ) : (
                 <Button
@@ -171,7 +171,7 @@ export default function ProfilePage() {
                   size="sm"
                   className="rounded-full px-6 py-2.5 bg-primary hover:bg-primary-hover text-on-primary font-bold shadow-xs hover:shadow-md transition-all"
                 >
-                  Giả lập Xác minh KYC (Mock Verification)
+                  {"Giả lập Xác minh KYC (Mock Verification)"}
                 </Button>
               )}
             </div>
@@ -182,11 +182,12 @@ export default function ProfilePage() {
         <div className="mt-8">
           <h2 className="text-lg font-bold text-on-surface mb-2 flex items-center gap-2">
             <KeyRound className="w-5 h-5 text-primary" aria-hidden="true" />
-            <span>Suất học Doanh nghiệp / Đối tác (Enterprise License)</span>
+            <span>{"Suất học Doanh nghiệp / Đối tác (Enterprise License)"}</span>
           </h2>
           <p className="text-sm text-on-surface-variant mb-6 leading-relaxed">
-            Nhập mã kích hoạt (Enterprise Seat Key) được cấp bởi trường đại học hoặc doanh nghiệp để
-            mở khóa 100% tài nguyên học tập trả phí.
+            {
+              "Nhập mã kích hoạt (Enterprise Seat Key) được cấp bởi trường đại học hoặc doanh nghiệp để mở khóa 100% tài nguyên học tập trả phí."
+            }
           </p>
 
           <form
@@ -210,7 +211,7 @@ export default function ProfilePage() {
               size="md"
               className="rounded-full px-8 font-bold shadow-xs hover:shadow-md transition-all"
             >
-              Kích hoạt mã
+              {"Kích hoạt mã"}
             </Button>
           </form>
         </div>
