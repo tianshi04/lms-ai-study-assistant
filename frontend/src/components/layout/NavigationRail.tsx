@@ -17,7 +17,7 @@ const defaultNavItems: NavRailItem[] = [
   { href: "/catalog", label: "Khám phá", icon: Compass },
   { href: "/my-learning", label: "Việc học của tôi", icon: BookOpen },
   { href: "/assessments", label: "Bài kiểm tra", icon: GraduationCap },
-  { href: "/certificates", label: "Chứng chỉ", icon: Award },
+  { href: "/my-learning?tab=certificates", label: "Chứng chỉ", icon: Award },
 ];
 
 export interface NavigationRailProps {
@@ -39,8 +39,9 @@ export function NavigationRail({ items = defaultNavItems, className }: Navigatio
       <div className="flex flex-col items-center gap-4 w-full px-2">
         {items.map((item) => {
           const Icon = item.icon;
+          const cleanHref = item.href.split("?")[0];
           const isActive =
-            pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+            pathname === item.href || (item.href !== "/" && pathname.startsWith(cleanHref));
 
           return (
             <Link

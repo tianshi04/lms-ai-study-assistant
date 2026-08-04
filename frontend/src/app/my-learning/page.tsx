@@ -1,25 +1,46 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore, Suspense } from "react";
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import { BookOpen, CheckCircle2, Award, Check, Eye } from "lucide-react";
 
 import { getRpcClient } from "@/lib/connect_client";
 import { LearningService, type EnrolledCourseSummary } from "@/gen/learning/v1/learning_pb";
+import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
 import { Tabs } from "@/components/ui/Tabs";
-import { Badge } from "@/components/ui/Badge";
 import { useAuth } from "@/components/providers/AuthProvider";
 
-type Tab = "ALL" | "IN_PROGRESS" | "COMPLETED";
+type Tab = "IN_PROGRESS" | "COMPLETED" | "CERTIFICATES";
+
+const TAB_PARAM_MAP: Record<string, Tab> = {
+  "in-progress": "IN_PROGRESS",
+  completed: "COMPLETED",
+  certificates: "CERTIFICATES",
+};
+
+const TAB_TO_PARAM: Record<Tab, string> = {
+  IN_PROGRESS: "in-progress",
+  COMPLETED: "completed",
+  CERTIFICATES: "certificates",
+};
 
 const emptySubscribe = () => () => {};
 
-export default function MyLearningPage() {
+function MyLearningContent() {
   const { isAuthenticated } = useAuth();
+  const searchParams = useSearchParams();
+
+  const tabParam = searchParams.get("tab");
+  const initialTab: Tab =
+    tabParam && TAB_PARAM_MAP[tabParam] ? TAB_PARAM_MAP[tabParam] : "IN_PROGRESS";
+
   const [courses, setCourses] = useState<EnrolledCourseSummary[]>([]);
+  const [certificates, setCertificates] = useState<VerifiedCertificate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>("ALL");
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
 
   const isMounted = useSyncExternalStore(
     emptySubscribe,
@@ -27,6 +48,13 @@ export default function MyLearningPage() {
     () => false,
   );
 
+  useEffect(() => {
+    if (tabParam && TAB_PARAM_MAP[tabParam]) {
+      setActiveTab(TAB_PARAM_MAP[tabParam]);
+    }
+  }, [tabParam]);
+
+  // Fetch enrolled courses and certificates in parallel on mount
   useEffect(() => {
     if (!isMounted) return;
 
@@ -37,17 +65,24 @@ export default function MyLearningPage() {
 
     let isCancelled = false;
 
-    async function fetchMyLearning() {
+    async function fetchMyLearningData() {
       try {
-        const client = getRpcClient(LearningService);
-        const res = await client.listMyEnrolledCourses({});
+        const learningClient = getRpcClient(LearningService);
+        const certClient = getRpcClient(CertificateService);
+
+        const [learningRes, certRes] = await Promise.all([
+          learningClient.listMyEnrolledCourses({}),
+          certClient.listMyCertificates({}).catch(() => ({ certificates: [] })),
+        ]);
+
         if (!isCancelled) {
-          setCourses(res.courses || []);
+          setCourses(learningRes.courses || []);
+          setCertificates(certRes.certificates || []);
         }
       } catch (err: unknown) {
         if (!isCancelled) {
-          console.error("Failed to fetch my courses:", err);
-          setError(err instanceof Error ? err.message : "Lỗi khi tải danh sách khóa học");
+          console.error("Failed to fetch my learning data:", err);
+          setError(err instanceof Error ? err.message : "Lỗi khi tải dữ liệu học tập");
         }
       } finally {
         if (!isCancelled) {
@@ -56,20 +91,28 @@ export default function MyLearningPage() {
       }
     }
 
-    fetchMyLearning();
+    fetchMyLearningData();
 
     return () => {
       isCancelled = true;
     };
-  }, [isMounted]);
+  }, [isMounted, isAuthenticated]);
 
-  const filteredCourses = courses.filter((c) => {
-    if (activeTab === "ALL") return true;
-    if (activeTab === "IN_PROGRESS")
-      return c.status === "IN_PROGRESS" || c.status === "NOT_STARTED";
-    if (activeTab === "COMPLETED") return c.status === "COMPLETED";
-    return true;
-  });
+  const handleTabChange = (id: string) => {
+    const newTab = id as Tab;
+    setActiveTab(newTab);
+    const param = TAB_TO_PARAM[newTab];
+    if (param && typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", param);
+      window.history.replaceState(null, "", url.toString());
+    }
+  };
+
+  const inProgressCourses = courses.filter(
+    (c) => c.status === "IN_PROGRESS" || c.status === "NOT_STARTED",
+  );
+  const completedCourses = courses.filter((c) => c.status === "COMPLETED");
 
   return (
     <main className="w-full max-w-7xl mx-auto px-6 pt-12 pb-20 flex-1">
@@ -87,21 +130,21 @@ export default function MyLearningPage() {
       {/* Tabs */}
       <Tabs
         tabs={[
-          { id: "ALL", label: "Tất cả", count: courses.length },
           {
             id: "IN_PROGRESS",
-            label: "Đang học",
-            count: courses.filter((c) => c.status === "IN_PROGRESS" || c.status === "NOT_STARTED")
-              .length,
+            label: "Đang tiến hành",
           },
           {
             id: "COMPLETED",
-            label: "Hoàn thành",
-            count: courses.filter((c) => c.status === "COMPLETED").length,
+            label: "Đã hoàn thành",
+          },
+          {
+            id: "CERTIFICATES",
+            label: "Chứng chỉ",
           },
         ]}
         activeTab={activeTab}
-        onChange={(id) => setActiveTab(id as Tab)}
+        onChange={handleTabChange}
         className="mb-8"
       />
 
@@ -132,15 +175,103 @@ export default function MyLearningPage() {
         <div className="bg-destructive/10 border border-destructive/20 text-destructive p-6 rounded-2xl text-center">
           <p className="font-semibold">{error}</p>
         </div>
-      ) : filteredCourses.length === 0 ? (
+      ) : activeTab === "CERTIFICATES" ? (
+        certificates.length === 0 ? (
+          <div className="py-16 text-center text-muted-foreground">
+            <Award className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" aria-hidden="true" />
+            <h3 className="text-lg font-bold text-foreground mb-2">{"Chưa có chứng chỉ nào"}</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              {"Bạn chưa đạt được chứng chỉ nào. Hãy hoàn thành khóa học để nhận chứng chỉ."}
+            </p>
+            <Link
+              href="/courses"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
+            >
+              {"Khám phá khóa học"}
+            </Link>
+          </div>
+        ) : (
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6">
+            {certificates.map((cert) => (
+              <div
+                key={cert.certificateId}
+                className="group relative bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized flex flex-col justify-between"
+              >
+                <div className="p-6 rounded-t-3xl">
+                  {/* Header Badge & Partner */}
+                  <div className="flex items-center justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-2">
+                      {cert.partnerLogoUrl ? (
+                        <Image
+                          src={cert.partnerLogoUrl}
+                          alt={cert.partnerName}
+                          width={28}
+                          height={28}
+                          unoptimized
+                          className="w-7 h-7 object-contain rounded"
+                        />
+                      ) : (
+                        <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                          {cert.partnerName.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground truncate">
+                        {cert.partnerName}
+                      </span>
+                    </div>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-success/10 text-success border border-success/20 shrink-0">
+                      <Check className="w-3.5 h-3.5" aria-hidden="true" />
+                      Verified
+                    </span>
+                  </div>
+
+                  {/* Course Title */}
+                  <h3 className="text-lg font-bold text-foreground leading-snug line-clamp-2 mb-4 group-hover:text-primary transition-colors">
+                    {cert.courseTitle}
+                  </h3>
+
+                  {/* Details */}
+                  <div className="space-y-2 text-xs text-muted-foreground bg-muted p-3.5 rounded-2xl border border-border">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{"Cấp ngày"}:</span>
+                      <span className="font-semibold text-foreground">{cert.issueDate}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{"Mã chứng chỉ"}:</span>
+                      <span className="font-mono text-[11px] font-bold text-primary truncate max-w-[150px]">
+                        {cert.certificateId}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Actions */}
+                <div className="p-4 border-t border-border bg-muted/50 flex items-center gap-2 rounded-b-3xl">
+                  <Link
+                    href={cert.verificationUrl || `/verify/${cert.certificateId}`}
+                    className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-all cursor-pointer"
+                  >
+                    <Eye className="w-4 h-4" aria-hidden="true" />
+                    <span>{"Xem chứng chỉ"}</span>
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      ) : activeTab === "IN_PROGRESS" && inProgressCourses.length === 0 ? (
         <div className="py-16 text-center text-muted-foreground">
           <BookOpen
             className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4"
             aria-hidden="true"
           />
-          <h3 className="text-lg font-bold text-foreground mb-2">{"Chưa có khóa học nào"}</h3>
+          <h3 className="text-lg font-bold text-foreground mb-2">
+            {"Không có khóa học nào đang tiến hành"}
+          </h3>
           <p className="text-sm text-muted-foreground mb-6">
-            {"Bạn chưa ghi danh vào khóa học nào. Hãy bắt đầu hành trình học tập ngay hôm nay!"}
+            {
+              "Bạn chưa ghi danh khóa học nào hoặc đã hoàn thành tất cả. Khám phá các khóa học mới ngay!"
+            }
           </p>
           <Link
             href="/courses"
@@ -149,9 +280,22 @@ export default function MyLearningPage() {
             {"Khám phá danh mục"}
           </Link>
         </div>
+      ) : activeTab === "COMPLETED" && completedCourses.length === 0 ? (
+        <div className="py-16 text-center text-muted-foreground">
+          <CheckCircle2
+            className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4"
+            aria-hidden="true"
+          />
+          <h3 className="text-lg font-bold text-foreground mb-2">
+            {"Chưa có khóa học nào hoàn thành"}
+          </h3>
+          <p className="text-sm text-muted-foreground mb-6">
+            {"Hãy tiếp tục hoàn thành các bài học và kiểm tra để nhận chứng chỉ!"}
+          </p>
+        </div>
       ) : (
         <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-6">
-          {filteredCourses.map((course) => (
+          {(activeTab === "IN_PROGRESS" ? inProgressCourses : completedCourses).map((course) => (
             <div
               key={course.courseId}
               className="group relative bg-card text-card-foreground border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized flex flex-col h-full"
@@ -161,19 +305,6 @@ export default function MyLearningPage() {
                   <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     {course.partnerName}
                   </span>
-                  {course.status === "COMPLETED" ? (
-                    <Badge variant="success" className="text-[10px]">
-                      ✓ {"Hoàn thành"}
-                    </Badge>
-                  ) : course.status === "IN_PROGRESS" ? (
-                    <Badge variant="primary" className="text-[10px]">
-                      {"Đang học"}
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" className="text-[10px]">
-                      {"Chưa bắt đầu"}
-                    </Badge>
-                  )}
                 </div>
                 <Link
                   href={`/courses/${course.courseId}`}
@@ -223,5 +354,26 @@ export default function MyLearningPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function MyLearningPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="w-full max-w-7xl mx-auto px-6 pt-12 pb-20 flex-1">
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className="bg-card border border-border rounded-2xl p-6 animate-pulse h-64"
+              />
+            ))}
+          </div>
+        </main>
+      }
+    >
+      <MyLearningContent />
+    </Suspense>
   );
 }

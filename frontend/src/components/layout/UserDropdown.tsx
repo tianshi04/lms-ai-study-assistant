@@ -3,7 +3,6 @@
 import React, { useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { getAvatarDataUri } from "@/lib/avatar";
 
@@ -11,7 +10,6 @@ import {
   Home,
   User,
   BookOpen,
-  Award,
   CircleDollarSign,
   GraduationCap,
   Layers,
@@ -31,6 +29,10 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/DropdownMenu";
 
+const itemClasses =
+  "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/70 font-medium justify-start gap-3 w-full rounded-xl px-3.5 py-2.5 my-0.5 transition-all cursor-pointer";
+const iconClasses = "w-4.5 h-4.5 text-on-surface-variant";
+
 export function UserDropdown() {
   const {
     userName,
@@ -40,7 +42,6 @@ export function UserDropdown() {
     isSuperAdmin,
     logout: handleLogout,
   } = useAuth();
-  const pathname = usePathname();
 
   const avatarSrc = useMemo(() => getAvatarDataUri(userEmail || "user"), [userEmail]);
 
@@ -56,26 +57,6 @@ export function UserDropdown() {
     if (r === "TA" || r.includes("TA")) return "Trợ giảng";
     return "Học viên";
   }, [userRole, isSuperAdmin]);
-
-  const isActive = (path: string) => {
-    if (path === "/") return pathname === "/";
-    return pathname?.startsWith(path);
-  };
-
-  const getItemClasses = (path: string, customActiveClasses?: string) => {
-    const active = isActive(path);
-    if (active) {
-      return (
-        customActiveClasses ||
-        "bg-primary-container text-on-primary-container font-bold justify-start gap-3 w-full rounded-xl px-3.5 py-2.5 my-0.5 transition-all shadow-xs"
-      );
-    }
-    return "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/70 font-medium justify-start gap-3 w-full rounded-xl px-3.5 py-2.5 my-0.5 transition-all";
-  };
-
-  const getIconClasses = (path: string) => {
-    return isActive(path) ? "text-on-primary-container" : "text-on-surface-variant";
-  };
 
   return (
     <DropdownMenu>
@@ -122,103 +103,65 @@ export function UserDropdown() {
         </div>
 
         {/* Menu Items */}
-        <DropdownMenuItem render={<Link href="/" />} className={getItemClasses("/")}>
-          <Home className={`w-4.5 h-4.5 ${getIconClasses("/")}`} />
-          <span>{"Bảng điều khiển chính"}</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem
-          render={<Link href="/auth/profile" />}
-          className={getItemClasses("/auth/profile")}
-        >
-          <User className={`w-4.5 h-4.5 ${getIconClasses("/auth/profile")}`} />
-          <span>{"Trang cá nhân"}</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem
-          render={<Link href="/my-learning" />}
-          className={getItemClasses("/my-learning")}
-        >
-          <BookOpen className={`w-4.5 h-4.5 ${getIconClasses("/my-learning")}`} />
+        <DropdownMenuItem render={<Link href="/my-learning" />} className={itemClasses}>
+          <BookOpen className={iconClasses} />
           <span>{"Việc học của tôi"}</span>
         </DropdownMenuItem>
 
-        <DropdownMenuItem
-          render={<Link href="/certificates" />}
-          className={getItemClasses("/certificates")}
-        >
-          <Award className={`w-4.5 h-4.5 ${getIconClasses("/certificates")}`} />
-          <span>{"Chứng chỉ của tôi"}</span>
+        <DropdownMenuItem render={<Link href="/" />} className={itemClasses}>
+          <Home className={iconClasses} />
+          <span>{"Bảng điều khiển chính"}</span>
         </DropdownMenuItem>
 
-        <DropdownMenuItem
-          render={<Link href="/financial-aid" />}
-          className={getItemClasses("/financial-aid")}
-        >
-          <CircleDollarSign className={`w-4.5 h-4.5 ${getIconClasses("/financial-aid")}`} />
+        <DropdownMenuItem render={<Link href="/auth/profile" />} className={itemClasses}>
+          <User className={iconClasses} />
+          <span>{"Trang cá nhân"}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem render={<Link href="/financial-aid" />} className={itemClasses}>
+          <CircleDollarSign className={iconClasses} />
           <span>{"Đơn Hỗ trợ tài chính"}</span>
         </DropdownMenuItem>
 
         {!isInstructorOrAdmin && (
-          <DropdownMenuItem
-            render={<Link href="/become-an-instructor" />}
-            className={getItemClasses("/become-an-instructor")}
-          >
-            <GraduationCap className={`w-4.5 h-4.5 ${getIconClasses("/become-an-instructor")}`} />
+          <DropdownMenuItem render={<Link href="/become-an-instructor" />} className={itemClasses}>
+            <GraduationCap className={iconClasses} />
             <span className="font-semibold">{"Đăng ký làm Giảng viên"}</span>
           </DropdownMenuItem>
         )}
 
         {isInstructorOrAdmin && (
           <>
-            <DropdownMenuItem
-              render={<Link href="/instructor/courses" />}
-              className={getItemClasses("/instructor/courses")}
-            >
-              <Layers className={`w-4.5 h-4.5 ${getIconClasses("/instructor/courses")}`} />
+            <DropdownMenuItem render={<Link href="/instructor/courses" />} className={itemClasses}>
+              <Layers className={iconClasses} />
               <span>{"Giảng Viên"}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              render={<Link href="/instructor/profile" />}
-              className={getItemClasses("/instructor/profile")}
-            >
-              <Edit className={`w-4.5 h-4.5 ${getIconClasses("/instructor/profile")}`} />
+            <DropdownMenuItem render={<Link href="/instructor/profile" />} className={itemClasses}>
+              <Edit className={iconClasses} />
               <span>{"Hồ sơ & Chữ ký Giảng viên"}</span>
             </DropdownMenuItem>
           </>
         )}
 
         {isSuperAdmin && (
-          <DropdownMenuItem
-            render={<Link href="/partner/settings" />}
-            className={getItemClasses("/partner/settings")}
-          >
-            <Settings className={`w-4.5 h-4.5 ${getIconClasses("/partner/settings")}`} />
+          <DropdownMenuItem render={<Link href="/partner/settings" />} className={itemClasses}>
+            <Settings className={iconClasses} />
             <span>{"Cấu hình Đối tác"}</span>
           </DropdownMenuItem>
         )}
 
         {isSuperAdmin && (
           <>
-            <DropdownMenuItem
-              render={<Link href="/admin/dashboard" />}
-              className={getItemClasses("/admin/dashboard")}
-            >
-              <LayoutDashboard className={`w-4.5 h-4.5 ${getIconClasses("/admin/dashboard")}`} />
+            <DropdownMenuItem render={<Link href="/admin/dashboard" />} className={itemClasses}>
+              <LayoutDashboard className={iconClasses} />
               <span>{"Trang quản trị"}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              render={<Link href="/admin/applications" />}
-              className={getItemClasses("/admin/applications")}
-            >
-              <CheckCircle2 className={`w-4.5 h-4.5 ${getIconClasses("/admin/applications")}`} />
+            <DropdownMenuItem render={<Link href="/admin/applications" />} className={itemClasses}>
+              <CheckCircle2 className={iconClasses} />
               <span>{"Duyệt đơn Giảng viên"}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              render={<Link href="/admin/partners" />}
-              className={getItemClasses("/admin/partners")}
-            >
-              <Building2 className={`w-4.5 h-4.5 ${getIconClasses("/admin/partners")}`} />
+            <DropdownMenuItem render={<Link href="/admin/partners" />} className={itemClasses}>
+              <Building2 className={iconClasses} />
               <span>{"Quản trị Đối tác"}</span>
             </DropdownMenuItem>
           </>
@@ -228,16 +171,16 @@ export function UserDropdown() {
 
         <DropdownMenuItem
           render={<Link href="/partners/stanford-online" />}
-          className={getItemClasses("/partners/stanford-online")}
+          className={itemClasses}
         >
-          <Globe className={`w-4.5 h-4.5 ${getIconClasses("/partners/stanford-online")}`} />
+          <Globe className={iconClasses} />
           <span>{"Giới thiệu Đối tác"}</span>
         </DropdownMenuItem>
 
         <div className="border-t border-outline-variant my-1.5" />
 
-        <DropdownMenuItem render={<Link href="/landing" />} className={getItemClasses("/landing")}>
-          <ExternalLink className={`w-4.5 h-4.5 ${getIconClasses("/landing")}`} />
+        <DropdownMenuItem render={<Link href="/landing" />} className={itemClasses}>
+          <ExternalLink className={iconClasses} />
           <span>{"Xem trang công khai"}</span>
         </DropdownMenuItem>
 

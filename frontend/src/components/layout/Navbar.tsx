@@ -73,7 +73,7 @@ export function Navbar() {
           </Link>
           {userName && (
             <Link href="/my-learning" prefetch={true} className={getLinkClasses("/my-learning")}>
-              Việc học của tôi
+              {"Việc học của tôi"}
             </Link>
           )}
           <Link
@@ -189,7 +189,7 @@ export function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
               className={getMobileLinkClasses("/my-learning")}
             >
-              Việc học của tôi
+              {"Việc học của tôi"}
             </Link>
           )}
           {!isInstructorOrAdmin && (
