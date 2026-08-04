@@ -24,7 +24,7 @@ backend_dir = Path(__file__).resolve().parent.parent
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from sqlalchemy import select, text
+from sqlalchemy import delete, select, text
 from src.shared.infrastructure.database import Base, async_session_scope
 from src.modules.assessment.infrastructure.models import (
     GradeAppealModel,
@@ -1060,6 +1060,8 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         await session.merge(thread2)
         await session.merge(reply2_1)
         await session.merge(thread3)
+
+        await session.execute(delete(ForumVoteORM))
 
         vote1 = ForumVoteORM(
             id="vote-01",

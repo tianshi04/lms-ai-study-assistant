@@ -1254,7 +1254,7 @@ class CatalogUseCase:
 
             return {
                 "collaborator": {
-                    "collaborator_id": f"collab_{course_id}_{target_user.id}",
+                    "collaborator_id": f"collab_{uuid.uuid4().hex[:12]}",
                     "user_id": target_user.id,
                     "email": target_user.email,
                     "full_name": target_user.full_name,

@@ -397,7 +397,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         if owner_id:
             owner_collab = CourseCollaboratorModel(
-                id=f"collab_owner_{course_id}_{owner_id}",
+                id=f"collab_{uuid.uuid4().hex[:12]}",
                 course_id=course_id,
                 user_id=owner_id,
                 role="PRIMARY_INSTRUCTOR",
@@ -409,7 +409,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             for co_id in co_instructor_ids:
                 if co_id != owner_id:
                     co_collab = CourseCollaboratorModel(
-                        id=f"collab_co_{course_id}_{co_id}",
+                        id=f"collab_{uuid.uuid4().hex[:12]}",
                         course_id=course_id,
                         user_id=co_id,
                         role="CO_INSTRUCTOR",
@@ -1190,7 +1190,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             collab.role = role
         else:
             collab = CourseCollaboratorModel(
-                id=f"collab_{course_id}_{user_id}",
+                id=f"collab_{uuid.uuid4().hex[:12]}",
                 course_id=course_id,
                 user_id=user_id,
                 role=role,
