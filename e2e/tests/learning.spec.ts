@@ -1,8 +1,23 @@
 import { test, expect } from '@playwright/test';
-import { LearningPage } from '../pages';
+import { LearningPage, MyLearningPage } from '../pages';
 
 test.describe('Full System Blackbox - Learning Experience (POM)', () => {
   const COURSE_ID = 'course-python-ai';
+
+  test('should load my learning page for authenticated student', async ({ page }) => {
+    const myLearningPage = new MyLearningPage(page);
+    await myLearningPage.goto();
+    await myLearningPage.verifyPageLoaded();
+  });
+
+  test('should redirect unauthenticated user accessing /my-learning to login', async ({ browser }) => {
+    const context = await browser.newContext({ storageState: { cookies: [], origins: [] } });
+    const cleanPage = await context.newPage();
+
+    await cleanPage.goto('/my-learning');
+    await expect(cleanPage).toHaveURL(/\/auth\/login/, { timeout: 10000 });
+    await context.close();
+  });
 
   test('should load learning player page with course title, progress bar and sidebar', async ({ page }) => {
     const learningPage = new LearningPage(page);

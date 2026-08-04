@@ -29,7 +29,7 @@ export function AIChatbot() {
       path: z
         .string()
         .describe(
-          "Relative path to navigate to (e.g., '/courses', '/my-courses', '/certificates', '/forum', '/financial-aid')",
+          "Relative path to navigate to (e.g., '/courses', '/my-learning', '/certificates', '/forum', '/financial-aid')",
         ),
     }),
     handler: async ({ path }: { path: string }) => {

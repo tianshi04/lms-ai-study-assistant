@@ -39,7 +39,7 @@ AI Chatbot được triển khai theo mô hình Hybrid giữa Server-Side Runtim
 
 ### 2.4 Frontend Tools (Client-Side Actions)
 Đăng ký thông qua hook `useFrontendTool`:
-1. `navigateTo`: Cho phép trợ lý AI điều hướng người dùng trực tiếp tới các trang trong hệ thống (`/courses`, `/my-courses`, `/certificates`, v.v.).
+1. `navigateTo`: Cho phép trợ lý AI điều hướng người dùng trực tiếp tới các trang trong hệ thống (`/courses`, `/my-learning`, `/certificates`, v.v.).
 2. `searchCourses`: Tìm kiếm khóa học theo từ khóa và điều hướng tới danh mục khóa học (`/courses?q=...`).
 3. `getCurrentLocation`: Trích xuất ngữ cảnh đường dẫn (URL) hiện tại của người dùng.
 

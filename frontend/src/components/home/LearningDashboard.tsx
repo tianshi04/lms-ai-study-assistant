@@ -171,7 +171,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
                 </div>
 
                 <Link
-                  href="/my-courses"
+                  href="/my-learning"
                   className="bg-surface-container-high p-4 rounded-full border border-outline-variant hover:bg-surface-container-highest hover:border-outline flex items-center justify-center gap-2 text-on-surface font-bold transition-all text-sm"
                 >
                   Xem tất cả khóa học

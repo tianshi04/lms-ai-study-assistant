@@ -190,7 +190,7 @@ The system enforces a strict 3-layer authorization model across all API endpoint
 
 | Phân hệ (Track) | Bounded Context | Backend Source (`backend/src/modules/`) | Frontend Route (`frontend/src/app/`) |
 | :--- | :--- | :--- | :--- |
-| **Catalog & Learning** | `catalog`, `learning` | `modules/catalog/`<br>`modules/learning/` | `/courses`<br>`/learn/[courseId]`<br>`/my-courses` |
+| **Catalog & Learning** | `catalog`, `learning` | `modules/catalog/`<br>`modules/learning/` | `/courses`<br>`/learn/[courseId]`<br>`/my-learning` |
 | **Assessments & Authoring** | `assessment` | `modules/assessment/` | `/assessments`<br>`/peer-review`<br>`/instructor`<br>`/ta` |
 | **Discussion Forum** | `forum` | `modules/forum/` | `/forum` |
 | **Identity & Certificates**| `identity`, `certificate` | `modules/identity/`<br>`modules/certificate/` | `/auth`<br>`/financial-aid`<br>`/certificates`<br>`/verify/[certId]` |

@@ -14,7 +14,7 @@ type Tab = "ALL" | "IN_PROGRESS" | "COMPLETED";
 
 const emptySubscribe = () => () => {};
 
-export default function MyCoursesPage() {
+export default function MyLearningPage() {
   const { isAuthenticated } = useAuth();
   const [courses, setCourses] = useState<EnrolledCourseSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,13 +31,13 @@ export default function MyCoursesPage() {
     if (!isMounted) return;
 
     if (!isAuthenticated) {
-      window.location.href = "/auth/login?redirect=/my-courses";
+      window.location.href = "/auth/login?redirect=/my-learning";
       return;
     }
 
     let isCancelled = false;
 
-    async function fetchMyCourses() {
+    async function fetchMyLearning() {
       try {
         const client = getRpcClient(LearningService);
         const res = await client.listMyEnrolledCourses({});
@@ -56,7 +56,7 @@ export default function MyCoursesPage() {
       }
     }
 
-    fetchMyCourses();
+    fetchMyLearning();
 
     return () => {
       isCancelled = true;
@@ -75,7 +75,7 @@ export default function MyCoursesPage() {
     <main className="w-full max-w-7xl mx-auto px-6 pt-12 pb-20 flex-1">
       <div className="w-full mb-10 text-center md:text-left max-w-3xl">
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-4 text-balance">
-          {"Khóa học của tôi"}
+          {"Việc học của tôi"}
         </h1>
         <p className="text-muted-foreground text-lg leading-relaxed">
           {

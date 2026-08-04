@@ -72,8 +72,8 @@ export function Navbar() {
             {"Khóa học"}
           </Link>
           {userName && (
-            <Link href="/my-courses" prefetch={true} className={getLinkClasses("/my-courses")}>
-              Khóa học của tôi
+            <Link href="/my-learning" prefetch={true} className={getLinkClasses("/my-learning")}>
+              Việc học của tôi
             </Link>
           )}
           <Link
@@ -185,11 +185,11 @@ export function Navbar() {
           </Link>
           {userName && (
             <Link
-              href="/my-courses"
+              href="/my-learning"
               onClick={() => setMobileMenuOpen(false)}
-              className={getMobileLinkClasses("/my-courses")}
+              className={getMobileLinkClasses("/my-learning")}
             >
-              Khóa học của tôi
+              Việc học của tôi
             </Link>
           )}
           {!isInstructorOrAdmin && (

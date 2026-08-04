@@ -136,11 +136,11 @@ export function UserDropdown() {
         </DropdownMenuItem>
 
         <DropdownMenuItem
-          render={<Link href="/my-courses" />}
-          className={getItemClasses("/my-courses")}
+          render={<Link href="/my-learning" />}
+          className={getItemClasses("/my-learning")}
         >
-          <BookOpen className={`w-4.5 h-4.5 ${getIconClasses("/my-courses")}`} />
-          <span>{"Khóa học của tôi"}</span>
+          <BookOpen className={`w-4.5 h-4.5 ${getIconClasses("/my-learning")}`} />
+          <span>{"Việc học của tôi"}</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem

@@ -30,7 +30,7 @@ async function refreshTokens(refreshToken: string) {
 
 // Routes that require authentication
 const PROTECTED_ROUTES = [
-  "/my-courses",
+  "/my-learning",
   "/learn",
   "/assessments",
   "/financial-aid",
