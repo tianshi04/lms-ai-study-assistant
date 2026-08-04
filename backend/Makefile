@@ -72,5 +72,3 @@ format:
 test:
 	uv run pytest
 
-reconcile-vnpay:
-	uv run python -m src.scripts.reconcile_vnpay_orders

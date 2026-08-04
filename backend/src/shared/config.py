@@ -59,6 +59,12 @@ class Settings(BaseSettings):
         description="Refresh token expiration in days",
     )
 
+    # 5. OpenTelemetry & Jaeger Observability
+    OTEL_EXPORTER_OTLP_ENDPOINT: Optional[str] = Field(
+        default=None,
+        description="OpenTelemetry OTLP Collector Endpoint (e.g. http://localhost:4317)",
+    )
+
     # 6. VNPay Sandbox Gateway Configuration
     VNPAY_TMN_CODE: str = Field(
         default="PLM6WVVN",
@@ -79,11 +85,6 @@ class Settings(BaseSettings):
     VNPAY_API_URL: str = Field(
         default="https://sandbox.vnpayment.vn/merchant_webapi/api/transaction",
         description="VNPay Merchant WebAPI Endpoint",
-    )
-
-    OTEL_EXPORTER_OTLP_ENDPOINT: Optional[str] = Field(
-        default=None,
-        description="OpenTelemetry OTLP Collector Endpoint (e.g. http://localhost:4317)",
     )
 
     @property

@@ -111,7 +111,6 @@ message VerifyVNPayPaymentResponse {
   PlanType plan_type = 8;
 }
 
-
 message GetUserPaymentAccessRequest {
   string course_id = 1;
 }
@@ -150,4 +149,3 @@ service PaymentService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }
-
