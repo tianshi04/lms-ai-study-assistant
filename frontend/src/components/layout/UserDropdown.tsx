@@ -7,7 +7,6 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { getAvatarDataUri } from "@/lib/avatar";
 
 import {
-  Home,
   User,
   BookOpen,
   CircleDollarSign,
@@ -106,11 +105,6 @@ export function UserDropdown() {
         <DropdownMenuItem render={<Link href="/my-learning" />} className={itemClasses}>
           <BookOpen className={iconClasses} />
           <span>{"Việc học của tôi"}</span>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem render={<Link href="/" />} className={itemClasses}>
-          <Home className={iconClasses} />
-          <span>{"Bảng điều khiển chính"}</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem render={<Link href="/auth/profile" />} className={itemClasses}>
