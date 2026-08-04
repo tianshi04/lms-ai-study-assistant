@@ -19,7 +19,7 @@ test.describe('Full System Blackbox - Authentication Flow (POM)', () => {
     await loginPage.login(email, password);
 
     // Should redirect to homepage or dashboard after login
-    await expect(page).toHaveURL(/\/(courses|learn|auth\/profile)?$/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/(courses|learn|account-settings)?$/, { timeout: 10000 });
   });
 
   test('should show error message when login fails with wrong password', async ({ page }) => {
@@ -64,12 +64,12 @@ test.describe('Full System Blackbox - Authentication Flow (POM)', () => {
     await page.addInitScript(() => localStorage.clear());
 
     const loginPage = new LoginPage(page);
-    await loginPage.goto('/auth/profile');
+    await loginPage.goto('/account-settings');
 
     const { email, password } = E2E_CONFIG.credentials.learner;
     await loginPage.login(email, password);
 
-    // Should redirect specifically to /auth/profile
-    await expect(page).toHaveURL(/\/auth\/profile/, { timeout: 20000 });
+    // Should redirect specifically to /account-settings
+    await expect(page).toHaveURL(/\/account-settings/, { timeout: 20000 });
   });
 });
