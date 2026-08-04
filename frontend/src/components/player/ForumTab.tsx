@@ -14,6 +14,7 @@ import {
 import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
 
 interface ForumTabProps {
   courseId: string;
@@ -53,6 +54,12 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
   const [editReplyContent, setEditReplyContent] = useState("");
   const [submittingEditReply, setSubmittingEditReply] = useState(false);
+
+  // Delete confirmations state
+  const [deletingThreadId, setDeletingThreadId] = useState<string | null>(null);
+  const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
+  const [isDeletingThread, setIsDeletingThread] = useState(false);
+  const [isDeletingReply, setIsDeletingReply] = useState(false);
 
   const fetchThreadsRef = useRef<() => Promise<void>>(async () => {});
 
@@ -154,14 +161,22 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
     }
   };
 
-  const handleDeleteThread = async (threadId: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa bài viết này không?")) return;
+  const handleDeleteThread = (threadId: string) => {
+    setDeletingThreadId(threadId);
+  };
+
+  const executeDeleteThread = async () => {
+    if (!deletingThreadId) return;
+    setIsDeletingThread(true);
     try {
       const client = getRpcClient(ForumService);
-      await client.deleteThread({ threadId });
+      await client.deleteThread({ threadId: deletingThreadId });
       fetchThreads();
     } catch (err) {
       console.error("Error deleting thread:", err);
+    } finally {
+      setIsDeletingThread(false);
+      setDeletingThreadId(null);
     }
   };
 
@@ -205,14 +220,22 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
     }
   };
 
-  const handleDeleteReply = async (replyId: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa phản hồi này không?")) return;
+  const handleDeleteReply = (replyId: string) => {
+    setDeletingReplyId(replyId);
+  };
+
+  const executeDeleteReply = async () => {
+    if (!deletingReplyId) return;
+    setIsDeletingReply(true);
     try {
       const client = getRpcClient(ForumService);
-      await client.deleteReply({ replyId });
+      await client.deleteReply({ replyId: deletingReplyId });
       fetchThreads();
     } catch (err) {
       console.error("Error deleting reply:", err);
+    } finally {
+      setIsDeletingReply(false);
+      setDeletingReplyId(null);
     }
   };
 
@@ -497,6 +520,32 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
         onDeleteThread={handleDeleteThread}
         onDeleteReply={handleDeleteReply}
         isNotificationTarget={targetThreadId === selectedModalThreadId}
+      />
+
+      {/* Confirm Dialog Delete Thread */}
+      <ConfirmAlertDialog
+        isOpen={Boolean(deletingThreadId)}
+        onClose={() => setDeletingThreadId(null)}
+        onConfirm={executeDeleteThread}
+        title="Xác nhận xóa bài viết"
+        description="Bạn có chắc chắn muốn xóa bài viết này không? Thao tác này không thể hoàn tác."
+        confirmText="Xóa bài viết"
+        cancelText="Hủy"
+        variant="danger"
+        isLoading={isDeletingThread}
+      />
+
+      {/* Confirm Dialog Delete Reply */}
+      <ConfirmAlertDialog
+        isOpen={Boolean(deletingReplyId)}
+        onClose={() => setDeletingReplyId(null)}
+        onConfirm={executeDeleteReply}
+        title="Xác nhận xóa phản hồi"
+        description="Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác."
+        confirmText="Xóa phản hồi"
+        cancelText="Hủy"
+        variant="danger"
+        isLoading={isDeletingReply}
       />
     </div>
   );

@@ -7,6 +7,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
 import { Modal } from "@/components/ui/Modal";
+import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -72,6 +73,10 @@ export default function InstructorCoursesPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
+  const [deletingCourseTarget, setDeletingCourseTarget] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
@@ -220,24 +225,26 @@ export default function InstructorCoursesPage() {
     }
   };
 
-  const handleDeleteCourse = async (courseId: string, courseTitle: string) => {
+  const handleDeleteCourse = (courseId: string, courseTitle: string) => {
     if (!isInstructorOrAdmin) {
       toast.error("Tài khoản Học viên (Learner) không có quyền xóa khóa học.");
       return;
     }
+    setDeletingCourseTarget({ id: courseId, title: courseTitle });
+  };
 
-    if (!confirm(`${"Xóa"} khóa học "${courseTitle}"? Thao tác này không thể hoàn tác.`)) {
-      return;
-    }
-
+  const executeDeleteCourse = async () => {
+    if (!deletingCourseTarget) return;
     try {
       const client = getRpcClient(CatalogService);
-      await client.deleteCourse({ id: courseId });
-      toast.success(`Đã xóa thành công khóa học "${courseTitle}".`);
+      await client.deleteCourse({ id: deletingCourseTarget.id });
+      toast.success(`Đã xóa thành công khóa học "${deletingCourseTarget.title}".`);
       await refreshCourses();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Không thể xóa khóa học.";
       toast.error(msg);
+    } finally {
+      setDeletingCourseTarget(null);
     }
   };
 
@@ -514,6 +521,21 @@ export default function InstructorCoursesPage() {
             </div>
           </form>
         </Modal>
+
+        <ConfirmAlertDialog
+          isOpen={Boolean(deletingCourseTarget)}
+          onClose={() => setDeletingCourseTarget(null)}
+          onConfirm={executeDeleteCourse}
+          title="Xác nhận xóa khóa học"
+          description={
+            deletingCourseTarget
+              ? `Bạn có chắc chắn muốn xóa khóa học "${deletingCourseTarget.title}"? Thao tác này không thể hoàn tác.`
+              : ""
+          }
+          confirmText="Xóa khóa học"
+          cancelText="Hủy"
+          variant="danger"
+        />
       </div>
     </DirectionalTransition>
   );

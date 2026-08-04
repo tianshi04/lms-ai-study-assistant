@@ -13,10 +13,14 @@ import {
 import { FileText, ExternalLink, PlayCircle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
+import { useToast } from "@/components/ui/Toast";
+import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
 
 export default function AdminInstructorApplicationsPage() {
+  const toast = useToast();
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [rejectingAppId, setRejectingAppId] = useState<string | null>(null);
+  const [approvingAppId, setApprovingAppId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState<string>("");
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string>("");
 
@@ -29,6 +33,7 @@ export default function AdminInstructorApplicationsPage() {
   const reviewMutation = useReviewInstructorApplicationMutation({
     onSuccess: (updatedApp, variables) => {
       setRejectingAppId(null);
+      setApprovingAppId(null);
       setRejectionReason("");
       setActionSuccessMsg(
         variables.approve
@@ -40,16 +45,18 @@ export default function AdminInstructorApplicationsPage() {
   });
 
   const handleApprove = (appId: string) => {
-    if (
-      confirm("Bạn có chắc chắn muốn phê duyệt đơn này và nâng quyền tài khoản thành Giảng viên?")
-    ) {
-      reviewMutation.mutate({ applicationId: appId, approve: true });
+    setApprovingAppId(appId);
+  };
+
+  const executeApprove = () => {
+    if (approvingAppId) {
+      reviewMutation.mutate({ applicationId: approvingAppId, approve: true });
     }
   };
 
   const handleConfirmReject = (appId: string) => {
     if (!rejectionReason.trim()) {
-      alert("Vui lòng nhập lý do từ chối.");
+      toast.error("Vui lòng nhập lý do từ chối.");
       return;
     }
     reviewMutation.mutate({
@@ -306,6 +313,18 @@ export default function AdminInstructorApplicationsPage() {
           </div>
         )}
       </div>
+
+      <ConfirmAlertDialog
+        isOpen={Boolean(approvingAppId)}
+        onClose={() => setApprovingAppId(null)}
+        onConfirm={executeApprove}
+        title="Xác nhận phê duyệt đơn Giảng viên"
+        description="Bạn có chắc chắn muốn phê duyệt đơn này và nâng quyền tài khoản tương ứng thành Giảng viên?"
+        confirmText="Phê Duyệt"
+        cancelText="Hủy"
+        variant="primary"
+        isLoading={reviewMutation.isPending}
+      />
     </div>
   );
 }

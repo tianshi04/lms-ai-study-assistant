@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
+import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Check, X, Plus, RefreshCw, Download, Copy, Building2 } from "lucide-react";
 import {
@@ -61,6 +62,8 @@ function PartnerSettingsForm({
   const [historicalPublicKeys, setHistoricalPublicKeys] = useState<string[]>(
     activePartner.historicalPublicKeys || [],
   );
+
+  const [showRotateConfirm, setShowRotateConfirm] = useState(false);
 
   // Sync historical keys when activePartner prop updates from backend query refetch
   if (
@@ -188,10 +191,12 @@ function PartnerSettingsForm({
     }
   };
 
-  const handleRotateKeyPair = async () => {
-    if (!window.confirm("Xác nhận tạo cặp khóa ký số mới? Khóa cũ sẽ bị thay thế.")) return;
-    setStatusMessage(null);
+  const handleRotateKeyPair = () => {
+    setShowRotateConfirm(true);
+  };
 
+  const executeRotateKeyPair = async () => {
+    setStatusMessage(null);
     try {
       const oldPem = publicKeyPem;
       const newPem = await rotateKeyPairMutation.mutateAsync({ partnerId: activePartner.id });
@@ -206,6 +211,8 @@ function PartnerSettingsForm({
         type: "error",
         text: (err as Error).message || "Tạo khóa ký số thất bại",
       });
+    } finally {
+      setShowRotateConfirm(false);
     }
   };
 
@@ -611,6 +618,18 @@ function PartnerSettingsForm({
           </Button>
         </div>
       </form>
+
+      <ConfirmAlertDialog
+        isOpen={showRotateConfirm}
+        onClose={() => setShowRotateConfirm(false)}
+        onConfirm={executeRotateKeyPair}
+        title="Xác nhận tạo cặp khóa ký số mới"
+        description="Bạn có chắc chắn muốn tạo cặp khóa ký số mới? Cặp khóa cũ sẽ bị xoay và thay thế."
+        confirmText="Tạo khóa mới"
+        cancelText="Hủy"
+        variant="warning"
+        isLoading={rotateKeyPairMutation.isPending}
+      />
     </div>
   );
 }

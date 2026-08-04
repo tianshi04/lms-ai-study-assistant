@@ -19,6 +19,8 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/Select";
+import { useToast } from "@/components/ui/Toast";
+import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
 
 const CategoryList = ({
   title,
@@ -69,6 +71,7 @@ const CategoryList = ({
 
 export default function AdminCategoriesPage() {
   const router = useRouter();
+  const toast = useToast();
 
   const { isSuperAdmin } = useAuth();
   const isAdmin = isSuperAdmin;
@@ -82,6 +85,7 @@ export default function AdminCategoriesPage() {
   const [newName, setNewName] = useState("");
   const [newType, setNewType] = useState<"SUBJECT" | "LEVEL">("SUBJECT");
   const [errorMsg, setErrorMsg] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: string } | null>(null);
 
   if (!isAdmin)
     return <div className="p-8 text-center text-destructive font-bold">{"Từ chối truy cập"}</div>;
@@ -100,14 +104,21 @@ export default function AdminCategoriesPage() {
     }
   };
 
-  const handleDelete = async (id: string, type: string) => {
-    if (!window.confirm("Xác nhận xoá")) return;
+  const handleDelete = (id: string, type: string) => {
+    setDeleteTarget({ id, type });
+  };
+
+  const executeDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteCategoryMutation.mutateAsync({ id });
-      if (type === "SUBJECT") refetchSubjects();
+      await deleteCategoryMutation.mutateAsync({ id: deleteTarget.id });
+      if (deleteTarget.type === "SUBJECT") refetchSubjects();
       else refetchLevels();
+      toast.success("Xóa danh mục thành công!");
     } catch (err: unknown) {
-      alert((err as Error).message || "Failed to delete category");
+      toast.error((err as Error).message || "Không thể xoá danh mục");
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -188,6 +199,18 @@ export default function AdminCategoriesPage() {
           deleteText={"Xoá"}
         />
       </div>
+
+      <ConfirmAlertDialog
+        isOpen={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={executeDelete}
+        title="Xác nhận xóa danh mục"
+        description="Bạn có chắc chắn muốn xóa danh mục này? Thao tác này không thể hoàn tác."
+        confirmText="Xóa danh mục"
+        cancelText="Hủy"
+        variant="danger"
+        isLoading={deleteCategoryMutation.isPending}
+      />
     </main>
   );
 }

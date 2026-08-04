@@ -26,6 +26,7 @@ import { LessonFormModal } from "./components/modals/LessonFormModal";
 import { LearningItemFormModal } from "./components/modals/LearningItemFormModal";
 import { ScormReviewModal } from "./components/modals/ScormReviewModal";
 import { CourseCollaboratorsModal } from "@/components/course/CourseCollaboratorsModal";
+import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
 
 export default function InstructorCourseBuilderPage({
   params,
@@ -296,6 +297,29 @@ export default function InstructorCourseBuilderPage({
         onClose={() => setShowCollaboratorsModal(false)}
         courseId={courseId}
         courseTitle={builder.course?.title}
+      />
+
+      {/* Confirm Delete Alert Dialog */}
+      <ConfirmAlertDialog
+        isOpen={Boolean(builder.confirmDeleteTarget)}
+        onClose={() => builder.setConfirmDeleteTarget(null)}
+        onConfirm={builder.executeConfirmDelete}
+        title={
+          builder.confirmDeleteTarget?.type === "week"
+            ? "Xác nhận xóa Tuần học"
+            : builder.confirmDeleteTarget?.type === "lesson"
+              ? "Xác nhận xóa Bài học"
+              : "Xác nhận xóa Học liệu"
+        }
+        description={
+          builder.confirmDeleteTarget
+            ? `Bạn có chắc chắn muốn xóa "${builder.confirmDeleteTarget.title}"? Thao tác này không thể hoàn tác.`
+            : ""
+        }
+        confirmText="Xóa"
+        cancelText="Hủy"
+        variant="danger"
+        isLoading={builder.saving}
       />
     </div>
   );

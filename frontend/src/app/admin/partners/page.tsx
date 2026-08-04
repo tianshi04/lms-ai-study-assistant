@@ -11,7 +11,9 @@ import {
   useUpdatePartnerMutation,
   useDeletePartnerMutation,
 } from "@/lib/query_hooks";
-import { Modal, ConfirmDialog } from "@/components/ui/Modal";
+import { Modal } from "@/components/ui/Modal";
+import { useToast } from "@/components/ui/Toast";
+import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -35,6 +37,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function AdminPartnersPage() {
   const router = useRouter();
+  const toast = useToast();
   const { isSuperAdmin } = useAuth();
   const isAdmin = isSuperAdmin;
 
@@ -255,8 +258,9 @@ export default function AdminPartnersPage() {
       await deleteMutation.mutateAsync({ id: deletingPartnerId });
       await refetchPartners();
       setDeletingPartnerId(null);
+      toast.success("Xóa đối tác thành công!");
     } catch (err: unknown) {
-      alert((err as Error).message || "Không thể xoá đối tác");
+      toast.error((err as Error).message || "Không thể xoá đối tác");
     }
   };
 
@@ -661,7 +665,7 @@ export default function AdminPartnersPage() {
       </Modal>
 
       {/* Confirm Dialog Xoá Đối tác */}
-      <ConfirmDialog
+      <ConfirmAlertDialog
         isOpen={!!deletingPartnerId}
         onClose={() => setDeletingPartnerId(null)}
         onConfirm={handleDeleteConfirm}

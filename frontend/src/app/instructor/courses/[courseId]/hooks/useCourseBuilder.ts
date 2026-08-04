@@ -48,6 +48,11 @@ export function useCourseBuilder(courseId: string) {
   const [saving, setSaving] = useState(false);
   const [submittingLaunch, setSubmittingLaunch] = useState(false);
   const [questionBanks, setQuestionBanks] = useState<QuestionBank[]>([]);
+  const [confirmDeleteTarget, setConfirmDeleteTarget] = useState<{
+    type: "week" | "lesson" | "item";
+    id: string;
+    title: string;
+  } | null>(null);
   const toast = useToast();
 
   const fetchCourseDetail = useCallback(async () => {
@@ -168,23 +173,8 @@ export function useCourseBuilder(courseId: string) {
     }
   };
 
-  const handleDeleteWeek = async (weekId: string, weekTitle: string) => {
-    if (
-      !confirm(
-        `Bạn có chắc chắn muốn xóa Tuần học "${weekTitle}"? Thao tác này sẽ xóa tất cả bài học bên trong.`,
-      )
-    ) {
-      return;
-    }
-    try {
-      const client = getRpcClient(CatalogService);
-      await client.deleteWeekModule({ id: weekId, courseId });
-      toast.success(`Đã xóa Tuần học "${weekTitle}" thành công!`);
-      await fetchCourseDetail();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Xóa Tuần học thất bại.";
-      toast.error(msg);
-    }
+  const handleDeleteWeek = (weekId: string, weekTitle: string) => {
+    setConfirmDeleteTarget({ type: "week", id: weekId, title: weekTitle });
   };
 
   const handleCreateLesson = async (
@@ -237,19 +227,8 @@ export function useCourseBuilder(courseId: string) {
     }
   };
 
-  const handleDeleteLesson = async (lessonId: string, lessonTitle: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa Bài học "${lessonTitle}"?`)) {
-      return;
-    }
-    try {
-      const client = getRpcClient(CatalogService);
-      await client.deleteLesson({ id: lessonId, courseId });
-      toast.success(`Đã xóa Bài học "${lessonTitle}" thành công!`);
-      await fetchCourseDetail();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Xóa Bài học thất bại.";
-      toast.error(msg);
-    }
+  const handleDeleteLesson = (lessonId: string, lessonTitle: string) => {
+    setConfirmDeleteTarget({ type: "lesson", id: lessonId, title: lessonTitle });
   };
 
   const handleCreateItem = async (payload: LearningItemPayload) => {
@@ -397,18 +376,31 @@ export function useCourseBuilder(courseId: string) {
     }
   };
 
-  const handleDeleteItem = async (itemId: string, itemTitle: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa Học liệu "${itemTitle}"?`)) {
-      return;
-    }
+  const handleDeleteItem = (itemId: string, itemTitle: string) => {
+    setConfirmDeleteTarget({ type: "item", id: itemId, title: itemTitle });
+  };
+
+  const executeConfirmDelete = async () => {
+    if (!confirmDeleteTarget) return;
+    const { type, id, title } = confirmDeleteTarget;
     try {
       const client = getRpcClient(CatalogService);
-      await client.deleteLearningItem({ id: itemId, courseId });
-      toast.success(`Đã xóa Học liệu "${itemTitle}" thành công!`);
+      if (type === "week") {
+        await client.deleteWeekModule({ id, courseId });
+        toast.success(`Đã xóa Tuần học "${title}" thành công!`);
+      } else if (type === "lesson") {
+        await client.deleteLesson({ id, courseId });
+        toast.success(`Đã xóa Bài học "${title}" thành công!`);
+      } else if (type === "item") {
+        await client.deleteLearningItem({ id, courseId });
+        toast.success(`Đã xóa Học liệu "${title}" thành công!`);
+      }
       await fetchCourseDetail();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Xóa Học liệu thất bại.";
+      const msg = err instanceof Error ? err.message : "Xóa thất bại.";
       toast.error(msg);
+    } finally {
+      setConfirmDeleteTarget(null);
     }
   };
 
@@ -533,6 +525,9 @@ export function useCourseBuilder(courseId: string) {
     handleCreateItem,
     handleUpdateItem,
     handleDeleteItem,
+    confirmDeleteTarget,
+    setConfirmDeleteTarget,
+    executeConfirmDelete,
     handleReorderWeeks,
     handleReorderLessons,
     handleReorderItems,
