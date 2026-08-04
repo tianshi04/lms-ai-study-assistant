@@ -5,6 +5,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { AlertTriangle, Send } from "lucide-react";
 
 interface HonorCodeModalProps {
@@ -73,17 +74,13 @@ export function HonorCodeModal({
           </ul>
         </div>
 
-        <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl bg-background hover:bg-accent/40 border border-border transition-colors">
-          <input
-            type="checkbox"
+        <div className="p-3 rounded-xl bg-background border border-border">
+          <Checkbox
             checked={isChecked}
-            onChange={(e) => setIsChecked(e.target.checked)}
-            className="mt-0.5 w-4 h-4 rounded text-primary focus-visible:ring-2 focus-visible:ring-ring border-input"
+            onCheckedChange={(checked) => setIsChecked(!!checked)}
+            label="Tôi xác nhận các đáp án trên và đồng ý tuân thủ Quy tắc Liêm chính Học thuật."
           />
-          <span className="text-xs font-semibold text-foreground leading-snug">
-            Tôi xác nhận các đáp án trên và đồng ý tuân thủ Quy tắc Liêm chính Học thuật.
-          </span>
-        </label>
+        </div>
 
         {errorMsg && (
           <p className="text-xs font-semibold text-destructive bg-destructive/10 p-2.5 rounded-lg border border-destructive/30">

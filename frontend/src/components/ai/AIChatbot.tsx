@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 
 import { z } from "zod";
 import { Sparkles, X, BotMessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { Tooltip } from "@/components/ui/Tooltip";
 
 export function AIChatbot() {
@@ -70,13 +71,15 @@ export function AIChatbot() {
               <Sparkles className="w-5 h-5 text-warning" />
               <h3 className="font-semibold text-sm tracking-wide">Trợ lý AI</h3>
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => setIsOpen(false)}
-              className="p-1 rounded-lg hover:bg-primary-foreground/10 transition-colors text-primary-foreground/90 hover:text-primary-foreground cursor-pointer"
+              className="p-1 rounded-lg text-primary-foreground/90 hover:text-primary-foreground hover:bg-primary-foreground/10"
               aria-label="Đóng"
             >
               <X aria-hidden="true" className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
 
           {/* CopilotChat Body */}
@@ -94,9 +97,11 @@ export function AIChatbot() {
       {/* Floating Action Circular Button */}
       <div className="relative flex items-center">
         <Tooltip content="Trợ lý AI" side="left">
-          <button
+          <Button
+            variant="primary"
+            size="icon"
             onClick={() => setIsOpen((prev) => !prev)}
-            className="w-14 h-14 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 ease-m3-emphasized cursor-pointer flex items-center justify-center relative border border-border"
+            className="w-14 h-14 rounded-full shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 ease-m3-emphasized relative border border-border"
             aria-label="Trợ lý AI"
           >
             {isOpen ? (
@@ -112,7 +117,7 @@ export function AIChatbot() {
                 <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-success border-2 border-background rounded-full" />
               </>
             )}
-          </button>
+          </Button>
         </Tooltip>
       </div>
     </div>

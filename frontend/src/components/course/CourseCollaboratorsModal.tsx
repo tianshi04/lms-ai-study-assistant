@@ -6,6 +6,7 @@ import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select, SelectItem } from "@/components/ui/Select";
+import { Badge } from "@/components/ui/Badge";
 import {
   useCourseCollaboratorsQuery,
   useAddCourseCollaboratorMutation,
@@ -103,22 +104,22 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
       case "co_instructor":
       case "đồng giảng viên":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+          <Badge variant="verified" className="gap-1">
             <UserCheck className="w-3.5 h-3.5" aria-hidden="true" /> Đồng giảng viên
-          </span>
+          </Badge>
         );
       case "ta":
       case "trợ giảng":
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">
+          <Badge variant="warning" className="gap-1">
             <GraduationCap className="w-3.5 h-3.5" aria-hidden="true" /> Trợ giảng (TA)
-          </span>
+          </Badge>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-secondary text-secondary-foreground border border-border">
+          <Badge variant="default" className="gap-1">
             {collabRole}
-          </span>
+          </Badge>
         );
     }
   };

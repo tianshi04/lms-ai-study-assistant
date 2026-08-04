@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { Search } from "lucide-react";
 import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { parseVTT, type VTTCue } from "@/lib/vtt_parser";
+import { Input } from "@/components/ui/Input";
 
 interface TranscriptPanelProps {
   activeItem: LearningItem | null;
@@ -193,14 +194,14 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
     <div className="flex flex-col h-full space-y-3 min-h-0">
       {/* Search Input Bar */}
       <div className="relative shrink-0">
-        <input
+        <Input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Tìm kiếm nội dung bài giảng…"
-          className="w-full pl-9 pr-8 py-2.5 text-xs rounded-xl border border-outline-variant bg-surface-container-lowest text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+          className="pl-9 pr-8"
         />
-        <Search className="w-4 h-4 text-on-surface-variant absolute left-3 top-3" />
+        <Search className="w-4 h-4 text-on-surface-variant absolute left-3 top-3 pointer-events-none" />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery("")}

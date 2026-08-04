@@ -15,6 +15,8 @@ import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 
 interface ForumTabProps {
   courseId: string;
@@ -55,80 +57,60 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
   const [editReplyContent, setEditReplyContent] = useState("");
   const [submittingEditReply, setSubmittingEditReply] = useState(false);
 
-  // Delete confirmations state
+  // Delete Confirm Modal State
   const [deletingThreadId, setDeletingThreadId] = useState<string | null>(null);
-  const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
   const [isDeletingThread, setIsDeletingThread] = useState(false);
+  const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
   const [isDeletingReply, setIsDeletingReply] = useState(false);
 
-  const fetchThreadsRef = useRef<() => Promise<void>>(async () => {});
-
-  useEffect(() => {
-    if (!courseId) return;
-    let cancelled = false;
-
-    const doFetch = async () => {
-      setLoading(true);
-      try {
-        const client = getRpcClient(ForumService);
-        const res = await client.listThreads({
-          courseId,
-          itemId: itemId || "",
-        });
-        if (!cancelled) {
-          setThreads(res.threads);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          console.error("Failed to load forum tab threads:", err);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchThreadsRef.current = doFetch;
-    doFetch();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [courseId, itemId]);
-
+  // Selected Modal Thread for Facebook Post Style View
   const [selectedModalThreadId, setSelectedModalThreadId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (targetThreadId && !loading && threads.length > 0) {
-      setSelectedModalThreadId(targetThreadId);
-      const timer = setTimeout(() => {
-        const el = document.getElementById(`thread-${targetThreadId}`);
-        if (el) {
-          el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [targetThreadId, loading, threads]);
+  const autoOpenedRef = useRef(false);
 
-  const fetchThreads = useCallback(() => fetchThreadsRef.current(), []);
+  const fetchThreads = useCallback(async () => {
+    try {
+      const client = getRpcClient(ForumService);
+      const res = await client.listThreads({ courseId, itemId });
+      setThreads(res.threads);
+    } catch (err) {
+      console.error("Error fetching forum threads:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [courseId, itemId]);
+
+  useEffect(() => {
+    fetchThreads();
+  }, [fetchThreads]);
+
+  // Auto-scroll or auto-open target thread from notification URL
+  useEffect(() => {
+    if (targetThreadId && threads.length > 0 && !autoOpenedRef.current) {
+      autoOpenedRef.current = true;
+      const targetThreadExists = threads.some((t) => t.id === targetThreadId);
+      if (targetThreadExists) {
+        setSelectedModalThreadId(targetThreadId);
+      }
+    }
+  }, [targetThreadId, threads]);
 
   const handleCreateThread = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
+    if (!newTitle.trim() || submitting) return;
+
     setSubmitting(true);
     try {
       const client = getRpcClient(ForumService);
       await client.createThread({
         courseId,
-        itemId: itemId || "",
-        title: newTitle,
-        content: newContent,
+        itemId,
+        title: newTitle.trim(),
+        content: newContent.trim(),
       });
       setNewTitle("");
       setNewContent("");
-      fetchThreads();
+      await fetchThreads();
     } catch (err) {
       console.error("Error creating thread:", err);
     } finally {
@@ -307,21 +289,20 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
         onSubmit={handleCreateThread}
         className="bg-surface-container-low border border-outline-variant rounded-2xl p-3.5 space-y-2.5 shadow-xs"
       >
-        <input
+        <Input
           type="text"
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Đặt câu hỏi thảo luận cho bài học này…"
-          className="w-full bg-surface-container-lowest border border-outline-variant rounded-xl p-2.5 text-xs text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
         />
         {newTitle.trim() && (
           <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-            <textarea
+            <Textarea
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
               placeholder="Chi tiết câu hỏi (nếu có)…"
               rows={2}
-              className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-xl p-2.5 text-xs text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors"
+              className="flex-1 min-h-[60px]"
             />
             <button
               type="submit"

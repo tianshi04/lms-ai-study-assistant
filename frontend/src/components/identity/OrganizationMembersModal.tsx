@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Badge } from "@/components/ui/Badge";
 import {
   useOrganizationMembersQuery,
   useAddOrganizationMemberMutation,
@@ -101,22 +102,22 @@ export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> =
     const r = (role || "").toUpperCase();
     if (r.includes("OWNER") || r.includes("ADMIN")) {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+        <Badge variant="verified" className="gap-1">
           <Shield className="w-3 h-3" aria-hidden="true" /> Chủ sở hữu / Quản trị viên
-        </span>
+        </Badge>
       );
     }
     if (r.includes("TA")) {
       return (
-        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">
+        <Badge variant="warning" className="gap-1">
           <UserCheck className="w-3 h-3" aria-hidden="true" /> Trợ giảng Tổ chức
-        </span>
+        </Badge>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
+      <Badge variant="default" className="gap-1">
         <UserCheck className="w-3 h-3" aria-hidden="true" /> Giảng viên Tổ chức
-      </span>
+      </Badge>
     );
   };
 
