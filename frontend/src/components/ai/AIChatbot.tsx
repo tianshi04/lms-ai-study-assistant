@@ -62,11 +62,11 @@ export function AIChatbot() {
     <div className="fixed bottom-6 right-6 z-widget flex flex-col items-end pointer-events-auto">
       {/* Floating Chat Box Window */}
       {isOpen && (
-        <div className="mb-3 w-[360px] sm:w-[400px] max-w-[calc(100vw-2rem)] h-[500px] max-h-[calc(100vh-6rem)] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-scale-up">
+        <div className="mb-3 w-[360px] sm:w-[400px] max-w-[calc(100vw-2rem)] h-[500px] max-h-[calc(100vh-6rem)] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           {/* Header Bar */}
           <div className="px-4 py-3 bg-primary text-primary-foreground flex items-center justify-between shadow-sm shrink-0">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-warning animate-pulse" />
+              <Sparkles className="w-5 h-5 text-warning" />
               <h3 className="font-semibold text-sm tracking-wide">Trợ lý AI</h3>
             </div>
             <button
@@ -83,7 +83,7 @@ export function AIChatbot() {
             <CopilotChat
               labels={{
                 welcomeMessageText: "Xin chào! Tôi có thể giúp gì cho bạn?",
-                chatInputPlaceholder: "Nhập câu hỏi cho AI…",
+                chatInputPlaceholder: "Hỏi tôi bất cứ điều gì",
               }}
             />
           </div>
