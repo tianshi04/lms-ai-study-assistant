@@ -2,10 +2,16 @@ import * as React from "react";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const starSizeClasses = {
+  sm: "w-3.5 h-3.5",
+  md: "w-4 h-4",
+  lg: "w-6 h-6",
+} as const;
+
 interface RatingStarsProps {
   rating: number;
   maxStars?: number;
-  size?: "sm" | "md" | "lg";
+  size?: keyof typeof starSizeClasses;
   className?: string;
   showScore?: boolean;
 }
@@ -17,11 +23,7 @@ export function RatingStars({
   className,
   showScore = false,
 }: RatingStarsProps) {
-  const sizeClasses = {
-    sm: "w-3.5 h-3.5",
-    md: "w-4 h-4",
-    lg: "w-6 h-6",
-  };
+  const roundedRating = Math.round(rating);
 
   return (
     <div
@@ -30,24 +32,24 @@ export function RatingStars({
       className={cn("inline-flex items-center gap-1", className)}
     >
       <div className="flex items-center gap-0.5 text-amber-400">
-        {Array.from({ length: maxStars }).map((_, i) => {
+        {Array.from({ length: maxStars }, (_, i) => {
           const starIndex = i + 1;
-          const isFilled = starIndex <= Math.round(rating);
+          const isFilled = starIndex <= roundedRating;
           return (
             <Star
-              key={i}
+              key={starIndex}
               aria-hidden="true"
               className={cn(
-                sizeClasses[size],
+                starSizeClasses[size],
                 isFilled ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30 fill-none",
               )}
             />
           );
         })}
       </div>
-      {showScore && (
+      {showScore ? (
         <span className="text-xs font-bold text-foreground ml-1">{rating.toFixed(1)}</span>
-      )}
+      ) : null}
     </div>
   );
 }
