@@ -71,4 +71,3 @@ format:
 
 test:
 	uv run pytest
-
