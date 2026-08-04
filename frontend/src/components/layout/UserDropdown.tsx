@@ -8,6 +8,7 @@ import { getAvatarDataUri } from "@/lib/avatar";
 
 import {
   BookOpen,
+  ShoppingBag,
   CircleDollarSign,
   GraduationCap,
   Layers,
@@ -104,6 +105,11 @@ export function UserDropdown() {
         <DropdownMenuItem render={<Link href="/my-learning" />} className={itemClasses}>
           <BookOpen className={iconClasses} />
           <span>{"Việc học của tôi"}</span>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem render={<Link href="/my-purchases" />} className={itemClasses}>
+          <ShoppingBag className={iconClasses} />
+          <span>{"Mua hàng của tôi"}</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem render={<Link href="/account-settings" />} className={itemClasses}>
