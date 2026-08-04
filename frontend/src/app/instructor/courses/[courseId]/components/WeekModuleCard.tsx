@@ -1,6 +1,5 @@
 "use client";
 
-import { ViewTransition } from "react";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { type WeekModule, type Lesson, type LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { LessonCard } from "./LessonCard";
@@ -69,109 +68,107 @@ export function WeekModuleCard({
   onDeleteItem,
 }: WeekModuleCardProps) {
   return (
-    <ViewTransition key={week.id}>
-      <div
-        data-week-id={week.id}
-        style={{ touchAction: "none" }}
-        className={`bg-card rounded-3xl border ${
-          activeDraggingWeekId === week.id
-            ? "border-primary shadow-xl opacity-100 scale-[1.005]"
-            : "border-border hover:border-input"
-        } p-6 shadow-sm space-y-4 transition-shadow`}
-      >
-        {/* Week Module Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              {isInstructorOrAdmin && (
-                <div
-                  onPointerDown={(e) => onWeekPointerDown(e, week.id, index)}
-                  onPointerMove={onWeekPointerMove}
-                  onPointerUp={onWeekPointerUp}
-                  onPointerCancel={onWeekPointerUp}
-                  className="flex items-center bg-muted rounded-lg px-2 py-1 border border-border cursor-grab active:cursor-grabbing select-none hover:bg-muted/80"
-                  title={"Kéo thả Tuần học để sắp xếp"}
-                >
-                  <span className="text-muted-foreground hover:text-foreground text-xs font-bold select-none">
-                    ⋮⋮
-                  </span>
-                </div>
-              )}
-              <span className="px-2.5 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-black uppercase">
-                {"Tuần"} {week.weekNumber}
-              </span>
-              <h3 className="text-lg font-extrabold text-foreground">{week.title}</h3>
-            </div>
-            {week.summary && <p className="text-xs text-muted-foreground">{week.summary}</p>}
+    <div
+      data-week-id={week.id}
+      style={{ touchAction: "none" }}
+      className={`bg-card rounded-3xl border ${
+        activeDraggingWeekId === week.id
+          ? "border-primary shadow-xl opacity-100 scale-[1.005]"
+          : "border-border hover:border-input"
+      } p-6 shadow-sm space-y-4 transition-shadow`}
+    >
+      {/* Week Module Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            {isInstructorOrAdmin && (
+              <div
+                onPointerDown={(e) => onWeekPointerDown(e, week.id, index)}
+                onPointerMove={onWeekPointerMove}
+                onPointerUp={onWeekPointerUp}
+                onPointerCancel={onWeekPointerUp}
+                className="flex items-center bg-muted rounded-lg px-2 py-1 border border-border cursor-grab active:cursor-grabbing select-none hover:bg-muted/80"
+                title={"Kéo thả Tuần học để sắp xếp"}
+              >
+                <span className="text-muted-foreground hover:text-foreground text-xs font-bold select-none">
+                  ⋮⋮
+                </span>
+              </div>
+            )}
+            <span className="px-2.5 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-black uppercase">
+              {"Tuần"} {week.weekNumber}
+            </span>
+            <h3 className="text-lg font-extrabold text-foreground">{week.title}</h3>
           </div>
-
-          {isInstructorOrAdmin && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => onEditWeek(week)}
-                className="px-2.5 py-1.5 rounded-xl bg-muted text-foreground border border-border text-xs font-semibold hover:bg-muted/80 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{"Sửa Tuần"}</span>
-              </button>
-
-              <button
-                onClick={() => onDeleteWeek(week.id, week.title)}
-                className="px-2.5 py-1.5 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>{"Xóa Tuần"}</span>
-              </button>
-
-              <button
-                onClick={() => onAddLesson(week.id)}
-                className="px-3.5 py-1.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
-              >
-                <Plus className="w-4 h-4 text-primary" aria-hidden="true" />
-                <span>{"Thêm Bài học"}</span>
-              </button>
-            </div>
-          )}
+          {week.summary && <p className="text-xs text-muted-foreground">{week.summary}</p>}
         </div>
 
-        {/* Lessons List under this Week */}
-        {!week.lessons || week.lessons.length === 0 ? (
-          <div className="py-6 text-center border border-dashed border-border rounded-2xl p-4">
-            <p className="text-xs text-muted-foreground">
-              {"Chưa có Bài học nào trong Tuần"} {week.weekNumber}
-            </p>
-          </div>
-        ) : (
-          <div
-            data-lessons-container
-            className="space-y-4 pl-2 sm:pl-4 border-l-2 border-border relative"
-          >
-            {week.lessons.map((lesson, lIdx) => (
-              <LessonCard
-                key={lesson.id}
-                lesson={lesson}
-                courseId={courseId}
-                weekId={week.id}
-                index={lIdx}
-                isInstructorOrAdmin={isInstructorOrAdmin}
-                activeDraggingLessonId={activeDraggingLessonId}
-                activeDraggingItemId={activeDraggingItemId}
-                onLessonPointerDown={onLessonPointerDown}
-                onLessonPointerMove={onLessonPointerMove}
-                onLessonPointerUp={onLessonPointerUp}
-                onItemPointerDown={onItemPointerDown}
-                onItemPointerMove={onItemPointerMove}
-                onItemPointerUp={onItemPointerUp}
-                onEditLesson={onEditLesson}
-                onDeleteLesson={onDeleteLesson}
-                onAddItem={onAddItem}
-                onEditItem={onEditItem}
-                onDeleteItem={onDeleteItem}
-              />
-            ))}
+        {isInstructorOrAdmin && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onEditWeek(week)}
+              className="px-2.5 py-1.5 rounded-xl bg-muted text-foreground border border-border text-xs font-semibold hover:bg-muted/80 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>{"Sửa Tuần"}</span>
+            </button>
+
+            <button
+              onClick={() => onDeleteWeek(week.id, week.title)}
+              className="px-2.5 py-1.5 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>{"Xóa Tuần"}</span>
+            </button>
+
+            <button
+              onClick={() => onAddLesson(week.id)}
+              className="px-3.5 py-1.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus className="w-4 h-4 text-primary" aria-hidden="true" />
+              <span>{"Thêm Bài học"}</span>
+            </button>
           </div>
         )}
       </div>
-    </ViewTransition>
+
+      {/* Lessons List under this Week */}
+      {!week.lessons || week.lessons.length === 0 ? (
+        <div className="py-6 text-center border border-dashed border-border rounded-2xl p-4">
+          <p className="text-xs text-muted-foreground">
+            {"Chưa có Bài học nào trong Tuần"} {week.weekNumber}
+          </p>
+        </div>
+      ) : (
+        <div
+          data-lessons-container
+          className="space-y-4 pl-2 sm:pl-4 border-l-2 border-border relative"
+        >
+          {week.lessons.map((lesson, lIdx) => (
+            <LessonCard
+              key={lesson.id}
+              lesson={lesson}
+              courseId={courseId}
+              weekId={week.id}
+              index={lIdx}
+              isInstructorOrAdmin={isInstructorOrAdmin}
+              activeDraggingLessonId={activeDraggingLessonId}
+              activeDraggingItemId={activeDraggingItemId}
+              onLessonPointerDown={onLessonPointerDown}
+              onLessonPointerMove={onLessonPointerMove}
+              onLessonPointerUp={onLessonPointerUp}
+              onItemPointerDown={onItemPointerDown}
+              onItemPointerMove={onItemPointerMove}
+              onItemPointerUp={onItemPointerUp}
+              onEditLesson={onEditLesson}
+              onDeleteLesson={onDeleteLesson}
+              onAddItem={onAddItem}
+              onEditItem={onEditItem}
+              onDeleteItem={onDeleteItem}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

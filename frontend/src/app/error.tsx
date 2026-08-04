@@ -40,7 +40,7 @@ export default function ErrorPage({
         {/* M3 Tonal Hero Icon Avatar */}
         <div className="relative flex items-center justify-center">
           <div
-            className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-error-container text-on-error-container border border-error/20 flex items-center justify-center shadow-inner transition-transform duration-300 ease-m3-emphasized hover:scale-105"
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-error-container text-on-error-container border border-error/20 flex items-center justify-center shadow-inner"
             aria-hidden="true"
           >
             <AlertTriangle className="w-10 h-10 sm:w-12 sm:h-12" />

@@ -109,7 +109,7 @@ export function TADashboard({ userName }: { userName: string }) {
             href="/forum"
             className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-start gap-4"
           >
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <MessagesSquare className="w-6 h-6" />
             </div>
             <div className="space-y-1">
@@ -127,7 +127,7 @@ export function TADashboard({ userName }: { userName: string }) {
             href="/ta/grading"
             className="p-6 rounded-3xl bg-card border border-border hover:border-warning/50 shadow-sm transition-all group flex items-start gap-4"
           >
-            <div className="w-12 h-12 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
               <FileText className="w-6 h-6" />
             </div>
             <div className="space-y-1">

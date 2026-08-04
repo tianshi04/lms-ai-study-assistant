@@ -101,9 +101,9 @@ export function PublicLanding() {
         <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link
             href="/courses"
-            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container hover:-translate-y-1 transition-all duration-300 text-left group shadow-xs hover:shadow-md"
+            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-300 text-left group shadow-xs hover:shadow-md"
           >
-            <div className="w-11 h-11 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center font-bold mb-3 group-hover:scale-110 transition-transform">
+            <div className="w-11 h-11 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center font-bold mb-3">
               <BookOpen className="w-5.5 h-5.5" aria-hidden="true" />
             </div>
             <h3 className="font-bold text-on-surface mb-1 group-hover:text-primary transition-colors">
@@ -116,9 +116,9 @@ export function PublicLanding() {
 
           <Link
             href="/learn/course-python-ai"
-            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container hover:-translate-y-1 transition-all duration-300 text-left group shadow-xs hover:shadow-md"
+            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-300 text-left group shadow-xs hover:shadow-md"
           >
-            <div className="w-11 h-11 rounded-2xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-bold mb-3 group-hover:scale-110 transition-transform">
+            <div className="w-11 h-11 rounded-2xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-bold mb-3">
               <PlayCircle className="w-5.5 h-5.5" aria-hidden="true" />
             </div>
             <h3 className="font-bold text-on-surface mb-1 group-hover:text-primary transition-colors">
@@ -131,9 +131,9 @@ export function PublicLanding() {
 
           <Link
             href="/financial-aid?courseId=course-python-ai"
-            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container hover:-translate-y-1 transition-all duration-300 text-left group shadow-xs hover:shadow-md"
+            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-300 text-left group shadow-xs hover:shadow-md"
           >
-            <div className="w-11 h-11 rounded-2xl bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold mb-3 group-hover:scale-110 transition-transform">
+            <div className="w-11 h-11 rounded-2xl bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold mb-3">
               <CircleDollarSign className="w-5.5 h-5.5" aria-hidden="true" />
             </div>
             <h3 className="font-bold text-on-surface mb-1 group-hover:text-primary transition-colors">
@@ -146,9 +146,9 @@ export function PublicLanding() {
 
           <Link
             href="/verify/CERT-DEMO12345"
-            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container hover:-translate-y-1 transition-all duration-300 text-left group shadow-xs hover:shadow-md"
+            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-300 text-left group shadow-xs hover:shadow-md"
           >
-            <div className="w-11 h-11 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center font-bold mb-3 group-hover:scale-110 transition-transform">
+            <div className="w-11 h-11 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center font-bold mb-3">
               <GraduationCap className="w-5.5 h-5.5" aria-hidden="true" />
             </div>
             <h3 className="font-bold text-on-surface mb-1 group-hover:text-primary transition-colors">

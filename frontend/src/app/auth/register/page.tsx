@@ -67,7 +67,7 @@ export default function RegisterPage() {
         <Card className="rounded-3xl p-8 transition-colors">
           <div className="text-center mb-8">
             <Link href="/" prefetch={true} className="inline-flex items-center gap-3 group mb-6">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl">
                 C
               </div>
               <div className="text-left">

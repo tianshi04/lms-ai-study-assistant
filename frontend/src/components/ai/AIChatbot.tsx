@@ -101,7 +101,7 @@ export function AIChatbot() {
             variant="primary"
             size="icon"
             onClick={() => setIsOpen((prev) => !prev)}
-            className="w-14 h-14 rounded-full shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 ease-m3-emphasized relative border border-border"
+            className="w-14 h-14 rounded-full shadow-md hover:shadow-lg transition-all duration-200 ease-m3-emphasized relative border border-border"
             aria-label="Trợ lý AI"
           >
             {isOpen ? (

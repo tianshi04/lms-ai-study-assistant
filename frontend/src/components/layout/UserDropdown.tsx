@@ -89,7 +89,7 @@ export function UserDropdown() {
           width={36}
           height={36}
           unoptimized
-          className="w-9 h-9 rounded-full bg-primary-container object-cover group-hover:scale-105 transition-transform pointer-events-none"
+          className="w-9 h-9 rounded-full bg-primary-container object-cover pointer-events-none"
         />
       </DropdownMenuTrigger>
 

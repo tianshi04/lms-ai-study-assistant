@@ -137,7 +137,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             href="/instructor/courses"
             className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-start gap-4"
           >
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Layers className="w-6 h-6" aria-hidden="true" />
             </div>
             <div className="space-y-1">
@@ -154,7 +154,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             href="/instructor/profile"
             className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-start gap-4"
           >
-            <div className="w-12 h-12 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
               <UserCheck className="w-6 h-6" aria-hidden="true" />
             </div>
             <div className="space-y-1">
@@ -171,7 +171,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             href="/instructor/financial-aid"
             className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-start gap-4"
           >
-            <div className="w-12 h-12 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+            <div className="w-12 h-12 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0">
               <CircleDollarSign className="w-6 h-6" aria-hidden="true" />
             </div>
             <div className="space-y-1">

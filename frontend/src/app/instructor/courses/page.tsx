@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
@@ -249,294 +248,292 @@ export default function InstructorCoursesPage() {
   };
 
   return (
-    <DirectionalTransition>
-      <div className="w-full max-w-7xl mx-auto px-6 py-12 flex-1">
-        {/* Top Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-border">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-2">
-              {"Instructor Portal"}
-            </div>
-            <h1 className="text-3xl font-extrabold text-foreground text-balance">
-              {"Quản lý Khóa học Giảng dạy"}
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {
-                "Soạn thảo, quản lý bài giảng, xem thống kê và đăng thông báo cho các khóa học trên nền tảng Coursera AI."
-              }
-            </p>
+    <div className="w-full max-w-7xl mx-auto px-6 py-12 flex-1">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-border">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-2">
+            {"Instructor Portal"}
           </div>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/instructor/financial-aid"
-              className="px-4 py-3 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-sm transition-all flex items-center gap-2"
-            >
-              <FileText className="w-5 h-5 text-primary" aria-hidden="true" />
-              <span>{"Duyệt Financial Aid"}</span>
-            </Link>
-
-            <Link
-              href="/instructor/courses/new"
-              className="px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <Plus className="w-5 h-5" aria-hidden="true" />
-              <span>{"Soạn Khóa Học Mới"}</span>
-            </Link>
-          </div>
+          <h1 className="text-3xl font-extrabold text-foreground text-balance">
+            {"Quản lý Khóa học Giảng dạy"}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {
+              "Soạn thảo, quản lý bài giảng, xem thống kê và đăng thông báo cho các khóa học trên nền tảng Coursera AI."
+            }
+          </p>
         </div>
 
-        {/* Role Warning Banner if user is Learner */}
-        {isMounted && userRole && !isInstructorOrAdmin && (
-          <div className="mb-6 p-4 rounded-2xl bg-warning/10 border border-warning/20 text-warning text-sm flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-            <span>
-              <strong>{"Lưu ý Phân quyền:"}</strong>{" "}
-              {
-                "Bạn đang xem ở chế độ đọc với tài khoản Learner (Học viên). Chỉ tài khoản Instructor (Giảng viên) mới có quyền tạo và chỉnh sửa khóa học."
-              }
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/instructor/financial-aid"
+            className="px-4 py-3 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-sm transition-all flex items-center gap-2"
+          >
+            <FileText className="w-5 h-5 text-primary" aria-hidden="true" />
+            <span>{"Duyệt Financial Aid"}</span>
+          </Link>
 
-        {/* Courses Table / Cards */}
-        {loading ? (
-          <div className="flex items-center justify-center py-20 text-muted-foreground">
-            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-3" />
-            <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
-          </div>
-        ) : courses.length === 0 ? (
-          <div className="text-center py-16 bg-card rounded-3xl border border-border">
-            <p className="text-muted-foreground mb-4">{"Chưa có khóa học nào được tạo."}</p>
-            <Button onClick={handleOpenCreateModal}>{"Tạo khóa học đầu tiên"}</Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {courses.map((course) => (
-              <div
-                key={course.id}
-                className="bg-card border border-border hover:border-primary/50 rounded-3xl p-6 transition-all flex flex-col justify-between h-full"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
-                      {course.partnerName}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(course.status)}
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                          course.financialAidEnabled
-                            ? "bg-success/10 text-success border border-success/20"
-                            : "bg-muted text-muted-foreground border border-input"
-                        }`}
-                      >
-                        {course.financialAidEnabled ? "FinAid: ON" : "FinAid: OFF"}
-                      </span>
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {course.weekModules.length} {"Tuần học"}
-                      </span>
-                    </div>
-                  </div>
-                  <Link href={`/instructor/courses/${course.id}`} className="block">
-                    <h3 className="font-bold text-lg text-foreground mb-2 line-clamp-2 hover:text-primary transition-colors">
-                      {course.title}
-                    </h3>
-                  </Link>
-                  <p className="text-xs text-muted-foreground line-clamp-3 mb-4 leading-relaxed">
-                    {course.description}
-                  </p>
-
-                  <div className="flex items-center gap-2 mb-4">
-                    <Link
-                      href={`/instructor/courses/${course.id}`}
-                      className="px-3 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center gap-1"
-                    >
-                      <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>{"Biên soạn"}</span>
-                    </Link>
-
-                    <Link
-                      href={`/instructor/courses/${course.id}/analytics`}
-                      className="px-2.5 py-1 rounded-lg bg-success/10 text-success border border-success/20 text-xs font-semibold hover:bg-success/20 transition-colors flex items-center gap-1"
-                    >
-                      <BarChart2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>{"Thống kê"}</span>
-                    </Link>
-
-                    <Link
-                      href={`/instructor/courses/${course.id}/announcements`}
-                      className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-semibold hover:bg-primary/20 transition-colors flex items-center gap-1"
-                    >
-                      <Megaphone className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>{"Thông báo"}</span>
-                    </Link>
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-border flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleOpenEditModal(course)}
-                      className="px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-xs font-semibold text-foreground transition-colors flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>{"Sửa thông tin"}</span>
-                    </button>
-
-                    <button
-                      onClick={() => handleDeleteCourse(course.id, course.title)}
-                      className="px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>{"Xóa"}</span>
-                    </button>
-
-                    <Link
-                      href={`/courses/${course.id}`}
-                      className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 ml-auto"
-                    >
-                      <span>{"Xem bài giảng"}</span>
-                      <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Modal Soạn / Chỉnh Sửa Khóa Học */}
-        <Modal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          title={editingCourseId ? "Chỉnh Sửa Khóa Học" : "Soạn Thảo Khóa Học Mới"}
-        >
-          <form onSubmit={handleSaveCourse} className="space-y-4 pt-2">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                {"Tên Khóa Học *"}
-              </label>
-              <Input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder={"Ví dụ: Natural Language Processing with Transformers"}
-                required
-              />
-            </div>
-
-            {!editingCourseId && (
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                  {"Slug URL"}
-                </label>
-                <Input
-                  type="text"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  placeholder={"course-nlp-transformers (Tự tạo nếu để trống)"}
-                  className="font-mono"
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                {"Mô Tả Nội Dung *"}
-              </label>
-              <Textarea
-                rows={3}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder={"Tóm tắt tổng quan kiến thức và kỹ năng đạt được sau khóa học…"}
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                  {"Đối Tác Phát Hành"}
-                </label>
-                <Input
-                  type="text"
-                  value={partnerName}
-                  onChange={(e) => setPartnerName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                  {"Logo URL Đối Tác"}
-                </label>
-                <Input
-                  type="text"
-                  value={partnerLogoUrl}
-                  onChange={(e) => setPartnerLogoUrl(e.target.value)}
-                  className="font-mono text-xs"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                {"Giảng Viên (cách nhau bởi dấu phẩy)"}
-              </label>
-              <Input
-                type="text"
-                value={instructorNames}
-                onChange={(e) => setInstructorNames(e.target.value)}
-              />
-            </div>
-
-            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-muted border border-border">
-              <input
-                type="checkbox"
-                id="financialAidToggle"
-                checked={financialAidEnabled}
-                onChange={(e) => setFinancialAidEnabled(e.target.checked)}
-                className="w-4 h-4 text-primary rounded focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
-              />
-              <label
-                htmlFor="financialAidToggle"
-                className="text-xs font-bold text-foreground cursor-pointer"
-              >
-                {"Cho phép xin Hỗ trợ Tài chính (Financial Aid available)"}
-              </label>
-            </div>
-
-            <div className="pt-4 flex justify-end gap-3 border-t border-border">
-              <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
-                {"Hủy"}
-              </Button>
-              <Button type="submit" variant="primary" disabled={saving}>
-                <span aria-live="polite">
-                  {saving
-                    ? "Đang lưu…"
-                    : editingCourseId
-                      ? "Cập Nhật Khóa Học"
-                      : "Lưu & Đăng Khóa Học"}
-                </span>
-              </Button>
-            </div>
-          </form>
-        </Modal>
-
-        <ConfirmAlertDialog
-          isOpen={Boolean(deletingCourseTarget)}
-          onClose={() => setDeletingCourseTarget(null)}
-          onConfirm={executeDeleteCourse}
-          title="Xác nhận xóa khóa học"
-          description={
-            deletingCourseTarget
-              ? `Bạn có chắc chắn muốn xóa khóa học "${deletingCourseTarget.title}"? Thao tác này không thể hoàn tác.`
-              : ""
-          }
-          confirmText="Xóa khóa học"
-          cancelText="Hủy"
-          variant="danger"
-        />
+          <Link
+            href="/instructor/courses/new"
+            className="px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer"
+          >
+            <Plus className="w-5 h-5" aria-hidden="true" />
+            <span>{"Soạn Khóa Học Mới"}</span>
+          </Link>
+        </div>
       </div>
-    </DirectionalTransition>
+
+      {/* Role Warning Banner if user is Learner */}
+      {isMounted && userRole && !isInstructorOrAdmin && (
+        <div className="mb-6 p-4 rounded-2xl bg-warning/10 border border-warning/20 text-warning text-sm flex items-center gap-3">
+          <AlertTriangle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+          <span>
+            <strong>{"Lưu ý Phân quyền:"}</strong>{" "}
+            {
+              "Bạn đang xem ở chế độ đọc với tài khoản Learner (Học viên). Chỉ tài khoản Instructor (Giảng viên) mới có quyền tạo và chỉnh sửa khóa học."
+            }
+          </span>
+        </div>
+      )}
+
+      {/* Courses Table / Cards */}
+      {loading ? (
+        <div className="flex items-center justify-center py-20 text-muted-foreground">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-3" />
+          <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
+        </div>
+      ) : courses.length === 0 ? (
+        <div className="text-center py-16 bg-card rounded-3xl border border-border">
+          <p className="text-muted-foreground mb-4">{"Chưa có khóa học nào được tạo."}</p>
+          <Button onClick={handleOpenCreateModal}>{"Tạo khóa học đầu tiên"}</Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {courses.map((course) => (
+            <div
+              key={course.id}
+              className="bg-card border border-border hover:border-primary/50 rounded-3xl p-6 transition-all flex flex-col justify-between h-full"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                    {course.partnerName}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(course.status)}
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        course.financialAidEnabled
+                          ? "bg-success/10 text-success border border-success/20"
+                          : "bg-muted text-muted-foreground border border-input"
+                      }`}
+                    >
+                      {course.financialAidEnabled ? "FinAid: ON" : "FinAid: OFF"}
+                    </span>
+                    <span className="text-xs text-muted-foreground font-mono">
+                      {course.weekModules.length} {"Tuần học"}
+                    </span>
+                  </div>
+                </div>
+                <Link href={`/instructor/courses/${course.id}`} className="block">
+                  <h3 className="font-bold text-lg text-foreground mb-2 line-clamp-2 hover:text-primary transition-colors">
+                    {course.title}
+                  </h3>
+                </Link>
+                <p className="text-xs text-muted-foreground line-clamp-3 mb-4 leading-relaxed">
+                  {course.description}
+                </p>
+
+                <div className="flex items-center gap-2 mb-4">
+                  <Link
+                    href={`/instructor/courses/${course.id}`}
+                    className="px-3 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center gap-1"
+                  >
+                    <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{"Biên soạn"}</span>
+                  </Link>
+
+                  <Link
+                    href={`/instructor/courses/${course.id}/analytics`}
+                    className="px-2.5 py-1 rounded-lg bg-success/10 text-success border border-success/20 text-xs font-semibold hover:bg-success/20 transition-colors flex items-center gap-1"
+                  >
+                    <BarChart2 className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{"Thống kê"}</span>
+                  </Link>
+
+                  <Link
+                    href={`/instructor/courses/${course.id}/announcements`}
+                    className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-semibold hover:bg-primary/20 transition-colors flex items-center gap-1"
+                  >
+                    <Megaphone className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{"Thông báo"}</span>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleOpenEditModal(course)}
+                    className="px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-xs font-semibold text-foreground transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{"Sửa thông tin"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteCourse(course.id, course.title)}
+                    className="px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span>{"Xóa"}</span>
+                  </button>
+
+                  <Link
+                    href={`/courses/${course.id}`}
+                    className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 ml-auto"
+                  >
+                    <span>{"Xem bài giảng"}</span>
+                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal Soạn / Chỉnh Sửa Khóa Học */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={editingCourseId ? "Chỉnh Sửa Khóa Học" : "Soạn Thảo Khóa Học Mới"}
+      >
+        <form onSubmit={handleSaveCourse} className="space-y-4 pt-2">
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              {"Tên Khóa Học *"}
+            </label>
+            <Input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={"Ví dụ: Natural Language Processing with Transformers"}
+              required
+            />
+          </div>
+
+          {!editingCourseId && (
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                {"Slug URL"}
+              </label>
+              <Input
+                type="text"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder={"course-nlp-transformers (Tự tạo nếu để trống)"}
+                className="font-mono"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              {"Mô Tả Nội Dung *"}
+            </label>
+            <Textarea
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder={"Tóm tắt tổng quan kiến thức và kỹ năng đạt được sau khóa học…"}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                {"Đối Tác Phát Hành"}
+              </label>
+              <Input
+                type="text"
+                value={partnerName}
+                onChange={(e) => setPartnerName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                {"Logo URL Đối Tác"}
+              </label>
+              <Input
+                type="text"
+                value={partnerLogoUrl}
+                onChange={(e) => setPartnerLogoUrl(e.target.value)}
+                className="font-mono text-xs"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+              {"Giảng Viên (cách nhau bởi dấu phẩy)"}
+            </label>
+            <Input
+              type="text"
+              value={instructorNames}
+              onChange={(e) => setInstructorNames(e.target.value)}
+            />
+          </div>
+
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-muted border border-border">
+            <input
+              type="checkbox"
+              id="financialAidToggle"
+              checked={financialAidEnabled}
+              onChange={(e) => setFinancialAidEnabled(e.target.checked)}
+              className="w-4 h-4 text-primary rounded focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+            />
+            <label
+              htmlFor="financialAidToggle"
+              className="text-xs font-bold text-foreground cursor-pointer"
+            >
+              {"Cho phép xin Hỗ trợ Tài chính (Financial Aid available)"}
+            </label>
+          </div>
+
+          <div className="pt-4 flex justify-end gap-3 border-t border-border">
+            <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
+              {"Hủy"}
+            </Button>
+            <Button type="submit" variant="primary" disabled={saving}>
+              <span aria-live="polite">
+                {saving
+                  ? "Đang lưu…"
+                  : editingCourseId
+                    ? "Cập Nhật Khóa Học"
+                    : "Lưu & Đăng Khóa Học"}
+              </span>
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      <ConfirmAlertDialog
+        isOpen={Boolean(deletingCourseTarget)}
+        onClose={() => setDeletingCourseTarget(null)}
+        onConfirm={executeDeleteCourse}
+        title="Xác nhận xóa khóa học"
+        description={
+          deletingCourseTarget
+            ? `Bạn có chắc chắn muốn xóa khóa học "${deletingCourseTarget.title}"? Thao tác này không thể hoàn tác.`
+            : ""
+        }
+        confirmText="Xóa khóa học"
+        cancelText="Hủy"
+        variant="danger"
+      />
+    </div>
   );
 }

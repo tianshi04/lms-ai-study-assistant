@@ -48,7 +48,6 @@ export function Navbar() {
 
   return (
     <header
-      style={{ viewTransitionName: "site-navbar" }}
       className={`sticky top-0 z-50 transition-all duration-300 ${
         isScrolled
           ? "bg-surface-container/90 backdrop-blur-md border-b border-outline-variant shadow-xs"
@@ -58,7 +57,7 @@ export function Navbar() {
       <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand Logo */}
         <Link href="/" prefetch={true} className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl shadow-lg shadow-primary/20">
             C
           </div>
           <div>

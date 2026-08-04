@@ -373,7 +373,7 @@ export function LearnPageAIChatbot({
           <button
             type="submit"
             disabled={!inputValue.trim() || agent?.isRunning}
-            className="w-7 h-7 rounded-full bg-primary text-on-primary hover:bg-primary-hover active:scale-95 transition-all flex items-center justify-center shrink-0 disabled:opacity-30 disabled:bg-on-surface/10 disabled:text-on-surface-variant/40 disabled:cursor-not-allowed cursor-pointer"
+            className="w-7 h-7 rounded-full bg-primary text-on-primary hover:bg-primary-hover transition-all flex items-center justify-center shrink-0 disabled:opacity-30 disabled:bg-on-surface/10 disabled:text-on-surface-variant/40 disabled:cursor-not-allowed cursor-pointer"
             title="Gửi tin nhắn"
             aria-label="Gửi tin nhắn"
           >

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useCourseDetailQuery,
@@ -241,7 +240,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   }
 
   return (
-    <DirectionalTransition>
+    <>
       {/* Hero Banner */}
       <div className="bg-background border-b border-border py-12">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
@@ -608,7 +607,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   onClick={() => setRating(star)}
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
-                  className="p-1 transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md cursor-pointer"
+                  className="p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md cursor-pointer"
                 >
                   <Star
                     className={`w-7 h-7 ${
@@ -834,6 +833,6 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
         courseId={course.id}
         courseTitle={course.title}
       />
-    </DirectionalTransition>
+    </>
   );
 }

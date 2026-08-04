@@ -103,7 +103,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
                         </div>
                         <div className="h-3 w-full bg-surface-variant rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-primary rounded-full transition-all duration-1000 ease-out"
+                            className="h-full bg-primary rounded-full transition-all duration-300 ease-m3-emphasized"
                             style={{
                               width: `${Math.max(0, continueLearningCourse.progressPercent)}%`,
                             }}
@@ -184,7 +184,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 pt-4">
               {/* AI Tutor Card (MD3 Expressive Container) */}
               <div className="lg:col-span-1 bg-gradient-to-br from-primary-container to-surface-container-high border border-outline-variant rounded-3xl p-6 text-on-primary-container relative overflow-hidden group shadow-xs">
-                <div className="absolute top-0 right-0 p-4 opacity-15 group-hover:scale-110 group-hover:opacity-35 transition-all duration-500">
+                <div className="absolute top-0 right-0 p-4 opacity-15 group-hover:opacity-35 transition-all duration-300">
                   <Zap className="w-24 h-24 text-primary" aria-hidden="true" />
                 </div>
                 <div className="relative z-10 flex flex-col h-full justify-between">

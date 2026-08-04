@@ -290,7 +290,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                         onClick={() => setRating(star)}
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(0)}
-                        className="p-1 cursor-pointer transition-transform hover:scale-110 focus:outline-none"
+                        className="p-1 cursor-pointer focus:outline-none"
                         aria-label={`Đánh giá ${star} sao`}
                       >
                         <Star

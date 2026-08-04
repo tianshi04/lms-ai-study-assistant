@@ -29,7 +29,7 @@ export function Checkbox({
       ref={ref}
       id={checkboxId}
       className={cn(
-        "peer h-5 w-5 shrink-0 rounded-md border border-input bg-background transition-all duration-200 ease-m3-emphasized focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-primary-foreground flex items-center justify-center cursor-pointer active:scale-95",
+        "peer h-5 w-5 shrink-0 rounded-md border border-input bg-background transition-all duration-200 ease-m3-emphasized focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-primary-foreground flex items-center justify-center cursor-pointer",
         error && "border-destructive focus-visible:ring-destructive/50",
         className,
       )}

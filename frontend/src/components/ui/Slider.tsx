@@ -35,7 +35,7 @@ export function Slider({ label, showValue = false, className, ref, ...props }: S
           <BaseSlider.Track className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-muted">
             <BaseSlider.Indicator className="absolute h-full bg-primary" />
           </BaseSlider.Track>
-          <BaseSlider.Thumb className="block h-4 w-4 rounded-full border-2 border-primary bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:pointer-events-none active:scale-110" />
+          <BaseSlider.Thumb className="block h-4 w-4 rounded-full border-2 border-primary bg-background shadow transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:pointer-events-none" />
         </BaseSlider.Control>
       </BaseSlider.Root>
     </div>

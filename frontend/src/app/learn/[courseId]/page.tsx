@@ -24,7 +24,6 @@ import { ForumTab } from "@/components/player/ForumTab";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { UserDropdown } from "@/components/layout/UserDropdown";
-import { DirectionalTransition } from "@/components/transitions/DirectionalTransition";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
 import { LearnPageAIChatbot } from "@/components/player/ai/LearnPageAIChatbot";
 import {
@@ -653,604 +652,599 @@ function CoursePlayerContent() {
   }
 
   return (
-    <DirectionalTransition>
-      <div className="h-screen h-dvh bg-surface text-on-surface flex flex-col overflow-hidden transition-colors duration-200">
-        {/* Top Player Navbar - Seamless Borderless Header */}
-        <header className="h-14 bg-surface-container-low px-6 flex items-center justify-between flex-shrink-0 z-30">
-          <div className="flex items-center gap-4 min-w-0">
-            {isPreviewMode ? (
-              <button
-                onClick={() => window.close()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-bold transition-colors cursor-pointer"
-                title="Đóng trình xem trước"
-              >
-                <X className="w-4 h-4" aria-hidden="true" />
-                <span>{"Đóng Xem trước"}</span>
-              </button>
-            ) : (
-              <Link
-                href={`/courses/${course.id}`}
-                className="p-2 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors"
-                title="Quay lại khóa học"
-              >
-                <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-              </Link>
-            )}
-            <span className="font-bold text-sm text-on-surface truncate max-w-md">
-              {isPreviewMode ? `Xem trước: ${activeItem?.title || course.title}` : course.title}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {!isPreviewMode && progress && (
-              <div className="flex items-center gap-3 bg-surface-container px-3.5 py-1.5 rounded-full">
-                <div className="w-24 h-2 bg-surface-container-high rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary rounded-full transition-all duration-500"
-                    style={{ width: `${progress.overallProgressPercent}%` }}
-                  />
-                </div>
-                <span className="text-xs font-mono font-bold text-primary">
-                  {progress.overallProgressPercent}%
-                </span>
-              </div>
-            )}
-
-            {!isPreviewMode &&
-              progress &&
-              (progress.overallProgressPercent >= 100 ||
-                progress.completedItemIds.length >= totalCourseItems) && (
-                <button
-                  onClick={() => setShowCompletionModal(true)}
-                  className="px-4 py-1.5 rounded-full bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-xs shadow-xs hover:shadow transition-colors flex items-center gap-1.5 cursor-pointer"
-                >
-                  <CheckCircle2 className="w-4 h-4 text-warning-foreground" aria-hidden="true" />
-                  <span>{"Xem Chứng Chỉ"}</span>
-                </button>
-              )}
-
-            {isPreviewMode && (
-              <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-warning/10 text-warning border border-warning/20 animate-pulse">
-                {"Xem trước học liệu"}
-              </span>
-            )}
-
-            <LanguageToggle />
-            <ThemeToggle />
-
-            {/* AI Assistant Icon Button matching ThemeToggle style with colored icon when supported */}
+    <div className="h-screen h-dvh bg-surface text-on-surface flex flex-col overflow-hidden transition-colors duration-200">
+      {/* Top Player Navbar - Seamless Borderless Header */}
+      <header className="h-14 bg-surface-container-low px-6 flex items-center justify-between flex-shrink-0 z-30">
+        <div className="flex items-center gap-4 min-w-0">
+          {isPreviewMode ? (
             <button
-              type="button"
-              disabled={!isAiSupported}
-              onClick={handleToggleAiAssistant}
-              className={`p-2 rounded-full transition-all shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                !isAiSupported
-                  ? "text-on-surface-variant/30 opacity-40 cursor-not-allowed"
-                  : isPanelOpen && activeTab === "ai_assistant"
-                    ? "bg-primary/15 text-primary cursor-pointer"
-                    : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 cursor-pointer"
-              }`}
-              title={
-                isAiSupported
-                  ? "Trợ lý AI Học tập (Socratic)"
-                  : isPreviewMode
-                    ? "Trợ lý AI chưa hỗ trợ ở chế độ xem trước"
-                    : activeItem?.type === 4
-                      ? "Trợ lý AI tạm khóa trong bài kiểm tra tính điểm"
-                      : "Trợ lý AI chưa hỗ trợ ở trang này"
-              }
-              aria-label={
-                isAiSupported
-                  ? "Mở Trợ lý AI Học tập"
+              onClick={() => window.close()}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-bold transition-colors cursor-pointer"
+              title="Đóng trình xem trước"
+            >
+              <X className="w-4 h-4" aria-hidden="true" />
+              <span>{"Đóng Xem trước"}</span>
+            </button>
+          ) : (
+            <Link
+              href={`/courses/${course.id}`}
+              className="p-2 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors"
+              title="Quay lại khóa học"
+            >
+              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+            </Link>
+          )}
+          <span className="font-bold text-sm text-on-surface truncate max-w-md">
+            {isPreviewMode ? `Xem trước: ${activeItem?.title || course.title}` : course.title}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-4">
+          {!isPreviewMode && progress && (
+            <div className="flex items-center gap-3 bg-surface-container px-3.5 py-1.5 rounded-full">
+              <div className="w-24 h-2 bg-surface-container-high rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-500"
+                  style={{ width: `${progress.overallProgressPercent}%` }}
+                />
+              </div>
+              <span className="text-xs font-mono font-bold text-primary">
+                {progress.overallProgressPercent}%
+              </span>
+            </div>
+          )}
+
+          {!isPreviewMode &&
+            progress &&
+            (progress.overallProgressPercent >= 100 ||
+              progress.completedItemIds.length >= totalCourseItems) && (
+              <button
+                onClick={() => setShowCompletionModal(true)}
+                className="px-4 py-1.5 rounded-full bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-xs shadow-xs hover:shadow transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4 text-warning-foreground" aria-hidden="true" />
+                <span>{"Xem Chứng Chỉ"}</span>
+              </button>
+            )}
+
+          {isPreviewMode && (
+            <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase bg-warning/10 text-warning border border-warning/20 animate-pulse">
+              {"Xem trước học liệu"}
+            </span>
+          )}
+
+          <LanguageToggle />
+          <ThemeToggle />
+
+          {/* AI Assistant Icon Button matching ThemeToggle style with colored icon when supported */}
+          <button
+            type="button"
+            disabled={!isAiSupported}
+            onClick={handleToggleAiAssistant}
+            className={`p-2 rounded-full transition-all shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              !isAiSupported
+                ? "text-on-surface-variant/30 opacity-40 cursor-not-allowed"
+                : isPanelOpen && activeTab === "ai_assistant"
+                  ? "bg-primary/15 text-primary cursor-pointer"
+                  : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 cursor-pointer"
+            }`}
+            title={
+              isAiSupported
+                ? "Trợ lý AI Học tập (Socratic)"
+                : isPreviewMode
+                  ? "Trợ lý AI chưa hỗ trợ ở chế độ xem trước"
                   : activeItem?.type === 4
                     ? "Trợ lý AI tạm khóa trong bài kiểm tra tính điểm"
                     : "Trợ lý AI chưa hỗ trợ ở trang này"
-              }
+            }
+            aria-label={
+              isAiSupported
+                ? "Mở Trợ lý AI Học tập"
+                : activeItem?.type === 4
+                  ? "Trợ lý AI tạm khóa trong bài kiểm tra tính điểm"
+                  : "Trợ lý AI chưa hỗ trợ ở trang này"
+            }
+          >
+            <Sparkles
+              className={`w-5 h-5 ${isAiSupported ? "text-primary" : "text-on-surface-variant/30"}`}
+              aria-hidden="true"
+            />
+          </button>
+
+          <UserDropdown />
+        </div>
+      </header>
+
+      {/* Main Workspace Layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar Icon Strip when collapsed */}
+        {!isSidebarOpen && !isPreviewMode && (
+          <div className="w-14 bg-surface-container-low flex flex-col items-center py-4 shrink-0 z-20 select-none">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="w-12 py-2.5 px-1 rounded-2xl flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all cursor-pointer"
+              title="Mở Lộ trình Bài học"
             >
-              <Sparkles
-                className={`w-5 h-5 ${isAiSupported ? "text-primary" : "text-on-surface-variant/30"}`}
-                aria-hidden="true"
-              />
+              <Menu className="w-5 h-5 mb-1" aria-hidden="true" />
+              <span className="text-[10px] tracking-tight leading-none font-semibold">
+                Lộ trình
+              </span>
             </button>
-
-            <UserDropdown />
           </div>
-        </header>
+        )}
 
-        {/* Main Workspace Layout */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Sidebar Icon Strip when collapsed */}
-          {!isSidebarOpen && !isPreviewMode && (
-            <div className="w-14 bg-surface-container-low flex flex-col items-center py-4 shrink-0 z-20 select-none">
+        {/* Left Sidebar - Seamless MD3 Tonal Surface Drawer */}
+        {isSidebarOpen && !isPreviewMode && (
+          <aside className="w-80 bg-surface-container-low overflow-y-auto flex-shrink-0 flex flex-col transition-all duration-300">
+            <div className="p-4 bg-surface-container-low sticky top-0 z-10 flex items-center justify-between">
+              <h2 className="font-bold text-xs uppercase tracking-wider text-on-surface-variant">
+                {"Lộ trình Bài học"}
+              </h2>
               <button
-                onClick={() => setIsSidebarOpen(true)}
-                className="w-12 py-2.5 px-1 rounded-2xl flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all cursor-pointer"
-                title="Mở Lộ trình Bài học"
+                onClick={() => setIsSidebarOpen(false)}
+                className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer"
+                title="Ẩn Lộ trình Bài học"
               >
-                <Menu className="w-5 h-5 mb-1" aria-hidden="true" />
-                <span className="text-[10px] tracking-tight leading-none font-semibold">
-                  Lộ trình
-                </span>
+                <X className="w-3.5 h-3.5" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-6">
+              {course.weekModules.map((week, weekIndex) => {
+                const isCollapsed = Boolean(collapsedWeeks[week.id]);
+                const unlocked = isWeekUnlocked(weekIndex);
+                const displayWeekTitle =
+                  week.title.startsWith("Tuần") || week.title.startsWith("Week")
+                    ? week.title
+                    : `Tuần ${week.weekNumber}: ${week.title}`;
+
+                return (
+                  <div key={week.id} className="space-y-3">
+                    {/* Module / Week Accordion Header */}
+                    <button
+                      type="button"
+                      onClick={() => toggleWeek(week.id)}
+                      className="w-full text-left flex items-center justify-between p-2.5 rounded-2xl hover:bg-surface-container-high/60 transition-colors group cursor-pointer"
+                    >
+                      <div className="flex-1 min-w-0 pr-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-bold tracking-wide text-on-surface-variant group-hover:text-primary transition-colors">
+                            {`Module ${week.weekNumber}`}
+                          </span>
+                          {!unlocked && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">
+                              <Lock className="w-3 h-3" /> Bị khóa
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm font-extrabold text-on-surface group-hover:text-primary transition-colors leading-snug truncate">
+                          {displayWeekTitle}
+                        </div>
+                      </div>
+                      <div className="text-on-surface-variant group-hover:text-on-surface transition-colors p-1 shrink-0">
+                        {isCollapsed ? (
+                          <ChevronDown className="w-4 h-4" />
+                        ) : (
+                          <ChevronUp className="w-4 h-4" />
+                        )}
+                      </div>
+                    </button>
+
+                    {/* Collapsible Lessons & Items List */}
+                    {!isCollapsed && (
+                      <div className="space-y-4 pl-1">
+                        {week.lessons.map((lesson, lessonIndex) => {
+                          const displayLessonTitle =
+                            lesson.title.startsWith("Bài") || lesson.title.startsWith("Lesson")
+                              ? lesson.title
+                              : `Bài ${lessonIndex + 1}: ${lesson.title}`;
+
+                          return (
+                            <div key={lesson.id} className="space-y-1.5">
+                              {/* Lesson Subheading */}
+                              <div className="text-xs font-bold text-on-surface-variant px-2 pt-1">
+                                {displayLessonTitle}
+                              </div>
+
+                              {/* Learning Items */}
+                              <div className="space-y-1">
+                                {lesson.items.map((item) => {
+                                  const isActive = activeItem?.id === item.id;
+                                  const isDone = progress?.completedItemIds.includes(item.id);
+
+                                  return (
+                                    <button
+                                      key={item.id}
+                                      type="button"
+                                      onClick={() => {
+                                        if (!unlocked) {
+                                          setLockNotice(
+                                            `Bạn cần hoàn thành tất cả các bài học ở Tuần ${weekIndex} để mở khóa Tuần ${weekIndex + 1}.`,
+                                          );
+                                          return;
+                                        }
+                                        setLockNotice("");
+                                        setActiveItem(item);
+                                        setActiveQuiz(null);
+                                      }}
+                                      className={`w-full text-left px-3.5 py-2.5 rounded-2xl flex items-center gap-3 transition-all cursor-pointer ${
+                                        !unlocked
+                                          ? "opacity-60 cursor-not-allowed hover:bg-transparent"
+                                          : isActive
+                                            ? "bg-primary-container text-on-primary-container shadow-xs font-bold"
+                                            : "hover:bg-surface-container-high/60 text-on-surface"
+                                      }`}
+                                    >
+                                      {/* Status Icon */}
+                                      <div className="shrink-0">
+                                        {!unlocked ? (
+                                          <div className="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center">
+                                            <Lock className="w-3 h-3 text-on-surface-variant" />
+                                          </div>
+                                        ) : isDone ? (
+                                          <div className="w-5 h-5 rounded-full bg-success text-success-foreground flex items-center justify-center shadow-2xs">
+                                            <Check className="w-3.5 h-3.5 text-success-foreground stroke-[3]" />
+                                          </div>
+                                        ) : (
+                                          <div className="w-5 h-5 rounded-full bg-surface-container" />
+                                        )}
+                                      </div>
+
+                                      {/* Title & Sub-info */}
+                                      <div className="flex-1 min-w-0">
+                                        <div
+                                          className={`text-xs leading-snug truncate ${
+                                            isActive
+                                              ? "font-bold text-on-primary-container"
+                                              : isDone
+                                                ? "font-medium text-on-surface"
+                                                : "font-normal text-on-surface-variant"
+                                          }`}
+                                        >
+                                          {item.title}
+                                        </div>
+                                        <div
+                                          className={`text-[11px] mt-0.5 font-normal ${
+                                            isActive
+                                              ? "text-on-primary-container/80"
+                                              : "text-on-surface-variant"
+                                          }`}
+                                        >
+                                          {!unlocked
+                                            ? `Bị khóa • Hoàn thành Tuần ${weekIndex}`
+                                            : `${getItemTypeName(item.type)} • ${item.estimatedMinutes || 5} min`}
+                                        </div>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </aside>
+        )}
+
+        {/* Center Workspace & Bottom Panels */}
+        <main className="flex-1 flex flex-col bg-surface-container-low overflow-hidden relative text-on-surface min-w-0 sm:min-w-[360px]">
+          {/* Lock Notice Banner */}
+          {lockNotice && (
+            <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-200">
+              <span>{lockNotice}</span>
+              <button
+                onClick={() => setLockNotice("")}
+                className="text-warning hover:opacity-75 font-bold text-xs cursor-pointer"
+              >
+                ✕
               </button>
             </div>
           )}
 
-          {/* Left Sidebar - Seamless MD3 Tonal Surface Drawer */}
-          {isSidebarOpen && !isPreviewMode && (
-            <aside className="w-80 bg-surface-container-low overflow-y-auto flex-shrink-0 flex flex-col transition-all duration-300">
-              <div className="p-4 bg-surface-container-low sticky top-0 z-10 flex items-center justify-between">
-                <h2 className="font-bold text-xs uppercase tracking-wider text-on-surface-variant">
-                  {"Lộ trình Bài học"}
-                </h2>
-                <button
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer"
-                  title="Ẩn Lộ trình Bài học"
-                >
-                  <X className="w-3.5 h-3.5" aria-hidden="true" />
-                </button>
+          {/* Center Video & Side Tool Panel Layout */}
+          <div className="flex-1 flex flex-row overflow-x-auto overflow-y-hidden relative min-h-0">
+            {/* Left/Center Video Media Viewer Canvas - Top Rounded Stage */}
+            <div className="flex-1 min-w-0 sm:min-w-[360px] bg-surface-container-lowest rounded-t-3xl sm:rounded-t-[28px] shadow-xs overflow-hidden flex flex-col items-center justify-between relative overflow-y-auto transition-colors duration-200 min-h-0">
+              <div className="w-full flex-1 flex flex-col p-3 min-h-0 overflow-y-auto">
+                <VideoPlayer
+                  videoRef={videoRef}
+                  activeItem={activeItem}
+                  userId={userId}
+                  activeQuiz={activeQuiz}
+                  selectedOption={selectedOption}
+                  quizSubmitted={quizSubmitted}
+                  completedItemIds={progress?.completedItemIds || []}
+                  currentTime={currentTime}
+                  onTimeUpdate={handleTimeUpdate}
+                  onSeeking={handleSeeking}
+                  onSelectOption={setSelectedOption}
+                  onSubmitQuiz={handleQuizSubmit}
+                  onContinueVideo={handleContinueVideo}
+                  onMarkComplete={handleMarkItemComplete}
+                  isPreviewMode={isPreviewMode}
+                  onSelectAiPrompt={(promptText) => {
+                    setActiveTab("ai_assistant");
+                    setIsPanelOpen(true);
+                    setTimeout(() => {
+                      const inputEl = document.querySelector(
+                        'input[placeholder*="Hỏi tôi"], textarea[placeholder*="Hỏi tôi"]',
+                      ) as HTMLInputElement | HTMLTextAreaElement | null;
+                      if (inputEl) {
+                        const nativeSetter = Object.getOwnPropertyDescriptor(
+                          window.HTMLInputElement.prototype,
+                          "value",
+                        )?.set;
+                        if (nativeSetter) {
+                          nativeSetter.call(inputEl, promptText);
+                        } else {
+                          inputEl.value = promptText;
+                        }
+                        inputEl.dispatchEvent(new Event("input", { bubbles: true }));
+                        const formEl = inputEl.closest("form");
+                        if (formEl) {
+                          if (
+                            "requestSubmit" in formEl &&
+                            typeof formEl.requestSubmit === "function"
+                          ) {
+                            formEl.requestSubmit();
+                            return;
+                          }
+                          formEl.dispatchEvent(
+                            new Event("submit", { bubbles: true, cancelable: true }),
+                          );
+                        }
+                      }
+                    }, 100);
+                  }}
+                  nextItem={nextItem}
+                  onNextLesson={() => {
+                    if (!nextItem || !course) return;
+                    const nextWeekIndex = course.weekModules.findIndex((wm) =>
+                      wm.lessons.some((l) => l.items.some((i) => i.id === nextItem.id)),
+                    );
+                    if (nextWeekIndex !== -1 && !isWeekUnlocked(nextWeekIndex)) {
+                      setLockNotice(
+                        `Bạn cần hoàn thành tất cả các bài học ở Tuần ${nextWeekIndex} để mở khóa Tuần ${nextWeekIndex + 1}.`,
+                      );
+                      return;
+                    }
+                    setLockNotice("");
+                    setActiveItem(nextItem);
+                    setActiveQuiz(null);
+                  }}
+                />
               </div>
+            </div>
 
-              <div className="p-4 space-y-6">
-                {course.weekModules.map((week, weekIndex) => {
-                  const isCollapsed = Boolean(collapsedWeeks[week.id]);
-                  const unlocked = isWeekUnlocked(weekIndex);
-                  const displayWeekTitle =
-                    week.title.startsWith("Tuần") || week.title.startsWith("Week")
-                      ? week.title
-                      : `Tuần ${week.weekNumber}: ${week.title}`;
-
-                  return (
-                    <div key={week.id} className="space-y-3">
-                      {/* Module / Week Accordion Header */}
-                      <button
-                        type="button"
-                        onClick={() => toggleWeek(week.id)}
-                        className="w-full text-left flex items-center justify-between p-2.5 rounded-2xl hover:bg-surface-container-high/60 transition-colors group cursor-pointer"
-                      >
-                        <div className="flex-1 min-w-0 pr-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] font-bold tracking-wide text-on-surface-variant group-hover:text-primary transition-colors">
-                              {`Module ${week.weekNumber}`}
-                            </span>
-                            {!unlocked && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">
-                                <Lock className="w-3 h-3" /> Bị khóa
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-sm font-extrabold text-on-surface group-hover:text-primary transition-colors leading-snug truncate">
-                            {displayWeekTitle}
-                          </div>
-                        </div>
-                        <div className="text-on-surface-variant group-hover:text-on-surface transition-colors p-1 shrink-0">
-                          {isCollapsed ? (
-                            <ChevronDown className="w-4 h-4" />
-                          ) : (
-                            <ChevronUp className="w-4 h-4" />
-                          )}
-                        </div>
-                      </button>
-
-                      {/* Collapsible Lessons & Items List */}
-                      {!isCollapsed && (
-                        <div className="space-y-4 pl-1">
-                          {week.lessons.map((lesson, lessonIndex) => {
-                            const displayLessonTitle =
-                              lesson.title.startsWith("Bài") || lesson.title.startsWith("Lesson")
-                                ? lesson.title
-                                : `Bài ${lessonIndex + 1}: ${lesson.title}`;
-
-                            return (
-                              <div key={lesson.id} className="space-y-1.5">
-                                {/* Lesson Subheading */}
-                                <div className="text-xs font-bold text-on-surface-variant px-2 pt-1">
-                                  {displayLessonTitle}
-                                </div>
-
-                                {/* Learning Items */}
-                                <div className="space-y-1">
-                                  {lesson.items.map((item) => {
-                                    const isActive = activeItem?.id === item.id;
-                                    const isDone = progress?.completedItemIds.includes(item.id);
-
-                                    return (
-                                      <button
-                                        key={item.id}
-                                        type="button"
-                                        onClick={() => {
-                                          if (!unlocked) {
-                                            setLockNotice(
-                                              `Bạn cần hoàn thành tất cả các bài học ở Tuần ${weekIndex} để mở khóa Tuần ${weekIndex + 1}.`,
-                                            );
-                                            return;
-                                          }
-                                          setLockNotice("");
-                                          setActiveItem(item);
-                                          setActiveQuiz(null);
-                                        }}
-                                        className={`w-full text-left px-3.5 py-2.5 rounded-2xl flex items-center gap-3 transition-all cursor-pointer ${
-                                          !unlocked
-                                            ? "opacity-60 cursor-not-allowed hover:bg-transparent"
-                                            : isActive
-                                              ? "bg-primary-container text-on-primary-container shadow-xs font-bold"
-                                              : "hover:bg-surface-container-high/60 text-on-surface"
-                                        }`}
-                                      >
-                                        {/* Status Icon */}
-                                        <div className="shrink-0">
-                                          {!unlocked ? (
-                                            <div className="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center">
-                                              <Lock className="w-3 h-3 text-on-surface-variant" />
-                                            </div>
-                                          ) : isDone ? (
-                                            <div className="w-5 h-5 rounded-full bg-success text-success-foreground flex items-center justify-center shadow-2xs">
-                                              <Check className="w-3.5 h-3.5 text-success-foreground stroke-[3]" />
-                                            </div>
-                                          ) : (
-                                            <div className="w-5 h-5 rounded-full bg-surface-container" />
-                                          )}
-                                        </div>
-
-                                        {/* Title & Sub-info */}
-                                        <div className="flex-1 min-w-0">
-                                          <div
-                                            className={`text-xs leading-snug truncate ${
-                                              isActive
-                                                ? "font-bold text-on-primary-container"
-                                                : isDone
-                                                  ? "font-medium text-on-surface"
-                                                  : "font-normal text-on-surface-variant"
-                                            }`}
-                                          >
-                                            {item.title}
-                                          </div>
-                                          <div
-                                            className={`text-[11px] mt-0.5 font-normal ${
-                                              isActive
-                                                ? "text-on-primary-container/80"
-                                                : "text-on-surface-variant"
-                                            }`}
-                                          >
-                                            {!unlocked
-                                              ? `Bị khóa • Hoàn thành Tuần ${weekIndex}`
-                                              : `${getItemTypeName(item.type)} • ${item.estimatedMinutes || 5} min`}
-                                          </div>
-                                        </div>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
+            {/* Standard Side Drawer Panel for non-AI Tabs (Transcript, Notes, Forum, Deadlines) */}
+            {isPanelOpen &&
+              activeTab !== "ai_assistant" &&
+              ((activeTab === "transcript" && isVideoItem) ||
+                ((activeTab === "notes" || activeTab === "forum") &&
+                  isLectureItem &&
+                  !isPreviewMode) ||
+                (activeTab === "deadlines" && !isPreviewMode)) && (
+                <aside className="w-80 xl:w-96 bg-surface-container-low flex flex-col shrink-0 h-full overflow-hidden shadow-xs z-10 border-l border-outline-variant/30">
+                  {/* Drawer Header */}
+                  <div className="h-12 px-4 flex items-center justify-between bg-surface-container-low shrink-0 border-b border-outline-variant/30">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs text-on-surface uppercase tracking-wider">
+                        {activeTab === "transcript" && "Phụ đề Tương tác"}
+                        {activeTab === "forum" && "Thảo luận Bài học"}
+                        {activeTab === "notes" && "Ghi chú Cá nhân"}
+                        {activeTab === "deadlines" && "Deadlines & Tiến độ"}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            </aside>
-          )}
+                    <button
+                      onClick={() => setIsPanelOpen(false)}
+                      className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer"
+                      title="Đóng bảng công cụ"
+                    >
+                      <X className="w-4 h-4" aria-hidden="true" />
+                    </button>
+                  </div>
 
-          {/* Center Workspace & Bottom Panels */}
-          <main className="flex-1 flex flex-col bg-surface-container-low overflow-hidden relative text-on-surface min-w-0 sm:min-w-[360px]">
-            {/* Lock Notice Banner */}
-            {lockNotice && (
-              <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-200">
-                <span>{lockNotice}</span>
-                <button
-                  onClick={() => setLockNotice("")}
-                  className="text-warning hover:opacity-75 font-bold text-xs cursor-pointer"
-                >
-                  ✕
-                </button>
+                  {/* Tab Body Content - Unified Background */}
+                  <div className="flex-1 overflow-y-auto p-4 bg-surface-container-low min-h-0 flex flex-col">
+                    {activeTab === "transcript" && isVideoItem && (
+                      <TranscriptPanel
+                        activeItem={activeItem}
+                        currentTime={currentTime}
+                        onSeekVideo={handleSeekVideo}
+                      />
+                    )}
+
+                    {!isPreviewMode && activeTab === "forum" && (
+                      <ForumTab
+                        courseId={courseId}
+                        itemId={activeItem?.id || ""}
+                        targetThreadId={urlThreadId || undefined}
+                      />
+                    )}
+
+                    {!isPreviewMode && activeTab === "notes" && isLectureItem && (
+                      <NotesPanel
+                        notes={notes}
+                        highlightText={highlightText}
+                        noteComment={noteComment}
+                        savingNote={savingNote}
+                        onHighlightTextChange={setHighlightText}
+                        onNoteCommentChange={setNoteComment}
+                        onSaveNote={handleSaveNote}
+                      />
+                    )}
+
+                    {!isPreviewMode && activeTab === "deadlines" && (
+                      <DeadlinesPanel progress={progress} onResetDeadlines={handleResetDeadlines} />
+                    )}
+                  </div>
+                </aside>
+              )}
+
+            {/* Persistent AI Chatbot Instance (Keeps conversation history & state mounted continuously in DOM) */}
+            {isAiSupported && (
+              <div
+                className={
+                  isPanelOpen && activeTab === "ai_assistant"
+                    ? "w-96 xl:w-[464px] h-full shrink-0 flex flex-col bg-surface-container-low z-10 border-l border-outline-variant/30 overflow-hidden"
+                    : "hidden"
+                }
+              >
+                <LearnPageAIChatbot
+                  courseId={courseId}
+                  courseTitle={course?.title || "Khóa học"}
+                  moduleTitle={activeModule?.title || "Module bài học"}
+                  activeItem={activeItem}
+                  currentTime={currentTime}
+                  readingMarkdown={activeItem?.readingMarkdown}
+                  onSeek={handleSeekVideo}
+                  onNextLesson={() => {
+                    if (nextItem) {
+                      setActiveItem(nextItem);
+                      setActiveQuiz(null);
+                    }
+                  }}
+                  onNoteCreated={(newNote) => setNotes((prev) => [newNote, ...prev])}
+                  onClose={handleCloseAiAssistant}
+                />
               </div>
             )}
 
-            {/* Center Video & Side Tool Panel Layout */}
-            <div className="flex-1 flex flex-row overflow-x-auto overflow-y-hidden relative min-h-0">
-              {/* Left/Center Video Media Viewer Canvas - Top Rounded Stage */}
-              <div className="flex-1 min-w-0 sm:min-w-[360px] bg-surface-container-lowest rounded-t-3xl sm:rounded-t-[28px] shadow-xs overflow-hidden flex flex-col items-center justify-between relative overflow-y-auto transition-colors duration-200 min-h-0">
-                <div className="w-full flex-1 flex flex-col p-3 min-h-0 overflow-y-auto">
-                  <VideoPlayer
-                    videoRef={videoRef}
-                    activeItem={activeItem}
-                    userId={userId}
-                    activeQuiz={activeQuiz}
-                    selectedOption={selectedOption}
-                    quizSubmitted={quizSubmitted}
-                    completedItemIds={progress?.completedItemIds || []}
-                    currentTime={currentTime}
-                    onTimeUpdate={handleTimeUpdate}
-                    onSeeking={handleSeeking}
-                    onSelectOption={setSelectedOption}
-                    onSubmitQuiz={handleQuizSubmit}
-                    onContinueVideo={handleContinueVideo}
-                    onMarkComplete={handleMarkItemComplete}
-                    isPreviewMode={isPreviewMode}
-                    onSelectAiPrompt={(promptText) => {
-                      setActiveTab("ai_assistant");
-                      setIsPanelOpen(true);
-                      setTimeout(() => {
-                        const inputEl = document.querySelector(
-                          'input[placeholder*="Hỏi tôi"], textarea[placeholder*="Hỏi tôi"]',
-                        ) as HTMLInputElement | HTMLTextAreaElement | null;
-                        if (inputEl) {
-                          const nativeSetter = Object.getOwnPropertyDescriptor(
-                            window.HTMLInputElement.prototype,
-                            "value",
-                          )?.set;
-                          if (nativeSetter) {
-                            nativeSetter.call(inputEl, promptText);
-                          } else {
-                            inputEl.value = promptText;
-                          }
-                          inputEl.dispatchEvent(new Event("input", { bubbles: true }));
-                          const formEl = inputEl.closest("form");
-                          if (formEl) {
-                            if (
-                              "requestSubmit" in formEl &&
-                              typeof formEl.requestSubmit === "function"
-                            ) {
-                              formEl.requestSubmit();
-                              return;
-                            }
-                            formEl.dispatchEvent(
-                              new Event("submit", { bubbles: true, cancelable: true }),
-                            );
-                          }
-                        }
-                      }, 100);
-                    }}
-                    nextItem={nextItem}
-                    onNextLesson={() => {
-                      if (!nextItem || !course) return;
-                      const nextWeekIndex = course.weekModules.findIndex((wm) =>
-                        wm.lessons.some((l) => l.items.some((i) => i.id === nextItem.id)),
-                      );
-                      if (nextWeekIndex !== -1 && !isWeekUnlocked(nextWeekIndex)) {
-                        setLockNotice(
-                          `Bạn cần hoàn thành tất cả các bài học ở Tuần ${nextWeekIndex} để mở khóa Tuần ${nextWeekIndex + 1}.`,
-                        );
-                        return;
-                      }
-                      setLockNotice("");
-                      setActiveItem(nextItem);
-                      setActiveQuiz(null);
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* Standard Side Drawer Panel for non-AI Tabs (Transcript, Notes, Forum, Deadlines) */}
-              {isPanelOpen &&
-                activeTab !== "ai_assistant" &&
-                ((activeTab === "transcript" && isVideoItem) ||
-                  ((activeTab === "notes" || activeTab === "forum") &&
-                    isLectureItem &&
-                    !isPreviewMode) ||
-                  (activeTab === "deadlines" && !isPreviewMode)) && (
-                  <aside className="w-80 xl:w-96 bg-surface-container-low flex flex-col shrink-0 h-full overflow-hidden shadow-xs z-10 border-l border-outline-variant/30">
-                    {/* Drawer Header */}
-                    <div className="h-12 px-4 flex items-center justify-between bg-surface-container-low shrink-0 border-b border-outline-variant/30">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-xs text-on-surface uppercase tracking-wider">
-                          {activeTab === "transcript" && "Phụ đề Tương tác"}
-                          {activeTab === "forum" && "Thảo luận Bài học"}
-                          {activeTab === "notes" && "Ghi chú Cá nhân"}
-                          {activeTab === "deadlines" && "Deadlines & Tiến độ"}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => setIsPanelOpen(false)}
-                        className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer"
-                        title="Đóng bảng công cụ"
-                      >
-                        <X className="w-4 h-4" aria-hidden="true" />
-                      </button>
+            {/* Vertical Icon Action Bar - Seamless MD3 Navigation Rail (Visible when AI Chatbot is inactive) */}
+            {(!isPanelOpen || activeTab !== "ai_assistant") && (
+              <div className="w-16 lg:w-20 bg-surface-container-low flex flex-col items-center justify-start py-5 gap-5 shrink-0 h-full z-20 select-none border-l border-outline-variant/30">
+                {/* Transcript Button: Only for Video Items */}
+                {isVideoItem && (
+                  <button
+                    onClick={() => handleTabClick("transcript")}
+                    className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
+                    title="Phụ đề"
+                  >
+                    <div
+                      className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
+                        isPanelOpen && activeTab === "transcript"
+                          ? "bg-primary-container text-on-primary-container font-bold"
+                          : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                      }`}
+                    >
+                      <AlignLeft className="w-4 h-4" aria-hidden="true" />
                     </div>
-
-                    {/* Tab Body Content - Unified Background */}
-                    <div className="flex-1 overflow-y-auto p-4 bg-surface-container-low min-h-0 flex flex-col">
-                      {activeTab === "transcript" && isVideoItem && (
-                        <TranscriptPanel
-                          activeItem={activeItem}
-                          currentTime={currentTime}
-                          onSeekVideo={handleSeekVideo}
-                        />
-                      )}
-
-                      {!isPreviewMode && activeTab === "forum" && (
-                        <ForumTab
-                          courseId={courseId}
-                          itemId={activeItem?.id || ""}
-                          targetThreadId={urlThreadId || undefined}
-                        />
-                      )}
-
-                      {!isPreviewMode && activeTab === "notes" && isLectureItem && (
-                        <NotesPanel
-                          notes={notes}
-                          highlightText={highlightText}
-                          noteComment={noteComment}
-                          savingNote={savingNote}
-                          onHighlightTextChange={setHighlightText}
-                          onNoteCommentChange={setNoteComment}
-                          onSaveNote={handleSaveNote}
-                        />
-                      )}
-
-                      {!isPreviewMode && activeTab === "deadlines" && (
-                        <DeadlinesPanel
-                          progress={progress}
-                          onResetDeadlines={handleResetDeadlines}
-                        />
-                      )}
-                    </div>
-                  </aside>
+                    <span
+                      className={`text-[10px] tracking-tight leading-none ${
+                        isPanelOpen && activeTab === "transcript"
+                          ? "text-primary font-bold"
+                          : "text-on-surface-variant"
+                      }`}
+                    >
+                      Phụ đề
+                    </span>
+                  </button>
                 )}
 
-              {/* Persistent AI Chatbot Instance (Keeps conversation history & state mounted continuously in DOM) */}
-              {isAiSupported && (
-                <div
-                  className={
-                    isPanelOpen && activeTab === "ai_assistant"
-                      ? "w-96 xl:w-[464px] h-full shrink-0 flex flex-col bg-surface-container-low z-10 border-l border-outline-variant/30 overflow-hidden"
-                      : "hidden"
-                  }
-                >
-                  <LearnPageAIChatbot
-                    courseId={courseId}
-                    courseTitle={course?.title || "Khóa học"}
-                    moduleTitle={activeModule?.title || "Module bài học"}
-                    activeItem={activeItem}
-                    currentTime={currentTime}
-                    readingMarkdown={activeItem?.readingMarkdown}
-                    onSeek={handleSeekVideo}
-                    onNextLesson={() => {
-                      if (nextItem) {
-                        setActiveItem(nextItem);
-                        setActiveQuiz(null);
-                      }
-                    }}
-                    onNoteCreated={(newNote) => setNotes((prev) => [newNote, ...prev])}
-                    onClose={handleCloseAiAssistant}
-                  />
-                </div>
-              )}
-
-              {/* Vertical Icon Action Bar - Seamless MD3 Navigation Rail (Visible when AI Chatbot is inactive) */}
-              {(!isPanelOpen || activeTab !== "ai_assistant") && (
-                <div className="w-16 lg:w-20 bg-surface-container-low flex flex-col items-center justify-start py-5 gap-5 shrink-0 h-full z-20 select-none border-l border-outline-variant/30">
-                  {/* Transcript Button: Only for Video Items */}
-                  {isVideoItem && (
-                    <button
-                      onClick={() => handleTabClick("transcript")}
-                      className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
-                      title="Phụ đề"
-                    >
-                      <div
-                        className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
-                          isPanelOpen && activeTab === "transcript"
-                            ? "bg-primary-container text-on-primary-container font-bold"
-                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                        }`}
-                      >
-                        <AlignLeft className="w-4 h-4" aria-hidden="true" />
-                      </div>
-                      <span
-                        className={`text-[10px] tracking-tight leading-none ${
-                          isPanelOpen && activeTab === "transcript"
-                            ? "text-primary font-bold"
-                            : "text-on-surface-variant"
-                        }`}
-                      >
-                        Phụ đề
-                      </span>
-                    </button>
-                  )}
-
-                  {!isPreviewMode && (
-                    <>
-                      {/* Notes Button: For Video & Reading Lecture Items */}
-                      {isLectureItem && (
-                        <button
-                          onClick={() => handleTabClick("notes")}
-                          className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
-                          title="Ghi chú"
-                        >
-                          <div
-                            className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
-                              isPanelOpen && activeTab === "notes"
-                                ? "bg-primary-container text-on-primary-container font-bold"
-                                : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                            }`}
-                          >
-                            <FileText className="w-4 h-4" aria-hidden="true" />
-                          </div>
-                          <span
-                            className={`text-[10px] tracking-tight leading-none ${
-                              isPanelOpen && activeTab === "notes"
-                                ? "text-primary font-bold"
-                                : "text-on-surface-variant"
-                            }`}
-                          >
-                            Ghi chú
-                          </span>
-                        </button>
-                      )}
-
-                      {/* Forum Button: For Video & Reading Lecture Items */}
-                      {isLectureItem && (
-                        <button
-                          onClick={() => handleTabClick("forum")}
-                          className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
-                          title="Thảo luận"
-                        >
-                          <div
-                            className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
-                              isPanelOpen && activeTab === "forum"
-                                ? "bg-primary-container text-on-primary-container font-bold"
-                                : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
-                            }`}
-                          >
-                            <MessageSquare className="w-4 h-4" aria-hidden="true" />
-                          </div>
-                          <span
-                            className={`text-[10px] tracking-tight leading-none ${
-                              isPanelOpen && activeTab === "forum"
-                                ? "text-primary font-bold"
-                                : "text-on-surface-variant"
-                            }`}
-                          >
-                            Thảo luận
-                          </span>
-                        </button>
-                      )}
-
-                      {/* Deadlines Button */}
+                {!isPreviewMode && (
+                  <>
+                    {/* Notes Button: For Video & Reading Lecture Items */}
+                    {isLectureItem && (
                       <button
-                        onClick={() => handleTabClick("deadlines")}
+                        onClick={() => handleTabClick("notes")}
                         className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
-                        title="Deadlines"
+                        title="Ghi chú"
                       >
                         <div
                           className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
-                            isPanelOpen && activeTab === "deadlines"
+                            isPanelOpen && activeTab === "notes"
                               ? "bg-primary-container text-on-primary-container font-bold"
                               : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
                           }`}
                         >
-                          <Clock className="w-4 h-4" aria-hidden="true" />
+                          <FileText className="w-4 h-4" aria-hidden="true" />
                         </div>
                         <span
                           className={`text-[10px] tracking-tight leading-none ${
-                            isPanelOpen && activeTab === "deadlines"
+                            isPanelOpen && activeTab === "notes"
                               ? "text-primary font-bold"
                               : "text-on-surface-variant"
                           }`}
                         >
-                          Deadlines
+                          Ghi chú
                         </span>
                       </button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </main>
+                    )}
 
-          <CourseCompletionModal
-            isOpen={showCompletionModal}
-            onClose={() => setShowCompletionModal(false)}
-            courseId={courseId}
-            courseTitle={course?.title || "Khóa học LMS"}
-            certificateId={certificateId || `CERT-${courseId.replace("course-", "").toUpperCase()}`}
-          />
-        </div>
+                    {/* Forum Button: For Video & Reading Lecture Items */}
+                    {isLectureItem && (
+                      <button
+                        onClick={() => handleTabClick("forum")}
+                        className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
+                        title="Thảo luận"
+                      >
+                        <div
+                          className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
+                            isPanelOpen && activeTab === "forum"
+                              ? "bg-primary-container text-on-primary-container font-bold"
+                              : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                          }`}
+                        >
+                          <MessageSquare className="w-4 h-4" aria-hidden="true" />
+                        </div>
+                        <span
+                          className={`text-[10px] tracking-tight leading-none ${
+                            isPanelOpen && activeTab === "forum"
+                              ? "text-primary font-bold"
+                              : "text-on-surface-variant"
+                          }`}
+                        >
+                          Thảo luận
+                        </span>
+                      </button>
+                    )}
+
+                    {/* Deadlines Button */}
+                    <button
+                      onClick={() => handleTabClick("deadlines")}
+                      className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
+                      title="Deadlines"
+                    >
+                      <div
+                        className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
+                          isPanelOpen && activeTab === "deadlines"
+                            ? "bg-primary-container text-on-primary-container font-bold"
+                            : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                        }`}
+                      >
+                        <Clock className="w-4 h-4" aria-hidden="true" />
+                      </div>
+                      <span
+                        className={`text-[10px] tracking-tight leading-none ${
+                          isPanelOpen && activeTab === "deadlines"
+                            ? "text-primary font-bold"
+                            : "text-on-surface-variant"
+                        }`}
+                      >
+                        Deadlines
+                      </span>
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </main>
+
+        <CourseCompletionModal
+          isOpen={showCompletionModal}
+          onClose={() => setShowCompletionModal(false)}
+          courseId={courseId}
+          courseTitle={course?.title || "Khóa học LMS"}
+          certificateId={certificateId || `CERT-${courseId.replace("course-", "").toUpperCase()}`}
+        />
       </div>
-    </DirectionalTransition>
+    </div>
   );
 }
 
