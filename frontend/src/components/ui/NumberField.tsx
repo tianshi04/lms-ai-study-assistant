@@ -1,0 +1,48 @@
+import * as React from "react";
+import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
+import { Plus, Minus } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export const NumberFieldRoot = BaseNumberField.Root;
+
+export interface NumberFieldProps extends React.ComponentProps<typeof BaseNumberField.Root> {
+  label?: string;
+  error?: string;
+  helperText?: string;
+}
+
+export function NumberField({
+  label,
+  error,
+  helperText,
+  className,
+  ref,
+  ...props
+}: NumberFieldProps) {
+  return (
+    <div className="space-y-1.5 w-full">
+      {label && (
+        <label className="block text-sm font-medium text-foreground leading-none select-none">
+          {label}
+        </label>
+      )}
+      <BaseNumberField.Root
+        ref={ref}
+        className={cn("inline-flex flex-col gap-1", className)}
+        {...props}
+      >
+        <BaseNumberField.Group className="inline-flex items-center rounded-lg border border-input bg-background shadow-xs transition-colors focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary">
+          <BaseNumberField.Decrement className="inline-flex h-9 w-9 items-center justify-center rounded-l-lg border-r border-input bg-muted/40 text-foreground transition-colors hover:bg-muted focus-visible:outline-none disabled:opacity-50 cursor-pointer">
+            <Minus className="h-4 w-4" />
+          </BaseNumberField.Decrement>
+          <BaseNumberField.Input className="h-9 w-16 text-center text-sm font-medium text-foreground bg-transparent focus:outline-none" />
+          <BaseNumberField.Increment className="inline-flex h-9 w-9 items-center justify-center rounded-r-lg border-l border-input bg-muted/40 text-foreground transition-colors hover:bg-muted focus-visible:outline-none disabled:opacity-50 cursor-pointer">
+            <Plus className="h-4 w-4" />
+          </BaseNumberField.Increment>
+        </BaseNumberField.Group>
+      </BaseNumberField.Root>
+      {error && <p className="text-xs text-destructive font-medium">{error}</p>}
+      {helperText && !error && <p className="text-xs text-muted-foreground">{helperText}</p>}
+    </div>
+  );
+}
