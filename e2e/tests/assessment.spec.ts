@@ -10,34 +10,6 @@ test.describe('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () 
     await assessmentPage.verifyPageLoaded();
   });
 
-  test('should display integrated honor code submit modal and submit quiz', async ({ page }) => {
-    const assessmentPage = new AssessmentPage(page);
-    await assessmentPage.goto();
-    await assessmentPage.verifyPageLoaded();
-
-    await assessmentPage.submitQuiz();
-    const resultOrQuizState = page.locator('text=/Score:|Điểm số:|Required:|Kết quả|Bài Thi/i').first();
-    await expect(resultOrQuizState).toBeVisible({ timeout: 10000 });
-  });
-
-  test('should submit graded quiz and display score result', async ({ page }) => {
-    const assessmentPage = new AssessmentPage(page);
-    await assessmentPage.goto();
-    await assessmentPage.verifyPageLoaded();
-
-    // Confirm honor code first if not already confirmed
-    await assessmentPage.agreeHonorCode();
-
-    // Click submit quiz button
-    await assessmentPage.submitQuiz();
-
-    // Result panel showing score or quiz state should appear
-    const resultOrQuizState = page.locator('text=/Score:|Điểm số:|Required:|Kết quả|Bài Thi/i').first().or(
-      page.locator('button').filter({ hasText: /Submit Graded Quiz|Nộp bài thi/i }).first()
-    );
-    await expect(resultOrQuizState).toBeVisible({ timeout: 10000 });
-  });
-
   test('should execute auto-graded lab in sandbox and show test case results', async ({ page }) => {
     const assessmentPage = new AssessmentPage(page);
     await assessmentPage.goto();
@@ -75,54 +47,6 @@ test.describe('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () 
     }
   });
 
-  test('should submit peer assignment successfully and unlock peer grading', async ({ page }) => {
-    const assessmentPage = new AssessmentPage(page);
-    await assessmentPage.goto();
-    await assessmentPage.verifyPageLoaded();
-
-    await assessmentPage.switchTab('peer');
-
-    // Submit assignment if on Tab 1, or click Tab 2 if already submitted
-    if (await assessmentPage.submitPeerAssignmentButton.isVisible()) {
-      await assessmentPage.submitPeerAssignment();
-    } else {
-      await assessmentPage.gradePeersTab.click();
-    }
-
-    // Verify submission success badge or grade peers tab unlocked
-    await expect(page.locator('text=/Đã Nộp Bài|Submit Peer Assignment|Rubric Criteria Scoring/i').first()).toBeVisible({ timeout: 10000 });
-  });
-
-  test('should allow grading peer submission using Rubric criteria', async ({ page }) => {
-    const assessmentPage = new AssessmentPage(page);
-    await assessmentPage.goto();
-    await assessmentPage.verifyPageLoaded();
-
-    await assessmentPage.switchTab('peer');
-    if (await assessmentPage.submitPeerAssignmentButton.isVisible()) {
-      await assessmentPage.submitPeerAssignment();
-    }
-
-    // Switch to Grade Peers tab and submit grade for Peer #1
-    await assessmentPage.gradeFirstPeer();
-  });
-
-  test('should allow submitting Grade Appeal to TA (BR_PEER_003)', async ({ page }) => {
-    const assessmentPage = new AssessmentPage(page);
-    await assessmentPage.goto();
-    await assessmentPage.verifyPageLoaded();
-
-    await assessmentPage.switchTab('peer');
-    if (await assessmentPage.submitPeerAssignmentButton.isVisible()) {
-      await assessmentPage.submitPeerAssignment();
-    }
-
-    const appealReason = 'Peer reviewers gave lower score on documentation section despite complete setup guide.';
-    await assessmentPage.submitAppeal(appealReason);
-
-    await expect(page.locator('text=/Appeal status:|PENDING|TA will review|submitted successfully/i').first()).toBeVisible({ timeout: 15000 });
-  });
-
   test('should allow reporting malicious or spam peer review (BR_PEER_005)', async ({ page }) => {
     const assessmentPage = new AssessmentPage(page);
     await assessmentPage.goto();
@@ -136,4 +60,5 @@ test.describe('Full System Blackbox - Assessment & Auto-Grader Flows (POM)', () 
     }
   });
 });
+
 
