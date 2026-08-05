@@ -90,6 +90,96 @@ export async function refreshSessionAction() {
   }
 }
 
+export async function googleRegisterVerifyAction(googleIdToken: string) {
+  try {
+    const client = getUnauthenticatedBackendClient();
+    const res = await client.googleRegisterVerify({ googleIdToken });
+    return {
+      success: true,
+      tempToken: res.tempToken,
+      email: res.email,
+      fullName: res.fullName,
+      avatarUrl: res.avatarUrl,
+      isAlreadyRegistered: res.isAlreadyRegistered,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Xác minh Google thất bại.";
+    return { success: false, error: msg };
+  }
+}
+
+export async function completeGoogleRegistrationAction(
+  tempToken: string,
+  password: string,
+  fullName: string,
+  role: number
+) {
+  try {
+    const client = getUnauthenticatedBackendClient();
+    const res = await client.completeGoogleRegistration({
+      tempToken,
+      password,
+      fullName,
+      role,
+    });
+
+    if (!res.accessToken || !res.user) {
+      return { success: false, error: "Hoàn tất đăng ký thất bại." };
+    }
+
+    const cookieStore = await cookies();
+    cookieStore.set("access_token", res.accessToken, getCookieOptions(ACCESS_TOKEN_MAX_AGE));
+    if (res.refreshToken) {
+      cookieStore.set("refresh_token", res.refreshToken, getCookieOptions(REFRESH_TOKEN_MAX_AGE));
+    }
+
+    return {
+      success: true,
+      user: {
+        id: res.user.id,
+        fullName: res.user.fullName,
+        email: res.user.email,
+        role: normalizeUserRole(String(res.user.role)),
+        avatarUrl: res.user.avatarUrl,
+      },
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Đăng ký thất bại.";
+    return { success: false, error: msg };
+  }
+}
+
+export async function googleLoginAction(googleIdToken: string) {
+  try {
+    const client = getUnauthenticatedBackendClient();
+    const res = await client.googleLogin({ googleIdToken });
+
+    if (!res.accessToken || !res.user) {
+      return { success: false, error: "Đăng nhập bằng Google thất bại." };
+    }
+
+    const cookieStore = await cookies();
+    cookieStore.set("access_token", res.accessToken, getCookieOptions(ACCESS_TOKEN_MAX_AGE));
+    if (res.refreshToken) {
+      cookieStore.set("refresh_token", res.refreshToken, getCookieOptions(REFRESH_TOKEN_MAX_AGE));
+    }
+
+    return {
+      success: true,
+      user: {
+        id: res.user.id,
+        fullName: res.user.fullName,
+        email: res.user.email,
+        role: normalizeUserRole(String(res.user.role)),
+        avatarUrl: res.user.avatarUrl,
+      },
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Đăng nhập bằng Google thất bại.";
+    return { success: false, error: msg };
+  }
+}
+
 export async function logoutAction() {
   const cookieStore = await cookies();
   cookieStore.delete("access_token");
