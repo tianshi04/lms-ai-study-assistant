@@ -51,11 +51,8 @@ test.describe('Full System Blackbox - Authentication Flow (POM)', () => {
     const uniqueEmail = `testuser_${Date.now()}@coursera.ai`;
     await registerPage.register('Test User E2E', uniqueEmail, '123456', '1');
 
-    // Should show success banner
-    await expect(registerPage.successBanner).toBeVisible({ timeout: 5000 });
-
-    // Should redirect to login after delay
-    await expect(page).toHaveURL(/\/auth\/login/, { timeout: 10000 });
+    // New 2-step flow auto-logs in after registration and redirects to homepage
+    await expect(page).toHaveURL(/^\/$|\/courses|\/learn/, { timeout: 15000 });
   });
 
   test('should redirect to requested URL parameter after successful login', async ({ page, context }) => {
