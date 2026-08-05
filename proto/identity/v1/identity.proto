@@ -228,11 +228,82 @@ message RemoveOrganizationMemberResponse {
   bool success = 1;
 }
 
+message GoogleRegisterVerifyRequest {
+  string google_id_token = 1;
+}
+
+message GoogleRegisterVerifyResponse {
+  string temp_token = 1;
+  string email = 2;
+  string full_name = 3;
+  string avatar_url = 4;
+  bool is_already_registered = 5;
+}
+
+message CompleteGoogleRegistrationRequest {
+  string temp_token = 1;
+  string password = 2;
+  string full_name = 3;
+  UserRole role = 4;
+}
+
+message CompleteGoogleRegistrationResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  User user = 3;
+}
+
+message GoogleLoginRequest {
+  string google_id_token = 1;
+}
+
+message GoogleLoginResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  User user = 3;
+}
+
+message GoogleResetPasswordVerifyRequest {
+  string google_id_token = 1;
+}
+
+message GoogleResetPasswordVerifyResponse {
+  string temp_token = 1;
+  string email = 2;
+  string full_name = 3;
+}
+
+message CompleteResetPasswordRequest {
+  string temp_token = 1;
+  string new_password = 2;
+}
+
+message CompleteResetPasswordResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  User user = 3;
+}
+
 service IdentityService {
   rpc Login(LoginRequest) returns (LoginResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
   }
   rpc Register(RegisterRequest) returns (RegisterResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc GoogleRegisterVerify(GoogleRegisterVerifyRequest) returns (GoogleRegisterVerifyResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc CompleteGoogleRegistration(CompleteGoogleRegistrationRequest) returns (CompleteGoogleRegistrationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc GoogleLogin(GoogleLoginRequest) returns (GoogleLoginResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc GoogleResetPasswordVerify(GoogleResetPasswordVerifyRequest) returns (GoogleResetPasswordVerifyResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc CompleteResetPassword(CompleteResetPasswordRequest) returns (CompleteResetPasswordResponse) {
     option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
   }
   rpc GetUserProfile(GetUserProfileRequest) returns (GetUserProfileResponse) {

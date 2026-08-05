@@ -73,6 +73,7 @@ def create_access_token(
     email: str = "",
     full_name: str = "",
     role: str = "",
+    avatar_url: str = "",
 ) -> str:
     now = datetime.now(timezone.utc)
     payload: dict[str, Any] = {
@@ -80,6 +81,7 @@ def create_access_token(
         "email": email,
         "full_name": full_name,
         "role": str(role),
+        "avatar_url": avatar_url,
         "type": "access",
         "iat": now,
         "exp": now + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
@@ -94,6 +96,25 @@ def create_refresh_token(user_id: str) -> str:
         "type": "refresh",
         "iat": now,
         "exp": now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+    }
+    return jwt.encode(payload, settings.JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def create_google_temp_token(
+    email: str,
+    google_id: str,
+    full_name: str = "",
+    avatar_url: str = "",
+) -> str:
+    now = datetime.now(timezone.utc)
+    payload: dict[str, Any] = {
+        "sub": google_id,
+        "email": email,
+        "full_name": full_name,
+        "avatar_url": avatar_url,
+        "type": "google_temp_registration",
+        "iat": now,
+        "exp": now + timedelta(minutes=15),
     }
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=JWT_ALGORITHM)
 

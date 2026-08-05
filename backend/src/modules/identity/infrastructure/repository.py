@@ -35,6 +35,12 @@ class IdentityRepository:
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
+    async def get_by_google_id(self, google_id: str) -> Optional[User]:
+        stmt = select(UserModel).where(UserModel.google_id == google_id)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
+
     async def save(self, user: User) -> User:
         stmt = select(UserModel).where(UserModel.id == user.id)
         result = await self._session.execute(stmt)
@@ -53,6 +59,7 @@ class IdentityRepository:
                 is_identity_verified=user.is_identity_verified,
                 signature_image_url=user.signature_image_url,
                 title=user.title,
+                google_id=user.google_id,
             )
             self._session.add(model)
         else:
@@ -66,6 +73,7 @@ class IdentityRepository:
             model.is_identity_verified = user.is_identity_verified
             model.signature_image_url = user.signature_image_url
             model.title = user.title
+            model.google_id = user.google_id
 
         await self._session.flush()
         return self._to_entity(model)
@@ -98,6 +106,7 @@ class IdentityRepository:
             is_identity_verified=model.is_identity_verified,
             signature_image_url=model.signature_image_url,
             title=model.title,
+            google_id=model.google_id,
         )
 
 
