@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
   experimental: {
     useTypeScriptCli: true,
     optimizePackageImports: ["lucide-react"],
+    turbopackRustReactCompiler: true,
   },
   async rewrites() {
     const backendUrl =
