@@ -51,6 +51,7 @@ export async function loginAction(email: string, password: string) {
         fullName: res.user.fullName,
         email: res.user.email,
         role: normalizeUserRole(String(res.user.role)),
+        avatarUrl: res.user.avatarUrl,
       },
     };
   } catch (err: unknown) {
@@ -180,6 +181,59 @@ export async function googleLoginAction(googleIdToken: string) {
   }
 }
 
+export async function googleResetPasswordVerifyAction(googleIdToken: string) {
+  try {
+    const client = getUnauthenticatedBackendClient();
+    const res = await client.googleResetPasswordVerify({ googleIdToken });
+    return {
+      success: true,
+      tempToken: res.tempToken,
+      email: res.email,
+      fullName: res.fullName,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Xác minh Google thất bại.";
+    return { success: false, error: msg };
+  }
+}
+
+export async function completeResetPasswordAction(
+  tempToken: string,
+  newPassword: string
+) {
+  try {
+    const client = getUnauthenticatedBackendClient();
+    const res = await client.completeResetPassword({
+      tempToken,
+      newPassword,
+    });
+
+    if (!res.accessToken || !res.user) {
+      return { success: false, error: "Đặt lại mật khẩu thất bại." };
+    }
+
+    const cookieStore = await cookies();
+    cookieStore.set("access_token", res.accessToken, getCookieOptions(ACCESS_TOKEN_MAX_AGE));
+    if (res.refreshToken) {
+      cookieStore.set("refresh_token", res.refreshToken, getCookieOptions(REFRESH_TOKEN_MAX_AGE));
+    }
+
+    return {
+      success: true,
+      user: {
+        id: res.user.id,
+        fullName: res.user.fullName,
+        email: res.user.email,
+        role: normalizeUserRole(String(res.user.role)),
+        avatarUrl: res.user.avatarUrl,
+      },
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Cập nhật mật khẩu thất bại.";
+    return { success: false, error: msg };
+  }
+}
+
 export async function logoutAction() {
   const cookieStore = await cookies();
   cookieStore.delete("access_token");
@@ -190,3 +244,4 @@ export async function logoutAction() {
   cookieStore.delete("user_role");
   return { success: true };
 }
+

@@ -72,9 +72,17 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
      * *Chức năng:* Chấp thuận (`APPROVED`) hoặc từ chối (`REJECTED`) đơn. Khi `APPROVED`, hệ thống nguyên tử nâng `user.role = USER_ROLE_INSTRUCTOR` và gán tài khoản vào Partner mặc định toàn sàn **`Coursera Project Network`** (`partner_id = "partner_community"`) để cấp quyền tạo bài giảng.
 
 
+### 1.7. Luồng Đăng ký & Đăng nhập lai (Google OAuth2 & Mật khẩu Dự phòng)
+* **Khái niệm & Luồng Nghiệp vụ:**
+  - **Đăng ký bắt buộc qua Google (Step 1)**: Người dùng phải xác minh email qua Google OAuth2 (`GoogleRegisterVerify`). Cơ chế này đảm bảo 100% địa chỉ email là chính chủ, triệt tiêu tài khoản bot/spam và tiết kiệm chi phí hạ tầng gửi email OTP.
+  - **Thiết lập Mật khẩu Dự phòng (Step 2)**: Ngay sau khi xác minh Google thành công, người dùng được yêu cầu khởi tạo Mật khẩu dự phòng (`CompleteGoogleRegistration`). Điều này đảm bảo tài khoản trong DB luôn sở hữu `password_hash`, cho phép đăng nhập độc lập bất kỳ lúc nào ngay cả khi dịch vụ Google bị sự cố (Disaster Recovery).
+  - **Đăng nhập 2 Chế độ (Dual Login Options)**: Hỗ trợ nút bấm **Google 1-click** (`GoogleLogin`) và ô nhập **Email & Mật khẩu** truyền thống (`Login`).
+  - **Đồng bộ Ảnh đại diện (Google Avatar Synchronization)**: Tự động trích xuất ảnh đại diện chính chủ từ Google (`picture`), lưu trữ vào DB và đồng bộ lên toàn bộ giao diện Navbar Header (`UserDropdown`) và Hồ sơ cá nhân.
+
 ---
 
 ## 2. VAI TRÒ: GIẢNG VIÊN & TRỢ GIẢNG (INSTRUCTOR / TA)
+
 
 ### 2.1. Quản lý Cấu trúc Học tập Coursera & Hồ sơ Chữ ký (Specialization, Course & Instructor Profile)
 * **Quản lý Hồ sơ & Chữ ký tay Điện tử (Instructor Profile & Signature V2):** Giảng viên chủ động cập nhật Chức danh khoa học (`title` - VD: *Professor of Computer Science, Stanford University*) và tải lên ảnh Chữ ký tay điện tử (`signature_image_url`) thông qua RPC `UpdateInstructorProfile`. Chữ ký này sẽ được nhúng tự động lên các chứng chỉ Verified Certificate do giảng viên đó phụ trách (`BR_CERT_002`).
