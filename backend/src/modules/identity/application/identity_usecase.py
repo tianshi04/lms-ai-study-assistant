@@ -68,7 +68,6 @@ def _parse_google_id_token(id_token: str) -> dict[str, str]:
             "picture": f"https://api.dicebear.com/7.x/avataaars/svg?seed={email}",
         }
 
-
     try:
         parts = id_token.split(".")
         if len(parts) == 3:
@@ -101,7 +100,6 @@ def hash_password(password: str, salt: Optional[bytes] = None) -> str:
         "sha256", password.encode("utf-8"), salt, DEFAULT_PBKDF2_ITERATIONS
     )
     return f"{salt.hex()}:{hashed.hex()}"
-
 
 
 def verify_password(password: str, password_hash: str) -> bool:
@@ -236,7 +234,12 @@ class IdentityUseCase:
         """Returns (user, access_token, refresh_token, error_message)."""
         payload = decode_token(temp_token)
         if not payload or payload.get("type") != "google_temp_registration":
-            return None, "", "", "Phiên xác thực Google đã hết hạn. Vui lòng thử lại từ bước 1."
+            return (
+                None,
+                "",
+                "",
+                "Phiên xác thực Google đã hết hạn. Vui lòng thử lại từ bước 1.",
+            )
 
         email = payload.get("email")
         google_id = payload.get("sub")
@@ -252,7 +255,9 @@ class IdentityUseCase:
         except ValueError:
             role = UserRole.LEARNER
 
-        final_name = (full_name or payload.get("full_name") or email.split("@")[0]).strip()
+        final_name = (
+            full_name or payload.get("full_name") or email.split("@")[0]
+        ).strip()
         user_id = f"usr_{uuid.uuid4().hex[:12]}"
         password_hash = hash_password(password)
 
@@ -362,7 +367,12 @@ class IdentityUseCase:
         """Returns (user, access_token, refresh_token, error_message)."""
         payload = decode_token(temp_token)
         if not payload:
-            return None, "", "", "Mã xác thực quá hạn hoặc không hợp lệ. Vui lòng bấm Quên mật khẩu lại!"
+            return (
+                None,
+                "",
+                "",
+                "Mã xác thực quá hạn hoặc không hợp lệ. Vui lòng bấm Quên mật khẩu lại!",
+            )
 
         email = payload.get("email", "").strip().lower()
         if not email:
@@ -399,7 +409,6 @@ class IdentityUseCase:
     ) -> tuple[Optional[User], str]:
         """Returns (user, error_message)."""
         async with async_session_scope() as session:
-
             repo = IdentityRepository(session)
             existing = await repo.get_by_email(email)
             if existing:

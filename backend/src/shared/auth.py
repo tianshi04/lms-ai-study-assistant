@@ -89,7 +89,6 @@ def create_access_token(
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
-
 def create_refresh_token(user_id: str) -> str:
     now = datetime.now(timezone.utc)
     payload: dict[str, Any] = {
@@ -125,4 +124,3 @@ def decode_token(token: str) -> Optional[dict[str, Any]]:
         return jwt.decode(token, settings.JWT_SECRET, algorithms=[JWT_ALGORITHM])
     except (jwt.PyJWTError, Exception):
         return None
-
