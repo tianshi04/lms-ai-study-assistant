@@ -51,7 +51,7 @@ export async function getAuthServer(): Promise<ServerUserAuth> {
     userName: payload.full_name || payload.email || null,
     userEmail: payload.email || null,
     userRole: normalizeUserRole(payload.role),
-    userAvatar: ((payload as Record<string, unknown>).avatar_url as string) || null,
+    userAvatar: ((payload as unknown as Record<string, unknown>).avatar_url as string) || null,
   };
 }
 
