@@ -10,6 +10,7 @@ import { UserDropdown } from "@/components/layout/UserDropdown";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { NotificationBell } from "@/components/notification/NotificationBell";
 import { Button } from "@/components/ui/Button";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export function Navbar() {
   const { userName, isInstructorOrAdmin, isSuperAdmin } = useAuth();
@@ -56,15 +57,7 @@ export function Navbar() {
     >
       <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand Logo */}
-        <Link href="/" prefetch={true} className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl shadow-lg shadow-primary/20">
-            C
-          </div>
-          <div>
-            <span className="font-bold text-lg tracking-tight text-foreground">Coursera AI</span>
-            <span className="text-xs block text-muted-foreground font-medium">LMS Platform</span>
-          </div>
-        </Link>
+        <BrandLogo size="md" />
 
         {/* Navigation Links (Desktop) */}
         <nav className="hidden md:flex items-center gap-2 text-sm font-semibold">
@@ -76,13 +69,7 @@ export function Navbar() {
               {"Việc học của tôi"}
             </Link>
           )}
-          <Link
-            href="/partners/stanford-online"
-            prefetch={true}
-            className={getLinkClasses("/partners")}
-          >
-            {"Đối tác"}
-          </Link>
+
           <Link href="/forum" prefetch={true} className={getLinkClasses("/forum")}>
             {"Diễn đàn"}
           </Link>
@@ -201,13 +188,7 @@ export function Navbar() {
               {"Trở thành Giảng viên"}
             </Link>
           )}
-          <Link
-            href="/partners/stanford-online"
-            onClick={() => setMobileMenuOpen(false)}
-            className={getMobileLinkClasses("/partners")}
-          >
-            {"Đối tác phát hành"}
-          </Link>
+
           <Link
             href="/forum"
             onClick={() => setMobileMenuOpen(false)}

@@ -19,7 +19,6 @@ import {
   LayoutDashboard,
   CheckCircle2,
   Building2,
-  Globe,
   ExternalLink,
   LogOut,
 } from "lucide-react";
@@ -73,9 +72,8 @@ export function UserDropdown() {
 
   const avatarSrc = useMemo(
     () => userAvatar || getAvatarDataUri(userEmail || "user"),
-    [userAvatar, userEmail]
+    [userAvatar, userEmail],
   );
-
 
   const displayUserName = useMemo(() => {
     if (!userName) return "";
@@ -198,16 +196,6 @@ export function UserDropdown() {
             </DropdownMenuItem>
           </>
         )}
-
-        <div className="border-t border-outline-variant my-1.5" />
-
-        <DropdownMenuItem
-          render={<Link href="/partners/stanford-online" />}
-          className={itemClasses}
-        >
-          <Globe className={iconClasses} />
-          <span>{"Giới thiệu Đối tác"}</span>
-        </DropdownMenuItem>
 
         <div className="border-t border-outline-variant my-1.5" />
 
