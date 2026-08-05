@@ -173,7 +173,7 @@ export function VideoUploadWidget({
       </div>
 
       {value && !isUploading ? (
-        <div className="p-3 rounded-2xl bg-success/10 border border-success/30 flex items-center justify-between gap-3 animate-in fade-in duration-150 shadow-2xs">
+        <div className="p-3 rounded-2xl bg-success/10 border border-success/30 flex items-center justify-between gap-3 animate-in fade-in duration-m3-short-3 ease-m3-decelerate shadow-2xs">
           <div className="flex items-center gap-2.5 overflow-hidden text-xs min-w-0">
             <div className="w-8 h-8 rounded-xl bg-success/20 text-success flex items-center justify-center shrink-0 border border-success/30">
               <CheckCircle2 className="w-4.5 h-4.5" aria-hidden="true" />
@@ -261,7 +261,7 @@ export function VideoUploadWidget({
               </div>
               <div className="w-full bg-secondary-container rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-primary h-full transition-all duration-300 rounded-full"
+                  className="bg-primary h-full transition-all duration-m3-medium-2 ease-m3-emphasized rounded-full"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>

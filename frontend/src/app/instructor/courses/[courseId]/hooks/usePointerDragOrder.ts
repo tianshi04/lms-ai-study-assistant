@@ -227,7 +227,7 @@ export function usePointerDragOrder(options: DragOptions) {
     siblingEls.forEach((el, idx) => {
       if (idx === drag.startIndex) return;
 
-      el.style.transition = "transform 0.22s cubic-bezier(0.2, 0, 0, 1)";
+      el.style.transition = "transform var(--duration-m3-short-4) var(--ease-m3-emphasized)";
 
       if (drag.startIndex < newTargetIndex) {
         if (idx > drag.startIndex && idx <= newTargetIndex) {
@@ -293,7 +293,7 @@ export function usePointerDragOrder(options: DragOptions) {
 
     if (itemEl) {
       itemEl.style.transition =
-        "transform 0.18s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.18s ease, border-color 0.18s ease";
+        "transform var(--duration-m3-short-4) var(--ease-m3-emphasized), box-shadow var(--duration-m3-short-4) var(--ease-m3-emphasized), border-color var(--duration-m3-short-4) var(--ease-m3-emphasized)";
       itemEl.style.transform = `translateY(${targetOffset}px)`;
       itemEl.style.boxShadow = "";
       itemEl.style.borderColor = "";
@@ -448,7 +448,7 @@ export function usePointerDragOrder(options: DragOptions) {
     siblingEls.forEach((el, idx) => {
       if (idx === drag.startIndex) return;
 
-      el.style.transition = "transform 0.22s cubic-bezier(0.2, 0, 0, 1)";
+      el.style.transition = "transform var(--duration-m3-short-4) var(--ease-m3-emphasized)";
 
       if (drag.startIndex < newTargetIndex) {
         if (idx > drag.startIndex && idx <= newTargetIndex) {
@@ -514,7 +514,7 @@ export function usePointerDragOrder(options: DragOptions) {
 
     if (lessonEl) {
       lessonEl.style.transition =
-        "transform 0.18s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.18s ease, border-color 0.18s ease";
+        "transform var(--duration-m3-short-4) var(--ease-m3-emphasized), box-shadow var(--duration-m3-short-4) var(--ease-m3-emphasized), border-color var(--duration-m3-short-4) var(--ease-m3-emphasized)";
       lessonEl.style.transform = `translateY(${targetOffset}px)`;
       lessonEl.style.boxShadow = "";
       lessonEl.style.borderColor = "";
@@ -664,7 +664,7 @@ export function usePointerDragOrder(options: DragOptions) {
     siblingEls.forEach((el, idx) => {
       if (idx === drag.startIndex) return;
 
-      el.style.transition = "transform 0.22s cubic-bezier(0.2, 0, 0, 1)";
+      el.style.transition = "transform var(--duration-m3-short-4) var(--ease-m3-emphasized)";
 
       if (drag.startIndex < newTargetIndex) {
         if (idx > drag.startIndex && idx <= newTargetIndex) {
@@ -730,7 +730,7 @@ export function usePointerDragOrder(options: DragOptions) {
 
     if (weekEl) {
       weekEl.style.transition =
-        "transform 0.18s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.18s ease, border-color 0.18s ease";
+        "transform var(--duration-m3-short-4) var(--ease-m3-emphasized), box-shadow var(--duration-m3-short-4) var(--ease-m3-emphasized), border-color var(--duration-m3-short-4) var(--ease-m3-emphasized)";
       weekEl.style.transform = `translateY(${targetOffset}px)`;
       weekEl.style.boxShadow = "";
       weekEl.style.borderColor = "";

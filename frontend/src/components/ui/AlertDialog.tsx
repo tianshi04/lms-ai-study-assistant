@@ -18,7 +18,7 @@ export function AlertDialogBackdrop({
     <BaseAlertDialog.Backdrop
       ref={ref}
       className={cn(
-        "fixed inset-0 z-modal bg-scrim/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-150",
+        "fixed inset-0 z-modal bg-scrim/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-m3-medium-2 ease-m3-decelerate",
         className,
       )}
       {...props}
@@ -39,7 +39,7 @@ export function AlertDialogContent({
         <BaseAlertDialog.Popup
           ref={ref}
           className={cn(
-            "bg-surface-container-high text-foreground rounded-3xl shadow-2xl w-full max-w-md p-6 border border-outline-variant animate-in fade-in zoom-in-95 duration-200 ease-m3-emphasized relative",
+            "bg-surface-container-high text-foreground rounded-3xl shadow-2xl w-full max-w-md p-6 border border-outline-variant animate-in fade-in zoom-in-95 duration-m3-medium-4 ease-m3-decelerate relative",
             className,
           )}
           {...props}

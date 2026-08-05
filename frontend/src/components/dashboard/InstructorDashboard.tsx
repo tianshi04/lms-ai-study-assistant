@@ -78,7 +78,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
         {/* Dynamic KPI Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
               <Users className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -90,7 +90,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0">
               <BadgeCheck className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -104,7 +104,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
               <Clock className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -118,7 +118,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center shrink-0">
               <FileEdit className="w-7 h-7" aria-hidden="true" />
             </div>

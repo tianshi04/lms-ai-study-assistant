@@ -97,7 +97,7 @@ export default function AssessmentsPage() {
       </div>
 
       {/* Selected Assessment Runner Component */}
-      <div className="transition-all duration-300">
+      <div className="transition-all duration-m3-medium-2 ease-m3-emphasized">
         {activeAssessment === "quiz" && <GradedQuizRunner itemId={quizItemId} />}
         {activeAssessment === "lab" && <AutoGradedLabRunner itemId={labItemId} />}
         {activeAssessment === "peer" && <PeerAssignmentWorkspace itemId={peerItemId} />}

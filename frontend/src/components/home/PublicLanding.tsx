@@ -13,7 +13,7 @@ import { ParticleBackground } from "@/components/home/ParticleBackground";
 
 export function PublicLanding() {
   return (
-    <div className="flex-1 flex flex-col justify-between w-full relative bg-surface text-on-surface animate-in fade-in duration-300 ease-m3-emphasized overflow-hidden">
+    <div className="flex-1 flex flex-col justify-between w-full relative bg-surface text-on-surface animate-in fade-in duration-m3-medium-2 ease-m3-emphasized overflow-hidden">
       {/* Dynamic Interactive Particle Canvas Background */}
       <ParticleBackground />
 
@@ -105,7 +105,7 @@ export function PublicLanding() {
         <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link
             href="/courses"
-            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-300 text-left group shadow-xs hover:shadow-md"
+            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-m3-medium-2 ease-m3-emphasized text-left group shadow-xs hover:shadow-md"
           >
             <div className="w-11 h-11 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center font-bold mb-3">
               <BookOpen className="w-5.5 h-5.5" aria-hidden="true" />
@@ -120,7 +120,7 @@ export function PublicLanding() {
 
           <Link
             href="/learn/course-python-ai"
-            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-300 text-left group shadow-xs hover:shadow-md"
+            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-m3-medium-2 ease-m3-emphasized text-left group shadow-xs hover:shadow-md"
           >
             <div className="w-11 h-11 rounded-2xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-bold mb-3">
               <PlayCircle className="w-5.5 h-5.5" aria-hidden="true" />
@@ -135,7 +135,7 @@ export function PublicLanding() {
 
           <Link
             href="/financial-aid?courseId=course-python-ai"
-            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-300 text-left group shadow-xs hover:shadow-md"
+            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-m3-medium-2 ease-m3-emphasized text-left group shadow-xs hover:shadow-md"
           >
             <div className="w-11 h-11 rounded-2xl bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold mb-3">
               <CircleDollarSign className="w-5.5 h-5.5" aria-hidden="true" />
@@ -150,7 +150,7 @@ export function PublicLanding() {
 
           <Link
             href="/verify/CERT-DEMO12345"
-            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-300 text-left group shadow-xs hover:shadow-md"
+            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-m3-medium-2 ease-m3-emphasized text-left group shadow-xs hover:shadow-md"
           >
             <div className="w-11 h-11 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center font-bold mb-3">
               <GraduationCap className="w-5.5 h-5.5" aria-hidden="true" />

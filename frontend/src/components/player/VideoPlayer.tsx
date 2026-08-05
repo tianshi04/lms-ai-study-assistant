@@ -86,7 +86,7 @@ export function VideoPlayer({
     // 1. Reading Item
     if (activeItem.type === 2) {
       return (
-        <div className="w-full p-6 sm:p-8 bg-background text-foreground transition-colors duration-200 rounded-2xl">
+        <div className="w-full p-6 sm:p-8 bg-background text-foreground transition-colors duration-m3-short-4 ease-m3-emphasized rounded-2xl">
           <div className="max-w-3xl mx-auto space-y-6">
             {/* Reading Header */}
             <div className="pb-4 border-b border-border">
@@ -215,7 +215,7 @@ export function VideoPlayer({
 
     return (
       <div className="w-full flex flex-col gap-3 min-h-0">
-        <div className="w-full aspect-video max-h-[62vh] relative flex items-center justify-center bg-surface-container-high dark:bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-xs transition-all duration-200">
+        <div className="w-full aspect-video max-h-[62vh] relative flex items-center justify-center bg-surface-container-high dark:bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-xs transition-all duration-m3-short-4 ease-m3-emphasized">
           {youtubeEmbedUrl ? (
             <iframe
               key={activeItem.id}
@@ -249,7 +249,7 @@ export function VideoPlayer({
 
           {/* In-Video Quiz Overlay */}
           {activeQuiz && (
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-30 flex items-center justify-center p-6 animate-in fade-in duration-200">
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-md z-30 flex items-center justify-center p-6 animate-in fade-in duration-m3-short-4 ease-m3-decelerate">
               <div className="bg-surface-container-high border border-outline-variant rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4 text-foreground">
                 <div className="flex items-center justify-between border-b border-border pb-3">
                   <span className="text-xs font-extrabold text-primary uppercase tracking-wider">
@@ -394,7 +394,7 @@ export function VideoPlayer({
           <button
             type="button"
             onClick={onNextLesson}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-surface-container-high text-on-surface hover:bg-primary-container hover:text-primary border border-outline-variant/40 hover:border-primary/40 transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-2xs hover:scale-102 active:scale-98 shrink-0"
+            className="px-4 py-2 rounded-xl text-xs font-semibold bg-surface-container-high text-on-surface hover:bg-primary-container hover:text-primary border border-outline-variant/40 hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized flex items-center gap-1.5 cursor-pointer shadow-2xs hover:scale-102 active:scale-98 shrink-0"
             title="Chuyển sang bài học tiếp theo"
           >
             <span>{"Bài tiếp theo"}</span>

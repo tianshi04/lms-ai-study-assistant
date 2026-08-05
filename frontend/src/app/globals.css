@@ -138,16 +138,36 @@
   --radius-3xl: 1.75rem;
   --radius-full: 9999px;
 
+  /* Motion Duration Tokens (M3 Spec: Short 50-200ms, Medium 250-400ms, Long 450-500ms) */
+  --duration-m3-short-1: 50ms;
+  --duration-m3-short-2: 100ms;
+  --duration-m3-short-3: 150ms;
+  --duration-m3-short-4: 200ms;
+  --duration-m3-medium-1: 250ms;
+  --duration-m3-medium-2: 300ms;
+  --duration-m3-medium-3: 350ms;
+  --duration-m3-medium-4: 400ms;
+  --duration-m3-long-1: 450ms;
+  --duration-m3-long-2: 500ms;
+
   /* Motion & Easing Tokens */
+  --ease-default: cubic-bezier(0.2, 0, 0, 1);
+  --duration-default: 200ms;
   --ease-m3-emphasized: cubic-bezier(0.2, 0, 0, 1);
   --ease-m3-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
   --ease-m3-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
   --ease-m3-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-m3-standard-decelerate: cubic-bezier(0, 0, 0, 1);
+  --ease-m3-standard-accelerate: cubic-bezier(0.3, 0, 1, 1);
 
   /* Keyframe Animation Tokens */
-  --animate-fade-in: fadeIn 0.25s cubic-bezier(0.05, 0.7, 0.1, 1) forwards;
-  --animate-slide-in-right: slideInRight 0.3s cubic-bezier(0.05, 0.7, 0.1, 1) forwards;
-  --animate-scale-up: scaleUp 0.2s cubic-bezier(0.05, 0.7, 0.1, 1) forwards;
+  --animate-fade-in: fadeIn var(--duration-m3-medium-1) var(--ease-m3-decelerate) forwards;
+  --animate-slide-in-right: slideInRight var(--duration-m3-medium-2) var(--ease-m3-decelerate)
+    forwards;
+  --animate-scale-up: scaleUp var(--duration-m3-short-4) var(--ease-m3-decelerate) forwards;
+  --animate-collapse-down: collapseDown var(--duration-m3-medium-2) var(--ease-m3-emphasized)
+    forwards;
+  --animate-collapse-up: collapseUp var(--duration-m3-short-4) var(--ease-m3-accelerate) forwards;
 
   /* Stacking & Layer Tokens */
   --z-deep: -1;
@@ -373,8 +393,8 @@ body {
   background-color: var(--background);
   color: var(--foreground);
   transition:
-    background-color 0.2s ease-in-out,
-    color 0.2s ease-in-out;
+    background-color var(--duration-m3-short-4) var(--ease-m3-emphasized),
+    color var(--duration-m3-short-4) var(--ease-m3-emphasized);
 }
 
 /* Hide native browser password reveal icon */
@@ -455,6 +475,28 @@ input::-ms-clear {
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes collapseDown {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height, auto);
+    opacity: 1;
+  }
+}
+
+@keyframes collapseUp {
+  from {
+    height: var(--radix-collapsible-content-height, auto);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
   }
 }
 
@@ -627,7 +669,7 @@ input::-ms-clear {
   font-size: 0.75rem !important;
   font-weight: 500 !important;
   padding: 0.375rem 0.75rem !important;
-  transition: all 0.2s ease !important;
+  transition: all var(--duration-m3-short-4) var(--ease-m3-emphasized) !important;
   cursor: pointer !important;
   margin: 0.25rem !important;
   display: inline-flex !important;

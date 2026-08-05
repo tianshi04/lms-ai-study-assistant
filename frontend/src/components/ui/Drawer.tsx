@@ -17,7 +17,7 @@ export function DrawerBackdrop({
     <BaseDrawer.Backdrop
       ref={ref}
       className={cn(
-        "fixed inset-0 z-50 bg-black/60 backdrop-blur-xs transition-opacity duration-200 ease-m3-emphasized data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "fixed inset-0 z-50 bg-black/60 backdrop-blur-xs transition-opacity duration-m3-medium-2 ease-m3-decelerate data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         className,
       )}
       {...props}
@@ -53,7 +53,7 @@ export function DrawerContent({
       <BaseDrawer.Popup
         ref={ref}
         className={cn(
-          "fixed z-50 bg-card p-6 shadow-2xl transition-transform duration-300 ease-m3-emphasized focus-visible:outline-none",
+          "fixed z-50 bg-card p-6 shadow-2xl transition-transform duration-m3-medium-4 ease-m3-decelerate focus-visible:outline-none",
           sideVariants[side],
           className,
         )}

@@ -274,7 +274,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
 
       {/* Lock Warning Notice Banner */}
       {lockNotice && (
-        <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 text-warning text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-200">
+        <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 text-warning text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-m3-short-4 ease-m3-decelerate">
           <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
           <span>{lockNotice}</span>
         </div>

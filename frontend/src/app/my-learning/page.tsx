@@ -195,7 +195,7 @@ function MyLearningContent() {
             {certificates.map((cert) => (
               <div
                 key={cert.certificateId}
-                className="group relative bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized flex flex-col justify-between"
+                className="group relative bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized flex flex-col justify-between"
               >
                 <div className="p-6 rounded-t-3xl">
                   {/* Header Badge & Partner */}
@@ -298,7 +298,7 @@ function MyLearningContent() {
           {(activeTab === "IN_PROGRESS" ? inProgressCourses : completedCourses).map((course) => (
             <div
               key={course.courseId}
-              className="group relative bg-card text-card-foreground border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized flex flex-col h-full"
+              className="group relative bg-card text-card-foreground border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized flex flex-col h-full"
             >
               <div className="p-6 flex-1 rounded-t-2xl">
                 <div className="flex items-center justify-between mb-3">
@@ -323,7 +323,7 @@ function MyLearningContent() {
                   </div>
                   <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${
+                      className={`h-full rounded-full transition-all duration-m3-long-2 ease-m3-emphasized ${
                         course.progressPercent === 100
                           ? "bg-success"
                           : course.progressPercent > 0

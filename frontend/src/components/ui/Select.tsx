@@ -17,7 +17,7 @@ export function SelectTrigger({
     <BaseSelect.Trigger
       ref={ref}
       className={cn(
-        "w-full bg-background border border-input rounded-xl px-4 py-2.5 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary appearance-none cursor-pointer hover:border-ring transition-all duration-200 ease-m3-emphasized flex items-center justify-between gap-2",
+        "w-full bg-background border border-input rounded-xl px-4 py-2.5 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary appearance-none cursor-pointer hover:border-ring transition-all duration-m3-short-4 ease-m3-emphasized flex items-center justify-between gap-2",
         className,
       )}
       {...props}
@@ -42,7 +42,7 @@ export function SelectContent({
         <BaseSelect.Popup
           ref={ref}
           className={cn(
-            "min-w-[180px] overflow-hidden rounded-2xl bg-surface-container-high text-on-surface p-1.5 shadow-md border border-outline-variant animate-in fade-in zoom-in-95 duration-150 ease-m3-emphasized",
+            "min-w-[180px] overflow-hidden rounded-2xl bg-surface-container-high text-on-surface p-1.5 shadow-md border border-outline-variant animate-in fade-in zoom-in-95 duration-m3-short-3 ease-m3-decelerate",
             className,
           )}
           {...props}
@@ -64,7 +64,7 @@ export function SelectItem({
     <BaseSelect.Item
       ref={ref}
       className={cn(
-        "relative flex cursor-pointer select-none items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold outline-none transition-colors text-on-surface data-[highlighted]:bg-surface-container-highest data-[selected]:bg-secondary-container data-[selected]:text-on-secondary-container data-[selected]:font-bold",
+        "relative flex cursor-pointer select-none items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold outline-none transition-colors duration-m3-short-3 ease-m3-emphasized text-on-surface data-[highlighted]:bg-surface-container-highest data-[selected]:bg-secondary-container data-[selected]:text-on-secondary-container data-[selected]:font-bold",
         className,
       )}
       {...props}

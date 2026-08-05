@@ -258,7 +258,7 @@ export function CourseCatalogClient() {
         </div>
       ) : (
         <div
-          className={`w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-opacity duration-200 ${isFetching ? "opacity-60 pointer-events-none" : "opacity-100"}`}
+          className={`w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-opacity duration-m3-short-4 ease-m3-emphasized ${isFetching ? "opacity-60 pointer-events-none" : "opacity-100"}`}
         >
           {courses.map((course) => (
             <CourseCard key={course.id} course={course} />

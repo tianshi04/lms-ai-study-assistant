@@ -507,7 +507,7 @@ function CoursePlayerContent() {
   }
 
   return (
-    <div className="h-screen h-dvh bg-surface text-on-surface flex flex-col overflow-hidden transition-colors duration-200">
+    <div className="h-screen h-dvh bg-surface text-on-surface flex flex-col overflow-hidden transition-colors duration-m3-short-4 ease-m3-emphasized">
       {/* Top Player Navbar - Seamless Borderless Header */}
       <header className="h-14 bg-surface-container-low px-6 flex items-center justify-between flex-shrink-0 z-30">
         <div className="flex items-center gap-4 min-w-0">
@@ -539,7 +539,7 @@ function CoursePlayerContent() {
             <div className="flex items-center gap-3 bg-surface-container px-3.5 py-1.5 rounded-full">
               <div className="w-24 h-2 bg-surface-container-high rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-primary rounded-full transition-all duration-500"
+                  className="h-full bg-primary rounded-full transition-all duration-m3-long-2 ease-m3-emphasized"
                   style={{ width: `${progress.overallProgressPercent}%` }}
                 />
               </div>
@@ -630,7 +630,7 @@ function CoursePlayerContent() {
 
         {/* Left Sidebar - Seamless MD3 Tonal Surface Drawer */}
         {isSidebarOpen && !isPreviewMode && (
-          <aside className="w-80 bg-surface-container-low overflow-y-auto flex-shrink-0 flex flex-col transition-all duration-300">
+          <aside className="w-80 bg-surface-container-low overflow-y-auto flex-shrink-0 flex flex-col transition-all duration-m3-medium-2 ease-m3-emphasized">
             <div className="p-4 bg-surface-container-low sticky top-0 z-10 flex items-center justify-between">
               <h2 className="font-bold text-xs uppercase tracking-wider text-on-surface-variant">
                 {"Lộ trình Bài học"}
@@ -790,7 +790,7 @@ function CoursePlayerContent() {
         <main className="flex-1 flex flex-col bg-surface-container-low overflow-hidden relative text-on-surface min-w-0 sm:min-w-[360px]">
           {/* Lock Notice Banner */}
           {lockNotice && (
-            <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-200">
+            <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-m3-short-4 ease-m3-decelerate">
               <span>{lockNotice}</span>
               <button
                 onClick={() => setLockNotice("")}
@@ -804,7 +804,7 @@ function CoursePlayerContent() {
           {/* Center Video & Side Tool Panel Layout */}
           <div className="flex-1 flex flex-row overflow-x-auto overflow-y-hidden relative min-h-0">
             {/* Left/Center Video Media Viewer Canvas - Top Rounded Stage */}
-            <div className="flex-1 min-w-0 sm:min-w-[360px] bg-surface-container-lowest rounded-t-3xl sm:rounded-t-[28px] shadow-xs overflow-hidden flex flex-col items-center justify-between relative overflow-y-auto transition-colors duration-200 min-h-0">
+            <div className="flex-1 min-w-0 sm:min-w-[360px] bg-surface-container-lowest rounded-t-3xl sm:rounded-t-[28px] shadow-xs overflow-hidden flex flex-col items-center justify-between relative overflow-y-auto transition-colors duration-m3-short-4 ease-m3-emphasized min-h-0">
               <div className="w-full flex-1 flex flex-col p-3 min-h-0 overflow-y-auto">
                 <VideoPlayer
                   videoRef={videoRef}

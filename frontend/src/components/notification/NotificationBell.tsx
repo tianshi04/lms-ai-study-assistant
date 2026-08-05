@@ -37,12 +37,12 @@ export function NotificationBell() {
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger
           type="button"
-          className="relative p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+          className="relative p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 transition-all duration-m3-short-4 ease-m3-emphasized focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
           aria-label={`Thông báo (${unreadCount} chưa đọc)`}
         >
           <Bell className="w-5 h-5" aria-hidden="true" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-black text-primary-foreground bg-primary rounded-full animate-in zoom-in-50 shadow-md">
+            <span className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-black text-primary-foreground bg-primary rounded-full animate-in zoom-in-50 duration-m3-short-4 ease-m3-decelerate shadow-md">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}

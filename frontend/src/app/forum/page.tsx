@@ -580,7 +580,7 @@ function ForumPageContent() {
                     >
                       <ChevronUp
                         aria-hidden="true"
-                        className={`w-4 h-4 transition-transform duration-200 group-hover:-translate-y-0.5 ${
+                        className={`w-4 h-4 transition-transform duration-m3-short-4 ease-m3-emphasized group-hover:-translate-y-0.5 ${
                           thread.isUpvotedByMe
                             ? "text-primary-foreground"
                             : "text-muted-foreground group-hover:text-primary"

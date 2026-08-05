@@ -30,7 +30,7 @@ export function CollapsibleContent({
     <BaseCollapsible.Panel
       ref={ref}
       className={cn(
-        "overflow-hidden transition-all duration-200 ease-m3-emphasized data-[state=closed]:animate-collapse-up data-[state=open]:animate-collapse-down",
+        "overflow-hidden transition-all duration-m3-short-4 ease-m3-emphasized data-[state=closed]:animate-collapse-up data-[state=open]:animate-collapse-down",
         className,
       )}
       {...props}

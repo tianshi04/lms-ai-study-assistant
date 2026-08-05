@@ -66,7 +66,7 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
 
   return (
     <div
-      className={`relative p-3.5 rounded-2xl transition-all duration-200 ${
+      className={`relative p-3.5 rounded-2xl transition-all duration-m3-short-4 ease-m3-emphasized ${
         item.isRead
           ? "bg-surface-container-low/60 hover:bg-surface-container-low border border-transparent"
           : "bg-primary-container/25 hover:bg-primary-container/40 border border-primary/20 shadow-2xs"

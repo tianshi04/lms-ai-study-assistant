@@ -50,7 +50,7 @@ export default function GlobalError({
             <button
               type="button"
               onClick={() => reset()}
-              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:bg-primary-hover transition-colors duration-200 cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:bg-primary-hover transition-colors duration-m3-short-4 ease-m3-emphasized cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
               <RefreshCw className="w-4 h-4 mr-2" aria-hidden="true" />
               Tải lại trang
@@ -58,7 +58,7 @@ export default function GlobalError({
 
             <a
               href="/"
-              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-full border border-outline text-primary font-medium hover:bg-primary/10 transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-full border border-outline text-primary font-medium hover:bg-primary/10 transition-colors duration-m3-short-4 ease-m3-emphasized cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             >
               <Home className="w-4 h-4 mr-2" aria-hidden="true" />
               Về Trang Chủ

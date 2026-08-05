@@ -776,7 +776,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               />
               <div className="w-full bg-muted h-2 rounded-full mt-3 overflow-hidden">
                 <div
-                  className={`h-full transition-all duration-300 ${isFinAidEnoughWords ? "bg-success" : "bg-primary"}`}
+                  className={`h-full transition-all duration-m3-medium-2 ease-m3-emphasized ${isFinAidEnoughWords ? "bg-success" : "bg-primary"}`}
                   style={{ width: `${Math.min(100, (finAidWordCount / 150) * 100)}%` }}
                 />
               </div>

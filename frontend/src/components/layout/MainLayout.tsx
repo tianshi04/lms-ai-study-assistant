@@ -19,7 +19,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-background text-foreground selection:bg-primary selection:text-primary-foreground transition-colors duration-200">
+    <div className="min-h-screen flex flex-col justify-between bg-background text-foreground selection:bg-primary selection:text-primary-foreground transition-colors duration-m3-short-4 ease-m3-emphasized">
       {!isAuthPage && <Navbar />}
       <div className="flex-1 flex flex-col">{children}</div>
       {!isAuthPage && <AIChatbot />}

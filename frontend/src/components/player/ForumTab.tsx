@@ -336,7 +336,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                   isTarget
                     ? "border-primary ring-2 ring-primary/50 shadow-md bg-primary-container/20"
                     : "border-outline-variant"
-                } rounded-2xl p-4 text-xs space-y-2.5 transition-all duration-300 shadow-xs`}
+                } rounded-2xl p-4 text-xs space-y-2.5 transition-all duration-m3-medium-2 ease-m3-emphasized shadow-xs`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">

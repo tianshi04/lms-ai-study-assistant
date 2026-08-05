@@ -64,7 +64,7 @@ export default function ErrorPage({
             <button
               type="button"
               onClick={() => setShowDetails((prev) => !prev)}
-              className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-xs font-medium text-muted-foreground transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-xs font-medium text-muted-foreground transition-colors duration-m3-short-4 ease-m3-emphasized cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               aria-expanded={showDetails}
             >
               <span className="flex items-center gap-2">
@@ -72,7 +72,7 @@ export default function ErrorPage({
                 <span>Chi tiết kỹ thuật (dành cho quản trị viên)</span>
               </span>
               <ChevronDown
-                className={`w-4 h-4 transition-transform duration-200 ${showDetails ? "rotate-180" : ""}`}
+                className={`w-4 h-4 transition-transform duration-m3-short-4 ease-m3-emphasized ${showDetails ? "rotate-180" : ""}`}
                 aria-hidden="true"
               />
             </button>

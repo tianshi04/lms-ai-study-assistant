@@ -54,7 +54,7 @@ export function TADashboard({ userName }: { userName: string }) {
 
         {/* Operational KPI Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-warning/10 flex items-center justify-center text-warning shrink-0">
               <ClipboardList className="w-7 h-7" />
             </div>
@@ -66,7 +66,7 @@ export function TADashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-info/10 flex items-center justify-center text-info shrink-0">
               <MessageCircle className="w-7 h-7" />
             </div>
@@ -78,7 +78,7 @@ export function TADashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-success/10 flex items-center justify-center text-success shrink-0">
               <CheckCircle2 className="w-7 h-7" />
             </div>
@@ -90,7 +90,7 @@ export function TADashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-200 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
               <Users className="w-7 h-7" />
             </div>
