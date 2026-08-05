@@ -129,9 +129,13 @@ export function Footer() {
         <div className="pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center text-xs text-muted-foreground gap-3">
           <p>© {new Date().getFullYear()} LMS AI Study Assistant. Tất cả các quyền được bảo lưu.</p>
           <div className="flex items-center space-x-4 text-[11px]">
-            <span>Chính sách Bảo mật</span>
+            <Link href="/privacy" className="hover:text-primary transition-colors">
+              Chính sách Bảo mật
+            </Link>
             <span>•</span>
-            <span>Điều khoản Dịch vụ</span>
+            <Link href="/terms" className="hover:text-primary transition-colors">
+              Điều khoản Dịch vụ
+            </Link>
           </div>
         </div>
       </div>
