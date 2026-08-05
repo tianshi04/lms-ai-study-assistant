@@ -4,10 +4,11 @@ import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
-import { loginAction } from "@/app/auth/actions";
+import { loginAction, googleLoginAction } from "@/app/auth/actions";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
 import { Eye, EyeOff, Zap } from "lucide-react";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -24,6 +25,7 @@ function LoginFormContent() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [googleSubmitting, setGoogleSubmitting] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -41,6 +43,7 @@ function LoginFormContent() {
             userName: res.user.fullName,
             userEmail: res.user.email,
             userRole: res.user.role,
+            userAvatar: res.user.avatarUrl,
           });
 
           router.push(redirectTarget);
@@ -60,9 +63,34 @@ function LoginFormContent() {
     },
   });
 
+  const handleGoogleLogin = async (googleIdToken: string) => {
+    setGoogleSubmitting(true);
+    try {
+      const res = await googleLoginAction(googleIdToken);
+      if (res.success && res.user) {
+        setAuth({
+          userId: res.user.id,
+          userName: res.user.fullName,
+          userEmail: res.user.email,
+          userRole: res.user.role,
+        });
+
+        toast.success("Đăng nhập bằng Google thành công!");
+        router.push(redirectTarget);
+        router.refresh();
+      } else {
+        toast.error(res.error || "Đăng nhập bằng Google thất bại.");
+      }
+    } catch {
+      toast.error("Không thể kết nối với dịch vụ xác thực Google. Vui lòng đăng nhập bằng Mật khẩu bên dưới.");
+    } finally {
+      setGoogleSubmitting(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-md">
-      <div className="bg-card border border-border rounded-3xl p-8 transition-colors">
+      <div className="bg-card border border-border rounded-3xl p-8 transition-colors shadow-xl">
         <div className="text-center mb-8">
           <Link href="/" prefetch={true} className="inline-flex items-center gap-3 group mb-6">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl">
@@ -85,6 +113,24 @@ function LoginFormContent() {
           </p>
         </div>
 
+        {/* Google 1-Click Login Option */}
+        <div className="space-y-4 mb-6">
+          <GoogleAuthButton
+            onSuccess={handleGoogleLogin}
+            isLoading={googleSubmitting}
+            text="Đăng nhập với Google"
+            variant="outline"
+          />
+
+          <div className="relative flex items-center justify-center">
+            <div className="border-t border-border w-full absolute"></div>
+            <span className="bg-card px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground relative z-10">
+              Hoặc đăng nhập bằng Email
+            </span>
+          </div>
+        </div>
+
+        {/* Email & Password Form */}
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -175,6 +221,14 @@ function LoginFormContent() {
                         <Eye className="w-4 h-4" aria-hidden="true" />
                       )}
                     </Button>
+                  </div>
+                  <div className="flex justify-end pt-1">
+                    <Link
+                      href="/auth/forgot-password"
+                      className="text-xs font-semibold text-primary hover:underline transition-all"
+                    >
+                      Quên mật khẩu?
+                    </Link>
                   </div>
                 </div>
               );

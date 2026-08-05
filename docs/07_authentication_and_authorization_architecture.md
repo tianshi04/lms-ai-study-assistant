@@ -83,7 +83,62 @@ class CurrentUserContext:
 
 ---
 
-## 5. Quy Tắc Thẩm Định Nghiệp Vụ Theo Đối Tượng
+## 6. Kiến Trúc Xác Thực Đăng Ký & Đăng Nhập Lai (Google OAuth2 + Password Fallback)
+
+Hệ thống triển khai cơ chế xác thực kép linh hoạt và an toàn cao, kết hợp giữa **Google OAuth2** và **Mật khẩu dự phòng độc lập**:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant FE as Frontend (Next.js)
+    participant BE as Backend (FastAPI)
+    participant GG as Google OAuth (accounts.google.com)
+
+    Note over User, GG: LUỒNG ĐĂNG KÝ BẮT BUỘC QUA GOOGLE + ĐẶT MẬT KHẨU DỰ PHÒNG
+    User->>FE: Bấm "Xác minh bằng Google"
+    FE->>GG: Mở Cửa sổ OAuth Popup (https://accounts.google.com/o/oauth2/v2/auth)
+    GG-->>User: Xác thực tài khoản Gmail & Đồng ý cấp quyền
+    GG-->>FE: Trả về Google ID Token via /auth/google/callback
+    FE->>BE: Gọi RPC GoogleRegisterVerify(google_id_token)
+    BE->>BE: Xác minh Token Google -> Sinh temp_token JWT (TTL 15 phút)
+    BE-->>FE: Trả về temp_token + Verified Email + Avatar
+    FE-->>User: Chuyển sang Bước 2: "Tạo Mật khẩu dự phòng"
+    User->>FE: Nhập Mật khẩu & Chọn Vai trò (Learner/Instructor)
+    FE->>BE: Gọi RPC CompleteGoogleRegistration(temp_token, password, role)
+    BE->>BE: Hash Password (PBKDF2) & Lưu User (Lưu google_id + password_hash + avatar_url)
+    BE-->>FE: Đăng ký thành công! Trả về JWT Access Token (Có chứa avatar_url)
+```
+
+### A. Lý Do Kỹ Thuật & Nghiệp Vụ Của Luồng Đăng Ký
+1. **Xác minh Email chính chủ & Chống Bot/Spam (Anti-Spam Email Guarantee)**:
+   - Bắt buộc đăng ký qua Google OAuth2 nhằm đảm bảo 100% email là thật và thuộc về người dùng chính chủ.
+   - Loại bỏ hoàn toàn chi phí duy trì dịch vụ gửi email OTP/Activation link (Resend, SendGrid, Amazon SES) và tránh rủi ro email bị rơi vào hộp thư Spam.
+2. **Cơ chế Dự phòng Sự cố (Disaster Recovery & High Availability)**:
+   - Việc bắt buộc tạo Mật khẩu phụ ngay lúc đăng ký đảm bảo **100% tài khoản trong DB đều có password_hash**.
+   - Trong trường hợp dịch vụ Google bị sự cố (Google Outage) hoặc người dùng không lưu session Google, người dùng **vẫn đăng nhập bình thường bằng Email & Mật khẩu** mà không bị gián đoạn học tập.
+3. **Đồng bộ Ảnh Đại diện Chính chủ (Google Avatar Synchronization)**:
+   - Tự động trích xuất ảnh đại diện chính chủ từ Google (`picture` claim), lưu trữ vào PostgreSQL và nạp vào JWT Token payload (`avatar_url`).
+   - Tự động đồng bộ hiển thị mượt mà trên Header Navbar (`UserDropdown`), Dropdown Menu, và Trang quản lý hồ sơ cá nhân.
+
+### B. Danh Mục Công Nghệ & Thư Viện Sử Dụng (Technology Stack)
+- **Frontend Stack**:
+  - `Next.js 16` (React 19, Turbopack, Server Actions trong `src/app/auth/actions.ts`).
+  - `Google Identity Services (GSI)` & Standard OAuth2 Popup Flow (`https://accounts.google.com/o/oauth2/v2/auth`).
+  - `@connectrpc/connect-web` giao tiếp RPC bất đồng bộ với Backend.
+  - `AuthProvider` React Context quản lý Client Auth State & đồng bộ Avatar.
+- **Backend Stack**:
+  - `FastAPI` 0.115+ (Async I/O cho mọi tác vụ).
+  - `ConnectRPC / gRPC` Service (`IdentityService`).
+  - `Mã hóa Mật khẩu`: PBKDF2 HMAC SHA-256 (`hash_password` / `verify_password`).
+  - `Mã hóa Session`: PyJWT mã hóa JWT Access Token (TTL 60m) & Refresh Token (TTL 7d) có chứa custom claim `avatar_url`.
+- **Cơ sở dữ liệu (Database Stack)**:
+  - `PostgreSQL` + `SQLAlchemy 2.0 Async`.
+  - `Alembic Migration`: `f89a1029c001_add_google_id_to_users.py` quản lý cột `google_id` (Unique, Indexed).
+
+---
+
+## 7. Quy Tắc Thẩm Định Nghiệp Vụ Theo Đối Tượng
 
 | Đối Tượng Nghiệp Vụ | Cơ Chế Thẩm Định | Chi Tiết Quy Tắc |
 | :--- | :--- | :--- |
@@ -95,5 +150,6 @@ class CurrentUserContext:
 | **Duyệt Đơn Giảng viên** | `_is_admin(user)` | Chỉ Quản trị viên hệ thống (`USER_ROLE_ADMIN`). |
 | **Duyệt Hỗ trợ Tài chính / Thu hồi Chứng chỉ** | `_is_admin(user)` | Chỉ Quản trị viên hệ thống (`USER_ROLE_ADMIN`). |
 | **Kiểm duyệt Diễn đàn** | `_can_moderate(user)` | Quản trị viên hệ thống HOẶC Giảng viên / Trợ giảng phụ trách khóa học. |
+
 
 
