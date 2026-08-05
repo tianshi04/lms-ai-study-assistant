@@ -15,7 +15,7 @@ async def test_google_register_and_fallback_login_flow():
         temp_token,
         email,
         full_name,
-        avatar_url,
+        _,
         is_already_reg,
         err,
     ) = await usecase.google_register_verify(mock_token)
@@ -41,15 +41,13 @@ async def test_google_register_and_fallback_login_flow():
     assert refresh_token != ""
 
     # Step 3: Test Login via Google 1-Click
-    g_user, g_access, g_refresh, g_err = await usecase.google_login(mock_token)
+    g_user, _, _, g_err = await usecase.google_login(mock_token)
     assert g_err == ""
     assert g_user is not None
     assert g_user.id == user.id
 
     # Step 4: Test Fallback Login via Email & Password
-    pass_user, pass_access, pass_refresh, pass_err = await usecase.login(
-        unique_email, "MySecretPassword123"
-    )
+    pass_user, _, _, pass_err = await usecase.login(unique_email, "MySecretPassword123")
     assert pass_err == ""
     assert pass_user is not None
     assert pass_user.id == user.id
@@ -58,7 +56,7 @@ async def test_google_register_and_fallback_login_flow():
     (
         reset_temp_token,
         reset_email,
-        reset_name,
+        _,
         reset_err,
     ) = await usecase.google_reset_password_verify(mock_token)
     assert reset_err == ""
@@ -68,8 +66,8 @@ async def test_google_register_and_fallback_login_flow():
     # Step 6: Complete Password Reset
     (
         updated_user,
-        new_access,
-        new_refresh,
+        _,
+        _,
         reset_comp_err,
     ) = await usecase.complete_reset_password(reset_temp_token, "NewUpdatedSecret456")
     assert reset_comp_err == ""

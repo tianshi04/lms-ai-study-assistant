@@ -337,7 +337,7 @@ class IdentityUseCase:
             return "", "", "", "Mã xác thực Google không hợp lệ hoặc đã hết hạn."
 
         email = payload.get("email", "").strip().lower()
-        full_name = payload.get("full_name", "").strip()
+        full_name = payload.get("name", "").strip()
 
         if not email:
             return "", "", "", "Không tìm thấy email trong thông tin Google."
@@ -357,7 +357,7 @@ class IdentityUseCase:
                 email=email,
                 google_id=payload.get("google_id", ""),
                 full_name=full_name or user.full_name,
-                avatar_url=payload.get("avatar_url", "") or user.avatar_url,
+                avatar_url=payload.get("picture", "") or user.avatar_url,
             )
             return temp_token, email, user.full_name, ""
 
@@ -388,7 +388,7 @@ class IdentityUseCase:
                 return None, "", "", "Không tìm thấy tài khoản để đặt lại mật khẩu."
 
             user.password_hash = hash_password(new_password)
-            google_id = payload.get("google_id")
+            google_id = payload.get("sub")
             if google_id and not user.google_id:
                 user.google_id = google_id
 
