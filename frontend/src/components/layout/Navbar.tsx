@@ -55,62 +55,49 @@ export function Navbar() {
           : "bg-surface border-b border-transparent shadow-none"
       }`}
     >
-      <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Brand Logo */}
-        <BrandLogo size="md" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        {/* Left Section: Brand Logo & Navigation Links */}
+        <div className="flex items-center gap-6">
+          <BrandLogo size="md" />
 
-        {/* Navigation Links (Desktop) */}
-        <nav className="hidden md:flex items-center gap-2 text-sm font-semibold">
-          <Link href="/courses" prefetch={true} className={getLinkClasses("/courses")}>
-            {"Khóa học"}
-          </Link>
-          {userName && (
-            <Link href="/my-learning" prefetch={true} className={getLinkClasses("/my-learning")}>
-              {"Việc học của tôi"}
+          {/* Navigation Links (Desktop) */}
+          <nav className="hidden md:flex items-center gap-2 text-sm font-semibold">
+            <Link href="/courses" prefetch={true} className={getLinkClasses("/courses")}>
+              {"Khóa học"}
             </Link>
-          )}
+            {userName && (
+              <Link href="/my-learning" prefetch={true} className={getLinkClasses("/my-learning")}>
+                {"Việc học của tôi"}
+              </Link>
+            )}
 
-          <Link href="/forum" prefetch={true} className={getLinkClasses("/forum")}>
-            {"Diễn đàn"}
-          </Link>
+            {/* Render Instructor Portal for authorized roles */}
+            {isInstructorOrAdmin && (
+              <Link
+                href="/instructor/courses"
+                className={`${getLinkClasses("/instructor")} flex items-center gap-1.5`}
+              >
+                <span>{"Giảng Viên"}</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                  Portal
+                </span>
+              </Link>
+            )}
 
-          {/* Render Become Instructor link for learners */}
-          {!isInstructorOrAdmin && (
-            <Link href="/become-an-instructor" className={getLinkClasses("/become-an-instructor")}>
-              {"Trở thành Giảng viên"}
-            </Link>
-          )}
-
-          {/* Render Instructor Portal for authorized roles */}
-          {isInstructorOrAdmin && (
-            <Link
-              href="/instructor/courses"
-              className={`${getLinkClasses("/instructor")} flex items-center gap-1.5`}
-            >
-              <span>{"Giảng Viên"}</span>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                Portal
-              </span>
-            </Link>
-          )}
-
-          {/* Render Admin Enterprise Dashboard Link */}
-          {isSuperAdmin && (
-            <Link
-              href="/admin/dashboard"
-              className={`${getLinkClasses("/admin")} flex items-center gap-1.5`}
-            >
-              <span>Admin</span>
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                Enterprise
-              </span>
-            </Link>
-          )}
-
-          <Link href="/verify" className={getLinkClasses("/verify")}>
-            {"Xác minh chứng chỉ"}
-          </Link>
-        </nav>
+            {/* Render Admin Enterprise Dashboard Link */}
+            {isSuperAdmin && (
+              <Link
+                href="/admin/dashboard"
+                className={`${getLinkClasses("/admin")} flex items-center gap-1.5`}
+              >
+                <span>Admin</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                  Enterprise
+                </span>
+              </Link>
+            )}
+          </nav>
+        </div>
 
         {/* User Auth & Actions Section */}
         <div className="flex items-center gap-2">
@@ -179,23 +166,6 @@ export function Navbar() {
               {"Việc học của tôi"}
             </Link>
           )}
-          {!isInstructorOrAdmin && (
-            <Link
-              href="/become-an-instructor"
-              onClick={() => setMobileMenuOpen(false)}
-              className={getMobileLinkClasses("/become-an-instructor")}
-            >
-              {"Trở thành Giảng viên"}
-            </Link>
-          )}
-
-          <Link
-            href="/forum"
-            onClick={() => setMobileMenuOpen(false)}
-            className={getMobileLinkClasses("/forum")}
-          >
-            {"Diễn đàn"}
-          </Link>
           {isInstructorOrAdmin && (
             <Link
               href="/instructor/courses"
@@ -220,13 +190,6 @@ export function Navbar() {
               </span>
             </Link>
           )}
-          <Link
-            href="/verify"
-            onClick={() => setMobileMenuOpen(false)}
-            className={getMobileLinkClasses("/verify")}
-          >
-            {"Xác minh chứng chỉ"}
-          </Link>
         </div>
       )}
     </header>
