@@ -73,6 +73,7 @@ function LoginFormContent() {
           userName: res.user.fullName,
           userEmail: res.user.email,
           userRole: res.user.role,
+          userAvatar: res.user.avatarUrl,
         });
 
         toast.success("Đăng nhập bằng Google thành công!");
