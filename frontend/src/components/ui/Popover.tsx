@@ -23,7 +23,7 @@ export function PopoverContent({
       <BasePopover.Positioner
         sideOffset={sideOffset}
         align={align}
-        className="z-[9999] outline-none"
+        className="z-[var(--z-dropdown)] outline-none"
       >
         <BasePopover.Popup
           ref={ref}

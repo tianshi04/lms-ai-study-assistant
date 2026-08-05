@@ -509,7 +509,7 @@ function CoursePlayerContent() {
   return (
     <div className="h-screen h-dvh bg-surface text-on-surface flex flex-col overflow-hidden transition-colors duration-m3-short-4 ease-m3-emphasized">
       {/* Top Player Navbar - Seamless Borderless Header */}
-      <header className="h-14 bg-surface-container-low px-6 flex items-center justify-between flex-shrink-0 z-30">
+      <header className="h-14 bg-surface-container-low px-6 flex items-center justify-between flex-shrink-0 border-b border-outline-variant/20">
         <div className="flex items-center gap-4 min-w-0">
           {isPreviewMode ? (
             <button
@@ -614,7 +614,7 @@ function CoursePlayerContent() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left Sidebar Icon Strip when collapsed */}
         {!isSidebarOpen && !isPreviewMode && (
-          <div className="w-14 bg-surface-container-low flex flex-col items-center py-4 shrink-0 z-20 select-none">
+          <div className="w-14 bg-surface-container-low flex flex-col items-center py-4 shrink-0 select-none">
             <button
               onClick={() => setIsSidebarOpen(true)}
               className="w-12 py-2.5 px-1 rounded-2xl flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all cursor-pointer"
@@ -631,7 +631,7 @@ function CoursePlayerContent() {
         {/* Left Sidebar - Seamless MD3 Tonal Surface Drawer */}
         {isSidebarOpen && !isPreviewMode && (
           <aside className="w-80 bg-surface-container-low overflow-y-auto flex-shrink-0 flex flex-col transition-all duration-m3-medium-2 ease-m3-emphasized">
-            <div className="p-4 bg-surface-container-low sticky top-0 z-10 flex items-center justify-between">
+            <div className="p-4 bg-surface-container-low sticky top-0 flex items-center justify-between">
               <h2 className="font-bold text-xs uppercase tracking-wider text-on-surface-variant">
                 {"Lộ trình Bài học"}
               </h2>
@@ -790,7 +790,7 @@ function CoursePlayerContent() {
         <main className="flex-1 flex flex-col bg-surface-container-low overflow-hidden relative text-on-surface min-w-0 sm:min-w-[360px]">
           {/* Lock Notice Banner */}
           {lockNotice && (
-            <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-20 animate-in fade-in duration-m3-short-4 ease-m3-decelerate">
+            <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-1 animate-in fade-in duration-m3-short-4 ease-m3-decelerate">
               <span>{lockNotice}</span>
               <button
                 onClick={() => setLockNotice("")}
@@ -884,7 +884,7 @@ function CoursePlayerContent() {
                   isLectureItem &&
                   !isPreviewMode) ||
                 (activeTab === "deadlines" && !isPreviewMode)) && (
-                <aside className="w-80 xl:w-96 bg-surface-container-low flex flex-col shrink-0 h-full overflow-hidden shadow-xs z-10 border-l border-outline-variant/30">
+                <aside className="w-80 xl:w-96 bg-surface-container-low flex flex-col shrink-0 h-full overflow-hidden shadow-xs border-l border-outline-variant/30">
                   {/* Drawer Header */}
                   <div className="h-12 px-4 flex items-center justify-between bg-surface-container-low shrink-0 border-b border-outline-variant/30">
                     <div className="flex items-center gap-2">
@@ -946,7 +946,7 @@ function CoursePlayerContent() {
               <div
                 className={
                   isPanelOpen && activeTab === "ai_assistant"
-                    ? "w-96 xl:w-[464px] h-full shrink-0 flex flex-col bg-surface-container-low z-10 border-l border-outline-variant/30 overflow-hidden"
+                    ? "w-96 xl:w-[464px] h-full shrink-0 flex flex-col bg-surface-container-low border-l border-outline-variant/30 overflow-hidden"
                     : "hidden"
                 }
               >
@@ -972,7 +972,7 @@ function CoursePlayerContent() {
 
             {/* Vertical Icon Action Bar - Seamless MD3 Navigation Rail (Visible when AI Chatbot is inactive) */}
             {(!isPanelOpen || activeTab !== "ai_assistant") && (
-              <div className="w-16 lg:w-20 bg-surface-container-low flex flex-col items-center justify-start py-5 gap-5 shrink-0 h-full z-20 select-none border-l border-outline-variant/30">
+              <div className="w-16 lg:w-20 bg-surface-container-low flex flex-col items-center justify-start py-5 gap-5 shrink-0 h-full select-none border-l border-outline-variant/30">
                 {/* Transcript Button: Only for Video Items */}
                 {isVideoItem && (
                   <button
