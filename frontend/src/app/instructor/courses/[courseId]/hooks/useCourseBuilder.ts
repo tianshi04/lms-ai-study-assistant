@@ -413,7 +413,8 @@ export function useCourseBuilder(courseId: string) {
 
     const [moved] = weeks.splice(fromIndex, 1);
     weeks.splice(toIndex, 0, moved);
-    setCourse({ ...course, weekModules: weeks });
+    const updatedWeeks = weeks.map((w, idx) => ({ ...w, weekNumber: idx + 1 }));
+    setCourse({ ...course, weekModules: updatedWeeks });
 
     try {
       const client = getRpcClient(CatalogService);
