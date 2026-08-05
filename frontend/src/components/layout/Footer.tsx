@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
   Award,
   BookOpen,
+  Globe,
   MessageSquare,
   ShieldCheck,
   HeartHandshake,
@@ -31,6 +32,15 @@ export function Footer() {
               Khám phá Học tập
             </h3>
             <ul className="space-y-2 text-xs">
+              <li>
+                <Link
+                  href="/landing"
+                  className="text-muted-foreground hover:text-primary transition-colors flex items-center gap-1.5"
+                >
+                  <Globe className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Trang giới thiệu</span>
+                </Link>
+              </li>
               <li>
                 <Link
                   href="/courses"

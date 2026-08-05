@@ -55,7 +55,6 @@ export async function getAuthServer(): Promise<ServerUserAuth> {
   };
 }
 
-
 /**
  * Get authorization headers object for server-side HTTP/ConnectRPC requests.
  */

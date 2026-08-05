@@ -26,7 +26,7 @@ export function GoogleAuthButton({
     if (!googleClientId) {
       const inputEmail = window.prompt(
         "Dev Mode: Nhập địa chỉ Gmail để giả lập xác minh Google",
-        "user.test@gmail.com"
+        "user.test@gmail.com",
       );
       if (inputEmail && inputEmail.includes("@")) {
         const mockToken = `mock_google_${inputEmail.trim()}_${inputEmail.split("@")[0]}`;
@@ -57,7 +57,7 @@ export function GoogleAuthButton({
     const popup = window.open(
       authUrl,
       "GoogleOAuthPopup",
-      `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=yes`
+      `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=yes`,
     );
 
     const handleMessage = (event: MessageEvent) => {

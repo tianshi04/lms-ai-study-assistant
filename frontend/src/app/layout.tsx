@@ -61,7 +61,6 @@ export default function RootLayout({
         <script src="https://accounts.google.com/gsi/client" async defer />
       </head>
       <body className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
-
         <QueryProvider>
           <ThemeProvider
             attribute="class"

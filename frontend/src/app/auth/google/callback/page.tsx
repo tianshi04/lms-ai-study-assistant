@@ -18,15 +18,9 @@ export default function GoogleCallbackPage() {
     if (window.opener) {
       // If opened in a Popup window
       if (idToken) {
-        window.opener.postMessage(
-          { type: "GOOGLE_AUTH_SUCCESS", idToken },
-          window.location.origin
-        );
+        window.opener.postMessage({ type: "GOOGLE_AUTH_SUCCESS", idToken }, window.location.origin);
       } else if (error) {
-        window.opener.postMessage(
-          { type: "GOOGLE_AUTH_ERROR", error },
-          window.location.origin
-        );
+        window.opener.postMessage({ type: "GOOGLE_AUTH_ERROR", error }, window.location.origin);
       }
       window.close();
     } else {

@@ -4,10 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
-import {
-  googleRegisterVerifyAction,
-  completeGoogleRegistrationAction,
-} from "@/app/auth/actions";
+import { googleRegisterVerifyAction, completeGoogleRegistrationAction } from "@/app/auth/actions";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
@@ -57,7 +54,7 @@ export default function RegisterPage() {
           tempToken,
           value.password,
           value.fullName.trim(),
-          value.role
+          value.role,
         );
 
         if (res.success && res.user) {
@@ -135,7 +132,9 @@ export default function RegisterPage() {
             <div className="flex items-center justify-center gap-2 mb-4">
               <span
                 className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                  step === 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                  step === 1
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 1. Xác minh Google
@@ -143,7 +142,9 @@ export default function RegisterPage() {
               <span className="text-muted-foreground">→</span>
               <span
                 className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-                  step === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                  step === 2
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 2. Tạo Mật khẩu
@@ -167,9 +168,7 @@ export default function RegisterPage() {
                 <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
                   <ShieldCheck className="w-6 h-6" />
                 </div>
-                <h3 className="text-sm font-semibold text-foreground">
-                  Xác minh Email chính chủ
-                </h3>
+                <h3 className="text-sm font-semibold text-foreground">Xác minh Email chính chủ</h3>
                 <p className="text-xs text-muted-foreground">
                   Hệ thống yêu cầu xác minh qua Google để đảm bảo địa chỉ email thực & tránh spam.
                 </p>

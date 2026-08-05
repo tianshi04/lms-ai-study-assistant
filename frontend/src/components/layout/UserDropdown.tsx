@@ -11,15 +11,12 @@ import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import {
   BookOpen,
   ShoppingBag,
-  CircleDollarSign,
-  GraduationCap,
   Layers,
   Edit,
   Settings,
   LayoutDashboard,
   CheckCircle2,
   Building2,
-  ExternalLink,
   LogOut,
 } from "lucide-react";
 import {
@@ -148,18 +145,6 @@ export function UserDropdown() {
           <span>{"Cài đặt"}</span>
         </DropdownMenuItem>
 
-        <DropdownMenuItem render={<Link href="/financial-aid" />} className={itemClasses}>
-          <CircleDollarSign className={iconClasses} />
-          <span>{"Đơn Hỗ trợ tài chính"}</span>
-        </DropdownMenuItem>
-
-        {!isInstructorOrAdmin && (
-          <DropdownMenuItem render={<Link href="/become-an-instructor" />} className={itemClasses}>
-            <GraduationCap className={iconClasses} />
-            <span className="font-semibold">{"Đăng ký làm Giảng viên"}</span>
-          </DropdownMenuItem>
-        )}
-
         {isInstructorOrAdmin && (
           <>
             <DropdownMenuItem render={<Link href="/instructor/courses" />} className={itemClasses}>
@@ -196,13 +181,6 @@ export function UserDropdown() {
             </DropdownMenuItem>
           </>
         )}
-
-        <div className="border-t border-outline-variant my-1.5" />
-
-        <DropdownMenuItem render={<Link href="/landing" />} className={itemClasses}>
-          <ExternalLink className={iconClasses} />
-          <span>{"Xem trang công khai"}</span>
-        </DropdownMenuItem>
 
         <div className="border-t border-outline-variant my-1.5" />
 

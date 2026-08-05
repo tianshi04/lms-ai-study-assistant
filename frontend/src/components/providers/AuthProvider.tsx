@@ -72,7 +72,13 @@ export function AuthProvider({
     if (initialAuth.userId || initialAuth.userRole) {
       setAuthState(initialAuth);
     }
-  }, [initialAuth.userId, initialAuth.userEmail, initialAuth.userName, initialAuth.userRole, initialAuth.userAvatar]);
+  }, [
+    initialAuth.userId,
+    initialAuth.userEmail,
+    initialAuth.userName,
+    initialAuth.userRole,
+    initialAuth.userAvatar,
+  ]);
 
   const setAuth = useCallback((newAuth: UserAuth) => {
     setAuthState(newAuth);
@@ -90,7 +96,6 @@ export function AuthProvider({
     });
     window.location.href = "/auth/login";
   }, []);
-
 
   const isAuthenticated = Boolean(auth.userId || auth.userEmail);
   const isSuperAdmin = Boolean(

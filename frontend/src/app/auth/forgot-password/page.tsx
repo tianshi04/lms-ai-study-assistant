@@ -10,10 +10,7 @@ import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { useAuth } from "@/components/providers/AuthProvider";
-import {
-  googleResetPasswordVerifyAction,
-  completeResetPasswordAction,
-} from "@/app/auth/actions";
+import { googleResetPasswordVerifyAction, completeResetPasswordAction } from "@/app/auth/actions";
 
 function ForgotPasswordContent() {
   const router = useRouter();
@@ -100,9 +97,7 @@ function ForgotPasswordContent() {
           <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3 shadow-inner">
             <KeyRound className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Quên mật khẩu?
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Quên mật khẩu?</h1>
           <p className="text-sm text-muted-foreground">
             {step === 1
               ? "Xác minh qua Google để đặt lại mật khẩu mới cho tài khoản của bạn"
@@ -147,9 +142,7 @@ function ForgotPasswordContent() {
               <p className="font-semibold text-foreground flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-primary" /> Bảo mật & Tốc độ cao:
               </p>
-              <p>
-                Xác thực danh tính trực tiếp qua Google chính chủ mà không cần chờ Email OTP.
-              </p>
+              <p>Xác thực danh tính trực tiếp qua Google chính chủ mà không cần chờ Email OTP.</p>
             </div>
 
             <GoogleAuthButton
@@ -173,9 +166,7 @@ function ForgotPasswordContent() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">
-                Mật khẩu mới
-              </label>
+              <label className="text-xs font-semibold text-foreground">Mật khẩu mới</label>
               <Input
                 type="password"
                 placeholder="Ví dụ: ••••••••••"
@@ -188,9 +179,7 @@ function ForgotPasswordContent() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">
-                Xác nhận mật khẩu mới
-              </label>
+              <label className="text-xs font-semibold text-foreground">Xác nhận mật khẩu mới</label>
               <Input
                 type="password"
                 placeholder="Nhập lại mật khẩu mới"

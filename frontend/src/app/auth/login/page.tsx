@@ -83,7 +83,9 @@ function LoginFormContent() {
         toast.error(res.error || "Đăng nhập bằng Google thất bại.");
       }
     } catch {
-      toast.error("Không thể kết nối với dịch vụ xác thực Google. Vui lòng đăng nhập bằng Mật khẩu bên dưới.");
+      toast.error(
+        "Không thể kết nối với dịch vụ xác thực Google. Vui lòng đăng nhập bằng Mật khẩu bên dưới.",
+      );
     } finally {
       setGoogleSubmitting(false);
     }
