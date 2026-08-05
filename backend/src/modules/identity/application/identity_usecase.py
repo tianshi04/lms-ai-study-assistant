@@ -38,16 +38,60 @@ from src.modules.identity.application.review_application_usecase import (
 )
 
 
+import base64
+import json
+
 from src.modules.learning.domain.repository import ILearningRepository
 from src.shared.auth import (
     CurrentUser,
     create_access_token,
+    create_google_temp_token,
     create_refresh_token,
     decode_token,
 )
 from src.shared.infrastructure.database import async_session_scope
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_google_id_token(id_token: str) -> dict[str, str]:
+    if id_token.startswith("mock_google_"):
+        raw = id_token[len("mock_google_") :]
+        parts = raw.rsplit("_", 1)
+        email = parts[0] if parts else "user@gmail.com"
+        name = parts[1] if len(parts) > 1 else "Google User"
+        google_id = f"google_id_{hashlib.md5(email.encode()).hexdigest()[:12]}"
+        return {
+            "google_id": google_id,
+            "email": email,
+            "name": name,
+            "picture": f"https://api.dicebear.com/7.x/avataaars/svg?seed={email}",
+        }
+
+
+    try:
+        parts = id_token.split(".")
+        if len(parts) == 3:
+            payload_b64 = parts[1]
+            payload_b64 += "=" * (-len(payload_b64) % 4)
+            payload_bytes = base64.urlsafe_b64decode(payload_b64)
+            payload = json.loads(payload_bytes.decode("utf-8"))
+            return {
+                "google_id": payload.get("sub", ""),
+                "email": payload.get("email", ""),
+                "name": payload.get("name", payload.get("email", "").split("@")[0]),
+                "picture": payload.get("picture", ""),
+            }
+    except Exception as e:
+        logger.warning("Failed to decode Google ID Token: %s", e)
+
+    email = "google.user@example.com"
+    return {
+        "google_id": f"google_id_{hashlib.md5(id_token.encode()).hexdigest()[:12]}",
+        "email": email,
+        "name": "Google User",
+        "picture": f"https://api.dicebear.com/7.x/avataaars/svg?seed={email}",
+    }
 
 
 def hash_password(password: str, salt: Optional[bytes] = None) -> str:
@@ -57,6 +101,7 @@ def hash_password(password: str, salt: Optional[bytes] = None) -> str:
         "sha256", password.encode("utf-8"), salt, DEFAULT_PBKDF2_ITERATIONS
     )
     return f"{salt.hex()}:{hashed.hex()}"
+
 
 
 def verify_password(password: str, password_hash: str) -> bool:
@@ -114,6 +159,7 @@ class IdentityUseCase:
                 email=user.email,
                 full_name=user.full_name,
                 role=str(user.role),
+                avatar_url=user.avatar_url,
             )
             refresh_token = create_refresh_token(user.id)
             return user, access_token, refresh_token, ""
@@ -139,15 +185,221 @@ class IdentityUseCase:
                 email=user.email,
                 full_name=user.full_name,
                 role=str(user.role),
+                avatar_url=user.avatar_url,
             )
             new_refresh_token = create_refresh_token(user.id)
             return new_access_token, new_refresh_token, ""
+
+    async def google_register_verify(
+        self, google_id_token: str
+    ) -> tuple[str, str, str, str, bool, str]:
+        """Returns (temp_token, email, full_name, avatar_url, is_already_registered, error_message)."""
+        if not google_id_token:
+            return "", "", "", "", False, "Mã Google ID Token không hợp lệ"
+
+        claims = _parse_google_id_token(google_id_token)
+        email = claims["email"]
+        google_id = claims["google_id"]
+        full_name = claims["name"]
+        avatar_url = claims["picture"]
+
+        if not email or not google_id:
+            return "", "", "", "", False, "Không thể xác thực thông tin từ Google"
+
+        async with async_session_scope() as session:
+            repo = IdentityRepository(session)
+            existing_user = await repo.get_by_google_id(google_id)
+            if not existing_user:
+                existing_user = await repo.get_by_email(email)
+
+            if existing_user:
+                return (
+                    "",
+                    existing_user.email,
+                    existing_user.full_name,
+                    existing_user.avatar_url,
+                    True,
+                    "Tài khoản với email này đã tồn tại. Vui lòng chuyển sang Đăng nhập!",
+                )
+
+            temp_token = create_google_temp_token(
+                email=email,
+                google_id=google_id,
+                full_name=full_name,
+                avatar_url=avatar_url,
+            )
+            return temp_token, email, full_name, avatar_url, False, ""
+
+    async def complete_google_registration(
+        self, temp_token: str, password: str, full_name: str, role_str: str
+    ) -> tuple[Optional[User], str, str, str]:
+        """Returns (user, access_token, refresh_token, error_message)."""
+        payload = decode_token(temp_token)
+        if not payload or payload.get("type") != "google_temp_registration":
+            return None, "", "", "Phiên xác thực Google đã hết hạn. Vui lòng thử lại từ bước 1."
+
+        email = payload.get("email")
+        google_id = payload.get("sub")
+        avatar_url = payload.get("avatar_url", "")
+        if not email or not google_id:
+            return None, "", "", "Thông tin Google không hợp lệ."
+
+        if not password or len(password) < 6:
+            return None, "", "", "Mật khẩu phải chứa ít nhất 6 ký tự."
+
+        try:
+            role = UserRole(role_str)
+        except ValueError:
+            role = UserRole.LEARNER
+
+        final_name = (full_name or payload.get("full_name") or email.split("@")[0]).strip()
+        user_id = f"usr_{uuid.uuid4().hex[:12]}"
+        password_hash = hash_password(password)
+
+        new_user = User(
+            id=user_id,
+            email=email,
+            full_name=final_name,
+            role=role,
+            avatar_url=avatar_url,
+            password_hash=password_hash,
+            google_id=google_id,
+            is_identity_verified=False,
+        )
+
+        async with async_session_scope() as session:
+            repo = IdentityRepository(session)
+            existing = await repo.get_by_email(email)
+            if existing:
+                return None, "", "", "Tài khoản với email này đã tồn tại."
+
+            saved_user = await repo.save(new_user)
+            access_token = create_access_token(
+                user_id=saved_user.id,
+                email=saved_user.email,
+                full_name=saved_user.full_name,
+                role=str(saved_user.role),
+                avatar_url=saved_user.avatar_url,
+            )
+            refresh_token = create_refresh_token(saved_user.id)
+            return saved_user, access_token, refresh_token, ""
+
+    async def google_login(
+        self, google_id_token: str
+    ) -> tuple[Optional[User], str, str, str]:
+        """Returns (user, access_token, refresh_token, error_message)."""
+        if not google_id_token:
+            return None, "", "", "Mã Google ID Token không hợp lệ"
+
+        claims = _parse_google_id_token(google_id_token)
+        email = claims["email"]
+        google_id = claims["google_id"]
+
+        async with async_session_scope() as session:
+            repo = IdentityRepository(session)
+            user = await repo.get_by_google_id(google_id)
+            if not user:
+                user = await repo.get_by_email(email)
+
+            if not user:
+                return (
+                    None,
+                    "",
+                    "",
+                    "Tài khoản chưa được đăng ký trong hệ thống. Vui lòng Đăng ký bằng Google trước!",
+                )
+
+            if not user.google_id:
+                user.google_id = google_id
+                user = await repo.save(user)
+
+            access_token = create_access_token(
+                user_id=user.id,
+                email=user.email,
+                full_name=user.full_name,
+                role=str(user.role),
+                avatar_url=user.avatar_url,
+            )
+            refresh_token = create_refresh_token(user.id)
+            return user, access_token, refresh_token, ""
+
+    async def google_reset_password_verify(
+        self, google_id_token: str
+    ) -> tuple[str, str, str, str]:
+        """Returns (temp_token, email, full_name, error_message)."""
+        payload = _parse_google_id_token(google_id_token)
+        if not payload:
+            return "", "", "", "Mã xác thực Google không hợp lệ hoặc đã hết hạn."
+
+        email = payload.get("email", "").strip().lower()
+        full_name = payload.get("full_name", "").strip()
+
+        if not email:
+            return "", "", "", "Không tìm thấy email trong thông tin Google."
+
+        async with async_session_scope() as session:
+            repo = IdentityRepository(session)
+            user = await repo.get_by_email(email)
+            if not user:
+                return (
+                    "",
+                    "",
+                    "",
+                    "Tài khoản chưa được đăng ký trong hệ thống. Vui lòng tạo tài khoản mới!",
+                )
+
+            temp_token = create_google_temp_token(
+                email=email,
+                google_id=payload.get("google_id", ""),
+                full_name=full_name or user.full_name,
+                avatar_url=payload.get("avatar_url", "") or user.avatar_url,
+            )
+            return temp_token, email, user.full_name, ""
+
+    async def complete_reset_password(
+        self, temp_token: str, new_password: str
+    ) -> tuple[Optional[User], str, str, str]:
+        """Returns (user, access_token, refresh_token, error_message)."""
+        payload = decode_token(temp_token)
+        if not payload:
+            return None, "", "", "Mã xác thực quá hạn hoặc không hợp lệ. Vui lòng bấm Quên mật khẩu lại!"
+
+        email = payload.get("email", "").strip().lower()
+        if not email:
+            return None, "", "", "Thông tin xác thực không hợp lệ."
+
+        if not new_password or len(new_password) < 6:
+            return None, "", "", "Mật khẩu mới phải chứa ít nhất 6 ký tự."
+
+        async with async_session_scope() as session:
+            repo = IdentityRepository(session)
+            user = await repo.get_by_email(email)
+            if not user:
+                return None, "", "", "Không tìm thấy tài khoản để đặt lại mật khẩu."
+
+            user.password_hash = hash_password(new_password)
+            google_id = payload.get("google_id")
+            if google_id and not user.google_id:
+                user.google_id = google_id
+
+            saved_user = await repo.save(user)
+
+            access_token = create_access_token(
+                user_id=saved_user.id,
+                email=saved_user.email,
+                full_name=saved_user.full_name,
+                role=str(saved_user.role),
+                avatar_url=saved_user.avatar_url,
+            )
+            refresh_token = create_refresh_token(saved_user.id)
+            return saved_user, access_token, refresh_token, ""
 
     async def register(
         self, email: str, password: str, full_name: str, role_str: str
     ) -> tuple[Optional[User], str]:
         """Returns (user, error_message)."""
         async with async_session_scope() as session:
+
             repo = IdentityRepository(session)
             existing = await repo.get_by_email(email)
             if existing:

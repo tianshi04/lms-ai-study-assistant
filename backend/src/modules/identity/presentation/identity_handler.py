@@ -138,6 +138,104 @@ class IdentityHandler(IdentityService):
             raise ConnectError(Code.ALREADY_EXISTS, err or "Đăng ký thất bại")
         return pb.RegisterResponse(user=_to_pb_user(user))
 
+    async def google_register_verify(
+        self,
+        request: pb.GoogleRegisterVerifyRequest,
+        ctx: RequestContext[pb.GoogleRegisterVerifyRequest, pb.GoogleRegisterVerifyResponse],
+    ) -> pb.GoogleRegisterVerifyResponse:
+        temp_token, email, full_name, avatar_url, is_already_registered, err = (
+            await self._use_case.google_register_verify(request.google_id_token)
+        )
+        if err and not is_already_registered:
+            raise ConnectError(Code.INVALID_ARGUMENT, err)
+
+        return pb.GoogleRegisterVerifyResponse(
+            temp_token=temp_token,
+            email=email,
+            full_name=full_name,
+            avatar_url=avatar_url,
+            is_already_registered=is_already_registered,
+        )
+
+    async def complete_google_registration(
+        self,
+        request: pb.CompleteGoogleRegistrationRequest,
+        ctx: RequestContext[
+            pb.CompleteGoogleRegistrationRequest, pb.CompleteGoogleRegistrationResponse
+        ],
+    ) -> pb.CompleteGoogleRegistrationResponse:
+        role_str = _pb_role_to_domain_str(request.role)
+        user, access_token, refresh_token, err = (
+            await self._use_case.complete_google_registration(
+                temp_token=request.temp_token,
+                password=request.password,
+                full_name=request.full_name,
+                role_str=role_str,
+            )
+        )
+        if err or not user:
+            raise ConnectError(Code.INVALID_ARGUMENT, err or "Hoàn tất đăng ký thất bại")
+
+        return pb.CompleteGoogleRegistrationResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            user=_to_pb_user(user),
+        )
+
+    async def google_login(
+        self,
+        request: pb.GoogleLoginRequest,
+        ctx: RequestContext[pb.GoogleLoginRequest, pb.GoogleLoginResponse],
+    ) -> pb.GoogleLoginResponse:
+        user, access_token, refresh_token, err = await self._use_case.google_login(
+            request.google_id_token
+        )
+        if err or not user:
+            raise ConnectError(Code.UNAUTHENTICATED, err or "Đăng nhập Google thất bại")
+
+        return pb.GoogleLoginResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            user=_to_pb_user(user),
+        )
+
+    async def google_reset_password_verify(
+        self,
+        request: pb.GoogleResetPasswordVerifyRequest,
+        ctx: RequestContext[pb.GoogleResetPasswordVerifyRequest, pb.GoogleResetPasswordVerifyResponse],
+    ) -> pb.GoogleResetPasswordVerifyResponse:
+        temp_token, email, full_name, err = (
+            await self._use_case.google_reset_password_verify(request.google_id_token)
+        )
+        if err:
+            raise ConnectError(Code.INVALID_ARGUMENT, err)
+
+        return pb.GoogleResetPasswordVerifyResponse(
+            temp_token=temp_token,
+            email=email,
+            full_name=full_name,
+        )
+
+    async def complete_reset_password(
+        self,
+        request: pb.CompleteResetPasswordRequest,
+        ctx: RequestContext[pb.CompleteResetPasswordRequest, pb.CompleteResetPasswordResponse],
+    ) -> pb.CompleteResetPasswordResponse:
+        user, access_token, refresh_token, err = (
+            await self._use_case.complete_reset_password(
+                request.temp_token, request.new_password
+            )
+        )
+        if err or not user:
+            raise ConnectError(Code.INVALID_ARGUMENT, err or "Đặt lại mật khẩu thất bại")
+
+        return pb.CompleteResetPasswordResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            user=_to_pb_user(user),
+        )
+
+
     async def get_user_profile(
         self,
         request: pb.GetUserProfileRequest,

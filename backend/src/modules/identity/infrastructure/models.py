@@ -47,6 +47,9 @@ class UserModel(Base):
         String(512), nullable=False, default=""
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    google_id: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True, unique=True, index=True
+    )
 
 
 class OrganizationModel(Base):

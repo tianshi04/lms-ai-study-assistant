@@ -76,6 +76,7 @@ class User:
     is_identity_verified: bool = False
     signature_image_url: str = ""
     title: str = ""
+    google_id: Optional[str] = None
 
 
 class ScopeType(str, Enum):
