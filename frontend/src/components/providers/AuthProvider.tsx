@@ -17,6 +17,7 @@ export interface UserAuth {
   userName: string | null;
   userEmail: string | null;
   userRole: string | null;
+  userAvatar?: string | null;
 }
 
 interface AuthContextType extends UserAuth {
@@ -35,6 +36,7 @@ const EMPTY_AUTH: UserAuth = {
   userName: null,
   userEmail: null,
   userRole: null,
+  userAvatar: null,
 };
 
 /**
@@ -70,7 +72,7 @@ export function AuthProvider({
     if (initialAuth.userId || initialAuth.userRole) {
       setAuthState(initialAuth);
     }
-  }, [initialAuth.userId, initialAuth.userEmail, initialAuth.userName, initialAuth.userRole]);
+  }, [initialAuth.userId, initialAuth.userEmail, initialAuth.userName, initialAuth.userRole, initialAuth.userAvatar]);
 
   const setAuth = useCallback((newAuth: UserAuth) => {
     setAuthState(newAuth);
@@ -84,9 +86,11 @@ export function AuthProvider({
       userName: null,
       userEmail: null,
       userRole: null,
+      userAvatar: null,
     });
     window.location.href = "/auth/login";
   }, []);
+
 
   const isAuthenticated = Boolean(auth.userId || auth.userEmail);
   const isSuperAdmin = Boolean(

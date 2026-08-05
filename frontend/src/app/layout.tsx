@@ -40,6 +40,7 @@ async function AsyncAuthProvider({ children }: { children: React.ReactNode }) {
     userName: session.userName,
     userEmail: session.userEmail,
     userRole: session.userRole,
+    userAvatar: session.userAvatar,
   };
 
   return <AuthProvider initialAuth={initialAuth}>{children}</AuthProvider>;
@@ -56,7 +57,11 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${beVietnamPro.variable} ${jetbrainsMono.variable} font-sans antialiased`}
     >
+      <head>
+        <script src="https://accounts.google.com/gsi/client" async defer />
+      </head>
       <body className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
+
         <QueryProvider>
           <ThemeProvider
             attribute="class"

@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { getAvatarDataUri } from "@/lib/avatar";
+import { getRpcClient } from "@/lib/connect_client";
+import { IdentityService } from "@/gen/identity/v1/identity_pb";
 
 import {
   BookOpen,
@@ -34,15 +36,46 @@ const iconClasses = "w-4.5 h-4.5 text-on-surface-variant";
 
 export function UserDropdown() {
   const {
+    userId,
     userName,
     userEmail,
     userRole,
+    userAvatar,
+    setAuth,
     isInstructorOrAdmin,
     isSuperAdmin,
     logout: handleLogout,
   } = useAuth();
 
-  const avatarSrc = useMemo(() => getAvatarDataUri(userEmail || "user"), [userEmail]);
+  useEffect(() => {
+    if (userName && !userAvatar) {
+      try {
+        const client = getRpcClient(IdentityService);
+        client
+          .getUserProfile({})
+          .then((res) => {
+            if (res.user?.avatarUrl) {
+              setAuth({
+                userId: res.user.id || userId,
+                userName: res.user.fullName || userName,
+                userEmail: res.user.email || userEmail,
+                userRole: String(res.user.role || userRole),
+                userAvatar: res.user.avatarUrl,
+              });
+            }
+          })
+          .catch(() => {});
+      } catch {
+        // Ignore
+      }
+    }
+  }, [userName, userAvatar, userId, userEmail, userRole, setAuth]);
+
+  const avatarSrc = useMemo(
+    () => userAvatar || getAvatarDataUri(userEmail || "user"),
+    [userAvatar, userEmail]
+  );
+
 
   const displayUserName = useMemo(() => {
     if (!userName) return "";

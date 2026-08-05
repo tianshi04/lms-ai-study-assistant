@@ -8,6 +8,7 @@ export interface ServerUserAuth {
   userName: string | null;
   userEmail: string | null;
   userRole: string | null;
+  userAvatar: string | null;
 }
 
 /**
@@ -26,6 +27,7 @@ export async function getAuthServer(): Promise<ServerUserAuth> {
       userName: null,
       userEmail: null,
       userRole: null,
+      userAvatar: null,
     };
   }
 
@@ -38,6 +40,7 @@ export async function getAuthServer(): Promise<ServerUserAuth> {
       userName: null,
       userEmail: null,
       userRole: null,
+      userAvatar: null,
     };
   }
 
@@ -48,8 +51,10 @@ export async function getAuthServer(): Promise<ServerUserAuth> {
     userName: payload.full_name || payload.email || null,
     userEmail: payload.email || null,
     userRole: normalizeUserRole(payload.role),
+    userAvatar: ((payload as unknown as Record<string, unknown>).avatar_url as string) || null,
   };
 }
+
 
 /**
  * Get authorization headers object for server-side HTTP/ConnectRPC requests.
