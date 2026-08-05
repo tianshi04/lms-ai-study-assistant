@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/Button";
 
 interface GoogleAuthButtonProps {
@@ -53,6 +53,7 @@ export function GoogleAuthButton({
 }: GoogleAuthButtonProps) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [internalLoading, setInternalLoading] = useState(false);
+  const googleBtnContainerRef = useRef<HTMLDivElement>(null);
 
   const googleClientId = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "").trim();
   const isRealClientId =
@@ -117,6 +118,19 @@ export function GoogleAuthButton({
           },
         });
 
+        if (googleBtnContainerRef.current) {
+          googleBtnContainerRef.current.innerHTML = "";
+          window.google.accounts.id.renderButton(googleBtnContainerRef.current, {
+            type: "standard",
+            theme: "outline",
+            size: "large",
+            text: text.includes("Đăng ký") ? "signup_with" : "continue_with",
+            shape: "rectangular",
+            logo_alignment: "left",
+            width: 360,
+          });
+        }
+
         if (enableOneTap) {
           window.google.accounts.id.prompt();
         }
@@ -124,7 +138,7 @@ export function GoogleAuthButton({
     } catch {
       // Ignore initialization errors gracefully
     }
-  }, [scriptLoaded, isRealClientId, googleClientId, handleCredentialResponse, enableOneTap]);
+  }, [scriptLoaded, isRealClientId, googleClientId, handleCredentialResponse, enableOneTap, text]);
 
   const handleClick = () => {
     if (!isRealClientId || !googleClientId) {
@@ -144,7 +158,7 @@ export function GoogleAuthButton({
             openDevModePrompt();
           },
         });
-        window.google.accounts.id.prompt((notification: unknown) => {
+        window.google.accounts.id.prompt(() => {
           setTimeout(() => setInternalLoading(false), 2000);
         });
       } else {
@@ -154,6 +168,14 @@ export function GoogleAuthButton({
       openDevModePrompt();
     }
   };
+
+  if (isRealClientId) {
+    return (
+      <div className={`w-full flex justify-center ${className}`}>
+        <div ref={googleBtnContainerRef} className="w-full flex justify-center" />
+      </div>
+    );
+  }
 
   return (
     <Button
