@@ -95,8 +95,8 @@ sequenceDiagram
     participant GG as Google GIS Server (gsi/client)
     participant BE as Backend (FastAPI ConnectRPC)
 
-    Note over User, BE: LUỒNG ĐĂNG KÝ BẮT BUỘC QUA GOOGLE (GIS SDK) + MẬT KHẨU DỰ PHÒNG
-    User->>FE: Mở Trang Đăng ký / Đăng nhập
+    Note over User, BE: GIAI ĐOẠN 1: XÁC MINH DANH TÍNH GMAIL QUA GOOGLE GIS SDK
+    User->>FE: Mở Trang Đăng ký
     FE->>GG: Nạp SDK https://accounts.google.com/gsi/client & Khởi tạo google.accounts.id
     GG-->>FE: Hiển thị Nút Đăng nhập / Google One Tap Prompt
     User->>FE: Bấm chọn tài khoản Gmail (1-Click)
@@ -104,10 +104,12 @@ sequenceDiagram
     FE->>BE: Gọi RPC GoogleRegisterVerify(google_id_token)
     BE->>BE: Xác minh Token Google -> Sinh temp_token JWT (TTL 15 phút)
     BE-->>FE: Trả về temp_token + Verified Email + Avatar
+
+    Note over User, BE: GIAI ĐOẠN 2: NHẬP MẬT KHẨU DỰ PHÒNG & LƯU VÀO CƠ SỞ DỮ LIỆU HỆ THỐNG
     FE-->>User: Chuyển sang Bước 2: "Tạo Mật khẩu dự phòng"
-    User->>FE: Nhập Mật khẩu & Chọn Vai trò (Learner/Instructor)
+    User->>FE: Nhập Mật khẩu (tối thiểu 6 ký tự) & Chọn Vai trò (Học viên / Giảng viên)
     FE->>BE: Gọi RPC CompleteGoogleRegistration(temp_token, password, role)
-    BE->>BE: Hash Password (PBKDF2) & Lưu User (Lưu google_id + password_hash + avatar_url)
+    BE->>BE: Hash Password (PBKDF2) & Lưu User vào PostgreSQL (google_id + password_hash + avatar_url)
     BE-->>FE: Đăng ký thành công! Trả về JWT Access Token (Có chứa avatar_url)
 ```
 
