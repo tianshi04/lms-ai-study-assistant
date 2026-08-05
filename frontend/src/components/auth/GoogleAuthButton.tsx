@@ -130,10 +130,6 @@ export function GoogleAuthButton({
             width: 360,
           });
         }
-
-        if (enableOneTap) {
-          window.google.accounts.id.prompt();
-        }
       }
     } catch {
       // Ignore initialization errors gracefully
