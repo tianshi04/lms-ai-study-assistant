@@ -22,6 +22,7 @@ declare global {
             callback: (response: { credential: string }) => void;
             auto_select?: boolean;
             cancel_on_tap_outside?: boolean;
+            error_callback?: (error: unknown) => void;
           }) => void;
           prompt: (notification?: (notification: unknown) => void) => void;
           renderButton: (
@@ -53,10 +54,11 @@ export function GoogleAuthButton({
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [internalLoading, setInternalLoading] = useState(false);
 
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const googleClientId = (process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "").trim();
   const isRealClientId =
     Boolean(googleClientId) &&
-    googleClientId !== "your_google_client_id.apps.googleusercontent.com";
+    googleClientId.length > 10 &&
+    !googleClientId.includes("your_google_client_id");
 
   const handleCredentialResponse = useCallback(
     (response: { credential: string }) => {
@@ -67,6 +69,18 @@ export function GoogleAuthButton({
     },
     [onSuccess]
   );
+
+  const openDevModePrompt = useCallback(() => {
+    setInternalLoading(false);
+    const inputEmail = window.prompt(
+      "Dev Mode: Nhập địa chỉ Gmail để giả lập xác minh Google",
+      "user.test@gmail.com"
+    );
+    if (inputEmail && inputEmail.includes("@")) {
+      const mockToken = `mock_google_${inputEmail.trim()}_${inputEmail.split("@")[0]}`;
+      onSuccess(mockToken);
+    }
+  }, [onSuccess]);
 
   useEffect(() => {
     if (!isRealClientId) return;
@@ -92,40 +106,52 @@ export function GoogleAuthButton({
   useEffect(() => {
     if (!scriptLoaded || !isRealClientId || !googleClientId) return;
 
-    if (window.google?.accounts?.id) {
-      window.google.accounts.id.initialize({
-        client_id: googleClientId,
-        callback: handleCredentialResponse,
-        cancel_on_tap_outside: false,
-      });
+    try {
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleCredentialResponse,
+          cancel_on_tap_outside: false,
+          error_callback: () => {
+            setInternalLoading(false);
+          },
+        });
 
-      if (enableOneTap) {
-        window.google.accounts.id.prompt();
+        if (enableOneTap) {
+          window.google.accounts.id.prompt();
+        }
       }
+    } catch {
+      // Ignore initialization errors gracefully
     }
   }, [scriptLoaded, isRealClientId, googleClientId, handleCredentialResponse, enableOneTap]);
 
   const handleClick = () => {
     if (!isRealClientId || !googleClientId) {
-      const inputEmail = window.prompt(
-        "Dev Mode: Nhập địa chỉ Gmail để giả lập xác minh Google",
-        "user.test@gmail.com"
-      );
-      if (inputEmail && inputEmail.includes("@")) {
-        const mockToken = `mock_google_${inputEmail.trim()}_${inputEmail.split("@")[0]}`;
-        onSuccess(mockToken);
-      }
+      openDevModePrompt();
       return;
     }
 
     setInternalLoading(true);
 
-    if (window.google?.accounts?.id) {
-      window.google.accounts.id.prompt(() => {
-        setTimeout(() => setInternalLoading(false), 3000);
-      });
-    } else {
-      setInternalLoading(false);
+    try {
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: handleCredentialResponse,
+          cancel_on_tap_outside: false,
+          error_callback: () => {
+            openDevModePrompt();
+          },
+        });
+        window.google.accounts.id.prompt((notification: unknown) => {
+          setTimeout(() => setInternalLoading(false), 2000);
+        });
+      } else {
+        openDevModePrompt();
+      }
+    } catch {
+      openDevModePrompt();
     }
   };
 
