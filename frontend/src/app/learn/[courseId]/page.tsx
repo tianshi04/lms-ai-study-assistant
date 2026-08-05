@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import {
   CatalogService,
@@ -26,9 +25,9 @@ import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { UserDropdown } from "@/components/layout/UserDropdown";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
 import { LearnPageAIChatbot } from "@/components/player/ai/LearnPageAIChatbot";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import {
   X,
-  ChevronLeft,
   ChevronDown,
   ChevronUp,
   CheckCircle2,
@@ -90,6 +89,19 @@ function CoursePlayerContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [collapsedWeeks, setCollapsedWeeks] = useState<Record<string, boolean>>({});
   const prevActiveItemIdRef = useRef<string | null>(null);
+
+  // Auto-collapse sidebars on small screens (< 1024px) for optimal mobile responsiveness
+  useEffect(() => {
+    const handleResponsiveLayout = () => {
+      if (window.innerWidth < 1024) {
+        setIsSidebarOpen(false);
+        setIsPanelOpen(false);
+      }
+    };
+    handleResponsiveLayout();
+    window.addEventListener("resize", handleResponsiveLayout);
+    return () => window.removeEventListener("resize", handleResponsiveLayout);
+  }, []);
 
   const toggleWeek = (weekId: string) => {
     setCollapsedWeeks((prev) => ({
@@ -507,31 +519,11 @@ function CoursePlayerContent() {
   }
 
   return (
-    <div className="h-screen h-dvh bg-surface text-on-surface flex flex-col overflow-hidden transition-colors duration-m3-short-4 ease-m3-emphasized">
+    <div className="h-screen h-dvh bg-surface-container-low text-on-surface flex flex-col overflow-hidden transition-colors duration-m3-short-4 ease-m3-emphasized">
       {/* Top Player Navbar - Seamless Borderless Header */}
-      <header className="h-14 bg-surface-container-low px-6 flex items-center justify-between flex-shrink-0 border-b border-outline-variant/20">
+      <header className="h-14 bg-surface-container-low px-6 flex items-center justify-between flex-shrink-0 relative z-sticky">
         <div className="flex items-center gap-4 min-w-0">
-          {isPreviewMode ? (
-            <button
-              onClick={() => window.close()}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive text-xs font-bold transition-colors cursor-pointer"
-              title="Đóng trình xem trước"
-            >
-              <X className="w-4 h-4" aria-hidden="true" />
-              <span>{"Đóng Xem trước"}</span>
-            </button>
-          ) : (
-            <Link
-              href={`/courses/${course.id}`}
-              className="p-2 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors"
-              title="Quay lại khóa học"
-            >
-              <ChevronLeft className="w-4 h-4" aria-hidden="true" />
-            </Link>
-          )}
-          <span className="font-bold text-sm text-on-surface truncate max-w-md">
-            {isPreviewMode ? `Xem trước: ${activeItem?.title || course.title}` : course.title}
-          </span>
+          <BrandLogo size="sm" />
         </div>
 
         <div className="flex items-center gap-4">
@@ -611,40 +603,42 @@ function CoursePlayerContent() {
       </header>
 
       {/* Main Workspace Layout */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden p-3 gap-3">
         {/* Left Sidebar Icon Strip when collapsed */}
         {!isSidebarOpen && !isPreviewMode && (
-          <div className="w-14 bg-surface-container-low flex flex-col items-center py-4 shrink-0 select-none">
+          <div className="w-14 bg-surface-container-lowest rounded-3xl shadow-xs flex flex-col items-center py-3 shrink-0 select-none">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="w-12 py-2.5 px-1 rounded-2xl flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all cursor-pointer"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all cursor-pointer"
               title="Mở Lộ trình Bài học"
+              aria-label="Mở Lộ trình Bài học"
             >
-              <Menu className="w-5 h-5 mb-1" aria-hidden="true" />
-              <span className="text-[10px] tracking-tight leading-none font-semibold">
-                Lộ trình
-              </span>
+              <Menu className="w-5 h-5" aria-hidden="true" />
             </button>
           </div>
         )}
 
-        {/* Left Sidebar - Seamless MD3 Tonal Surface Drawer */}
+        {/* Left Sidebar - MD3 Floating Surface Container Drawer */}
         {isSidebarOpen && !isPreviewMode && (
-          <aside className="w-80 bg-surface-container-low overflow-y-auto flex-shrink-0 flex flex-col transition-all duration-m3-medium-2 ease-m3-emphasized">
-            <div className="p-4 bg-surface-container-low sticky top-0 flex items-center justify-between">
-              <h2 className="font-bold text-xs uppercase tracking-wider text-on-surface-variant">
-                {"Lộ trình Bài học"}
+          <aside className="w-full max-w-[calc(100vw-24px)] lg:w-80 xl:w-90 bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs h-full overflow-hidden flex-shrink-0 flex flex-col transition-all duration-m3-medium-2 ease-m3-emphasized">
+            <div className="p-4 bg-surface-container-lowest flex items-start justify-between gap-2 shrink-0">
+              <h2
+                className="font-bold text-xl text-on-surface leading-snug break-words"
+                title={course.title}
+              >
+                {course.title}
               </h2>
               <button
                 onClick={() => setIsSidebarOpen(false)}
-                className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer"
+                className="w-9 h-9 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer shrink-0"
                 title="Ẩn Lộ trình Bài học"
+                aria-label="Ẩn Lộ trình Bài học"
               >
-                <X className="w-3.5 h-3.5" aria-hidden="true" />
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
-            <div className="p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
               {course.weekModules.map((week, weekIndex) => {
                 const isCollapsed = Boolean(collapsedWeeks[week.id]);
                 const unlocked = isWeekUnlocked(weekIndex);
@@ -659,24 +653,24 @@ function CoursePlayerContent() {
                     <button
                       type="button"
                       onClick={() => toggleWeek(week.id)}
-                      className="w-full text-left flex items-center justify-between p-2.5 rounded-2xl hover:bg-surface-container-high/60 transition-colors group cursor-pointer"
+                      className="w-full text-left flex items-start justify-between p-2.5 rounded-2xl hover:bg-surface-container-high/60 transition-colors group cursor-pointer"
                     >
                       <div className="flex-1 min-w-0 pr-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-bold tracking-wide text-on-surface-variant group-hover:text-primary transition-colors">
+                          <span className="text-xs font-bold tracking-wide text-on-surface-variant group-hover:text-primary transition-colors">
                             {`Module ${week.weekNumber}`}
                           </span>
                           {!unlocked && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">
+                            <span className="inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">
                               <Lock className="w-3 h-3" /> Bị khóa
                             </span>
                           )}
                         </div>
-                        <div className="text-sm font-extrabold text-on-surface group-hover:text-primary transition-colors leading-snug truncate">
+                        <div className="text-sm font-extrabold text-on-surface group-hover:text-primary transition-colors leading-snug break-words mt-0.5">
                           {displayWeekTitle}
                         </div>
                       </div>
-                      <div className="text-on-surface-variant group-hover:text-on-surface transition-colors p-1 shrink-0">
+                      <div className="text-on-surface-variant group-hover:text-on-surface transition-colors p-1 shrink-0 mt-0.5">
                         {isCollapsed ? (
                           <ChevronDown className="w-4 h-4" />
                         ) : (
@@ -697,7 +691,7 @@ function CoursePlayerContent() {
                           return (
                             <div key={lesson.id} className="space-y-1.5">
                               {/* Lesson Subheading */}
-                              <div className="text-xs font-bold text-on-surface-variant px-2 pt-1">
+                              <div className="text-xs font-bold text-on-surface-variant px-2 pt-1 break-words leading-snug">
                                 {displayLessonTitle}
                               </div>
 
@@ -748,7 +742,7 @@ function CoursePlayerContent() {
                                       {/* Title & Sub-info */}
                                       <div className="flex-1 min-w-0">
                                         <div
-                                          className={`text-xs leading-snug truncate ${
+                                          className={`text-xs leading-snug break-words ${
                                             isActive
                                               ? "font-bold text-on-primary-container"
                                               : isDone
@@ -759,7 +753,7 @@ function CoursePlayerContent() {
                                           {item.title}
                                         </div>
                                         <div
-                                          className={`text-[11px] mt-0.5 font-normal ${
+                                          className={`text-xs mt-0.5 font-normal ${
                                             isActive
                                               ? "text-on-primary-container/80"
                                               : "text-on-surface-variant"
@@ -787,7 +781,7 @@ function CoursePlayerContent() {
         )}
 
         {/* Center Workspace & Bottom Panels */}
-        <main className="flex-1 flex flex-col bg-surface-container-low overflow-hidden relative text-on-surface min-w-0 sm:min-w-[360px]">
+        <main className="flex-1 flex flex-col overflow-hidden relative text-on-surface min-w-0 h-full">
           {/* Lock Notice Banner */}
           {lockNotice && (
             <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-1 animate-in fade-in duration-m3-short-4 ease-m3-decelerate">
@@ -802,9 +796,9 @@ function CoursePlayerContent() {
           )}
 
           {/* Center Video & Side Tool Panel Layout */}
-          <div className="flex-1 flex flex-row overflow-x-auto overflow-y-hidden relative min-h-0">
-            {/* Left/Center Video Media Viewer Canvas - Top Rounded Stage */}
-            <div className="flex-1 min-w-0 sm:min-w-[360px] bg-surface-container-lowest rounded-t-3xl sm:rounded-t-[28px] shadow-xs overflow-hidden flex flex-col items-center justify-between relative overflow-y-auto transition-colors duration-m3-short-4 ease-m3-emphasized min-h-0">
+          <div className="flex-1 flex flex-row overflow-x-auto overflow-y-hidden relative min-h-0 gap-3">
+            {/* Left/Center Video Media Viewer Canvas - MD3 Floating Surface Card */}
+            <div className="flex-1 min-w-0 bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden flex flex-col items-center justify-between relative overflow-y-auto transition-colors duration-m3-short-4 ease-m3-emphasized min-h-0">
               <div className="w-full flex-1 flex flex-col p-3 min-h-0 overflow-y-auto">
                 <VideoPlayer
                   videoRef={videoRef}
@@ -884,9 +878,9 @@ function CoursePlayerContent() {
                   isLectureItem &&
                   !isPreviewMode) ||
                 (activeTab === "deadlines" && !isPreviewMode)) && (
-                <aside className="w-80 xl:w-96 bg-surface-container-low flex flex-col shrink-0 h-full overflow-hidden shadow-xs border-l border-outline-variant/30">
+                <aside className="w-full max-w-[calc(100vw-24px)] lg:w-80 xl:w-90 bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs flex flex-col shrink-0 h-full overflow-hidden">
                   {/* Drawer Header */}
-                  <div className="h-12 px-4 flex items-center justify-between bg-surface-container-low shrink-0 border-b border-outline-variant/30">
+                  <div className="h-12 px-4 flex items-center justify-between bg-surface-container-lowest shrink-0">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-xs text-on-surface uppercase tracking-wider">
                         {activeTab === "transcript" && "Phụ đề Tương tác"}
@@ -905,7 +899,7 @@ function CoursePlayerContent() {
                   </div>
 
                   {/* Tab Body Content - Unified Background */}
-                  <div className="flex-1 overflow-y-auto p-4 bg-surface-container-low min-h-0 flex flex-col">
+                  <div className="flex-1 overflow-y-auto p-4 bg-surface-container-lowest min-h-0 flex flex-col">
                     {activeTab === "transcript" && isVideoItem && (
                       <TranscriptPanel
                         activeItem={activeItem}
@@ -946,7 +940,7 @@ function CoursePlayerContent() {
               <div
                 className={
                   isPanelOpen && activeTab === "ai_assistant"
-                    ? "w-96 xl:w-[464px] h-full shrink-0 flex flex-col bg-surface-container-low border-l border-outline-variant/30 overflow-hidden"
+                    ? "w-full max-w-[calc(100vw-24px)] lg:w-[412px] xl:w-[452px] h-full shrink-0 flex flex-col bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs overflow-hidden"
                     : "hidden"
                 }
               >
@@ -972,7 +966,7 @@ function CoursePlayerContent() {
 
             {/* Vertical Icon Action Bar - Seamless MD3 Navigation Rail (Visible when AI Chatbot is inactive) */}
             {(!isPanelOpen || activeTab !== "ai_assistant") && (
-              <div className="w-16 lg:w-20 bg-surface-container-low flex flex-col items-center justify-start py-5 gap-5 shrink-0 h-full select-none border-l border-outline-variant/30">
+              <div className="w-16 lg:w-20 bg-surface-container-low flex flex-col items-center justify-start py-5 gap-5 shrink-0 h-full select-none">
                 {/* Transcript Button: Only for Video Items */}
                 {isVideoItem && (
                   <button
@@ -990,7 +984,7 @@ function CoursePlayerContent() {
                       <AlignLeft className="w-4 h-4" aria-hidden="true" />
                     </div>
                     <span
-                      className={`text-[10px] tracking-tight leading-none ${
+                      className={`text-xs tracking-tight leading-none ${
                         isPanelOpen && activeTab === "transcript"
                           ? "text-primary font-bold"
                           : "text-on-surface-variant"

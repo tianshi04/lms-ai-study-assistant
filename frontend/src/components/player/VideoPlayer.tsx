@@ -86,7 +86,7 @@ export function VideoPlayer({
     // 1. Reading Item
     if (activeItem.type === 2) {
       return (
-        <div className="w-full p-6 sm:p-8 bg-background text-foreground transition-colors duration-m3-short-4 ease-m3-emphasized rounded-2xl">
+        <div className="w-full p-6 sm:p-8 bg-surface-container-lowest text-on-surface transition-colors duration-m3-short-4 ease-m3-emphasized rounded-2xl">
           <div className="max-w-3xl mx-auto space-y-6">
             {/* Reading Header */}
             <div className="pb-4 border-b border-border">
@@ -94,7 +94,7 @@ export function VideoPlayer({
                 <FileText className="w-7 h-7 text-success" aria-hidden="true" />
                 <span>{activeItem.title}</span>
                 {isPreviewMode && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-warning/10 text-warning border border-warning/20 animate-pulse">
+                  <span className="px-2 py-0.5 rounded-full text-xs font-extrabold uppercase bg-warning/10 text-warning border border-warning/20 animate-pulse">
                     {"Xem trước"}
                   </span>
                 )}
@@ -198,7 +198,7 @@ export function VideoPlayer({
     // 4. Peer Review Item
     if (activeItem.type === 6) {
       return (
-        <div className="w-full p-4 sm:p-6 bg-background rounded-2xl">
+        <div className="w-full p-4 sm:p-6 bg-surface-container-lowest text-on-surface rounded-2xl">
           <PeerAssignmentWorkspace
             itemId={activeItem.id}
             title={activeItem.title}
@@ -215,7 +215,7 @@ export function VideoPlayer({
 
     return (
       <div className="w-full flex flex-col gap-3 min-h-0">
-        <div className="w-full aspect-video max-h-[62vh] relative flex items-center justify-center bg-surface-container-high dark:bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden shadow-xs transition-all duration-m3-short-4 ease-m3-emphasized">
+        <div className="w-full aspect-video max-h-[62vh] relative flex items-center justify-center bg-surface-container-high rounded-2xl overflow-hidden shadow-xs transition-all duration-m3-short-4 ease-m3-emphasized">
           {youtubeEmbedUrl ? (
             <iframe
               key={activeItem.id}
@@ -255,7 +255,7 @@ export function VideoPlayer({
                   <span className="text-xs font-extrabold text-primary uppercase tracking-wider">
                     In-Video Quiz ({activeQuiz.timestampSeconds}s)
                   </span>
-                  <span className="text-[10px] text-muted-foreground font-mono">
+                  <span className="text-xs text-muted-foreground font-mono">
                     {"Dừng video để kiểm tra"}
                   </span>
                 </div>
@@ -336,7 +336,7 @@ export function VideoPlayer({
         </div>
 
         {/* Coursera-style AI Learning Prompts Card ("Tìm hiểu sâu hơn về chủ đề này") - Only for Video Items */}
-        <div className="w-full my-1 p-4 rounded-2xl bg-surface-container-low border border-outline-variant/30 shadow-2xs transition-colors">
+        <div className="w-full my-1 p-4 rounded-2xl bg-surface-container-low shadow-2xs transition-colors">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
