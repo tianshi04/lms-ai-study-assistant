@@ -9,10 +9,14 @@ import {
   ShieldCheck,
   Zap,
 } from "lucide-react";
+import { ParticleBackground } from "@/components/home/ParticleBackground";
 
 export function PublicLanding() {
   return (
     <div className="flex-1 flex flex-col justify-between w-full relative bg-surface text-on-surface animate-in fade-in duration-300 ease-m3-emphasized overflow-hidden">
+      {/* Dynamic Interactive Particle Canvas Background */}
+      <ParticleBackground />
+
       {/* High-Tech Geometric Grid Matrix (Subtle Tech Texture away from Navbar) */}
       <svg
         className="absolute inset-0 w-full h-full stroke-outline-variant/20 [mask-image:radial-gradient(ellipse_60%_50%_at_80%_50%,black_30%,transparent_100%)] pointer-events-none"
