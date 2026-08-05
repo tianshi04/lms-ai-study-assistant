@@ -9,7 +9,6 @@ interface GoogleAuthButtonProps {
   text?: string;
   variant?: "outline" | "primary" | "secondary";
   className?: string;
-  enableOneTap?: boolean;
 }
 
 declare global {
@@ -49,7 +48,6 @@ export function GoogleAuthButton({
   text = "Tiếp tục với Google",
   variant = "outline",
   className = "",
-  enableOneTap = true,
 }: GoogleAuthButtonProps) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [internalLoading, setInternalLoading] = useState(false);
@@ -134,7 +132,7 @@ export function GoogleAuthButton({
     } catch {
       // Ignore initialization errors gracefully
     }
-  }, [scriptLoaded, isRealClientId, googleClientId, handleCredentialResponse, enableOneTap, text]);
+  }, [scriptLoaded, isRealClientId, googleClientId, handleCredentialResponse, text]);
 
   const handleClick = () => {
     if (!isRealClientId || !googleClientId) {
