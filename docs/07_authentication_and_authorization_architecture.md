@@ -83,7 +83,7 @@ class CurrentUserContext:
 
 ---
 
-## 6. Kiến Trúc Xác Thực Đăng Ký & Đăng Nhập Lai (Google Identity Services GIS SDK + Password Fallback)
+## 5. Kiến Trúc Xác Thực Đăng Ký & Đăng Nhập Lai (Google Identity Services GIS SDK + Password Fallback)
 
 Hệ thống triển khai cơ chế xác thực kép linh hoạt và an toàn cao, kết hợp giữa **Google Identity Services (GIS SDK)** chuẩn 2026 và **Mật khẩu dự phòng độc lập**:
 
@@ -141,7 +141,7 @@ sequenceDiagram
 
 ---
 
-## 7. Quy Tắc Thẩm Định Nghiệp Vụ Theo Đối Tượng
+## 6. Quy Tắc Thẩm Định Nghiệp Vụ Theo Đối Tượng
 
 | Đối Tượng Nghiệp Vụ | Cơ Chế Thẩm Định | Chi Tiết Quy Tắc |
 | :--- | :--- | :--- |
