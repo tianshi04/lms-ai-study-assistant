@@ -83,23 +83,24 @@ class CurrentUserContext:
 
 ---
 
-## 6. Kiến Trúc Xác Thực Đăng Ký & Đăng Nhập Lai (Google OAuth2 + Password Fallback)
+## 6. Kiến Trúc Xác Thực Đăng Ký & Đăng Nhập Lai (Google Identity Services GIS SDK + Password Fallback)
 
-Hệ thống triển khai cơ chế xác thực kép linh hoạt và an toàn cao, kết hợp giữa **Google OAuth2** và **Mật khẩu dự phòng độc lập**:
+Hệ thống triển khai cơ chế xác thực kép linh hoạt và an toàn cao, kết hợp giữa **Google Identity Services (GIS SDK)** chuẩn 2026 và **Mật khẩu dự phòng độc lập**:
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User
-    participant FE as Frontend (Next.js)
-    participant BE as Backend (FastAPI)
-    participant GG as Google OAuth (accounts.google.com)
+    participant FE as Frontend (Next.js + GIS SDK)
+    participant GG as Google GIS Server (gsi/client)
+    participant BE as Backend (FastAPI ConnectRPC)
 
-    Note over User, GG: LUỒNG ĐĂNG KÝ BẮT BUỘC QUA GOOGLE + ĐẶT MẬT KHẨU DỰ PHÒNG
-    User->>FE: Bấm "Xác minh bằng Google"
-    FE->>GG: Mở Cửa sổ OAuth Popup (https://accounts.google.com/o/oauth2/v2/auth)
-    GG-->>User: Xác thực tài khoản Gmail & Đồng ý cấp quyền
-    GG-->>FE: Trả về Google ID Token via /auth/google/callback
+    Note over User, BE: LUỒNG ĐĂNG KÝ BẮT BUỘC QUA GOOGLE (GIS SDK) + MẬT KHẨU DỰ PHÒNG
+    User->>FE: Mở Trang Đăng ký / Đăng nhập
+    FE->>GG: Nạp SDK https://accounts.google.com/gsi/client & Khởi tạo google.accounts.id
+    GG-->>FE: Hiển thị Nút Đăng nhập / Google One Tap Prompt
+    User->>FE: Bấm chọn tài khoản Gmail (1-Click)
+    GG-->>FE: Trả về signed Credential (id_token JWT) trực tiếp qua callback JS
     FE->>BE: Gọi RPC GoogleRegisterVerify(google_id_token)
     BE->>BE: Xác minh Token Google -> Sinh temp_token JWT (TTL 15 phút)
     BE-->>FE: Trả về temp_token + Verified Email + Avatar
@@ -112,7 +113,7 @@ sequenceDiagram
 
 ### A. Lý Do Kỹ Thuật & Nghiệp Vụ Của Luồng Đăng Ký
 1. **Xác minh Email chính chủ & Chống Bot/Spam (Anti-Spam Email Guarantee)**:
-   - Bắt buộc đăng ký qua Google OAuth2 nhằm đảm bảo 100% email là thật và thuộc về người dùng chính chủ.
+   - Bắt buộc đăng ký qua Google Identity Services (GIS SDK) nhằm đảm bảo 100% email là thật và thuộc về người dùng chính chủ.
    - Loại bỏ hoàn toàn chi phí duy trì dịch vụ gửi email OTP/Activation link (Resend, SendGrid, Amazon SES) và tránh rủi ro email bị rơi vào hộp thư Spam.
 2. **Cơ chế Dự phòng Sự cố (Disaster Recovery & High Availability)**:
    - Việc bắt buộc tạo Mật khẩu phụ ngay lúc đăng ký đảm bảo **100% tài khoản trong DB đều có password_hash**.
@@ -124,7 +125,7 @@ sequenceDiagram
 ### B. Danh Mục Công Nghệ & Thư Viện Sử Dụng (Technology Stack)
 - **Frontend Stack**:
   - `Next.js 16` (React 19, Turbopack, Server Actions trong `src/app/auth/actions.ts`).
-  - `Google Identity Services (GSI)` & Standard OAuth2 Popup Flow (`https://accounts.google.com/o/oauth2/v2/auth`).
+  - `Google Identity Services (GIS SDK)` (`https://accounts.google.com/gsi/client` & `google.accounts.id` API).
   - `@connectrpc/connect-web` giao tiếp RPC bất đồng bộ với Backend.
   - `AuthProvider` React Context quản lý Client Auth State & đồng bộ Avatar.
 - **Backend Stack**:

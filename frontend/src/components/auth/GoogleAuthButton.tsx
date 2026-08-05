@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 
 interface GoogleAuthButtonProps {
@@ -9,6 +9,37 @@ interface GoogleAuthButtonProps {
   text?: string;
   variant?: "outline" | "primary" | "secondary";
   className?: string;
+  enableOneTap?: boolean;
+}
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { credential: string }) => void;
+            auto_select?: boolean;
+            cancel_on_tap_outside?: boolean;
+          }) => void;
+          prompt: (notification?: (notification: unknown) => void) => void;
+          renderButton: (
+            parent: HTMLElement,
+            options: {
+              type?: "standard" | "icon";
+              theme?: "outline" | "filled_blue" | "filled_black";
+              size?: "large" | "medium" | "small";
+              text?: "signin_with" | "signup_with" | "continue_with" | "signin";
+              shape?: "rectangular" | "pill" | "circle";
+              logo_alignment?: "left" | "center";
+              width?: number;
+            }
+          ) => void;
+        };
+      };
+    };
+  }
 }
 
 export function GoogleAuthButton({
@@ -17,13 +48,65 @@ export function GoogleAuthButton({
   text = "Tiếp tục với Google",
   variant = "outline",
   className = "",
+  enableOneTap = true,
 }: GoogleAuthButtonProps) {
+  const [scriptLoaded, setScriptLoaded] = useState(false);
   const [internalLoading, setInternalLoading] = useState(false);
 
-  const handleClick = () => {
-    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const isRealClientId =
+    Boolean(googleClientId) &&
+    googleClientId !== "your_google_client_id.apps.googleusercontent.com";
 
-    if (!googleClientId) {
+  const handleCredentialResponse = useCallback(
+    (response: { credential: string }) => {
+      setInternalLoading(false);
+      if (response?.credential) {
+        onSuccess(response.credential);
+      }
+    },
+    [onSuccess]
+  );
+
+  useEffect(() => {
+    if (!isRealClientId) return;
+
+    if (typeof window !== "undefined" && window.google?.accounts?.id) {
+      setScriptLoaded(true);
+      return;
+    }
+
+    if (!document.getElementById("google-gis-sdk")) {
+      const script = document.createElement("script");
+      script.id = "google-gis-sdk";
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      script.onload = () => setScriptLoaded(true);
+      document.body.appendChild(script);
+    } else {
+      setScriptLoaded(true);
+    }
+  }, [isRealClientId]);
+
+  useEffect(() => {
+    if (!scriptLoaded || !isRealClientId || !googleClientId) return;
+
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleCredentialResponse,
+        cancel_on_tap_outside: false,
+      });
+
+      if (enableOneTap) {
+        window.google.accounts.id.prompt();
+      }
+    }
+  }, [scriptLoaded, isRealClientId, googleClientId, handleCredentialResponse, enableOneTap]);
+
+  const handleClick = () => {
+    if (!isRealClientId || !googleClientId) {
       const inputEmail = window.prompt(
         "Dev Mode: Nhập địa chỉ Gmail để giả lập xác minh Google",
         "user.test@gmail.com"
@@ -37,50 +120,13 @@ export function GoogleAuthButton({
 
     setInternalLoading(true);
 
-    const redirectUri = `${window.location.origin}/auth/google/callback`;
-    const width = 500;
-    const height = 620;
-    const left = Math.max(0, Math.round(window.screenX + (window.outerWidth - width) / 2));
-    const top = Math.max(0, Math.round(window.screenY + (window.outerHeight - height) / 2));
-
-    const authUrl =
-      `https://accounts.google.com/o/oauth2/v2/auth?` +
-      new URLSearchParams({
-        client_id: googleClientId,
-        redirect_uri: redirectUri,
-        response_type: "token id_token",
-        scope: "openid email profile",
-        nonce: Math.random().toString(36).substring(2),
-        prompt: "select_account",
-      }).toString();
-
-    const popup = window.open(
-      authUrl,
-      "GoogleOAuthPopup",
-      `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=yes`
-    );
-
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type === "GOOGLE_AUTH_SUCCESS" && event.data?.idToken) {
-        window.removeEventListener("message", handleMessage);
-        setInternalLoading(false);
-        onSuccess(event.data.idToken);
-      } else if (event.data?.type === "GOOGLE_AUTH_ERROR") {
-        window.removeEventListener("message", handleMessage);
-        setInternalLoading(false);
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-
-    const timer = setInterval(() => {
-      if (popup && popup.closed) {
-        clearInterval(timer);
-        window.removeEventListener("message", handleMessage);
-        setInternalLoading(false);
-      }
-    }, 1000);
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.prompt(() => {
+        setTimeout(() => setInternalLoading(false), 3000);
+      });
+    } else {
+      setInternalLoading(false);
+    }
   };
 
   return (
