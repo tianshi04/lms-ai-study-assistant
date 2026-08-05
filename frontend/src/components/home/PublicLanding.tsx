@@ -164,24 +164,6 @@ export function PublicLanding() {
           </Link>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-outline-variant py-6 text-center text-xs text-on-surface-variant mt-auto bg-surface-container-lowest">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p>© 2026 Coursera LMS Platform. Nền tảng học tập trực tuyến hàng đầu.</p>
-          <div className="flex space-x-4">
-            <Link href="/courses" className="hover:text-primary transition-colors">
-              Khóa học
-            </Link>
-            <Link href="/account-settings" className="hover:text-primary transition-colors">
-              Cài đặt
-            </Link>
-            <Link href="/instructor/courses" className="hover:text-primary transition-colors">
-              Giảng Viên
-            </Link>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

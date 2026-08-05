@@ -168,15 +168,17 @@
   --animate-collapse-down: collapseDown var(--duration-m3-medium-2) var(--ease-m3-emphasized)
     forwards;
   --animate-collapse-up: collapseUp var(--duration-m3-short-4) var(--ease-m3-accelerate) forwards;
+}
 
-  /* Stacking & Layer Tokens */
-  --z-deep: -10;
-  --z-base: 0;
-  --z-sticky: 100;
-  --z-widget: 300;
-  --z-modal: 1000;
-  --z-dropdown: 1200;
-  --z-toast: 2000;
+/* Stacking & Layer Tokens (Tailwind CSS v4 Recommended Official Syntax) */
+@theme inline {
+  --z-index-deep: -10;
+  --z-index-base: 0;
+  --z-index-sticky: 100;
+  --z-index-widget: 300;
+  --z-index-modal: 1000;
+  --z-index-dropdown: 1200;
+  --z-index-toast: 2000;
 }
 
 :root {

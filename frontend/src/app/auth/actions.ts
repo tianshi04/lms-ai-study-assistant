@@ -113,7 +113,7 @@ export async function completeGoogleRegistrationAction(
   tempToken: string,
   password: string,
   fullName: string,
-  role: number
+  role: number,
 ) {
   try {
     const client = getUnauthenticatedBackendClient();
@@ -197,10 +197,7 @@ export async function googleResetPasswordVerifyAction(googleIdToken: string) {
   }
 }
 
-export async function completeResetPasswordAction(
-  tempToken: string,
-  newPassword: string
-) {
+export async function completeResetPasswordAction(tempToken: string, newPassword: string) {
   try {
     const client = getUnauthenticatedBackendClient();
     const res = await client.completeResetPassword({
@@ -244,4 +241,3 @@ export async function logoutAction() {
   cookieStore.delete("user_role");
   return { success: true };
 }
-

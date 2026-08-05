@@ -56,7 +56,7 @@ export default function PartnerPublicPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background pb-16 text-foreground">
+    <div className="w-full bg-background pb-16 text-foreground">
       {/* Partner Banner Header */}
       <div className="relative w-full bg-card border-b border-border text-foreground">
         {partner.bannerUrl ? (
@@ -298,6 +298,6 @@ export default function PartnerPublicPage() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

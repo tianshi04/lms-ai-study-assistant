@@ -253,10 +253,10 @@ export function LearnPageAIChatbot({
     <div
       role="region"
       aria-label="Trợ lý AI Học Tập"
-      className="flex flex-col h-full w-full bg-surface-container-low text-on-surface overflow-hidden"
+      className="flex flex-col h-full w-full bg-surface-container-lowest text-on-surface rounded-3xl overflow-hidden"
     >
       {/* Drawer Header */}
-      <div className="h-12 px-4 bg-surface-container-low border-b border-outline-variant/30 flex items-center justify-between shrink-0">
+      <div className="h-12 px-4 bg-surface-container-lowest flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
           <span className="font-bold text-xs text-on-surface uppercase tracking-wider">
@@ -292,7 +292,7 @@ export function LearnPageAIChatbot({
         role="log"
         aria-live="polite"
         aria-label="Nội dung cuộc trò chuyện với Trợ lý AI"
-        className="flex-1 overflow-y-auto p-4 space-y-4 bg-surface-container-low"
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-surface-container-lowest"
       >
         {displayMessages && displayMessages.length > 0 ? (
           <>
@@ -359,21 +359,25 @@ export function LearnPageAIChatbot({
           sendMessage(inputValue);
         }}
         aria-label="Khung gửi tin nhắn cho Trợ lý AI"
-        className="p-3 bg-surface-container-low border-t border-outline-variant/20 flex flex-col gap-2 shrink-0"
+        className="p-3 bg-surface-container-lowest flex flex-col gap-2 shrink-0"
       >
-        <div className="flex items-center gap-2 bg-surface-container-high border border-outline-variant/40 rounded-full pl-4 pr-1.5 py-1 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+        <div className="flex items-center gap-2 bg-surface-container-low border border-outline-variant/30 rounded-full pl-4 pr-1.5 py-1.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Hỏi tôi bất cứ điều gì..."
             aria-label="Nhập câu hỏi cho Trợ lý AI"
-            className="flex-1 bg-transparent text-xs text-on-surface placeholder:text-on-surface-variant/60 border-none outline-none py-1"
+            className="flex-1 bg-transparent text-xs text-on-surface placeholder:text-on-surface-variant/70 border-none outline-none py-1"
           />
           <button
             type="submit"
             disabled={!inputValue.trim() || agent?.isRunning}
-            className="w-7 h-7 rounded-full bg-primary text-on-primary hover:bg-primary-hover transition-all flex items-center justify-center shrink-0 disabled:opacity-30 disabled:bg-on-surface/10 disabled:text-on-surface-variant/40 disabled:cursor-not-allowed cursor-pointer"
+            className={`w-8 h-8 rounded-full transition-all flex items-center justify-center shrink-0 ${
+              !inputValue.trim() || agent?.isRunning
+                ? "bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed"
+                : "bg-primary text-primary-foreground hover:bg-primary-hover shadow-xs cursor-pointer active:scale-95"
+            }`}
             title="Gửi tin nhắn"
             aria-label="Gửi tin nhắn"
           >
@@ -381,7 +385,7 @@ export function LearnPageAIChatbot({
           </button>
         </div>
 
-        <p className="text-[11px] text-center text-on-surface-variant/60">
+        <p className="text-xs text-center text-on-surface-variant/70">
           AI có thể mắc sai sót. Vui lòng kiểm tra lại thông tin quan trọng.
         </p>
       </form>

@@ -143,21 +143,41 @@ export function GoogleAuthButton({
     setInternalLoading(true);
 
     try {
-      if (window.google?.accounts?.id) {
-        window.google.accounts.id.initialize({
+      const redirectUri = `${window.location.origin}/auth/google/callback`;
+      const width = 500;
+      const height = 620;
+      const left = Math.max(0, Math.round(window.screenX + (window.outerWidth - width) / 2));
+      const top = Math.max(0, Math.round(window.screenY + (window.outerHeight - height) / 2));
+
+      const authUrl =
+        `https://accounts.google.com/o/oauth2/v2/auth?` +
+        new URLSearchParams({
           client_id: googleClientId,
-          callback: handleCredentialResponse,
-          cancel_on_tap_outside: false,
-          error_callback: () => {
-            openDevModePrompt();
-          },
-        });
-        window.google.accounts.id.prompt(() => {
-          setTimeout(() => setInternalLoading(false), 2000);
-        });
-      } else {
-        openDevModePrompt();
-      }
+          redirect_uri: redirectUri,
+          response_type: "token id_token",
+          scope: "openid email profile",
+          nonce: Math.random().toString(36).substring(2),
+          prompt: "select_account",
+        }).toString();
+
+      const popup = window.open(
+        authUrl,
+        "GoogleOAuthPopup",
+        `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=yes`,
+      );
+
+      const handleMessage = (event: MessageEvent) => {
+        if (event.origin !== window.location.origin) return;
+        if (event.data?.type === "GOOGLE_AUTH_SUCCESS" && event.data?.idToken) {
+          window.removeEventListener("message", handleMessage);
+          setInternalLoading(false);
+          onSuccess(event.data.idToken);
+        } else if (event.data?.type === "GOOGLE_AUTH_ERROR") {
+          window.removeEventListener("message", handleMessage);
+          setInternalLoading(false);
+        }
+      };
+      window.addEventListener("message", handleMessage);
     } catch {
       openDevModePrompt();
     }
