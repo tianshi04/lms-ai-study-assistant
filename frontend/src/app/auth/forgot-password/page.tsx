@@ -169,7 +169,7 @@ function ForgotPasswordContent() {
               <label className="text-xs font-semibold text-foreground">Mật khẩu mới</label>
               <Input
                 type="password"
-                placeholder="Ví dụ: ••••••••••"
+                placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
@@ -182,7 +182,7 @@ function ForgotPasswordContent() {
               <label className="text-xs font-semibold text-foreground">Xác nhận mật khẩu mới</label>
               <Input
                 type="password"
-                placeholder="Nhập lại mật khẩu mới"
+                placeholder="Nhập lại mật khẩu mới để xác nhận"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required

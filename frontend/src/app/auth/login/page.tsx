@@ -205,7 +205,7 @@ function LoginFormContent() {
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
-                      placeholder="••••••••"
+                      placeholder="Nhập mật khẩu của bạn"
                       autoComplete="current-password"
                       error={hasError ? String(field.state.meta.errors[0]) : undefined}
                       required

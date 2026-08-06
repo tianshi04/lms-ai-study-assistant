@@ -298,7 +298,7 @@ export default function RegisterPage() {
                           value={field.state.value}
                           onBlur={field.handleBlur}
                           onChange={(e) => field.handleChange(e.target.value)}
-                          placeholder="••••••••"
+                          placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
                           autoComplete="new-password"
                           error={hasError ? String(field.state.meta.errors[0]) : undefined}
                           className="pl-10 pr-11 py-3 rounded-xl bg-muted"
@@ -355,7 +355,7 @@ export default function RegisterPage() {
                           value={field.state.value}
                           onBlur={field.handleBlur}
                           onChange={(e) => field.handleChange(e.target.value)}
-                          placeholder="••••••••"
+                          placeholder="Nhập lại mật khẩu để xác nhận"
                           autoComplete="new-password"
                           error={hasError ? String(field.state.meta.errors[0]) : undefined}
                           className="pl-10 py-3 rounded-xl bg-muted"
