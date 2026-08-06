@@ -3,11 +3,13 @@
 Best-Practice DDD Infrastructure Seeding Script:
 - Default Execution (Upsert Mode): Uses session.merge() to safely insert missing seed records or update existing ones without destructive data wipes.
 - Reset Execution (--reset Flag): Dynamically truncates all database tables when explicitly requested for a pristine environment reset.
+- Demo Execution (--demo Flag): Seeds from JSON files in data/demo_data/ for clean demo presentations.
 - Dev Startup Integration: Auto-seeds initial catalog if the database contains no courses.
 
 Usage:
-  - Default / Upsert:  uv run python src/seed.py
-  - Full Clean Reset:  uv run python src/seed.py --reset
+  - Default / Upsert:  uv run python -m src.seed
+  - Full Clean Reset:  uv run python -m src.seed --reset
+  - Demo Data (JSON):  uv run python -m src.seed --demo
 """
 
 # ruff: noqa: E402, F401
@@ -17,6 +19,8 @@ import asyncio
 import json
 import logging
 import sys
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Add backend directory to sys.path
@@ -1386,6 +1390,262 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         logger.info("[SEED] Database seeding completed successfully!")
 
 
+async def load_demo_data(session):
+    """Load demo data from JSON files in data/demo_data/."""
+    data_dir = Path(__file__).resolve().parent.parent / "data" / "demo_data"
+
+    # Load users
+    with open(data_dir / "users.json", "r") as f:
+        users_data = json.load(f)
+
+    default_pw = hash_password("123456")
+    for u in users_data:
+        role = UserRole.LEARNER
+        if u["role"] == "INSTRUCTOR":
+            role = UserRole.INSTRUCTOR
+        elif u["role"] == "ADMIN":
+            role = UserRole.ADMIN
+
+        user = UserModel(
+            id=u["id"],
+            email=u["email"],
+            full_name=u["full_name"],
+            role=role,
+            avatar_url=u["avatar_url"],
+            password_hash=default_pw,
+            title=u.get("title", ""),
+            signature_image_url=u.get("signature_image_url", ""),
+        )
+        await session.merge(user)
+        logger.info(f"Loaded User: {u['full_name']} ({u['role']})")
+
+    # Load catalog
+    with open(data_dir / "catalog.json", "r") as f:
+        catalog_data = json.load(f)
+
+    for cat in catalog_data.get("categories", []):
+        await session.merge(CategoryModel(**cat))
+
+    for p in catalog_data.get("partners", []):
+        await session.merge(PartnerModel(**p))
+
+    for c in catalog_data.get("courses", []):
+        course = CourseModel(
+            id=c["id"],
+            title=c["title"],
+            slug=c["slug"],
+            description=c["description"],
+            partner_name=c["partner_name"],
+            partner_logo_url=c["partner_logo_url"],
+            instructor_names=c["instructor_names"],
+            owner_id=c["owner_id"],
+            subject=c["subject"],
+            level=c["level"],
+            status=c["status"],
+        )
+
+        for w in c.get("weeks", []):
+            week = WeekModuleModel(
+                id=w["id"],
+                course_id=course.id,
+                week_number=w["week_number"],
+                title=w["title"],
+                summary=w["summary"],
+            )
+            for les in w.get("lessons", []):
+                lesson = LessonModel(
+                    id=les["id"],
+                    week_module_id=week.id,
+                    title=les["title"],
+                    estimated_minutes=les["estimated_minutes"],
+                )
+                for item_data in les.get("items", []):
+                    itype = getattr(ItemType, item_data["type"])
+                    item = LearningItemModel(
+                        id=item_data["id"],
+                        lesson_id=lesson.id,
+                        title=item_data["title"],
+                        type=itype,
+                        estimated_minutes=item_data.get("estimated_minutes", 10),
+                        video_url=item_data.get("video_url", ""),
+                        reading_markdown=item_data.get("reading_markdown", ""),
+                        quiz_matrix_id=item_data.get("quiz_matrix_id", ""),
+                        language=item_data.get("language", ""),
+                        starter_code=item_data.get("starter_code", ""),
+                        test_cases_json=item_data.get("test_cases_json", ""),
+                    )
+
+                    for t in item_data.get("transcripts", []):
+                        item.interactive_transcripts.append(
+                            InteractiveTranscriptModel(**t)
+                        )
+                    for q in item_data.get("quizzes", []):
+                        item.in_video_quizzes.append(InVideoQuizModel(**q))
+
+                    lesson.items.append(item)
+                week.lessons.append(lesson)
+            course.week_modules.append(week)
+
+        await session.merge(course)
+        logger.info(f"Loaded Course: {c['title']}")
+
+    for prog in catalog_data.get("progress", []):
+        progress = LearningProgressModel(
+            id=f"{prog['user_id']}:{prog['course_id']}",
+            user_id=prog["user_id"],
+            course_id=prog["course_id"],
+            overall_progress_percent=prog["overall_progress_percent"],
+            completed_item_ids=prog["completed_item_ids"],
+        )
+        await session.merge(progress)
+
+        fa = FinancialAidModel(
+            id=f"fa-{prog['user_id']}-{prog['course_id']}",
+            user_id=prog["user_id"],
+            course_id=prog["course_id"],
+            essay_150_words="Em xin đăng ký hỗ trợ tài chính để tham gia khóa học này phục vụ cho việc làm đồ án tốt nghiệp và nâng cao kỹ năng.",
+            status="PENDING",
+            review_deadline_days_left=14,
+        )
+        await session.merge(fa)
+
+    # Load social data
+    social_file = data_dir / "social.json"
+    if social_file.exists():
+        with open(social_file, "r") as f:
+            social_data = json.load(f)
+
+        now_str = datetime.now(timezone.utc).isoformat()
+
+        for rev in social_data.get("reviews", []):
+            review = CourseReviewModel(
+                id=uuid.uuid4().hex,
+                course_id=rev["course_id"],
+                user_id=rev["user_id"],
+                user_name="Demo User",
+                rating_stars=rev["rating"],
+                comment_text=rev["comment"],
+                created_at=now_str,
+            )
+            await session.merge(review)
+
+        for thread in social_data.get("threads", []):
+            t_model = ForumThreadORM(
+                id=uuid.uuid4().hex,
+                course_id=thread["course_id"],
+                item_id=thread["item_id"],
+                title=thread["title"],
+                content=thread["content"],
+                author_user_id=thread["author_id"],
+                author_name="Demo User",
+                upvote_count=5,
+                created_at=now_str,
+            )
+            for r_idx, reply in enumerate(thread.get("replies", [])):
+                r_model = ForumReplyORM(
+                    id=uuid.uuid4().hex,
+                    thread_id=t_model.id,
+                    content=reply["content"],
+                    author_user_id=reply["author_id"],
+                    author_name="Demo Instructor",
+                    upvote_count=2,
+                    created_at=now_str,
+                )
+                t_model.replies.append(r_model)
+            await session.merge(t_model)
+
+        logger.info("[SEED DEMO] Loaded Social Data (Reviews & Forum Threads)")
+
+    # Load assessment data
+    assessment_file = data_dir / "assessment.json"
+    if assessment_file.exists():
+        with open(assessment_file, "r") as f:
+            assessment_data = json.load(f)
+
+        for qb_data in assessment_data.get("question_banks", []):
+            qb = QuestionBankModel(
+                id=qb_data["id"],
+                course_id=qb_data["course_id"],
+                title=qb_data["title"],
+                category=qb_data["category"],
+                description=qb_data["description"],
+                created_at=now_str,
+            )
+            for q_data in qb_data.get("questions", []):
+                q = QuestionModel(
+                    id=q_data["id"],
+                    bank_id=qb.id,
+                    text=q_data["text"],
+                    question_type=q_data["question_type"],
+                    difficulty=q_data["difficulty"],
+                    explanation=q_data["explanation"],
+                    created_at=now_str,
+                )
+                for opt_data in q_data.get("options", []):
+                    opt = QuestionOptionModel(
+                        id=opt_data["id"],
+                        question_id=q.id,
+                        option_text=opt_data["option_text"],
+                        is_correct=opt_data["is_correct"],
+                        order_index=opt_data["order_index"],
+                    )
+                    q.options.append(opt)
+                qb.questions.append(q)
+            await session.merge(qb)
+
+        for matrix_data in assessment_data.get("quiz_matrices", []):
+            matrix = QuizMatrixModel(
+                item_id=matrix_data["item_id"],
+                bank_id=matrix_data["bank_id"],
+                time_limit_minutes=matrix_data["time_limit_minutes"],
+                passing_threshold_percent=matrix_data["passing_threshold_percent"],
+                easy_count=matrix_data["easy_count"],
+                medium_count=matrix_data["medium_count"],
+                hard_count=matrix_data["hard_count"],
+                shuffle_options=matrix_data["shuffle_options"],
+                max_attempts=matrix_data["max_attempts"],
+                cooldown_hours=matrix_data["cooldown_hours"],
+            )
+            await session.merge(matrix)
+
+        for qsub in assessment_data.get("quiz_submissions", []):
+            qsub["created_at"] = now_str
+            await session.merge(QuizSubmissionModel(**qsub))
+
+        for lsub in assessment_data.get("lab_submissions", []):
+            lsub["created_at"] = now_str
+            await session.merge(LabSubmissionModel(**lsub))
+
+        for psub in assessment_data.get("peer_assignments", []):
+            psub["created_at"] = now_str
+            await session.merge(PeerAssignmentSubmissionModel(**psub))
+
+        for prev in assessment_data.get("peer_reviews", []):
+            prev["rubric_criteria_json"] = prev.pop("rubric_criteria", [])
+            prev["created_at"] = now_str
+            await session.merge(PeerReviewModel(**prev))
+
+        logger.info("[SEED DEMO] Loaded Assessment Data (Quizzes & Submissions)")
+
+    await session.commit()
+    logger.info("[SEED DEMO] Demo seeding completed successfully!")
+
+
+async def seed_demo_database() -> None:
+    """Seed database with JSON demo data (truncate first)."""
+    async with async_session_scope() as session:
+        logger.info("[SEED DEMO] Truncating ALL tables for clean demo reset...")
+        tables = [f'"{table.name}"' for table in Base.metadata.sorted_tables]
+        if tables:
+            await session.execute(
+                text(f"TRUNCATE TABLE {', '.join(tables)} RESTART IDENTITY CASCADE")
+            )
+            await session.commit()
+
+        logger.info("[SEED DEMO] Loading JSON Demo Data...")
+        await load_demo_data(session)
+
+
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments for CLI execution."""
     parser = argparse.ArgumentParser(
@@ -1396,9 +1656,17 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Truncate existing tables before seeding for a 100%% clean reset.",
     )
+    parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="Seed from JSON files in data/demo_data/ instead of hardcoded data.",
+    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    asyncio.run(seed_database(reset=args.reset, auto_mode=False))
+    if args.demo:
+        asyncio.run(seed_demo_database())
+    else:
+        asyncio.run(seed_database(reset=args.reset, auto_mode=False))
