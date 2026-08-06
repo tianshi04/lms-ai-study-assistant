@@ -1,4 +1,5 @@
 from typing import Optional
+import sqlalchemy
 from sqlalchemy import (
     ARRAY,
     Boolean,
@@ -192,3 +193,14 @@ class InvitationModel(Base):
     )
     created_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     responded_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+
+
+class RevokedTokenModel(Base):
+    __tablename__ = "revoked_tokens"
+
+    jti: Mapped[str] = mapped_column(String(36), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(36), nullable=False, index=True)
+    revoked_at = mapped_column(
+        sqlalchemy.DateTime(timezone=True), server_default=sqlalchemy.func.now()
+    )
+    expires_at = mapped_column(sqlalchemy.DateTime(timezone=True), nullable=False)
