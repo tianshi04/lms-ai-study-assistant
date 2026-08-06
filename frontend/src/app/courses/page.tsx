@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { cacheLife, cacheTag } from "next/cache";
+import { connection } from "next/server";
 import { getPublicRpcServerClient } from "@/lib/server_connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CourseCatalogClient } from "./CourseCatalogClient";
@@ -35,22 +36,48 @@ async function getInitialCatalogData() {
   await Promise.all([
     queryClient.prefetchQuery({
       queryKey: ["courses", defaultFilters],
-      queryFn: async () => (await client.listCourses(defaultFilters)).courses,
+      queryFn: async () => {
+        try {
+          const res = await client.listCourses(defaultFilters);
+          return res.courses;
+        } catch {
+          return [];
+        }
+      },
     }),
     queryClient.prefetchQuery({
       queryKey: ["categories", "SUBJECT"],
-      queryFn: async () => (await client.listCategories({ type: "SUBJECT" })).categories,
+      queryFn: async () => {
+        try {
+          const res = await client.listCategories({ type: "SUBJECT" });
+          return res.categories;
+        } catch {
+          return [];
+        }
+      },
     }),
     queryClient.prefetchQuery({
       queryKey: ["categories", "LEVEL"],
-      queryFn: async () => (await client.listCategories({ type: "LEVEL" })).categories,
+      queryFn: async () => {
+        try {
+          const res = await client.listCategories({ type: "LEVEL" });
+          return res.categories;
+        } catch {
+          return [];
+        }
+      },
     }),
   ]);
 
   return dehydrate(queryClient);
 }
 
+<<<<<<< HEAD
 async function CatalogContent() {
+=======
+export default async function CoursesPage() {
+  await connection();
+>>>>>>> 14d2db9 (fix(storage/catalog): fix R2 proxy upload CORS, Next.js 16 prerender error, and IPv6 lookup timeouts)
   const dehydratedState = await getInitialCatalogData();
 
   return (

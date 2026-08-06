@@ -198,10 +198,24 @@ async def proxy_media(request):
             status_code=204,
             headers={
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS",
-                "Access-Control-Allow-Headers": "Content-Type, Range, Authorization",
-                "Access-Control-Expose-Headers": "Content-Range, Accept-Ranges, Content-Length",
+                "Access-Control-Allow-Methods": "GET, HEAD, PUT, OPTIONS",
+                "Access-Control-Allow-Headers": "*",
+                "Access-Control-Expose-Headers": "*",
             },
+        )
+
+    if request.method == "PUT":
+        content_type = request.headers.get("content-type", "application/octet-stream")
+        body_bytes = await request.body()
+        await s3.upload_file(
+            file_bytes=body_bytes,
+            object_key=path,
+            content_type=content_type,
+        )
+        return Response(
+            status_code=200,
+            content="OK",
+            headers={"Access-Control-Allow-Origin": "*"},
         )
 
     s3_client_ctx = s3._get_client()
@@ -272,7 +286,7 @@ routes = [
     Route(
         "/coursera-assets/{path:path}",
         endpoint=proxy_media,
-        methods=["GET", "HEAD", "OPTIONS"],
+        methods=["GET", "HEAD", "PUT", "OPTIONS"],
     ),
 ]
 
@@ -283,14 +297,8 @@ middleware = [
         CORSMiddleware,
         allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
         allow_credentials=True,
-        allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=[
-            "connect-protocol-version",
-            "content-type",
-            "authorization",
-            "cookie",
-            "x-request-id",
-        ],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
         expose_headers=[
             "connect-error-info",
             "connect-protocol-version",

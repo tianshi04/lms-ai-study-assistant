@@ -23,7 +23,7 @@ export function CourseCatalogClient() {
   const [sortBy, setSortBy] = useState("");
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 500);
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 200);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
@@ -169,7 +169,7 @@ export function CourseCatalogClient() {
                 type="button"
                 variant={subject === s.id ? "secondary" : "outline"}
                 size="sm"
-                onClick={() => setSubject(s.id)}
+                onClick={() => setSubject(subject === s.id ? "" : s.id)}
                 className={`rounded-full text-xs font-bold ${
                   subject === s.id
                     ? "bg-secondary-container text-on-secondary-container border-secondary-container shadow-xs"
@@ -205,7 +205,7 @@ export function CourseCatalogClient() {
                 type="button"
                 variant={level === l.id ? "secondary" : "outline"}
                 size="sm"
-                onClick={() => setLevel(l.id)}
+                onClick={() => setLevel(level === l.id ? "" : l.id)}
                 className={`rounded-full text-xs font-bold ${
                   level === l.id
                     ? "bg-secondary-container text-on-secondary-container border-secondary-container shadow-xs"

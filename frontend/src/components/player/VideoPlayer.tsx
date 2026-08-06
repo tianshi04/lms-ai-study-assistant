@@ -1,6 +1,6 @@
 "use client";
 
-import { RefObject, useState } from "react";
+import { RefObject, useState, useEffect, useRef } from "react";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
 import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
@@ -75,10 +75,80 @@ export function VideoPlayer({
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     const ccParam = autoTranscribe ? "&cc_load_policy=1" : "";
+    // Added origin for postMessage API to work correctly
     return match && match[2].length === 11
-      ? `https://www.youtube.com/embed/${match[2]}?enablejsapi=1${ccParam}`
+      ? `https://www.youtube.com/embed/${match[2]}?enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}${ccParam}`
       : null;
   }
+
+  const ytPlayerRef = useRef<any>(null);
+  const youtubeEmbedUrl = activeItem?.videoUrl
+    ? getYouTubeEmbedUrl(activeItem.videoUrl, activeItem.autoTranscribe)
+    : null;
+
+  // Initialize YouTube IFrame API and proxy the videoRef
+  useEffect(() => {
+    if (!youtubeEmbedUrl || !activeItem) return;
+
+    // Intercept videoRef to provide a fake HTMLVideoElement interface for YouTube
+    if (videoRef && !videoRef.current) {
+      (videoRef as any).current = {
+        _currentTime: 0,
+        get currentTime() { return this._currentTime; },
+        set currentTime(val: number) { 
+          this._currentTime = val; 
+          ytPlayerRef.current?.seekTo(val, true); 
+        },
+        duration: 0,
+        pause: () => ytPlayerRef.current?.pauseVideo(),
+        play: () => ytPlayerRef.current?.playVideo()
+      };
+    }
+
+    const initPlayer = () => {
+      ytPlayerRef.current = new (window as any).YT.Player(`yt-player-${activeItem.id}`, {
+        events: {
+          'onReady': (event: any) => {
+             const interval = setInterval(() => {
+               if (videoRef.current && ytPlayerRef.current && event.target.getCurrentTime) {
+                 const time = event.target.getCurrentTime();
+                 // update proxy value
+                 (videoRef.current as any)._currentTime = time;
+                 (videoRef.current as any).duration = event.target.getDuration();
+                 onTimeUpdate();
+               }
+             }, 500);
+             ytPlayerRef.current._timeInterval = interval;
+          },
+          'onStateChange': (event: any) => {
+             if (event.data === 0) { // ENDED
+               onMarkComplete?.(activeItem.id);
+             }
+          }
+        }
+      });
+    };
+
+    if ((window as any).YT && (window as any).YT.Player) {
+      // Delay initialization slightly to ensure the iframe is mounted in DOM
+      setTimeout(initPlayer, 100);
+    } else {
+      (window as any).onYouTubeIframeAPIReady = () => setTimeout(initPlayer, 100);
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    }
+
+    return () => {
+      if (ytPlayerRef.current) {
+         clearInterval(ytPlayerRef.current._timeInterval);
+         if (ytPlayerRef.current.destroy) {
+            ytPlayerRef.current.destroy();
+         }
+      }
+    };
+  }, [youtubeEmbedUrl, activeItem?.id, videoRef, onTimeUpdate, onMarkComplete]);
 
   function renderLessonContent() {
     if (!activeItem) return null;
@@ -173,15 +243,13 @@ export function VideoPlayer({
     }
 
     // 5. Video Item Default Fallback
-    const youtubeEmbedUrl = activeItem.videoUrl
-      ? getYouTubeEmbedUrl(activeItem.videoUrl, activeItem.autoTranscribe)
-      : null;
 
     return (
       <div className="w-full flex flex-col gap-3 min-h-0">
         <div className="w-full aspect-video max-h-[62vh] relative flex items-center justify-center bg-surface-container-high rounded-2xl overflow-hidden shadow-xs transition-colors duration-m3-short-4 ease-m3-emphasized">
           {youtubeEmbedUrl ? (
             <iframe
+              id={`yt-player-${activeItem.id}`}
               key={activeItem.id}
               src={youtubeEmbedUrl}
               title={activeItem.title || "Video bài giảng"}
@@ -195,13 +263,18 @@ export function VideoPlayer({
               ref={videoRef}
               src={activeItem.videoUrl}
               controls
+              playsInline
               onTimeUpdate={onTimeUpdate}
               onSeeking={onSeeking}
               onEnded={() => onMarkComplete?.(activeItem.id)}
               aria-label={activeItem.title || "Video bài giảng"}
               className="w-full h-full object-contain rounded-2xl"
             >
+<<<<<<< HEAD
               <track kind="captions" src="" label="Phụ đề" />
+=======
+              <track src="/internet-sample.vtt" kind="subtitles" srcLang="en" label="English" default />
+>>>>>>> 14d2db9 (fix(storage/catalog): fix R2 proxy upload CORS, Next.js 16 prerender error, and IPv6 lookup timeouts)
             </video>
           )}
 
