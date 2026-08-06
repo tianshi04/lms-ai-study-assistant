@@ -6,6 +6,9 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Optional
 
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
 from sqlalchemy import select, update
 
 from src.modules.identity.domain.entities import (
@@ -44,9 +47,6 @@ from src.modules.identity.application.review_application_usecase import (
 )
 
 
-import base64
-import json
-
 from src.modules.learning.domain.repository import ILearningRepository
 from src.shared.auth import (
     CurrentUser,
@@ -60,9 +60,9 @@ from src.shared.infrastructure.database import async_session_scope
 logger = logging.getLogger(__name__)
 
 
-def _parse_google_id_token(id_token: str) -> dict[str, str]:
-    if id_token.startswith("mock_google_"):
-        raw = id_token[len("mock_google_") :]
+def _parse_google_id_token(token: str) -> dict[str, str]:
+    if token.startswith("mock_google_"):
+        raw = token[len("mock_google_") :]
         parts = raw.rsplit("_", 1)
         email = parts[0] if parts else "user@gmail.com"
         name = parts[1] if len(parts) > 1 else "Google User"
@@ -75,28 +75,28 @@ def _parse_google_id_token(id_token: str) -> dict[str, str]:
         }
 
     try:
-        parts = id_token.split(".")
-        if len(parts) == 3:
-            payload_b64 = parts[1]
-            payload_b64 += "=" * (-len(payload_b64) % 4)
-            payload_bytes = base64.urlsafe_b64decode(payload_b64)
-            payload = json.loads(payload_bytes.decode("utf-8"))
-            return {
-                "google_id": payload.get("sub", ""),
-                "email": payload.get("email", ""),
-                "name": payload.get("name", payload.get("email", "").split("@")[0]),
-                "picture": payload.get("picture", ""),
-            }
-    except Exception as e:
-        logger.warning("Failed to decode Google ID Token: %s", e)
+        client_id = os.getenv("NEXT_PUBLIC_GOOGLE_CLIENT_ID") or os.getenv(
+            "GOOGLE_CLIENT_ID"
+        )
+        if not client_id:
+            logger.warning(
+                "GOOGLE_CLIENT_ID is not set in backend! Token verification might fail or be insecure if audience is not checked."
+            )
 
-    email = "google.user@example.com"
-    return {
-        "google_id": f"google_id_{hashlib.md5(id_token.encode()).hexdigest()[:12]}",
-        "email": email,
-        "name": "Google User",
-        "picture": f"https://api.dicebear.com/7.x/avataaars/svg?seed={email}",
-    }
+        # Verify the token using Google's library. This checks signature, expiration, and audience (client_id).
+        payload = id_token.verify_oauth2_token(token, requests.Request(), client_id)
+
+        return {
+            "google_id": payload.get("sub", ""),
+            "email": payload.get("email", ""),
+            "name": payload.get("name", payload.get("email", "").split("@")[0]),
+            "picture": payload.get("picture", ""),
+        }
+    except ValueError as e:
+        logger.error("Failed to decode and verify Google ID Token: %s", e)
+        raise ValueError("Token Google không hợp lệ hoặc đã hết hạn.")
+
+    raise ValueError("Token Google không hợp lệ.")
 
 
 def hash_password(password: str, salt: Optional[bytes] = None) -> str:
