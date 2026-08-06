@@ -1,0 +1,188 @@
+{
+  "question_banks": [
+    {
+      "id": "qb-demo-client-components",
+      "course_id": "demo-course-1",
+      "title": "React Server vs Client Components",
+      "category": "PRACTICE",
+      "description": "Kiểm tra kiến thức về Server và Client Components trong Next.js App Router.",
+      "questions": [
+        {
+          "id": "q-demo-1",
+          "text": "Đâu là đặc điểm chính của Server Components trong Next.js 13+?",
+          "question_type": "SINGLE_CHOICE",
+          "difficulty": "EASY",
+          "explanation": "Server Components render sẵn HTML trên Server, gửi zero JS payload về Client, giúp tăng tốc độ load và SEO.",
+          "options": [
+            {
+              "id": "opt-1-1",
+              "option_text": "Cần phải import useState để hoạt động",
+              "is_correct": false,
+              "order_index": 1
+            },
+            {
+              "id": "opt-1-2",
+              "option_text": "Không gửi JavaScript về phía Client, render trên Server",
+              "is_correct": true,
+              "order_index": 2
+            },
+            {
+              "id": "opt-1-3",
+              "option_text": "Bắt buộc khai báo 'use client'",
+              "is_correct": false,
+              "order_index": 3
+            },
+            {
+              "id": "opt-1-4",
+              "option_text": "Chỉ chạy được trên trình duyệt",
+              "is_correct": false,
+              "order_index": 4
+            }
+          ]
+        },
+        {
+          "id": "q-demo-2",
+          "text": "Khi nào bạn BẮT BUỘC phải dùng Client Component ('use client')?",
+          "question_type": "SINGLE_CHOICE",
+          "difficulty": "MEDIUM",
+          "explanation": "Bất kỳ tương tác nào của người dùng (onClick, onChange) hoặc hooks (useState, useEffect) đều yêu cầu Client Component.",
+          "options": [
+            {
+              "id": "opt-2-1",
+              "option_text": "Khi cần fetch dữ liệu từ Database",
+              "is_correct": false,
+              "order_index": 1
+            },
+            {
+              "id": "opt-2-2",
+              "option_text": "Khi muốn SEO tốt hơn",
+              "is_correct": false,
+              "order_index": 2
+            },
+            {
+              "id": "opt-2-3",
+              "option_text": "Khi sử dụng các React hooks như useState, useEffect hoặc event listeners (onClick)",
+              "is_correct": true,
+              "order_index": 3
+            },
+            {
+              "id": "opt-2-4",
+              "option_text": "Khi định nghĩa layout.tsx",
+              "is_correct": false,
+              "order_index": 4
+            }
+          ]
+        },
+        {
+          "id": "q-demo-3",
+          "text": "Next.js mặc định các component nằm trong thư mục `app` là loại Component nào?",
+          "question_type": "SINGLE_CHOICE",
+          "difficulty": "EASY",
+          "explanation": "Tất cả các component trong thư mục `app` mặc định là Server Components trừ khi khai báo 'use client'.",
+          "options": [
+            {
+              "id": "opt-3-1",
+              "option_text": "Client Components",
+              "is_correct": false,
+              "order_index": 1
+            },
+            {
+              "id": "opt-3-2",
+              "option_text": "Server Components",
+              "is_correct": true,
+              "order_index": 2
+            },
+            {
+              "id": "opt-3-3",
+              "option_text": "Static Components",
+              "is_correct": false,
+              "order_index": 3
+            },
+            {
+              "id": "opt-3-4",
+              "option_text": "Edge Components",
+              "is_correct": false,
+              "order_index": 4
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "quiz_matrices": [
+    {
+      "item_id": "demo-item-quiz-1",
+      "bank_id": "qb-demo-client-components",
+      "time_limit_minutes": 15,
+      "passing_threshold_percent": 60.0,
+      "easy_count": 2,
+      "medium_count": 1,
+      "hard_count": 0,
+      "shuffle_options": true,
+      "max_attempts": 3,
+      "cooldown_hours": 12
+    }
+  ],
+  "quiz_submissions": [
+    {
+      "id": "sub-demo-active",
+      "user_id": "demo_active_learner",
+      "item_id": "demo-item-quiz-1",
+      "selected_option_indexes": [3, 2, 0],
+      "score_percent": 100.0,
+      "passed": true,
+      "attempt_number": 1
+    }
+  ],
+  "lab_submissions": [
+    {
+      "id": "29ed6857fbec40c1ab1d847b65a25ddf",
+      "user_id": "demo_active_learner",
+      "item_id": "demo-item-lab-1",
+      "source_code": "import json\nimport urllib.request\n\ndef fetch_posts():\n    req = urllib.request.Request('https://jsonplaceholder.typicode.com/posts')\n    with urllib.request.urlopen(req) as response:\n        data = json.loads(response.read())\n        return data\n",
+      "language": "python",
+      "score_percent": 100.0,
+      "passed": true,
+      "total_test_cases": 1,
+      "passed_test_cases": 1,
+      "test_logs": "Test Passed: fetch_posts() returned a valid list of dictionaries."
+    }
+  ],
+  "peer_assignments": [
+    {
+      "id": "pa-demo-1",
+      "user_id": "demo_active_learner",
+      "item_id": "demo-item-peer-1",
+      "submission_url": "https://github.com/nguyenthanhphong/nextjs-blog-project",
+      "text_content": "Dự án cuối khóa: Blog xây dựng bằng Next.js App Router. Dữ liệu được fetch qua SSG.",
+      "final_score": 90.0,
+      "graded_by_staff": false
+    }
+  ],
+  "peer_reviews": [
+    {
+      "id": "19c9a577838f40ec905134197082f2b9",
+      "submission_id": "pa-demo-1",
+      "reviewer_user_id": "demo_passive_learner",
+      "item_id": "demo-item-peer-1",
+      "total_score": 90.0,
+      "is_outlier": false,
+      "rubric_criteria": [
+        {
+          "criteria_id": "ui-ux",
+          "title": "Giao diện UI/UX",
+          "max_score": 40.0,
+          "score_given": 35.0,
+          "feedback": "Giao diện đẹp mắt, dùng Tailwind rất chuẩn, tuy nhiên cần cải thiện khoảng cách trên Mobile."
+        },
+        {
+          "criteria_id": "fetch-data",
+          "title": "Fetch Data hợp lệ",
+          "max_score": 60.0,
+          "score_given": 55.0,
+          "feedback": "Code clean, dùng SSR fetch đúng chuẩn Next.js."
+        }
+      ]
+    }
+  ]
+}
