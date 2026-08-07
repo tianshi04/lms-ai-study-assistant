@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 import "@/app/globals.css";
 
@@ -56,13 +57,13 @@ export default function GlobalError({
               Tải lại trang
             </button>
 
-            <a
+            <Link
               href="/"
               className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-full border border-outline text-primary font-medium hover:bg-primary/10 transition-colors duration-m3-short-4 ease-m3-emphasized cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Home className="w-4 h-4 mr-2" aria-hidden="true" />
               Về Trang Chủ
-            </a>
+            </Link>
           </div>
         </main>
       </body>
