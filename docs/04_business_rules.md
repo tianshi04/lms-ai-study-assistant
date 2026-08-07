@@ -93,6 +93,9 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * *Tầng Trạng thái Hiện tại (`organization_members`):* Quản lý trạng thái gia nhập hiện tại (`ACTIVE`) của thành viên nhằm tối ưu tốc độ truy vấn phân quyền ($O(1)$ index lookup).
   * *Tầng Nhật ký Bất biến (`organization_audit_logs`):* Tự động lưu vết chuỗi sự kiện không thể thay thế/sửa xóa (Append-Only Log) cho tất cả các biến động nhân sự: gia nhập (`MEMBER_JOINED`), tự rời (`MEMBER_LEFT`), bị loại bỏ (`MEMBER_KICKED`) và thay đổi vai trò (`ROLE_CHANGED`).
   * *Bảo toàn Lịch sử Ra/Vào:* Mỗi bản ghi audit log ghi nhận đầy đủ mốc thời gian ISO8601, ID người thực hiện (Actor ID), ID người chịu tác động (Target User ID) và thông tin chi tiết. Dù người dùng rời và gia nhập lại nhiều lần, toàn bộ vết lịch sử quá khứ đều được bảo toàn 100%.
+* **BR_COURSE_003 (Nhật ký Bất biến Thành viên Đội ngũ Giảng dạy Khóa học - Course Audit Log System):**
+  * *Tầng Nhật ký Bất biến (`course_audit_logs`):* Tự động ghi vết sự kiện cho toàn bộ các thao tác thay đổi đội ngũ giảng dạy khóa học: chấp nhận gia nhập qua lời mời (`COLLABORATOR_JOINED`), được thêm trực tiếp (`COLLABORATOR_ADDED`), tự rút tên (`COLLABORATOR_REMOVED` - Self Leave), bị loại bỏ bởi Owner (`COLLABORATOR_REMOVED` - Kicked).
+  * *Kiểm tra Thẩm quyền Tra cứu:* Chỉ Giảng viên chính sở hữu khóa học (`owner_id`), Giảng viên đồng hành (`co_instructor_ids`) hoặc Admin mới có quyền gọi `ListCourseAuditLogs` để xem nhật ký lịch sử.
 
 ---
 

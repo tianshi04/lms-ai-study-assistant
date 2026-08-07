@@ -1136,8 +1136,25 @@ export function useRemoveCourseCollaboratorMutation(
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["courseCollaborators", variables.courseId] });
       queryClient.invalidateQueries({ queryKey: ["courseDetail", variables.courseId] });
+      queryClient.invalidateQueries({ queryKey: ["courseAuditLogs", variables.courseId] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
+  });
+}
+
+/**
+ * Hook danh sách nhật ký lịch sử khóa học (Course Audit Logs)
+ */
+export function useListCourseAuditLogsQuery(courseId: string) {
+  return useQuery({
+    queryKey: ["courseAuditLogs", courseId],
+    queryFn: async () => {
+      if (!courseId) return [];
+      const client = getRpcClient(CatalogService);
+      const res = await client.listCourseAuditLogs({ courseId });
+      return res.logs;
+    },
+    enabled: Boolean(courseId),
   });
 }
 

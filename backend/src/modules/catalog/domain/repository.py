@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Any
 
 from src.modules.catalog.domain.entities import (
     Category,
@@ -275,4 +276,19 @@ class ICatalogRepository(ABC):
     async def list_course_collaborators_with_details(
         self, course_id: str
     ) -> list[dict]:
+        pass
+
+    @abstractmethod
+    async def create_audit_log(
+        self,
+        course_id: str,
+        actor_id: str,
+        target_user_id: str,
+        action: str,
+        details: str = "",
+    ) -> Any:
+        pass
+
+    @abstractmethod
+    async def list_audit_logs(self, course_id: str, limit: int = 100) -> list[dict]:
         pass

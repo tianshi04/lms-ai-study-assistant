@@ -982,3 +982,48 @@ class CatalogHandler(CatalogService):
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
         except ValueError as e:
             raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
+    async def list_course_audit_logs(
+        self,
+        request: pb.ListCourseAuditLogsRequest,
+        ctx: RequestContext[
+            pb.ListCourseAuditLogsRequest,
+            pb.ListCourseAuditLogsResponse,
+        ],
+    ) -> pb.ListCourseAuditLogsResponse:
+        user = require_current_user()
+        try:
+            logs = await self.use_case.list_course_audit_logs(
+                course_id=request.course_id.strip(), current_user=user
+            )
+            pb_logs = []
+            for item in logs:
+                action_str = item.get("action", "")
+                action_enum = pb.CourseAuditAction.UNSPECIFIED
+                if "JOINED" in action_str:
+                    action_enum = pb.CourseAuditAction.COLLABORATOR_JOINED
+                elif "ADDED" in action_str:
+                    action_enum = pb.CourseAuditAction.COLLABORATOR_ADDED
+                elif "REMOVED" in action_str:
+                    action_enum = pb.CourseAuditAction.COLLABORATOR_REMOVED
+                elif "ROLE" in action_str:
+                    action_enum = pb.CourseAuditAction.ROLE_CHANGED
+
+                pb_logs.append(
+                    pb.CourseAuditLog(
+                        id=item.get("id", ""),
+                        course_id=item.get("course_id", ""),
+                        actor_id=item.get("actor_id", ""),
+                        actor_name=item.get("actor_name", ""),
+                        target_user_id=item.get("target_user_id", ""),
+                        target_user_name=item.get("target_user_name", ""),
+                        action=action_enum,
+                        details=item.get("details", ""),
+                        created_at=item.get("created_at", ""),
+                    )
+                )
+            return pb.ListCourseAuditLogsResponse(logs=pb_logs)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))

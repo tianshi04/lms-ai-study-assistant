@@ -1239,6 +1239,14 @@ class CatalogUseCase:
 
             await repo.add_course_collaborator(course_id, target_user.id, clean_role)
 
+            await repo.create_audit_log(
+                course_id=course_id,
+                actor_id=current_user.id if current_user else "system",
+                target_user_id=target_user.id,
+                action="COURSE_AUDIT_ACTION_COLLABORATOR_ADDED",
+                details=f"Được thêm vào khóa học với vai trò {clean_role.upper()}",
+            )
+
             collabs = await repo.list_course_collaborators_with_details(course_id)
             updated_course = await repo.get_course_detail(course_id)
             co_instructor_ids = (
@@ -1286,9 +1294,42 @@ class CatalogUseCase:
             await self._verify_course_owner_permission(
                 repo, course_id, current_user, "xóa người hợp tác khỏi khóa học"
             )
+            is_self = current_user and current_user.id == user_id
+            actor_id = current_user.id if current_user else "system"
+            if is_self:
+                action_str = "COURSE_AUDIT_ACTION_COLLABORATOR_REMOVED"
+                details_str = "Thành viên tự rút tên khỏi khóa học"
+            else:
+                action_str = "COURSE_AUDIT_ACTION_COLLABORATOR_REMOVED"
+                actor_name = (
+                    current_user.full_name or current_user.email
+                    if current_user
+                    else "Quản trị viên"
+                )
+                details_str = f"Bị loại bỏ khỏi khóa học bởi {actor_name}"
+
             success = await repo.remove_course_collaborator(course_id, user_id)
+            if success:
+                await repo.create_audit_log(
+                    course_id=course_id,
+                    actor_id=actor_id,
+                    target_user_id=user_id,
+                    action=action_str,
+                    details=details_str,
+                )
+
             updated_course = await repo.get_course_detail(course_id)
             co_instructor_ids = (
                 updated_course.co_instructor_ids if updated_course else []
             )
             return {"success": success, "co_instructor_ids": co_instructor_ids}
+
+    async def list_course_audit_logs(
+        self, course_id: str, current_user: CurrentUser | None = None
+    ) -> list[dict]:
+        async with async_session_scope() as session:
+            repo = self.repo_factory(session)
+            await self._verify_course_owner_permission(
+                repo, course_id, current_user, "xem nhật ký lịch sử khóa học"
+            )
+            return await repo.list_audit_logs(course_id)

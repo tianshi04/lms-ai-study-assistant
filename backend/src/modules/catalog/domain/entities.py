@@ -28,12 +28,33 @@ class CourseRole(str, Enum):
     COURSE_TA = "COURSE_TA"
 
 
+class CourseAuditAction(str, Enum):
+    UNSPECIFIED = "COURSE_AUDIT_ACTION_UNSPECIFIED"
+    COLLABORATOR_JOINED = "COURSE_AUDIT_ACTION_COLLABORATOR_JOINED"
+    COLLABORATOR_ADDED = "COURSE_AUDIT_ACTION_COLLABORATOR_ADDED"
+    COLLABORATOR_REMOVED = "COURSE_AUDIT_ACTION_COLLABORATOR_REMOVED"
+    ROLE_CHANGED = "COURSE_AUDIT_ACTION_ROLE_CHANGED"
+
+
 @dataclass
 class CourseCollaborator:
     id: str
     course_id: str
     user_id: str
     role: CourseRole
+    created_at: str = ""
+
+
+@dataclass
+class CourseAuditLog:
+    id: str
+    course_id: str
+    actor_id: str
+    target_user_id: str
+    action: CourseAuditAction
+    actor_name: str = ""
+    target_user_name: str = ""
+    details: str = ""
     created_at: str = ""
 
 

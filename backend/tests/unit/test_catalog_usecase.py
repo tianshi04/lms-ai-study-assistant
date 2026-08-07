@@ -1,6 +1,7 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
+from src.shared.auth import CurrentUser
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 from src.modules.catalog.domain.entities import Course, Lesson, Specialization
 
@@ -458,3 +459,30 @@ async def test_import_course_from_scorm_standard(
             scorm_object_key="some-key", course_id="c1", current_user=None
         )
     assert "Level 2" in str(exc.value)
+
+
+@pytest.mark.asyncio
+@patch("src.modules.catalog.application.catalog_usecase.async_session_scope")
+async def test_remove_course_collaborator_audit_log(
+    mock_scope, catalog_usecase, mock_repo, mock_session
+):
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    mock_repo.get_course_detail.return_value = MagicMock(
+        owner_id="owner_1", co_instructor_ids=[]
+    )
+    mock_repo.remove_course_collaborator.return_value = True
+
+    owner = CurrentUser(
+        id="owner_1", email="owner@test.com", full_name="Owner", role="INSTRUCTOR"
+    )
+    res = await catalog_usecase.remove_course_collaborator(
+        course_id="c1", user_id="user_2", current_user=owner
+    )
+    assert res["success"] is True
+    mock_repo.create_audit_log.assert_called_once()
+    call_kwargs = mock_repo.create_audit_log.call_args[1]
+    assert call_kwargs["action"] == "COURSE_AUDIT_ACTION_COLLABORATOR_REMOVED"
+    assert call_kwargs["target_user_id"] == "user_2"

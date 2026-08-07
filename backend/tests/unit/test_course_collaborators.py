@@ -46,6 +46,11 @@ async def test_add_course_collaborator_success():
             return_value=True,
         ) as mock_add,
         patch(
+            "src.modules.catalog.infrastructure.repository.SQLAlchemyCatalogRepository.create_audit_log",
+            new_callable=AsyncMock,
+            return_value=True,
+        ),
+        patch(
             "src.modules.catalog.infrastructure.repository.SQLAlchemyCatalogRepository.list_course_collaborators_with_details",
             new_callable=AsyncMock,
             return_value=[
@@ -157,6 +162,11 @@ async def test_list_and_remove_course_collaborator():
         ),
         patch(
             "src.modules.catalog.infrastructure.repository.SQLAlchemyCatalogRepository.remove_course_collaborator",
+            new_callable=AsyncMock,
+            return_value=True,
+        ),
+        patch(
+            "src.modules.catalog.infrastructure.repository.SQLAlchemyCatalogRepository.create_audit_log",
             new_callable=AsyncMock,
             return_value=True,
         ),

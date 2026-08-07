@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.modules.identity.infrastructure.models import UserModel
 from src.modules.catalog.domain.entities import (
     Course,
     CourseAnnouncement,
@@ -25,6 +26,7 @@ from src.modules.catalog.domain.entities import (
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.models import (
     CourseAnnouncementModel,
+    CourseAuditLogModel,
     CourseCollaboratorModel,
     CourseModel,
     CourseReviewModel,
@@ -1236,6 +1238,73 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                     "avatar_url": user_model.avatar_url or "",
                     "role": collab_model.role,
                     "added_at": collab_model.created_at or "",
+                }
+            )
+        return result
+
+    async def create_audit_log(
+        self,
+        course_id: str,
+        actor_id: str,
+        target_user_id: str,
+        action: str,
+        details: str = "",
+    ) -> CourseAuditLogModel:
+        now_str = datetime.now(timezone.utc).isoformat()
+        log_model = CourseAuditLogModel(
+            id=f"calog_{uuid.uuid4().hex[:12]}",
+            course_id=course_id,
+            actor_id=actor_id,
+            target_user_id=target_user_id,
+            action=action,
+            details=details,
+            created_at=now_str,
+        )
+        self.session.add(log_model)
+        await self.session.flush()
+        return log_model
+
+    async def list_audit_logs(self, course_id: str, limit: int = 100) -> list[dict]:
+        stmt = (
+            select(CourseAuditLogModel)
+            .where(CourseAuditLogModel.course_id == course_id)
+            .order_by(CourseAuditLogModel.created_at.desc())
+            .limit(limit)
+        )
+        res = await self.session.execute(stmt)
+        logs = res.scalars().all()
+        if not logs:
+            return []
+
+        user_ids = set()
+        for item in logs:
+            user_ids.add(item.actor_id)
+            user_ids.add(item.target_user_id)
+
+        user_names = {}
+        if user_ids:
+            user_stmt = select(UserModel.id, UserModel.full_name).where(
+                UserModel.id.in_(list(user_ids))
+            )
+            user_res = await self.session.execute(user_stmt)
+            for uid, fname in user_res.all():
+                user_names[uid] = fname
+
+        result = []
+        for item in logs:
+            result.append(
+                {
+                    "id": item.id,
+                    "course_id": item.course_id,
+                    "actor_id": item.actor_id,
+                    "actor_name": user_names.get(item.actor_id, "Hệ thống"),
+                    "target_user_id": item.target_user_id,
+                    "target_user_name": user_names.get(
+                        item.target_user_id, "Thành viên"
+                    ),
+                    "action": item.action,
+                    "details": item.details or "",
+                    "created_at": item.created_at,
                 }
             )
         return result

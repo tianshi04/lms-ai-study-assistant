@@ -1335,6 +1335,13 @@ class IdentityUseCase:
                     user_id=current_user.id,
                     role=inv.role_id or "co_instructor",
                 )
+                await cat_repo.create_audit_log(
+                    course_id=inv.target_id,
+                    actor_id=inv.inviter_id or current_user.id,
+                    target_user_id=current_user.id,
+                    action="COURSE_AUDIT_ACTION_COLLABORATOR_JOINED",
+                    details=f"Gia nhập đội ngũ giảng dạy với vai trò {(inv.role_id or 'co_instructor').upper()} qua lời mời.",
+                )
             elif "ENTERPRISE" in inv_type_str or "SEAT" in inv_type_str:
                 lic_key = inv.target_id
                 license_model = await session.get(EnterpriseLicenseModel, lic_key)
