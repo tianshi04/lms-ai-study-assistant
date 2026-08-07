@@ -1140,6 +1140,28 @@ class IdentityUseCase:
             )
 
             saved = await inv_repo.save(inv)
+
+            if invitee_id:
+                try:
+                    from src.modules.notification.application.use_cases import (
+                        NotificationUseCase,
+                    )
+                    from src.modules.notification.domain.constants import (
+                        NotificationCategory,
+                    )
+
+                    notif_uc = NotificationUseCase()
+                    await notif_uc.send_notification(
+                        recipient_id=invitee_id,
+                        category=NotificationCategory.SYSTEM,
+                        title=f"Lời mời tham gia {target_name}",
+                        content=f"{inviter_name} đã mời bạn tham gia {target_name} với vai trò {role_id or 'MEMBER'}.",
+                        action_url=f"/invitations/{raw_token}",
+                        actor_avatar_url=getattr(current_user, "avatar_url", "") or "",
+                    )
+                except Exception:
+                    pass
+
             res_dict = self._invitation_to_dict(saved)
             res_dict["token"] = raw_token
             return res_dict
