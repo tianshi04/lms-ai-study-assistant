@@ -93,6 +93,8 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
   * Người chưa có tài khoản bấm vào link lời mời `https://<domain>/invitations/<token>` sẽ được chuyển hướng tới trang chấp nhận công khai (`AUTH_POLICY_PUBLIC`).
   * Người dùng bấm nút **Đăng ký** sẽ tự động được điền sẵn Email và gắn kèm `invite_token`. Ngay sau khi đăng ký thành công, hệ thống tự động hoàn tất chấp nhận lời mời và cấp quyền ngay lập tức mà không cần người dùng thao tác lại.
   * Nếu đăng nhập sai email so với email trên lời mời, giao diện hiển thị cảnh báo đỏ yêu cầu chuyển đổi tài khoản.
+* **Tự động Phát Thông báo Hệ thống In-App (In-App Invitation Notification Dispatching):**
+  * Khi khởi tạo lời mời mới (`SendInvitation`), nếu email của người nhận trùng khớp với một tài khoản người dùng đã có sẵn trên hệ thống (`invitee_id`), hệ thống sẽ tự động gửi một thông báo danh mục `SYSTEM` trực tiếp tới tài khoản đó kèm đường dẫn liên kết `/invitations/{token}` để người dùng nhận được thông báo tức thì trên thanh điều hướng Header Navbar.
 
 ### 1.9. Quản lý & Rời Thành viên Tổ chức (Organization Member Management & Voluntary Leave)
 * **Khái niệm & Phạm vi Nghiệp vụ:** Cung cấp cơ chế quản lý tư cách thành viên nội bộ của Tổ chức Đối tác thông qua RPC `RemoveOrganizationMember`.
@@ -189,6 +191,8 @@ flowchart TD
   * Phụ đề cuộn tự động theo lời nói trong video. Bấm vào dòng phụ đề để nhảy đến giây video tương ứng.
   * Học viên có thể bôi đen (Highlight) từ/cụm từ trong phụ đề hoặc bài đọc để lưu lại thành **Ghi chú cá nhân (Personal Notes)**.
 * **In-Video Quiz Experience:** Video tự dừng tại mốc thời gian chèn quiz. Học viên chọn đáp án và bấm "Submit" để xem giải thích và tiếp tục xem video.
+* **Theo dõi & Lưu vết Tiến độ Bài học (Granular Item Completion Tracking):**
+  * Khi học viên hoàn thành bài học (xem video, đọc bài đọc hoặc thi quiz đạt điểm Pass), hệ thống lưu vết bản ghi trạng thái hoàn thành item (`user_item_completions`) với cặp khóa duy nhất `(user_id, item_id)` và thời điểm `completed_at` để tính toán phần trăm tiến độ hoàn thành khóa học chính xác và bảo lưu lâu dài.
 
 ### 3.2. Cơ chế Học tập Linh hoạt & Reset Deadlines (Flexible Weekly Schedule)
 * **Hạn nộp linh hoạt (Flexible Deadlines):** Mỗi tuần học có hạn nộp gợi ý (Suggested Deadlines) để học viên duy trì tiến độ.
