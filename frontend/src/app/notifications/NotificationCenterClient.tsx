@@ -108,7 +108,7 @@ export function NotificationCenterClient() {
                 type="button"
                 onClick={handleMarkAllAsRead}
                 disabled={markAllAsReadMutation.isPending}
-                className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-high text-primary hover:bg-primary-container/40 border border-outline-variant/40 transition-colors flex items-center gap-2 cursor-pointer"
+                className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-high text-primary hover:bg-primary-container/40 border border-outline-variant/40 transition-colors flex items-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {markAllAsReadMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
@@ -122,7 +122,7 @@ export function NotificationCenterClient() {
             <button
               type="button"
               onClick={() => setIsPrefModalOpen(true)}
-              className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-high text-on-surface hover:bg-surface-container-highest border border-outline-variant/40 transition-colors flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-high text-on-surface hover:bg-surface-container-highest border border-outline-variant/40 transition-colors flex items-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Settings className="w-4 h-4" aria-hidden="true" />
               <span>Cài đặt</span>
@@ -142,7 +142,7 @@ export function NotificationCenterClient() {
                   key={cat.id}
                   type="button"
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     isSelected
                       ? "bg-primary text-on-primary shadow-xs"
                       : "bg-surface-container-low text-on-surface-variant border border-outline-variant/40 hover:text-on-surface hover:bg-surface-container-high"
@@ -159,7 +159,7 @@ export function NotificationCenterClient() {
           <button
             type="button"
             onClick={() => setUnreadOnly(!unreadOnly)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors cursor-pointer border select-none self-end md:self-auto ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors cursor-pointer border select-none self-end md:self-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               unreadOnly
                 ? "bg-primary-container text-on-primary-container border-primary/40 shadow-2xs"
                 : "bg-surface-container-low text-on-surface-variant border-outline-variant/40 hover:bg-surface-container-high hover:text-on-surface"

@@ -106,24 +106,27 @@ export function WeekModuleCard({
         {isInstructorOrAdmin && (
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => onEditWeek(week)}
-              className="px-2.5 py-1.5 rounded-xl bg-muted text-foreground border border-border text-xs font-semibold hover:bg-muted/80 transition-colors flex items-center gap-1 cursor-pointer"
+              className="px-2.5 py-1.5 rounded-xl bg-muted text-foreground border border-border text-xs font-semibold hover:bg-muted/80 transition-colors flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{"Sửa Tuần"}</span>
             </button>
 
             <button
+              type="button"
               onClick={() => onDeleteWeek(week.id, week.title)}
-              className="px-2.5 py-1.5 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer"
+              className="px-2.5 py-1.5 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{"Xóa Tuần"}</span>
             </button>
 
             <button
+              type="button"
               onClick={() => onAddLesson(week.id)}
-              className="px-3.5 py-1.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Plus className="w-4 h-4 text-primary" aria-hidden="true" />
               <span>{"Thêm Bài học"}</span>

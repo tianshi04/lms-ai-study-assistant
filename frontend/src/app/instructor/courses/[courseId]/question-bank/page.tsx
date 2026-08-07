@@ -550,15 +550,14 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
             <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
               {"Tên Kho Ngân hàng Đề"} *
             </label>
-            <input
-              type="text"
+            <Input
               required
               value={newBankTitle}
               onChange={(e) => setNewBankTitle(e.target.value)}
               placeholder="Ví dụ: Kho thi kết thúc Tuần 1: Khái niệm AI"
               aria-label="Tên Kho Ngân hàng Đề"
               spellCheck={false}
-              className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-semibold focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="font-semibold"
             />
           </div>
 
@@ -745,7 +744,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                     type="checkbox"
                     checked={opt.isCorrect}
                     onChange={(e) => handleOptionCorrectChange(idx, e.target.checked)}
-                    className="w-4 h-4 text-primary rounded cursor-pointer"
+                    className="w-4 h-4 text-primary rounded cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     title="Đánh dấu phương án đúng"
                     aria-label={`Đánh dấu phương án ${idx + 1} là phương án đúng`}
                   />

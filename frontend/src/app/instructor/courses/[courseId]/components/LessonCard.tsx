@@ -91,24 +91,27 @@ export function LessonCard({
         {isInstructorOrAdmin && (
           <div className="flex items-center gap-1.5">
             <button
+              type="button"
               onClick={() => onEditLesson(lesson)}
-              className="px-2 py-1 rounded-lg bg-muted text-foreground text-[11px] font-semibold hover:bg-muted/80 transition-colors flex items-center gap-1 cursor-pointer"
+              className="px-2 py-1 rounded-lg bg-muted text-foreground text-[11px] font-semibold hover:bg-muted/80 transition-colors flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Pencil className="w-3 h-3" aria-hidden="true" />
               <span>{"Sửa Bài"}</span>
             </button>
 
             <button
+              type="button"
               onClick={() => onDeleteLesson(lesson.id, lesson.title)}
-              className="px-2 py-1 rounded-lg bg-destructive/10 text-destructive text-[11px] font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer"
+              className="px-2 py-1 rounded-lg bg-destructive/10 text-destructive text-[11px] font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Trash2 className="w-3 h-3" aria-hidden="true" />
               <span>{"Xóa Bài"}</span>
             </button>
 
             <button
+              type="button"
               onClick={() => onAddItem(lesson.id)}
-              className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-bold hover:bg-primary/20 transition-colors flex items-center gap-1 cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-bold hover:bg-primary/20 transition-colors flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{"Thêm Học liệu"}</span>

@@ -10,6 +10,7 @@ import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
 import {
@@ -483,20 +484,13 @@ export default function InstructorCoursesPage() {
             onChange={(e) => setInstructorNames(e.target.value)}
           />
 
-          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-muted border border-border">
-            <input
-              type="checkbox"
+          <div className="p-3.5 rounded-2xl bg-muted border border-border">
+            <Checkbox
               id="financialAidToggle"
               checked={financialAidEnabled}
-              onChange={(e) => setFinancialAidEnabled(e.target.checked)}
-              className="w-4 h-4 text-primary rounded focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+              onCheckedChange={(checked) => setFinancialAidEnabled(Boolean(checked))}
+              label="Cho phép xin Hỗ trợ Tài chính (Financial Aid available)"
             />
-            <label
-              htmlFor="financialAidToggle"
-              className="text-xs font-bold text-foreground cursor-pointer"
-            >
-              {"Cho phép xin Hỗ trợ Tài chính (Financial Aid available)"}
-            </label>
           </div>
 
           <div className="pt-4 flex justify-end gap-3 border-t border-border">
