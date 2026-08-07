@@ -9,8 +9,8 @@ class LearningProgressModel(Base):
     __tablename__ = "learning_progresses"
 
     id: Mapped[str] = mapped_column(String(128), primary_key=True)  # user_id:course_id
-    user_id: Mapped[str] = mapped_column(String(64), nullable=False)
-    course_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    course_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     overall_progress_percent: Mapped[float] = mapped_column(
         Float, nullable=False, default=0.0
     )
@@ -35,6 +35,7 @@ class WeeklyDeadlineModel(Base):
         String(128),
         ForeignKey("learning_progresses.id", ondelete="CASCADE"),
         nullable=False,
+        index=True,
     )
     week_number: Mapped[int] = mapped_column(Integer, nullable=False)
     due_date: Mapped[str] = mapped_column(String(32), nullable=False)
@@ -53,7 +54,7 @@ class PersonalNoteModel(Base):
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     course_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    item_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     highlighted_text: Mapped[str] = mapped_column(Text, nullable=False)
     note_comment: Mapped[str] = mapped_column(Text, nullable=False, default="")
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)

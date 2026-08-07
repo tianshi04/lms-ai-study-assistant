@@ -28,7 +28,7 @@ class ForumThreadORM(Base):
     )
     author_user_id: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     created_at: Mapped[str] = mapped_column(
-        String(100), nullable=False, default=utc_now_str
+        String(100), nullable=False, default=utc_now_str, index=True
     )
     upvote_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     is_staff_pinned: Mapped[bool] = mapped_column(
@@ -68,7 +68,7 @@ class ForumReplyORM(Base):
     )
     upvote_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     created_at: Mapped[str] = mapped_column(
-        String(100), nullable=False, default=utc_now_str
+        String(100), nullable=False, default=utc_now_str, index=True
     )
     is_edited: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     edited_at: Mapped[str] = mapped_column(String(100), nullable=False, default="")

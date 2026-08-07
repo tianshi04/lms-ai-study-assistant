@@ -36,7 +36,7 @@ class UserModel(Base):
     )
     avatar_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
     enterprise_seat_key: Mapped[Optional[str]] = mapped_column(
-        String(128), nullable=True
+        String(128), nullable=True, index=True
     )
     seat_assigned_at: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False, default="")
@@ -183,6 +183,8 @@ class InvitationModel(Base):
         String(64), nullable=False, unique=True, index=True
     )
     message: Mapped[str] = mapped_column(Text, nullable=False, default="")
-    expires_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    expires_at: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="", index=True
+    )
     created_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     responded_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")

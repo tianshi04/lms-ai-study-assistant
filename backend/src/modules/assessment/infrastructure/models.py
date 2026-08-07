@@ -176,7 +176,10 @@ class QuizMatrixModel(Base):
 
     item_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     bank_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("question_banks.id"), nullable=False
+        String(64),
+        ForeignKey("question_banks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     time_limit_minutes: Mapped[int] = mapped_column(
         Integer, nullable=False, default=DEFAULT_QUIZ_TIME_LIMIT_MINUTES

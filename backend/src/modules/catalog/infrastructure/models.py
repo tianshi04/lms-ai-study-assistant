@@ -4,6 +4,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     JSON,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -80,7 +81,7 @@ class CourseModel(Base):
         Boolean, nullable=False, default=True, server_default="true"
     )
     price: Mapped[float] = mapped_column(
-        Float, nullable=False, server_default="1190000.0"
+        Numeric(12, 2, asdecimal=False), nullable=False, server_default="1190000.0"
     )
     currency: Mapped[str] = mapped_column(
         String(8), nullable=False, server_default="VND"
@@ -116,7 +117,10 @@ class WeekModuleModel(Base):
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     course_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("courses.id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("courses.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     week_number: Mapped[int] = mapped_column(Integer, nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -138,7 +142,10 @@ class LessonModel(Base):
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     week_module_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("week_modules.id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("week_modules.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     estimated_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=30)
@@ -162,7 +169,10 @@ class LearningItemModel(Base):
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     lesson_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("lessons.id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("lessons.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     type: Mapped[ItemType] = mapped_column(
@@ -206,7 +216,10 @@ class InteractiveTranscriptModel(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     item_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("learning_items.id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("learning_items.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     timestamp_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
@@ -221,7 +234,10 @@ class InVideoQuizModel(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     item_id: Mapped[str] = mapped_column(
-        String(64), ForeignKey("learning_items.id", ondelete="CASCADE"), nullable=False
+        String(64),
+        ForeignKey("learning_items.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     timestamp_seconds: Mapped[int] = mapped_column(Integer, nullable=False)
     question: Mapped[str] = mapped_column(Text, nullable=False)

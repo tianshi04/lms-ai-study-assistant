@@ -1,6 +1,6 @@
 """SQLAlchemy ORM models for Payment module."""
 
-from sqlalchemy import Float, String, UniqueConstraint
+from sqlalchemy import Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.shared.infrastructure.database import Base
@@ -17,7 +17,9 @@ class CoursePurchaseModel(Base):
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     course_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    amount: Mapped[float] = mapped_column(
+        Numeric(12, 2, asdecimal=False), nullable=False
+    )
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VND")
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="COMPLETED")
     payment_method: Mapped[str] = mapped_column(
@@ -47,12 +49,14 @@ class PaymentOrderModel(Base):
         String(32), nullable=False
     )  # COURSE, PARTNER_MEMBERSHIP, SYSTEM_SUBSCRIPTION
     target_id: Mapped[str] = mapped_column(
-        String(64), nullable=False
+        String(64), nullable=False, index=True
     )  # course_id, partner_id, or COURSERA_PLUS
     plan_type: Mapped[str] = mapped_column(
         String(32), nullable=False, default="NONE"
     )  # NONE, MONTHLY, YEARLY
-    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    amount: Mapped[float] = mapped_column(
+        Numeric(12, 2, asdecimal=False), nullable=False
+    )
     currency: Mapped[str] = mapped_column(String(8), nullable=False, default="VND")
     status: Mapped[str] = mapped_column(
         String(32), nullable=False, default="PENDING", index=True
@@ -70,7 +74,7 @@ class PaymentTransactionModel(Base):
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     order_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     vnp_transaction_no: Mapped[str] = mapped_column(
-        String(64), nullable=False, default=""
+        String(64), nullable=False, default="", index=True
     )
     vnp_response_code: Mapped[str] = mapped_column(
         String(16), nullable=False, default=""
