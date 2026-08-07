@@ -29,7 +29,7 @@ export function RadioOption({
         ref={ref}
         id={radioId}
         className={cn(
-          "aspect-square h-5 w-5 rounded-full border border-input text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary flex items-center justify-center cursor-pointer transition-all duration-m3-short-4 ease-m3-emphasized mt-0.5",
+          "aspect-square h-5 w-5 rounded-full border border-input text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary flex items-center justify-center cursor-pointer transition-colors duration-m3-short-4 ease-m3-emphasized mt-0.5",
           className,
         )}
         {...props}

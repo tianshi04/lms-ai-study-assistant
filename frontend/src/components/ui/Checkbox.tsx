@@ -29,14 +29,14 @@ export function Checkbox({
       ref={ref}
       id={checkboxId}
       className={cn(
-        "peer h-5 w-5 shrink-0 rounded-md border border-input bg-background transition-all duration-m3-short-4 ease-m3-emphasized focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-primary-foreground flex items-center justify-center cursor-pointer",
+        "peer h-5 w-5 shrink-0 rounded-md border border-input bg-background transition-colors duration-m3-short-4 ease-m3-emphasized focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:border-primary data-[state=checked]:text-primary-foreground flex items-center justify-center cursor-pointer",
         error && "border-destructive focus-visible:ring-destructive/50",
         className,
       )}
       {...props}
     >
       <BaseCheckbox.Indicator className="flex items-center justify-center text-current">
-        <Check className="h-3.5 w-3.5 stroke-[3]" />
+        <Check aria-hidden="true" className="h-3.5 w-3.5 stroke-[3]" />
       </BaseCheckbox.Indicator>
     </BaseCheckbox.Root>
   );

@@ -38,7 +38,10 @@ export default function PartnerPublicPage() {
   if (!partner) {
     return (
       <div className="max-w-md mx-auto my-20 p-8 bg-card border border-border rounded-2xl text-center shadow-sm text-foreground">
-        <AlertTriangle className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+        <AlertTriangle
+          aria-hidden="true"
+          className="w-16 h-16 mx-auto text-muted-foreground mb-4"
+        />
         <h1 className="text-2xl font-bold text-foreground mb-2 text-balance">
           Không tìm thấy Đối tác
         </h1>
@@ -111,7 +114,7 @@ export default function PartnerPublicPage() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center text-sm text-primary hover:underline mt-2 font-medium"
                   >
-                    <ExternalLink className="w-4 h-4 mr-1.5" />
+                    <ExternalLink aria-hidden="true" className="w-4 h-4 mr-1.5" />
                     {partner.websiteUrl}
                   </a>
                 )}
@@ -166,7 +169,10 @@ export default function PartnerPublicPage() {
 
               {partnerCourses.length === 0 ? (
                 <div className="bg-card rounded-2xl p-12 text-center border border-border">
-                  <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                  <BookOpen
+                    aria-hidden="true"
+                    className="w-12 h-12 mx-auto text-muted-foreground mb-3"
+                  />
                   <p className="text-muted-foreground font-medium">
                     Hiện chưa có khóa học nào được phát hành bởi đối tác này.
                   </p>
@@ -177,7 +183,7 @@ export default function PartnerPublicPage() {
                     <div
                       key={course.id}
                       onClick={() => router.push(`/courses/${course.slug}`)}
-                      className="bg-card rounded-2xl border border-border p-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-all cursor-pointer flex flex-col justify-between"
+                      className="bg-card rounded-2xl border border-border p-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-colors cursor-pointer flex flex-col justify-between"
                     >
                       <div>
                         <div className="flex items-center space-x-2 mb-2">
@@ -188,10 +194,10 @@ export default function PartnerPublicPage() {
                             {course.level || "Cơ bản"}
                           </span>
                         </div>
-                        <h3 className="text-base font-bold text-foreground line-clamp-2 hover:text-primary transition-colors">
+                        <h3 className="text-base font-bold text-foreground min-w-0 line-clamp-2 hover:text-primary transition-colors">
                           {course.title}
                         </h3>
-                        <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                        <p className="text-xs text-muted-foreground mt-2 min-w-0 line-clamp-2">
                           {course.description}
                         </p>
                       </div>
@@ -229,7 +235,7 @@ export default function PartnerPublicPage() {
                     {partner.signerName ? (
                       partner.signerName.charAt(0).toUpperCase()
                     ) : (
-                      <PenTool className="w-6 h-6" />
+                      <PenTool aria-hidden="true" className="w-6 h-6" />
                     )}
                   </div>
                   <div>
@@ -274,7 +280,7 @@ export default function PartnerPublicPage() {
                       key={i}
                       className="inline-flex items-center gap-1.5 px-3 py-1 bg-muted text-foreground font-mono text-xs rounded-lg border border-border"
                     >
-                      <Globe className="w-3.5 h-3.5 text-primary" />
+                      <Globe aria-hidden="true" className="w-3.5 h-3.5 text-primary" />
                       {domain}
                     </span>
                   ))}
@@ -285,7 +291,7 @@ export default function PartnerPublicPage() {
             {/* OpenBadges Compliance Badge */}
             <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20">
               <div className="flex items-center space-x-3 mb-2">
-                <GraduationCap className="w-6 h-6 text-primary shrink-0" />
+                <GraduationCap aria-hidden="true" className="w-6 h-6 text-primary shrink-0" />
                 <h3 className="font-bold text-foreground text-sm">
                   Tương thích OpenBadges v2.0 / v3.0
                 </h3>

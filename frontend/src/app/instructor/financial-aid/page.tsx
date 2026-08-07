@@ -131,7 +131,7 @@ export default function InstructorFinancialAidPage() {
             href="/instructor/courses"
             className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 border border-border"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft aria-hidden="true" className="w-4 h-4" />
             <span>Quản lý Khóa học</span>
           </Link>
         </div>
@@ -157,7 +157,7 @@ export default function InstructorFinancialAidPage() {
         {/* Toast Alert Notification */}
         {toastMessage && (
           <div
-            className={`p-4 rounded-xl text-sm font-semibold flex items-center justify-between shadow-md transition-all ${
+            className={`p-4 rounded-xl text-sm font-semibold flex items-center justify-between shadow-md transition-colors ${
               toastMessage.type === "success"
                 ? "bg-success/10 text-success border border-success/30"
                 : "bg-destructive/10 text-destructive border border-destructive/30"
@@ -165,9 +165,9 @@ export default function InstructorFinancialAidPage() {
           >
             <div className="flex items-center gap-2">
               {toastMessage.type === "success" ? (
-                <Check className="w-5 h-5 text-success" />
+                <Check aria-hidden="true" className="w-5 h-5 text-success" />
               ) : (
-                <X className="w-5 h-5 text-destructive" />
+                <X aria-hidden="true" className="w-5 h-5 text-destructive" />
               )}
               <span>{toastMessage.text}</span>
             </div>
@@ -175,7 +175,7 @@ export default function InstructorFinancialAidPage() {
               onClick={() => setToastMessage(null)}
               className="p-1 rounded-md opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
             >
-              <X className="w-4 h-4" />
+              <X aria-hidden="true" className="w-4 h-4" />
             </button>
           </div>
         )}
@@ -184,7 +184,7 @@ export default function InstructorFinancialAidPage() {
         {isMounted && !isInstructorOrAdmin && (
           <div className="p-6 rounded-2xl bg-warning/10 border border-warning/30 text-warning">
             <h2 className="font-bold text-base flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
+              <AlertTriangle aria-hidden="true" className="w-5 h-5" />
               Quyền truy cập bị hạn chế
             </h2>
             <p className="text-sm mt-1">
@@ -207,7 +207,7 @@ export default function InstructorFinancialAidPage() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
                   activeTab === tab
                     ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                     : "bg-card text-muted-foreground hover:text-foreground border border-border"
@@ -229,7 +229,7 @@ export default function InstructorFinancialAidPage() {
           </div>
         ) : filteredApps.length === 0 ? (
           <div className="py-16 text-center bg-card rounded-2xl border border-border p-8">
-            <FileText className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+            <FileText aria-hidden="true" className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
             <p className="text-base font-bold text-foreground">
               Không có đơn nộp nào trong danh mục này
             </p>
@@ -242,7 +242,7 @@ export default function InstructorFinancialAidPage() {
             {filteredApps.map((app) => (
               <div
                 key={app.id}
-                className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-md transition-all space-y-4 text-foreground"
+                className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-md transition-colors space-y-4 text-foreground"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
                   <div className="space-y-1">
@@ -299,17 +299,17 @@ export default function InstructorFinancialAidPage() {
                     <button
                       onClick={() => handleReview(app.id, false)}
                       disabled={processingId === app.id}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-destructive bg-destructive/10 border border-destructive/30 hover:bg-destructive/20 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-destructive bg-destructive/10 border border-destructive/30 hover:bg-destructive/20 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                     >
-                      <X className="w-4 h-4" />
+                      <X aria-hidden="true" className="w-4 h-4" />
                       <span>{processingId === app.id ? "Đang xử lý…" : "Từ chối đơn"}</span>
                     </button>
                     <button
                       onClick={() => handleReview(app.id, true)}
                       disabled={processingId === app.id}
-                      className="px-5 py-2 rounded-xl text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover shadow-md shadow-primary/20 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      className="px-5 py-2 rounded-xl text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover shadow-md shadow-primary/20 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                     >
-                      <Check className="w-4 h-4" />
+                      <Check aria-hidden="true" className="w-4 h-4" />
                       <span>{processingId === app.id ? "Đang xử lý…" : "Phê duyệt đơn"}</span>
                     </button>
                   </div>

@@ -237,7 +237,7 @@ export default function AdminEnterpriseDashboardPage() {
         {/* Notification Toast */}
         {message && (
           <div
-            className={`p-4 rounded-2xl text-sm font-semibold flex items-center justify-between shadow-md transition-all ${
+            className={`p-4 rounded-2xl text-sm font-semibold flex items-center justify-between shadow-md transition-colors ${
               message.type === "success"
                 ? "bg-success/10 text-success border border-success/30"
                 : "bg-destructive/10 text-destructive border border-destructive/30"

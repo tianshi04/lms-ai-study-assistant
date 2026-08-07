@@ -279,7 +279,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
             onClick={() => setShowCreateBankModal(true)}
             className="px-5 py-3 rounded-xl font-bold text-sm shadow-md gap-2"
           >
-            <Plus className="w-4 h-4" />
+            <Plus aria-hidden="true" className="w-4 h-4" />
             <span>{"Tạo Kho Ngân hàng Đề"}</span>
           </Button>
         </Card>
@@ -311,7 +311,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                       <button
                         key={bank.id}
                         onClick={() => setSelectedBankId(bank.id)}
-                        className={`w-full text-left p-5 rounded-2xl border transition-all flex flex-col gap-1 cursor-pointer ${
+                        className={`w-full text-left p-5 rounded-2xl border transition-colors flex flex-col gap-1 cursor-pointer ${
                           isSelected
                             ? "bg-primary/10 border-primary ring-1 ring-primary"
                             : "bg-card border-border hover:border-muted-foreground/30"
@@ -333,12 +333,12 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                           {bank.title}
                         </h3>
                         {bank.description && (
-                          <p className="text-xs text-muted-foreground line-clamp-1">
+                          <p className="text-xs text-muted-foreground min-w-0 line-clamp-1">
                             {bank.description}
                           </p>
                         )}
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-2 border-t border-border pt-2 w-full">
-                          <HelpCircle className="w-3.5 h-3.5" />
+                          <HelpCircle aria-hidden="true" className="w-3.5 h-3.5" />
                           <span>{bank.questions?.length || 0} câu hỏi</span>
                         </div>
                       </button>
@@ -352,7 +352,10 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
             <div className="lg:col-span-8">
               {!selectedBank ? (
                 <div className="py-20 text-center bg-card rounded-3xl border border-border p-8 space-y-4">
-                  <FolderOpen className="w-16 h-16 mx-auto text-muted-foreground/40" />
+                  <FolderOpen
+                    aria-hidden="true"
+                    className="w-16 h-16 mx-auto text-muted-foreground/40"
+                  />
                   <div>
                     <h3 className="text-base font-bold text-foreground">
                       Chưa chọn Kho ngân hàng đề
@@ -402,7 +405,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                       }}
                       className="px-4 py-2.5 rounded-xl font-bold text-xs shadow-md gap-1.5 shrink-0"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus aria-hidden="true" className="w-4 h-4" />
                       <span>{"Thêm Câu hỏi vào Kho"}</span>
                     </Button>
                   </Card>
@@ -410,7 +413,10 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                   {/* Questions List */}
                   {!selectedBank.questions || selectedBank.questions.length === 0 ? (
                     <div className="py-16 text-center bg-card rounded-3xl border border-dashed border-border text-muted-foreground p-8 space-y-3">
-                      <HelpCircle className="w-10 h-10 mx-auto text-muted-foreground/50" />
+                      <HelpCircle
+                        aria-hidden="true"
+                        className="w-10 h-10 mx-auto text-muted-foreground/50"
+                      />
                       <p className="text-sm font-semibold">
                         {"Kho đề này chưa có câu hỏi nào. Hãy thêm câu hỏi đầu tiên!"}
                       </p>
@@ -461,7 +467,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                                     className="h-7 w-7 text-muted-foreground hover:text-primary"
                                     title="Sửa"
                                   >
-                                    <Pencil className="w-3.5 h-3.5" />
+                                    <Pencil aria-hidden="true" className="w-3.5 h-3.5" />
                                   </Button>
                                   <Button
                                     variant="ghost"
@@ -470,7 +476,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                                     className="h-7 w-7 text-muted-foreground hover:text-destructive"
                                     title="Xoá"
                                   >
-                                    <Trash2 className="w-3.5 h-3.5" />
+                                    <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
                                   </Button>
                                 </div>
                               </div>
@@ -509,7 +515,10 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                             {/* Answer Explanation */}
                             {q.explanation && (
                               <div className="mt-3 p-3.5 rounded-xl bg-card border border-border text-xs text-muted-foreground flex items-start gap-2">
-                                <Info className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                                <Info
+                                  aria-hidden="true"
+                                  className="w-4 h-4 text-primary mt-0.5 flex-shrink-0"
+                                />
                                 <div>
                                   <span className="font-bold text-foreground block mb-0.5">
                                     Lời giải thích:
@@ -547,6 +556,8 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
               value={newBankTitle}
               onChange={(e) => setNewBankTitle(e.target.value)}
               placeholder="Ví dụ: Kho thi kết thúc Tuần 1: Khái niệm AI"
+              aria-label="Tên Kho Ngân hàng Đề"
+              spellCheck={false}
               className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-semibold focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
           </div>
@@ -736,6 +747,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                     onChange={(e) => handleOptionCorrectChange(idx, e.target.checked)}
                     className="w-4 h-4 text-primary rounded cursor-pointer"
                     title="Đánh dấu phương án đúng"
+                    aria-label={`Đánh dấu phương án ${idx + 1} là phương án đúng`}
                   />
                   <Input
                     type="text"
@@ -743,6 +755,8 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
                     value={opt.optionText}
                     onChange={(e) => handleOptionChange(idx, e.target.value)}
                     placeholder={`Phương án ${idx + 1}…`}
+                    aria-label={`Nội dung phương án ${idx + 1}`}
+                    spellCheck={false}
                     className="flex-1 py-1.5 rounded-lg bg-card text-xs"
                   />
                   {qOptions.length > 2 && (

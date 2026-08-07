@@ -16,7 +16,7 @@ function VNPayReturnContent() {
 
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
-  const [message, setMessage] = useState("Đang xác thực kết quả thanh toán...");
+  const [message, setMessage] = useState("Đang xác thực kết quả thanh toán…");
   const [targetType, setTargetType] = useState<string>("");
   const [targetId, setTargetId] = useState<string>("");
   const [rawTargetType, setRawTargetType] = useState<PaymentTargetType>(
@@ -107,10 +107,13 @@ function VNPayReturnContent() {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-4">
         <div className="bg-card border border-border rounded-xl p-8 max-w-md w-full text-center shadow-lg">
-          <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
+          <Loader2
+            aria-hidden="true"
+            className="w-12 h-12 text-primary animate-spin mx-auto mb-4"
+          />
           <h2 className="text-xl font-bold mb-2">Đang xác nhận giao dịch</h2>
           <p className="text-sm text-muted-foreground">
-            Vui lòng chờ trong giây lát, hệ thống đang đối soát chữ ký bảo mật với VNPay...
+            Vui lòng chờ trong giây lát, hệ thống đang đối soát chữ ký bảo mật với VNPay…
           </p>
         </div>
       </div>
@@ -123,7 +126,7 @@ function VNPayReturnContent() {
         {success ? (
           <div className="space-y-6">
             <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto text-success">
-              <CheckCircle2 className="w-10 h-10" />
+              <CheckCircle2 aria-hidden="true" className="w-10 h-10" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Thanh toán thành công!</h1>
@@ -158,7 +161,7 @@ function VNPayReturnContent() {
                   href={`/courses/${targetId}`}
                   className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary-hover px-5 py-3 rounded-lg font-medium transition-colors"
                 >
-                  <BookOpen className="w-4 h-4" />
+                  <BookOpen aria-hidden="true" className="w-4 h-4" />
                   Vào học ngay
                 </Link>
               ) : (
@@ -166,7 +169,7 @@ function VNPayReturnContent() {
                   href="/my-learning"
                   className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary-hover px-5 py-3 rounded-lg font-medium transition-colors"
                 >
-                  <BookOpen className="w-4 h-4" />
+                  <BookOpen aria-hidden="true" className="w-4 h-4" />
                   Góc học tập của tôi
                 </Link>
               )}
@@ -175,14 +178,14 @@ function VNPayReturnContent() {
                 className="inline-flex items-center justify-center gap-2 bg-muted text-muted-foreground hover:bg-muted/80 px-5 py-3 rounded-lg font-medium transition-colors"
               >
                 Trang chủ
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight aria-hidden="true" className="w-4 h-4" />
               </Link>
             </div>
           </div>
         ) : (
           <div className="space-y-6">
             <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto text-destructive">
-              <XCircle className="w-10 h-10" />
+              <XCircle aria-hidden="true" className="w-10 h-10" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">Giao dịch không thành công</h1>
@@ -208,11 +211,11 @@ function VNPayReturnContent() {
                 className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary-hover px-5 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
               >
                 {isRetrying ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" />
                 ) : (
-                  <RefreshCw className="w-4 h-4" />
+                  <RefreshCw aria-hidden="true" className="w-4 h-4" />
                 )}
-                {isRetrying ? "Đang tạo giao dịch..." : "Thử lại"}
+                {isRetrying ? "Đang tạo giao dịch…" : "Thử lại"}
               </button>
               <Link
                 href="/courses"
@@ -233,7 +236,7 @@ export default function VNPayReturnPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
-          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <Loader2 aria-hidden="true" className="w-8 h-8 text-primary animate-spin" />
         </div>
       }
     >

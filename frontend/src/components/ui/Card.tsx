@@ -16,7 +16,7 @@ export function Card({ className, variant = "elevated", ref, ...props }: CardPro
     <div
       ref={ref}
       className={cn(
-        "rounded-2xl transition-all duration-m3-short-4 ease-m3-emphasized p-6",
+        "rounded-2xl transition-colors duration-m3-short-4 ease-m3-emphasized p-6",
         variantStyles[variant],
         className,
       )}

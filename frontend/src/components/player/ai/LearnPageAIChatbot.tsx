@@ -309,7 +309,7 @@ export function LearnPageAIChatbot({
                 className="flex items-center gap-2 text-xs text-on-surface-variant italic py-1 animate-pulse"
               >
                 <Sparkles className="w-3.5 h-3.5 text-primary animate-spin" aria-hidden="true" />
-                <span>Trợ lý AI đang suy nghĩ...</span>
+                <span>Trợ lý AI đang suy nghĩ…</span>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -321,7 +321,7 @@ export function LearnPageAIChatbot({
               className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3"
               aria-hidden="true"
             >
-              <Sparkles className="w-6 h-6" />
+              <Sparkles aria-hidden="true" className="w-6 h-6" />
             </div>
             <h3 className="text-base font-semibold text-on-surface mb-1">
               Xin chào. Tôi có thể giúp gì?
@@ -361,19 +361,20 @@ export function LearnPageAIChatbot({
         aria-label="Khung gửi tin nhắn cho Trợ lý AI"
         className="p-3 bg-surface-container-lowest flex flex-col gap-2 shrink-0"
       >
-        <div className="flex items-center gap-2 bg-surface-container-low border border-outline-variant/30 rounded-full pl-4 pr-1.5 py-1.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+        <div className="flex items-center gap-2 bg-surface-container-low border border-outline-variant/30 rounded-full pl-4 pr-1.5 py-1.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors">
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Hỏi tôi bất cứ điều gì..."
+            placeholder="Hỏi tôi bất cứ điều gì…"
             aria-label="Nhập câu hỏi cho Trợ lý AI"
-            className="flex-1 bg-transparent text-xs text-on-surface placeholder:text-on-surface-variant/70 border-none outline-none py-1"
+            spellCheck={false}
+            className="flex-1 bg-transparent text-xs text-on-surface placeholder:text-on-surface-variant/70 border-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring py-1"
           />
           <button
             type="submit"
             disabled={!inputValue.trim() || agent?.isRunning}
-            className={`w-8 h-8 rounded-full transition-all flex items-center justify-center shrink-0 ${
+            className={`w-8 h-8 rounded-full transition-colors flex items-center justify-center shrink-0 ${
               !inputValue.trim() || agent?.isRunning
                 ? "bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed"
                 : "bg-primary text-primary-foreground hover:bg-primary-hover shadow-xs cursor-pointer active:scale-95"

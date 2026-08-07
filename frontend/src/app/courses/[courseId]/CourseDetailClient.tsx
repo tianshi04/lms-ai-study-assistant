@@ -252,21 +252,21 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               {isInstructorOrAdmin && (
                 <Link
                   href={`/instructor/courses/${course.id}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-extrabold shadow-md transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-extrabold shadow-md transition-colors cursor-pointer"
                 >
-                  <Pencil className="w-3.5 h-3.5" />
+                  <Pencil aria-hidden="true" className="w-3.5 h-3.5" />
                   <span>{"Biên soạn Bài giảng (Instructor Builder)"}</span>
                 </Link>
               )}
               {hasCert && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 border border-success/20 text-success text-xs font-bold">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-success" />
+                  <CheckCircle2 aria-hidden="true" className="w-3.5 h-3.5 text-success" />
                   <span>{"Đã Nhận Chứng Chỉ"}</span>
                 </div>
               )}
               {course.averageRating > 0 && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-warning/10 border border-warning/20 text-warning text-xs font-bold">
-                  <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                  <Star aria-hidden="true" className="w-4 h-4 text-amber-400 fill-amber-400" />
                   <span>
                     {course.averageRating.toFixed(1)} ★ ({course.reviewCount} {"nhận xét"})
                   </span>
@@ -299,7 +299,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           </div>
 
           {/* Enrollment Card (M3 Elevated & Glassmorphism Container Item 1.3) */}
-          <div className="relative overflow-hidden bg-card/90 backdrop-blur-xl border border-primary/20 p-6 rounded-3xl shadow-xl shadow-primary/5 space-y-6 transition-all hover:border-primary/30">
+          <div className="relative overflow-hidden bg-card/90 backdrop-blur-xl border border-primary/20 p-6 rounded-3xl shadow-xl shadow-primary/5 space-y-6 transition-colors hover:border-primary/30">
             {/* M3 Top Gradient Accent Bar */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-primary/80 to-accent" />
 
@@ -329,14 +329,14 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <div className="space-y-3">
                 <Link
                   href={`/verify/${certId}`}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-sm transition-all shadow-lg cursor-pointer"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-sm transition-colors shadow-lg cursor-pointer"
                 >
-                  <CheckCircle2 className="w-4 h-4 text-warning-foreground" />
+                  <CheckCircle2 aria-hidden="true" className="w-4 h-4 text-warning-foreground" />
                   <span>{"Xem Chứng Chỉ"}</span>
                 </Link>
                 <Link
                   href={`/learn/${course.id}`}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-full bg-muted hover:bg-muted/80 text-foreground text-sm font-semibold transition-all cursor-pointer"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-full bg-muted hover:bg-muted/80 text-foreground text-sm font-semibold transition-colors cursor-pointer"
                 >
                   <span>{"Vào Học Lại"}</span>
                 </Link>
@@ -345,20 +345,20 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <div className="space-y-3">
                 <Link
                   href={`/learn/${course.id}`}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-all shadow-lg cursor-pointer"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-colors shadow-lg cursor-pointer"
                 >
                   <span>{"Vào Học Ngay (Paid Mode)"}</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight aria-hidden="true" className="w-4 h-4" />
                 </Link>
               </div>
             ) : (
               <div className="space-y-3">
                 <Link
                   href={`/learn/${course.id}`}
-                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-all shadow-lg cursor-pointer"
+                  className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-colors shadow-lg cursor-pointer"
                 >
                   <span>{"Vào Học Ngay (Audit Mode)"}</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight aria-hidden="true" className="w-4 h-4" />
                 </Link>
                 <Button
                   type="button"
@@ -366,7 +366,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   onClick={() => setIsPaymentModalOpen(true)}
                   className="w-full py-3 px-6 rounded-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary font-semibold text-sm justify-center gap-2"
                 >
-                  <CreditCard className="w-4 h-4 text-primary" />
+                  <CreditCard aria-hidden="true" className="w-4 h-4 text-primary" />
                   <span>{"Nâng Cấp Paid Mode / Coursera Plus"}</span>
                 </Button>
               </div>
@@ -374,16 +374,16 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
 
             <ul className="space-y-3 text-xs text-muted-foreground border-t border-border pt-4">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-primary" />
+                <Check aria-hidden="true" className="w-4 h-4 text-primary" />
                 {"Hạn nộp linh hoạt (Flexible Deadlines)"}
               </li>
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-primary" />
+                <Check aria-hidden="true" className="w-4 h-4 text-primary" />
                 {"Chứng chỉ Xác thực Đã đăng ký"}
               </li>
               {course.financialAidEnabled && (
                 <li className="flex items-center gap-2 pt-1 border-t border-border">
-                  <CircleDollarSign className="w-4 h-4 text-success" />
+                  <CircleDollarSign aria-hidden="true" className="w-4 h-4 text-success" />
                   <Button
                     type="button"
                     variant="ghost"
@@ -395,7 +395,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                     <span aria-live="polite">
                       {checkingFinAidStatus ? "Đang kiểm tra…" : "Financial Aid available"}
                     </span>
-                    <ArrowRight className="w-3 h-3 ml-1" />
+                    <ArrowRight aria-hidden="true" className="w-3 h-3 ml-1" />
                   </Button>
                 </li>
               )}
@@ -436,7 +436,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                       className="bg-muted/50 border border-border rounded-xl p-4"
                     >
                       <h4 className="font-semibold text-sm text-foreground mb-2 flex items-center gap-2">
-                        <BookOpen className="w-4 h-4 text-primary" />
+                        <BookOpen aria-hidden="true" className="w-4 h-4 text-primary" />
                         {lesson.title}
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-6">
@@ -447,18 +447,33 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                           >
                             <span className="flex items-center gap-1">
                               {item.type === ItemType.VIDEO ? (
-                                <PlayCircle className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                                <PlayCircle
+                                  aria-hidden="true"
+                                  className="w-3.5 h-3.5 text-primary flex-shrink-0"
+                                />
                               ) : item.type === ItemType.READING ? (
-                                <FileText className="w-3.5 h-3.5 text-success flex-shrink-0" />
+                                <FileText
+                                  aria-hidden="true"
+                                  className="w-3.5 h-3.5 text-success flex-shrink-0"
+                                />
                               ) : item.type === ItemType.AUTO_GRADED_LAB ? (
-                                <Code2 className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                                <Code2
+                                  aria-hidden="true"
+                                  className="w-3.5 h-3.5 text-primary flex-shrink-0"
+                                />
                               ) : item.type === ItemType.PEER_REVIEW ? (
-                                <Users className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                                <Users
+                                  aria-hidden="true"
+                                  className="w-3.5 h-3.5 text-primary flex-shrink-0"
+                                />
                               ) : (
-                                <Pencil className="w-3.5 h-3.5 text-warning flex-shrink-0" />
+                                <Pencil
+                                  aria-hidden="true"
+                                  className="w-3.5 h-3.5 text-warning flex-shrink-0"
+                                />
                               )}
                             </span>
-                            <span className="text-foreground font-medium truncate">
+                            <span className="text-foreground font-medium min-w-0 truncate">
                               {item.title}
                             </span>
                             <span className="text-muted-foreground ml-auto">
@@ -514,7 +529,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   }}
                   className="px-4 py-2.5 rounded-xl font-bold shadow-sm gap-2"
                 >
-                  <SquarePen className="w-4 h-4" />
+                  <SquarePen aria-hidden="true" className="w-4 h-4" />
                   <span>{"Viết / Sửa đánh giá"}</span>
                 </Button>
               )}
@@ -572,7 +587,10 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                     </div>
                     <div className="flex items-center gap-0.5 text-amber-400 bg-warning/10 border border-warning/20 px-2.5 py-1 rounded-full text-xs font-semibold">
                       <span>{rev.ratingStars}</span>
-                      <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <Star
+                        aria-hidden="true"
+                        className="w-3.5 h-3.5 fill-amber-400 text-amber-400"
+                      />
                     </div>
                   </div>
                   {rev.commentText && (
@@ -610,6 +628,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   className="p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md cursor-pointer"
                 >
                   <Star
+                    aria-hidden="true"
                     className={`w-7 h-7 ${
                       star <= (hoverRating || rating)
                         ? "fill-amber-400 text-amber-400"
@@ -691,13 +710,13 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               )}
               {existingFinAidStatus.status === "APPROVED" && (
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20 flex items-center gap-1.5">
-                  <Check className="w-4 h-4 text-success" />
+                  <Check aria-hidden="true" className="w-4 h-4 text-success" />
                   {"Đã Phê Duyệt"}
                 </span>
               )}
               {existingFinAidStatus.status === "REJECTED" && (
                 <span className="px-3 py-1 rounded-full text-xs font-bold bg-destructive/10 text-destructive border border-destructive/20 flex items-center gap-1.5">
-                  <X className="w-4 h-4 text-destructive" />
+                  <X aria-hidden="true" className="w-4 h-4 text-destructive" />
                   {"Chưa được duyệt"}
                 </span>
               )}
@@ -737,10 +756,10 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               </Button>
               <Link
                 href="/financial-aid"
-                className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-all flex items-center gap-1.5"
+                className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-colors flex items-center gap-1.5"
               >
                 <span>{"Quản lý danh sách Đơn Hỗ trợ tài chính của tôi"}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight aria-hidden="true" className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>
@@ -776,7 +795,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               />
               <div className="w-full bg-muted h-2 rounded-full mt-3 overflow-hidden">
                 <div
-                  className={`h-full transition-all duration-m3-medium-2 ease-m3-emphasized ${isFinAidEnoughWords ? "bg-success" : "bg-primary"}`}
+                  className={`h-full transition-colors duration-m3-medium-2 ease-m3-emphasized ${isFinAidEnoughWords ? "bg-success" : "bg-primary"}`}
                   style={{ width: `${Math.min(100, (finAidWordCount / 150) * 100)}%` }}
                 />
               </div>
@@ -784,7 +803,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
 
             <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 text-xs text-warning space-y-1">
               <p className="font-bold flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4 text-warning" />
+                <AlertTriangle aria-hidden="true" className="w-4 h-4 text-warning" />
                 {"Cam kết liêm chính học thuật:"}
               </p>
               <p>

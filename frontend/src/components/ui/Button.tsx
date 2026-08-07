@@ -9,7 +9,7 @@ const outlineStyle = "border border-outline text-primary hover:bg-primary/10";
 const textStyle = "hover:bg-primary/10 text-primary";
 
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center font-medium rounded-full transition-all duration-m3-short-4 ease-m3-emphasized focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer",
+  "inline-flex items-center justify-center font-medium rounded-full transition-colors duration-m3-short-4 ease-m3-emphasized focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer",
   {
     variants: {
       variant: {
@@ -79,7 +79,7 @@ export function Button({
     >
       {isLoading ? (
         <span aria-live="polite" className="inline-flex items-center gap-2">
-          <Loader2 className="animate-spin h-4 w-4 text-current" />
+          <Loader2 aria-hidden="true" className="animate-spin h-4 w-4 text-current" />
           Đang tải…
         </span>
       ) : (

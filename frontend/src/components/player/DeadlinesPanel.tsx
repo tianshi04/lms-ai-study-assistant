@@ -32,9 +32,9 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
           {hasOverdue && (
             <button
               onClick={onResetDeadlines}
-              className="px-4 py-2 bg-warning hover:bg-warning-hover text-warning-foreground text-xs font-bold rounded-full shadow-xs hover:shadow-md transition-all border border-warning/30 flex items-center gap-2 animate-pulse cursor-pointer"
+              className="px-4 py-2 bg-warning hover:bg-warning-hover text-warning-foreground text-xs font-bold rounded-full shadow-xs hover:shadow-md transition-colors border border-warning/30 flex items-center gap-2 animate-pulse cursor-pointer"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw aria-hidden="true" className="w-3.5 h-3.5" />
               Reset My Deadlines
             </button>
           )}

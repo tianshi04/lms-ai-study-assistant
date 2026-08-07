@@ -310,7 +310,7 @@ export function LearningItemFormModal({
                   rows={13}
                   value={readingMarkdown}
                   onChange={(e) => setReadingMarkdown(e.target.value)}
-                  placeholder="Nhập nội dung bài đọc định dạng Markdown tại đây...&#10;&#10;# Tiêu đề bài đọc&#10;- Ý chính 1&#10;- Ý chính 2"
+                  placeholder="Nhập nội dung bài đọc định dạng Markdown tại đây…&#10;&#10;# Tiêu đề bài đọc&#10;- Ý chính 1&#10;- Ý chính 2"
                   className="w-full font-mono shadow-2xs"
                 />
               </div>
@@ -328,7 +328,7 @@ export function LearningItemFormModal({
                     renderMarkdown(readingMarkdown)
                   ) : (
                     <div className="text-muted-foreground text-xs italic flex flex-col items-center justify-center py-12">
-                      <FileText className="w-8 h-8 mb-2 opacity-40" />
+                      <FileText aria-hidden="true" className="w-8 h-8 mb-2 opacity-40" />
                       Nội dung Markdown xem trước sẽ hiển thị trực tiếp ở đây.
                     </div>
                   )}

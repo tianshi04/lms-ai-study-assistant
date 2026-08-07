@@ -51,7 +51,7 @@ export function PublicLanding() {
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-2">
             <Link
               href="/courses"
-              className="px-8 py-3.5 rounded-full bg-primary hover:bg-primary-hover text-on-primary font-bold shadow-xs hover:shadow-md transition-all text-sm flex items-center space-x-2"
+              className="px-8 py-3.5 rounded-full bg-primary hover:bg-primary-hover text-on-primary font-bold shadow-xs hover:shadow-md transition-colors text-sm flex items-center space-x-2"
             >
               <span>Khám phá Danh mục Khóa học</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
@@ -59,7 +59,7 @@ export function PublicLanding() {
 
             <Link
               href="/auth/register"
-              className="px-8 py-3.5 rounded-full bg-surface-container-high border border-outline-variant text-on-surface font-bold hover:bg-surface-container-highest transition-all text-sm"
+              className="px-8 py-3.5 rounded-full bg-surface-container-high border border-outline-variant text-on-surface font-bold hover:bg-surface-container-highest transition-colors text-sm"
             >
               Đăng ký Học thử Miễn phí
             </Link>
@@ -105,7 +105,7 @@ export function PublicLanding() {
         <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link
             href="/courses"
-            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-m3-medium-2 ease-m3-emphasized text-left group shadow-xs hover:shadow-md"
+            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-colors duration-m3-medium-2 ease-m3-emphasized text-left group shadow-xs hover:shadow-md"
           >
             <div className="w-11 h-11 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center font-bold mb-3">
               <BookOpen className="w-5.5 h-5.5" aria-hidden="true" />
@@ -120,7 +120,7 @@ export function PublicLanding() {
 
           <Link
             href="/learn/course-python-ai"
-            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-m3-medium-2 ease-m3-emphasized text-left group shadow-xs hover:shadow-md"
+            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-colors duration-m3-medium-2 ease-m3-emphasized text-left group shadow-xs hover:shadow-md"
           >
             <div className="w-11 h-11 rounded-2xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-bold mb-3">
               <PlayCircle className="w-5.5 h-5.5" aria-hidden="true" />
@@ -135,7 +135,7 @@ export function PublicLanding() {
 
           <Link
             href="/financial-aid?courseId=course-python-ai"
-            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-m3-medium-2 ease-m3-emphasized text-left group shadow-xs hover:shadow-md"
+            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-colors duration-m3-medium-2 ease-m3-emphasized text-left group shadow-xs hover:shadow-md"
           >
             <div className="w-11 h-11 rounded-2xl bg-secondary-container text-on-secondary-container flex items-center justify-center font-bold mb-3">
               <CircleDollarSign className="w-5.5 h-5.5" aria-hidden="true" />
@@ -150,7 +150,7 @@ export function PublicLanding() {
 
           <Link
             href="/verify/CERT-DEMO12345"
-            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-all duration-m3-medium-2 ease-m3-emphasized text-left group shadow-xs hover:shadow-md"
+            className="p-6 rounded-3xl bg-surface-container-low border border-outline-variant hover:border-primary/50 hover:bg-surface-container transition-colors duration-m3-medium-2 ease-m3-emphasized text-left group shadow-xs hover:shadow-md"
           >
             <div className="w-11 h-11 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center font-bold mb-3">
               <GraduationCap className="w-5.5 h-5.5" aria-hidden="true" />

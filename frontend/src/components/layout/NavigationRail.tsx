@@ -48,7 +48,7 @@ export function NavigationRail({ items = defaultNavItems, className }: Navigatio
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center justify-center w-full py-2.5 px-1 rounded-2xl transition-all duration-m3-short-4 ease-m3-emphasized group text-center gap-1",
+                "flex flex-col items-center justify-center w-full py-2.5 px-1 rounded-2xl transition-colors duration-m3-short-4 ease-m3-emphasized group text-center gap-1",
                 isActive
                   ? "bg-primary-container text-on-primary-container font-semibold"
                   : "text-muted-foreground hover:bg-surface-container-highest hover:text-foreground",
@@ -56,7 +56,7 @@ export function NavigationRail({ items = defaultNavItems, className }: Navigatio
             >
               <div
                 className={cn(
-                  "flex items-center justify-center w-12 h-7 rounded-full transition-all duration-m3-short-4 ease-m3-emphasized",
+                  "flex items-center justify-center w-12 h-7 rounded-full transition-colors duration-m3-short-4 ease-m3-emphasized",
                   isActive ? "bg-primary text-primary-foreground" : "group-hover:bg-primary/10",
                 )}
               >

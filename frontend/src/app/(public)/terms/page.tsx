@@ -132,14 +132,14 @@ export default function TermsOfServicePage() {
                   <button
                     key={sec.id}
                     onClick={() => scrollToSection(sec.id)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl text-left transition-all font-medium ${
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl text-left transition-colors font-medium ${
                       isActive
                         ? "bg-primary text-primary-foreground font-semibold shadow-xs"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     <IconComponent className="w-4 h-4 shrink-0" aria-hidden="true" />
-                    <span className="truncate">{sec.title}</span>
+                    <span className="min-w-0 truncate">{sec.title}</span>
                   </button>
                 );
               })}

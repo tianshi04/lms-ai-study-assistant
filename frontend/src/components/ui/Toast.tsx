@@ -79,7 +79,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast }) => {
     <BaseToast.Root
       toast={toast}
       className={cn(
-        "pointer-events-auto relative flex w-full items-start justify-between gap-3 overflow-hidden rounded-2xl border p-4 shadow-xl transition-all duration-m3-medium-2 ease-m3-decelerate",
+        "pointer-events-auto relative flex w-full items-start justify-between gap-3 overflow-hidden rounded-2xl border p-4 shadow-xl transition-colors duration-m3-medium-2 ease-m3-decelerate",
         "bg-surface-container-high/95 backdrop-blur-md text-foreground",
         "data-[ending]:animate-out data-[ending]:fade-out-0 data-[ending]:slide-out-to-right-full data-[ending]:duration-m3-short-4 data-[ending]:ease-m3-accelerate",
         "data-[starting]:animate-in data-[starting]:fade-in-0 data-[starting]:slide-in-from-top-5 data-[starting]:duration-m3-medium-2 data-[starting]:ease-m3-decelerate",

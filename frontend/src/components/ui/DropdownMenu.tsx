@@ -24,7 +24,7 @@ export function DropdownMenuContent({
       <BaseMenu.Positioner
         sideOffset={sideOffset}
         align={align}
-        className="z-dropdown outline-none"
+        className="z-dropdown outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <BaseMenu.Popup
           ref={ref}
@@ -50,7 +50,7 @@ export function DropdownMenuItem({
     <BaseMenu.Item
       ref={ref}
       className={cn(
-        "relative flex cursor-pointer select-none items-center justify-start gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium outline-none transition-all duration-m3-short-4 ease-m3-emphasized hover:bg-surface-container-highest text-foreground data-[highlighted]:bg-surface-container-highest",
+        "relative flex cursor-pointer select-none items-center justify-start gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors duration-m3-short-4 ease-m3-emphasized hover:bg-surface-container-highest text-foreground data-[highlighted]:bg-surface-container-highest",
         className,
       )}
       {...props}

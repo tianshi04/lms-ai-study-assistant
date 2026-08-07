@@ -211,7 +211,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
         </div>
 
         <h2 className="relative z-20 text-2xl font-extrabold tracking-tight">Course Completed!</h2>
-        <p className="relative z-20 text-primary-foreground/90 text-sm mt-1 max-w-sm mx-auto line-clamp-2">
+        <p className="relative z-20 text-primary-foreground/90 text-sm mt-1 max-w-sm mx-auto min-w-0 line-clamp-2">
           {courseTitle}
         </p>
 
@@ -290,7 +290,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                         onClick={() => setRating(star)}
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(0)}
-                        className="p-1 cursor-pointer focus:outline-none"
+                        className="p-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         aria-label={`Đánh giá ${star} sao`}
                       >
                         <Star

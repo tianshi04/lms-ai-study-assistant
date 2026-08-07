@@ -159,7 +159,7 @@ export default function InstructorCourseBuilderPage({
             href="/instructor/courses"
             className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-muted text-muted-foreground hover:bg-muted/80 transition-colors flex items-center gap-1.5"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft aria-hidden="true" className="w-4 h-4" />
             <span>{"Danh sách Khóa học"}</span>
           </Link>
         </div>

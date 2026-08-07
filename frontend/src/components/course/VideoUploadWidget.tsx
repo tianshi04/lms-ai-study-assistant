@@ -133,6 +133,7 @@ export function VideoUploadWidget({
         ref={fileInputRef}
         type="file"
         accept={accept}
+        aria-label="Tải lên tệp video hoặc phụ đề"
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0];
@@ -183,11 +184,13 @@ export function VideoUploadWidget({
                 <span className="px-2 py-0.5 rounded-md bg-success text-success-foreground font-bold text-[10px] uppercase tracking-wider shrink-0">
                   {isSubtitle ? "Đã chọn Phụ đề" : "Đã chọn Video"}
                 </span>
-                <span className="font-mono text-foreground text-xs truncate font-semibold">
+                <span className="font-mono text-foreground text-xs min-w-0 truncate font-semibold">
                   {value.split("/").pop() || value}
                 </span>
               </div>
-              <p className="text-[10px] text-muted-foreground font-mono truncate mt-0.5">{value}</p>
+              <p className="text-[10px] text-muted-foreground font-mono min-w-0 truncate mt-0.5">
+                {value}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
@@ -228,7 +231,7 @@ export function VideoUploadWidget({
               if (file) handleFileSelect(file);
             }}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all ${
+            className={`border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
               compact ? "p-3 sm:p-4" : "p-6"
             } ${
               dragOver
@@ -241,7 +244,7 @@ export function VideoUploadWidget({
                 compact ? "w-8 h-8 mb-2" : "w-12 h-12 mb-3"
               }`}
             >
-              <Upload className={compact ? "w-4 h-4" : "w-6 h-6"} />
+              <Upload aria-hidden="true" className={compact ? "w-4 h-4" : "w-6 h-6"} />
             </div>
 
             <p className="text-xs font-bold text-foreground">
@@ -261,7 +264,7 @@ export function VideoUploadWidget({
               </div>
               <div className="w-full bg-secondary-container rounded-full h-2 overflow-hidden">
                 <div
-                  className="bg-primary h-full transition-all duration-m3-medium-2 ease-m3-emphasized rounded-full"
+                  className="bg-primary h-full transition-colors duration-m3-medium-2 ease-m3-emphasized rounded-full"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
@@ -275,6 +278,8 @@ export function VideoUploadWidget({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
+            aria-label="Đường dẫn URL media"
+            spellCheck={false}
             className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>

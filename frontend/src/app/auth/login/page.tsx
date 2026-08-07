@@ -228,7 +228,7 @@ function LoginFormContent() {
                   <div className="flex justify-end pt-1">
                     <Link
                       href="/auth/forgot-password"
-                      className="text-xs font-semibold text-primary hover:underline transition-all"
+                      className="text-xs font-semibold text-primary hover:underline transition-colors"
                     >
                       Quên mật khẩu?
                     </Link>
@@ -259,7 +259,7 @@ function LoginFormContent() {
           <div className="mt-6 p-4 rounded-2xl bg-muted border border-border space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
-                <Zap className="w-4 h-4" />
+                <Zap aria-hidden="true" className="w-4 h-4" />
                 {"Tài khoản Test sẵn (Dev Mode)"}
               </span>
               <span className="text-[10px] font-mono text-muted-foreground">
@@ -294,13 +294,13 @@ function LoginFormContent() {
                     form.setFieldValue("email", acc.email);
                     form.setFieldValue("password", "123456");
                   }}
-                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-card border border-border hover:border-primary transition-all text-xs font-medium flex items-center justify-between group cursor-pointer"
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-card border border-border hover:border-primary transition-colors text-xs font-medium flex items-center justify-between group cursor-pointer"
                 >
-                  <div className="truncate pr-1">
-                    <div className="font-semibold text-foreground group-hover:text-primary truncate">
+                  <div className="min-w-0 truncate pr-1">
+                    <div className="font-semibold text-foreground group-hover:text-primary min-w-0 truncate">
                       {acc.label}
                     </div>
-                    <div className="text-[10px] font-mono text-muted-foreground truncate">
+                    <div className="text-[10px] font-mono text-muted-foreground min-w-0 truncate">
                       {acc.email}
                     </div>
                   </div>

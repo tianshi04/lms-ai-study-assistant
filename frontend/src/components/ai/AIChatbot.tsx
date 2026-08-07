@@ -199,7 +199,7 @@ export function AIChatbot() {
         <div
           role="region"
           aria-label="Trợ lý AI Hỗ Trợ"
-          className="mb-3 w-[360px] sm:w-[400px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[calc(100vh-6rem)] bg-surface-container-lowest border border-outline-variant/30 rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-all duration-m3-short-4 ease-m3-emphasized"
+          className="mb-3 w-[360px] sm:w-[400px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[calc(100vh-6rem)] bg-surface-container-lowest border border-outline-variant/30 rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-m3-short-4 ease-m3-emphasized"
         >
           {/* Header Bar (MD3 Tonal Surface Header) */}
           <div className="px-4 py-3 bg-surface-container-lowest border-b border-outline-variant/20 flex items-center justify-between shrink-0">
@@ -277,7 +277,7 @@ export function AIChatbot() {
                       className="w-3.5 h-3.5 text-primary animate-spin"
                       aria-hidden="true"
                     />
-                    <span>Trợ lý AI đang suy nghĩ...</span>
+                    <span>Trợ lý AI đang suy nghĩ…</span>
                   </div>
                 )}
                 <div ref={messagesEndRef} />
@@ -289,7 +289,7 @@ export function AIChatbot() {
                   className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3 shadow-2xs"
                   aria-hidden="true"
                 >
-                  <Sparkles className="w-7 h-7" />
+                  <Sparkles aria-hidden="true" className="w-7 h-7" />
                 </div>
                 <h3 className="text-base font-bold text-on-surface mb-1.5">
                   Xin chào. Tôi có thể giúp gì cho bạn?
@@ -310,19 +310,20 @@ export function AIChatbot() {
             aria-label="Khung gửi tin nhắn cho Trợ lý AI"
             className="p-3 bg-surface-container-lowest border-t border-outline-variant/20 flex flex-col gap-2 shrink-0"
           >
-            <div className="flex items-center gap-2 bg-surface-container-low border border-outline-variant/30 rounded-full pl-4 pr-1.5 py-1.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+            <div className="flex items-center gap-2 bg-surface-container-low border border-outline-variant/30 rounded-full pl-4 pr-1.5 py-1.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors">
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Hỏi tôi bất cứ điều gì..."
+                placeholder="Hỏi tôi bất cứ điều gì…"
                 aria-label="Nhập câu hỏi cho Trợ lý AI"
-                className="flex-1 bg-transparent text-xs text-on-surface placeholder:text-on-surface-variant/70 border-none outline-none py-1"
+                spellCheck={false}
+                className="flex-1 bg-transparent text-xs text-on-surface placeholder:text-on-surface-variant/70 border-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring py-1"
               />
               <button
                 type="submit"
                 disabled={!inputValue.trim() || agent?.isRunning}
-                className={`w-8 h-8 rounded-full transition-all flex items-center justify-center shrink-0 ${
+                className={`w-8 h-8 rounded-full transition-colors flex items-center justify-center shrink-0 ${
                   !inputValue.trim() || agent?.isRunning
                     ? "bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed"
                     : "bg-primary text-primary-foreground hover:bg-primary-hover shadow-xs cursor-pointer active:scale-95"
@@ -348,7 +349,7 @@ export function AIChatbot() {
             variant="primary"
             size="icon"
             onClick={() => setIsOpen((prev) => !prev)}
-            className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-m3-short-4 ease-m3-emphasized relative border-none"
+            className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-colors duration-m3-short-4 ease-m3-emphasized relative border-none"
             aria-label="Trợ lý AI"
           >
             {isOpen ? (

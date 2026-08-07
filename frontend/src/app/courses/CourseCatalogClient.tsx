@@ -76,6 +76,9 @@ export function CourseCatalogClient() {
             />
             <Input
               type="text"
+              name="search"
+              autoComplete="off"
+              aria-label="Tìm kiếm khóa học"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={"Tìm kiếm khóa học theo tên hoặc từ khóa…"}

@@ -242,6 +242,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                 min={0}
                 value={timestampSeconds}
                 onChange={(e) => setTimestampSeconds(parseInt(e.target.value) || 0)}
+                aria-label="Mốc thời gian (Giây)"
                 className="w-full px-3 py-2 rounded-lg border border-input bg-card text-foreground text-xs font-mono font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 required
               />
@@ -260,6 +261,8 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="VD: Hàm print() trong Python có tác dụng gì?"
+              aria-label="Nội dung câu hỏi"
+              spellCheck={false}
               className="w-full px-3 py-2 rounded-lg border border-input bg-card text-foreground text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
@@ -294,6 +297,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                     name="correctOption"
                     checked={correctOptionIndex === idx}
                     onChange={() => setCorrectOptionIndex(idx)}
+                    aria-label={`Chọn phương án ${letter} làm đáp án đúng`}
                     className="w-4 h-4 text-primary cursor-pointer"
                   />
                   <span className="text-xs font-bold text-muted-foreground font-mono">
@@ -304,6 +308,8 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                     value={optText}
                     onChange={(e) => handleOptionChange(idx, e.target.value)}
                     placeholder={`Nhập phương án ${letter}…`}
+                    aria-label={`Nội dung phương án ${letter}`}
+                    spellCheck={false}
                     className="w-full bg-transparent text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded px-1"
                   />
                   {optionsList.length > 2 && (
@@ -332,6 +338,8 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
             value={explanation}
             onChange={(e) => setExplanation(e.target.value)}
             placeholder="VD: print() là hàm tích hợp sẵn của Python để ghi dữ liệu ra console."
+            aria-label="Lời giải thích chi tiết"
+            spellCheck={false}
             className="w-full px-3 py-2 rounded-lg border border-input bg-card text-foreground text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
@@ -340,7 +348,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
           <button
             type="button"
             onClick={handleAddOrUpdateQuiz}
-            className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-md transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" aria-hidden="true" />
             <span>{editingIndex !== null ? "Lưu cập nhật mốc" : "Chèn mốc câu hỏi vào Video"}</span>

@@ -95,7 +95,7 @@ function ForgotPasswordContent() {
         {/* Header Section */}
         <div className="text-center space-y-2">
           <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3 shadow-inner">
-            <KeyRound className="w-6 h-6" />
+            <KeyRound aria-hidden="true" className="w-6 h-6" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Quên mật khẩu?</h1>
           <p className="text-sm text-muted-foreground">
@@ -108,23 +108,23 @@ function ForgotPasswordContent() {
         {/* Step Indicator */}
         <div className="flex items-center justify-center gap-3 text-xs font-semibold">
           <span
-            className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-all ${
+            className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors ${
               step === 1
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "bg-muted text-muted-foreground"
             }`}
           >
-            <ShieldCheck className="w-3.5 h-3.5" /> 1. Xác minh Google
+            <ShieldCheck aria-hidden="true" className="w-3.5 h-3.5" /> 1. Xác minh Google
           </span>
           <span className="text-muted-foreground">→</span>
           <span
-            className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-all ${
+            className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors ${
               step === 2
                 ? "bg-primary text-primary-foreground shadow-sm"
                 : "bg-muted text-muted-foreground"
             }`}
           >
-            <Lock className="w-3.5 h-3.5" /> 2. Mật khẩu mới
+            <Lock aria-hidden="true" className="w-3.5 h-3.5" /> 2. Mật khẩu mới
           </span>
         </div>
 
@@ -140,7 +140,8 @@ function ForgotPasswordContent() {
           <div className="space-y-4 pt-2">
             <div className="p-4 rounded-xl bg-muted/50 border border-border/80 text-xs text-muted-foreground leading-relaxed space-y-1">
               <p className="font-semibold text-foreground flex items-center gap-1.5">
-                <ShieldCheck className="w-4 h-4 text-primary" /> Bảo mật & Tốc độ cao:
+                <ShieldCheck aria-hidden="true" className="w-4 h-4 text-primary" /> Bảo mật & Tốc độ
+                cao:
               </p>
               <p>Xác thực danh tính trực tiếp qua Google chính chủ mà không cần chờ Email OTP.</p>
             </div>
@@ -158,7 +159,7 @@ function ForgotPasswordContent() {
         {step === 2 && (
           <form onSubmit={handleSubmitReset} className="space-y-4 pt-2">
             <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/15 text-xs text-foreground flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+              <CheckCircle2 aria-hidden="true" className="w-4 h-4 text-primary shrink-0" />
               <div>
                 <span className="font-semibold block">{userName}</span>
                 <span className="text-muted-foreground">{userEmail}</span>
@@ -209,7 +210,7 @@ function ForgotPasswordContent() {
             href="/auth/login"
             className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
+            <ArrowLeft aria-hidden="true" className="w-3.5 h-3.5" />
             <span>Quay lại Đăng nhập</span>
           </Link>
         </div>

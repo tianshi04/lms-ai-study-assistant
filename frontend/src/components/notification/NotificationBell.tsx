@@ -37,7 +37,7 @@ export function NotificationBell() {
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger
           type="button"
-          className="relative p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 transition-all duration-m3-short-4 ease-m3-emphasized focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+          className="relative p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 transition-colors duration-m3-short-4 ease-m3-emphasized focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
           aria-label={`Thông báo (${unreadCount} chưa đọc)`}
         >
           <Bell className="w-5 h-5" aria-hidden="true" />
@@ -66,7 +66,7 @@ export function NotificationBell() {
                   type="button"
                   onClick={handleMarkAllAsRead}
                   disabled={markAllAsReadMutation.isPending || unreadCount === 0}
-                  className="px-3 py-1.5 rounded-full text-xs font-bold text-primary hover:bg-primary-container/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 rounded-full text-xs font-bold text-primary hover:bg-primary-container/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 cursor-pointer"
                   title="Đánh dấu tất cả đã đọc"
                 >
                   <CheckCheck className="w-4 h-4" aria-hidden="true" />
@@ -123,7 +123,7 @@ export function NotificationBell() {
             <Link
               href="/notifications"
               onClick={() => setIsOpen(false)}
-              className="inline-flex items-center justify-center gap-2 text-xs font-bold bg-primary hover:bg-primary-hover text-on-primary transition-all w-full py-2.5 rounded-full shadow-sm hover:shadow-md cursor-pointer active:scale-[0.98]"
+              className="inline-flex items-center justify-center gap-2 text-xs font-bold bg-primary hover:bg-primary-hover text-on-primary transition-colors w-full py-2.5 rounded-full shadow-sm hover:shadow-md cursor-pointer active:scale-[0.98]"
             >
               <span>Xem tất cả thông báo</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />

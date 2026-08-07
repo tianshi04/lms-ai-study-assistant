@@ -43,7 +43,7 @@ export default function ErrorPage({
             className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-error-container text-on-error-container border border-error/20 flex items-center justify-center shadow-inner"
             aria-hidden="true"
           >
-            <AlertTriangle className="w-10 h-10 sm:w-12 sm:h-12" />
+            <AlertTriangle aria-hidden="true" className="w-10 h-10 sm:w-12 sm:h-12" />
           </div>
         </div>
 

@@ -24,7 +24,7 @@ export function TabsTrigger({
     <BaseTabs.Tab
       ref={ref}
       className={cn(
-        "relative pb-3 pt-2 px-3 text-sm font-medium transition-all duration-m3-short-4 ease-m3-emphasized flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground -mb-px after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[3px] after:rounded-t-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+        "relative pb-3 pt-2 px-3 text-sm font-medium transition-colors duration-m3-short-4 ease-m3-emphasized flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground -mb-px after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[3px] after:rounded-t-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
         "data-[selected]:text-primary data-[selected]:font-bold data-[selected]:after:bg-primary",
         "aria-selected:text-primary aria-selected:font-bold aria-selected:after:bg-primary",
         "data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:after:bg-primary",
@@ -45,7 +45,7 @@ export function TabsContent({
     <BaseTabs.Panel
       ref={ref}
       className={cn(
-        "pt-4 focus:outline-none animate-in fade-in duration-m3-medium-1 ease-m3-decelerate",
+        "pt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring animate-in fade-in duration-m3-medium-1 ease-m3-decelerate",
         className,
       )}
       {...props}
@@ -78,7 +78,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
               {tab.count !== undefined && (
                 <span
                   className={cn(
-                    "text-xs px-2 py-0.5 rounded-full font-medium transition-all duration-m3-short-4 ease-m3-emphasized",
+                    "text-xs px-2 py-0.5 rounded-full font-medium transition-colors duration-m3-short-4 ease-m3-emphasized",
                     isActive
                       ? "bg-primary-container text-on-primary-container font-semibold"
                       : "bg-muted text-muted-foreground",

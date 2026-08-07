@@ -36,9 +36,9 @@ export function PartnerDashboard({ userName }: { userName: string }) {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/partner/settings"
-              className="px-6 py-3 rounded-2xl bg-warning hover:opacity-90 text-warning-foreground font-bold text-sm shadow-lg shadow-warning/20 transition-all flex items-center gap-2 cursor-pointer"
+              className="px-6 py-3 rounded-2xl bg-warning hover:opacity-90 text-warning-foreground font-bold text-sm shadow-lg shadow-warning/20 transition-colors flex items-center gap-2 cursor-pointer"
             >
-              <Settings className="w-5 h-5" />
+              <Settings aria-hidden="true" className="w-5 h-5" />
               Cấu Hình Gói Doanh Nghiệp
             </Link>
           </div>
@@ -52,7 +52,7 @@ export function PartnerDashboard({ userName }: { userName: string }) {
           </p>
           <Link
             href="/partner/settings"
-            className="inline-block px-6 py-3 rounded-xl bg-warning hover:opacity-90 text-warning-foreground font-bold text-sm shadow-md transition-all"
+            className="inline-block px-6 py-3 rounded-xl bg-warning hover:opacity-90 text-warning-foreground font-bold text-sm shadow-md transition-colors"
           >
             Đến trang quản lý suất học →
           </Link>

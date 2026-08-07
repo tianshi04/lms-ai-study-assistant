@@ -138,7 +138,7 @@ export default function BecomeAnInstructorPage() {
             <div className="pt-2">
               <Link
                 href="/instructor/courses"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold transition-all"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold transition-colors"
               >
                 <span>Truy cập Cổng Giảng viên</span>
                 <ArrowRight className="w-4 h-4" aria-hidden="true" />
@@ -159,13 +159,13 @@ export default function BecomeAnInstructorPage() {
             <div className="flex items-center justify-center gap-4 pt-2">
               <Link
                 href="/auth/login?redirect=/become-an-instructor"
-                className="px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold transition-all"
+                className="px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold transition-colors"
               >
                 Đăng nhập ngay
               </Link>
               <Link
                 href="/auth/register"
-                className="px-6 py-3 rounded-2xl bg-card text-foreground border border-border hover:bg-muted font-bold transition-all"
+                className="px-6 py-3 rounded-2xl bg-card text-foreground border border-border hover:bg-muted font-bold transition-colors"
               >
                 Đăng ký tài khoản
               </Link>
@@ -228,7 +228,7 @@ export default function BecomeAnInstructorPage() {
                         href={existingApp.linkedinUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-primary hover:underline font-medium truncate block"
+                        className="text-primary hover:underline font-medium min-w-0 truncate block"
                       >
                         {existingApp.linkedinUrl}
                       </a>
@@ -243,7 +243,7 @@ export default function BecomeAnInstructorPage() {
                         href={existingApp.cvUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-primary hover:underline font-medium truncate block"
+                        className="text-primary hover:underline font-medium min-w-0 truncate block"
                       >
                         {existingApp.cvUrl}
                       </a>

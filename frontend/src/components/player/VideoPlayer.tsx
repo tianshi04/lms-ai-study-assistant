@@ -112,7 +112,7 @@ export function VideoPlayer({
                 <button
                   onClick={() => onMarkComplete?.(activeItem.id)}
                   disabled={isCompleted}
-                  className={`px-6 py-3 rounded-full text-xs font-bold transition-all flex items-center gap-2 ${
+                  className={`px-6 py-3 rounded-full text-xs font-bold transition-colors flex items-center gap-2 ${
                     isCompleted
                       ? "bg-success/10 text-success border border-success/30 cursor-default"
                       : "bg-success hover:bg-success-hover text-success-foreground shadow-md cursor-pointer"
@@ -179,7 +179,7 @@ export function VideoPlayer({
 
     return (
       <div className="w-full flex flex-col gap-3 min-h-0">
-        <div className="w-full aspect-video max-h-[62vh] relative flex items-center justify-center bg-surface-container-high rounded-2xl overflow-hidden shadow-xs transition-all duration-m3-short-4 ease-m3-emphasized">
+        <div className="w-full aspect-video max-h-[62vh] relative flex items-center justify-center bg-surface-container-high rounded-2xl overflow-hidden shadow-xs transition-colors duration-m3-short-4 ease-m3-emphasized">
           {youtubeEmbedUrl ? (
             <iframe
               key={activeItem.id}
@@ -250,7 +250,7 @@ export function VideoPlayer({
                         key={idx}
                         disabled={quizSubmitted}
                         onClick={() => onSelectOption(idx)}
-                        className={`w-full text-left p-3 rounded-xl border text-xs transition-all flex items-center justify-between ${optionStyle}`}
+                        className={`w-full text-left p-3 rounded-xl border text-xs transition-colors flex items-center justify-between ${optionStyle}`}
                       >
                         <span>{option}</span>
                         {quizSubmitted && isCorrect && (
@@ -273,14 +273,14 @@ export function VideoPlayer({
                     <button
                       onClick={onSubmitQuiz}
                       disabled={selectedOption === null}
-                      className="px-5 py-2.5 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground font-bold text-xs shadow-md transition-all cursor-pointer"
+                      className="px-5 py-2.5 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground font-bold text-xs shadow-md transition-colors cursor-pointer"
                     >
                       {"Kiểm Tra Đáp Án"}
                     </button>
                   ) : (
                     <button
                       onClick={onContinueVideo}
-                      className="px-5 py-2.5 rounded-full bg-success hover:bg-success-hover text-success-foreground font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                      className="px-5 py-2.5 rounded-full bg-success hover:bg-success-hover text-success-foreground font-bold text-xs shadow-md transition-colors flex items-center gap-2 cursor-pointer"
                     >
                       {"Tiếp Tục Xem Video"}
                       <ArrowRight className="w-4 h-4" aria-hidden="true" />
@@ -335,7 +335,7 @@ export function VideoPlayer({
                   key={text}
                   type="button"
                   onClick={() => onSelectAiPrompt?.(text)}
-                  className="text-xs font-semibold px-4 py-2.5 rounded-xl bg-surface-container-high hover:bg-primary-container text-on-surface hover:text-primary border border-outline-variant/40 hover:border-primary/40 transition-all cursor-pointer shadow-2xs leading-snug w-fit hover:scale-102 active:scale-98"
+                  className="text-xs font-semibold px-4 py-2.5 rounded-xl bg-surface-container-high hover:bg-primary-container text-on-surface hover:text-primary border border-outline-variant/40 hover:border-primary/40 transition-colors cursor-pointer shadow-2xs leading-snug w-fit hover:scale-102 active:scale-98"
                 >
                   <span>{text}</span>
                 </button>
@@ -358,7 +358,7 @@ export function VideoPlayer({
           <button
             type="button"
             onClick={onNextLesson}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-surface-container-high text-on-surface hover:bg-primary-container hover:text-primary border border-outline-variant/40 hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized flex items-center gap-1.5 cursor-pointer shadow-2xs hover:scale-102 active:scale-98 shrink-0"
+            className="px-4 py-2 rounded-xl text-xs font-semibold bg-surface-container-high text-on-surface hover:bg-primary-container hover:text-primary border border-outline-variant/40 hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex items-center gap-1.5 cursor-pointer shadow-2xs hover:scale-102 active:scale-98 shrink-0"
             title="Chuyển sang bài học tiếp theo"
           >
             <span>{"Bài tiếp theo"}</span>

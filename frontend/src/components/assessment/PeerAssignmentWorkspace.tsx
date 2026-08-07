@@ -243,7 +243,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             className="flex items-center gap-1"
           >
             <span>1. My Submission</span>
-            {hasSubmitted && <Check className="w-3.5 h-3.5 text-success" />}
+            {hasSubmitted && <Check aria-hidden="true" className="w-3.5 h-3.5 text-success" />}
           </Button>
 
           <Button
@@ -255,7 +255,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             className="flex items-center gap-1"
           >
             <span>2. Grade Peers (3/3)</span>
-            {!hasSubmitted && <Lock className="w-3 h-3 text-muted-foreground" />}
+            {!hasSubmitted && <Lock aria-hidden="true" className="w-3 h-3 text-muted-foreground" />}
           </Button>
 
           <Button
@@ -267,7 +267,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             className="flex items-center gap-1"
           >
             <span>3. Grade Appeal</span>
-            {!hasSubmitted && <Lock className="w-3 h-3 text-muted-foreground" />}
+            {!hasSubmitted && <Lock aria-hidden="true" className="w-3 h-3 text-muted-foreground" />}
           </Button>
         </div>
       </div>
@@ -275,7 +275,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
       {/* Lock Warning Notice Banner */}
       {lockNotice && (
         <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 text-warning text-xs font-semibold flex items-center gap-2 animate-in fade-in duration-m3-short-4 ease-m3-decelerate">
-          <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
+          <AlertTriangle aria-hidden="true" className="w-4 h-4 text-warning shrink-0" />
           <span>{lockNotice}</span>
         </div>
       )}
@@ -285,7 +285,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-info/10 border border-info/20 text-xs text-info space-y-1">
             <h4 className="font-bold flex items-center gap-1.5">
-              <Info className="w-4 h-4 text-info" />
+              <Info aria-hidden="true" className="w-4 h-4 text-info" />
               <span>Submission Requirements:</span>
             </h4>
             <p>
@@ -312,7 +312,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
 
             {submitStatus && (
               <p className="p-3 rounded-xl bg-success/10 border border-success/30 text-xs font-bold text-success flex items-center gap-1.5">
-                <Check className="w-4 h-4 text-success" />
+                <Check aria-hidden="true" className="w-4 h-4 text-success" />
                 <span>{submitStatus}</span>
               </p>
             )}
@@ -324,7 +324,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
               size="sm"
             >
               {isSubmitting ? "Submitting…" : "Submit Peer Assignment"}
-              <Send className="w-4 h-4 ml-1.5" />
+              <Send aria-hidden="true" className="w-4 h-4 ml-1.5" />
             </Button>
           </div>
         </div>
@@ -355,7 +355,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                   rel="noreferrer"
                   className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
                   <span>View Repository</span>
                 </a>
               </div>
@@ -388,6 +388,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                       step={1}
                       value={crit.scoreGiven}
                       onChange={(e) => handleScoreChange(pIdx, cIdx, parseFloat(e.target.value))}
+                      aria-label={`Điểm cho tiêu chí ${crit.title}`}
                       className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
                     />
                   </div>
@@ -409,7 +410,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-accent text-accent-foreground border border-border text-xs">
             <h4 className="font-bold mb-1 flex items-center gap-1.5">
-              <Scale className="w-4 h-4 text-primary" />
+              <Scale aria-hidden="true" className="w-4 h-4 text-primary" />
               <span>Submit Grade Appeal (BR_PEER_003)</span>
             </h4>
             <p>

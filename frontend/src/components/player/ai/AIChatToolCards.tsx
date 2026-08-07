@@ -57,7 +57,7 @@ export function SaveNoteCard({
         type="button"
         disabled={isSaved || isSaving}
         onClick={handleSave}
-        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer w-fit ${
+        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer w-fit ${
           isSaved
             ? "bg-success/10 text-success border-success/30 cursor-default"
             : "bg-primary/10 hover:bg-primary/20 text-primary border-primary/20"
@@ -71,7 +71,7 @@ export function SaveNoteCard({
         ) : (
           <>
             <BookmarkPlus className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-            <span>{isSaving ? "Đang lưu..." : "Lưu vào Ghi chú cá nhân"}</span>
+            <span>{isSaving ? "Đang lưu…" : "Lưu vào Ghi chú cá nhân"}</span>
           </>
         )}
       </button>
@@ -101,7 +101,7 @@ export function TimestampSeekCard({
         <button
           type="button"
           onClick={() => onSeek(seconds)}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold border border-primary/20 transition-all cursor-pointer w-fit"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold border border-primary/20 transition-colors cursor-pointer w-fit"
         >
           <Play className="w-3.5 h-3.5 fill-primary text-primary" aria-hidden="true" />
           <span>Chuyển đến đoạn [{displayLabel}]</span>

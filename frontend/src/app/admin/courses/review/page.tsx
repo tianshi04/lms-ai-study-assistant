@@ -149,7 +149,7 @@ export default function CourseReviewerPortalPage() {
 
           <Link
             href="/admin/dashboard"
-            className="px-4 py-2.5 rounded-xl bg-card border border-border hover:bg-muted text-foreground font-semibold text-sm transition-all"
+            className="px-4 py-2.5 rounded-xl bg-card border border-border hover:bg-muted text-foreground font-semibold text-sm transition-colors"
           >
             {"Về Admin Dashboard"}
           </Link>
@@ -226,7 +226,7 @@ export default function CourseReviewerPortalPage() {
                     </span>
                   </div>
                   <h3 className="font-extrabold text-xl text-foreground">{course.title}</h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-muted-foreground min-w-0 line-clamp-2 leading-relaxed">
                     {course.description}
                   </p>
                   <p className="text-xs font-medium text-muted-foreground">

@@ -30,7 +30,7 @@ export function Meter({ label, showValue = true, className, ref, ...props }: Met
         {...props}
       >
         <BaseMeter.Track className="h-full w-full">
-          <BaseMeter.Indicator className="h-full bg-primary transition-all duration-m3-medium-2 ease-m3-emphasized rounded-full" />
+          <BaseMeter.Indicator className="h-full bg-primary transition-colors duration-m3-medium-2 ease-m3-emphasized rounded-full" />
         </BaseMeter.Track>
       </BaseMeter.Root>
     </div>

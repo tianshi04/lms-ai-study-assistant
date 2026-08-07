@@ -135,7 +135,7 @@ function FinancialAidContent() {
     return (
       <div className="flex items-center justify-center py-24">
         <div className="flex items-center gap-3 text-muted-foreground">
-          <Loader2 className="animate-spin h-6 w-6 text-primary" />
+          <Loader2 aria-hidden="true" className="animate-spin h-6 w-6 text-primary" />
           <span aria-live="polite" className="text-sm font-medium">
             {"Đang tải danh sách Đơn Hỗ trợ tài chính…"}
           </span>
@@ -173,7 +173,7 @@ function FinancialAidContent() {
         {myApps.length === 0 ? (
           <div className="bg-card border border-border rounded-3xl p-12 text-center space-y-4 shadow-sm">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto">
-              <FileText className="w-6 h-6" />
+              <FileText aria-hidden="true" className="w-6 h-6" />
             </div>
             <p className="text-muted-foreground text-sm font-medium">
               {"Bạn chưa có đơn xin Hỗ trợ Tài chính nào."}
@@ -185,7 +185,7 @@ function FinancialAidContent() {
             </p>
             <Link
               href="/courses"
-              className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-all inline-flex items-center gap-2"
+              className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-colors inline-flex items-center gap-2"
             >
               {"Khám phá danh sách Khóa học →"}
             </Link>
@@ -201,7 +201,7 @@ function FinancialAidContent() {
                 <div
                   key={app.id}
                   onClick={() => setSelectedApp(app)}
-                  className={`bg-card border rounded-2xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                  className={`bg-card border rounded-2xl p-5 shadow-sm hover:shadow-md transition-colors cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 ${
                     selectedApp?.id === app.id
                       ? "border-primary ring-2 ring-primary/20"
                       : "border-border"
@@ -219,7 +219,7 @@ function FinancialAidContent() {
                     <h3 className="text-base font-bold text-foreground hover:text-primary transition-colors">
                       {courseTitle}
                     </h3>
-                    <p className="text-xs text-muted-foreground line-clamp-1">
+                    <p className="text-xs text-muted-foreground min-w-0 line-clamp-1">
                       {app.essay150Words}
                     </p>
                   </div>
@@ -233,20 +233,20 @@ function FinancialAidContent() {
                     )}
                     {app.status === "APPROVED" && (
                       <Badge variant="success" className="flex items-center gap-1.5">
-                        <Check className="w-3.5 h-3.5 text-success" />
+                        <Check aria-hidden="true" className="w-3.5 h-3.5 text-success" />
                         {"Đã Phê Duyệt"}
                       </Badge>
                     )}
                     {app.status === "REJECTED" && (
                       <Badge variant="danger" className="flex items-center gap-1.5">
-                        <X className="w-3.5 h-3.5 text-destructive" />
+                        <X aria-hidden="true" className="w-3.5 h-3.5 text-destructive" />
                         {"Chưa được duyệt"}
                       </Badge>
                     )}
 
                     <Button type="button" variant="ghost" size="sm">
                       {"Xem chi tiết"}
-                      <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                      <ChevronRight aria-hidden="true" className="w-3.5 h-3.5 ml-1" />
                     </Button>
                   </div>
                 </div>
@@ -284,13 +284,13 @@ function FinancialAidContent() {
               )}
               {selectedApp.status === "APPROVED" && (
                 <Badge variant="success" className="flex items-center gap-1.5">
-                  <Check className="w-4 h-4 text-success" />
+                  <Check aria-hidden="true" className="w-4 h-4 text-success" />
                   {"Đã Phê Duyệt"}
                 </Badge>
               )}
               {selectedApp.status === "REJECTED" && (
                 <Badge variant="danger" className="flex items-center gap-1.5">
-                  <X className="w-4 h-4 text-destructive" />
+                  <X aria-hidden="true" className="w-4 h-4 text-destructive" />
                   {"Chưa được duyệt"}
                 </Badge>
               )}
@@ -312,7 +312,7 @@ function FinancialAidContent() {
             {selectedApp.status === "APPROVED" && (
               <div className="p-4 rounded-2xl bg-success/10 border border-success/20 text-xs text-success space-y-1">
                 <p className="font-bold flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-success" />
+                  <CheckCircle2 aria-hidden="true" className="w-4 h-4 text-success" />
                   {"Đơn đã được duyệt thành công!"}
                 </p>
                 <p>
@@ -326,7 +326,7 @@ function FinancialAidContent() {
             {selectedApp.status === "REJECTED" && (
               <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-xs text-destructive space-y-1">
                 <p className="font-bold flex items-center gap-1.5">
-                  <AlertCircle className="w-4 h-4 text-destructive" />
+                  <AlertCircle aria-hidden="true" className="w-4 h-4 text-destructive" />
                   {"Đơn chưa được duyệt."}
                 </p>
                 <p>{"Bạn có thể nộp lại đơn bài luận mới để ban quản trị tiếp tục thẩm định."}</p>
@@ -361,7 +361,7 @@ function FinancialAidContent() {
 
               <Link
                 href={`/courses/${selectedApp.courseId}`}
-                className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-all ml-auto"
+                className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-colors ml-auto"
               >
                 {"Trang bài giảng khóa học →"}
               </Link>
@@ -394,7 +394,7 @@ function FinancialAidContent() {
 
               {selectedCourse && selectedCourse.financialAidEnabled === false && (
                 <div className="mt-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-bold flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-destructive" />
+                  <AlertTriangle aria-hidden="true" className="w-4 h-4 text-destructive" />
                   <span>
                     {"Khóa học này hiện đã bị tắt tính năng xin Hỗ trợ Tài chính (BR_FAID_003)."}
                   </span>

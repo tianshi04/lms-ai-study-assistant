@@ -42,7 +42,7 @@ export function PaymentCheckoutModal({
       if (data.success && data.paymentUrl) {
         setFeedbackMsg({
           type: "success",
-          text: "Đang chuyển hướng sang cổng thanh toán VNPay Sandbox...",
+          text: "Đang chuyển hướng sang cổng thanh toán VNPay Sandbox…",
         });
         window.location.href = data.paymentUrl;
       } else {
@@ -119,7 +119,7 @@ export function PaymentCheckoutModal({
           {/* Mua lẻ */}
           <div
             onClick={() => setSelectedOption("SINGLE")}
-            className={`cursor-pointer p-4 rounded-xl border-2 transition-all flex flex-col justify-between ${
+            className={`cursor-pointer p-4 rounded-xl border-2 transition-colors flex flex-col justify-between ${
               selectedOption === "SINGLE"
                 ? "border-primary bg-primary/5 shadow-md"
                 : "border-border hover:border-primary/50"
@@ -136,7 +136,7 @@ export function PaymentCheckoutModal({
                   )}
                 </span>
               </div>
-              <h4 className="font-semibold text-foreground text-base mb-1 line-clamp-1">
+              <h4 className="font-semibold text-foreground text-base mb-1 min-w-0 line-clamp-1">
                 {courseTitle}
               </h4>
               <p className="text-xs text-muted-foreground mb-3">
@@ -153,7 +153,7 @@ export function PaymentCheckoutModal({
           {/* Coursera Plus - Tháng */}
           <div
             onClick={() => setSelectedOption("PLUS_MONTHLY")}
-            className={`cursor-pointer p-4 rounded-xl border-2 transition-all flex flex-col justify-between relative ${
+            className={`cursor-pointer p-4 rounded-xl border-2 transition-colors flex flex-col justify-between relative ${
               selectedOption === "PLUS_MONTHLY"
                 ? "border-primary bg-primary/5 shadow-md"
                 : "border-border hover:border-primary/50"
@@ -184,7 +184,7 @@ export function PaymentCheckoutModal({
           {/* Coursera Plus - Năm */}
           <div
             onClick={() => setSelectedOption("PLUS_YEARLY")}
-            className={`cursor-pointer p-4 rounded-xl border-2 transition-all flex flex-col justify-between relative ${
+            className={`cursor-pointer p-4 rounded-xl border-2 transition-colors flex flex-col justify-between relative ${
               selectedOption === "PLUS_YEARLY"
                 ? "border-primary bg-primary/5 shadow-md"
                 : "border-border hover:border-primary/50"

@@ -303,6 +303,8 @@ export default function NewCoursePage() {
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   placeholder="lap-trinh-python-can-ban"
+                  aria-label="Đường dẫn tĩnh (Slug)"
+                  spellCheck={false}
                   className="w-full px-4 py-3 bg-transparent text-sm font-mono text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>

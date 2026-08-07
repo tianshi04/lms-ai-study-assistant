@@ -13,7 +13,7 @@ export function CollapsibleTrigger({
     <BaseCollapsible.Trigger
       ref={ref}
       className={cn(
-        "flex w-full items-center justify-between font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md cursor-pointer",
+        "flex w-full items-center justify-between font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md cursor-pointer",
         className,
       )}
       {...props}
@@ -30,7 +30,7 @@ export function CollapsibleContent({
     <BaseCollapsible.Panel
       ref={ref}
       className={cn(
-        "overflow-hidden transition-all duration-m3-short-4 ease-m3-emphasized data-[state=closed]:animate-collapse-up data-[state=open]:animate-collapse-down",
+        "overflow-hidden transition-colors duration-m3-short-4 ease-m3-emphasized data-[state=closed]:animate-collapse-up data-[state=open]:animate-collapse-down",
         className,
       )}
       {...props}

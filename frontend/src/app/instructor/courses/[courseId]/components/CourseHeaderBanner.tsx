@@ -113,7 +113,7 @@ export function CourseHeaderBanner({
           <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight text-balance">
             {course.title}
           </h1>
-          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+          <p className="text-sm text-muted-foreground leading-relaxed min-w-0 line-clamp-2">
             {course.description}
           </p>
           <div className="text-xs font-medium text-muted-foreground flex items-center gap-2 pt-1">
@@ -130,7 +130,7 @@ export function CourseHeaderBanner({
               type="button"
               onClick={onSubmitForLaunch}
               disabled={submittingLaunch}
-              className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-lg shadow-primary/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <Check className="w-4 h-4" aria-hidden="true" />
               <span aria-live="polite">
@@ -154,6 +154,7 @@ export function CourseHeaderBanner({
             <input
               type="file"
               accept=".zip"
+              aria-label="Import tệp Gói SCORM"
               className="hidden"
               disabled={scormImporting}
               onChange={(e) => {
@@ -204,7 +205,7 @@ export function CourseHeaderBanner({
           {isInstructorOrAdmin && (
             <button
               onClick={onAddWeek}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
+              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
             >
               <Plus className="w-5 h-5" aria-hidden="true" />
               <span>{"Thêm Tuần học"}</span>

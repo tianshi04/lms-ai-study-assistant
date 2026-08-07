@@ -28,7 +28,7 @@ export function CourseCard({ course }: { course: Course }) {
   return (
     <div
       onMouseEnter={handlePrefetch}
-      className="group relative hover:z-10 bg-surface-container-low text-on-surface border border-outline-variant hover:border-outline hover:bg-surface-container rounded-3xl p-6 transition-all duration-m3-medium-2 ease-m3-emphasized shadow-xs hover:shadow-md flex flex-col justify-between"
+      className="group relative hover:z-10 bg-surface-container-low text-on-surface border border-outline-variant hover:border-outline hover:bg-surface-container rounded-3xl p-6 transition-colors duration-m3-medium-2 ease-m3-emphasized shadow-xs hover:shadow-md flex flex-col justify-between"
     >
       <div>
         {/* Partner Header */}
@@ -55,11 +55,11 @@ export function CourseCard({ course }: { course: Course }) {
 
         {/* Title & Description */}
         <Link href={`/courses/${course.id}`} prefetch={true} className="block">
-          <h3 className="text-xl font-bold text-on-surface group-hover:text-primary transition-colors mb-3 line-clamp-2">
+          <h3 className="text-xl font-bold text-on-surface group-hover:text-primary transition-colors mb-3 min-w-0 line-clamp-2">
             {course.title}
           </h3>
         </Link>
-        <p className="text-sm text-on-surface-variant mb-6 line-clamp-3 leading-relaxed">
+        <p className="text-sm text-on-surface-variant mb-6 min-w-0 line-clamp-3 leading-relaxed">
           {course.description}
         </p>
       </div>
@@ -67,7 +67,7 @@ export function CourseCard({ course }: { course: Course }) {
       <div>
         {/* Instructors & Modules Count */}
         <div className="pt-4 border-t border-outline-variant mb-6 flex items-center justify-between text-xs text-on-surface-variant font-medium">
-          <span className="flex items-center gap-1.5 truncate max-w-[160px]">
+          <span className="flex items-center gap-1.5 min-w-0 truncate max-w-[160px]">
             <User className="w-3.5 h-3.5 text-on-surface-variant shrink-0" aria-hidden="true" />
             {course.instructorNames.join(", ") || "Giảng viên Coursera"}
           </span>
@@ -81,7 +81,7 @@ export function CourseCard({ course }: { course: Course }) {
         <Link
           href={`/courses/${course.id}`}
           transitionTypes={["nav-forward"]}
-          className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 rounded-full bg-primary hover:bg-primary-hover text-on-primary text-sm font-bold transition-all shadow-xs hover:shadow-md"
+          className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 rounded-full bg-primary hover:bg-primary-hover text-on-primary text-sm font-bold transition-colors shadow-xs hover:shadow-md"
         >
           {"Xem Chi Tiết Khóa Học"}
           <ArrowRight

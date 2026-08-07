@@ -23,7 +23,7 @@ export function TooltipContent({
       <BaseTooltip.Positioner sideOffset={sideOffset} ref={ref} {...props}>
         <BaseTooltip.Popup
           className={cn(
-            "z-dropdown overflow-hidden rounded-md bg-inverse-surface px-3 py-1.5 text-xs font-medium text-inverse-on-surface shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 transition-all duration-m3-short-3 ease-m3-decelerate",
+            "z-dropdown overflow-hidden rounded-md bg-inverse-surface px-3 py-1.5 text-xs font-medium text-inverse-on-surface shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 transition-colors duration-m3-short-3 ease-m3-decelerate",
             className,
           )}
         >

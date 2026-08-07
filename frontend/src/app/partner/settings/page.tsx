@@ -281,9 +281,9 @@ function PartnerSettingsForm({
         >
           <div className="flex items-center gap-2">
             {statusMessage.type === "success" ? (
-              <Check className="w-5 h-5 text-success" />
+              <Check aria-hidden="true" className="w-5 h-5 text-success" />
             ) : (
-              <X className="w-5 h-5 text-destructive" />
+              <X aria-hidden="true" className="w-5 h-5 text-destructive" />
             )}
             <span>{statusMessage.text}</span>
           </div>
@@ -428,7 +428,7 @@ function PartnerSettingsForm({
             {signatories.map((sig) => (
               <div
                 key={sig.id}
-                className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
+                className={`p-4 rounded-xl border transition-colors flex flex-col justify-between ${
                   sig.isDefault
                     ? "bg-primary/10 border-primary/30 shadow-sm"
                     : "bg-muted border-border"
@@ -444,7 +444,7 @@ function PartnerSettingsForm({
                         variant="verified"
                         className="text-[10px] uppercase flex items-center gap-1"
                       >
-                        <Check className="w-3 h-3" />
+                        <Check aria-hidden="true" className="w-3 h-3" />
                         Mặc định
                       </Badge>
                     ) : (
@@ -499,7 +499,7 @@ function PartnerSettingsForm({
           {/* Add New Signatory Sub-form */}
           <div className="p-4 bg-muted rounded-xl border border-border space-y-4">
             <h4 className="text-xs font-bold uppercase text-foreground flex items-center gap-1.5">
-              <Plus className="w-4 h-4 text-success" />
+              <Plus aria-hidden="true" className="w-4 h-4 text-success" />
               Thêm Người ký Đại diện mới
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -530,7 +530,7 @@ function PartnerSettingsForm({
             </div>
             <div className="flex justify-end">
               <Button type="button" onClick={handleAddSignatory} variant="primary" size="sm">
-                <Plus className="w-3.5 h-3.5 mr-1" />
+                <Plus aria-hidden="true" className="w-3.5 h-3.5 mr-1" />
                 Thêm Người ký
               </Button>
             </div>
@@ -560,7 +560,7 @@ function PartnerSettingsForm({
                 variant="primary"
                 size="sm"
               >
-                <RefreshCw className="w-4 h-4 mr-1.5" />
+                <RefreshCw aria-hidden="true" className="w-4 h-4 mr-1.5" />
                 Tạo Cặp Khóa Ký số Mới (Rotate Key Pair)
               </Button>
               <Button
@@ -569,7 +569,7 @@ function PartnerSettingsForm({
                 variant="outline"
                 size="sm"
               >
-                <Download className="w-4 h-4 text-primary mr-1.5" />
+                <Download aria-hidden="true" className="w-4 h-4 text-primary mr-1.5" />
                 Tải xuống File Xác thực OpenBadges (openbadges-issuer.json)
               </Button>
             </div>
@@ -584,12 +584,12 @@ function PartnerSettingsForm({
                 <Button type="button" variant="ghost" size="sm" onClick={handleCopyPublicKey}>
                   {copiedKey ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-success mr-1" />
+                      <Check aria-hidden="true" className="w-3.5 h-3.5 text-success mr-1" />
                       <span>Đã sao chép!</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3.5 h-3.5 mr-1" />
+                      <Copy aria-hidden="true" className="w-3.5 h-3.5 mr-1" />
                       <span>Sao chép Public Key</span>
                     </>
                   )}
@@ -613,7 +613,7 @@ function PartnerSettingsForm({
             isLoading={updateMutation.isPending}
             className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-xl px-6 py-3 text-sm shadow-md flex items-center gap-2"
           >
-            <Check className="w-4 h-4" />
+            <Check aria-hidden="true" className="w-4 h-4" />
             Lưu thay đổi Cấu hình Đối tác
           </Button>
         </div>
@@ -677,7 +677,7 @@ export default function PartnerSettingsPage() {
   if (partners.length === 0 || !activePartner) {
     return (
       <div className="max-w-2xl mx-auto my-16 p-8 bg-card border border-border rounded-2xl text-center shadow-sm">
-        <Building2 className="w-16 h-16 mx-auto text-muted-foreground/60 mb-4" />
+        <Building2 aria-hidden="true" className="w-16 h-16 mx-auto text-muted-foreground/60 mb-4" />
         <h2 className="text-xl font-bold text-foreground mb-2">Chưa tìm thấy hồ sơ Đối tác</h2>
         <p className="text-muted-foreground text-sm">
           Tài khoản của bạn chưa gắn liền với thông tin đối tác nào. Vui lòng liên hệ Super Admin để

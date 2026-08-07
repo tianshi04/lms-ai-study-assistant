@@ -53,7 +53,7 @@ export function ForumReplyItem({
                 variant="warning"
                 className="gap-0.5 text-warning font-extrabold text-[10px] py-0 px-1"
               >
-                <Check className="w-3 h-3 text-warning" />
+                <Check aria-hidden="true" className="w-3 h-3 text-warning" />
                 (TA Staff)
               </Badge>
             )}
@@ -91,6 +91,7 @@ export function ForumReplyItem({
           className="text-[10px] font-bold px-1.5 py-0.5 h-auto gap-1"
         >
           <ThumbsUp
+            aria-hidden="true"
             className={`w-2.5 h-2.5 ${reply.isUpvotedByMe ? "text-primary-foreground" : "text-primary"}`}
           />
           <span>{reply.upvoteCount}</span>

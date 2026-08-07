@@ -61,14 +61,14 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() => setIsOrgModalOpen(true)}
-              className="px-5 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg transition-all flex items-center gap-2 cursor-pointer border border-border"
+              className="px-5 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg transition-colors flex items-center gap-2 cursor-pointer border border-border"
             >
               <UserPlus className="w-5 h-5 text-primary" aria-hidden="true" />
               Thành viên Organization
             </button>
             <Link
               href="/instructor/courses/new"
-              className="px-6 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg transition-all flex items-center gap-2 cursor-pointer border border-border"
+              className="px-6 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg transition-colors flex items-center gap-2 cursor-pointer border border-border"
             >
               <Plus className="w-5 h-5 text-primary" aria-hidden="true" />
               Tạo Khóa Học Mới
@@ -78,7 +78,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
         {/* Dynamic KPI Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
               <Users className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -90,7 +90,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0">
               <BadgeCheck className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -104,7 +104,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
               <Clock className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -118,7 +118,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center shrink-0">
               <FileEdit className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -135,7 +135,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link
             href="/instructor/courses"
-            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-start gap-4"
+            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-colors group flex items-start gap-4"
           >
             <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Layers className="w-6 h-6" aria-hidden="true" />
@@ -152,7 +152,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
           <Link
             href="/instructor/profile"
-            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-start gap-4"
+            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-colors group flex items-start gap-4"
           >
             <div className="w-12 h-12 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
               <UserCheck className="w-6 h-6" aria-hidden="true" />
@@ -169,7 +169,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
           <Link
             href="/instructor/financial-aid"
-            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-start gap-4"
+            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-colors group flex items-start gap-4"
           >
             <div className="w-12 h-12 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0">
               <CircleDollarSign className="w-6 h-6" aria-hidden="true" />
@@ -225,7 +225,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                 <Link
                   key={c.id}
                   href={`/instructor/courses/${c.id}`}
-                  className="p-5 rounded-2xl border border-border hover:border-primary/40 hover:bg-muted transition-all flex flex-col justify-between space-y-3"
+                  className="p-5 rounded-2xl border border-border hover:border-primary/40 hover:bg-muted transition-colors flex flex-col justify-between space-y-3"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -244,7 +244,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                         {CourseStatus[c.status] || "DRAFT"}
                       </span>
                     </div>
-                    <h3 className="font-bold text-foreground text-sm line-clamp-2">{c.title}</h3>
+                    <h3 className="font-bold text-foreground text-sm min-w-0 line-clamp-2">
+                      {c.title}
+                    </h3>
                   </div>
 
                   <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">

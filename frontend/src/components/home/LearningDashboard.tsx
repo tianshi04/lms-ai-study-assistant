@@ -76,9 +76,9 @@ export function LearningDashboard({ userName }: { userName: string }) {
             {/* Top Row: Continue Learning & Quick Stats */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Continue Learning (MD3 Tonal Container Card) */}
-              <div className="lg:col-span-2 relative rounded-3xl overflow-hidden group border border-outline-variant hover:border-outline bg-surface-container-low transition-all duration-m3-medium-2 ease-m3-emphasized">
+              <div className="lg:col-span-2 relative rounded-3xl overflow-hidden group border border-outline-variant hover:border-outline bg-surface-container-low transition-colors duration-m3-medium-2 ease-m3-emphasized">
                 {/* Decorative background blob */}
-                <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-m3-medium-2 ease-m3-emphasized" />
+                <div className="absolute -right-20 -top-20 w-64 h-64 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-colors duration-m3-medium-2 ease-m3-emphasized" />
 
                 {continueLearningCourse ? (
                   <div className="relative p-8 h-full flex flex-col justify-between z-10">
@@ -87,7 +87,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
                         <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                         Tiếp tục học
                       </div>
-                      <h2 className="text-2xl md:text-3xl font-extrabold text-on-surface mb-2 line-clamp-2">
+                      <h2 className="text-2xl md:text-3xl font-extrabold text-on-surface mb-2 min-w-0 line-clamp-2">
                         {continueLearningCourse.courseTitle}
                       </h2>
                       <p className="text-on-surface-variant font-medium text-sm md:text-base">
@@ -103,7 +103,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
                         </div>
                         <div className="h-3 w-full bg-surface-variant rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-primary rounded-full transition-all duration-m3-medium-2 ease-m3-emphasized"
+                            className="h-full bg-primary rounded-full transition-colors duration-m3-medium-2 ease-m3-emphasized"
                             style={{
                               width: `${Math.max(0, continueLearningCourse.progressPercent)}%`,
                             }}
@@ -113,7 +113,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
 
                       <Link
                         href={`/learn/${continueLearningCourse.courseId}`}
-                        className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 rounded-full bg-primary text-on-primary font-bold hover:bg-primary-hover shadow-xs hover:shadow-md transition-all duration-m3-medium-2 ease-m3-emphasized"
+                        className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 rounded-full bg-primary text-on-primary font-bold hover:bg-primary-hover shadow-xs hover:shadow-md transition-colors duration-m3-medium-2 ease-m3-emphasized"
                       >
                         Tiếp tục bài học
                         <ArrowRight
@@ -146,7 +146,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
 
               {/* Quick Stats Column */}
               <div className="flex flex-col gap-4">
-                <div className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant flex items-center gap-5 hover:bg-surface-container hover:border-outline transition-all duration-m3-short-4 ease-m3-emphasized">
+                <div className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant flex items-center gap-5 hover:bg-surface-container hover:border-outline transition-colors duration-m3-short-4 ease-m3-emphasized">
                   <div className="w-14 h-14 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
                     <Layers className="w-7 h-7" aria-hidden="true" />
                   </div>
@@ -158,7 +158,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
                   </div>
                 </div>
 
-                <div className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant flex items-center gap-5 hover:bg-surface-container hover:border-outline transition-all duration-m3-short-4 ease-m3-emphasized">
+                <div className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant flex items-center gap-5 hover:bg-surface-container hover:border-outline transition-colors duration-m3-short-4 ease-m3-emphasized">
                   <div className="w-14 h-14 rounded-2xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center shrink-0">
                     <Award className="w-7 h-7" aria-hidden="true" />
                   </div>
@@ -172,7 +172,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
 
                 <Link
                   href="/my-learning"
-                  className="bg-surface-container-high p-4 rounded-full border border-outline-variant hover:bg-surface-container-highest hover:border-outline flex items-center justify-center gap-2 text-on-surface font-bold transition-all text-sm"
+                  className="bg-surface-container-high p-4 rounded-full border border-outline-variant hover:bg-surface-container-highest hover:border-outline flex items-center justify-center gap-2 text-on-surface font-bold transition-colors text-sm"
                 >
                   Xem tất cả khóa học
                   <ChevronRight className="w-4 h-4" aria-hidden="true" />
@@ -184,7 +184,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 pt-4">
               {/* AI Tutor Card (MD3 Expressive Container) */}
               <div className="lg:col-span-1 bg-gradient-to-br from-primary-container to-surface-container-high border border-outline-variant rounded-3xl p-6 text-on-primary-container relative overflow-hidden group shadow-xs">
-                <div className="absolute top-0 right-0 p-4 opacity-15 group-hover:opacity-35 transition-all duration-m3-medium-2 ease-m3-emphasized">
+                <div className="absolute top-0 right-0 p-4 opacity-15 group-hover:opacity-35 transition-colors duration-m3-medium-2 ease-m3-emphasized">
                   <Zap className="w-24 h-24 text-primary" aria-hidden="true" />
                 </div>
                 <div className="relative z-10 flex flex-col h-full justify-between">
@@ -217,7 +217,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
                       <Link
                         key={course.courseId}
                         href={`/learn/${course.courseId}`}
-                        className="group flex gap-4 p-4 rounded-2xl border border-outline-variant bg-surface-container-lowest hover:border-primary/40 hover:bg-surface-container-high transition-all cursor-pointer"
+                        className="group flex gap-4 p-4 rounded-2xl border border-outline-variant bg-surface-container-lowest hover:border-primary/40 hover:bg-surface-container-high transition-colors cursor-pointer"
                       >
                         <div className="w-12 h-12 rounded-xl bg-surface-variant flex items-center justify-center shrink-0 group-hover:bg-primary-container group-hover:text-on-primary-container transition-colors">
                           <BookOpen
@@ -226,7 +226,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-sm font-bold text-on-surface truncate mb-1.5 group-hover:text-primary">
+                          <h4 className="text-sm font-bold text-on-surface truncate min-w-0 mb-1.5 group-hover:text-primary">
                             {course.courseTitle}
                           </h4>
                           <div className="flex items-center gap-2">

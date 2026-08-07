@@ -141,7 +141,10 @@ export function PartnersCatalogClient() {
             />
             <Input
               type="text"
-              placeholder="Tìm kiếm đối tác theo tên hoặc thông tin..."
+              name="search"
+              autoComplete="off"
+              aria-label="Tìm kiếm đối tác"
+              placeholder="Tìm kiếm đối tác theo tên hoặc thông tin…"
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10 pr-9 bg-background border-border text-foreground rounded-xl text-xs"
@@ -152,7 +155,7 @@ export function PartnersCatalogClient() {
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
                 aria-label="Xóa từ khóa tìm kiếm"
               >
-                <X className="w-4 h-4" />
+                <X aria-hidden="true" className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -184,7 +187,10 @@ export function PartnersCatalogClient() {
           </div>
         ) : filteredPartners.length === 0 ? (
           <div className="text-center py-16 bg-card border border-border rounded-3xl p-8 max-w-md mx-auto">
-            <Building2 className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-60" />
+            <Building2
+              aria-hidden="true"
+              className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-60"
+            />
             <h3 className="text-lg font-bold text-foreground mb-1">Không tìm thấy đối tác nào</h3>
             <p className="text-xs text-muted-foreground mb-6">
               Không có đối tác phù hợp với từ khóa &quot;{searchQuery}&quot;. Vui lòng thử tìm kiếm
@@ -209,7 +215,7 @@ export function PartnersCatalogClient() {
                   <Link
                     key={partner.id}
                     href={`/partners/${partner.slug || partner.id}`}
-                    className="bg-card border border-border rounded-3xl overflow-hidden hover:shadow-xl hover:border-primary/40 transition-all duration-300 flex flex-col justify-between group cursor-pointer"
+                    className="bg-card border border-border rounded-3xl overflow-hidden hover:shadow-xl hover:border-primary/40 transition-colors duration-300 flex flex-col justify-between group cursor-pointer"
                   >
                     <div>
                       {/* Partner Banner Header */}
@@ -249,16 +255,16 @@ export function PartnersCatalogClient() {
                         </div>
 
                         <div className="flex items-center justify-between gap-2">
-                          <h2 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors tracking-tight line-clamp-1">
+                          <h2 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors tracking-tight min-w-0 line-clamp-1">
                             {partner.name}
                           </h2>
                           <ArrowRight
-                            className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0"
+                            className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-colors shrink-0"
                             aria-hidden="true"
                           />
                         </div>
 
-                        <p className="text-xs text-muted-foreground mt-2 leading-relaxed line-clamp-3">
+                        <p className="text-xs text-muted-foreground mt-2 leading-relaxed min-w-0 line-clamp-3">
                           {partner.description ||
                             "Tổ chức đối tác chiến lược tham gia cấp phát khóa học và chứng chỉ chuẩn hóa."}
                         </p>
@@ -282,7 +288,7 @@ export function PartnersCatalogClient() {
                           className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-muted/80"
                           title="Trang web chính thức"
                         >
-                          <ExternalLink className="w-3.5 h-3.5" />
+                          <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
                           <span>Website</span>
                         </span>
                       )}
@@ -316,14 +322,14 @@ export function PartnersCatalogClient() {
                     className="p-2 rounded-xl text-xs cursor-pointer disabled:opacity-40"
                     aria-label="Trang trước"
                   >
-                    <ChevronLeft className="w-4 h-4" />
+                    <ChevronLeft aria-hidden="true" className="w-4 h-4" />
                   </Button>
 
                   {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      className={`w-8 h-8 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                         currentPage === page
                           ? "bg-primary text-primary-foreground shadow-xs"
                           : "bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -340,7 +346,7 @@ export function PartnersCatalogClient() {
                     className="p-2 rounded-xl text-xs cursor-pointer disabled:opacity-40"
                     aria-label="Trang tiếp"
                   >
-                    <ChevronRight className="w-4 h-4" />
+                    <ChevronRight aria-hidden="true" className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
@@ -432,7 +438,7 @@ export function PartnersCatalogClient() {
 
           <div className="bg-muted p-4 rounded-2xl border border-border space-y-2">
             <div className="flex items-center space-x-2 text-primary font-semibold text-xs">
-              <Mail className="w-4 h-4" />
+              <Mail aria-hidden="true" className="w-4 h-4" />
               <span>Email liên hệ đối tác:</span>
             </div>
             <p className="font-mono text-xs text-foreground font-bold selection:bg-primary">

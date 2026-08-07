@@ -22,7 +22,7 @@ export default function VerifyPortalPage() {
     <main className="max-w-3xl mx-auto px-4 py-16 w-full flex-1 flex flex-col justify-center">
       <div className="bg-card border border-border rounded-3xl p-8 sm:p-12 shadow-xl text-center space-y-6 text-foreground">
         <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold text-3xl mx-auto border border-primary/20">
-          <GraduationCap className="w-8 h-8" />
+          <GraduationCap aria-hidden="true" className="w-8 h-8" />
         </div>
 
         <div>

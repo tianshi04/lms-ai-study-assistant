@@ -40,7 +40,7 @@ export function NotFoundClient() {
                 className="absolute -top-3 -right-4 sm:-top-4 sm:-right-6 w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-primary-container text-on-primary-container border border-primary/20 shadow-md flex items-center justify-center"
                 aria-hidden="true"
               >
-                <Search className="w-6 h-6 sm:w-8 sm:h-8" />
+                <Search aria-hidden="true" className="w-6 h-6 sm:w-8 sm:h-8" />
               </div>
             </div>
           </div>

@@ -53,7 +53,7 @@ export function DrawerContent({
       <BaseDrawer.Popup
         ref={ref}
         className={cn(
-          "fixed z-modal bg-card p-6 shadow-2xl transition-transform duration-m3-medium-4 ease-m3-decelerate focus-visible:outline-none",
+          "fixed z-modal bg-card p-6 shadow-2xl transition-transform duration-m3-medium-4 ease-m3-decelerate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           sideVariants[side],
           className,
         )}
@@ -62,7 +62,7 @@ export function DrawerContent({
         {children}
         {showCloseButton && (
           <BaseDrawer.Close className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer">
-            <X className="h-4 w-4" />
+            <X aria-hidden="true" className="h-4 w-4" />
             <span className="sr-only font-medium">Đóng</span>
           </BaseDrawer.Close>
         )}

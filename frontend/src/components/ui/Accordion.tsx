@@ -17,13 +17,16 @@ export function AccordionTrigger({
       <BaseAccordion.Trigger
         ref={ref}
         className={cn(
-          "flex flex-1 items-center justify-between py-4 font-medium transition-all duration-m3-short-4 ease-m3-emphasized hover:no-underline text-foreground cursor-pointer group text-left",
+          "flex flex-1 items-center justify-between py-4 font-medium transition-colors duration-m3-short-4 ease-m3-emphasized hover:no-underline text-foreground cursor-pointer group text-left",
           className,
         )}
         {...props}
       >
         {children}
-        <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-m3-medium-2 ease-m3-emphasized group-data-[panel-open]:rotate-180 text-muted-foreground" />
+        <ChevronDown
+          aria-hidden="true"
+          className="h-4 w-4 shrink-0 transition-transform duration-m3-medium-2 ease-m3-emphasized group-data-[panel-open]:rotate-180 text-muted-foreground"
+        />
       </BaseAccordion.Trigger>
     </BaseAccordion.Header>
   );
@@ -39,7 +42,7 @@ export function AccordionContent({
     <BaseAccordion.Panel
       ref={ref}
       className={cn(
-        "overflow-hidden text-sm transition-all duration-m3-medium-2 ease-m3-emphasized text-muted-foreground pb-4 pt-0",
+        "overflow-hidden text-sm transition-colors duration-m3-medium-2 ease-m3-emphasized text-muted-foreground pb-4 pt-0",
         className,
       )}
       {...props}

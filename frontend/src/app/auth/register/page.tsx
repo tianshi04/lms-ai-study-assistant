@@ -166,7 +166,7 @@ export default function RegisterPage() {
             <div className="space-y-6">
               <div className="p-4 rounded-2xl bg-muted/60 border border-border text-center space-y-2">
                 <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
-                  <ShieldCheck className="w-6 h-6" />
+                  <ShieldCheck aria-hidden="true" className="w-6 h-6" />
                 </div>
                 <h3 className="text-sm font-semibold text-foreground">Xác minh Email chính chủ</h3>
                 <p className="text-xs text-muted-foreground">
@@ -204,12 +204,15 @@ export default function RegisterPage() {
               {/* Verified Email Banner */}
               <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
                 <div className="flex items-center gap-2 overflow-hidden pr-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-                  <div className="truncate">
+                  <CheckCircle2
+                    aria-hidden="true"
+                    className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0"
+                  />
+                  <div className="min-w-0 truncate">
                     <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 block tracking-wider">
                       Email đã xác minh Google
                     </span>
-                    <span className="text-xs font-semibold text-foreground truncate block">
+                    <span className="text-xs font-semibold text-foreground min-w-0 truncate block">
                       {verifiedEmail}
                     </span>
                   </div>
@@ -219,7 +222,7 @@ export default function RegisterPage() {
                   onClick={() => setStep(1)}
                   className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium flex-shrink-0"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <ArrowLeft aria-hidden="true" className="w-3.5 h-3.5" />
                   Đổi
                 </button>
               </div>
@@ -246,7 +249,7 @@ export default function RegisterPage() {
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground z-10">
-                          <User className="w-5 h-5" />
+                          <User aria-hidden="true" className="w-5 h-5" />
                         </div>
                         <Input
                           id={field.name}
@@ -289,7 +292,7 @@ export default function RegisterPage() {
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground z-10">
-                          <Lock className="w-5 h-5" />
+                          <Lock aria-hidden="true" className="w-5 h-5" />
                         </div>
                         <Input
                           id={field.name}
@@ -313,9 +316,9 @@ export default function RegisterPage() {
                           className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                         >
                           {showPassword ? (
-                            <EyeOff className="w-5 h-5" />
+                            <EyeOff aria-hidden="true" className="w-5 h-5" />
                           ) : (
-                            <Eye className="w-5 h-5" />
+                            <Eye aria-hidden="true" className="w-5 h-5" />
                           )}
                         </Button>
                       </div>
@@ -346,7 +349,7 @@ export default function RegisterPage() {
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground z-10">
-                          <Lock className="w-5 h-5" />
+                          <Lock aria-hidden="true" className="w-5 h-5" />
                         </div>
                         <Input
                           id={field.name}
@@ -379,7 +382,7 @@ export default function RegisterPage() {
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10 text-muted-foreground">
-                        <Users className="w-5 h-5" />
+                        <Users aria-hidden="true" className="w-5 h-5" />
                       </div>
                       <Select
                         value={String(field.state.value)}

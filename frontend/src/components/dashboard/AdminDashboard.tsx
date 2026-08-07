@@ -15,10 +15,10 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link
             href="/admin/applications"
-            className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-center gap-4"
+            className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 shadow-sm transition-colors group flex items-center gap-4"
           >
             <div className="w-10 h-10 rounded-xl bg-success/10 text-success flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-5 h-5" />
+              <CheckCircle2 aria-hidden="true" className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-xs text-foreground group-hover:text-primary transition-colors">
@@ -32,10 +32,10 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
 
           <Link
             href="/admin/courses/review"
-            className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-center gap-4"
+            className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 shadow-sm transition-colors group flex items-center gap-4"
           >
             <div className="w-10 h-10 rounded-xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
-              <Clock className="w-5 h-5" />
+              <Clock aria-hidden="true" className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-xs text-foreground group-hover:text-primary transition-colors">
@@ -49,10 +49,10 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
 
           <Link
             href="/admin/categories"
-            className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-center gap-4"
+            className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 shadow-sm transition-colors group flex items-center gap-4"
           >
             <div className="w-10 h-10 rounded-xl bg-accent text-accent-foreground flex items-center justify-center shrink-0">
-              <List className="w-5 h-5" />
+              <List aria-hidden="true" className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-xs text-foreground group-hover:text-primary transition-colors">
@@ -64,10 +64,10 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
 
           <Link
             href="/admin/partners"
-            className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-center gap-4"
+            className="p-5 rounded-2xl bg-card border border-border hover:border-primary/50 shadow-sm transition-colors group flex items-center gap-4"
           >
             <div className="w-10 h-10 rounded-xl bg-info/10 text-info flex items-center justify-center shrink-0">
-              <Building2 className="w-5 h-5" />
+              <Building2 aria-hidden="true" className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-xs text-foreground group-hover:text-primary transition-colors">

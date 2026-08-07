@@ -94,7 +94,7 @@ export function VerifyDetailClient({
             />
           </div>
           <Button type="submit" size="md">
-            <Search className="w-4 h-4 mr-1.5" />
+            <Search aria-hidden="true" className="w-4 h-4 mr-1.5" />
             <span>{"Tra cứu Chứng chỉ"}</span>
           </Button>
         </form>
@@ -105,7 +105,7 @@ export function VerifyDetailClient({
           {/* Status Verification Badge */}
           <div className="bg-success/10 border border-success/20 rounded-2xl p-4 flex items-center gap-3 text-success">
             <div className="w-8 h-8 rounded-full bg-success text-success-foreground flex items-center justify-center font-bold shrink-0">
-              <Check className="w-5 h-5" />
+              <Check aria-hidden="true" className="w-5 h-5" />
             </div>
             <div>
               <h3 className="font-bold text-sm">{"Chứng chỉ Xác minh Chính thức"}</h3>
@@ -239,7 +239,7 @@ export function VerifyDetailClient({
                 <Button type="button" variant="outline" size="sm" onClick={handleCopyLink}>
                   {copied ? (
                     <>
-                      <Check className="w-4 h-4 text-success mr-1" />
+                      <Check aria-hidden="true" className="w-4 h-4 text-success mr-1" />
                       <span>Copied Link</span>
                     </>
                   ) : (
@@ -256,7 +256,7 @@ export function VerifyDetailClient({
       ) : (
         <div className="bg-destructive/10 border border-destructive/20 rounded-3xl p-8 text-center space-y-4">
           <div className="w-12 h-12 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center font-bold text-xl mx-auto">
-            <X className="w-6 h-6" />
+            <X aria-hidden="true" className="w-6 h-6" />
           </div>
           <h2 className="text-xl font-bold text-destructive">{"Không thể Xác minh Chứng chỉ"}</h2>
           <p className="text-sm text-muted-foreground max-w-md mx-auto">

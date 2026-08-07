@@ -268,7 +268,7 @@ export default function InstructorCoursesPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/instructor/financial-aid"
-            className="px-4 py-3 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-sm transition-all flex items-center gap-2"
+            className="px-4 py-3 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-sm transition-colors flex items-center gap-2"
           >
             <FileText className="w-5 h-5 text-primary" aria-hidden="true" />
             <span>{"Duyệt Financial Aid"}</span>
@@ -276,7 +276,7 @@ export default function InstructorCoursesPage() {
 
           <Link
             href="/instructor/courses/new"
-            className="px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm transition-all flex items-center gap-2 cursor-pointer"
+            className="px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-semibold text-sm transition-colors flex items-center gap-2 cursor-pointer"
           >
             <Plus className="w-5 h-5" aria-hidden="true" />
             <span>{"Soạn Khóa Học Mới"}</span>
@@ -313,7 +313,7 @@ export default function InstructorCoursesPage() {
           {courses.map((course) => (
             <div
               key={course.id}
-              className="bg-card border border-border hover:border-primary/50 rounded-3xl p-6 transition-all flex flex-col justify-between h-full"
+              className="bg-card border border-border hover:border-primary/50 rounded-3xl p-6 transition-colors flex flex-col justify-between h-full"
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
@@ -337,11 +337,11 @@ export default function InstructorCoursesPage() {
                   </div>
                 </div>
                 <Link href={`/instructor/courses/${course.id}`} className="block">
-                  <h3 className="font-bold text-lg text-foreground mb-2 line-clamp-2 hover:text-primary transition-colors">
+                  <h3 className="font-bold text-lg text-foreground mb-2 min-w-0 line-clamp-2 hover:text-primary transition-colors">
                     {course.title}
                   </h3>
                 </Link>
-                <p className="text-xs text-muted-foreground line-clamp-3 mb-4 leading-relaxed">
+                <p className="text-xs text-muted-foreground min-w-0 line-clamp-3 mb-4 leading-relaxed">
                   {course.description}
                 </p>
 
@@ -476,16 +476,12 @@ export default function InstructorCoursesPage() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-              {"Giảng Viên (cách nhau bởi dấu phẩy)"}
-            </label>
-            <Input
-              type="text"
-              value={instructorNames}
-              onChange={(e) => setInstructorNames(e.target.value)}
-            />
-          </div>
+          <Input
+            label="Giảng Viên (cách nhau bởi dấu phẩy)"
+            type="text"
+            value={instructorNames}
+            onChange={(e) => setInstructorNames(e.target.value)}
+          />
 
           <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-muted border border-border">
             <input

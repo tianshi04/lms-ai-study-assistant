@@ -35,7 +35,7 @@ export default function AssessmentsPage() {
         <div className="flex items-center gap-1.5 bg-muted p-1.5 rounded-2xl border border-border shadow-inner">
           <button
             onClick={() => setActiveAssessment("quiz")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
               activeAssessment === "quiz"
                 ? "bg-card text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -46,7 +46,7 @@ export default function AssessmentsPage() {
           </button>
           <button
             onClick={() => setActiveAssessment("lab")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
               activeAssessment === "lab"
                 ? "bg-card text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -57,7 +57,7 @@ export default function AssessmentsPage() {
           </button>
           <button
             onClick={() => setActiveAssessment("peer")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
               activeAssessment === "peer"
                 ? "bg-card text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -97,7 +97,7 @@ export default function AssessmentsPage() {
       </div>
 
       {/* Selected Assessment Runner Component */}
-      <div className="transition-all duration-m3-medium-2 ease-m3-emphasized">
+      <div className="transition-colors duration-m3-medium-2 ease-m3-emphasized">
         {activeAssessment === "quiz" && <GradedQuizRunner itemId={quizItemId} />}
         {activeAssessment === "lab" && <AutoGradedLabRunner itemId={labItemId} />}
         {activeAssessment === "peer" && <PeerAssignmentWorkspace itemId={peerItemId} />}

@@ -17,14 +17,14 @@ export function SelectTrigger({
     <BaseSelect.Trigger
       ref={ref}
       className={cn(
-        "w-full bg-background border border-input rounded-xl px-4 py-2.5 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary appearance-none cursor-pointer hover:border-ring transition-all duration-m3-short-4 ease-m3-emphasized flex items-center justify-between gap-2",
+        "w-full bg-background border border-input rounded-xl px-4 py-2.5 text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:border-primary appearance-none cursor-pointer hover:border-ring transition-colors duration-m3-short-4 ease-m3-emphasized flex items-center justify-between gap-2",
         className,
       )}
       {...props}
     >
       {children}
       <BaseSelect.Icon className="text-muted-foreground shrink-0">
-        <ChevronDown className="w-4 h-4" />
+        <ChevronDown aria-hidden="true" className="w-4 h-4" />
       </BaseSelect.Icon>
     </BaseSelect.Trigger>
   );
@@ -38,7 +38,10 @@ export function SelectContent({
 }: React.ComponentProps<typeof BaseSelect.Popup>) {
   return (
     <SelectPortal>
-      <BaseSelect.Positioner sideOffset={6} className="z-dropdown outline-none">
+      <BaseSelect.Positioner
+        sideOffset={6}
+        className="z-dropdown outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
         <BaseSelect.Popup
           ref={ref}
           className={cn(
@@ -64,14 +67,14 @@ export function SelectItem({
     <BaseSelect.Item
       ref={ref}
       className={cn(
-        "relative flex cursor-pointer select-none items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold outline-none transition-colors duration-m3-short-3 ease-m3-emphasized text-on-surface data-[highlighted]:bg-surface-container-highest data-[selected]:bg-secondary-container data-[selected]:text-on-secondary-container data-[selected]:font-bold",
+        "relative flex cursor-pointer select-none items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-xs font-semibold outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors duration-m3-short-3 ease-m3-emphasized text-on-surface data-[highlighted]:bg-surface-container-highest data-[selected]:bg-secondary-container data-[selected]:text-on-secondary-container data-[selected]:font-bold",
         className,
       )}
       {...props}
     >
       <BaseSelect.ItemText>{children}</BaseSelect.ItemText>
       <BaseSelect.ItemIndicator className="text-on-secondary-container shrink-0">
-        <Check className="w-3.5 h-3.5" />
+        <Check aria-hidden="true" className="w-3.5 h-3.5" />
       </BaseSelect.ItemIndicator>
     </BaseSelect.Item>
   );

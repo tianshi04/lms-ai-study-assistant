@@ -25,7 +25,7 @@ export default function GlobalError({
               className="w-20 h-20 rounded-3xl bg-error-container text-on-error-container border border-error/20 flex items-center justify-center shadow-inner"
               aria-hidden="true"
             >
-              <AlertTriangle className="w-10 h-10 text-destructive" />
+              <AlertTriangle aria-hidden="true" className="w-10 h-10 text-destructive" />
             </div>
           </div>
 

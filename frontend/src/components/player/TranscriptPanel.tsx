@@ -196,16 +196,23 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
       <div className="relative shrink-0">
         <Input
           type="text"
+          name="search"
+          autoComplete="off"
+          aria-label="Tìm kiếm nội dung bài giảng"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Tìm kiếm nội dung bài giảng…"
           className="pl-9 pr-8"
         />
-        <Search className="w-4 h-4 text-on-surface-variant absolute left-3 top-3 pointer-events-none" />
+        <Search
+          aria-hidden="true"
+          className="w-4 h-4 text-on-surface-variant absolute left-3 top-3 pointer-events-none"
+        />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-2.5 text-on-surface-variant hover:text-on-surface text-xs font-bold cursor-pointer"
+            className="absolute right-3 top-2.5 text-on-surface-variant hover:text-on-surface text-xs font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            aria-label="Xóa từ khóa tìm kiếm"
           >
             ✕
           </button>
@@ -245,7 +252,7 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
                       key={cue.originalIndex}
                       id={`transcript-cue-${cue.originalIndex}`}
                       onClick={() => onSeekVideo(cue.startTime)}
-                      className={`transition-all duration-m3-short-4 ease-m3-emphasized cursor-pointer inline box-decoration-clone rounded-md px-1 py-0.5 ${
+                      className={`transition-colors duration-m3-short-4 ease-m3-emphasized cursor-pointer inline box-decoration-clone rounded-md px-1 py-0.5 ${
                         isActive
                           ? "bg-primary-container text-on-primary-container font-bold shadow-xs ring-1 ring-primary/30"
                           : "text-on-surface/80 hover:text-on-surface hover:bg-surface-container-high"

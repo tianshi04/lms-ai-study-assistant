@@ -95,6 +95,7 @@ export function LearningItemRow({
           target="_blank"
           className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
           title={"Xem trước nội dung trong Trình phát bài học"}
+          aria-label={"Xem trước nội dung trong Trình phát bài học"}
         >
           <Eye className="w-3.5 h-3.5" aria-hidden="true" />
         </Link>
@@ -103,15 +104,17 @@ export function LearningItemRow({
           <>
             <button
               onClick={() => onEdit(item)}
-              className="p-1 text-muted-foreground hover:text-primary hover:bg-muted rounded transition-colors cursor-pointer"
+              className="p-1 text-muted-foreground hover:text-primary hover:bg-muted rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title={"Sửa nội dung học liệu"}
+              aria-label={"Sửa nội dung học liệu"}
             >
               <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
             <button
               onClick={() => onDelete(item.id, item.title)}
-              className="p-1 text-destructive hover:bg-destructive/10 rounded transition-colors cursor-pointer"
+              className="p-1 text-destructive hover:bg-destructive/10 rounded transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title={"Xóa học liệu"}
+              aria-label={"Xóa học liệu"}
             >
               <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
             </button>

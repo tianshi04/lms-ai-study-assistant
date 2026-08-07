@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/DropdownMenu";
 
 const itemClasses =
-  "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/70 font-medium justify-start gap-3 w-full rounded-xl px-3.5 py-2.5 my-0.5 transition-all cursor-pointer";
+  "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/70 font-medium justify-start gap-3 w-full rounded-xl px-3.5 py-2.5 my-0.5 transition-colors cursor-pointer";
 const iconClasses = "w-4.5 h-4.5 text-on-surface-variant";
 
 export function UserDropdown() {
@@ -88,7 +88,7 @@ export function UserDropdown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className="relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring transition-all cursor-pointer group p-0.5 border border-outline-variant hover:border-primary shrink-0"
+        className="relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer group p-0.5 border border-outline-variant hover:border-primary shrink-0"
         aria-label={displayUserName || "Tài khoản người dùng"}
       >
         <Image
@@ -117,10 +117,10 @@ export function UserDropdown() {
             className="w-11 h-11 rounded-full bg-primary-container object-cover ring-2 ring-primary/20 shrink-0"
           />
           <div className="min-w-0 flex-1 space-y-1">
-            <p className="text-sm font-bold text-on-surface truncate leading-snug">
+            <p className="text-sm font-bold text-on-surface truncate min-w-0 leading-snug">
               {displayUserName}
             </p>
-            <p className="text-xs text-on-surface-variant truncate">{userEmail}</p>
+            <p className="text-xs text-on-surface-variant truncate min-w-0">{userEmail}</p>
             <div>
               <span className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container border border-primary/20 uppercase tracking-wider">
                 {roleLabel}
@@ -131,28 +131,28 @@ export function UserDropdown() {
 
         {/* Menu Items */}
         <DropdownMenuItem render={<Link href="/my-learning" />} className={itemClasses}>
-          <BookOpen className={iconClasses} />
+          <BookOpen aria-hidden="true" className={iconClasses} />
           <span>{"Việc học của tôi"}</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem render={<Link href="/my-purchases" />} className={itemClasses}>
-          <ShoppingBag className={iconClasses} />
+          <ShoppingBag aria-hidden="true" className={iconClasses} />
           <span>{"Mua hàng của tôi"}</span>
         </DropdownMenuItem>
 
         <DropdownMenuItem render={<Link href="/account-settings" />} className={itemClasses}>
-          <Settings className={iconClasses} />
+          <Settings aria-hidden="true" className={iconClasses} />
           <span>{"Cài đặt"}</span>
         </DropdownMenuItem>
 
         {isInstructorOrAdmin && (
           <>
             <DropdownMenuItem render={<Link href="/instructor/courses" />} className={itemClasses}>
-              <Layers className={iconClasses} />
+              <Layers aria-hidden="true" className={iconClasses} />
               <span>{"Giảng Viên"}</span>
             </DropdownMenuItem>
             <DropdownMenuItem render={<Link href="/instructor/profile" />} className={itemClasses}>
-              <Edit className={iconClasses} />
+              <Edit aria-hidden="true" className={iconClasses} />
               <span>{"Hồ sơ & Chữ ký Giảng viên"}</span>
             </DropdownMenuItem>
           </>
@@ -160,7 +160,7 @@ export function UserDropdown() {
 
         {isSuperAdmin && (
           <DropdownMenuItem render={<Link href="/partner/settings" />} className={itemClasses}>
-            <Settings className={iconClasses} />
+            <Settings aria-hidden="true" className={iconClasses} />
             <span>{"Cấu hình Đối tác"}</span>
           </DropdownMenuItem>
         )}
@@ -168,15 +168,15 @@ export function UserDropdown() {
         {isSuperAdmin && (
           <>
             <DropdownMenuItem render={<Link href="/admin/dashboard" />} className={itemClasses}>
-              <LayoutDashboard className={iconClasses} />
+              <LayoutDashboard aria-hidden="true" className={iconClasses} />
               <span>{"Trang quản trị"}</span>
             </DropdownMenuItem>
             <DropdownMenuItem render={<Link href="/admin/applications" />} className={itemClasses}>
-              <CheckCircle2 className={iconClasses} />
+              <CheckCircle2 aria-hidden="true" className={iconClasses} />
               <span>{"Duyệt đơn Giảng viên"}</span>
             </DropdownMenuItem>
             <DropdownMenuItem render={<Link href="/admin/partners" />} className={itemClasses}>
-              <Building2 className={iconClasses} />
+              <Building2 aria-hidden="true" className={iconClasses} />
               <span>{"Quản trị Đối tác"}</span>
             </DropdownMenuItem>
           </>
@@ -186,9 +186,9 @@ export function UserDropdown() {
 
         <DropdownMenuItem
           onClick={handleLogout}
-          className="text-error hover:bg-error-container/40 cursor-pointer px-3.5 py-2.5 text-sm font-medium justify-start gap-3 w-full rounded-xl my-0.5 transition-all"
+          className="text-error hover:bg-error-container/40 cursor-pointer px-3.5 py-2.5 text-sm font-medium justify-start gap-3 w-full rounded-xl my-0.5 transition-colors"
         >
-          <LogOut className="w-4.5 h-4.5 text-error" />
+          <LogOut aria-hidden="true" className="w-4.5 h-4.5 text-error" />
           <span>{"Thoát"}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>

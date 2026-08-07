@@ -100,7 +100,7 @@ export function ThreadDetailModal({
               )}
               {thread.isStaffPinned && (
                 <Badge variant="warning" className="gap-1.5 px-3 py-1 shadow-xs text-xs font-bold">
-                  <Pin className="w-3.5 h-3.5 text-warning shrink-0" />
+                  <Pin aria-hidden="true" className="w-3.5 h-3.5 text-warning shrink-0" />
                   <span>Giảng viên đã ghim</span>
                 </Badge>
               )}
@@ -162,6 +162,7 @@ export function ThreadDetailModal({
                 className="gap-1.5 font-bold shadow-xs"
               >
                 <ThumbsUp
+                  aria-hidden="true"
                   className={`w-4 h-4 ${thread.isUpvotedByMe ? "text-primary-foreground" : "text-primary"}`}
                 />
                 <span>{thread.upvoteCount} Hữu ích</span>
@@ -185,7 +186,7 @@ export function ThreadDetailModal({
         {/* Action bar info */}
         <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/60">
           <div className="flex items-center gap-1.5 font-semibold">
-            <MessageSquare className="w-4 h-4 text-primary" />
+            <MessageSquare aria-hidden="true" className="w-4 h-4 text-primary" />
             <span>{thread.replies.length} Phản hồi</span>
           </div>
           {isThreadAuthor && (
@@ -215,7 +216,7 @@ export function ThreadDetailModal({
                       className="absolute right-2 top-2 text-[10px] text-muted-foreground hover:text-warning"
                       title="Ghim làm câu trả lời chính thức"
                     >
-                      <Pin className="w-3 h-3" />
+                      <Pin aria-hidden="true" className="w-3 h-3" />
                       <span>Ghim</span>
                     </Button>
                   )}

@@ -2,7 +2,7 @@ import { ConnectError, Code } from "@connectrpc/connect";
 
 /**
  * Maps a ConnectError or unknown error to a clean, user-friendly Vietnamese error string.
- * Strips raw ConnectRPC error code brackets like "[permission_denied] ...".
+ * Strips raw ConnectRPC error code brackets like "[permission_denied] …".
  */
 export function mapConnectError(
   error: unknown,

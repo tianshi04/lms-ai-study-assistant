@@ -219,8 +219,10 @@ export default function TAGradingPage() {
                       </div>
                     </TableCell>
                     <TableCell className="max-w-xs">
-                      <div className="font-bold text-foreground truncate">{sub.itemTitle}</div>
-                      <div className="text-[10px] text-muted-foreground truncate">
+                      <div className="font-bold text-foreground min-w-0 truncate">
+                        {sub.itemTitle}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground min-w-0 truncate">
                         {sub.courseTitle}
                       </div>
                     </TableCell>

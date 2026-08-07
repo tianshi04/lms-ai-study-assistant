@@ -340,9 +340,9 @@ export function GradedQuizRunner({
           }`}
         >
           {isPassed ? (
-            <CheckCircle2 className="w-12 h-12 text-success mx-auto" />
+            <CheckCircle2 aria-hidden="true" className="w-12 h-12 text-success mx-auto" />
           ) : (
-            <AlertCircle className="w-12 h-12 text-destructive mx-auto" />
+            <AlertCircle aria-hidden="true" className="w-12 h-12 text-destructive mx-auto" />
           )}
           <h3 className="text-lg font-bold">
             {isPassed ? "Bài Thi Đã Hoàn Thành" : "Bài Thi Bị Khóa"}
@@ -354,7 +354,7 @@ export function GradedQuizRunner({
 
     return (
       <div className="max-w-4xl mx-auto p-8 rounded-2xl bg-destructive/10 border border-destructive/30 text-destructive text-center space-y-3 shadow-xs">
-        <AlertTriangle className="w-10 h-10 text-destructive mx-auto" />
+        <AlertTriangle aria-hidden="true" className="w-10 h-10 text-destructive mx-auto" />
         <p className="text-sm font-bold">{error}</p>
         <p className="text-xs text-muted-foreground">
           Vui lòng liên hệ giảng viên hoặc thiết lập cấu hình Ma trận đề thi cho bài thi này.
@@ -408,7 +408,7 @@ export function GradedQuizRunner({
         <div className="p-5 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive space-y-2">
           <div className="flex items-center justify-between">
             <h4 className="font-bold text-sm flex items-center gap-2">
-              <Clock className="w-4 h-4 text-destructive" />
+              <Clock aria-hidden="true" className="w-4 h-4 text-destructive" />
               <span>Thời gian chờ {cooldownHours} giờ đang kích hoạt</span>
             </h4>
             <span className="font-mono font-bold text-lg px-3 py-1 bg-destructive/20 rounded-xl">
@@ -442,12 +442,12 @@ export function GradedQuizRunner({
                     variant="warning"
                     className="text-[10px] py-0.5 px-2.5 font-bold shrink-0 flex items-center gap-1"
                   >
-                    <CheckSquare className="w-3 h-3" />
+                    <CheckSquare aria-hidden="true" className="w-3 h-3" />
                     Chọn nhiều đáp án
                   </Badge>
                 ) : q.questionType === "TRUE_FALSE" ? (
                   <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-info/15 text-info border border-info/30 shrink-0">
-                    <HelpCircle className="w-3 h-3" />
+                    <HelpCircle aria-hidden="true" className="w-3 h-3" />
                     Đúng / Sai
                   </span>
                 ) : (
@@ -455,7 +455,7 @@ export function GradedQuizRunner({
                     variant="default"
                     className="text-[10px] py-0.5 px-2.5 font-medium text-muted-foreground shrink-0 flex items-center gap-1"
                   >
-                    <CircleDot className="w-3 h-3" />
+                    <CircleDot aria-hidden="true" className="w-3 h-3" />
                     Chọn 1 đáp án
                   </Badge>
                 )}
@@ -470,7 +470,7 @@ export function GradedQuizRunner({
                       type="button"
                       disabled={(cooldownCountdown > 0 && !isPreviewMode) || quizResult !== null}
                       onClick={() => handleOptionSelect(qIdx, optIdx, isMultipleChoice)}
-                      className={`p-3.5 rounded-xl text-xs text-left font-medium transition-all border flex items-center gap-2.5 cursor-pointer ${
+                      className={`p-3.5 rounded-xl text-xs text-left font-medium transition-colors border flex items-center gap-2.5 cursor-pointer ${
                         isSelected
                           ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
                           : "bg-card border-border hover:border-primary/50 text-foreground"
@@ -486,7 +486,7 @@ export function GradedQuizRunner({
                         }`}
                       >
                         {isMultipleChoice && isSelected ? (
-                          <Check className="w-3 h-3 text-primary-foreground" />
+                          <Check aria-hidden="true" className="w-3 h-3 text-primary-foreground" />
                         ) : (
                           String.fromCharCode(65 + optIdx)
                         )}
@@ -514,9 +514,9 @@ export function GradedQuizRunner({
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full flex items-center justify-center bg-current/10">
                 {quizResult.passed ? (
-                  <Check className="w-5 h-5 text-success" />
+                  <Check aria-hidden="true" className="w-5 h-5 text-success" />
                 ) : (
-                  <X className="w-5 h-5 text-destructive" />
+                  <X aria-hidden="true" className="w-5 h-5 text-destructive" />
                 )}
               </div>
               <div>
@@ -567,7 +567,7 @@ export function GradedQuizRunner({
             className="text-destructive hover:text-destructive p-1 h-auto w-auto"
             aria-label="Đóng thông báo lỗi"
           >
-            <X className="w-4 h-4" />
+            <X aria-hidden="true" className="w-4 h-4" />
           </Button>
         </div>
       )}
@@ -583,13 +583,13 @@ export function GradedQuizRunner({
         <div className="flex items-center gap-3">
           {isPreviewMode && quizResult && (
             <Button type="button" variant="outline" size="sm" onClick={handleResetPreview}>
-              <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+              <RotateCcw aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
               Làm lại bài thi (Reset)
             </Button>
           )}
           {!isPreviewMode && quizResult && cooldownCountdown === 0 && attemptsLeft > 0 && (
             <Button type="button" variant="outline" size="sm" onClick={handleRetryQuiz}>
-              <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+              <RotateCcw aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
               Làm lại bài thi (Cải thiện điểm)
             </Button>
           )}
@@ -602,7 +602,7 @@ export function GradedQuizRunner({
               size="sm"
             >
               {isSubmitting ? "Đang chấm điểm…" : "Nộp bài thi"}
-              {!isSubmitting && <Send className="w-4 h-4 ml-1.5" />}
+              {!isSubmitting && <Send aria-hidden="true" className="w-4 h-4 ml-1.5" />}
             </Button>
           )}
         </div>

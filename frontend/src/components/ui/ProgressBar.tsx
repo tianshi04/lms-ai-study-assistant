@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 export const progressBarVariants = cva(
-  "h-full transition-all duration-m3-long-2 ease-m3-emphasized rounded-full",
+  "h-full transition-colors duration-m3-long-2 ease-m3-emphasized rounded-full",
   {
     variants: {
       color: {

@@ -23,12 +23,12 @@ export function PopoverContent({
       <BasePopover.Positioner
         sideOffset={sideOffset}
         align={align}
-        className="z-dropdown outline-none"
+        className="z-dropdown outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <BasePopover.Popup
           ref={ref}
           className={cn(
-            "w-80 sm:w-[400px] rounded-3xl bg-surface-container-high text-on-surface border border-outline-variant/60 shadow-2xl overflow-hidden outline-none animate-in fade-in-0 zoom-in-95 duration-m3-short-4 ease-m3-decelerate",
+            "w-80 sm:w-[400px] rounded-3xl bg-surface-container-high text-on-surface border border-outline-variant/60 shadow-2xl overflow-hidden outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring animate-in fade-in-0 zoom-in-95 duration-m3-short-4 ease-m3-decelerate",
             className,
           )}
           {...props}

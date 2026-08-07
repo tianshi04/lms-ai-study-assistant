@@ -99,7 +99,7 @@ export function HonorCodeModal({
             isLoading={isSubmitting}
           >
             {isSubmitting ? "Đang chấm điểm…" : "Đồng ý & Nộp bài ngay"}
-            {!isSubmitting && <Send className="w-3.5 h-3.5 ml-1.5" />}
+            {!isSubmitting && <Send aria-hidden="true" className="w-3.5 h-3.5 ml-1.5" />}
           </Button>
         </div>
       </div>

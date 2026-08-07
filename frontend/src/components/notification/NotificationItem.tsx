@@ -66,7 +66,7 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
 
   return (
     <div
-      className={`relative p-3.5 rounded-2xl transition-all duration-m3-short-4 ease-m3-emphasized ${
+      className={`relative p-3.5 rounded-2xl transition-colors duration-m3-short-4 ease-m3-emphasized ${
         item.isRead
           ? "bg-surface-container-low/60 hover:bg-surface-container-low border border-transparent"
           : "bg-primary-container/25 hover:bg-primary-container/40 border border-primary/20 shadow-2xs"
@@ -108,7 +108,7 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
               className="block group"
             >
               <h4
-                className={`text-xs font-bold tracking-tight text-on-surface group-hover:text-primary transition-colors ${
+                className={`text-xs font-bold tracking-tight text-on-surface group-hover:text-primary transition-colors min-w-0 ${
                   compact ? "line-clamp-1" : "line-clamp-2"
                 }`}
               >
@@ -117,7 +117,7 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
 
               {item.content && (
                 <p
-                  className={`text-[11px] text-on-surface-variant mt-0.5 leading-relaxed ${
+                  className={`text-[11px] text-on-surface-variant mt-0.5 leading-relaxed min-w-0 ${
                     compact ? "line-clamp-2" : "line-clamp-3"
                   }`}
                 >
@@ -128,7 +128,7 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
           ) : (
             <>
               <h4
-                className={`text-xs font-bold tracking-tight text-on-surface ${
+                className={`text-xs font-bold tracking-tight text-on-surface min-w-0 ${
                   compact ? "line-clamp-1" : "line-clamp-2"
                 }`}
               >
@@ -137,7 +137,7 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
 
               {item.content && (
                 <p
-                  className={`text-[11px] text-on-surface-variant mt-0.5 leading-relaxed ${
+                  className={`text-[11px] text-on-surface-variant mt-0.5 leading-relaxed min-w-0 ${
                     compact ? "line-clamp-2" : "line-clamp-3"
                   }`}
                 >

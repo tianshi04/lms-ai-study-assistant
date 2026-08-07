@@ -218,7 +218,8 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
 
             {isLoading ? (
               <div className="flex items-center justify-center p-8 text-muted-foreground text-sm">
-                <Loader2 className="w-5 h-5 animate-spin mr-2" /> Đang tải danh sách...
+                <Loader2 aria-hidden="true" className="w-5 h-5 animate-spin mr-2" /> Đang tải danh
+                sách…
               </div>
             ) : isError ? (
               <div className="p-4 text-center text-sm text-destructive bg-destructive/5 rounded-lg">

@@ -32,7 +32,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 transition-all cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
+      className="p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
       aria-label="Chuyển đổi giao diện sáng/tối"
       title={isDark ? "Chuyển sang Chế độ Sáng" : "Chuyển sang Chế độ Tối"}
     >

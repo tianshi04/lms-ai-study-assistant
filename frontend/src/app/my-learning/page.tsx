@@ -195,7 +195,7 @@ function MyLearningContent() {
             {certificates.map((cert) => (
               <div
                 key={cert.certificateId}
-                className="group relative bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized flex flex-col justify-between"
+                className="group relative bg-card text-card-foreground border border-border rounded-3xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col justify-between"
               >
                 <div className="p-6 rounded-t-3xl">
                   {/* Header Badge & Partner */}
@@ -215,7 +215,7 @@ function MyLearningContent() {
                           {cert.partnerName.slice(0, 2).toUpperCase()}
                         </div>
                       )}
-                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground truncate">
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground min-w-0 truncate">
                         {cert.partnerName}
                       </span>
                     </div>
@@ -226,7 +226,7 @@ function MyLearningContent() {
                   </div>
 
                   {/* Course Title */}
-                  <h3 className="text-lg font-bold text-foreground leading-snug line-clamp-2 mb-4 group-hover:text-primary transition-colors">
+                  <h3 className="text-lg font-bold text-foreground leading-snug min-w-0 line-clamp-2 mb-4 group-hover:text-primary transition-colors">
                     {cert.courseTitle}
                   </h3>
 
@@ -238,7 +238,7 @@ function MyLearningContent() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="font-medium">{"Mã chứng chỉ"}:</span>
-                      <span className="font-mono text-[11px] font-bold text-primary truncate max-w-[150px]">
+                      <span className="font-mono text-[11px] font-bold text-primary min-w-0 truncate max-w-[150px]">
                         {cert.certificateId}
                       </span>
                     </div>
@@ -249,7 +249,7 @@ function MyLearningContent() {
                 <div className="p-4 border-t border-border bg-muted/50 flex items-center gap-2 rounded-b-3xl">
                   <Link
                     href={cert.verificationUrl || `/verify/${cert.certificateId}`}
-                    className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-all cursor-pointer"
+                    className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-colors cursor-pointer"
                   >
                     <Eye className="w-4 h-4" aria-hidden="true" />
                     <span>{"Xem chứng chỉ"}</span>
@@ -298,7 +298,7 @@ function MyLearningContent() {
           {(activeTab === "IN_PROGRESS" ? inProgressCourses : completedCourses).map((course) => (
             <div
               key={course.courseId}
-              className="group relative bg-card text-card-foreground border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized flex flex-col h-full"
+              className="group relative bg-card text-card-foreground border border-border rounded-2xl shadow-sm hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex flex-col h-full"
             >
               <div className="p-6 flex-1 rounded-t-2xl">
                 <div className="flex items-center justify-between mb-3">
@@ -311,7 +311,7 @@ function MyLearningContent() {
                   transitionTypes={["nav-forward"]}
                   className="block group-hover:text-primary transition-colors"
                 >
-                  <h3 className="text-lg font-bold text-foreground line-clamp-2 mb-3">
+                  <h3 className="text-lg font-bold text-foreground min-w-0 line-clamp-2 mb-3">
                     {course.courseTitle}
                   </h3>
                 </Link>
@@ -323,7 +323,7 @@ function MyLearningContent() {
                   </div>
                   <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-m3-long-2 ease-m3-emphasized ${
+                      className={`h-full rounded-full transition-colors duration-m3-long-2 ease-m3-emphasized ${
                         course.progressPercent === 100
                           ? "bg-success"
                           : course.progressPercent > 0
@@ -340,7 +340,7 @@ function MyLearningContent() {
                 <Link
                   href={`/learn/${course.courseId}`}
                   transitionTypes={["nav-forward"]}
-                  className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-all cursor-pointer"
+                  className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
                 >
                   {course.status === "COMPLETED"
                     ? "Đánh giá khóa học"

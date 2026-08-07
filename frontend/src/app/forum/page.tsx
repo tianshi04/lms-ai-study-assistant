@@ -402,7 +402,7 @@ function ForumPageContent() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 border-b border-border pb-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-3">
-              <MessageSquare className="w-3.5 h-3.5" />
+              <MessageSquare aria-hidden="true" className="w-3.5 h-3.5" />
               Coursera Learning Forum
             </div>
             <h1 className="text-3xl font-extrabold text-foreground text-balance">
@@ -419,7 +419,7 @@ function ForumPageContent() {
               onClick={() => setShowCreateModal(true)}
               className="px-5 py-2.5 rounded-xl font-semibold text-sm shadow-md shadow-primary/20 gap-2"
             >
-              <Plus className="w-4 h-4" />
+              <Plus aria-hidden="true" className="w-4 h-4" />
               {"Tạo chủ đề thảo luận mới"}
             </Button>
           </div>
@@ -477,7 +477,10 @@ function ForumPageContent() {
           </div>
         ) : threads.length === 0 ? (
           <div className="text-center py-16 bg-card rounded-2xl border border-border p-8">
-            <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <MessageSquare
+              aria-hidden="true"
+              className="w-12 h-12 text-muted-foreground mx-auto mb-3"
+            />
             <p className="text-muted-foreground font-medium">
               {"Chưa có chủ đề thảo luận nào. Hãy là người đầu tiên đặt câu hỏi!"}
             </p>
@@ -496,7 +499,7 @@ function ForumPageContent() {
                 <Card
                   key={thread.id}
                   id={`thread-${thread.id}`}
-                  className={`rounded-2xl p-6 transition-all shadow-sm ${
+                  className={`rounded-2xl p-6 transition-colors shadow-sm ${
                     isTargetThread
                       ? "border-primary ring-2 ring-primary/50 shadow-lg bg-primary/5"
                       : "hover:border-accent-hover"
@@ -513,7 +516,7 @@ function ForumPageContent() {
                         )}
                         {thread.isStaffPinned && (
                           <Badge variant="warning" className="gap-1.5 px-3 py-1 shadow-xs">
-                            <Pin className="w-3.5 h-3.5 text-warning shrink-0" />
+                            <Pin aria-hidden="true" className="w-3.5 h-3.5 text-warning shrink-0" />
                             <span>Staff Pinned</span>
                           </Badge>
                         )}
@@ -625,7 +628,7 @@ function ForumPageContent() {
                         return (
                           <div
                             key={reply.id}
-                            className={`p-4 rounded-xl text-sm transition-all ${
+                            className={`p-4 rounded-xl text-sm transition-colors ${
                               reply.isStaffAnswer
                                 ? "bg-warning/10 border border-warning/20"
                                 : "bg-muted/50 border border-border"
@@ -693,7 +696,7 @@ function ForumPageContent() {
                                   onClick={() => handleVote(reply.id, true)}
                                   className="rounded-full text-xs gap-1 px-3 py-1 h-auto"
                                 >
-                                  <ChevronUp className="w-3.5 h-3.5" />
+                                  <ChevronUp aria-hidden="true" className="w-3.5 h-3.5" />
                                   <span className="font-bold">{reply.upvoteCount}</span>
                                 </Button>
                               </div>
@@ -747,7 +750,10 @@ function ForumPageContent() {
                             }
                             className="w-full justify-start text-xs font-medium text-muted-foreground bg-muted hover:bg-muted/80 rounded-xl p-3 h-auto group border-input"
                           >
-                            <Reply className="w-4 h-4 mr-2 text-muted-foreground group-hover:text-primary transition-colors" />
+                            <Reply
+                              aria-hidden="true"
+                              className="w-4 h-4 mr-2 text-muted-foreground group-hover:text-primary transition-colors"
+                            />
                             <span>{"Nội dung thắc mắc hoặc thảo luận chi tiết…"}</span>
                           </Button>
                         ) : (
@@ -833,32 +839,24 @@ function ForumPageContent() {
             </Select>
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1">
-              Title *
-            </label>
-            <Input
-              type="text"
-              required
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              placeholder={"Tiêu đề chủ đề…"}
-              className="bg-muted text-sm p-3 rounded-xl"
-            />
-          </div>
+          <Input
+            label="Title *"
+            type="text"
+            required
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            placeholder={"Tiêu đề chủ đề…"}
+            className="bg-muted text-sm p-3 rounded-xl"
+          />
 
-          <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1">
-              Content
-            </label>
-            <Textarea
-              rows={4}
-              value={newContent}
-              onChange={(e) => setNewContent(e.target.value)}
-              placeholder={"Nội dung thắc mắc hoặc thảo luận chi tiết…"}
-              className="bg-muted text-sm p-3 rounded-xl"
-            />
-          </div>
+          <Textarea
+            label="Content"
+            rows={4}
+            value={newContent}
+            onChange={(e) => setNewContent(e.target.value)}
+            placeholder={"Nội dung thắc mắc hoặc thảo luận chi tiết…"}
+            className="bg-muted text-sm p-3 rounded-xl"
+          />
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button
@@ -890,30 +888,22 @@ function ForumPageContent() {
         size="lg"
       >
         <form onSubmit={handleUpdateThread} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1">
-              Title *
-            </label>
-            <Input
-              type="text"
-              required
-              value={editThreadTitle}
-              onChange={(e) => setEditThreadTitle(e.target.value)}
-              className="bg-muted text-sm p-3 rounded-xl"
-            />
-          </div>
+          <Input
+            label="Title *"
+            type="text"
+            required
+            value={editThreadTitle}
+            onChange={(e) => setEditThreadTitle(e.target.value)}
+            className="bg-muted text-sm p-3 rounded-xl"
+          />
 
-          <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1">
-              Content
-            </label>
-            <Textarea
-              rows={4}
-              value={editThreadContent}
-              onChange={(e) => setEditThreadContent(e.target.value)}
-              className="bg-muted text-sm p-3 rounded-xl"
-            />
-          </div>
+          <Textarea
+            label="Content"
+            rows={4}
+            value={editThreadContent}
+            onChange={(e) => setEditThreadContent(e.target.value)}
+            className="bg-muted text-sm p-3 rounded-xl"
+          />
 
           <div className="flex justify-end gap-3 pt-4 border-t border-border">
             <Button

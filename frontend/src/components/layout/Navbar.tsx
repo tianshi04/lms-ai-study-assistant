@@ -36,20 +36,20 @@ export function Navbar() {
   const getLinkClasses = (path: string) => {
     const active = isActive(path);
     return active
-      ? "relative text-on-secondary-container font-bold px-4 py-2 rounded-full bg-secondary-container transition-all shadow-xs"
-      : "relative text-on-surface-variant hover:text-on-surface px-4 py-2 rounded-full hover:bg-surface-container-high/60 transition-all font-medium";
+      ? "relative text-on-secondary-container font-bold px-4 py-2 rounded-full bg-secondary-container transition-colors shadow-xs"
+      : "relative text-on-surface-variant hover:text-on-surface px-4 py-2 rounded-full hover:bg-surface-container-high/60 transition-colors font-medium";
   };
 
   const getMobileLinkClasses = (path: string) => {
     const active = isActive(path);
     return active
-      ? "block px-4 py-2.5 rounded-full text-sm font-bold text-on-secondary-container bg-secondary-container transition-all"
-      : "block px-4 py-2.5 rounded-full text-sm font-medium text-on-surface-variant hover:bg-surface-container-high/60 transition-all";
+      ? "block px-4 py-2.5 rounded-full text-sm font-bold text-on-secondary-container bg-secondary-container transition-colors"
+      : "block px-4 py-2.5 rounded-full text-sm font-medium text-on-surface-variant hover:bg-surface-container-high/60 transition-colors";
   };
 
   return (
     <header
-      className={`sticky top-0 z-sticky transition-all duration-m3-medium-2 ease-m3-emphasized ${
+      className={`sticky top-0 z-sticky transition-colors duration-m3-medium-2 ease-m3-emphasized ${
         isScrolled
           ? "bg-surface-container/90 backdrop-blur-md border-b border-outline-variant shadow-xs"
           : "bg-surface border-b border-transparent shadow-none"

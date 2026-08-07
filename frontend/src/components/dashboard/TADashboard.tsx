@@ -44,9 +44,9 @@ export function TADashboard({ userName }: { userName: string }) {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href="/forum"
-              className="px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm shadow-lg shadow-primary/20 transition-all flex items-center gap-2 cursor-pointer"
+              className="px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm shadow-lg shadow-primary/20 transition-colors flex items-center gap-2 cursor-pointer"
             >
-              <MessageSquare className="w-5 h-5" />
+              <MessageSquare aria-hidden="true" className="w-5 h-5" />
               Diễn Đàn Trả Lời Q&A
             </Link>
           </div>
@@ -54,9 +54,9 @@ export function TADashboard({ userName }: { userName: string }) {
 
         {/* Operational KPI Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-warning/10 flex items-center justify-center text-warning shrink-0">
-              <ClipboardList className="w-7 h-7" />
+              <ClipboardList aria-hidden="true" className="w-7 h-7" />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -66,9 +66,9 @@ export function TADashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-info/10 flex items-center justify-center text-info shrink-0">
-              <MessageCircle className="w-7 h-7" />
+              <MessageCircle aria-hidden="true" className="w-7 h-7" />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -78,9 +78,9 @@ export function TADashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-success/10 flex items-center justify-center text-success shrink-0">
-              <CheckCircle2 className="w-7 h-7" />
+              <CheckCircle2 aria-hidden="true" className="w-7 h-7" />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -90,9 +90,9 @@ export function TADashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-all duration-m3-short-4 ease-m3-emphasized">
+          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized">
             <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-              <Users className="w-7 h-7" />
+              <Users aria-hidden="true" className="w-7 h-7" />
             </div>
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -107,10 +107,10 @@ export function TADashboard({ userName }: { userName: string }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Link
             href="/forum"
-            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-all group flex items-start gap-4"
+            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-colors group flex items-start gap-4"
           >
             <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <MessagesSquare className="w-6 h-6" />
+              <MessagesSquare aria-hidden="true" className="w-6 h-6" />
             </div>
             <div className="space-y-1">
               <h3 className="font-bold text-foreground group-hover:text-primary transition-colors">
@@ -125,10 +125,10 @@ export function TADashboard({ userName }: { userName: string }) {
 
           <Link
             href="/ta/grading"
-            className="p-6 rounded-3xl bg-card border border-border hover:border-warning/50 shadow-sm transition-all group flex items-start gap-4"
+            className="p-6 rounded-3xl bg-card border border-border hover:border-warning/50 shadow-sm transition-colors group flex items-start gap-4"
           >
             <div className="w-12 h-12 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
-              <FileText className="w-6 h-6" />
+              <FileText aria-hidden="true" className="w-6 h-6" />
             </div>
             <div className="space-y-1">
               <h3 className="font-bold text-foreground group-hover:text-warning transition-colors">

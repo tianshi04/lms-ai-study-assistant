@@ -512,7 +512,7 @@ function CoursePlayerContent() {
       <div className="min-h-screen bg-background text-muted-foreground flex items-center justify-center">
         <div className="flex items-center gap-3">
           <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-          <span>Đang mở Trình phát bài học...</span>
+          <span>Đang mở Trình phát bài học…</span>
         </div>
       </div>
     );
@@ -531,7 +531,7 @@ function CoursePlayerContent() {
             <div className="flex items-center gap-3 bg-surface-container px-3.5 py-1.5 rounded-full">
               <div className="w-24 h-2 bg-surface-container-high rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-primary rounded-full transition-all duration-m3-long-2 ease-m3-emphasized"
+                  className="h-full bg-primary rounded-full transition-colors duration-m3-long-2 ease-m3-emphasized"
                   style={{ width: `${progress.overallProgressPercent}%` }}
                 />
               </div>
@@ -568,7 +568,7 @@ function CoursePlayerContent() {
             type="button"
             disabled={!isAiSupported}
             onClick={handleToggleAiAssistant}
-            className={`p-2 rounded-full transition-all shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`p-2 rounded-full transition-colors shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               !isAiSupported
                 ? "text-on-surface-variant/30 opacity-40 cursor-not-allowed"
                 : isPanelOpen && activeTab === "ai_assistant"
@@ -609,7 +609,7 @@ function CoursePlayerContent() {
           <div className="w-14 bg-surface-container-lowest rounded-3xl shadow-xs flex flex-col items-center py-3 shrink-0 select-none">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all cursor-pointer"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors cursor-pointer"
               title="Mở Lộ trình Bài học"
               aria-label="Mở Lộ trình Bài học"
             >
@@ -620,7 +620,7 @@ function CoursePlayerContent() {
 
         {/* Left Sidebar - MD3 Floating Surface Container Drawer */}
         {isSidebarOpen && !isPreviewMode && (
-          <aside className="w-full max-w-[calc(100vw-24px)] lg:w-80 xl:w-90 bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs h-full overflow-hidden flex-shrink-0 flex flex-col transition-all duration-m3-medium-2 ease-m3-emphasized">
+          <aside className="w-full max-w-[calc(100vw-24px)] lg:w-80 xl:w-90 bg-surface-container-lowest text-on-surface rounded-3xl shadow-xs h-full overflow-hidden flex-shrink-0 flex flex-col transition-colors duration-m3-medium-2 ease-m3-emphasized">
             <div className="p-4 bg-surface-container-lowest flex items-start justify-between gap-2 shrink-0">
               <h2
                 className="font-bold text-xl text-on-surface leading-snug break-words"
@@ -662,7 +662,7 @@ function CoursePlayerContent() {
                           </span>
                           {!unlocked && (
                             <span className="inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">
-                              <Lock className="w-3 h-3" /> Bị khóa
+                              <Lock aria-hidden="true" className="w-3 h-3" /> Bị khóa
                             </span>
                           )}
                         </div>
@@ -672,9 +672,9 @@ function CoursePlayerContent() {
                       </div>
                       <div className="text-on-surface-variant group-hover:text-on-surface transition-colors p-1 shrink-0 mt-0.5">
                         {isCollapsed ? (
-                          <ChevronDown className="w-4 h-4" />
+                          <ChevronDown aria-hidden="true" className="w-4 h-4" />
                         ) : (
-                          <ChevronUp className="w-4 h-4" />
+                          <ChevronUp aria-hidden="true" className="w-4 h-4" />
                         )}
                       </div>
                     </button>
@@ -716,7 +716,7 @@ function CoursePlayerContent() {
                                         setActiveItem(item);
                                         setActiveQuiz(null);
                                       }}
-                                      className={`w-full text-left px-3.5 py-2.5 rounded-2xl flex items-center gap-3 transition-all cursor-pointer ${
+                                      className={`w-full text-left px-3.5 py-2.5 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer ${
                                         !unlocked
                                           ? "opacity-60 cursor-not-allowed hover:bg-transparent"
                                           : isActive
@@ -728,11 +728,17 @@ function CoursePlayerContent() {
                                       <div className="shrink-0">
                                         {!unlocked ? (
                                           <div className="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center">
-                                            <Lock className="w-3 h-3 text-on-surface-variant" />
+                                            <Lock
+                                              aria-hidden="true"
+                                              className="w-3 h-3 text-on-surface-variant"
+                                            />
                                           </div>
                                         ) : isDone ? (
                                           <div className="w-5 h-5 rounded-full bg-success text-success-foreground flex items-center justify-center shadow-2xs">
-                                            <Check className="w-3.5 h-3.5 text-success-foreground stroke-[3]" />
+                                            <Check
+                                              aria-hidden="true"
+                                              className="w-3.5 h-3.5 text-success-foreground stroke-[3]"
+                                            />
                                           </div>
                                         ) : (
                                           <div className="w-5 h-5 rounded-full bg-surface-container" />
@@ -971,11 +977,11 @@ function CoursePlayerContent() {
                 {isVideoItem && (
                   <button
                     onClick={() => handleTabClick("transcript")}
-                    className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
+                    className="group flex flex-col items-center gap-1 cursor-pointer transition-colors"
                     title="Phụ đề"
                   >
                     <div
-                      className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
+                      className={`w-12 h-7 rounded-full flex items-center justify-center transition-colors ${
                         isPanelOpen && activeTab === "transcript"
                           ? "bg-primary-container text-on-primary-container font-bold"
                           : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
@@ -1001,11 +1007,11 @@ function CoursePlayerContent() {
                     {isLectureItem && (
                       <button
                         onClick={() => handleTabClick("notes")}
-                        className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
+                        className="group flex flex-col items-center gap-1 cursor-pointer transition-colors"
                         title="Ghi chú"
                       >
                         <div
-                          className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
+                          className={`w-12 h-7 rounded-full flex items-center justify-center transition-colors ${
                             isPanelOpen && activeTab === "notes"
                               ? "bg-primary-container text-on-primary-container font-bold"
                               : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
@@ -1029,11 +1035,11 @@ function CoursePlayerContent() {
                     {isLectureItem && (
                       <button
                         onClick={() => handleTabClick("forum")}
-                        className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
+                        className="group flex flex-col items-center gap-1 cursor-pointer transition-colors"
                         title="Thảo luận"
                       >
                         <div
-                          className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
+                          className={`w-12 h-7 rounded-full flex items-center justify-center transition-colors ${
                             isPanelOpen && activeTab === "forum"
                               ? "bg-primary-container text-on-primary-container font-bold"
                               : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
@@ -1056,11 +1062,11 @@ function CoursePlayerContent() {
                     {/* Deadlines Button */}
                     <button
                       onClick={() => handleTabClick("deadlines")}
-                      className="group flex flex-col items-center gap-1 cursor-pointer transition-all"
+                      className="group flex flex-col items-center gap-1 cursor-pointer transition-colors"
                       title="Deadlines"
                     >
                       <div
-                        className={`w-12 h-7 rounded-full flex items-center justify-center transition-all ${
+                        className={`w-12 h-7 rounded-full flex items-center justify-center transition-colors ${
                           isPanelOpen && activeTab === "deadlines"
                             ? "bg-primary-container text-on-primary-container font-bold"
                             : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"

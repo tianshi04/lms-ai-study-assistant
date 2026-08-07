@@ -169,7 +169,7 @@ export default function AccountSettingsPage() {
                   isLoading={verifyingIdentity}
                   variant="primary"
                   size="sm"
-                  className="rounded-full px-6 py-2.5 bg-primary hover:bg-primary-hover text-on-primary font-bold shadow-xs hover:shadow-md transition-all"
+                  className="rounded-full px-6 py-2.5 bg-primary hover:bg-primary-hover text-on-primary font-bold shadow-xs hover:shadow-md transition-colors"
                 >
                   {"Giả lập Xác minh KYC (Mock Verification)"}
                 </Button>
@@ -209,7 +209,7 @@ export default function AccountSettingsPage() {
               disabled={!enterpriseKey}
               variant="primary"
               size="md"
-              className="rounded-full px-8 font-bold shadow-xs hover:shadow-md transition-all"
+              className="rounded-full px-8 font-bold shadow-xs hover:shadow-md transition-colors"
             >
               {"Kích hoạt mã"}
             </Button>
