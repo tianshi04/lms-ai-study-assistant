@@ -105,29 +105,43 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
     switch (status) {
       case InvitationStatus.PENDING:
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20">
-            <Clock className="w-3.5 h-3.5" aria-hidden="true" />
-            Đang chờ (PENDING)
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20">
+            <Clock className="w-3 h-3" aria-hidden="true" />
+            Đang chờ
           </span>
         );
       case InvitationStatus.ACCEPTED:
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20">
-            <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20">
+            <CheckCircle2 className="w-3 h-3" aria-hidden="true" />
             Đã chấp nhận
           </span>
         );
       case InvitationStatus.DECLINED:
         return (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-destructive/10 text-destructive border border-destructive/20">
-            <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
-            Từ chối
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-destructive/10 text-destructive border border-destructive/20">
+            <XCircle className="w-3 h-3" aria-hidden="true" />
+            Đã từ chối
+          </span>
+        );
+      case InvitationStatus.CANCELLED:
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-destructive/10 text-destructive border border-destructive/20">
+            <XCircle className="w-3 h-3" aria-hidden="true" />
+            Đã hủy
+          </span>
+        );
+      case InvitationStatus.EXPIRED:
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-muted text-muted-foreground border border-border">
+            <Clock className="w-3 h-3" aria-hidden="true" />
+            Hết hạn
           </span>
         );
       default:
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-muted text-muted-foreground border border-border">
-            Hết hạn / Hủy
+            {status || "Không xác định"}
           </span>
         );
     }
