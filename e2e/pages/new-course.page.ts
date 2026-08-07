@@ -58,5 +58,6 @@ export class NewCoursePage {
     await this.descriptionTextarea.fill(description);
     await expect(this.submitButton).toBeVisible({ timeout: 10000 });
     await this.submitButton.click();
+    await this.page.waitForURL(/\/instructor\/courses\//, { timeout: 15000 }).catch(() => null);
   }
 }

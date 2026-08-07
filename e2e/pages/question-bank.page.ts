@@ -21,7 +21,7 @@ export class QuestionBankPage {
   constructor(page: Page) {
     this.page = page;
     this.addQuestionBankButton = page.getByRole('button', { name: /Tạo Kho Ngân hàng Đề|Create Question Bank/i });
-    this.bankTitleInput = page.locator('input[placeholder*="Kho Ngân hàng"], form input[type="text"]').first();
+    this.bankTitleInput = page.locator('input[aria-label="Tên Kho Ngân hàng Đề"], input[placeholder*="Kho thi"], input[placeholder*="Kho Ngân hàng"], form input').first();
     this.bankCategorySelect = page.locator('form select').first();
     this.bankDescriptionInput = page.locator('form textarea').first();
     this.submitBankButton = page.getByRole('button', { name: /Xác nhận tạo Kho|Confirm Create/i });

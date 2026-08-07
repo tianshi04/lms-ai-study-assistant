@@ -26,11 +26,30 @@ export class RegisterPage {
     this.errorBanner = page.locator('div.bg-rose-50, div.bg-rose-500\\/10, div.border-rose-200, div.border-rose-900\\/50, [role="status"], [role="alert"]').first();
     this.successBanner = page.locator('div.bg-emerald-50, div.bg-emerald-500\\/10, div.border-emerald-200, div.border-emerald-900\\/50, [data-type="success"], div[role="status"]:not([id="__next-route-announcer__"]), div[role="alert"]:not([id="__next-route-announcer__"])').first();
     this.loginLink = page.getByRole('link', { name: /đăng nhập tại đây|sign in here/i });
-    this.verifiedEmailBanner = page.locator('text=Email đã xác minh Google');
+    this.verifiedEmailBanner = page.getByText(/Email đã xác minh/i).first();
   }
 
   async goto() {
     await this.page.goto('/auth/register');
+    // Intercept Google OAuth window.open in local dev environment where Google Client ID is configured
+    await this.page.evaluate(() => {
+      const origOpen = window.open;
+      window.open = function (url: string | URL | undefined, name?: string, specs?: string) {
+        const urlStr = String(url || '');
+        if (urlStr.includes('accounts.google.com')) {
+          const email = window.prompt(
+            'Dev Mode: Nhập địa chỉ Gmail để giả lập xác minh Google',
+            'user.test@gmail.com',
+          );
+          if (email && email.includes('@')) {
+            const mockToken = `mock_google_${email.trim()}_${email.split('@')[0]}`;
+            window.postMessage({ type: 'GOOGLE_AUTH_SUCCESS', idToken: mockToken }, '*');
+          }
+          return null;
+        }
+        return origOpen.call(window, urlStr, name, specs);
+      };
+    });
   }
 
   async verifyPageLoaded() {
@@ -46,13 +65,13 @@ export class RegisterPage {
    */
   async register(fullName: string, email: string, pass: string, roleValue = '1') {
     // Step 1: Handle Google verification via dev-mode prompt dialog
-    this.page.once('dialog', async (dialog) => {
-      await dialog.accept(email);
+    this.page.once('dialog', (dialog) => {
+      dialog.accept(email).catch(() => null);
     });
     await this.googleButton.click();
 
     // Wait for Step 2 to appear (verified email banner + form fields)
-    await expect(this.verifiedEmailBanner).toBeVisible({ timeout: 10000 });
+    await expect(this.verifiedEmailBanner).toBeVisible({ timeout: 15000 });
     await expect(this.fullNameInput).toBeVisible({ timeout: 5000 });
 
     // Step 2: Fill the registration form

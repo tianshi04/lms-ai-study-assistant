@@ -28,9 +28,9 @@ export class AssessmentPage {
   constructor(page: Page) {
     this.page = page;
 
-    this.quizTab = page.getByRole('button', { name: /Graded Quiz/i });
-    this.labTab = page.getByRole('button', { name: /Auto-Graded Lab/i });
-    this.peerTab = page.getByRole('button', { name: /Peer Review & Appeal/i });
+    this.quizTab = page.getByRole('button', { name: /Graded Quiz|Bài trắc nghiệm/i });
+    this.labTab = page.getByRole('button', { name: /Auto-Graded Lab|Thực hành Lab/i });
+    this.peerTab = page.getByRole('button', { name: /Peer Review & Appeal|Đánh giá ngang hàng/i });
 
     this.openHonorButton = page.getByRole('button', { name: /Xác nhận Cam kết Trung thực|Agree Honor Code|Confirm Honor Code|I Agree \& Continue/i }).first();
     this.honorAgreedBadge = page.getByTestId('honor-agreed-badge');
