@@ -165,7 +165,7 @@ export default function RegisterPage() {
             /* STEP 1: GOOGLE VERIFICATION */
             <div className="space-y-6">
               <div className="p-4 rounded-2xl bg-muted/60 border border-border text-center space-y-2">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+                <div className="w-10 h-10 rounded-full bg-success/10 text-success flex items-center justify-center mx-auto">
                   <ShieldCheck aria-hidden="true" className="w-6 h-6" />
                 </div>
                 <h3 className="text-sm font-semibold text-foreground">Xác minh Email chính chủ</h3>

@@ -196,7 +196,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
               <button
                 type="button"
                 onClick={captureCurrentTime}
-                className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <Clock className="w-4 h-4" aria-hidden="true" />
                 <span>Lấy mốc giây hiện tại từ Video</span>
@@ -316,7 +316,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                     <button
                       type="button"
                       onClick={() => handleRemoveOption(idx)}
-                      className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors cursor-pointer"
+                      className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       title="Xóa phương án này"
                       aria-label="Xóa phương án này"
                     >
@@ -348,7 +348,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
           <button
             type="button"
             onClick={handleAddOrUpdateQuiz}
-            className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-md transition-colors flex items-center gap-1.5 cursor-pointer"
+            className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-md transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Plus className="w-4 h-4" aria-hidden="true" />
             <span>{editingIndex !== null ? "Lưu cập nhật mốc" : "Chèn mốc câu hỏi vào Video"}</span>
@@ -391,7 +391,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                   <button
                     type="button"
                     onClick={() => handleEditQuiz(idx)}
-                    className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     title="Sửa mốc câu hỏi"
                     aria-label="Sửa mốc câu hỏi"
                   >
@@ -400,7 +400,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                   <button
                     type="button"
                     onClick={() => handleDeleteQuiz(idx)}
-                    className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     title="Xóa mốc câu hỏi"
                     aria-label="Xóa mốc câu hỏi"
                   >

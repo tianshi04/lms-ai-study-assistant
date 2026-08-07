@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
+import { Slider } from "@/components/ui/Slider";
 
 interface PeerAssignmentWorkspaceProps {
   itemId: string;
@@ -381,15 +382,16 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                       </span>
                     </div>
 
-                    <input
-                      type="range"
+                    <Slider
                       min={0}
                       max={crit.maxScore}
                       step={1}
-                      value={crit.scoreGiven}
-                      onChange={(e) => handleScoreChange(pIdx, cIdx, parseFloat(e.target.value))}
+                      value={[crit.scoreGiven]}
+                      onValueChange={(val) => {
+                        const num = Array.isArray(val) ? val[0] : val;
+                        handleScoreChange(pIdx, cIdx, num);
+                      }}
                       aria-label={`Điểm cho tiêu chí ${crit.title}`}
-                      className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     />
                   </div>
                 ))}
@@ -411,22 +413,22 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
           <div className="p-4 rounded-xl bg-accent text-accent-foreground border border-border text-xs">
             <h4 className="font-bold mb-1 flex items-center gap-1.5">
               <Scale aria-hidden="true" className="w-4 h-4 text-primary" />
-              <span>Submit Grade Appeal (BR_PEER_003)</span>
+              <span>Gửi Khiếu nại Điểm số (BR_PEER_003)</span>
             </h4>
             <p>
-              If you believe peer reviewers scored your assignment unfairly or incorrectly, submit
-              an appeal within 7 days. A Teaching Assistant (TA) will re-grade your submission
-              directly.
+              Nếu bạn cho rằng người đánh giá ngang hàng chấm điểm không chính xác hoặc thiếu công
+              bằng, bạn có thể nộp đơn khiếu nại trong vòng 7 ngày. Giảng viên/Trợ giảng (TA) sẽ
+              trực tiếp chấm lại bài làm của bạn.
             </p>
           </div>
 
           <div className="space-y-3">
             <Textarea
-              label="Reason for Appeal & Justification"
+              label="Lý do & Căn cứ Khiếu nại"
               value={appealReason}
               onChange={(e) => setAppealReason(e.target.value)}
               rows={4}
-              placeholder="Explain why the peer review grade should be reviewed by a TA…"
+              placeholder="Giải thích lý do cần Giảng viên/Trợ giảng chấm lại bài làm của bạn…"
             />
 
             {appealStatus && (
@@ -436,7 +438,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             )}
 
             <Button type="button" onClick={handleSubmitAppeal} disabled={!appealReason} size="sm">
-              Submit Appeal to TA
+              Gửi Khiếu nại cho Giảng viên
             </Button>
           </div>
         </div>

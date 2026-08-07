@@ -17,6 +17,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
+import { Button } from "@/components/ui/Button";
 
 interface ForumTabProps {
   courseId: string;
@@ -304,13 +305,14 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
               rows={2}
               className="flex-1 min-h-[60px]"
             />
-            <button
+            <Button
               type="submit"
               disabled={submitting || !newTitle.trim()}
-              className="px-4 py-2 bg-primary hover:bg-primary-hover text-on-primary rounded-full text-xs font-bold shrink-0 cursor-pointer transition-colors shadow-xs hover:shadow-md"
+              isLoading={submitting}
+              size="sm"
             >
-              <span aria-live="polite">{submitting ? "Đang gửi…" : "Đăng Thảo Luận"}</span>
-            </button>
+              Đăng Thảo Luận
+            </Button>
           </div>
         )}
       </form>
@@ -363,16 +365,18 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                       )}
                       {isThreadAuthor && (
                         <button
+                          type="button"
                           onClick={() => startEditThread(thread)}
-                          className="text-[10px] font-bold text-on-surface-variant hover:text-primary cursor-pointer ml-1"
+                          className="text-[10px] font-bold text-on-surface-variant hover:text-primary cursor-pointer ml-1 rounded-sm p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           {"Sửa"}
                         </button>
                       )}
                       {canDeleteThread && (
                         <button
+                          type="button"
                           onClick={() => handleDeleteThread(thread.id)}
-                          className="text-[10px] font-bold text-on-surface-variant hover:text-destructive cursor-pointer ml-1"
+                          className="text-[10px] font-bold text-on-surface-variant hover:text-destructive cursor-pointer ml-1 rounded-sm p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           {"Xóa"}
                         </button>
@@ -381,37 +385,37 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
 
                     {isEditingThisThread ? (
                       <div className="space-y-2 my-1">
-                        <input
-                          type="text"
+                        <Input
                           value={editThreadTitle}
                           onChange={(e) => setEditThreadTitle(e.target.value)}
                           aria-label="Tiêu đề câu hỏi"
-                          spellCheck={false}
-                          className="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-3 py-1.5 text-xs font-bold text-on-surface focus:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                          className="font-bold text-xs"
                         />
-                        <textarea
+                        <Textarea
                           value={editThreadContent}
                           onChange={(e) => setEditThreadContent(e.target.value)}
                           placeholder="Chi tiết câu hỏi (nếu có)…"
                           aria-label="Chi tiết câu hỏi"
-                          spellCheck={false}
                           rows={2}
-                          className="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-3 py-1.5 text-xs text-on-surface focus:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         />
                         <div className="flex justify-end gap-1.5">
-                          <button
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            type="button"
                             onClick={() => setEditingThreadId(null)}
-                            className="px-3 py-1 border border-outline-variant text-on-surface-variant rounded-full text-[11px]"
                           >
                             {"Hủy"}
-                          </button>
-                          <button
+                          </Button>
+                          <Button
+                            size="sm"
+                            type="button"
                             onClick={() => handleUpdateThread(thread.id)}
                             disabled={submittingEditThread || !editThreadTitle.trim()}
-                            className="px-3 py-1 bg-primary text-on-primary rounded-full text-[11px] font-bold hover:bg-primary-hover"
+                            isLoading={submittingEditThread}
                           >
                             {"Lưu thay đổi"}
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     ) : (
@@ -480,9 +484,10 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                     className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-full px-3.5 py-1.5 text-xs text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   />
                   <button
+                    type="button"
                     onClick={() => handlePostReply(thread.id)}
                     disabled={!(replyInputs[thread.id] || "").trim()}
-                    className="px-3.5 py-1.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-on-primary rounded-full text-xs font-bold cursor-pointer transition-colors shadow-xs"
+                    className="px-3.5 py-1.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-on-primary rounded-full text-xs font-bold cursor-pointer transition-colors shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     Gửi
                   </button>
