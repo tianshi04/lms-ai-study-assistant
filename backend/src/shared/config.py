@@ -18,10 +18,14 @@ class Settings(BaseSettings):
     ENV: str = Field(default="development", description="Environment mode")
     BACKEND_PORT: int = Field(default=8000, description="Backend port")
 
-    # 2. PostgreSQL Database URL
+    # 2. PostgreSQL Database URL & Redis Cache/Broker URL
     DATABASE_URL: str = Field(
         default="postgresql+asyncpg://coursera_admin:coursera_password123@localhost:5432/coursera_lms",
         description="Async PostgreSQL connection URL",
+    )
+    REDIS_URL: str = Field(
+        default="redis://localhost:6379",
+        description="Redis connection URL for caching and message broker",
     )
 
     # 3. MinIO / S3 Object Storage credentials for SDK Client & Presigned URLs
@@ -85,6 +89,12 @@ class Settings(BaseSettings):
     VNPAY_API_URL: str = Field(
         default="https://sandbox.vnpayment.vn/merchant_webapi/api/transaction",
         description="VNPay Merchant WebAPI Endpoint",
+    )
+
+    # 7. Google OAuth 2.0
+    GOOGLE_CLIENT_ID: str = Field(default="", description="Google OAuth 2.0 Client ID")
+    GOOGLE_CLIENT_SECRET: str = Field(
+        default="", description="Google OAuth 2.0 Client Secret (Server-side only)"
     )
 
     @property

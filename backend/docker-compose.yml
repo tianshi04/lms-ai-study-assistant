@@ -66,6 +66,7 @@ services:
       - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-minio_password123}
       - MINIO_BUCKET_NAME=coursera-assets
       - MINIO_SECURE=false
+      - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET:-your_super_secret_jwt_key_coursera_2026_change_in_prod}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     ports:
@@ -77,7 +78,25 @@ services:
         condition: service_healthy
 
   # ------------------------------------------------------------------
-  # 4. HẠ TẦNG OBSERVABILITY: Jaeger All-In-One (OTel Collector & UI)
+  # 4. HẠ TẦNG IN-MEMORY CACHE & JOB QUEUE: Redis 7
+  # ------------------------------------------------------------------
+  redis:
+    profiles: ["infra", "app", "all"]
+    image: redis:7-alpine
+    container_name: coursera_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ------------------------------------------------------------------
+  # 5. HẠ TẦNG OBSERVABILITY: Jaeger All-In-One (OTel Collector & UI)
   # ------------------------------------------------------------------
   jaeger:
     profiles: ["infra", "app", "all"]
@@ -95,3 +114,5 @@ services:
 volumes:
   postgres_data:
   minio_data:
+  redis_data:
+

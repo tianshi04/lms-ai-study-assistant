@@ -105,11 +105,21 @@ async def lifespan(app: Starlette):
 
     try:
         from src.shared.infrastructure.database import dispose_engine
+        from src.shared.infrastructure.redis import close_redis_client
 
-        await dispose_engine()
-        logger.info("[SHUTDOWN] Database connection pool disposed.")
+        async def _shutdown_db() -> None:
+            await dispose_engine()
+            logger.info("[SHUTDOWN] Database connection pool disposed.")
+
+        async def _shutdown_redis() -> None:
+            await close_redis_client()
+            logger.info("[SHUTDOWN] Redis connection pool closed.")
+
+        await asyncio.gather(_shutdown_db(), _shutdown_redis(), return_exceptions=True)
     except Exception as e:
-        logger.warning("[SHUTDOWN] Error disposing database engine: %s", e)
+        logger.warning(
+            "[SHUTDOWN] Error disposing database engine or redis client: %s", e
+        )
 
     try:
         from opentelemetry import metrics, trace
