@@ -66,7 +66,7 @@ export function NotificationBell() {
                   type="button"
                   onClick={handleMarkAllAsRead}
                   disabled={markAllAsReadMutation.isPending || unreadCount === 0}
-                  className="px-3 py-1.5 rounded-full text-xs font-bold text-primary hover:bg-primary-container/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 cursor-pointer"
+                  className="px-3 py-1.5 rounded-full text-xs font-bold text-primary hover:bg-primary-container/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   title="Đánh dấu tất cả đã đọc"
                 >
                   <CheckCheck className="w-4 h-4" aria-hidden="true" />
@@ -80,7 +80,7 @@ export function NotificationBell() {
                   setIsOpen(false);
                   setIsPrefModalOpen(true);
                 }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 title="Cài đặt thông báo"
                 aria-label="Cài đặt thông báo"
               >

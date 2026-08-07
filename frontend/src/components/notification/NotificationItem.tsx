@@ -153,7 +153,7 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
               <button
                 type="button"
                 onClick={() => onMarkAsRead(item.id)}
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-on-surface-variant hover:text-primary transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm p-0.5"
                 title="Đánh dấu đã đọc"
               >
                 <CheckCircle2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />

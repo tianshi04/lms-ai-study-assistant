@@ -151,7 +151,7 @@ export function VideoUploadWidget({
           <button
             type="button"
             onClick={() => setActiveTab("upload")}
-            className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               activeTab === "upload"
                 ? "bg-card text-primary shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -162,7 +162,7 @@ export function VideoUploadWidget({
           <button
             type="button"
             onClick={() => setActiveTab("url")}
-            className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer ${
+            className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               activeTab === "url"
                 ? "bg-card text-primary shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -203,14 +203,14 @@ export function VideoUploadWidget({
                   onChange("");
                 }
               }}
-              className="px-2.5 py-1 rounded-lg text-xs font-bold bg-card text-foreground hover:bg-muted border border-border transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-lg text-xs font-bold bg-card text-foreground hover:bg-muted border border-border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Thay đổi
             </button>
             <button
               type="button"
               onClick={() => onChange("")}
-              className="px-2.5 py-1 rounded-lg text-xs font-bold text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+              className="px-2.5 py-1 rounded-lg text-xs font-bold text-destructive hover:bg-destructive/10 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Gỡ bỏ
             </button>

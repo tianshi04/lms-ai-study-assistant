@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 
+import { Button } from "@/components/ui/Button";
+
 export function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -29,10 +31,12 @@ export function ThemeToggle() {
   const isDark = mounted && resolvedTheme === "dark";
 
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon"
       type="button"
       onClick={toggleTheme}
-      className="p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
+      className="rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 shrink-0"
       aria-label="Chuyển đổi giao diện sáng/tối"
       title={isDark ? "Chuyển sang Chế độ Sáng" : "Chuyển sang Chế độ Tối"}
     >
@@ -41,6 +45,6 @@ export function ThemeToggle() {
       ) : (
         <Sun className="w-5 h-5" aria-hidden="true" />
       )}
-    </button>
+    </Button>
   );
 }

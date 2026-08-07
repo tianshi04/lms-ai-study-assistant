@@ -470,7 +470,7 @@ export function GradedQuizRunner({
                       type="button"
                       disabled={(cooldownCountdown > 0 && !isPreviewMode) || quizResult !== null}
                       onClick={() => handleOptionSelect(qIdx, optIdx, isMultipleChoice)}
-                      className={`p-3.5 rounded-xl text-xs text-left font-medium transition-colors border flex items-center gap-2.5 cursor-pointer ${
+                      className={`p-3.5 rounded-xl text-xs text-left font-medium transition-colors border flex items-center gap-2.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                         isSelected
                           ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
                           : "bg-card border-border hover:border-primary/50 text-foreground"

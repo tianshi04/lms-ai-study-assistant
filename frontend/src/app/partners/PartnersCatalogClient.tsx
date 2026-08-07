@@ -151,8 +151,9 @@ export function PartnersCatalogClient() {
             />
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => handleSearchChange("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded p-0.5"
                 aria-label="Xóa từ khóa tìm kiếm"
               >
                 <X aria-hidden="true" className="w-4 h-4" />

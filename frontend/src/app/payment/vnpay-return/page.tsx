@@ -206,9 +206,10 @@ function VNPayReturnContent() {
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
+                type="button"
                 onClick={handleRetryPayment}
                 disabled={isRetrying}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary-hover px-5 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
+                className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary-hover px-5 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {isRetrying ? (
                   <Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" />

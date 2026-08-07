@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { parseVTT, type VTTCue } from "@/lib/vtt_parser";
 import { Input } from "@/components/ui/Input";
@@ -210,11 +210,12 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
         />
         {searchQuery && (
           <button
+            type="button"
             onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-2.5 text-on-surface-variant hover:text-on-surface text-xs font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            className="absolute right-3 top-2.5 text-on-surface-variant hover:text-on-surface text-xs font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded p-0.5"
             aria-label="Xóa từ khóa tìm kiếm"
           >
-            ✕
+            <X className="w-3.5 h-3.5" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -234,8 +235,9 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
               {/* Aggregated Timestamp Header */}
               <div className="flex items-center gap-2 pt-2 pb-0.5">
                 <button
+                  type="button"
                   onClick={() => onSeekVideo(block.startTime)}
-                  className="font-mono text-[11px] font-bold text-on-primary-container bg-primary-container hover:bg-primary-container/80 border border-primary/20 px-3 py-0.5 rounded-full cursor-pointer transition-colors shadow-xs"
+                  className="font-mono text-[11px] font-bold text-on-primary-container bg-primary-container hover:bg-primary-container/80 border border-primary/20 px-3 py-0.5 rounded-full cursor-pointer transition-colors shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   title="Nhảy đến mốc thời gian này"
                 >
                   {formatTime(block.startTime)}

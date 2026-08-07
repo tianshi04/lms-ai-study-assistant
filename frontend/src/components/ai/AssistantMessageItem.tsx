@@ -31,7 +31,7 @@ export function AssistantMessageItem({
       <button
         type="button"
         onClick={handleCopy}
-        className="w-6 h-6 inline-flex items-center justify-center text-on-surface-variant/70 hover:text-primary transition-colors cursor-pointer mt-1 rounded-md hover:bg-surface-container-high border border-transparent hover:border-outline-variant/30"
+        className="w-6 h-6 inline-flex items-center justify-center text-on-surface-variant/70 hover:text-primary transition-colors cursor-pointer mt-1 rounded-md hover:bg-surface-container-high border border-transparent hover:border-outline-variant/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         title="Sao chép câu trả lời"
         aria-label="Sao chép câu trả lời"
       >

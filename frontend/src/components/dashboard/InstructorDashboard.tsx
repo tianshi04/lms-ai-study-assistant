@@ -60,8 +60,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
           <div className="flex flex-wrap items-center gap-3">
             <button
+              type="button"
               onClick={() => setIsOrgModalOpen(true)}
-              className="px-5 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg transition-colors flex items-center gap-2 cursor-pointer border border-border"
+              className="px-5 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg transition-colors flex items-center gap-2 cursor-pointer border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <UserPlus className="w-5 h-5 text-primary" aria-hidden="true" />
               Thành viên Organization

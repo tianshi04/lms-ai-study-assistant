@@ -31,8 +31,9 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
           </div>
           {hasOverdue && (
             <button
+              type="button"
               onClick={onResetDeadlines}
-              className="px-4 py-2 bg-warning hover:bg-warning-hover text-warning-foreground text-xs font-bold rounded-full shadow-xs hover:shadow-md transition-colors border border-warning/30 flex items-center gap-2 animate-pulse cursor-pointer"
+              className="px-4 py-2 bg-warning hover:bg-warning-hover text-warning-foreground text-xs font-bold rounded-full shadow-xs hover:shadow-md transition-colors border border-warning/30 flex items-center gap-2 animate-pulse cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <RotateCcw aria-hidden="true" className="w-3.5 h-3.5" />
               Reset My Deadlines
