@@ -167,7 +167,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
       }
     }
     checkExistingReview();
-  }, [isOpen, courseId]);
+  }, [isOpen, courseId, authUserId]);
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();

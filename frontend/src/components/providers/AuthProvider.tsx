@@ -73,6 +73,7 @@ export function AuthProvider({
       setAuthState(initialAuth);
     }
   }, [
+    initialAuth,
     initialAuth.userId,
     initialAuth.userEmail,
     initialAuth.userName,
