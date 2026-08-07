@@ -1,13 +1,8 @@
 from src.shared.config import get_settings, settings
 
 
-def test_settings_load_defaults(monkeypatch):
+def test_settings_load_defaults():
     """Verify essential default configuration settings are loaded properly."""
-    monkeypatch.setenv("MINIO_ENDPOINT", "http://localhost:9090")
-    monkeypatch.setenv("MINIO_ACCESS_KEY", "minio_admin")
-    monkeypatch.setenv("MINIO_SECRET_KEY", "minio_password123")
-    monkeypatch.setenv("MINIO_BUCKET_NAME", "coursera-assets")
-    get_settings.cache_clear()
     config = get_settings()
     assert config.ENV == "development"
     assert config.BACKEND_PORT == 8000
@@ -16,7 +11,6 @@ def test_settings_load_defaults(monkeypatch):
     assert config.MINIO_SECRET_KEY == "minio_password123"
     assert config.MINIO_BUCKET_NAME == "coursera-assets"
     assert config.async_database_url.startswith("postgresql+asyncpg://")
-    get_settings.cache_clear()
 
 
 def test_singleton_settings_instance():

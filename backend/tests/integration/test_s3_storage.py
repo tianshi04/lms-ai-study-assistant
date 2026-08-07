@@ -6,10 +6,6 @@ from src.shared.infrastructure.s3_storage import get_s3_storage_service
 async def test_s3_storage_operations():
     """Verify S3 storage operations against the coursera_minio Docker container."""
     s3_service = get_s3_storage_service()
-    if "cloudflarestorage.com" in s3_service.endpoint_url:
-        pytest.skip(
-            "Skipping S3 storage integration test against Cloudflare R2 credentials."
-        )
 
     # 1. Ensure test bucket exists in MinIO
     test_bucket = "coursera-test-bucket"
