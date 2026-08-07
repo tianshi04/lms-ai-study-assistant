@@ -793,10 +793,12 @@ function CoursePlayerContent() {
             <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-1 animate-in fade-in duration-m3-short-4 ease-m3-decelerate">
               <span>{lockNotice}</span>
               <button
+                type="button"
                 onClick={() => setLockNotice("")}
-                className="text-warning hover:opacity-75 font-bold text-xs cursor-pointer"
+                aria-label="Đóng thông báo"
+                className="p-1 rounded-md text-warning hover:opacity-75 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                ✕
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
           )}

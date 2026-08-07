@@ -377,7 +377,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-foreground">{crit.title}</span>
                       <span className="font-mono font-bold text-primary">
-                        {crit.scoreGiven} / {crit.maxScore} pts
+                        {crit.scoreGiven} / {crit.maxScore} điểm
                       </span>
                     </div>
 
@@ -389,7 +389,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                       value={crit.scoreGiven}
                       onChange={(e) => handleScoreChange(pIdx, cIdx, parseFloat(e.target.value))}
                       aria-label={`Điểm cho tiêu chí ${crit.title}`}
-                      className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+                      className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     />
                   </div>
                 ))}
@@ -397,7 +397,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
 
               <div className="flex justify-end pt-2">
                 <Button type="button" onClick={() => handleSubmitPeerGrade(pIdx)} size="sm">
-                  Submit Grade for Peer #{pIdx + 1}
+                  Nộp điểm cho Bài làm #{pIdx + 1}
                 </Button>
               </div>
             </div>

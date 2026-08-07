@@ -294,7 +294,7 @@ function LoginFormContent() {
                     form.setFieldValue("email", acc.email);
                     form.setFieldValue("password", "123456");
                   }}
-                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-card border border-border hover:border-primary transition-colors text-xs font-medium flex items-center justify-between group cursor-pointer"
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-card border border-border hover:border-primary transition-colors text-xs font-medium flex items-center justify-between group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <div className="min-w-0 truncate pr-1">
                     <div className="font-semibold text-foreground group-hover:text-primary min-w-0 truncate">

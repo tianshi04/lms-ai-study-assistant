@@ -172,8 +172,10 @@ export default function InstructorFinancialAidPage() {
               <span>{toastMessage.text}</span>
             </div>
             <button
+              type="button"
               onClick={() => setToastMessage(null)}
-              className="p-1 rounded-md opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+              aria-label="Đóng thông báo"
+              className="p-1 rounded-md opacity-60 hover:opacity-100 transition-opacity cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <X aria-hidden="true" className="w-4 h-4" />
             </button>
@@ -206,8 +208,9 @@ export default function InstructorFinancialAidPage() {
             return (
               <button
                 key={tab}
+                type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                   activeTab === tab
                     ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                     : "bg-card text-muted-foreground hover:text-foreground border border-border"
@@ -297,17 +300,19 @@ export default function InstructorFinancialAidPage() {
                 {app.status === "PENDING" && isInstructorOrAdmin && (
                   <div className="flex items-center justify-end gap-3 pt-2">
                     <button
+                      type="button"
                       onClick={() => handleReview(app.id, false)}
                       disabled={processingId === app.id}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-destructive bg-destructive/10 border border-destructive/30 hover:bg-destructive/20 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      className="px-4 py-2 rounded-xl text-xs font-bold text-destructive bg-destructive/10 border border-destructive/30 hover:bg-destructive/20 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <X aria-hidden="true" className="w-4 h-4" />
                       <span>{processingId === app.id ? "Đang xử lý…" : "Từ chối đơn"}</span>
                     </button>
                     <button
+                      type="button"
                       onClick={() => handleReview(app.id, true)}
                       disabled={processingId === app.id}
-                      className="px-5 py-2 rounded-xl text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover shadow-md shadow-primary/20 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                      className="px-5 py-2 rounded-xl text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover shadow-md shadow-primary/20 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <Check aria-hidden="true" className="w-4 h-4" />
                       <span>{processingId === app.id ? "Đang xử lý…" : "Phê duyệt đơn"}</span>

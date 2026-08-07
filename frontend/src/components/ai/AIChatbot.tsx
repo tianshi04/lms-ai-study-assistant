@@ -323,7 +323,7 @@ export function AIChatbot() {
               <button
                 type="submit"
                 disabled={!inputValue.trim() || agent?.isRunning}
-                className={`w-8 h-8 rounded-full transition-colors flex items-center justify-center shrink-0 ${
+                className={`w-8 h-8 rounded-full transition-colors flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                   !inputValue.trim() || agent?.isRunning
                     ? "bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed"
                     : "bg-primary text-primary-foreground hover:bg-primary-hover shadow-xs cursor-pointer active:scale-95"

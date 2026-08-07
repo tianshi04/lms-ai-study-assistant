@@ -606,15 +606,16 @@ export default function AdminPartnersPage() {
                         </span>
                       </div>
                     </div>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       type="button"
                       onClick={() => handleRemovePartnerAdmin(admin.id)}
-                      className="text-destructive hover:opacity-80 p-1 cursor-pointer"
-                      title="Gỡ Quản trị viên"
+                      className="text-destructive hover:bg-destructive/10"
                       aria-label="Gỡ Quản trị viên"
                     >
                       <X className="w-4 h-4" aria-hidden="true" />
-                    </button>
+                    </Button>
                   </div>
                 ))
               )}

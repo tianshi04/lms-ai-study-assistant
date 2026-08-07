@@ -11,6 +11,14 @@ import { Avatar } from "@/components/ui/Avatar";
 
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Check, X } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/Breadcrumb";
 
 export default function InstructorProfilePage() {
   const router = useRouter();
@@ -88,16 +96,22 @@ export default function InstructorProfilePage() {
     <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Header */}
       <div className="pb-6 border-b border-border">
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-1">
-          <button
-            onClick={() => router.push("/instructor/courses")}
-            className="hover:text-primary transition-colors"
-          >
-            Giảng dạy
-          </button>
-          <span>/</span>
-          <span className="text-foreground font-medium">Hồ sơ & Chữ ký Giảng viên</span>
-        </div>
+        <Breadcrumb className="mb-1">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="cursor-pointer"
+                onClick={() => router.push("/instructor/courses")}
+              >
+                Giảng dạy
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Hồ sơ & Chữ ký Giảng viên</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
         <h1 className="text-3xl font-extrabold text-foreground tracking-tight text-balance">
           Cấu hình Hồ sơ & Chữ ký tay Điện tử
         </h1>
@@ -124,10 +138,12 @@ export default function InstructorProfilePage() {
             <span>{statusMessage.text}</span>
           </div>
           <button
+            type="button"
             onClick={() => setStatusMessage(null)}
-            className="text-xs opacity-70 hover:opacity-100"
+            aria-label="Đóng thông báo"
+            className="p-1 rounded-md opacity-70 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
           >
-            ✕
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       )}

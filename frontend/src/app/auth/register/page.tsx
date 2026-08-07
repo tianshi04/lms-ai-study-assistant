@@ -202,14 +202,11 @@ export default function RegisterPage() {
               className="space-y-5"
             >
               {/* Verified Email Banner */}
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+              <div className="p-3 rounded-xl bg-success/10 border border-success/20 flex items-center justify-between">
                 <div className="flex items-center gap-2 overflow-hidden pr-2">
-                  <CheckCircle2
-                    aria-hidden="true"
-                    className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0"
-                  />
+                  <CheckCircle2 aria-hidden="true" className="w-5 h-5 text-success flex-shrink-0" />
                   <div className="min-w-0 truncate">
-                    <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 block tracking-wider">
+                    <span className="text-[10px] uppercase font-bold text-success block tracking-wider">
                       Email đã xác minh Google
                     </span>
                     <span className="text-xs font-semibold text-foreground min-w-0 truncate block">
@@ -220,7 +217,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium flex-shrink-0"
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium flex-shrink-0 rounded-lg p-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
                 >
                   <ArrowLeft aria-hidden="true" className="w-3.5 h-3.5" />
                   Đổi

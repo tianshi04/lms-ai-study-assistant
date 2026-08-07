@@ -130,19 +130,17 @@ export function CourseHeaderBanner({
               type="button"
               onClick={onSubmitForLaunch}
               disabled={submittingLaunch}
-              className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-lg shadow-primary/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-lg shadow-primary/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Check className="w-4 h-4" aria-hidden="true" />
-              <span aria-live="polite">
-                {submittingLaunch ? "Đang nộp…" : "Submit for Launch (Gửi duyệt)"}
-              </span>
+              <span aria-live="polite">{submittingLaunch ? "Đang nộp…" : "Gửi duyệt mở lớp"}</span>
             </button>
           )}
           <button
             type="button"
             onClick={onExportScorm}
             disabled={saving}
-            className="px-3.5 py-2.5 rounded-xl bg-warning/10 text-warning border border-warning/20 text-xs font-bold hover:bg-warning/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="px-3.5 py-2.5 rounded-xl bg-warning/10 text-warning border border-warning/20 text-xs font-bold hover:bg-warning/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Download className="w-4 h-4" aria-hidden="true" />
             <span>{"Xuất SCORM 1.2 ZIP"}</span>
@@ -195,7 +193,7 @@ export function CourseHeaderBanner({
             <button
               type="button"
               onClick={onOpenCollaboratorsModal}
-              className="px-4 py-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              className="px-4 py-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Users className="w-4 h-4" aria-hidden="true" />
               <span>{"Người hợp tác"}</span>
@@ -204,8 +202,9 @@ export function CourseHeaderBanner({
 
           {isInstructorOrAdmin && (
             <button
+              type="button"
               onClick={onAddWeek}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer flex-shrink-0"
+              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Plus className="w-5 h-5" aria-hidden="true" />
               <span>{"Thêm Tuần học"}</span>

@@ -20,51 +20,54 @@ export default function AssessmentsPage() {
         <div>
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-info/10 text-info border border-info/20">
-              TRACK B ASSESSMENTS
+              BÀI KIỂM TRẢ &amp; ĐÁNH GIÁ
             </span>
             <span className="text-xs text-muted-foreground">
-              Coursera Auto-Grader &amp; Peer Review Engine
+              Hệ thống Tự động Chấm điểm &amp; Đánh giá Ngang hàng
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-1 text-foreground text-balance">
-            Assessments &amp; Auto-Grader Sandbox
+            Thử nghiệm Bài kiểm tra &amp; Auto-Grader
           </h1>
         </div>
 
         {/* Assessment Selector Tabs */}
         <div className="flex items-center gap-1.5 bg-muted p-1.5 rounded-2xl border border-border shadow-inner">
           <button
+            type="button"
             onClick={() => setActiveAssessment("quiz")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               activeAssessment === "quiz"
                 ? "bg-card text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <FileText className="w-4 h-4 text-primary" aria-hidden="true" />
-            Graded Quiz (80% Pass)
+            Bài trắc nghiệm (Đạt 80%)
           </button>
           <button
+            type="button"
             onClick={() => setActiveAssessment("lab")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               activeAssessment === "lab"
                 ? "bg-card text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
             <Code2 className="w-4 h-4 text-accent-foreground" aria-hidden="true" />
-            Auto-Graded Lab
+            Thực hành Lab tự chấm
           </button>
           <button
+            type="button"
             onClick={() => setActiveAssessment("peer")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               activeAssessment === "peer"
                 ? "bg-card text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Users className="w-4 h-4 text-success" aria-hidden="true" />
-            Peer Review &amp; Appeal
+            <Users className="w-4 h-4 text-secondary" aria-hidden="true" />
+            Đánh giá ngang hàng &amp; Phúc khảo
           </button>
         </div>
       </div>

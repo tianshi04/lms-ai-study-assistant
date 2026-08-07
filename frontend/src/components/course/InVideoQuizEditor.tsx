@@ -277,7 +277,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
             <button
               type="button"
               onClick={handleAddOption}
-              className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
+              className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md p-0.5"
             >
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               <span>+ Thêm phương án</span>
@@ -298,7 +298,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                     checked={correctOptionIndex === idx}
                     onChange={() => setCorrectOptionIndex(idx)}
                     aria-label={`Chọn phương án ${letter} làm đáp án đúng`}
-                    className="w-4 h-4 text-primary cursor-pointer"
+                    className="w-4 h-4 text-primary cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   />
                   <span className="text-xs font-bold text-muted-foreground font-mono">
                     {letter}.
