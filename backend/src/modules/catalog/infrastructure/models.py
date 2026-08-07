@@ -13,6 +13,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from sqlalchemy.dialects.postgresql import JSONB
+
 from src.modules.catalog.domain.entities import ItemType, CourseStatus
 from src.modules.identity.domain.constants import INTERNAL_SYSTEM_ORG_ID
 from src.shared.infrastructure.database import Base
@@ -188,9 +190,13 @@ class LearningItemModel(Base):
         Integer, nullable=False, default=0, server_default="0"
     )
     starter_code: Mapped[str] = mapped_column(Text, nullable=False, default="")
-    test_cases_json: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    test_cases_json: Mapped[str] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=False, default=""
+    )
     language: Mapped[str] = mapped_column(String(32), nullable=False, default="")
-    rubric_criteria_json: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    rubric_criteria_json: Mapped[str] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=False, default=""
+    )
     quiz_matrix_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     auto_transcribe: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default="false"

@@ -3,6 +3,8 @@ from typing import Any, Optional
 from sqlalchemy import Boolean, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
+from sqlalchemy.dialects.postgresql import JSONB
+
 from src.modules.certificate.domain.constants import (
     DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS,
 )
@@ -44,7 +46,7 @@ class CertificateModel(Base):
     verification_url: Mapped[str] = mapped_column(String(512), nullable=False)
     qr_code_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
     open_badges_json_ld: Mapped[dict[str, Any]] = mapped_column(
-        JSON, nullable=False, default=dict
+        JSON().with_variant(JSONB, "postgresql"), nullable=False, default=dict
     )
     is_revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     revoked_reason: Mapped[str] = mapped_column(Text, nullable=False, default="")

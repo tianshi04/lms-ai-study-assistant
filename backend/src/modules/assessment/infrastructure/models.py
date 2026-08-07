@@ -10,6 +10,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.assessment.domain.constants import (
@@ -112,7 +113,9 @@ class PeerReviewModel(Base):
         String(64), nullable=False, index=True
     )
     item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    rubric_criteria_json: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    rubric_criteria_json: Mapped[dict[str, Any]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=False
+    )
     total_score: Mapped[float] = mapped_column(Float, nullable=False)
     is_outlier: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -244,7 +247,9 @@ class QuizSessionModel(Base):
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    questions_json: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False)
+    questions_json: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=False
+    )
     started_at: Mapped[str] = mapped_column(String(64), nullable=False)
     expires_at: Mapped[str] = mapped_column(String(64), nullable=False)
     time_limit_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -261,6 +266,8 @@ class QuizActiveSessionModel(Base):
     user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     session_seed: Mapped[int] = mapped_column(Integer, nullable=False)
-    questions_json: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False)
+    questions_json: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=False
+    )
     started_at: Mapped[str] = mapped_column(String(64), nullable=False)
     expires_at: Mapped[str] = mapped_column(String(64), nullable=False)
