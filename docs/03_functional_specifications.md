@@ -94,6 +94,15 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
   * Người dùng bấm nút **Đăng ký** sẽ tự động được điền sẵn Email và gắn kèm `invite_token`. Ngay sau khi đăng ký thành công, hệ thống tự động hoàn tất chấp nhận lời mời và cấp quyền ngay lập tức mà không cần người dùng thao tác lại.
   * Nếu đăng nhập sai email so với email trên lời mời, giao diện hiển thị cảnh báo đỏ yêu cầu chuyển đổi tài khoản.
 
+### 1.9. Quản lý & Rời Thành viên Tổ chức (Organization Member Management & Voluntary Leave)
+* **Khái niệm & Phạm vi Nghiệp vụ:** Cung cấp cơ chế quản lý tư cách thành viên nội bộ của Tổ chức Đối tác thông qua RPC `RemoveOrganizationMember`.
+* **Kick Thành viên (Remove Member):**
+  * Thao tác xóa thành viên khỏi Tổ chức do **Chủ sở hữu Tổ chức (`ORG_OWNER`)** hoặc **Super Admin** thực hiện tại giao diện `/organizations/[slug]/members`.
+  * Ràng buộc bảo vệ: Nghiêm cấm Kick tài khoản có vai trò `ORG_OWNER` khác khỏi Tổ chức. Giảng viên (`INSTRUCTOR`) không có quyền Kick thành viên.
+* **Tự nguyện Rời Tổ chức (Voluntary Self-Leave):**
+  * Thành viên (`INSTRUCTOR` hoặc `MEMBER`) có quyền tự nguyện rút khỏi Tổ chức bất kỳ lúc nào (`user_id == current_user.id`).
+  * Ràng buộc bảo vệ: Tài khoản `ORG_OWNER` duy nhất không thể tự rời Tổ chức khi chưa chuyển nhượng quyền sở hữu.
+
 ---
 
 ## 2. VAI TRÒ: GIẢNG VIÊN & TRỢ GIẢNG (INSTRUCTOR / TA)

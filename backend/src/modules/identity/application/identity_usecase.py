@@ -929,12 +929,37 @@ class IdentityUseCase:
         organization_id: str,
         current_user: Optional[CurrentUser] = None,
     ) -> bool:
+        if not current_user:
+            raise PermissionError("Yêu cầu đăng nhập.")
+
         async with async_session_scope() as session:
             org_repo = OrganizationRepository(session)
-            await self._verify_org_admin_permission(
-                session, current_user, organization_id
+            target_org_id = await self._resolve_target_org_id(
+                org_repo, current_user, organization_id
             )
-            return await org_repo.remove_member(user_id=user_id, org_id=organization_id)
+
+            target_member = await org_repo.get_member(user_id, target_org_id)
+            if not target_member:
+                return True
+
+            is_self = user_id == current_user.id
+            target_role = (target_member.role_id or "").upper()
+
+            if is_self:
+                if "OWNER" in target_role and not current_user.is_admin:
+                    raise PermissionError(
+                        "Chủ sở hữu duy nhất không thể tự rời Tổ chức. Vui lòng chuyển nhượng quyền sở hữu trước."
+                    )
+            else:
+                await self._verify_org_admin_permission(
+                    session, current_user, target_org_id
+                )
+                if "OWNER" in target_role and not current_user.is_admin:
+                    raise PermissionError(
+                        "Không thể xóa tài khoản Chủ sở hữu (ORG_OWNER) khỏi Tổ chức."
+                    )
+
+            return await org_repo.remove_member(user_id=user_id, org_id=target_org_id)
 
     async def list_my_organizations(
         self, current_user: CurrentUser

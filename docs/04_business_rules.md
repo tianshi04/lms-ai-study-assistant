@@ -83,6 +83,12 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_INVITE_003 (Luồng Nhận Lời mời & Khớp Định danh Email):**
   * *Khớp định danh bắt buộc:* Khi phản hồi lời mời (`RespondToInvitation`), email tài khoản đang đăng nhập (`current_user.email`) bắt buộc phải trùng khớp với email người nhận được mời (`invitee_email`). Nếu không trùng khớp, hệ thống chặn thao tác và thông báo yêu cầu chuyển đổi tài khoản.
   * *Kích hoạt tự động cho người dùng mới:* Trường hợp người nhận chưa có tài khoản, sau khi đăng ký tài khoản thành công với mã `invite_token`, hệ thống tự động gán tài khoản vào Tổ chức / Khóa học / Suất học Doanh nghiệp ngay lập tức.
+* **BR_ORG_001 (Quy chế Kick / Loại bỏ Thành viên khỏi Tổ chức - Kick Member Boundary):**
+  * *Thẩm quyền độc quyền:* Thao tác xóa thành viên khỏi Tổ chức qua RPC `RemoveOrganizationMember` đòi hỏi thẩm quyền độc quyền của **Chủ sở hữu Tổ chức (`Organization Owner` / `ORG_OWNER`)** hoặc **Super Admin**. Giảng viên (`INSTRUCTOR`) và Thành viên (`MEMBER`) tuyệt đối không có quyền kick tài khoản khác.
+  * *Chặn Kick Chủ sở hữu (Owner Protection Guard):* Hệ thống chủ động kiểm tra và nghiêm cấm xóa tài khoản có vai trò `ORG_OWNER` khỏi Tổ chức để bảo đảm tính toàn vẹn tư cách pháp lý của đối tác.
+* **BR_ORG_002 (Quy chế Tự nguyện Rời Tổ chức - Self-Leave Organization):**
+  * *Tự nguyện rút tên:* Thành viên (`INSTRUCTOR` hoặc `MEMBER`) có quyền tự nguyện gửi yêu cầu rời khỏi Tổ chức bất kỳ lúc nào (`user_id == current_user.id`).
+  * *Ràng buộc Chủ sở hữu:* Tài khoản `ORG_OWNER` duy nhất tuyệt đối không được tự rời Tổ chức khi chưa thực hiện quy trình chuyển nhượng quyền sở hữu cho thành viên khác (ngăn ngừa nguy cơ Tổ chức bị vô chủ).
 
 ---
 
