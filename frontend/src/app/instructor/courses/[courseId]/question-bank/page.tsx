@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import {
@@ -740,13 +741,11 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
             <div className="space-y-2">
               {qOptions.map((opt, idx) => (
                 <div key={idx} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={opt.isCorrect}
-                    onChange={(e) => handleOptionCorrectChange(idx, e.target.checked)}
-                    className="w-4 h-4 text-primary rounded cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    title="Đánh dấu phương án đúng"
+                    onCheckedChange={(checked) => handleOptionCorrectChange(idx, Boolean(checked))}
                     aria-label={`Đánh dấu phương án ${idx + 1} là phương án đúng`}
+                    title="Đánh dấu phương án đúng"
                   />
                   <Input
                     type="text"

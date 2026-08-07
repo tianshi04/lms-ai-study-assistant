@@ -472,8 +472,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
 
                 {/* Inline Reply Input */}
                 <div className="flex gap-2 items-center pt-1">
-                  <input
-                    type="text"
+                  <Input
                     value={replyInputs[thread.id] || ""}
                     onChange={(e) =>
                       setReplyInputs((prev) => ({ ...prev, [thread.id]: e.target.value }))
@@ -481,16 +480,16 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                     placeholder="Trả lời…"
                     aria-label="Nhập nội dung trả lời"
                     spellCheck={false}
-                    className="flex-1 bg-surface-container-lowest border border-outline-variant rounded-full px-3.5 py-1.5 text-xs text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    className="flex-1 rounded-full text-xs"
                   />
-                  <button
+                  <Button
                     type="button"
                     onClick={() => handlePostReply(thread.id)}
                     disabled={!(replyInputs[thread.id] || "").trim()}
-                    className="px-3.5 py-1.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-on-primary rounded-full text-xs font-bold cursor-pointer transition-colors shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="rounded-full text-xs font-bold px-3.5"
                   >
                     Gửi
-                  </button>
+                  </Button>
                 </div>
               </div>
             );

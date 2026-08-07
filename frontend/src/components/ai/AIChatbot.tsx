@@ -320,10 +320,11 @@ export function AIChatbot() {
                 spellCheck={false}
                 className="flex-1 bg-transparent text-xs text-on-surface placeholder:text-on-surface-variant/70 border-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring py-1"
               />
-              <button
+              <Button
                 type="submit"
+                size="icon"
                 disabled={!inputValue.trim() || agent?.isRunning}
-                className={`w-8 h-8 rounded-full transition-colors flex items-center justify-center shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                className={`w-8 h-8 rounded-full shrink-0 ${
                   !inputValue.trim() || agent?.isRunning
                     ? "bg-surface-container-high text-on-surface-variant/50 cursor-not-allowed"
                     : "bg-primary text-primary-foreground hover:bg-primary-hover shadow-xs cursor-pointer active:scale-95"
@@ -332,7 +333,7 @@ export function AIChatbot() {
                 aria-label="Gửi tin nhắn"
               >
                 <ArrowUp className="w-4 h-4" aria-hidden="true" />
-              </button>
+              </Button>
             </div>
 
             <p className="text-xs text-center text-on-surface-variant/70">

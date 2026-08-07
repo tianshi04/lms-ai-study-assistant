@@ -3,6 +3,8 @@
 import React, { useState, useRef } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { Clock, Video, Plus, Trash2, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 
 export interface InVideoQuizItem {
   timestampSeconds: number;
@@ -237,16 +239,16 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
               Mốc thời gian (Giây)
             </label>
             <div className="flex items-center gap-2">
-              <input
+              <Input
                 type="number"
                 min={0}
                 value={timestampSeconds}
                 onChange={(e) => setTimestampSeconds(parseInt(e.target.value) || 0)}
                 aria-label="Mốc thời gian (Giây)"
-                className="w-full px-3 py-2 rounded-lg border border-input bg-card text-foreground text-xs font-mono font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="font-mono font-bold"
                 required
               />
-              <span className="text-xs font-mono font-semibold text-muted-foreground">
+              <span className="text-xs font-mono font-semibold text-muted-foreground shrink-0">
                 ({formatSeconds(timestampSeconds)})
               </span>
             </div>
@@ -256,14 +258,12 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
             <label className="block text-[11px] font-bold text-muted-foreground mb-1">
               Nội dung câu hỏi
             </label>
-            <input
-              type="text"
+            <Input
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="VD: Hàm print() trong Python có tác dụng gì?"
               aria-label="Nội dung câu hỏi"
               spellCheck={false}
-              className="w-full px-3 py-2 rounded-lg border border-input bg-card text-foreground text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </div>
         </div>
@@ -274,14 +274,16 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
             <label className="block text-[11px] font-bold text-muted-foreground">
               Phương án trả lời (Tích chọn nút tròn để chỉ định Đáp án Đúng):
             </label>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={handleAddOption}
-              className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md p-0.5"
+              className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer h-auto py-0.5 px-1.5"
             >
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               <span>+ Thêm phương án</span>
-            </button>
+            </Button>
           </div>
 
           <div className="space-y-2">
@@ -303,25 +305,26 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                   <span className="text-xs font-bold text-muted-foreground font-mono">
                     {letter}.
                   </span>
-                  <input
-                    type="text"
+                  <Input
                     value={optText}
                     onChange={(e) => handleOptionChange(idx, e.target.value)}
                     placeholder={`Nhập phương án ${letter}…`}
                     aria-label={`Nội dung phương án ${letter}`}
                     spellCheck={false}
-                    className="w-full bg-transparent text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded px-1"
+                    className="bg-transparent text-xs py-1"
                   />
                   {optionsList.length > 2 && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleRemoveOption(idx)}
-                      className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors cursor-pointer w-7 h-7"
                       title="Xóa phương án này"
                       aria-label="Xóa phương án này"
                     >
                       <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    </button>
+                    </Button>
                   )}
                 </div>
               );
@@ -333,26 +336,24 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
           <label className="block text-[11px] font-bold text-muted-foreground mb-1">
             Lời giải thích chi tiết (Hiển thị sau khi học viên nộp bài)
           </label>
-          <input
-            type="text"
+          <Input
             value={explanation}
             onChange={(e) => setExplanation(e.target.value)}
             placeholder="VD: print() là hàm tích hợp sẵn của Python để ghi dữ liệu ra console."
             aria-label="Lời giải thích chi tiết"
             spellCheck={false}
-            className="w-full px-3 py-2 rounded-lg border border-input bg-card text-foreground text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
 
         <div className="flex justify-end pt-1">
-          <button
+          <Button
             type="button"
             onClick={handleAddOrUpdateQuiz}
-            className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-md transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="px-4 py-2 rounded-xl font-bold text-xs shadow-md transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" aria-hidden="true" />
             <span>{editingIndex !== null ? "Lưu cập nhật mốc" : "Chèn mốc câu hỏi vào Video"}</span>
-          </button>
+          </Button>
         </div>
       </div>
 

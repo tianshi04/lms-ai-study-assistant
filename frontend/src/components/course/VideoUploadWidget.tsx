@@ -5,6 +5,7 @@ import { Upload, CheckCircle2 } from "lucide-react";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
+import { Input } from "@/components/ui/Input";
 
 interface VideoUploadWidgetProps {
   value: string;
@@ -273,14 +274,13 @@ export function VideoUploadWidget({
         </div>
       ) : (
         <div>
-          <input
-            type="url"
+          <Input
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
             aria-label="Đường dẫn URL media"
             spellCheck={false}
-            className="w-full px-4 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            className="font-mono"
           />
         </div>
       )}

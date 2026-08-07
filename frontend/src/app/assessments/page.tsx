@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { FileText, Code2, Users } from "lucide-react";
 import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
 import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
 import { PeerAssignmentWorkspace } from "@/components/assessment/PeerAssignmentWorkspace";
@@ -33,10 +34,11 @@ export default function AssessmentsPage() {
 
         {/* Assessment Selector Tabs */}
         <div className="flex items-center gap-1.5 bg-muted p-1.5 rounded-2xl border border-border shadow-inner">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => setActiveAssessment("quiz")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
               activeAssessment === "quiz"
                 ? "bg-card text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -44,11 +46,12 @@ export default function AssessmentsPage() {
           >
             <FileText className="w-4 h-4 text-primary" aria-hidden="true" />
             Bài trắc nghiệm (Đạt 80%)
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => setActiveAssessment("lab")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
               activeAssessment === "lab"
                 ? "bg-card text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -56,11 +59,12 @@ export default function AssessmentsPage() {
           >
             <Code2 className="w-4 h-4 text-accent-foreground" aria-hidden="true" />
             Thực hành Lab tự chấm
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => setActiveAssessment("peer")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
               activeAssessment === "peer"
                 ? "bg-card text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -68,7 +72,7 @@ export default function AssessmentsPage() {
           >
             <Users className="w-4 h-4 text-secondary" aria-hidden="true" />
             Đánh giá ngang hàng &amp; Phúc khảo
-          </button>
+          </Button>
         </div>
       </div>
       {/* Item ID Configuration */}

@@ -293,19 +293,18 @@ export default function NewCoursePage() {
               <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
                 Đường dẫn tĩnh (Slug) <span className="text-destructive">*</span>
               </label>
-              <div className="flex items-center rounded-xl bg-card border border-input overflow-hidden">
-                <span className="px-4 py-3 text-xs text-muted-foreground bg-muted border-r border-border">
+              <div className="flex items-center rounded-xl overflow-hidden">
+                <span className="px-4 py-2.5 text-xs text-muted-foreground bg-muted border border-r-0 border-input rounded-l-xl font-mono shrink-0">
                   /courses/
                 </span>
-                <input
-                  type="text"
+                <Input
                   required
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   placeholder="lap-trinh-python-can-ban"
                   aria-label="Đường dẫn tĩnh (Slug)"
                   spellCheck={false}
-                  className="w-full px-4 py-3 bg-transparent text-sm font-mono text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="rounded-l-none font-mono text-sm"
                 />
               </div>
             </div>
