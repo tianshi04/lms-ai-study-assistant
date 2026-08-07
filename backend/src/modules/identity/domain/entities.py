@@ -1,3 +1,4 @@
+import hashlib
 from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
@@ -107,3 +108,50 @@ class EnterpriseLicense:
         if not self.allowed_course_ids:
             return False
         return course_id in self.allowed_course_ids
+
+
+class InvitationType(str, Enum):
+    ORGANIZATION_MEMBER = "INVITATION_TYPE_ORGANIZATION_MEMBER"
+    COURSE_CO_INSTRUCTOR = "INVITATION_TYPE_COURSE_CO_INSTRUCTOR"
+    ENTERPRISE_SEAT = "INVITATION_TYPE_ENTERPRISE_SEAT"
+
+
+class InvitationStatus(str, Enum):
+    PENDING = "INVITATION_STATUS_PENDING"
+    ACCEPTED = "INVITATION_STATUS_ACCEPTED"
+    DECLINED = "INVITATION_STATUS_DECLINED"
+    CANCELLED = "INVITATION_STATUS_CANCELLED"
+    EXPIRED = "INVITATION_STATUS_EXPIRED"
+
+
+class InvitationAction(str, Enum):
+    ACCEPT = "INVITATION_ACTION_ACCEPT"
+    DECLINE = "INVITATION_ACTION_DECLINE"
+
+
+def hash_invitation_token(raw_token: str) -> str:
+    """Computes SHA-256 hash of an invitation token for secure database lookup."""
+    if not raw_token:
+        return ""
+    return hashlib.sha256(raw_token.strip().encode("utf-8")).hexdigest()
+
+
+@dataclass
+class Invitation:
+    id: str
+    type: InvitationType
+    status: InvitationStatus
+    inviter_id: str
+    inviter_name: str
+    inviter_email: str
+    invitee_email: str
+    target_id: str
+    target_name: str
+    role_id: str
+    token_hash: str
+    message: str = ""
+    invitee_id: Optional[str] = None
+    raw_token: Optional[str] = None  # Only populated in-memory when sending raw token
+    expires_at: str = ""
+    created_at: str = ""
+    responded_at: str = ""

@@ -151,6 +151,26 @@ sequenceDiagram
 | **Duyệt Đơn Giảng viên** | `_is_admin(user)` | Chỉ Quản trị viên hệ thống (`USER_ROLE_ADMIN`). |
 | **Duyệt Hỗ trợ Tài chính / Thu hồi Chứng chỉ** | `_is_admin(user)` | Chỉ Quản trị viên hệ thống (`USER_ROLE_ADMIN`). |
 | **Kiểm duyệt Diễn đàn** | `_can_moderate(user)` | Quản trị viên hệ thống HOẶC Giảng viên / Trợ giảng phụ trách khóa học. |
+| **Gửi Lời mời Thành viên Tổ chức** | `_verify_org_admin_permission(session, user, org_id)` | Admin/Owner của Tổ chức (Nghiêm cấm mời vai trò `ORG_OWNER`). |
+| **Gửi Lời mời Giảng viên Khóa học** | `SQLAlchemyCatalogRepository.get_course_detail(target_id)` | Owner/Co-Instructor của Khóa học hoặc Admin (Nghiêm cấm mời vai trò `COURSE_OWNER`). |
+| **Gửi Lời mời Suất học Enterprise** | `_is_admin(user)` | Chỉ Quản trị viên hệ thống (`USER_ROLE_ADMIN`). |
+| **Phản hồi Lời mời (Respond)** | Match `invitee_email == current_user.email` | Người dùng được mời có email khớp chính xác với tài khoản đang đăng nhập. |
+
+---
+
+## 8. Kiến Trúc Bảo Mật & Mã Hóa Token Lời Mời (Invitation Cryptographic Architecture)
+
+### A. Quy trình Băm Mã Token SHA-256 (SHA-256 Token Digest Flow)
+1. **Khởi tạo Token Tạm (In-Memory Token Generation)**: Khi tạo lời mời, backend khởi tạo ngẫu nhiên chuỗi token `inv_tok_<uuid4_hex>` (32 bytes entropy). Chuỗi raw token này chỉ được gửi 1 lần duy nhất trong phản hồi JSON về cho Client/Email.
+2. **Lưu trữ Chuỗi Băm Hex SHA-256 (Database Saltless Hashing)**:
+   ```python
+   def hash_invitation_token(raw_token: str) -> str:
+       return hashlib.sha256(raw_token.strip().encode("utf-8")).hexdigest()
+   ```
+   Cơ sở dữ liệu lưu chuỗi băm 64 ký tự `token_hash`. Khi người dùng truy cập link `https://<domain>/invitations/<token>`, backend thực hiện băm token nhận được và tìm kiếm theo chỉ mục SQL indexed: `SELECT * FROM invitations WHERE token_hash = :hash`.
+3. **Bảo vệ Đơn kỳ & Tự động Hết hạn (Single-Use & Automatic Expiration)**:
+   - Mọi thao tác kiểm tra token (`GetInvitationByToken`, `RespondToInvitation`) tự động so sánh mốc thời gian UTC `datetime.now(timezone.utc) > exp_dt`. Nếu quá 7 ngày kể từ ngày khởi tạo, trạng thái chuyển thành `EXPIRED`.
+   - Lời mời chỉ chấp nhận phản hồi khi ở trạng thái `PENDING`. Sau khi `ACCEPT` hoặc `DECLINE`, trạng thái được cập nhật nguyên tử, ngăn chặn việc sử dụng lại token.
 
 
 

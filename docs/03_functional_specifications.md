@@ -80,6 +80,20 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
   - **Đăng nhập 2 Chế độ (Dual Login Options)**: Hỗ trợ nút bấm **Google 1-click** (`GoogleLogin`) và ô nhập **Email & Mật khẩu** truyền thống (`Login`).
   - **Đồng bộ Ảnh đại diện (Google Avatar Synchronization)**: Tự động trích xuất ảnh đại diện chính chủ từ Google (`picture`), lưu trữ vào DB và đồng bộ lên toàn bộ giao diện Navbar Header (`UserDropdown`) và Hồ sơ cá nhân.
 
+### 1.8. Hệ thống Quản lý Lời mời Gia nhập (Invitation Management System)
+* **Khái niệm & Phạm vi Nghiệp vụ:** Cung cấp cơ chế gửi lời mời qua Email để tuyển dụng/cấp quyền cho 3 đối tượng nghiệp vụ chính: Thành viên Tổ chức (`ORGANIZATION_MEMBER`), Giảng viên đồng hành Khóa học (`COURSE_CO_INSTRUCTOR`), và Suất học Doanh nghiệp (`ENTERPRISE_SEAT`).
+* **Phân quyền Phân cấp Lời mời (Role-Based Invitation Restrictions):**
+  * **Tổ chức (Organization)**: Org Owner / Org Admin gửi lời mời thành viên với vai trò `ORG_ADMIN`, `MEMBER`... Nghiêm cấm gửi lời mời cho vai trò `ORG_OWNER`.
+  * **Khóa học (Course)**: Chủ sở hữu / Giảng viên khóa học gửi lời mời làm `CO_INSTRUCTOR`, `TA`... Nghiêm cấm gửi lời mời cho vai trò `COURSE_OWNER`.
+  * **Suất học Doanh nghiệp (Enterprise Seat)**: Chỉ Quản trị viên hệ thống (Super Admin) mới có quyền khởi tạo và gửi lời mời kích hoạt Suất học Doanh nghiệp. Hệ thống tự động kiểm tra hạn mức `used_seats < total_seats` và ghi nhận tăng nguyên tử số suất đã dùng khi người nhận chấp nhận lời mời.
+* **Mã hóa Token SHA-256 & Vòng đời Đơn kỳ (Single-Use Token Lifecycle):**
+  * Token lời mời ngẫu nhiên (`inv_tok_<uuid>`) chỉ tồn tại tạm thời trên bộ nhớ và được gửi qua link. Trong Database chỉ lưu trữ chuỗi băm Hex SHA-256 của token (`token_hash`), chống lộ token khi bị rò rỉ cơ sở dữ liệu.
+  * Lời mời có thời hạn mặc định 7 ngày (`DEFAULT_INVITATION_EXPIRATION_DAYS = 7`). Khi quá hạn, trạng thái tự động chuyển sang `EXPIRED`.
+* **Luồng Trải nghiệm Người nhận chưa có tài khoản (Unregistered Invitee Onboarding):**
+  * Người chưa có tài khoản bấm vào link lời mời `https://<domain>/invitations/<token>` sẽ được chuyển hướng tới trang chấp nhận công khai (`AUTH_POLICY_PUBLIC`).
+  * Người dùng bấm nút **Đăng ký** sẽ tự động được điền sẵn Email và gắn kèm `invite_token`. Ngay sau khi đăng ký thành công, hệ thống tự động hoàn tất chấp nhận lời mời và cấp quyền ngay lập tức mà không cần người dùng thao tác lại.
+  * Nếu đăng nhập sai email so với email trên lời mời, giao diện hiển thị cảnh báo đỏ yêu cầu chuyển đổi tài khoản.
+
 ---
 
 ## 2. VAI TRÒ: GIẢNG VIÊN & TRỢ GIẢNG (INSTRUCTOR / TA)

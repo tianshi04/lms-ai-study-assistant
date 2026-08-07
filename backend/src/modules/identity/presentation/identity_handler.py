@@ -578,3 +578,201 @@ class IdentityHandler(IdentityService):
             return pb.RemoveOrganizationMemberResponse(success=success)
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
+
+    async def create_invitation(
+        self,
+        request: pb.CreateInvitationRequest,
+        ctx: RequestContext[
+            pb.CreateInvitationRequest,
+            pb.CreateInvitationResponse,
+        ],
+    ) -> pb.CreateInvitationResponse:
+        current_user = require_current_user()
+        type_str = (
+            _pb_type_to_str(request.type)
+            if request.type != pb.InvitationType.UNSPECIFIED
+            else ""
+        )
+        try:
+            res = await self._use_case.create_invitation(
+                type=type_str,
+                invitee_email=request.invitee_email,
+                target_id=request.target_id,
+                target_name=request.target_name,
+                role_id=request.role_id,
+                message=request.message,
+                current_user=current_user,
+            )
+            return pb.CreateInvitationResponse(invitation=_dict_to_pb_invitation(res))
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
+    async def list_sent_invitations(
+        self,
+        request: pb.ListSentInvitationsRequest,
+        ctx: RequestContext[
+            pb.ListSentInvitationsRequest,
+            pb.ListSentInvitationsResponse,
+        ],
+    ) -> pb.ListSentInvitationsResponse:
+        current_user = require_current_user()
+        type_str = (
+            _pb_type_to_str(request.type)
+            if request.type != pb.InvitationType.UNSPECIFIED
+            else ""
+        )
+        invs = await self._use_case.list_sent_invitations(
+            type=type_str,
+            target_id=request.target_id,
+            current_user=current_user,
+        )
+        return pb.ListSentInvitationsResponse(
+            invitations=[_dict_to_pb_invitation(inv) for inv in invs]
+        )
+
+    async def list_my_invitations(
+        self,
+        request: pb.ListMyInvitationsRequest,
+        ctx: RequestContext[
+            pb.ListMyInvitationsRequest,
+            pb.ListMyInvitationsResponse,
+        ],
+    ) -> pb.ListMyInvitationsResponse:
+        current_user = require_current_user()
+        status_str = (
+            _pb_status_to_str(request.status_filter)
+            if request.status_filter != pb.InvitationStatus.UNSPECIFIED
+            else ""
+        )
+        invs = await self._use_case.list_my_invitations(
+            status_filter=status_str,
+            current_user=current_user,
+        )
+        return pb.ListMyInvitationsResponse(
+            invitations=[_dict_to_pb_invitation(inv) for inv in invs]
+        )
+
+    async def get_invitation_by_token(
+        self,
+        request: pb.GetInvitationByTokenRequest,
+        ctx: RequestContext[
+            pb.GetInvitationByTokenRequest,
+            pb.GetInvitationByTokenResponse,
+        ],
+    ) -> pb.GetInvitationByTokenResponse:
+        try:
+            res = await self._use_case.get_invitation_by_token(request.token)
+            return pb.GetInvitationByTokenResponse(
+                invitation=_dict_to_pb_invitation(res)
+            )
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
+    async def respond_to_invitation(
+        self,
+        request: pb.RespondToInvitationRequest,
+        ctx: RequestContext[
+            pb.RespondToInvitationRequest,
+            pb.RespondToInvitationResponse,
+        ],
+    ) -> pb.RespondToInvitationResponse:
+        current_user = require_current_user()
+        try:
+            inv_dict, success, msg = await self._use_case.respond_to_invitation(
+                invitation_id=request.invitation_id,
+                action=str(request.action),
+                token=request.token,
+                current_user=current_user,
+            )
+            return pb.RespondToInvitationResponse(
+                invitation=_dict_to_pb_invitation(inv_dict) if inv_dict else None,
+                success=success,
+                message=msg,
+            )
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+        except ValueError as e:
+            raise ConnectError(Code.INVALID_ARGUMENT, str(e))
+
+    async def cancel_invitation(
+        self,
+        request: pb.CancelInvitationRequest,
+        ctx: RequestContext[
+            pb.CancelInvitationRequest,
+            pb.CancelInvitationResponse,
+        ],
+    ) -> pb.CancelInvitationResponse:
+        current_user = require_current_user()
+        try:
+            success = await self._use_case.cancel_invitation(
+                invitation_id=request.invitation_id,
+                current_user=current_user,
+            )
+            return pb.CancelInvitationResponse(success=success)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+
+
+def _pb_type_to_str(type_enum: pb.InvitationType) -> str:
+    mapping = {
+        pb.InvitationType.ORGANIZATION_MEMBER: "INVITATION_TYPE_ORGANIZATION_MEMBER",
+        pb.InvitationType.COURSE_CO_INSTRUCTOR: "INVITATION_TYPE_COURSE_CO_INSTRUCTOR",
+        pb.InvitationType.ENTERPRISE_SEAT: "INVITATION_TYPE_ENTERPRISE_SEAT",
+    }
+    return mapping.get(type_enum, "")
+
+
+def _pb_status_to_str(status_enum: pb.InvitationStatus) -> str:
+    mapping = {
+        pb.InvitationStatus.PENDING: "INVITATION_STATUS_PENDING",
+        pb.InvitationStatus.ACCEPTED: "INVITATION_STATUS_ACCEPTED",
+        pb.InvitationStatus.DECLINED: "INVITATION_STATUS_DECLINED",
+        pb.InvitationStatus.CANCELLED: "INVITATION_STATUS_CANCELLED",
+        pb.InvitationStatus.EXPIRED: "INVITATION_STATUS_EXPIRED",
+    }
+    return mapping.get(status_enum, "")
+
+
+def _dict_to_pb_invitation(d: dict) -> pb.Invitation:
+    type_val = str(d.get("type", "")).upper()
+    type_enum = pb.InvitationType.UNSPECIFIED
+    if "ORGANIZATION" in type_val:
+        type_enum = pb.InvitationType.ORGANIZATION_MEMBER
+    elif "COURSE" in type_val or "CO_INSTRUCTOR" in type_val:
+        type_enum = pb.InvitationType.COURSE_CO_INSTRUCTOR
+    elif "ENTERPRISE" in type_val or "SEAT" in type_val:
+        type_enum = pb.InvitationType.ENTERPRISE_SEAT
+
+    status_val = str(d.get("status", "")).upper()
+    status_enum = pb.InvitationStatus.UNSPECIFIED
+    if "PENDING" in status_val:
+        status_enum = pb.InvitationStatus.PENDING
+    elif "ACCEPTED" in status_val:
+        status_enum = pb.InvitationStatus.ACCEPTED
+    elif "DECLINED" in status_val:
+        status_enum = pb.InvitationStatus.DECLINED
+    elif "CANCELLED" in status_val:
+        status_enum = pb.InvitationStatus.CANCELLED
+    elif "EXPIRED" in status_val:
+        status_enum = pb.InvitationStatus.EXPIRED
+
+    return pb.Invitation(
+        id=d.get("id", ""),
+        type=type_enum,
+        status=status_enum,
+        inviter_id=d.get("inviter_id", ""),
+        inviter_name=d.get("inviter_name", ""),
+        inviter_email=d.get("inviter_email", ""),
+        invitee_email=d.get("invitee_email", ""),
+        invitee_id=d.get("invitee_id", ""),
+        target_id=d.get("target_id", ""),
+        target_name=d.get("target_name", ""),
+        role_id=d.get("role_id", ""),
+        token=d.get("token", ""),
+        message=d.get("message", ""),
+        expires_at=d.get("expires_at", ""),
+        created_at=d.get("created_at", ""),
+        responded_at=d.get("responded_at", ""),
+    )

@@ -58,10 +58,14 @@ export function useCourseReviewsQuery(
 
 import {
   IdentityService,
+  InvitationType,
+  InvitationStatus,
+  InvitationAction,
   type User,
   type EnterpriseSeat,
   type InstructorApplication,
   type OrganizationMemberDetail,
+  type Invitation,
 } from "@/gen/identity/v1/identity_pb";
 import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
 import {
@@ -1280,6 +1284,149 @@ export function useUpdateNotificationPreferencesMutation(
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notificationPreferences"] });
+    },
+    ...options,
+  });
+}
+
+// --- Invitation Hooks ---
+
+export function useMyInvitationsQuery(
+  statusFilter?: InvitationStatus,
+  options?: Partial<UseQueryOptions<Invitation[], Error>>,
+) {
+  const { isAuthenticated } = useAuth();
+  return useQuery<Invitation[], Error>({
+    queryKey: ["myInvitations", statusFilter],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.listMyInvitations({
+        statusFilter: statusFilter ?? InvitationStatus.UNSPECIFIED,
+      });
+      return res.invitations || [];
+    },
+    enabled: isAuthenticated && (options?.enabled ?? true),
+    ...options,
+  });
+}
+
+export function useSentInvitationsQuery(
+  type?: InvitationType,
+  targetId?: string,
+  options?: Partial<UseQueryOptions<Invitation[], Error>>,
+) {
+  const { isAuthenticated } = useAuth();
+  return useQuery<Invitation[], Error>({
+    queryKey: ["sentInvitations", type, targetId],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.listSentInvitations({
+        type: type ?? InvitationType.UNSPECIFIED,
+        targetId: targetId ?? "",
+      });
+      return res.invitations || [];
+    },
+    enabled: isAuthenticated && (options?.enabled ?? true),
+    ...options,
+  });
+}
+
+export function useGetInvitationByTokenQuery(
+  token: string,
+  options?: Partial<UseQueryOptions<Invitation | null, Error>>,
+) {
+  return useQuery<Invitation | null, Error>({
+    queryKey: ["invitationByToken", token],
+    queryFn: async () => {
+      if (!token) return null;
+      const client = getRpcClient(IdentityService);
+      const res = await client.getInvitationByToken({ token });
+      return res.invitation ?? null;
+    },
+    enabled: !!token && (options?.enabled ?? true),
+    ...options,
+  });
+}
+
+export function useCreateInvitationMutation(
+  options?: UseMutationOptions<
+    Invitation,
+    Error,
+    {
+      type: InvitationType;
+      inviteeEmail: string;
+      targetId: string;
+      targetName?: string;
+      roleId?: string;
+      message?: string;
+    }
+  >,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars) => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.createInvitation({
+        type: vars.type,
+        inviteeEmail: vars.inviteeEmail,
+        targetId: vars.targetId,
+        targetName: vars.targetName ?? "",
+        roleId: vars.roleId ?? "",
+        message: vars.message ?? "",
+      });
+      if (!res.invitation) throw new Error("Không thể khởi tạo lời mời.");
+      return res.invitation;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sentInvitations"] });
+    },
+    ...options,
+  });
+}
+
+export function useRespondToInvitationMutation(
+  options?: UseMutationOptions<
+    { invitation: Invitation | null; success: boolean; message: string },
+    Error,
+    { invitationId: string; action: InvitationAction; token?: string }
+  >,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (vars) => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.respondToInvitation({
+        invitationId: vars.invitationId,
+        action: vars.action,
+        token: vars.token ?? "",
+      });
+      return {
+        invitation: res.invitation ?? null,
+        success: res.success,
+        message: res.message,
+      };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myInvitations"] });
+      queryClient.invalidateQueries({ queryKey: ["organizationMembers"] });
+      queryClient.invalidateQueries({ queryKey: ["myEnrolledCourses"] });
+    },
+    ...options,
+  });
+}
+
+export function useCancelInvitationMutation(
+  options?: UseMutationOptions<boolean, Error, { invitationId: string }>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ invitationId }) => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.cancelInvitation({ invitationId });
+      return res.success;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sentInvitations"] });
     },
     ...options,
   });

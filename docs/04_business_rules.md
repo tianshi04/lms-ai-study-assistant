@@ -71,6 +71,16 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * Mỗi khóa học sở hữu cờ cấu hình `financial_aid_enabled` (Mặc định `= True`).
   * Giảng viên sở hữu khóa học (`owner_id`) hoặc Admin có quyền tắt cờ này đối với các khóa học đặc thù (khóa luyện thi chứng chỉ đắt tiền, bài lab tốn chi phí hạ tầng).
   * Khi `financial_aid_enabled = False`: Trình phát & Trang thông tin khóa học ẩn hoàn toàn liên kết/nút *"Financial Aid available"*, và RPC `ApplyFinancialAid` ở Backend từ chối tiếp nhận đơn xin học bổng cho khóa học đó.
+* **BR_INVITE_001 (Bảo mật Token SHA-256 & Vòng đời Lời mời Single-Use):**
+  * Token lời mời ngẫu nhiên (`inv_tok_<uuid>`) chỉ tồn tại tạm thời trong bộ nhớ và được gửi trực tiếp cho người nhận qua link hoặc email.
+  * Cơ sở dữ liệu tuyệt đối không lưu trữ raw token mà chỉ lưu trữ chuỗi băm SHA-256 (`token_hash = hashlib.sha256(raw_token).hexdigest()`). Việc tra cứu lời mời qua token công khai bắt buộc phải băm input trước khi query SQL (`WHERE token_hash = :hash`).
+  * Lời mời có thời hạn mặc định 7 ngày kể từ ngày khởi tạo (`expires_at = now() + 7 days`). Khi quá hạn, trạng thái lời mời tự động chuyển sang `EXPIRED`. Lời mời chỉ được phép phản hồi 1 lần duy nhất khi ở trạng thái `PENDING`.
+* **BR_INVITE_002 (Ràng buộc Phân quyền theo Vai trò trong Lời mời):**
+  * *Chặn gán quyền Owner:* Nghiêm cấm gửi lời mời cho vai trò Chủ sở hữu Tổ chức (`ORG_OWNER`) và Chủ sở hữu Khóa học (`COURSE_OWNER`). Việc chuyển giao quyền Chủ sở hữu phải thực hiện qua quy trình quản trị chuyên biệt, tuyệt đối không cấp qua link lời mời công khai.
+  * *Kiểm tra thẩm quyền người gửi:* Người gửi lời mời Tổ chức phải có quyền Admin/Owner của Tổ chức đó. Người gửi lời mời Giảng viên đồng hành phải là Owner/Co-Instructor của Khóa học hoặc Admin. Người gửi lời mời Suất học Doanh nghiệp phải có vai trò Quản trị viên (`ADMIN`).
+* **BR_INVITE_003 (Luồng Nhận Lời mời & Khớp Định danh Email):**
+  * *Khớp định danh bắt buộc:* Khi phản hồi lời mời (`RespondToInvitation`), email tài khoản đang đăng nhập (`current_user.email`) bắt buộc phải trùng khớp với email người nhận được mời (`invitee_email`). Nếu không trùng khớp, hệ thống chặn thao tác và thông báo yêu cầu chuyển đổi tài khoản.
+  * *Kích hoạt tự động cho người dùng mới:* Trường hợp người nhận chưa có tài khoản, sau khi đăng ký tài khoản thành công với mã `invite_token`, hệ thống tự động gán tài khoản vào Tổ chức / Khóa học / Suất học Doanh nghiệp ngay lập tức.
 
 ---
 

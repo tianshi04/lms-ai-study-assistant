@@ -10,9 +10,13 @@ from src.modules.identity.domain.entities import (
     OrganizationMember,
     InstructorApplication,
     ApplicationStatus,
+    Invitation,
+    InvitationType,
+    InvitationStatus,
 )
 from src.modules.identity.infrastructure.models import (
     InstructorApplicationModel,
+    InvitationModel,
     OrganizationMemberModel,
     OrganizationModel,
     UserModel,
@@ -394,4 +398,141 @@ class InstructorApplicationRepository:
             rejection_reason=model.rejection_reason,
             created_at=model.created_at,
             reviewed_at=model.reviewed_at,
+        )
+
+
+class InvitationRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def save(self, invitation: Invitation) -> Invitation:
+        stmt = select(InvitationModel).where(InvitationModel.id == invitation.id)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+
+        status_val = (
+            invitation.status.value
+            if hasattr(invitation.status, "value")
+            else str(invitation.status)
+        )
+        type_val = (
+            invitation.type.value
+            if hasattr(invitation.type, "value")
+            else str(invitation.type)
+        )
+
+        if not model:
+            model = InvitationModel(
+                id=invitation.id,
+                type=type_val,
+                status=status_val,
+                inviter_id=invitation.inviter_id,
+                inviter_name=invitation.inviter_name,
+                inviter_email=invitation.inviter_email,
+                invitee_email=invitation.invitee_email,
+                invitee_id=invitation.invitee_id,
+                target_id=invitation.target_id,
+                target_name=invitation.target_name,
+                role_id=invitation.role_id,
+                token_hash=invitation.token_hash,
+                message=invitation.message,
+                expires_at=invitation.expires_at,
+                created_at=invitation.created_at,
+                responded_at=invitation.responded_at,
+            )
+            self._session.add(model)
+        else:
+            model.status = status_val
+            model.invitee_id = invitation.invitee_id
+            model.responded_at = invitation.responded_at
+
+        await self._session.flush()
+        return self._to_entity(model)
+
+    async def get_by_id(self, invitation_id: str) -> Optional[Invitation]:
+        stmt = select(InvitationModel).where(InvitationModel.id == invitation_id)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
+
+    async def get_by_token_hash(self, token_hash: str) -> Optional[Invitation]:
+        stmt = select(InvitationModel).where(InvitationModel.token_hash == token_hash)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
+
+    async def list_sent_invitations(
+        self,
+        inviter_id: str,
+        inv_type: Optional[str] = None,
+        target_id: Optional[str] = None,
+    ) -> list[Invitation]:
+        stmt = select(InvitationModel).where(InvitationModel.inviter_id == inviter_id)
+        if inv_type and inv_type != "INVITATION_TYPE_UNSPECIFIED":
+            stmt = stmt.where(InvitationModel.type == inv_type)
+        if target_id:
+            stmt = stmt.where(InvitationModel.target_id == target_id)
+        stmt = stmt.order_by(InvitationModel.created_at.desc())
+        result = await self._session.execute(stmt)
+        models = result.scalars().all()
+        return [self._to_entity(m) for m in models]
+
+    async def list_my_invitations(
+        self,
+        email: str,
+        user_id: Optional[str] = None,
+        status_filter: Optional[str] = None,
+    ) -> list[Invitation]:
+        from sqlalchemy import or_
+
+        conditions = [InvitationModel.invitee_email == email]
+        if user_id:
+            conditions.append(InvitationModel.invitee_id == user_id)
+        stmt = select(InvitationModel).where(or_(*conditions))
+
+        if status_filter and status_filter != "INVITATION_STATUS_UNSPECIFIED":
+            stmt = stmt.where(InvitationModel.status == status_filter)
+
+        stmt = stmt.order_by(InvitationModel.created_at.desc())
+        result = await self._session.execute(stmt)
+        models = result.scalars().all()
+        return [self._to_entity(m) for m in models]
+
+    async def find_pending_invitations_by_email(self, email: str) -> list[Invitation]:
+        stmt = select(InvitationModel).where(
+            InvitationModel.invitee_email == email,
+            InvitationModel.status == "INVITATION_STATUS_PENDING",
+        )
+        result = await self._session.execute(stmt)
+        models = result.scalars().all()
+        return [self._to_entity(m) for m in models]
+
+    def _to_entity(self, model: InvitationModel) -> Invitation:
+        try:
+            inv_type = InvitationType(model.type)
+        except ValueError:
+            inv_type = InvitationType.ORGANIZATION_MEMBER
+
+        try:
+            inv_status = InvitationStatus(model.status)
+        except ValueError:
+            inv_status = InvitationStatus.PENDING
+
+        return Invitation(
+            id=model.id,
+            type=inv_type,
+            status=inv_status,
+            inviter_id=model.inviter_id,
+            inviter_name=model.inviter_name,
+            inviter_email=model.inviter_email,
+            invitee_email=model.invitee_email,
+            invitee_id=model.invitee_id,
+            target_id=model.target_id,
+            target_name=model.target_name,
+            role_id=model.role_id,
+            token_hash=model.token_hash,
+            message=model.message,
+            expires_at=model.expires_at,
+            created_at=model.created_at,
+            responded_at=model.responded_at,
         )

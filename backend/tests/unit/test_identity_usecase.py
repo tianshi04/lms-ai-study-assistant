@@ -6,6 +6,7 @@ from src.modules.identity.application.identity_usecase import (
     verify_password,
 )
 from src.modules.identity.domain.entities import User, UserRole
+from src.shared.auth import CurrentUser
 
 
 def test_hash_and_verify_password():
@@ -686,3 +687,168 @@ async def test_update_instructor_profile(mock_session_scope, mock_identity_repo)
     assert updated_user.title == "Professor of Computer Science"
     assert updated_user.signature_image_url == "https://example.com/sig.png"
     mock_repo_instance.save.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_create_and_get_invitation(mock_session_scope):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    inviter = CurrentUser(
+        id="user_admin_001",
+        email="admin@test.com",
+        full_name="Admin Test",
+        role="ADMIN",
+    )
+
+    with (
+        patch(
+            "src.modules.identity.application.identity_usecase.InvitationRepository"
+        ) as mock_inv_repo,
+        patch(
+            "src.modules.identity.application.identity_usecase.IdentityRepository"
+        ) as mock_user_repo,
+    ):
+        mock_inv_repo_instance = AsyncMock()
+        mock_user_repo_instance = AsyncMock()
+        mock_inv_repo.return_value = mock_inv_repo_instance
+        mock_user_repo.return_value = mock_user_repo_instance
+        mock_inv_repo_instance.save.side_effect = lambda inv: inv
+
+        mock_user_repo_instance.get_by_id.return_value = User(
+            id="user_admin_001",
+            email="admin@test.com",
+            full_name="Admin Test",
+            role=UserRole.ADMIN,
+        )
+
+        uc = IdentityUseCase()
+        res = await uc.create_invitation(
+            type="INVITATION_TYPE_ORGANIZATION_MEMBER",
+            invitee_email="learner1@test.com",
+            target_id="org_test_001",
+            target_name="Test Organization",
+            role_id="MEMBER",
+            message="Mời bạn tham gia tổ chức",
+            current_user=inviter,
+        )
+
+        assert res["id"].startswith("inv_")
+        assert res["status"] == "INVITATION_STATUS_PENDING"
+        assert res["invitee_email"] == "learner1@test.com"
+        assert res["token"].startswith("inv_tok_")
+        mock_inv_repo_instance.save.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_respond_to_invitation(mock_session_scope):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    invitee = CurrentUser(
+        id="user_learner_002",
+        email="invitee2@test.com",
+        full_name="Learner 2",
+        role="LEARNER",
+    )
+
+    with (
+        patch(
+            "src.modules.identity.application.identity_usecase.InvitationRepository"
+        ) as mock_inv_repo,
+        patch(
+            "src.modules.identity.application.identity_usecase.OrganizationRepository"
+        ) as mock_org_repo,
+    ):
+        mock_inv_repo_instance = AsyncMock()
+        mock_org_repo_instance = AsyncMock()
+        mock_inv_repo.return_value = mock_inv_repo_instance
+        mock_org_repo.return_value = mock_org_repo_instance
+        mock_inv_repo_instance.save.side_effect = lambda inv: inv
+
+        from src.modules.identity.domain.entities import (
+            Invitation,
+            InvitationType,
+            InvitationStatus,
+        )
+
+        inv = Invitation(
+            id="inv_123",
+            type=InvitationType.ORGANIZATION_MEMBER,
+            status=InvitationStatus.PENDING,
+            inviter_id="user_admin_002",
+            inviter_name="Admin",
+            inviter_email="admin@test.com",
+            invitee_email="invitee2@test.com",
+            target_id="org_123",
+            target_name="Test Org 123",
+            role_id="MEMBER",
+            token_hash="hash123",
+        )
+        mock_inv_repo_instance.get_by_id.return_value = inv
+
+        uc = IdentityUseCase()
+        resp, success, msg = await uc.respond_to_invitation(
+            invitation_id="inv_123",
+            action="INVITATION_ACTION_ACCEPT",
+            current_user=invitee,
+        )
+
+        assert success is True
+        assert resp["status"] == "INVITATION_STATUS_ACCEPTED"
+        mock_org_repo_instance.add_member.assert_called_once_with(
+            user_id=invitee.id,
+            org_id="org_123",
+            role_id="MEMBER",
+            status="ACTIVE",
+        )
+
+
+@pytest.mark.asyncio
+async def test_cancel_invitation(mock_session_scope):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    inviter = CurrentUser(
+        id="user_admin_003",
+        email="admin3@test.com",
+        full_name="Admin 3",
+        role="ADMIN",
+    )
+
+    with patch(
+        "src.modules.identity.application.identity_usecase.InvitationRepository"
+    ) as mock_inv_repo:
+        mock_inv_repo_instance = AsyncMock()
+        mock_inv_repo.return_value = mock_inv_repo_instance
+        mock_inv_repo_instance.save.side_effect = lambda inv: inv
+
+        from src.modules.identity.domain.entities import (
+            Invitation,
+            InvitationType,
+            InvitationStatus,
+        )
+
+        inv = Invitation(
+            id="inv_cancel_123",
+            type=InvitationType.COURSE_CO_INSTRUCTOR,
+            status=InvitationStatus.PENDING,
+            inviter_id="user_admin_003",
+            inviter_name="Admin 3",
+            inviter_email="admin3@test.com",
+            invitee_email="instructor3@test.com",
+            target_id="course_123",
+            target_name="Test Course 123",
+            role_id="co_instructor",
+            token_hash="hash_cancel",
+        )
+        mock_inv_repo_instance.get_by_id.return_value = inv
+
+        uc = IdentityUseCase()
+        cancel_success = await uc.cancel_invitation(
+            invitation_id="inv_cancel_123",
+            current_user=inviter,
+        )
+        assert cancel_success is True
+        assert inv.status == InvitationStatus.CANCELLED
+        mock_inv_repo_instance.save.assert_called_once()

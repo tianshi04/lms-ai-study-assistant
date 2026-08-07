@@ -130,3 +130,42 @@ class InstructorApplicationModel(Base):
     rejection_reason: Mapped[str] = mapped_column(Text, nullable=False, default="")
     created_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
     reviewed_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+
+
+class InvitationModel(Base):
+    __tablename__ = "invitations"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    type: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="INVITATION_STATUS_PENDING",
+        server_default="INVITATION_STATUS_PENDING",
+        index=True,
+    )
+    inviter_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    inviter_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    inviter_email: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    invitee_email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    invitee_id: Mapped[Optional[str]] = mapped_column(
+        String(64),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    target_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    target_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    role_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    token_hash: Mapped[str] = mapped_column(
+        String(64), nullable=False, unique=True, index=True
+    )
+    message: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    expires_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    responded_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")

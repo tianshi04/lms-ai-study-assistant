@@ -351,4 +351,122 @@ service IdentityService {
   rpc RemoveOrganizationMember(RemoveOrganizationMemberRequest) returns (RemoveOrganizationMemberResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
+
+  rpc CreateInvitation(CreateInvitationRequest) returns (CreateInvitationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListSentInvitations(ListSentInvitationsRequest) returns (ListSentInvitationsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListMyInvitations(ListMyInvitationsRequest) returns (ListMyInvitationsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc GetInvitationByToken(GetInvitationByTokenRequest) returns (GetInvitationByTokenResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_PUBLIC;
+  }
+  rpc RespondToInvitation(RespondToInvitationRequest) returns (RespondToInvitationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc CancelInvitation(CancelInvitationRequest) returns (CancelInvitationResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+}
+
+enum InvitationType {
+  INVITATION_TYPE_UNSPECIFIED = 0;
+  INVITATION_TYPE_ORGANIZATION_MEMBER = 1;
+  INVITATION_TYPE_COURSE_CO_INSTRUCTOR = 2;
+  INVITATION_TYPE_ENTERPRISE_SEAT = 3;
+}
+
+enum InvitationStatus {
+  INVITATION_STATUS_UNSPECIFIED = 0;
+  INVITATION_STATUS_PENDING = 1;
+  INVITATION_STATUS_ACCEPTED = 2;
+  INVITATION_STATUS_DECLINED = 3;
+  INVITATION_STATUS_CANCELLED = 4;
+  INVITATION_STATUS_EXPIRED = 5;
+}
+
+enum InvitationAction {
+  INVITATION_ACTION_UNSPECIFIED = 0;
+  INVITATION_ACTION_ACCEPT = 1;
+  INVITATION_ACTION_DECLINE = 2;
+}
+
+message Invitation {
+  string id = 1;
+  InvitationType type = 2;
+  InvitationStatus status = 3;
+  string inviter_id = 4;
+  string inviter_name = 5;
+  string inviter_email = 6;
+  string invitee_email = 7;
+  string invitee_id = 8;
+  string target_id = 9;
+  string target_name = 10;
+  string role_id = 11;
+  string token = 12;
+  string message = 13;
+  string expires_at = 14;
+  string created_at = 15;
+  string responded_at = 16;
+}
+
+message CreateInvitationRequest {
+  InvitationType type = 1;
+  string invitee_email = 2;
+  string target_id = 3;
+  string target_name = 4;
+  string role_id = 5;
+  string message = 6;
+}
+
+message CreateInvitationResponse {
+  Invitation invitation = 1;
+}
+
+message ListSentInvitationsRequest {
+  InvitationType type = 1;
+  string target_id = 2;
+}
+
+message ListSentInvitationsResponse {
+  repeated Invitation invitations = 1;
+}
+
+message ListMyInvitationsRequest {
+  InvitationStatus status_filter = 1;
+}
+
+message ListMyInvitationsResponse {
+  repeated Invitation invitations = 1;
+}
+
+message GetInvitationByTokenRequest {
+  string token = 1;
+}
+
+message GetInvitationByTokenResponse {
+  Invitation invitation = 1;
+}
+
+message RespondToInvitationRequest {
+  string invitation_id = 1;
+  InvitationAction action = 2;
+  string token = 3;
+}
+
+message RespondToInvitationResponse {
+  Invitation invitation = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message CancelInvitationRequest {
+  string invitation_id = 1;
+}
+
+message CancelInvitationResponse {
+  bool success = 1;
 }
