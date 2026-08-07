@@ -1,3 +1,5 @@
+import pytest
+
 from src.shared.domain.base import Entity, ValueObject
 
 
@@ -47,13 +49,16 @@ def test_role_helpers_exact_match():
     assert learner_user.role == "USER_ROLE_LEARNER"
 
 
-def test_health_endpoint():
-    from starlette.testclient import TestClient
+@pytest.mark.asyncio
+async def test_health_endpoint():
+    import httpx
 
     from src.main import app
 
-    client = TestClient(app)
-    for path in ("/health", "/healthz"):
-        response = client.get(path)
-        assert response.status_code == 200
-        assert response.json() == {"status": "ok"}
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://testserver"
+    ) as client:
+        for path in ("/health", "/healthz"):
+            response = await client.get(path)
+            assert response.status_code == 200
+            assert response.json() == {"status": "ok"}

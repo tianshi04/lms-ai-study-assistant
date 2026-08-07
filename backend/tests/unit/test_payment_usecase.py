@@ -201,6 +201,9 @@ async def test_create_vnpay_payment_url_success(mock_scope):
 @patch("src.modules.payment.application.payment_usecase.async_session_scope")
 async def test_verify_vnpay_payment_success(mock_scope):
     mock_session = AsyncMock()
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_res
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
     mock_scope.return_value = mock_ctx
@@ -271,6 +274,9 @@ async def test_verify_vnpay_payment_success(mock_scope):
 @patch("src.modules.payment.application.payment_usecase.async_session_scope")
 async def test_process_vnpay_ipn_success(mock_scope):
     mock_session = AsyncMock()
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_res
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
     mock_scope.return_value = mock_ctx
@@ -342,6 +348,9 @@ async def test_user_subscription_expired():
 @patch("src.modules.payment.application.payment_usecase.async_session_scope")
 async def test_pending_order_reuse(mock_scope):
     mock_session = AsyncMock()
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_res
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
     mock_scope.return_value = mock_ctx
@@ -387,6 +396,9 @@ async def test_pending_order_reuse(mock_scope):
 @patch("src.modules.payment.application.payment_usecase.async_session_scope")
 async def test_amount_tampering_detected(mock_scope):
     mock_session = AsyncMock()
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_res
     mock_ctx = AsyncMock()
     mock_ctx.__aenter__.return_value = mock_session
     mock_scope.return_value = mock_ctx
