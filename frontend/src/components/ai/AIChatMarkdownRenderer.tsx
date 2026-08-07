@@ -16,7 +16,7 @@ export function AIChatMarkdownRenderer({
   return (
     <div className="w-full text-xs text-on-surface leading-relaxed">
       <Streamdown
-        plugins={{ code, math }}
+        plugins={{ code: code as any, math }}
         caret="block"
         isAnimating={isStreaming}
         mode={isStreaming ? "streaming" : "static"}
