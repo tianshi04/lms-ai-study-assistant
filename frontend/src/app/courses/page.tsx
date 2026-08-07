@@ -2,8 +2,6 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { cacheLife, cacheTag } from "next/cache";
-import { connection } from "next/server";
-import { cacheLife, cacheTag } from "next/cache";
 import { getPublicRpcServerClient } from "@/lib/server_connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CourseCatalogClient } from "./CourseCatalogClient";
@@ -73,12 +71,7 @@ async function getInitialCatalogData() {
   return dehydrate(queryClient);
 }
 
-<<<<<<< HEAD
 async function CatalogContent() {
-=======
-export default async function CoursesPage() {
-  await connection();
->>>>>>> 14d2db9 (fix(storage/catalog): fix R2 proxy upload CORS, Next.js 16 prerender error, and IPv6 lookup timeouts)
   const dehydratedState = await getInitialCatalogData();
 
   return (

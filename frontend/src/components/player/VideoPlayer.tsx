@@ -270,11 +270,7 @@ export function VideoPlayer({
               aria-label={activeItem.title || "Video bài giảng"}
               className="w-full h-full object-contain rounded-2xl"
             >
-<<<<<<< HEAD
-              <track kind="captions" src="" label="Phụ đề" />
-=======
               <track src="/internet-sample.vtt" kind="subtitles" srcLang="en" label="English" default />
->>>>>>> 14d2db9 (fix(storage/catalog): fix R2 proxy upload CORS, Next.js 16 prerender error, and IPv6 lookup timeouts)
             </video>
           )}
 

@@ -89,12 +89,8 @@ async function CourseDetailContent({
 }: {
   paramsPromise: Promise<{ courseId: string }>;
 }) {
-<<<<<<< HEAD
-  const { courseId } = await paramsPromise;
-  const dehydratedState = await getInitialCourseDetailData(courseId);
-=======
   await connection();
-  const { courseId } = await params;
+  const { courseId } = await paramsPromise;
 
   // Fetch cached data (no Date.now() inside cache boundary)
   const { course, reviews } = await fetchCourseData(courseId);
@@ -104,7 +100,6 @@ async function CourseDetailContent({
   queryClient.setQueryData(["courseDetail", courseId], course);
   queryClient.setQueryData(["courseReviews", courseId], reviews);
   const dehydratedState = dehydrate(queryClient);
->>>>>>> 14d2db9 (fix(storage/catalog): fix R2 proxy upload CORS, Next.js 16 prerender error, and IPv6 lookup timeouts)
 
   return (
     <HydrationBoundary state={dehydratedState}>
