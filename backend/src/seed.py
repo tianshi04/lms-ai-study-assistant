@@ -784,12 +784,14 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         await session.merge(prog1)
 
         deadline1 = WeeklyDeadlineModel(
+            id=1,
             progress_id="user_learner_demo:course-python-ai",
             week_number=1,
             due_date="2026-07-20T23:59:59Z",
             status=DeadlineStatus.COMPLETED,
         )
         deadline2 = WeeklyDeadlineModel(
+            id=2,
             progress_id="user_learner_demo:course-python-ai",
             week_number=2,
             due_date="2026-07-27T23:59:59Z",

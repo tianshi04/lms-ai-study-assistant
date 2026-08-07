@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from sqlalchemy import Boolean, Integer, JSON, String, Text
+from sqlalchemy import Boolean, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.modules.certificate.domain.constants import (
@@ -11,6 +11,9 @@ from src.shared.infrastructure.database import Base
 
 class FinancialAidModel(Base):
     __tablename__ = "financial_aid_applications"
+    __table_args__ = (
+        UniqueConstraint("user_id", "course_id", name="uq_financial_aid_user_course"),
+    )
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
@@ -24,6 +27,9 @@ class FinancialAidModel(Base):
 
 class CertificateModel(Base):
     __tablename__ = "verified_certificates"
+    __table_args__ = (
+        UniqueConstraint("user_id", "course_id", name="uq_certificate_user_course"),
+    )
 
     certificate_id: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)

@@ -1,4 +1,13 @@
-from sqlalchemy import ARRAY, Enum as SQLEnum, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    ARRAY,
+    Enum as SQLEnum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.learning.domain.entities import DeadlineStatus
@@ -29,6 +38,11 @@ class LearningProgressModel(Base):
 
 class WeeklyDeadlineModel(Base):
     __tablename__ = "weekly_deadlines"
+    __table_args__ = (
+        UniqueConstraint(
+            "progress_id", "week_number", name="uq_weekly_deadline_progress_week"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     progress_id: Mapped[str] = mapped_column(

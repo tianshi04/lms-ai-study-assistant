@@ -1,6 +1,6 @@
 """SQLAlchemy ORM models for Payment module."""
 
-from sqlalchemy import Numeric, String, UniqueConstraint
+from sqlalchemy import ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.shared.infrastructure.database import Base
@@ -72,7 +72,12 @@ class PaymentTransactionModel(Base):
     __tablename__ = "payment_transactions"
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    order_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    order_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("payment_orders.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
     vnp_transaction_no: Mapped[str] = mapped_column(
         String(64), nullable=False, default="", index=True
     )

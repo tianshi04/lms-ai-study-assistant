@@ -1,5 +1,15 @@
 from typing import Any
-from sqlalchemy import ARRAY, Boolean, Float, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import (
+    ARRAY,
+    Boolean,
+    Float,
+    ForeignKey,
+    Integer,
+    JSON,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.modules.assessment.domain.constants import (
@@ -70,6 +80,9 @@ class LabSubmissionModel(Base):
 
 class PeerAssignmentSubmissionModel(Base):
     __tablename__ = "peer_assignment_submissions"
+    __table_args__ = (
+        UniqueConstraint("user_id", "item_id", name="uq_peer_submission_user_item"),
+    )
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
@@ -85,6 +98,13 @@ class PeerAssignmentSubmissionModel(Base):
 
 class PeerReviewModel(Base):
     __tablename__ = "peer_reviews"
+    __table_args__ = (
+        UniqueConstraint(
+            "submission_id",
+            "reviewer_user_id",
+            name="uq_peer_review_submission_reviewer",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     submission_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
@@ -100,6 +120,11 @@ class PeerReviewModel(Base):
 
 class GradeAppealModel(Base):
     __tablename__ = "grade_appeals"
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", "submission_id", name="uq_grade_appeal_user_submission"
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
