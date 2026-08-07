@@ -974,6 +974,21 @@ export function useCreateVNPayPaymentUrlMutation(
   });
 }
 
+export function useListUserPurchasesQuery(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ["userPurchasesAndOrders"],
+    queryFn: async () => {
+      const client = getRpcClient(PaymentService);
+      const res = await client.listUserPurchases({});
+      return {
+        purchases: res.purchases ?? [],
+        orders: res.orders ?? [],
+      };
+    },
+    ...options,
+  });
+}
+
 // --- Organization Member Hooks ---
 
 export function useOrganizationMembersQuery(

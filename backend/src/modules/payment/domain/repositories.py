@@ -96,3 +96,13 @@ class IPaymentRepository(ABC):
     ) -> PaymentTransaction:
         """Persists a payment transaction audit log entity."""
         pass
+
+    @abstractmethod
+    async def list_user_orders(self, user_id: str) -> list[PaymentOrder]:
+        """Lists all payment orders for a user ordered by created_at descending."""
+        pass
+
+    @abstractmethod
+    async def get_course_titles(self, course_ids: list[str]) -> dict[str, str]:
+        """Maps course IDs to their titles for display."""
+        pass

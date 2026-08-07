@@ -237,7 +237,12 @@ class PaymentHandler(PaymentService):
         ctx: RequestContext[pb.ListUserPurchasesRequest, pb.ListUserPurchasesResponse],
     ) -> pb.ListUserPurchasesResponse:
         current_user = require_current_user()
-        purchases = await self._use_case.list_user_purchases(current_user.id)
+        (
+            purchases,
+            orders,
+            titles_map,
+        ) = await self._use_case.list_user_purchases(current_user.id)
+
         pb_purchases = [
             pb.CoursePurchase(
                 id=p.id,
@@ -250,4 +255,56 @@ class PaymentHandler(PaymentService):
             )
             for p in purchases
         ]
-        return pb.ListUserPurchasesResponse(purchases=pb_purchases)
+
+        pb_orders = []
+        for o in orders:
+            t_type = pb.PaymentTargetType.UNSPECIFIED
+            if o.target_type == PaymentTargetType.COURSE:
+                t_type = pb.PaymentTargetType.COURSE
+            elif o.target_type == PaymentTargetType.SYSTEM_SUBSCRIPTION:
+                t_type = pb.PaymentTargetType.SYSTEM_SUBSCRIPTION
+
+            p_type = pb.PlanType.UNSPECIFIED
+            if o.plan_type == PlanType.MONTHLY:
+                p_type = pb.PlanType.MONTHLY
+            elif o.plan_type == PlanType.YEARLY:
+                p_type = pb.PlanType.YEARLY
+
+            st = pb.PaymentOrderStatus.UNSPECIFIED
+            if o.status.value == "PENDING":
+                st = pb.PaymentOrderStatus.PENDING
+            elif o.status.value == "COMPLETED":
+                st = pb.PaymentOrderStatus.COMPLETED
+            elif o.status.value == "FAILED":
+                st = pb.PaymentOrderStatus.FAILED
+            elif o.status.value == "EXPIRED":
+                st = pb.PaymentOrderStatus.EXPIRED
+
+            title = "Sản phẩm LMS"
+            if o.target_type == PaymentTargetType.COURSE:
+                title = titles_map.get(o.target_id, f"Khóa học #{o.target_id[:8]}")
+            elif o.target_type == PaymentTargetType.SYSTEM_SUBSCRIPTION:
+                title = (
+                    "Gói Coursera Plus (Năm)"
+                    if o.plan_type == PlanType.YEARLY
+                    else "Gói Coursera Plus (Tháng)"
+                )
+
+            pb_orders.append(
+                pb.PaymentOrderInfo(
+                    id=o.id,
+                    user_id=o.user_id,
+                    target_type=t_type,
+                    target_id=o.target_id,
+                    plan_type=p_type,
+                    amount=o.amount,
+                    currency=o.currency,
+                    status=st,
+                    vnp_txn_ref=o.vnp_txn_ref,
+                    created_at=o.created_at,
+                    updated_at=o.updated_at,
+                    target_title=title,
+                )
+            )
+
+        return pb.ListUserPurchasesResponse(purchases=pb_purchases, orders=pb_orders)

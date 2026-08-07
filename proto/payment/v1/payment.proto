@@ -123,11 +123,28 @@ message GetUserPaymentAccessResponse {
   UserSubscription active_subscription = 5;
 }
 
+message PaymentOrderInfo {
+  string id = 1;
+  string user_id = 2;
+  PaymentTargetType target_type = 3;
+  string target_id = 4;
+  PlanType plan_type = 5;
+  double amount = 6;
+  string currency = 7;
+  PaymentOrderStatus status = 8;
+  string vnp_txn_ref = 9;
+  string created_at = 10;
+  string updated_at = 11;
+  string target_title = 12;
+}
+
 message ListUserPurchasesRequest {}
 
 message ListUserPurchasesResponse {
   repeated CoursePurchase purchases = 1;
+  repeated PaymentOrderInfo orders = 2;
 }
+
 
 service PaymentService {
   rpc PurchaseCourse(PurchaseCourseRequest) returns (PurchaseCourseResponse) {

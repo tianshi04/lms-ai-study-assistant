@@ -344,3 +344,40 @@ class PaymentRepository(IPaymentRepository):
         await self.session.merge(model)
         await self.session.flush()
         return transaction
+
+    async def list_user_orders(self, user_id: str) -> list[PaymentOrder]:
+        stmt = (
+            select(PaymentOrderModel)
+            .where(PaymentOrderModel.user_id == user_id)
+            .order_by(PaymentOrderModel.created_at.desc())
+        )
+        res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        return [
+            PaymentOrder(
+                id=m.id,
+                user_id=m.user_id,
+                target_type=PaymentTargetType(m.target_type),
+                target_id=m.target_id,
+                plan_type=PlanType(m.plan_type),
+                amount=m.amount,
+                currency=m.currency,
+                status=PaymentOrderStatus(m.status),
+                vnp_txn_ref=m.vnp_txn_ref,
+                created_at=m.created_at,
+                updated_at=m.updated_at,
+            )
+            for m in models
+        ]
+
+    async def get_course_titles(self, course_ids: list[str]) -> dict[str, str]:
+        if not course_ids:
+            return {}
+        from src.modules.catalog.infrastructure.models import CourseModel
+
+        stmt = select(CourseModel.id, CourseModel.title).where(
+            CourseModel.id.in_(course_ids)
+        )
+        res = await self.session.execute(stmt)
+        rows = res.all()
+        return {r[0]: r[1] for r in rows}
