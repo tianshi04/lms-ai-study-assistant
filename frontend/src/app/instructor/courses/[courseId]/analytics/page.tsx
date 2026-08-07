@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, Suspense } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
@@ -23,11 +23,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/Breadcrumb";
 
-export default function InstructorAnalyticsPage({
-  params,
-}: {
-  params: Promise<{ courseId: string }>;
-}) {
+function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: string }> }) {
   const resolvedParams = use(params);
   const courseId = resolvedParams.courseId;
 
@@ -226,5 +222,23 @@ export default function InstructorAnalyticsPage({
         )}
       </main>
     </div>
+  );
+}
+
+export default function InstructorAnalyticsPage({
+  params,
+}: {
+  params: Promise<{ courseId: string }>;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="py-20 text-center text-muted-foreground animate-pulse">
+          Đang tải dữ liệu thống kê...
+        </div>
+      }
+    >
+      <InstructorAnalyticsContent params={params} />
+    </Suspense>
   );
 }

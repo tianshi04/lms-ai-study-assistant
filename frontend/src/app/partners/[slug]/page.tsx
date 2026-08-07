@@ -1,12 +1,13 @@
 "use client";
 
+import { Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { usePartnersQuery, useCoursesQuery } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 import { AlertTriangle, ExternalLink, BookOpen, PenTool, Globe, GraduationCap } from "lucide-react";
 
-export default function PartnerPublicPage() {
+function PartnerPublicContent() {
   const params = useParams();
   const router = useRouter();
   const slug = (params?.slug as string) || "";
@@ -307,5 +308,20 @@ export default function PartnerPublicPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PartnerPublicPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-3" />
+          <span aria-live="polite">Đang tải thông tin đối tác…</span>
+        </div>
+      }
+    >
+      <PartnerPublicContent />
+    </Suspense>
   );
 }

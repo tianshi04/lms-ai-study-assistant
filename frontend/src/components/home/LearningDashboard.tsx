@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useMyEnrolledCoursesQuery } from "@/lib/query_hooks";
 import {
@@ -31,12 +32,14 @@ export function LearningDashboard({ userName }: { userName: string }) {
         ? activeCourses[0]
         : null;
 
-  const getGreeting = () => {
+  const [greeting, setGreeting] = useState("Xin chào");
+
+  useEffect(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Chào buổi sáng";
-    if (hour < 18) return "Chào buổi chiều";
-    return "Chào buổi tối";
-  };
+    if (hour < 12) setGreeting("Chào buổi sáng");
+    else if (hour < 18) setGreeting("Chào buổi chiều");
+    else setGreeting("Chào buổi tối");
+  }, []);
 
   return (
     <div className="w-full flex-1 bg-surface text-on-surface min-h-screen">
@@ -44,7 +47,7 @@ export function LearningDashboard({ userName }: { userName: string }) {
         {/* Header Greeting */}
         <header className="animate-in fade-in duration-m3-medium-2 ease-m3-emphasized">
           <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-on-surface mb-2 text-balance">
-            {getGreeting()}, <span className="text-primary">{userName}</span>!
+            {greeting}, <span className="text-primary">{userName}</span>!
           </h1>
           <p className="text-on-surface-variant text-lg">
             Sẵn sàng để tiếp tục hành trình học tập của bạn hôm nay chưa?

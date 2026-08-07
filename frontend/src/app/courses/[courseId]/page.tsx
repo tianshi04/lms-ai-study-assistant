@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { cacheLife, cacheTag } from "next/cache";
@@ -17,26 +18,24 @@ async function getCourseMetadata(courseId: string): Promise<Metadata> {
   try {
     const client = getPublicRpcServerClient(CatalogService);
     const res = await client.getCourseDetail({ idOrSlug: courseId });
-    if (res.course) {
+    if (!res.course) {
       return {
-        title: `${res.course.title} | LMS AI Study Assistant`,
-        description:
-          res.course.description ||
-          "Tham gia khóa học chất lượng cao trên hệ thống đào tạo LMS AI.",
-        openGraph: {
-          title: res.course.title,
-          description: res.course.description || "Khóa học AI & Khoa học Dữ liệu chất lượng cao.",
-          type: "website",
-        },
+        title: "Chi tiết Khóa học",
+        description: "Khóa học chất lượng cao trên LMS AI Study Assistant",
       };
     }
-  } catch (err) {
-    console.warn("Failed to generate metadata for course:", courseId, err);
+    return {
+      title: `${res.course.title} - LMS AI Study Assistant`,
+      description: res.course.description
+        ? res.course.description.slice(0, 160)
+        : "Khóa học chất lượng cao trên LMS AI Study Assistant",
+    };
+  } catch {
+    return {
+      title: "Chi tiết Khóa học",
+      description: "Khóa học chất lượng cao trên LMS AI Study Assistant",
+    };
   }
-  return {
-    title: "Chi Tiết Khóa Học | LMS AI Platform",
-    description: "Khóa học chất lượng cao trên LMS AI Study Assistant.",
-  };
 }
 
 export async function generateMetadata({
@@ -74,17 +73,31 @@ async function getInitialCourseDetailData(courseId: string) {
   return dehydrate(queryClient);
 }
 
-export default async function CourseDetailPage({
-  params,
+async function CourseDetailContent({
+  paramsPromise,
 }: {
-  params: Promise<{ courseId: string }>;
+  paramsPromise: Promise<{ courseId: string }>;
 }) {
-  const { courseId } = await params;
+  const { courseId } = await paramsPromise;
   const dehydratedState = await getInitialCourseDetailData(courseId);
 
   return (
     <HydrationBoundary state={dehydratedState}>
       <CourseDetailClient courseId={courseId} />
     </HydrationBoundary>
+  );
+}
+
+export default function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground animate-pulse">
+          Đang tải thông tin khóa học...
+        </div>
+      }
+    >
+      <CourseDetailContent paramsPromise={params} />
+    </Suspense>
   );
 }

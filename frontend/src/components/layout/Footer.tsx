@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Award,
@@ -13,6 +14,12 @@ import {
 import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export function Footer() {
+  const [currentYear, setCurrentYear] = useState(2026);
+
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear());
+  }, []);
+
   return (
     <footer className="border-t border-border bg-card text-card-foreground transition-colors mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -127,7 +134,7 @@ export function Footer() {
 
         {/* Bottom copyright line */}
         <div className="pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center text-xs text-muted-foreground gap-3">
-          <p>© {new Date().getFullYear()} LMS AI Study Assistant. Tất cả các quyền được bảo lưu.</p>
+          <p>© {currentYear} LMS AI Study Assistant. Tất cả các quyền được bảo lưu.</p>
           <div className="flex items-center space-x-4 text-[11px]">
             <Link href="/privacy" className="hover:text-primary transition-colors">
               Chính sách Bảo mật

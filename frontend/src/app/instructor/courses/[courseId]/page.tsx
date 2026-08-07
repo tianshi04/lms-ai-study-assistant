@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import {
@@ -28,11 +28,7 @@ import { ScormReviewModal } from "./components/modals/ScormReviewModal";
 import { CourseCollaboratorsModal } from "@/components/course/CourseCollaboratorsModal";
 import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
 
-export default function InstructorCourseBuilderPage({
-  params,
-}: {
-  params: Promise<{ courseId: string }>;
-}) {
+function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId: string }> }) {
   const resolvedParams = use(params);
   const courseId = resolvedParams.courseId;
 
@@ -322,5 +318,23 @@ export default function InstructorCourseBuilderPage({
         isLoading={builder.saving}
       />
     </div>
+  );
+}
+
+export default function InstructorCourseBuilderPage({
+  params,
+}: {
+  params: Promise<{ courseId: string }>;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 text-center animate-pulse text-muted-foreground">
+          Đang tải cấu trúc khóa học...
+        </div>
+      }
+    >
+      <InstructorCourseBuilderContent params={params} />
+    </Suspense>
   );
 }

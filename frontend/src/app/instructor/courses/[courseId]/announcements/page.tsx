@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, Suspense } from "react";
 import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type CourseAnnouncement } from "@/gen/catalog/v1/catalog_pb";
@@ -10,11 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 
-export default function InstructorAnnouncementsPage({
-  params,
-}: {
-  params: Promise<{ courseId: string }>;
-}) {
+function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId: string }> }) {
   const { isInstructorOrAdmin } = useAuth();
   const resolvedParams = use(params);
   const courseId = resolvedParams.courseId;
@@ -244,5 +240,23 @@ export default function InstructorAnnouncementsPage({
         </div>
       </main>
     </div>
+  );
+}
+
+export default function InstructorAnnouncementsPage({
+  params,
+}: {
+  params: Promise<{ courseId: string }>;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="py-12 text-center text-muted-foreground animate-pulse">
+          Đang tải thông báo khóa học...
+        </div>
+      }
+    >
+      <InstructorAnnouncementsContent params={params} />
+    </Suspense>
   );
 }

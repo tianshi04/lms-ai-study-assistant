@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCoursesQuery } from "@/lib/query_hooks";
 import { CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
@@ -29,12 +29,14 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
   const totalStudents = courses.length * 15; // Estimated student count across courses
 
-  const getGreeting = () => {
+  const [greeting, setGreeting] = useState("Xin chào");
+
+  useEffect(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Chào buổi sáng";
-    if (hour < 18) return "Chào buổi chiều";
-    return "Chào buổi tối";
-  };
+    if (hour < 12) setGreeting("Chào buổi sáng");
+    else if (hour < 18) setGreeting("Chào buổi chiều");
+    else setGreeting("Chào buổi tối");
+  }, []);
 
   return (
     <div className="w-full flex-1 bg-background min-h-screen">
@@ -50,7 +52,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               Bảng Điều Khiển Giảng Viên
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-balance">
-              {getGreeting()}, <span className="opacity-90">Thầy/Cô {userName}</span>
+              {greeting}, <span className="opacity-90">Thầy/Cô {userName}</span>
             </h1>
             <p className="text-sm opacity-80 max-w-xl">
               Quản lý danh sách khóa học giảng dạy, theo dõi lượng học viên đăng ký, kiểm duyệt bài

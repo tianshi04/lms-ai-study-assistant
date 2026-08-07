@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, use } from "react";
+import React, { useState, use, Suspense } from "react";
 import Link from "next/link";
 import { Plus, HelpCircle, FolderOpen, Pencil, Trash2, Info } from "lucide-react";
 
@@ -29,7 +29,7 @@ import {
 } from "@/lib/query_hooks";
 import { type Question } from "@/gen/assessment/v1/assessment_pb";
 
-export default function QuestionBankPage({ params }: { params: Promise<{ courseId: string }> }) {
+function QuestionBankContent({ params }: { params: Promise<{ courseId: string }> }) {
   const resolvedParams = use(params);
   const courseId = resolvedParams.courseId;
   const toast = useToast();
@@ -832,5 +832,19 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
         isLoading={deleteQuestionMutation.isPending}
       />
     </div>
+  );
+}
+
+export default function QuestionBankPage({ params }: { params: Promise<{ courseId: string }> }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-muted-foreground animate-pulse">
+          Đang tải ngân hàng câu hỏi...
+        </div>
+      }
+    >
+      <QuestionBankContent params={params} />
+    </Suspense>
   );
 }

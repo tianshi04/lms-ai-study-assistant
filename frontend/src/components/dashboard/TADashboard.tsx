@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   MessageSquare,
@@ -12,12 +13,14 @@ import {
 } from "lucide-react";
 
 export function TADashboard({ userName }: { userName: string }) {
-  const getGreeting = () => {
+  const [greeting, setGreeting] = useState("Xin chào");
+
+  useEffect(() => {
     const hour = new Date().getHours();
-    if (hour < 12) return "Chào buổi sáng";
-    if (hour < 18) return "Chào buổi chiều";
-    return "Chào buổi tối";
-  };
+    if (hour < 12) setGreeting("Chào buổi sáng");
+    else if (hour < 18) setGreeting("Chào buổi chiều");
+    else setGreeting("Chào buổi tối");
+  }, []);
 
   return (
     <div className="w-full flex-1 bg-background min-h-screen">
@@ -33,7 +36,7 @@ export function TADashboard({ userName }: { userName: string }) {
               Bảng Điều Khiển Trợ Giảng (TA)
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-balance">
-              {getGreeting()}, <span className="text-primary">Trợ Giảng {userName}</span>
+              {greeting}, <span className="text-primary">Trợ Giảng {userName}</span>
             </h1>
             <p className="text-sm text-muted-foreground max-w-xl">
               Hỗ trợ chấm điểm bài tập tự luận, giải đáp thắc mắc chuyên môn trên diễn đàn khóa học

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { cacheLife, cacheTag } from "next/cache";
 import { getPublicRpcServerClient } from "@/lib/server_connect_client";
@@ -32,10 +33,10 @@ async function getCachedVerifiedCertificate(certId: string) {
         : null,
     };
   } catch (err) {
-    console.error("Lỗi xác thực chứng chỉ:", err);
+    console.error("Failed to verify certificate public:", certId, err);
     return {
       isValid: false,
-      statusMessage: "Không thể tải thông tin chứng chỉ",
+      statusMessage: "Không thể kết nối đến hệ thống xác minh chứng chỉ.",
       certificate: null,
     };
   }
@@ -53,9 +54,23 @@ export async function generateMetadata({
   };
 }
 
-export default async function VerifyPage({ params }: { params: Promise<{ certId: string }> }) {
-  const { certId } = await params;
+async function VerifyContent({ paramsPromise }: { paramsPromise: Promise<{ certId: string }> }) {
+  const { certId } = await paramsPromise;
   const initialData = await getCachedVerifiedCertificate(certId);
 
   return <VerifyDetailClient certId={certId} initialData={initialData} />;
+}
+
+export default function VerifyPage({ params }: { params: Promise<{ certId: string }> }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground animate-pulse">
+          Đang tra cứu chứng chỉ...
+        </div>
+      }
+    >
+      <VerifyContent paramsPromise={params} />
+    </Suspense>
+  );
 }

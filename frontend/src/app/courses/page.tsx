@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { cacheLife, cacheTag } from "next/cache";
@@ -49,12 +50,26 @@ async function getInitialCatalogData() {
   return dehydrate(queryClient);
 }
 
-export default async function CoursesPage() {
+async function CatalogContent() {
   const dehydratedState = await getInitialCatalogData();
 
   return (
     <HydrationBoundary state={dehydratedState}>
       <CourseCatalogClient />
     </HydrationBoundary>
+  );
+}
+
+export default function CoursesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full max-w-7xl mx-auto px-6 py-12 min-h-[65vh] text-center text-muted-foreground animate-pulse">
+          Đang tải danh sách khóa học...
+        </div>
+      }
+    >
+      <CatalogContent />
+    </Suspense>
   );
 }

@@ -29,9 +29,6 @@ export const metadata: Metadata = {
   description: "Coursera-style Online Learning Platform",
 };
 
-// Documented Block: RootLayout allows dynamic authentication and params resolution across client subtrees.
-export const instant = false;
-
 async function AsyncAuthProvider({ children }: { children: React.ReactNode }) {
   const session = await getAuthServer();
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { getRpcClient } from "@/lib/connect_client";
+import { revalidateCourseCacheAction } from "@/app/actions/cache";
 import {
   CatalogService,
   ItemType,
@@ -57,6 +58,7 @@ export function useCourseBuilder(courseId: string) {
 
   const fetchCourseDetail = useCallback(async () => {
     try {
+      revalidateCourseCacheAction(courseId).catch(() => {});
       const client = getRpcClient(CatalogService);
       const res = await client.getCourseDetail({ idOrSlug: courseId });
       if (res.course) {
@@ -112,6 +114,7 @@ export function useCourseBuilder(courseId: string) {
     if (!course) return;
     setSubmittingLaunch(true);
     try {
+      revalidateCourseCacheAction(course.id).catch(() => {});
       const client = getRpcClient(CatalogService);
       const res = await client.submitCourseForLaunch({ courseId: course.id });
       if (res.course) {
