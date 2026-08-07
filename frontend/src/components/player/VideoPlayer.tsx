@@ -190,6 +190,7 @@ export function VideoPlayer({
               allowFullScreen
             />
           ) : (
+            /* oxlint-disable jsx-a11y/media-has-caption */
             <video
               key={activeItem.id}
               ref={videoRef}
@@ -200,9 +201,7 @@ export function VideoPlayer({
               onEnded={() => onMarkComplete?.(activeItem.id)}
               aria-label={activeItem.title || "Video bài giảng"}
               className="w-full h-full object-contain rounded-2xl"
-            >
-              <track kind="captions" src="" label="Phụ đề" />
-            </video>
+            />
           )}
 
           {/* Floating Top Left Control Overlay for Video Preview Mode */}
