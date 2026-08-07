@@ -95,7 +95,7 @@ export function AuthProvider({
       userRole: null,
       userAvatar: null,
     });
-    window.location.href = "/auth/login";
+    window.location.href = "/";
   }, []);
 
   const isAuthenticated = Boolean(auth.userId || auth.userEmail);
