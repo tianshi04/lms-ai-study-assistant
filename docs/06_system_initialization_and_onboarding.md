@@ -8,11 +8,11 @@ Tài liệu này quy định **Toàn bộ Quy trình Vận hành Nghiệp vụ (
 
 ```mermaid
 flowchart TD
-    subgraph B1["1. Nghiệp vụ Khởi tạo Tổ chức Đối tác (Partner Onboarding)"]
-        B1_1["Super Admin đăng ký Hồ sơ Đối tác B2B (Stanford, Google...)"]
-
-        B1_2["Organization Admin nhận quyền, thiết lập Thương hiệu & Người ký Mặc định"]
-        B1_3["Khởi tạo / Xoay Khóa ký số (ECDSA P-256) & Xuất File openbadges-issuer.json"]
+    subgraph B1["1. Nghiệp vụ Khởi tạo & Quản trị Tổ chức (Partner Onboarding & Hub)"]
+        B1_1["Super Admin khởi tạo Hồ sơ Đối tác B2B (Stanford, Google...)"]
+        B1_2["Gán tài khoản đại diện với vai trò Organization Owner (ORG_OWNER)"]
+        B1_3["Org Owner truy cập Hub (/organizations/slug/manage) gửi lời mời thành viên INSTRUCTOR / MEMBER"]
+        B1_4["Org Owner thiết lập Nhận diện Logo, Banner, Domain bảo chứng & Cặp khóa ECDSA P-256"]
     end
 
     subgraph B2["2. Nghiệp vụ Giảng viên & Khai thác Khóa học (Course Launch)"]
@@ -38,19 +38,21 @@ flowchart TD
 
 ---
 
-## 2. NGHIỆP VỤ 1: Đăng ký & Cấu hình Tổ chức Đối tác (B2B Partner Onboarding)
+## 2. NGHIỆP VỤ 1: Đăng ký & Cấu hình Tổ chức Đối tác (B2B Partner Onboarding & Hub)
 
-Giai đoạn này thiết lập tư cách pháp lý và đại diện thương hiệu cho các Trường Đại học hoặc Tập đoàn hợp tác phát hành khóa học.
+Giai đoạn này thiết lập tư cách pháp lý, đại diện thương hiệu và phân quyền tự quản trị cho các Trường Đại học hoặc Tập đoàn hợp tác phát hành khóa học.
 
-### 📋 Bảng Chi tiết Quy trình Nghiệp vụ Partner Onboarding:
+### 📋 Bảng Chi tiết Quy trình Nghiệp vụ Partner Onboarding & Hub:
 
 | Bước | Vai trò Nghiệp vụ (Actor) | Thao tác Nghiệp vụ | Dữ liệu Đầu vào (Business Input) | Kết quả Nghiệp vụ (Business Outcome) |
 | :---: | :--- | :--- | :--- | :--- |
-| **1.1** | Super Admin | Khởi tạo Hồ sơ Đối tác B2B | Tên trường (*Stanford Online*), Slug (`stanford-online`), Tên miền ủy quyền (`["@stanford.edu"]`). | Tổ chức Đối tác được ghi nhận chính thức trên Nền tảng. |
-| **1.2** | Super Admin | Bổ nhiệm Quản trị viên Tổ chức | Gán tài khoản đại diện với vai trò `Organization Admin`. | Người đại diện Trường có toàn quyền tự quản lý hồ sơ tổ chức. |
-| **1.3** | Organization Admin | Thiết lập Nhận diện Thương hiệu | Tải lên Logo chính thức, Banner bìa, Họ tên & Chức danh Hiệu trưởng / Viện trưởng. | Hoàn thiện Trang giới thiệu đối tác công khai (`/partners/stanford-online`). |
-| **1.4** | Organization Admin | Khởi tạo / Xoay Khóa Ký số | Chọn *"🔄 Tạo Cặp Khóa Ký số Mới"* trên Admin Portal. | Hệ thống cấp Cặp khóa ECDSA P-256 mới. Khóa cũ tự động lưu vết vào danh sách lịch sử. |
-| **1.5** | Organization Admin | Ủy quyền Xác thực Tên miền | Bấm *"📥 Tải xuống File openbadges-issuer.json"* dán lên `https://stanford.edu/.well-known/openbadges-issuer.json`. | Minh chứng kỹ thuật công khai việc Trường ủy quyền ký số cho Nền tảng mà không cần máy chủ riêng. |
+| **1.1** | Super Admin | Khởi tạo Hồ sơ Đối tác B2B | Tên trường (*Stanford Online*), Slug (`stanford`), Tên miền ủy quyền (`["@stanford.edu"]`). | Tổ chức Đối tác được ghi nhận chính thức trên Nền tảng. |
+| **1.2** | Super Admin | Bổ nhiệm Chủ sở hữu Tổ chức | Gán tài khoản đại diện với vai trò `Organization Owner` (`ORG_OWNER`). | Người đại diện Trường có toàn quyền tối cao quản lý hồ sơ và thành viên Tổ chức. |
+| **1.3a** | Organization Owner | Quản lý & Tuyển dụng Thành viên | Đăng nhập `/organizations/stanford/members`, gửi lời mời Email với vai trò `INSTRUCTOR` hoặc `MEMBER`. | Tạo Lời mời `PENDING` kèm mã Token duy nhất. Chặn tự động nếu email đã là thành viên hoặc đã có lời mời chờ. |
+| **1.3b** | Organization Owner | Theo dõi Lời mời đã gửi | Mở trang `/organizations/stanford/invitations`, sao chép Link Token chia sẻ hoặc Hủy lời mời. | Người nhận bấm Link (`/invitations/[token]`) để gia nhập Tổ chức ngay lập tức. |
+| **1.4** | Organization Owner | Thiết lập Nhận diện Thương hiệu | Mở `/organizations/stanford/settings`, tải lên Logo chính thức, Banner bìa, Website, Tên miền ủy quyền. | Cập nhật nhãn hiệu công khai và cấu hình tự động phân bổ Suất học Enterprise Seat cho sinh viên theo domain email (`@stanford.edu`). |
+| **1.5** | Organization Owner | Khởi tạo / Xoay Khóa Ký số | Chọn *"🔄 Tạo Cặp Khóa Ký số Mới"* trên Admin/Org Portal. | Hệ thống cấp Cặp khóa ECDSA P-256 mới. Khóa cũ tự động lưu vết vào danh sách lịch sử. |
+| **1.6** | Organization Owner | Ủy quyền Xác thực Tên miền | Bấm *"📥 Tải xuống File openbadges-issuer.json"* dán lên `https://stanford.edu/.well-known/openbadges-issuer.json`. | Minh chứng kỹ thuật công khai việc Trường ủy quyền ký số cho Nền tảng mà không cần máy chủ riêng. |
 
 ---
 
@@ -67,10 +69,10 @@ Giai đoạn này đảm bảo chất lượng chuyên môn bài giảng và s�
 | **2.1c** | Giảng viên | Cấu hình Hồ sơ & Chữ ký tay | Đăng nhập `/instructor/profile`, điền Chức danh khoa học (*GS. Andrew Ng - Senior AI Expert*) & Upload nét ký tay PNG. | Mẫu chữ ký tay điện tử sẵn sàng để nhúng lên chứng chỉ sau này (`BR_CERT_002`). |
 | **2.2** | Giảng viên | Xây dựng Cấu trúc Học tập | Tạo Tuần học (Week 1, Week 2), đăng Video kèm Phụ đề VTT, soạn Bài đọc và Ma trận Quiz. | Khung chương trình bài giảng hoàn thiện dưới dạng Bản nháp (Draft). |
 | **2.3** | Giảng viên | Cấu hình Rubric & Peer Review | Nhập tiêu chí chấm điểm tự luận/dự án (Rubric Criteria) và số lượng bài chấm bắt buộc ($N=3$). | Bộ bài tập thực hành & chấm chéo sẵn sàng vận hành. |
-| **2.4** | Organization Admin | Phân công Giảng viên phụ trách | Gán Giảng viên chính (`owner_id`) và Giảng viên đồng giảng dạy (`co_instructor_ids`). | Xác định tư cách Giảng viên đứng tên đại diện trên Chứng chỉ (`BR_CATALOG_001`). |
+| **2.4** | Organization Owner | Phân công Giảng viên phụ trách | Gán Giảng viên chính (`owner_id`) và Giảng viên đồng giảng dạy (`co_instructor_ids`). | Xác định tư cách Giảng viên đứng tên đại diện trên Chứng chỉ (`BR_CATALOG_001`). |
 | **2.5** | Giảng viên | Gửi Yêu cầu Phê duyệt (`Submit for Launch`) | Bấm nút *"Submit for Launch"* (Pre-submit checklist PASS). | Khóa học chuyển sang trạng thái **`PENDING_REVIEW`** và tạm khóa quyền chỉnh sửa (Read-only `BR_CATALOG_003`). |
-| **2.6** | Organization Admin / Reviewer | Màn hình Kiểm duyệt (*Course Reviewer Portal*) | Xem trước dưới chế độ Học viên (*Student Preview Mode*). | Đánh giá chất lượng thực tế video, phụ đề VTT, bài thi thi thử và bài tập dự án. |
-| **2.7** | Organization Admin / Reviewer | Phê duyệt hoặc Từ chối (*Approve / Reject*) | Bấm *"Approve & Publish"* hoặc *"Reject"* kèm Feedback lý do. | Nếu Approve: Khóa học chuyển sang **`PUBLISHED`** mở bán công khai. Nếu Reject: Khóa học về **`DRAFT`** kèm góp ý để Giảng viên sửa lại. |
+| **2.6** | Organization Owner / Reviewer | Màn hình Kiểm duyệt (*Course Reviewer Portal*) | Xem trước dưới chế độ Học viên (*Student Preview Mode*). | Đánh giá chất lượng thực tế video, phụ đề VTT, bài thi thi thử và bài tập dự án. |
+| **2.7** | Organization Owner / Reviewer | Phê duyệt hoặc Từ chối (*Approve / Reject*) | Bấm *"Approve & Publish"* hoặc *"Reject"* kèm Feedback lý do. | Nếu Approve: Khóa học chuyển sang **`PUBLISHED`** mở bán công khai. Nếu Reject: Khóa học về **`DRAFT`** kèm góp ý để Giảng viên sửa lại. |
 
 
 ---
