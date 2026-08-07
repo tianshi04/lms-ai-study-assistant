@@ -76,7 +76,9 @@ async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
     # Dev Mode Mock — chỉ hoạt động khi ENABLE_DEV_MOCK=true
     from src.shared.config import settings
 
-    if code.startswith("mock_google_") and settings.ENABLE_DEV_MOCK:
+    if code.startswith("mock_google_") and (
+        settings.ENABLE_DEV_MOCK or not settings.GOOGLE_CLIENT_ID
+    ):
         raw = code[len("mock_google_") :]
         parts = raw.rsplit("_", 1)
         email = parts[0] if parts else "user@gmail.com"

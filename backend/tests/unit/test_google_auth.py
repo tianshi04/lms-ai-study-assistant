@@ -2,10 +2,12 @@ import uuid
 import pytest
 from src.modules.identity.application.identity_usecase import IdentityUseCase
 from src.modules.identity.domain.entities import UserRole
+from src.shared.config import settings
 
 
 @pytest.mark.asyncio
-async def test_google_register_and_fallback_login_flow():
+async def test_google_register_and_fallback_login_flow(monkeypatch):
+    monkeypatch.setattr(settings, "ENABLE_DEV_MOCK", True)
     usecase = IdentityUseCase()
     unique_email = f"student_{uuid.uuid4().hex[:8]}@gmail.com"
 
