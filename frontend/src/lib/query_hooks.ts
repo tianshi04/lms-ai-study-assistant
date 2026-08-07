@@ -1047,8 +1047,22 @@ export function useRemoveOrganizationMemberMutation(
     onSuccess: (data, variables, context) => {
       const orgId = variables.organizationId || "org_default";
       queryClient.invalidateQueries({ queryKey: ["organizationMembers", orgId] });
+      queryClient.invalidateQueries({ queryKey: ["organizationAuditLogs", orgId] });
       options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
+  });
+}
+
+export function useListOrganizationAuditLogsQuery(organizationId: string) {
+  return useQuery({
+    queryKey: ["organizationAuditLogs", organizationId],
+    queryFn: async () => {
+      if (!organizationId) return [];
+      const client = getRpcClient(IdentityService);
+      const res = await client.listOrganizationAuditLogs({ organizationId });
+      return res.logs;
+    },
+    enabled: Boolean(organizationId),
   });
 }
 

@@ -959,7 +959,40 @@ class IdentityUseCase:
                         "Không thể xóa tài khoản Chủ sở hữu (ORG_OWNER) khỏi Tổ chức."
                     )
 
-            return await org_repo.remove_member(user_id=user_id, org_id=target_org_id)
+            action_type = (
+                "ORGANIZATION_AUDIT_ACTION_MEMBER_LEFT"
+                if is_self
+                else "ORGANIZATION_AUDIT_ACTION_MEMBER_KICKED"
+            )
+            details_text = (
+                "Thành viên tự nguyện rời khỏi Tổ chức."
+                if is_self
+                else f"Loại khỏi Tổ chức bởi {current_user.full_name or current_user.email}."
+            )
+
+            res = await org_repo.remove_member(user_id=user_id, org_id=target_org_id)
+            if res:
+                await org_repo.create_audit_log(
+                    org_id=target_org_id,
+                    actor_id=current_user.id,
+                    target_user_id=user_id,
+                    action=action_type,
+                    details=details_text,
+                )
+            return res
+
+    async def list_organization_audit_logs(
+        self, organization_id: str, current_user: CurrentUser
+    ) -> list[dict]:
+        async with async_session_scope() as session:
+            org_repo = OrganizationRepository(session)
+            target_org_id = await self._resolve_target_org_id(
+                org_repo, current_user, organization_id
+            )
+            await self._verify_org_admin_permission(
+                session, current_user, target_org_id
+            )
+            return await org_repo.list_audit_logs(target_org_id)
 
     async def list_my_organizations(
         self, current_user: CurrentUser
@@ -1261,6 +1294,13 @@ class IdentityUseCase:
                     org_id=inv.target_id,
                     role_id=inv.role_id or "MEMBER",
                     status="ACTIVE",
+                )
+                await org_repo.create_audit_log(
+                    org_id=inv.target_id,
+                    actor_id=inv.inviter_id or current_user.id,
+                    target_user_id=current_user.id,
+                    action="ORGANIZATION_AUDIT_ACTION_MEMBER_JOINED",
+                    details=f"Gia nhập với vai trò {inv.role_id or 'MEMBER'} qua lời mời.",
                 )
             elif "COURSE" in inv_type_str or "CO_INSTRUCTOR" in inv_type_str:
                 from src.modules.catalog.infrastructure.repository import (

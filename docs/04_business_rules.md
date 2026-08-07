@@ -89,6 +89,10 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_ORG_002 (Quy chế Tự nguyện Rời Tổ chức - Self-Leave Organization):**
   * *Tự nguyện rút tên:* Thành viên (`INSTRUCTOR` hoặc `MEMBER`) có quyền tự nguyện gửi yêu cầu rời khỏi Tổ chức bất kỳ lúc nào (`user_id == current_user.id`).
   * *Ràng buộc Chủ sở hữu:* Tài khoản `ORG_OWNER` duy nhất tuyệt đối không được tự rời Tổ chức khi chưa thực hiện quy trình chuyển nhượng quyền sở hữu cho thành viên khác (ngăn ngừa nguy cơ Tổ chức bị vô chủ).
+* **BR_ORG_003 (Kiến trúc Nhật ký Bất biến 2 Tầng - 2-Layer Immutable Audit Log System):**
+  * *Tầng Trạng thái Hiện tại (`organization_members`):* Quản lý trạng thái gia nhập hiện tại (`ACTIVE`) của thành viên nhằm tối ưu tốc độ truy vấn phân quyền ($O(1)$ index lookup).
+  * *Tầng Nhật ký Bất biến (`organization_audit_logs`):* Tự động lưu vết chuỗi sự kiện không thể thay thế/sửa xóa (Append-Only Log) cho tất cả các biến động nhân sự: gia nhập (`MEMBER_JOINED`), tự rời (`MEMBER_LEFT`), bị loại bỏ (`MEMBER_KICKED`) và thay đổi vai trò (`ROLE_CHANGED`).
+  * *Bảo toàn Lịch sử Ra/Vào:* Mỗi bản ghi audit log ghi nhận đầy đủ mốc thời gian ISO8601, ID người thực hiện (Actor ID), ID người chịu tác động (Target User ID) và thông tin chi tiết. Dù người dùng rời và gia nhập lại nhiều lần, toàn bộ vết lịch sử quá khứ đều được bảo toàn 100%.
 
 ---
 

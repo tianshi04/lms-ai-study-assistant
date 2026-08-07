@@ -559,6 +559,50 @@ class IdentityHandler(IdentityService):
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
 
+    async def list_organization_audit_logs(
+        self,
+        request: pb.ListOrganizationAuditLogsRequest,
+        ctx: RequestContext[
+            pb.ListOrganizationAuditLogsRequest,
+            pb.ListOrganizationAuditLogsResponse,
+        ],
+    ) -> pb.ListOrganizationAuditLogsResponse:
+        current_user = require_current_user()
+        org_id = request.organization_id.strip()
+        try:
+            logs = await self._use_case.list_organization_audit_logs(
+                organization_id=org_id, current_user=current_user
+            )
+            pb_logs = []
+            for item in logs:
+                action_str = item.get("action", "")
+                action_enum = pb.OrganizationAuditAction.UNSPECIFIED
+                if "JOINED" in action_str:
+                    action_enum = pb.OrganizationAuditAction.MEMBER_JOINED
+                elif "LEFT" in action_str:
+                    action_enum = pb.OrganizationAuditAction.MEMBER_LEFT
+                elif "KICKED" in action_str:
+                    action_enum = pb.OrganizationAuditAction.MEMBER_KICKED
+                elif "ROLE" in action_str:
+                    action_enum = pb.OrganizationAuditAction.ROLE_CHANGED
+
+                pb_logs.append(
+                    pb.OrganizationAuditLog(
+                        id=item.get("id", ""),
+                        organization_id=item.get("organization_id", ""),
+                        actor_id=item.get("actor_id", ""),
+                        actor_name=item.get("actor_name", ""),
+                        target_user_id=item.get("target_user_id", ""),
+                        target_user_name=item.get("target_user_name", ""),
+                        action=action_enum,
+                        details=item.get("details", ""),
+                        created_at=item.get("created_at", ""),
+                    )
+                )
+            return pb.ListOrganizationAuditLogsResponse(logs=pb_logs)
+        except PermissionError as e:
+            raise ConnectError(Code.PERMISSION_DENIED, str(e))
+
     async def remove_organization_member(
         self,
         request: pb.RemoveOrganizationMemberRequest,

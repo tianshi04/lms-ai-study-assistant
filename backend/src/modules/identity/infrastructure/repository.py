@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import inspect
 from unittest.mock import MagicMock
 from typing import Optional, Any
@@ -19,6 +20,7 @@ from src.modules.identity.domain.entities import (
 from src.modules.identity.infrastructure.models import (
     InstructorApplicationModel,
     InvitationModel,
+    OrganizationAuditLogModel,
     OrganizationMemberModel,
     OrganizationModel,
     UserModel,
@@ -354,6 +356,79 @@ class OrganizationRepository:
         await self._session.delete(existing)
         await self._session.flush()
         return True
+
+    async def create_audit_log(
+        self,
+        org_id: str,
+        actor_id: str,
+        target_user_id: str,
+        action: str,
+        details: str = "",
+    ) -> dict:
+        log_id = f"audit_{uuid.uuid4().hex[:12]}"
+        now_str = datetime.now(timezone.utc).isoformat()
+        log_model = OrganizationAuditLogModel(
+            id=log_id,
+            organization_id=org_id,
+            actor_id=actor_id,
+            target_user_id=target_user_id,
+            action=action,
+            details=details,
+            created_at=now_str,
+        )
+        self._session.add(log_model)
+        await self._session.flush()
+        return {
+            "id": log_model.id,
+            "organization_id": log_model.organization_id,
+            "actor_id": log_model.actor_id,
+            "target_user_id": log_model.target_user_id,
+            "action": log_model.action,
+            "details": log_model.details,
+            "created_at": log_model.created_at,
+        }
+
+    async def list_audit_logs(self, org_id: str) -> list[dict]:
+        stmt = (
+            select(OrganizationAuditLogModel)
+            .where(OrganizationAuditLogModel.organization_id == org_id)
+            .order_by(OrganizationAuditLogModel.created_at.desc())
+        )
+        result = await self._session.execute(stmt)
+        logs = result.scalars().all()
+
+        user_ids = set()
+        for entry in logs:
+            if entry.actor_id:
+                user_ids.add(entry.actor_id)
+            if entry.target_user_id:
+                user_ids.add(entry.target_user_id)
+
+        user_map = {}
+        if user_ids:
+            user_stmt = select(UserModel).where(UserModel.id.in_(user_ids))
+            user_res = await self._session.execute(user_stmt)
+            for u in user_res.scalars().all():
+                user_map[u.id] = u.full_name or u.email
+
+        res = []
+        for entry in logs:
+            res.append(
+                {
+                    "id": entry.id,
+                    "organization_id": entry.organization_id,
+                    "actor_id": entry.actor_id,
+                    "actor_name": user_map.get(entry.actor_id, "Hệ thống"),
+                    "target_user_id": entry.target_user_id,
+                    "target_user_name": user_map.get(
+                        entry.target_user_id, "Thành viên"
+                    ),
+                    "action": entry.action,
+                    "details": entry.details or "",
+                    "created_at": entry.created_at,
+                }
+            )
+        return res
 
 
 class InstructorApplicationRepository:

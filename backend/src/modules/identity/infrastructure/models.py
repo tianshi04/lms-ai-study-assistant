@@ -87,6 +87,23 @@ class OrganizationMemberModel(Base):
     joined_at: Mapped[str] = mapped_column(String(64), nullable=False, default="")
 
 
+class OrganizationAuditLogModel(Base):
+    __tablename__ = "organization_audit_logs"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    organization_id: Mapped[str] = mapped_column(
+        String(64),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    actor_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    target_user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    action: Mapped[str] = mapped_column(String(64), nullable=False)
+    details: Mapped[str] = mapped_column(Text, nullable=True, default="")
+    created_at: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
 class EnterpriseLicenseModel(Base):
     __tablename__ = "enterprise_licenses"
 

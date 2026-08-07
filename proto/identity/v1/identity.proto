@@ -244,6 +244,34 @@ message ListMyOrganizationsResponse {
   repeated UserOrganizationDetail organizations = 1;
 }
 
+enum OrganizationAuditAction {
+  ORGANIZATION_AUDIT_ACTION_UNSPECIFIED = 0;
+  ORGANIZATION_AUDIT_ACTION_MEMBER_JOINED = 1;
+  ORGANIZATION_AUDIT_ACTION_MEMBER_LEFT = 2;
+  ORGANIZATION_AUDIT_ACTION_MEMBER_KICKED = 3;
+  ORGANIZATION_AUDIT_ACTION_ROLE_CHANGED = 4;
+}
+
+message OrganizationAuditLog {
+  string id = 1;
+  string organization_id = 2;
+  string actor_id = 3;
+  string actor_name = 4;
+  string target_user_id = 5;
+  string target_user_name = 6;
+  OrganizationAuditAction action = 7;
+  string details = 8;
+  string created_at = 9;
+}
+
+message ListOrganizationAuditLogsRequest {
+  string organization_id = 1;
+}
+
+message ListOrganizationAuditLogsResponse {
+  repeated OrganizationAuditLog logs = 1;
+}
+
 message GoogleRegisterVerifyRequest {
   string google_id_token = 1;
 }
@@ -368,6 +396,9 @@ service IdentityService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ListMyOrganizations(ListMyOrganizationsRequest) returns (ListMyOrganizationsResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListOrganizationAuditLogs(ListOrganizationAuditLogsRequest) returns (ListOrganizationAuditLogsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 

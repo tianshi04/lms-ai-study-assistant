@@ -852,3 +852,30 @@ async def test_cancel_invitation(mock_session_scope):
         assert cancel_success is True
         assert inv.status == InvitationStatus.CANCELLED
         mock_inv_repo_instance.save.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_remove_organization_member_audit_logging():
+    with patch(
+        "src.modules.identity.application.identity_usecase.OrganizationRepository"
+    ) as mock_org_repo:
+        mock_repo = AsyncMock()
+        mock_org_repo.return_value = mock_repo
+        mock_repo.get_member.return_value = MagicMock(role_id="MEMBER")
+        mock_repo.remove_member.return_value = True
+
+        uc = IdentityUseCase()
+        owner = CurrentUser(
+            id="user_owner",
+            email="owner@test.com",
+            full_name="Owner Test",
+            role="ADMIN",
+        )
+        res = await uc.remove_organization_member(
+            user_id="user_member", organization_id="org_123", current_user=owner
+        )
+        assert res is True
+        mock_repo.create_audit_log.assert_called_once()
+        call_kwargs = mock_repo.create_audit_log.call_args[1]
+        assert call_kwargs["action"] == "ORGANIZATION_AUDIT_ACTION_MEMBER_KICKED"
+        assert call_kwargs["target_user_id"] == "user_member"

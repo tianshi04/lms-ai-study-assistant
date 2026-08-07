@@ -129,6 +129,27 @@ class InvitationAction(str, Enum):
     DECLINE = "INVITATION_ACTION_DECLINE"
 
 
+class OrganizationAuditAction(str, Enum):
+    UNSPECIFIED = "ORGANIZATION_AUDIT_ACTION_UNSPECIFIED"
+    MEMBER_JOINED = "ORGANIZATION_AUDIT_ACTION_MEMBER_JOINED"
+    MEMBER_LEFT = "ORGANIZATION_AUDIT_ACTION_MEMBER_LEFT"
+    MEMBER_KICKED = "ORGANIZATION_AUDIT_ACTION_MEMBER_KICKED"
+    ROLE_CHANGED = "ORGANIZATION_AUDIT_ACTION_ROLE_CHANGED"
+
+
+@dataclass
+class OrganizationAuditLog:
+    id: str
+    organization_id: str
+    actor_id: str
+    target_user_id: str
+    action: OrganizationAuditAction
+    details: str = ""
+    created_at: str = ""
+    actor_name: str = ""
+    target_user_name: str = ""
+
+
 def hash_invitation_token(raw_token: str) -> str:
     """Computes SHA-256 hash of an invitation token for secure database lookup."""
     if not raw_token:
