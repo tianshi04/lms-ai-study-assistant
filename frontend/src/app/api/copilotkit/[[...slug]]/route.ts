@@ -7,7 +7,7 @@ import {
 import { handle } from "hono/vercel";
 
 const modelName =
-  process.env.NEXT_PUBLIC_COPILOT_MODEL || process.env.COPILOT_MODEL || "google/gemini-2.5-flash";
+  process.env.NEXT_PUBLIC_COPILOT_MODEL || process.env.COPILOT_MODEL || "google/gemini-3.6-flash";
 
 const generalAgent = new BuiltInAgent({
   model: modelName,

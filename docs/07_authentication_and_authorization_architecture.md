@@ -85,7 +85,7 @@ class CurrentUserContext:
 
 ## 6. Kiến Trúc Xác Thực Đăng Ký & Đăng Nhập Lai (Google OAuth2 + Password Fallback)
 
-Hệ thống triển khai cơ chế xác thực kép linh hoạt và an toàn cao, kết hợp giữa **Google OAuth2** và **Mật khẩu dự phòng độc lập**:
+Hệ thống triển khai cơ chế xác thực kép linh hoạt và an toàn cao, kết hợp giữa **Đăng ký Email/Mật khẩu truyền thống (RPC `Register`)**, **Google OAuth2** và **Mật khẩu dự phòng độc lập**:
 
 ```mermaid
 sequenceDiagram
@@ -95,8 +95,8 @@ sequenceDiagram
     participant BE as Backend (FastAPI)
     participant GG as Google OAuth (accounts.google.com)
 
-    Note over User, GG: LUỒNG ĐĂNG KÝ BẮT BUỘC QUA GOOGLE + ĐẶT MẬT KHẨU DỰ PHÒNG
-    User->>FE: Bấm "Xác minh bằng Google"
+    Note over User, GG: LUỒNG ĐĂNG KÝ QUA GOOGLE + ĐẶT MẬT KHẨU DỰ PHÒNG (SO SÓNG VỚI ĐĂNG KÝ TRUYỀN THỐNG)
+    User->>FE: Bấm "Xác minh bằng Google" (Hoặc Đăng ký Email/Password qua RPC Register)
     FE->>GG: Mở Cửa sổ OAuth Popup (https://accounts.google.com/o/oauth2/v2/auth)
     GG-->>User: Xác thực tài khoản Gmail & Đồng ý cấp quyền
     GG-->>FE: Trả về Google ID Token via /auth/google/callback
@@ -111,13 +111,14 @@ sequenceDiagram
 ```
 
 ### A. Lý Do Kỹ Thuật & Nghiệp Vụ Của Luồng Đăng Ký
-1. **Xác minh Email chính chủ & Chống Bot/Spam (Anti-Spam Email Guarantee)**:
-   - Bắt buộc đăng ký qua Google OAuth2 nhằm đảm bảo 100% email là thật và thuộc về người dùng chính chủ.
-   - Loại bỏ hoàn toàn chi phí duy trì dịch vụ gửi email OTP/Activation link (Resend, SendGrid, Amazon SES) và tránh rủi ro email bị rơi vào hộp thư Spam.
-2. **Cơ chế Dự phòng Sự cố (Disaster Recovery & High Availability)**:
-   - Việc bắt buộc tạo Mật khẩu phụ ngay lúc đăng ký đảm bảo **100% tài khoản trong DB đều có password_hash**.
+1. **Linh hoạt 2 Chế độ Đăng ký (Dual Registration Flexibility)**:
+   - Hỗ trợ đăng ký nhanh 1-click qua Google OAuth2 hoặc Đăng ký bằng Email & Mật khẩu chuẩn (RPC `Register`) cho người dùng tùy chọn.
+2. **Xác minh Email chính chủ & Chống Bot/Spam (Anti-Spam Email Guarantee)**:
+   - Đăng ký qua Google OAuth2 giúp xác minh 100% email là thật và thuộc về người dùng chính chủ mà không tốn chi phí gửi OTP.
+3. **Cơ chế Dự phòng Sự cố (Disaster Recovery & High Availability)**:
+   - Việc tạo Mật khẩu phụ ngay lúc đăng ký Google đảm bảo **100% tài khoản trong DB đều có password_hash**.
    - Trong trường hợp dịch vụ Google bị sự cố (Google Outage) hoặc người dùng không lưu session Google, người dùng **vẫn đăng nhập bình thường bằng Email & Mật khẩu** mà không bị gián đoạn học tập.
-3. **Đồng bộ Ảnh Đại diện Chính chủ (Google Avatar Synchronization)**:
+4. **Đồng bộ Ảnh Đại diện Chính chủ (Google Avatar Synchronization)**:
    - Tự động trích xuất ảnh đại diện chính chủ từ Google (`picture` claim), lưu trữ vào PostgreSQL và nạp vào JWT Token payload (`avatar_url`).
    - Tự động đồng bộ hiển thị mượt mà trên Header Navbar (`UserDropdown`), Dropdown Menu, và Trang quản lý hồ sơ cá nhân.
 

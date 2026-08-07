@@ -6,7 +6,12 @@ Dự án phát triển **Hệ thống Quản lý Học tập Trực tuyến Chu�
 
 ## 1. Các Tác Nhân trong Hệ Thống (Roles & Personas)
 
-Hệ thống được vận hành và tương tác bởi 4 vai trò cốt lõi:
+Về mặt kỹ thuật (tầng Database & Protobuf Schema), hệ thống chỉ có **3 vai trò tài khoản cốt lõi (System Roles)** thuộc Enum `UserRole`:
+1. `USER_ROLE_LEARNER = 1` (Học viên)
+2. `USER_ROLE_INSTRUCTOR = 2` (Giảng viên)
+3. `USER_ROLE_ADMIN = 3` (Quản trị viên)
+
+Về mặt vận hành nghiệp vụ, 3 vai trò tài khoản cốt lõi này được kết hợp với **phân quyền theo ngữ cảnh (Contextual RBAC/ReBAC)** (như danh sách `co_instructor_ids`, `ta_ids` trong khóa học, hoặc vai trò trong Tổ chức `Partner Member`) để phục vụ **4 nhóm tác nhân vận hành chính**:
 
 1. **Super Admin (Platform Admin - Quản trị nền tảng):**
    * Quản lý tài khoản người dùng toàn hệ thống (phê duyệt, khóa, phân quyền).

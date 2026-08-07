@@ -24,9 +24,9 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 * **Báo cáo tài nguyên:** Tải CPU, RAM, lưu lượng mạng của hệ thống web server, Auto-Grader sandbox server và Vector Database.
 
 ### 1.3. Cấu hình kỹ thuật hệ thống (System Configurations)
-* **Cấu hình API LLM:** Giao diện nhập và kiểm tra (Test Connection) API Key cho Gemini LLM. Cấu hình model mặc định (`gemini-1.5-flash`, `gemini-1.5-pro`).
+* **Cấu hình API LLM:** Giao diện nhập và kiểm tra (Test Connection) API Key cho Gemini LLM. Cấu hình model mặc định (`google/gemini-3.6-flash`).
 * **Cài đặt tham số LLM:** Cấu hình `Temperature` (mặc định `0.2` để đảm bảo độ chính xác học thuật), `Max Output Tokens`, `Top-P`, `Top-K`.
-* **Cấu hình Vector DB & Cloud Storage:** Địa chỉ kết nối Vector Database (Index Name, API Key) và Google Cloud Storage cho video/phụ đề.
+* **Cấu hình Vector DB & Cloud Storage:** Địa chỉ kết nối Vector Database (Index Name, API Key) và Cloud Storage cho video/phụ đề.
 
 ### 1.4. Quản lý chất lượng & Báo cáo vi phạm (Quality Control & Abuse Management)
 * **Giám sát chỉ số CSAT:** Tổng hợp điểm số hài lòng trung bình (1-5 sao) và tỷ lệ hoàn thành (Completion Rate) của từng khóa học.
@@ -74,8 +74,9 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 
 ### 1.7. Luồng Đăng ký & Đăng nhập lai (Google OAuth2 & Mật khẩu Dự phòng)
 * **Khái niệm & Luồng Nghiệp vụ:**
-  - **Đăng ký bắt buộc qua Google (Step 1)**: Người dùng phải xác minh email qua Google OAuth2 (`GoogleRegisterVerify`). Cơ chế này đảm bảo 100% địa chỉ email là chính chủ, triệt tiêu tài khoản bot/spam và tiết kiệm chi phí hạ tầng gửi email OTP.
-  - **Thiết lập Mật khẩu Dự phòng (Step 2)**: Ngay sau khi xác minh Google thành công, người dùng được yêu cầu khởi tạo Mật khẩu dự phòng (`CompleteGoogleRegistration`). Điều này đảm bảo tài khoản trong DB luôn sở hữu `password_hash`, cho phép đăng nhập độc lập bất kỳ lúc nào ngay cả khi dịch vụ Google bị sự cố (Disaster Recovery).
+  - **Đăng ký linh hoạt 2 Phương thức**: Hệ thống hỗ trợ cả đăng ký Email/Mật khẩu truyền thống (RPC `Register`) và đăng ký nhanh qua Google OAuth2 (`GoogleRegisterVerify`).
+  - **Đăng ký qua Google (Step 1)**: Người dùng xác minh email chính chủ qua Google OAuth2 (`GoogleRegisterVerify`).
+  - **Thiết lập Mật khẩu Dự phòng (Step 2)**: Ngay sau khi xác minh Google thành công, người dùng khởi tạo Mật khẩu dự phòng (`CompleteGoogleRegistration`). Điều này đảm bảo tài khoản trong DB luôn sở hữu `password_hash`, cho phép đăng nhập độc lập bất kỳ lúc nào ngay cả khi dịch vụ Google bị sự cố (Disaster Recovery).
   - **Đăng nhập 2 Chế độ (Dual Login Options)**: Hỗ trợ nút bấm **Google 1-click** (`GoogleLogin`) và ô nhập **Email & Mật khẩu** truyền thống (`Login`).
   - **Đồng bộ Ảnh đại diện (Google Avatar Synchronization)**: Tự động trích xuất ảnh đại diện chính chủ từ Google (`picture`), lưu trữ vào DB và đồng bộ lên toàn bộ giao diện Navbar Header (`UserDropdown`) và Hồ sơ cá nhân.
 
