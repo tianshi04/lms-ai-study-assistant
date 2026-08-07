@@ -240,7 +240,7 @@ export function AIChatbot() {
           >
             {displayMessages && displayMessages.length > 0 ? (
               <>
-                {displayMessages.map((msg) => {
+                {displayMessages.map((msg, idx) => {
                   if (msg.role === "user") {
                     return (
                       <div key={msg.id} className="flex flex-col items-end w-full my-1">
@@ -257,9 +257,12 @@ export function AIChatbot() {
                   const roleStr = msg.role as string;
                   if (!rawText || roleStr === "tool" || roleStr === "action") return null;
 
+                  const isLastAssistantMsg = idx === displayMessages.length - 1;
+                  const isStreaming = Boolean(agent?.isRunning && isLastAssistantMsg);
+
                   return (
                     <div key={msg.id} className="w-full flex flex-col my-1">
-                      <AssistantMessageItem text={rawText} />
+                      <AssistantMessageItem text={rawText} isStreaming={isStreaming} />
                     </div>
                   );
                 })}

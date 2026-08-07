@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
 import { ItemType } from "@/gen/catalog/v1/catalog_pb";
 import { type QuestionBank } from "@/gen/assessment/v1/assessment_pb";
 import { Modal } from "@/components/ui/Modal";
@@ -325,7 +325,7 @@ export function LearningItemFormModal({
                 </div>
                 <div className="p-4 rounded-2xl border border-border bg-card text-foreground text-sm prose dark:prose-invert max-w-none min-h-[300px] max-h-[360px] overflow-y-auto shadow-2xs">
                   {readingMarkdown ? (
-                    <ReactMarkdown>{readingMarkdown}</ReactMarkdown>
+                    renderMarkdown(readingMarkdown)
                   ) : (
                     <div className="text-muted-foreground text-xs italic flex flex-col items-center justify-center py-12">
                       <FileText className="w-8 h-8 mb-2 opacity-40" />

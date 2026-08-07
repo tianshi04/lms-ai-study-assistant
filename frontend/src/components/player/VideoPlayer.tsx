@@ -1,7 +1,7 @@
 "use client";
 
 import { RefObject, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
 import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
 import { AutoGradedLabRunner } from "@/components/assessment/AutoGradedLabRunner";
@@ -103,43 +103,7 @@ export function VideoPlayer({
 
             {/* Reading Markdown Content */}
             <div className="max-w-none leading-relaxed text-sm space-y-4">
-              <ReactMarkdown
-                components={{
-                  h1: ({ children }) => (
-                    <h1 className="text-xl font-bold text-foreground mt-6 mb-3">{children}</h1>
-                  ),
-                  h2: ({ children }) => (
-                    <h2 className="text-lg font-bold text-primary mt-5 mb-2">{children}</h2>
-                  ),
-                  h3: ({ children }) => (
-                    <h3 className="text-base font-bold text-foreground mt-4 mb-2">{children}</h3>
-                  ),
-                  p: ({ children }) => (
-                    <p className="text-foreground/90 leading-relaxed my-2">{children}</p>
-                  ),
-                  ul: ({ children }) => (
-                    <ul className="list-disc pl-6 space-y-1 my-3 text-foreground/90">{children}</ul>
-                  ),
-                  ol: ({ children }) => (
-                    <ol className="list-decimal pl-6 space-y-1 my-3 text-foreground/90">
-                      {children}
-                    </ol>
-                  ),
-                  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-                  blockquote: ({ children }) => (
-                    <blockquote className="border-l-4 border-success pl-4 py-2 italic bg-success/10 my-4 text-success rounded-r-lg border border-border">
-                      {children}
-                    </blockquote>
-                  ),
-                  code: ({ children }) => (
-                    <code className="bg-surface-container-highest text-foreground px-2 py-0.5 rounded font-mono text-xs border border-border">
-                      {children}
-                    </code>
-                  ),
-                }}
-              >
-                {activeItem.readingMarkdown || "*Không có nội dung bài đọc.*"}
-              </ReactMarkdown>
+              {renderMarkdown(activeItem.readingMarkdown || "*Không có nội dung bài đọc.*")}
             </div>
 
             {/* Coursera-Style Bottom Mark as Complete Action Banner */}

@@ -4,7 +4,13 @@ import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { renderMarkdown } from "./AIChatMarkdownRenderer";
 
-export function AssistantMessageItem({ text }: { text: string }) {
+export function AssistantMessageItem({
+  text,
+  isStreaming = false,
+}: {
+  text: string;
+  isStreaming?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -19,7 +25,9 @@ export function AssistantMessageItem({ text }: { text: string }) {
 
   return (
     <div className="flex flex-col items-start w-full py-1 group">
-      <div className="w-full text-xs text-on-surface leading-relaxed">{renderMarkdown(text)}</div>
+      <div className="w-full text-xs text-on-surface leading-relaxed">
+        {renderMarkdown(text, isStreaming)}
+      </div>
       <button
         type="button"
         onClick={handleCopy}
