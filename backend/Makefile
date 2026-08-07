@@ -16,7 +16,6 @@ help:
 	@echo "  make dev          - Start local dev server"
 	@echo "  make seed         - Seed database with initial sample courses (Upsert mode)"
 	@echo "  make seed-reset   - Truncate all tables and re-seed pristine initial catalog"
-	@echo "  make seed-demo    - Seed database with clean JSON demo data"
 	@echo "  make format       - Format code and fix auto-fixable lint issues"
 	@echo "  make test         - Run test suite (pytest + ruff + ty)"
 
@@ -66,8 +65,6 @@ seed: migrate
 seed-reset: migrate
 	uv run python -m src.seed --reset
 
-seed-demo: migrate
-	uv run python -m src.seed_demo --reset
 format:
 	uv run ruff format .
 	uv run ruff check --fix .
