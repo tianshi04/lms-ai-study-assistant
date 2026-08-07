@@ -65,6 +65,7 @@ import {
   type EnterpriseSeat,
   type InstructorApplication,
   type OrganizationMemberDetail,
+  type UserOrganizationDetail,
   type Invitation,
 } from "@/gen/identity/v1/identity_pb";
 import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
@@ -1377,8 +1378,10 @@ export function useCreateInvitationMutation(
       if (!res.invitation) throw new Error("Không thể khởi tạo lời mời.");
       return res.invitation;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries({ queryKey: ["sentInvitations"] });
+      queryClient.invalidateQueries({ queryKey: ["myInvitations"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
     ...options,
   });
@@ -1428,6 +1431,22 @@ export function useCancelInvitationMutation(
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sentInvitations"] });
     },
+    ...options,
+  });
+}
+
+export function useMyOrganizationsQuery(
+  options?: Partial<UseQueryOptions<UserOrganizationDetail[], Error>>,
+) {
+  const { isAuthenticated } = useAuth();
+  return useQuery<UserOrganizationDetail[], Error>({
+    queryKey: ["myOrganizations"],
+    queryFn: async () => {
+      const client = getRpcClient(IdentityService);
+      const res = await client.listMyOrganizations({});
+      return res.organizations || [];
+    },
+    enabled: isAuthenticated && (options?.enabled ?? true),
     ...options,
   });
 }

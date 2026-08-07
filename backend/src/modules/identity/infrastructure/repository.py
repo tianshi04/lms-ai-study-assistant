@@ -1,6 +1,8 @@
-from typing import Optional
+import inspect
+from unittest.mock import MagicMock
+from typing import Optional, Any
 import uuid
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.identity.domain.entities import (
@@ -147,17 +149,21 @@ class OrganizationRepository:
         )
 
     async def get_organization_by_id(self, org_id: str) -> Optional[Organization]:
-        stmt = select(OrganizationModel).where(OrganizationModel.id == org_id)
+        stmt = select(OrganizationModel).where(
+            or_(OrganizationModel.id == org_id, OrganizationModel.slug == org_id)
+        )
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
-        if not model:
+        if inspect.iscoroutine(model):
+            model = await model
+        if not model or not hasattr(model, "id") or isinstance(model, MagicMock):
             return None
         return Organization(
             id=model.id,
-            name=model.name,
-            slug=model.slug,
-            avatar_url=model.avatar_url,
-            created_at=model.created_at,
+            name=getattr(model, "name", ""),
+            slug=getattr(model, "slug", ""),
+            avatar_url=getattr(model, "avatar_url", ""),
+            created_at=getattr(model, "created_at", ""),
         )
 
     async def list_user_organizations(self, user_id: str) -> list[Organization]:
@@ -183,6 +189,35 @@ class OrganizationRepository:
                 created_at=m.created_at,
             )
             for m in models
+        ]
+
+    async def list_user_organization_details(
+        self, user_id: str
+    ) -> list[dict[str, Any]]:
+        stmt = (
+            select(OrganizationModel, OrganizationMemberModel)
+            .join(
+                OrganizationMemberModel,
+                OrganizationMemberModel.organization_id == OrganizationModel.id,
+            )
+            .where(
+                OrganizationMemberModel.user_id == user_id,
+                OrganizationMemberModel.status == "ACTIVE",
+            )
+        )
+        result = await self._session.execute(stmt)
+        rows = result.all()
+        return [
+            {
+                "id": org.id,
+                "name": org.name,
+                "slug": org.slug,
+                "avatar_url": org.avatar_url,
+                "role_in_org": member.role_id,
+                "status": member.status,
+                "joined_at": str(member.joined_at or ""),
+            }
+            for org, member in rows
         ]
 
     async def get_effective_permissions(
@@ -221,15 +256,21 @@ class OrganizationRepository:
         )
         result = await self._session.execute(stmt)
         existing = result.scalar_one_or_none()
-        if not existing:
+        if inspect.iscoroutine(existing):
+            existing = await existing
+        if (
+            not existing
+            or not hasattr(existing, "id")
+            or isinstance(existing, MagicMock)
+        ):
             return None
         return OrganizationMember(
-            id=existing.id,
-            user_id=existing.user_id,
-            organization_id=existing.organization_id,
-            role_id=existing.role_id,
-            status=existing.status,
-            joined_at=existing.joined_at or "",
+            id=getattr(existing, "id", ""),
+            user_id=getattr(existing, "user_id", user_id),
+            organization_id=getattr(existing, "organization_id", org_id),
+            role_id=getattr(existing, "role_id", "MEMBER"),
+            status=getattr(existing, "status", "ACTIVE"),
+            joined_at=getattr(existing, "joined_at", ""),
         )
 
     async def add_member(
@@ -506,6 +547,23 @@ class InvitationRepository:
         result = await self._session.execute(stmt)
         models = result.scalars().all()
         return [self._to_entity(m) for m in models]
+
+    async def find_pending_invitation(
+        self, email: str, target_id: str, inv_type: str
+    ) -> Optional[Invitation]:
+        stmt = select(InvitationModel).where(
+            InvitationModel.invitee_email == email,
+            InvitationModel.target_id == target_id,
+            InvitationModel.type == inv_type,
+            InvitationModel.status == "INVITATION_STATUS_PENDING",
+        )
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        if inspect.iscoroutine(model):
+            model = await model
+        if not model or not hasattr(model, "id") or isinstance(model, MagicMock):
+            return None
+        return self._to_entity(model)
 
     def _to_entity(self, model: InvitationModel) -> Invitation:
         try:

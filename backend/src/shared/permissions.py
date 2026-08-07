@@ -70,12 +70,26 @@ async def enforce_organization_permission(
     if user.is_admin:
         return
 
-    from src.modules.identity.infrastructure.models import OrganizationMemberModel
+    from src.modules.identity.infrastructure.models import (
+        OrganizationMemberModel,
+        OrganizationModel,
+    )
+    from sqlalchemy import or_
 
-    stmt = select(OrganizationMemberModel).where(
-        OrganizationMemberModel.organization_id == organization_id,
-        OrganizationMemberModel.user_id == user.id,
-        OrganizationMemberModel.status == "ACTIVE",
+    stmt = (
+        select(OrganizationMemberModel)
+        .join(
+            OrganizationModel,
+            OrganizationMemberModel.organization_id == OrganizationModel.id,
+        )
+        .where(
+            or_(
+                OrganizationMemberModel.organization_id == organization_id,
+                OrganizationModel.slug == organization_id,
+            ),
+            OrganizationMemberModel.user_id == user.id,
+            OrganizationMemberModel.status == "ACTIVE",
+        )
     )
     result = await session.execute(stmt)
     member = result.scalar_one_or_none()

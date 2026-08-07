@@ -22,7 +22,7 @@ Hệ thống loại bỏ hoàn toàn các bảng cơ sở dữ liệu động l�
 ## 2. Ma Trận Vai Trò & Quyền Tĩnh (Static ReBAC Matrices in `src/shared/permissions.py`)
 
 ### A. Phân quyền Tổ chức (Organization Level - `OrgRole` & `OrgPermission`)
-- **Vai trò tĩnh (`OrgRole`)**: `OWNER`, `INSTRUCTOR`, `TA`, `MEMBER`.
+- **Vai trò tĩnh (`OrgRole`)**: `OWNER`, `INSTRUCTOR`, `MEMBER`.
 - **Hành động (`OrgPermission`)**: `MANAGE_MEMBERS` (`org:manage_members`), `CREATE_COURSE` (`org:create_course`), `MANAGE_COURSES` (`org:manage_courses`), `VIEW_ANALYTICS` (`org:view_analytics`).
 - **Bảng Ma trận Role-Permission (`ROLE_PERMISSIONS`)**:
   - `OWNER`: Toàn quyền (`MANAGE_MEMBERS`, `CREATE_COURSE`, `MANAGE_COURSES`, `VIEW_ANALYTICS`).
@@ -151,7 +151,7 @@ sequenceDiagram
 | **Duyệt Đơn Giảng viên** | `_is_admin(user)` | Chỉ Quản trị viên hệ thống (`USER_ROLE_ADMIN`). |
 | **Duyệt Hỗ trợ Tài chính / Thu hồi Chứng chỉ** | `_is_admin(user)` | Chỉ Quản trị viên hệ thống (`USER_ROLE_ADMIN`). |
 | **Kiểm duyệt Diễn đàn** | `_can_moderate(user)` | Quản trị viên hệ thống HOẶC Giảng viên / Trợ giảng phụ trách khóa học. |
-| **Gửi Lời mời Thành viên Tổ chức** | `_verify_org_admin_permission(session, user, org_id)` | Admin/Owner của Tổ chức (Nghiêm cấm mời vai trò `ORG_OWNER`). |
+| **Gửi Lời mời Thành viên Tổ chức** | `_verify_org_admin_permission(session, user, org_id)` | Owner của Tổ chức (Nghiêm cấm mời vai trò `ORG_OWNER`). |
 | **Gửi Lời mời Giảng viên Khóa học** | `SQLAlchemyCatalogRepository.get_course_detail(target_id)` | Owner/Co-Instructor của Khóa học hoặc Admin (Nghiêm cấm mời vai trò `COURSE_OWNER`). |
 | **Gửi Lời mời Suất học Enterprise** | `_is_admin(user)` | Chỉ Quản trị viên hệ thống (`USER_ROLE_ADMIN`). |
 | **Phản hồi Lời mời (Respond)** | Match `invitee_email == current_user.email` | Người dùng được mời có email khớp chính xác với tài khoản đang đăng nhập. |

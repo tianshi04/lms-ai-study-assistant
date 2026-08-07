@@ -140,6 +140,11 @@ export function UserDropdown() {
           <span>{"Mua hàng của tôi"}</span>
         </DropdownMenuItem>
 
+        <DropdownMenuItem render={<Link href="/my-organizations" />} className={itemClasses}>
+          <Building2 aria-hidden="true" className={iconClasses} />
+          <span>{"Tổ chức của tôi"}</span>
+        </DropdownMenuItem>
+
         <DropdownMenuItem render={<Link href="/account-settings" />} className={itemClasses}>
           <Settings aria-hidden="true" className={iconClasses} />
           <span>{"Cài đặt"}</span>

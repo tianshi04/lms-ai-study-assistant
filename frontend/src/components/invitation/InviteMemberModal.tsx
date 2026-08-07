@@ -37,8 +37,8 @@ export function InviteMemberModal({
   type,
   defaultRole = "MEMBER",
   rolesList = [
-    { id: "MEMBER", label: "Thành viên (Member)" },
-    { id: "ORG_ADMIN", label: "Quản trị viên Tổ chức (Org Admin)" },
+    { id: "INSTRUCTOR", label: "Giảng viên (Instructor)" },
+    { id: "MEMBER", label: "Thành viên / Học viên (Member)" },
   ],
 }: InviteMemberModalProps) {
   const [activeTab, setActiveTab] = useState<"send" | "pending">("send");

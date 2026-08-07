@@ -151,3 +151,19 @@ def test_enforce_course_ownership_fallback_attributes():
     stranger = CurrentUserContext(id="stranger_99", role="INSTRUCTOR")
     with pytest.raises(PermissionError):
         enforce_course_ownership(course, stranger)
+
+
+@pytest.mark.asyncio
+async def test_enforce_organization_permission_slug_success():
+    session = AsyncMock()
+    mock_member = MagicMock()
+    mock_member.role_id = "ORG_OWNER"
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_member
+    session.execute.return_value = mock_result
+
+    user = CurrentUserContext(id="user_owner_01", role="INSTRUCTOR")
+    # Should succeed matching by slug 'stanford'
+    await enforce_organization_permission(
+        session, user, "stanford", required_permission=OrgPermission.MANAGE_MEMBERS
+    )

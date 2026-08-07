@@ -579,6 +579,32 @@ class IdentityHandler(IdentityService):
         except PermissionError as e:
             raise ConnectError(Code.PERMISSION_DENIED, str(e))
 
+    async def list_my_organizations(
+        self,
+        request: pb.ListMyOrganizationsRequest,
+        ctx: RequestContext[
+            pb.ListMyOrganizationsRequest,
+            pb.ListMyOrganizationsResponse,
+        ],
+    ) -> pb.ListMyOrganizationsResponse:
+        current_user = require_current_user()
+        org_details = await self._use_case.list_my_organizations(
+            current_user=current_user
+        )
+        pb_orgs = [
+            pb.UserOrganizationDetail(
+                id=o["id"],
+                name=o["name"],
+                slug=o["slug"],
+                avatar_url=o["avatar_url"],
+                role_in_org=o["role_in_org"],
+                status=o["status"],
+                joined_at=o["joined_at"],
+            )
+            for o in org_details
+        ]
+        return pb.ListMyOrganizationsResponse(organizations=pb_orgs)
+
     async def create_invitation(
         self,
         request: pb.CreateInvitationRequest,

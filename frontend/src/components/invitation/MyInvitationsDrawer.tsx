@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMyInvitationsQuery, useRespondToInvitationMutation } from "@/lib/query_hooks";
 import { InvitationAction, InvitationStatus, InvitationType } from "@/gen/identity/v1/identity_pb";
 import {
@@ -26,6 +26,15 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
     type: "success" | "error";
     text: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   const {
     data: invitations,
@@ -78,8 +87,14 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
   const historyList = invitations?.filter((i) => i.status !== InvitationStatus.PENDING);
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-xs">
-      <div className="bg-card text-foreground border-l border-border w-full max-w-md h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-modal flex justify-end bg-scrim backdrop-blur-xs cursor-pointer"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="bg-card text-foreground border-l border-border w-full max-w-md h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200 cursor-default"
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
           <div className="flex items-center space-x-2">
@@ -89,7 +104,8 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
           <button
             type="button"
             onClick={onClose}
-            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label="Đóng"
+            className="p-1.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -215,6 +231,17 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
               ))}
             </div>
           )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-border bg-muted/20 flex justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2 rounded-xl bg-muted text-foreground hover:bg-muted/80 font-bold text-xs transition-colors cursor-pointer border border-border"
+          >
+            Đóng
+          </button>
         </div>
       </div>
     </div>

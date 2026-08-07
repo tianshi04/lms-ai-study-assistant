@@ -144,3 +144,31 @@ async def test_list_and_remove_organization_members():
             "user_123", "org_default", current_user=admin_user
         )
         assert success is True
+
+
+@pytest.mark.asyncio
+async def test_list_my_organizations_success():
+    use_case = IdentityUseCase()
+    current_user = CurrentUserContext(id="user_123", role="INSTRUCTOR")
+
+    expected_orgs = [
+        {
+            "id": "partner_community",
+            "name": "Coursera Project Network",
+            "slug": "partner_community",
+            "avatar_url": "",
+            "role_in_org": "INSTRUCTOR",
+            "status": "ACTIVE",
+            "joined_at": "2026-08-01",
+        }
+    ]
+
+    with patch(
+        "src.modules.identity.infrastructure.repository.OrganizationRepository.list_user_organization_details",
+        new_callable=AsyncMock,
+        return_value=expected_orgs,
+    ):
+        result = await use_case.list_my_organizations(current_user=current_user)
+        assert len(result) == 1
+        assert result[0]["id"] == "partner_community"
+        assert result[0]["role_in_org"] == "INSTRUCTOR"

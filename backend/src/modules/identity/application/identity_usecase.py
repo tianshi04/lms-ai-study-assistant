@@ -17,6 +17,7 @@ from src.modules.identity.domain.entities import (
     InvitationStatus,
     hash_invitation_token,
 )
+from src.shared.permissions import OrgRole
 from src.modules.identity.domain.constants import (
     DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS,
     DEFAULT_PBKDF2_ITERATIONS,
@@ -33,7 +34,6 @@ from src.modules.identity.infrastructure.repository import (
 )
 from src.shared.permissions import (
     OrgPermission,
-    OrgRole,
     enforce_organization_permission,
 )
 from src.modules.identity.application.submit_application_usecase import (
@@ -835,6 +835,9 @@ class IdentityUseCase:
     ) -> str:
         clean_org_id = (organization_id or "").strip()
         if clean_org_id:
+            org = await org_repo.get_organization_by_id(clean_org_id)
+            if org:
+                return org.id
             return clean_org_id
         if user:
             user_orgs = await org_repo.list_user_organizations(user.id)
@@ -933,6 +936,13 @@ class IdentityUseCase:
             )
             return await org_repo.remove_member(user_id=user_id, org_id=organization_id)
 
+    async def list_my_organizations(
+        self, current_user: CurrentUser
+    ) -> list[dict[str, Any]]:
+        async with async_session_scope() as session:
+            org_repo = OrganizationRepository(session)
+            return await org_repo.list_user_organization_details(current_user.id)
+
     async def create_invitation(
         self,
         type: str,
@@ -962,9 +972,17 @@ class IdentityUseCase:
 
             type_str = str(type).upper()
             if "ORGANIZATION" in type_str or type_str == "1":
-                if role_id in ["ORG_OWNER", "OWNER"]:
+                clean_role = (role_id or "INSTRUCTOR").upper().strip()
+                valid_org_roles = [r.value for r in OrgRole]
+                if clean_role not in valid_org_roles and clean_role not in [
+                    "ORG_OWNER"
+                ]:
+                    raise ValueError(
+                        f"Vai trò '{role_id}' không thuộc danh sách vai trò hợp lệ của Tổ chức ({', '.join(valid_org_roles)})."
+                    )
+                if clean_role in [OrgRole.OWNER.value, "ORG_OWNER"]:
                     raise PermissionError(
-                        "Không thể gửi lời mời cho vai trò Chủ sở hữu Tổ chức (ORG_OWNER)."
+                        "Không thể gửi lời mời trực tiếp cho vai trò Chủ sở hữu Tổ chức (OWNER)."
                     )
                 type_enum = InvitationType.ORGANIZATION_MEMBER
                 target_org_id = await self._resolve_target_org_id(
@@ -1023,6 +1041,23 @@ class IdentityUseCase:
             invitee_user = await user_repo.get_by_email(invitee_email_clean)
             invitee_id = invitee_user.id if invitee_user else None
 
+            # Check if user is already an active member of the organization
+            if invitee_user and type_enum == InvitationType.ORGANIZATION_MEMBER:
+                existing_member = await org_repo.get_member(invitee_user.id, target_id)
+                if existing_member and existing_member.status == "ACTIVE":
+                    raise ValueError(
+                        f"Người dùng '{invitee_email_clean}' đã là thành viên của Tổ chức này."
+                    )
+
+            # Check if a PENDING invitation already exists for this email and target
+            existing_invite = await inv_repo.find_pending_invitation(
+                invitee_email_clean, target_id, type_enum.value
+            )
+            if existing_invite and isinstance(existing_invite, Invitation):
+                raise ValueError(
+                    f"Đã có một lời mời đang chờ phản hồi (PENDING) gửi tới '{invitee_email_clean}' cho Tổ chức này."
+                )
+
             raw_token = f"inv_tok_{uuid.uuid4().hex}"
             token_hash = hash_invitation_token(raw_token)
             now_dt = datetime.now(timezone.utc)
@@ -1061,10 +1096,17 @@ class IdentityUseCase:
             return []
         async with async_session_scope() as session:
             inv_repo = InvitationRepository(session)
+            org_repo = OrganizationRepository(session)
+            clean_target_id = (target_id or "").strip()
+            if clean_target_id:
+                resolved_id = await self._resolve_target_org_id(
+                    org_repo, current_user, clean_target_id
+                )
+                clean_target_id = resolved_id or clean_target_id
             invs = await inv_repo.list_sent_invitations(
                 inviter_id=current_user.id,
                 inv_type=type,
-                target_id=target_id,
+                target_id=clean_target_id,
             )
             return [self._invitation_to_dict(i) for i in invs]
 

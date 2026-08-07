@@ -228,6 +228,22 @@ message RemoveOrganizationMemberResponse {
   bool success = 1;
 }
 
+message UserOrganizationDetail {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string avatar_url = 4;
+  string role_in_org = 5;
+  string status = 6;
+  string joined_at = 7;
+}
+
+message ListMyOrganizationsRequest {}
+
+message ListMyOrganizationsResponse {
+  repeated UserOrganizationDetail organizations = 1;
+}
+
 message GoogleRegisterVerifyRequest {
   string google_id_token = 1;
 }
@@ -349,6 +365,9 @@ service IdentityService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc RemoveOrganizationMember(RemoveOrganizationMemberRequest) returns (RemoveOrganizationMemberResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc ListMyOrganizations(ListMyOrganizationsRequest) returns (ListMyOrganizationsResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 
