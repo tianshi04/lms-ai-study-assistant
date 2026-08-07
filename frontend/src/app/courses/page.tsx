@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { cacheLife, cacheTag } from "next/cache";
 import { connection } from "next/server";
+import { cacheLife, cacheTag } from "next/cache";
 import { getPublicRpcServerClient } from "@/lib/server_connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CourseCatalogClient } from "./CourseCatalogClient";
