@@ -8,6 +8,7 @@ declare namespace google {
         client_id: string;
         scope: string;
         ux_mode: 'popup' | 'redirect';
+        nonce?: string;
         callback: (response: CodeResponse) => void;
         login_hint?: string;
       }

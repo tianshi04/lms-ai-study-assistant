@@ -11,22 +11,6 @@ interface GoogleAuthButtonProps {
   className?: string;
 }
 
-export function generateCodeVerifier(): string {
-  const array = new Uint32Array(56 / 2);
-  window.crypto.getRandomValues(array);
-  return Array.from(array, (dec) => ("0" + dec.toString(16)).substring(-2)).join("");
-}
-
-export async function generateCodeChallenge(verifier: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(verifier);
-  const digest = await window.crypto.subtle.digest("SHA-256", data);
-  return btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
 function generateNonce(length = 32): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const array = new Uint32Array(length);
@@ -68,11 +52,12 @@ export function GoogleAuthButton({
 
     try {
       const nonce = generateNonce();
-      
+
       const client = google.accounts.oauth2.initCodeClient({
         client_id: googleClientId,
         scope: "openid email profile",
         ux_mode: "popup",
+        nonce: nonce,
         callback: (response) => {
           setInternalLoading(false);
           if (response.error) {
@@ -84,7 +69,7 @@ export function GoogleAuthButton({
           }
         },
       });
-      
+
       client.requestCode();
     } catch (error) {
       console.error(error);
