@@ -196,8 +196,7 @@ export function AIChatbot() {
     <div className="fixed bottom-6 right-6 z-widget flex flex-col items-end pointer-events-auto">
       {/* Floating Chat Box Window */}
       {isOpen && (
-        <div
-          role="region"
+        <section
           aria-label="Trợ lý AI Hỗ Trợ"
           className="mb-3 w-[360px] sm:w-[400px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[calc(100vh-6rem)] bg-surface-container-lowest border border-outline-variant/30 rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-colors duration-m3-short-4 ease-m3-emphasized"
         >
@@ -268,8 +267,7 @@ export function AIChatbot() {
                 })}
 
                 {showThinkingIndicator && (
-                  <div
-                    role="status"
+                  <output
                     aria-live="polite"
                     className="flex items-center gap-2 text-xs text-on-surface-variant italic py-1 animate-pulse"
                   >
@@ -278,7 +276,7 @@ export function AIChatbot() {
                       aria-hidden="true"
                     />
                     <span>Trợ lý AI đang suy nghĩ…</span>
-                  </div>
+                  </output>
                 )}
                 <div ref={messagesEndRef} />
               </>
@@ -340,7 +338,7 @@ export function AIChatbot() {
               AI có thể mắc sai sót. Vui lòng kiểm tra lại thông tin quan trọng.
             </p>
           </form>
-        </div>
+        </section>
       )}
 
       {/* Floating Action Circular Button (MD3 Primary FAB) */}

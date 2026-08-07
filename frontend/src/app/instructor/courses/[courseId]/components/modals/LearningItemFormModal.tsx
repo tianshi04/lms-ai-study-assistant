@@ -191,7 +191,10 @@ export function LearningItemFormModal({
             </div>
 
             <div className="sm:col-span-4">
-              <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1">
+              <label
+                htmlFor="itemTypeSelect"
+                className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1"
+              >
                 Loại nội dung
               </label>
               <Select
@@ -200,7 +203,11 @@ export function LearningItemFormModal({
                   if (val) setItemType(Number(val) as ItemType);
                 }}
               >
-                <SelectTrigger className="w-full bg-card shadow-2xs">
+                <SelectTrigger
+                  id="itemTypeSelect"
+                  aria-label="Loại nội dung"
+                  className="w-full bg-card shadow-2xs"
+                >
                   <SelectValue placeholder="Chọn loại nội dung">
                     {itemType === ItemType.VIDEO
                       ? "🎬 VIDEO (Bài giảng Video)"
@@ -302,11 +309,15 @@ export function LearningItemFormModal({
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Edit3 className="w-4 h-4 text-primary" aria-hidden="true" />
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <label
+                    htmlFor="readingMarkdown"
+                    className="block text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                  >
                     Nội dung Soạn thảo (Markdown)
                   </label>
                 </div>
                 <Textarea
+                  id="readingMarkdown"
                   rows={13}
                   value={readingMarkdown}
                   onChange={(e) => setReadingMarkdown(e.target.value)}
@@ -319,9 +330,9 @@ export function LearningItemFormModal({
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <Eye className="w-4 h-4 text-primary" aria-hidden="true" />
-                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Xem trước Giao diện (Live Preview)
-                  </label>
+                  </span>
                 </div>
                 <div className="p-4 rounded-2xl border border-border bg-card text-foreground text-sm prose dark:prose-invert max-w-none min-h-[300px] max-h-[360px] overflow-y-auto shadow-2xs">
                   {readingMarkdown ? (
@@ -341,7 +352,10 @@ export function LearningItemFormModal({
             <div className="space-y-4">
               <div className="flex items-center gap-3 bg-card p-3 rounded-xl border border-border">
                 <Code className="w-4 h-4 text-primary" aria-hidden="true" />
-                <label className="text-xs font-bold uppercase tracking-wider text-foreground shrink-0">
+                <label
+                  htmlFor="labLanguage"
+                  className="text-xs font-bold uppercase tracking-wider text-foreground shrink-0"
+                >
                   Ngôn ngữ lập trình:
                 </label>
                 <div className="w-48">
@@ -351,7 +365,11 @@ export function LearningItemFormModal({
                       if (val) setLabLanguage(val as string);
                     }}
                   >
-                    <SelectTrigger className="w-full bg-card">
+                    <SelectTrigger
+                      id="labLanguage"
+                      aria-label="Ngôn ngữ lập trình"
+                      className="w-full bg-card"
+                    >
                       <SelectValue placeholder="Chọn ngôn ngữ">
                         {labLanguage === "python"
                           ? "Python 3"
@@ -399,7 +417,10 @@ export function LearningItemFormModal({
           {(itemType === ItemType.PRACTICE_QUIZ || itemType === ItemType.GRADED_QUIZ) && (
             <div className="space-y-4">
               <div className="bg-card p-4 rounded-2xl border border-border shadow-2xs space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                <label
+                  htmlFor="quizBankId"
+                  className="block text-xs font-bold uppercase tracking-wider text-foreground"
+                >
                   Ngân hàng Câu hỏi liên kết
                 </label>
                 <Select
@@ -408,7 +429,11 @@ export function LearningItemFormModal({
                     setQuizBankId((val as string) || "");
                   }}
                 >
-                  <SelectTrigger className="w-full bg-card">
+                  <SelectTrigger
+                    id="quizBankId"
+                    aria-label="Ngân hàng Câu hỏi liên kết"
+                    className="w-full bg-card"
+                  >
                     <SelectValue placeholder="-- Chọn Ngân hàng Câu hỏi --">
                       {(() => {
                         const bank = questionBanks.find((b) => b.id === quizBankId);
@@ -524,11 +549,15 @@ export function LearningItemFormModal({
             <div className="bg-card p-4 rounded-2xl border border-border shadow-2xs space-y-3">
               <div className="flex items-center gap-2 border-b border-border pb-2">
                 <Users className="w-4 h-4 text-primary" aria-hidden="true" />
-                <label className="block text-xs font-bold uppercase tracking-wider text-foreground">
+                <label
+                  htmlFor="peerRubricJson"
+                  className="block text-xs font-bold uppercase tracking-wider text-foreground"
+                >
                   Tiêu chí chấm điểm Peer Review (Cấu hình JSON)
                 </label>
               </div>
               <Textarea
+                id="peerRubricJson"
                 rows={8}
                 value={peerRubricJson}
                 onChange={(e) => setPeerRubricJson(e.target.value)}

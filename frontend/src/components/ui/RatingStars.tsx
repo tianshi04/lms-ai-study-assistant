@@ -26,8 +26,7 @@ export function RatingStars({
   const roundedRating = Math.round(rating);
 
   return (
-    <div
-      role="img"
+    <span
       aria-label={`Đánh giá ${rating.toFixed(1)} trên ${maxStars} sao`}
       className={cn("inline-flex items-center gap-1", className)}
     >
@@ -50,6 +49,6 @@ export function RatingStars({
       {showScore ? (
         <span className="text-xs font-bold text-foreground ml-1">{rating.toFixed(1)}</span>
       ) : null}
-    </div>
+    </span>
   );
 }

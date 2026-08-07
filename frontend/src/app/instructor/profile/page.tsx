@@ -169,10 +169,14 @@ export default function InstructorProfilePage() {
         {/* Academic Title & Signature Form */}
         <div className="bg-card rounded-2xl p-6 sm:p-8 border border-border shadow-sm space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-muted-foreground mb-1.5">
+            <label
+              htmlFor="academicTitle"
+              className="block text-sm font-semibold text-muted-foreground mb-1.5"
+            >
               Chức danh khoa học & Học vị
             </label>
             <Input
+              id="academicTitle"
               type="text"
               value={title}
               onChange={(e) => setTitleInput(e.target.value)}
@@ -185,10 +189,14 @@ export default function InstructorProfilePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-muted-foreground mb-1.5">
+            <label
+              htmlFor="signatureImageUrl"
+              className="block text-sm font-semibold text-muted-foreground mb-1.5"
+            >
               URL Ảnh Chữ ký tay Điện tử (PNG / SVG nền trong suốt)
             </label>
             <Input
+              id="signatureImageUrl"
               type="text"
               value={signatureImageUrl}
               onChange={(e) => setSignatureInput(e.target.value)}

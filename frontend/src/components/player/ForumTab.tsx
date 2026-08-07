@@ -419,13 +419,16 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                         </div>
                       </div>
                     ) : (
-                      <h4
+                      <button
+                        type="button"
                         onClick={() => setSelectedModalThreadId(thread.id)}
-                        className="font-bold text-on-surface text-sm hover:text-primary transition-colors cursor-pointer"
+                        className="text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg cursor-pointer group/title"
                         title="Bấm để mở rộng bài viết"
                       >
-                        {thread.title}
-                      </h4>
+                        <h4 className="font-bold text-on-surface text-sm group-hover/title:text-primary transition-colors">
+                          {thread.title}
+                        </h4>
+                      </button>
                     )}
                   </div>
 

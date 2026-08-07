@@ -229,8 +229,12 @@ export default function NewCoursePage() {
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Organization / Partner Scoping Selection */}
+            {/* Organization / Partner Scoping Selection */}
             <div className="md:col-span-2 space-y-2">
-              <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+              <label
+                htmlFor="orgSelect"
+                className="block text-xs font-bold text-foreground uppercase tracking-wider"
+              >
                 Partner / Tổ Chức Đại Diện Bảo Chứng <span className="text-destructive">*</span>
               </label>
               {loadingOrgs ? (
@@ -242,7 +246,11 @@ export default function NewCoursePage() {
                     if (val) setSelectedOrgId(val as string);
                   }}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger
+                    id="orgSelect"
+                    aria-label="Partner / Tổ Chức Đại Diện Bảo Chứng"
+                    className="w-full"
+                  >
                     <SelectValue placeholder="Chọn Partner / Tổ chức">
                       {selectedOrgId === "partner_community"
                         ? "🌐 Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)"
@@ -275,10 +283,14 @@ export default function NewCoursePage() {
 
             {/* Course Title */}
             <div className="space-y-2 md:col-span-2">
-              <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+              <label
+                htmlFor="courseTitle"
+                className="block text-xs font-bold text-foreground uppercase tracking-wider"
+              >
                 Tên Khóa Học <span className="text-destructive">*</span>
               </label>
               <Input
+                id="courseTitle"
                 type="text"
                 required
                 value={title}
@@ -290,7 +302,10 @@ export default function NewCoursePage() {
 
             {/* Course Slug */}
             <div className="space-y-2 md:col-span-2">
-              <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+              <label
+                htmlFor="courseSlug"
+                className="block text-xs font-bold text-foreground uppercase tracking-wider"
+              >
                 Đường dẫn tĩnh (Slug) <span className="text-destructive">*</span>
               </label>
               <div className="flex items-center rounded-xl overflow-hidden">
@@ -298,6 +313,7 @@ export default function NewCoursePage() {
                   /courses/
                 </span>
                 <Input
+                  id="courseSlug"
                   required
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
@@ -311,7 +327,10 @@ export default function NewCoursePage() {
 
             {/* Subject */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+              <label
+                htmlFor="courseSubject"
+                className="block text-xs font-bold text-foreground uppercase tracking-wider"
+              >
                 Lĩnh Vực Chuyên Môn
               </label>
               <Select
@@ -320,7 +339,11 @@ export default function NewCoursePage() {
                   if (val) setSubject(val as string);
                 }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger
+                  id="courseSubject"
+                  aria-label="Lĩnh Vực Chuyên Môn"
+                  className="w-full"
+                >
                   <SelectValue placeholder="Chọn lĩnh vực">{subject}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -335,7 +358,10 @@ export default function NewCoursePage() {
 
             {/* Level */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+              <label
+                htmlFor="courseLevel"
+                className="block text-xs font-bold text-foreground uppercase tracking-wider"
+              >
                 Trình Độ Yêu Cầu
               </label>
               <Select
@@ -344,7 +370,7 @@ export default function NewCoursePage() {
                   if (val) setLevel(val as string);
                 }}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="courseLevel" aria-label="Trình Độ Yêu Cầu" className="w-full">
                   <SelectValue placeholder="Chọn trình độ">
                     {level === "Sơ cấp"
                       ? "Sơ cấp (Beginner)"
@@ -365,10 +391,14 @@ export default function NewCoursePage() {
 
             {/* Description */}
             <div className="space-y-2 md:col-span-2">
-              <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+              <label
+                htmlFor="courseDescription"
+                className="block text-xs font-bold text-foreground uppercase tracking-wider"
+              >
                 Mô Tả Tổng Quan Khóa Học
               </label>
               <Textarea
+                id="courseDescription"
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}

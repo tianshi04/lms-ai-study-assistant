@@ -250,18 +250,19 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
                   const isActive = cue.originalIndex === activeIndex;
 
                   return (
-                    <span
+                    <button
+                      type="button"
                       key={cue.originalIndex}
                       id={`transcript-cue-${cue.originalIndex}`}
                       onClick={() => onSeekVideo(cue.startTime)}
-                      className={`transition-colors duration-m3-short-4 ease-m3-emphasized cursor-pointer inline box-decoration-clone rounded-md px-1 py-0.5 ${
+                      className={`transition-colors duration-m3-short-4 ease-m3-emphasized cursor-pointer inline box-decoration-clone rounded-md px-1 py-0.5 text-left border-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                         isActive
                           ? "bg-primary-container text-on-primary-container font-bold shadow-xs ring-1 ring-primary/30"
                           : "text-on-surface/80 hover:text-on-surface hover:bg-surface-container-high"
                       }`}
                     >
                       {renderHighlightedText(cue.text, searchQuery)}{" "}
-                    </span>
+                    </button>
                   );
                 })}
               </p>

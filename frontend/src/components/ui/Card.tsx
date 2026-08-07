@@ -29,7 +29,7 @@ export function CardHeader({ className, ref, ...props }: React.ComponentProps<"d
   return <div ref={ref} className={cn("flex flex-col space-y-1.5 pb-4", className)} {...props} />;
 }
 
-export function CardTitle({ className, ref, ...props }: React.ComponentProps<"h3">) {
+export function CardTitle({ className, ref, children, ...props }: React.ComponentProps<"h3">) {
   return (
     <h3
       ref={ref}
@@ -38,7 +38,9 @@ export function CardTitle({ className, ref, ...props }: React.ComponentProps<"h3
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+    </h3>
   );
 }
 

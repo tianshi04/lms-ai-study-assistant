@@ -251,8 +251,7 @@ export function LearnPageAIChatbot({
   });
 
   return (
-    <div
-      role="region"
+    <section
       aria-label="Trợ lý AI Học Tập"
       className="flex flex-col h-full w-full bg-surface-container-lowest text-on-surface rounded-3xl overflow-hidden"
     >
@@ -268,7 +267,7 @@ export function LearnPageAIChatbot({
           <button
             type="button"
             onClick={handleNewChat}
-            className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer"
+            className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             title="Tạo cuộc trò chuyện mới"
             aria-label="Tạo cuộc trò chuyện mới"
           >
@@ -278,7 +277,7 @@ export function LearnPageAIChatbot({
             <button
               type="button"
               onClick={onClose}
-              className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer"
+              className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               title="Đóng Trợ lý AI"
               aria-label="Đóng Trợ lý AI"
             >
@@ -304,14 +303,13 @@ export function LearnPageAIChatbot({
             ))}
 
             {showThinkingIndicator && (
-              <div
-                role="status"
+              <output
                 aria-live="polite"
                 className="flex items-center gap-2 text-xs text-on-surface-variant italic py-1 animate-pulse"
               >
                 <Sparkles className="w-3.5 h-3.5 text-primary animate-spin" aria-hidden="true" />
                 <span>Trợ lý AI đang suy nghĩ…</span>
-              </div>
+              </output>
             )}
             <div ref={messagesEndRef} />
           </>
@@ -332,11 +330,7 @@ export function LearnPageAIChatbot({
             </p>
 
             {suggestions.length > 0 && (
-              <div
-                role="group"
-                aria-label="Gợi ý câu hỏi bài học"
-                className="flex flex-wrap items-center justify-center gap-2 max-w-md"
-              >
+              <div className="flex flex-wrap items-center justify-center gap-2 max-w-md">
                 {suggestions.map((text) => (
                   <button
                     key={text}
@@ -392,6 +386,6 @@ export function LearnPageAIChatbot({
           AI có thể mắc sai sót. Vui lòng kiểm tra lại thông tin quan trọng.
         </p>
       </form>
-    </div>
+    </section>
   );
 }

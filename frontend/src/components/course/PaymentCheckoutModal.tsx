@@ -117,9 +117,11 @@ export function PaymentCheckoutModal({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
           {/* Mua lẻ */}
-          <div
+          <button
+            type="button"
+            aria-label="Chọn Mua Lẻ Khóa"
             onClick={() => setSelectedOption("SINGLE")}
-            className={`cursor-pointer p-4 rounded-xl border-2 transition-colors flex flex-col justify-between ${
+            className={`text-left cursor-pointer p-4 rounded-xl border-2 transition-colors flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               selectedOption === "SINGLE"
                 ? "border-primary bg-primary/5 shadow-md"
                 : "border-border hover:border-primary/50"
@@ -143,17 +145,19 @@ export function PaymentCheckoutModal({
                 Quyền truy cập Paid Mode vĩnh viễn riêng khóa học này.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-border">
+            <div className="mt-4 pt-3 border-t border-border w-full">
               <span className="text-lg font-bold text-primary">
                 {priceVnd.toLocaleString("vi-VN")} VNĐ
               </span>
             </div>
-          </div>
+          </button>
 
           {/* Coursera Plus - Tháng */}
-          <div
+          <button
+            type="button"
+            aria-label="Chọn Coursera Plus Gói Theo Tháng"
             onClick={() => setSelectedOption("PLUS_MONTHLY")}
-            className={`cursor-pointer p-4 rounded-xl border-2 transition-colors flex flex-col justify-between relative ${
+            className={`text-left cursor-pointer p-4 rounded-xl border-2 transition-colors flex flex-col justify-between relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               selectedOption === "PLUS_MONTHLY"
                 ? "border-primary bg-primary/5 shadow-md"
                 : "border-border hover:border-primary/50"
@@ -175,16 +179,18 @@ export function PaymentCheckoutModal({
                 Mở khóa 100% khóa học trên nền tảng trong 30 ngày.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-border">
+            <div className="mt-4 pt-3 border-t border-border w-full">
               <span className="text-lg font-bold text-primary">790,000 VNĐ</span>
               <span className="text-xs text-muted-foreground font-normal"> / tháng</span>
             </div>
-          </div>
+          </button>
 
           {/* Coursera Plus - Năm */}
-          <div
+          <button
+            type="button"
+            aria-label="Chọn Coursera Plus Gói Theo Năm"
             onClick={() => setSelectedOption("PLUS_YEARLY")}
-            className={`cursor-pointer p-4 rounded-xl border-2 transition-colors flex flex-col justify-between relative ${
+            className={`text-left cursor-pointer p-4 rounded-xl border-2 transition-colors flex flex-col justify-between relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               selectedOption === "PLUS_YEARLY"
                 ? "border-primary bg-primary/5 shadow-md"
                 : "border-border hover:border-primary/50"
@@ -209,11 +215,11 @@ export function PaymentCheckoutModal({
                 Mở khóa 100% khóa học trong 365 ngày liên tục.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-border">
+            <div className="mt-4 pt-3 border-t border-border w-full">
               <span className="text-lg font-bold text-primary">5,900,000 VNĐ</span>
               <span className="text-xs text-muted-foreground font-normal"> / năm</span>
             </div>
-          </div>
+          </button>
         </div>
 
         <DialogFooter className="flex items-center justify-end gap-3 pt-3 border-t border-border">

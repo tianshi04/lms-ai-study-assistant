@@ -154,10 +154,14 @@ export default function InstructorAnnouncementsPage({
 
             <form onSubmit={handlePostAnnouncement} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                <label
+                  htmlFor="announcementTitle"
+                  className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1"
+                >
                   Tiêu đề thông báo *
                 </label>
                 <Input
+                  id="announcementTitle"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -167,10 +171,14 @@ export default function InstructorAnnouncementsPage({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                <label
+                  htmlFor="announcementContent"
+                  className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1"
+                >
                   Nội dung chi tiết *
                 </label>
                 <Textarea
+                  id="announcementContent"
                   rows={4}
                   value={content}
                   onChange={(e) => setContent(e.target.value)}

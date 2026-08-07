@@ -180,10 +180,12 @@ export default function PartnerPublicPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {partnerCourses.map((course) => (
-                    <div
+                    <button
+                      type="button"
                       key={course.id}
+                      aria-label={`Khóa học ${course.title}`}
                       onClick={() => router.push(`/courses/${course.slug}`)}
-                      className="bg-card rounded-2xl border border-border p-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-colors cursor-pointer flex flex-col justify-between"
+                      className="text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring bg-card rounded-2xl border border-border p-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-colors cursor-pointer flex flex-col justify-between"
                     >
                       <div>
                         <div className="flex items-center space-x-2 mb-2">
@@ -211,11 +213,11 @@ export default function PartnerPublicPage() {
                             ({course.reviewCount || 0})
                           </span>
                         </div>
-                        <span className="text-xs font-semibold text-primary hover:underline">
+                        <span className="text-xs font-semibold text-primary">
                           Xem khóa học &rarr;
                         </span>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}

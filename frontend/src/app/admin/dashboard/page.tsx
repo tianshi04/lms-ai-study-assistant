@@ -393,7 +393,10 @@ export default function AdminEnterpriseDashboardPage() {
           />
 
           <div>
-            <label className="block text-xs font-semibold text-foreground mb-1.5">
+            <label
+              htmlFor="selectedSeatKey"
+              className="block text-xs font-semibold text-foreground mb-1.5"
+            >
               Chọn Mã Enterprise Key
             </label>
             <Select
@@ -402,7 +405,11 @@ export default function AdminEnterpriseDashboardPage() {
                 if (val) setSelectedSeatKey(val as string);
               }}
             >
-              <SelectTrigger className="w-full font-mono font-semibold">
+              <SelectTrigger
+                id="selectedSeatKey"
+                aria-label="Chọn Mã Enterprise Key"
+                className="w-full font-mono font-semibold"
+              >
                 <SelectValue placeholder="Chọn Mã Enterprise Key">
                   {(() => {
                     const s = seats.find((seat) => seat.seatKey === selectedSeatKey);

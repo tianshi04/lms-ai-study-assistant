@@ -27,13 +27,15 @@ export interface BreadcrumbLinkProps extends React.ComponentProps<"a"> {
   asChild?: boolean;
 }
 
-export function BreadcrumbLink({ className, ref, ...props }: BreadcrumbLinkProps) {
+export function BreadcrumbLink({ className, ref, children, ...props }: BreadcrumbLinkProps) {
   return (
     <a
       ref={ref}
       className={cn("transition-colors hover:text-foreground text-muted-foreground", className)}
       {...props}
-    />
+    >
+      {children}
+    </a>
   );
 }
 
@@ -41,8 +43,6 @@ export function BreadcrumbPage({ className, ref, ...props }: React.ComponentProp
   return (
     <span
       ref={ref}
-      role="link"
-      aria-disabled="true"
       aria-current="page"
       className={cn("font-semibold text-foreground", className)}
       {...props}

@@ -167,8 +167,11 @@ function ForgotPasswordContent() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">Mật khẩu mới</label>
+              <label htmlFor="newPassword" className="text-xs font-semibold text-foreground">
+                Mật khẩu mới
+              </label>
               <Input
+                id="newPassword"
                 type="password"
                 placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
                 value={newPassword}
@@ -180,8 +183,11 @@ function ForgotPasswordContent() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">Xác nhận mật khẩu mới</label>
+              <label htmlFor="confirmPassword" className="text-xs font-semibold text-foreground">
+                Xác nhận mật khẩu mới
+              </label>
               <Input
+                id="confirmPassword"
                 type="password"
                 placeholder="Nhập lại mật khẩu mới để xác nhận"
                 value={confirmPassword}

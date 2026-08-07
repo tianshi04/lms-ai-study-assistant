@@ -709,10 +709,14 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+            <label
+              htmlFor="qText"
+              className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1"
+            >
               Nội dung Cốt lõi của Câu hỏi *
             </label>
             <Textarea
+              id="qText"
               rows={3}
               required
               value={qText}
@@ -725,9 +729,9 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
           {/* Options */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Danh sách Phương án Trả lời *
-              </label>
+              </span>
               <Button
                 type="button"
                 variant="ghost"
@@ -774,10 +778,14 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
           </div>
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+            <label
+              htmlFor="qExplanation"
+              className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1"
+            >
               Giải thích Đáp án (Explanation)
             </label>
             <Textarea
+              id="qExplanation"
               rows={2}
               value={qExplanation}
               onChange={(e) => setQExplanation(e.target.value)}

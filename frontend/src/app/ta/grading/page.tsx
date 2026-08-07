@@ -299,9 +299,9 @@ export default function TAGradingPage() {
 
               {/* Submission Content Text */}
               <div className="space-y-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Nội dung bài làm của học viên
-                </label>
+                </span>
                 <div className="p-4 rounded-2xl bg-card border border-border text-xs font-mono text-foreground leading-relaxed max-h-48 overflow-y-auto">
                   {selectedSubmission.textContent}
                 </div>

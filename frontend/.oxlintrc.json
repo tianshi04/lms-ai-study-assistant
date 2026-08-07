@@ -1,5 +1,6 @@
 {
   "ignorePatterns": [".next/**", "out/**", "build/**", "next-env.d.ts", "src/gen/**"],
+  "plugins": ["jsx-a11y"],
   "rules": {
     "no-unused-vars": "error"
   }

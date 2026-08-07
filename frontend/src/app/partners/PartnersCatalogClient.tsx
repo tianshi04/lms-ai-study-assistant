@@ -280,18 +280,17 @@ export function PartnersCatalogClient() {
                       </span>
 
                       {partner.websiteUrl && (
-                        <span
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            window.open(partner.websiteUrl, "_blank", "noopener,noreferrer");
-                          }}
-                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-muted/80"
+                        <a
+                          href={partner.websiteUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           title="Trang web chính thức"
                         >
-                          <ExternalLink aria-hidden="true" className="w-3.5 h-3.5" />
+                          <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>Website</span>
-                        </span>
+                        </a>
                       )}
                     </div>
                   </Link>

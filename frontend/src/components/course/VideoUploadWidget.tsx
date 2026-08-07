@@ -219,7 +219,8 @@ export function VideoUploadWidget({
         </div>
       ) : activeTab === "upload" ? (
         <div className="space-y-3">
-          <div
+          <button
+            type="button"
             onDragOver={(e) => {
               e.preventDefault();
               setDragOver(true);
@@ -232,7 +233,7 @@ export function VideoUploadWidget({
               if (file) handleFileSelect(file);
             }}
             onClick={() => fileInputRef.current?.click()}
-            className={`border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
+            className={`w-full border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
               compact ? "p-3 sm:p-4" : "p-6"
             } ${
               dragOver
@@ -255,7 +256,7 @@ export function VideoUploadWidget({
             <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">
               {fileTypesHint || defaultFileTypesHint}
             </p>
-          </div>
+          </button>
 
           {isUploading && (
             <div className="space-y-1 bg-primary/10 p-3 rounded-xl border border-primary/20">

@@ -184,6 +184,7 @@ export function VideoPlayer({
             <iframe
               key={activeItem.id}
               src={youtubeEmbedUrl}
+              title={activeItem.title || "Video bài giảng"}
               className="w-full h-full border-0 rounded-2xl shadow-md"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
@@ -197,8 +198,11 @@ export function VideoPlayer({
               onTimeUpdate={onTimeUpdate}
               onSeeking={onSeeking}
               onEnded={() => onMarkComplete?.(activeItem.id)}
+              aria-label={activeItem.title || "Video bài giảng"}
               className="w-full h-full object-contain rounded-2xl"
-            />
+            >
+              <track kind="captions" src="" label="Phụ đề" />
+            </video>
           )}
 
           {/* Floating Top Left Control Overlay for Video Preview Mode */}

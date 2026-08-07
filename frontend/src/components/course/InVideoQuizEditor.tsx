@@ -189,8 +189,11 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                 ref={videoRef}
                 src={videoUrl}
                 controls
+                aria-label="Xem trước video bài giảng"
                 className="w-full h-full object-contain"
-              />
+              >
+                <track kind="captions" src="" label="Phụ đề" />
+              </video>
             )}
           </div>
           {!isYouTubeUrl(videoUrl) && (
@@ -235,11 +238,15 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
 
         <div className="grid grid-cols-3 gap-3">
           <div className="col-span-1">
-            <label className="block text-[11px] font-bold text-muted-foreground mb-1">
+            <label
+              htmlFor="timestampSeconds"
+              className="block text-[11px] font-bold text-muted-foreground mb-1"
+            >
               Mốc thời gian (Giây)
             </label>
             <div className="flex items-center gap-2">
               <Input
+                id="timestampSeconds"
                 type="number"
                 min={0}
                 value={timestampSeconds}
@@ -255,10 +262,14 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
           </div>
 
           <div className="col-span-2">
-            <label className="block text-[11px] font-bold text-muted-foreground mb-1">
+            <label
+              htmlFor="quizQuestion"
+              className="block text-[11px] font-bold text-muted-foreground mb-1"
+            >
               Nội dung câu hỏi
             </label>
             <Input
+              id="quizQuestion"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
               placeholder="VD: Hàm print() trong Python có tác dụng gì?"
@@ -271,9 +282,9 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
         {/* Dynamic Options List */}
         <div className="space-y-2 pt-1">
           <div className="flex items-center justify-between">
-            <label className="block text-[11px] font-bold text-muted-foreground">
+            <span className="block text-[11px] font-bold text-muted-foreground">
               Phương án trả lời (Tích chọn nút tròn để chỉ định Đáp án Đúng):
-            </label>
+            </span>
             <Button
               type="button"
               variant="ghost"
@@ -333,10 +344,14 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
         </div>
 
         <div>
-          <label className="block text-[11px] font-bold text-muted-foreground mb-1">
+          <label
+            htmlFor="quizExplanation"
+            className="block text-[11px] font-bold text-muted-foreground mb-1"
+          >
             Lời giải thích chi tiết (Hiển thị sau khi học viên nộp bài)
           </label>
           <Input
+            id="quizExplanation"
             value={explanation}
             onChange={(e) => setExplanation(e.target.value)}
             placeholder="VD: print() là hàm tích hợp sẵn của Python để ghi dữ liệu ra console."

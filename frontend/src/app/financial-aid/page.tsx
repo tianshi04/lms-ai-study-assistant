@@ -198,10 +198,11 @@ function FinancialAidContent() {
               const partnerName = matchedCourse ? matchedCourse.partnerName : "Coursera AI Partner";
 
               return (
-                <div
+                <button
+                  type="button"
                   key={app.id}
                   onClick={() => setSelectedApp(app)}
-                  className={`bg-card border rounded-2xl p-5 shadow-sm hover:shadow-md transition-colors cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                  className={`w-full text-left bg-card border rounded-2xl p-5 shadow-sm hover:shadow-md transition-colors cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                     selectedApp?.id === app.id
                       ? "border-primary ring-2 ring-primary/20"
                       : "border-border"
@@ -231,12 +232,6 @@ function FinancialAidContent() {
                         {`Chờ duyệt (${app.reviewDeadlineDaysLeft}d left)`}
                       </Badge>
                     )}
-                    {app.status === "APPROVED" && (
-                      <Badge variant="success" className="flex items-center gap-1.5">
-                        <Check aria-hidden="true" className="w-3.5 h-3.5 text-success" />
-                        {"Đã Phê Duyệt"}
-                      </Badge>
-                    )}
                     {app.status === "REJECTED" && (
                       <Badge variant="danger" className="flex items-center gap-1.5">
                         <X aria-hidden="true" className="w-3.5 h-3.5 text-destructive" />
@@ -244,12 +239,12 @@ function FinancialAidContent() {
                       </Badge>
                     )}
 
-                    <Button type="button" variant="ghost" size="sm">
+                    <span className="inline-flex items-center text-xs font-semibold text-primary">
                       {"Xem chi tiết"}
                       <ChevronRight aria-hidden="true" className="w-3.5 h-3.5 ml-1" />
-                    </Button>
+                    </span>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

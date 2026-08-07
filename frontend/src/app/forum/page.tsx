@@ -565,13 +565,16 @@ function ForumPageContent() {
                         )}
                       </div>
 
-                      <h2
+                      <button
+                        type="button"
                         onClick={() => setSelectedModalThreadId(thread.id)}
-                        className="text-xl font-bold text-foreground leading-snug hover:text-primary transition-colors cursor-pointer"
+                        className="text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg cursor-pointer group/title"
                         title="Bấm để mở rộng xem thảo luận riêng"
                       >
-                        {thread.title}
-                      </h2>
+                        <h2 className="text-xl font-bold text-foreground leading-snug group-hover/title:text-primary transition-colors">
+                          {thread.title}
+                        </h2>
+                      </button>
                     </div>
 
                     {/* Upvote Button */}
@@ -759,7 +762,6 @@ function ForumPageContent() {
                         ) : (
                           <div className="space-y-2">
                             <Textarea
-                              autoFocus
                               value={replyInputs[thread.id] || ""}
                               onChange={(e) =>
                                 setReplyInputs((prev) => ({ ...prev, [thread.id]: e.target.value }))

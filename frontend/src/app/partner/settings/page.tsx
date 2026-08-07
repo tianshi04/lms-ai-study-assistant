@@ -579,7 +579,10 @@ function PartnerSettingsForm({
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-semibold uppercase text-muted-foreground">
+              <label
+                htmlFor="publicKeyPem"
+                className="block text-xs font-semibold uppercase text-muted-foreground"
+              >
                 Public Key PEM (Khóa Công khai Ký số Hiện tại)
               </label>
               {publicKeyPem && (
@@ -599,6 +602,7 @@ function PartnerSettingsForm({
               )}
             </div>
             <Textarea
+              id="publicKeyPem"
               value={publicKeyPem}
               readOnly
               rows={4}

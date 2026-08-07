@@ -441,10 +441,14 @@ export default function AdminPartnersPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+              <label
+                htmlFor="partnerName"
+                className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
+              >
                 Tên đối tác / Trường học <span className="text-destructive">*</span>
               </label>
               <Input
+                id="partnerName"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -453,10 +457,14 @@ export default function AdminPartnersPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+              <label
+                htmlFor="partnerSlug"
+                className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
+              >
                 Slug URL định danh <span className="text-destructive">*</span>
               </label>
               <Input
+                id="partnerSlug"
                 type="text"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
@@ -468,10 +476,14 @@ export default function AdminPartnersPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+            <label
+              htmlFor="partnerDesc"
+              className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
+            >
               Mô tả giới thiệu
             </label>
             <Textarea
+              id="partnerDesc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Giới thiệu sơ lược về tổ chức đối tác…"
@@ -481,10 +493,14 @@ export default function AdminPartnersPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+              <label
+                htmlFor="partnerLogo"
+                className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
+              >
                 URL Logo đối tác
               </label>
               <Input
+                id="partnerLogo"
                 type="text"
                 value={logoUrl}
                 onChange={(e) => setLogoUrl(e.target.value)}
@@ -492,10 +508,14 @@ export default function AdminPartnersPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+              <label
+                htmlFor="partnerBanner"
+                className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
+              >
                 URL Banner bìa
               </label>
               <Input
+                id="partnerBanner"
                 type="text"
                 value={bannerUrl}
                 onChange={(e) => setBannerUrl(e.target.value)}
@@ -503,10 +523,14 @@ export default function AdminPartnersPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+              <label
+                htmlFor="partnerWebsite"
+                className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
+              >
                 Website chính thức
               </label>
               <Input
+                id="partnerWebsite"
                 type="text"
                 value={websiteUrl}
                 onChange={(e) => setWebsiteUrl(e.target.value)}
@@ -516,10 +540,14 @@ export default function AdminPartnersPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+            <label
+              htmlFor="partnerDomains"
+              className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
+            >
               Tên miền được phép cấp chứng chỉ (Phân cách bởi dấu phẩy)
             </label>
             <Input
+              id="partnerDomains"
               type="text"
               value={allowedDomainsStr}
               onChange={(e) => setAllowedDomainsStr(e.target.value)}
@@ -535,10 +563,14 @@ export default function AdminPartnersPage() {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+                <label
+                  htmlFor="signerName"
+                  className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
+                >
                   Họ tên người ký (signer_name)
                 </label>
                 <Input
+                  id="signerName"
                   type="text"
                   value={signerName}
                   onChange={(e) => setSignerName(e.target.value)}
@@ -546,10 +578,14 @@ export default function AdminPartnersPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+                <label
+                  htmlFor="signerTitle"
+                  className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
+                >
                   Chức danh (signer_title)
                 </label>
                 <Input
+                  id="signerTitle"
                   type="text"
                   value={signerTitle}
                   onChange={(e) => setSignerTitle(e.target.value)}
@@ -557,10 +593,14 @@ export default function AdminPartnersPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+                <label
+                  htmlFor="signatureImg"
+                  className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
+                >
                   URL Ảnh chữ ký (signature_image_url)
                 </label>
                 <Input
+                  id="signatureImg"
                   type="text"
                   value={signatureImageUrl}
                   onChange={(e) => setSignatureImageUrl(e.target.value)}
@@ -651,10 +691,14 @@ export default function AdminPartnersPage() {
           </div>
 
           <div className="border-t border-border pt-4">
-            <label className="block text-xs font-semibold uppercase text-muted-foreground mb-1">
+            <label
+              htmlFor="publicKeyPem"
+              className="block text-xs font-semibold uppercase text-muted-foreground mb-1"
+            >
               Public Key PEM (Khóa công khai ký số)
             </label>
             <Textarea
+              id="publicKeyPem"
               value={publicKeyPem}
               onChange={(e) => setPublicKeyPem(e.target.value)}
               placeholder="-----BEGIN PUBLIC KEY-----…"
