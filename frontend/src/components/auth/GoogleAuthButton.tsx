@@ -29,7 +29,10 @@ export function GoogleAuthButton({
 
   const handleClick = async () => {
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    const devMockEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_MOCK === "true";
+    const isProduction = process.env.NEXT_PUBLIC_ENV === "production";
+    const devMockEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_MOCK
+      ? process.env.NEXT_PUBLIC_ENABLE_DEV_MOCK === "true"
+      : !isProduction;
 
     if (!googleClientId && devMockEnabled) {
       const inputEmail = window.prompt(
