@@ -145,7 +145,6 @@ message ListUserPurchasesResponse {
   repeated PaymentOrderInfo orders = 2;
 }
 
-
 service PaymentService {
   rpc PurchaseCourse(PurchaseCourseRequest) returns (PurchaseCourseResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
