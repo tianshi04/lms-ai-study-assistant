@@ -364,7 +364,7 @@ export function LearnPageAIChatbot({
             placeholder="Hỏi tôi bất cứ điều gì…"
             aria-label="Nhập câu hỏi cho Trợ lý AI"
             spellCheck={false}
-            className="flex-1 bg-transparent text-xs text-on-surface placeholder:text-on-surface-variant/70 border-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring py-1"
+            className="flex-1 bg-transparent text-xs text-on-surface placeholder:text-on-surface-variant/70 border-none focus-visible:outline-none py-1"
           />
           <Button
             type="submit"
