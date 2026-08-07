@@ -1,8 +1,8 @@
 "use client";
 
-import { use, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useGetInvitationByTokenQuery, useRespondToInvitationMutation } from "@/lib/query_hooks";
 import { InvitationAction, InvitationStatus, InvitationType } from "@/gen/identity/v1/identity_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -18,9 +18,9 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-export default function AcceptInvitationPage({ params }: { params: Promise<{ token: string }> }) {
-  const resolvedParams = use(params);
-  const token = resolvedParams.token;
+function AcceptInvitationContent() {
+  const params = useParams();
+  const token = (params?.token as string) || "";
   const router = useRouter();
   const { userEmail, isAuthenticated } = useAuth();
   const [feedback, setFeedback] = useState<{
@@ -234,5 +234,20 @@ export default function AcceptInvitationPage({ params }: { params: Promise<{ tok
         )}
       </div>
     </div>
+  );
+}
+
+export default function AcceptInvitationPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 text-muted-foreground">
+          <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+          <p className="text-sm">Đang tải thông tin lời mời...</p>
+        </div>
+      }
+    >
+      <AcceptInvitationContent />
+    </Suspense>
   );
 }
