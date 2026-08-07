@@ -25,6 +25,14 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/Table";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/Breadcrumb";
 
 interface PartnerAdminUser {
   id: string;
@@ -269,16 +277,22 @@ export default function AdminPartnersPage() {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-border gap-4">
         <div>
-          <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-1">
-            <button
-              onClick={() => router.push("/admin/dashboard")}
-              className="hover:text-primary transition-colors"
-            >
-              Trang quản trị
-            </button>
-            <span>/</span>
-            <span className="text-foreground font-medium">Đối tác phát hành</span>
-          </div>
+          <Breadcrumb className="mb-1">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  className="cursor-pointer"
+                  onClick={() => router.push("/admin/dashboard")}
+                >
+                  Trang quản trị
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Đối tác phát hành</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
           <h1 className="text-3xl font-extrabold text-foreground tracking-tight text-balance">
             Quản lý Đối tác Phát hành
           </h1>

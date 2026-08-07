@@ -14,6 +14,14 @@ import {
   TableCell,
 } from "@/components/ui/Table";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/Breadcrumb";
 
 export default function InstructorAnalyticsPage({
   params,
@@ -48,17 +56,23 @@ export default function InstructorAnalyticsPage({
       <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Breadcrumb */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Link href="/instructor/courses" className="hover:text-primary">
-              Giảng viên
-            </Link>
-            <span>/</span>
-            <Link href={`/instructor/courses/${courseId}`} className="hover:text-primary">
-              Chi tiết khóa học
-            </Link>
-            <span>/</span>
-            <span className="font-semibold text-foreground">Thống kê lớp học</span>
-          </div>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/instructor/courses">Giảng viên</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink href={`/instructor/courses/${courseId}`}>
+                  Chi tiết khóa học
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Thống kê lớp học</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
 
           <Link
             href={`/instructor/courses/${courseId}`}

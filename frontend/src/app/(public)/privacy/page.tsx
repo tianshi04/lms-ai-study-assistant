@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import {
   Shield,
   Lock,
@@ -12,11 +11,18 @@ import {
   CreditCard,
   UserCheck,
   Mail,
-  ChevronRight,
   Sparkles,
   FileCheck,
   AlertCircle,
 } from "lucide-react";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/Breadcrumb";
 
 interface Section {
   id: string;
@@ -76,16 +82,17 @@ export default function PrivacyPolicyPage() {
     <div className="min-h-screen bg-background text-foreground py-12 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-6xl mx-auto space-y-10">
         {/* Breadcrumb Navigation */}
-        <nav
-          aria-label="Breadcrumb"
-          className="flex items-center gap-2 text-xs text-muted-foreground"
-        >
-          <Link href="/" className="hover:text-primary transition-colors">
-            Trang chủ
-          </Link>
-          <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
-          <span className="text-foreground font-medium">Chính sách Bảo mật</span>
-        </nav>
+        <Breadcrumb>
+          <BreadcrumbList className="text-xs">
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/">Trang chủ</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Chính sách Bảo mật</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
         {/* Hero Section */}
         <div className="bg-card rounded-3xl p-8 sm:p-12 border border-border relative overflow-hidden text-center sm:text-left">
