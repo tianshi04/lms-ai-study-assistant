@@ -73,8 +73,10 @@ async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
     - KT #7: Immutable ID (sub)
     - KT #8: Nonce Validation
     """
-    # Dev Mode Mock (preserved for offline development)
-    if code.startswith("mock_google_"):
+    # Dev Mode Mock — chỉ hoạt động khi ENABLE_DEV_MOCK=true
+    from src.shared.config import settings
+
+    if code.startswith("mock_google_") and settings.ENABLE_DEV_MOCK:
         raw = code[len("mock_google_") :]
         parts = raw.rsplit("_", 1)
         email = parts[0] if parts else "user@gmail.com"
@@ -86,8 +88,6 @@ async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
             "name": name,
             "picture": f"https://api.dicebear.com/7.x/avataaars/svg?seed={email}",
         }
-
-    from src.shared.config import settings
 
     client_id = settings.GOOGLE_CLIENT_ID
     client_secret = settings.GOOGLE_CLIENT_SECRET

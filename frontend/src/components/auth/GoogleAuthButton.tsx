@@ -45,8 +45,9 @@ export function GoogleAuthButton({
 
   const handleClick = async () => {
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const devMockEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_MOCK === "true";
 
-    if (!googleClientId) {
+    if (!googleClientId && devMockEnabled) {
       const inputEmail = window.prompt(
         "Dev Mode: Nhập địa chỉ Gmail để giả lập xác minh Google",
         "user.test@gmail.com",
@@ -55,6 +56,11 @@ export function GoogleAuthButton({
         const mockToken = `mock_google_${inputEmail.trim()}_${inputEmail.split("@")[0]}`;
         onSuccess(mockToken, "mock");
       }
+      return;
+    }
+
+    if (!googleClientId) {
+      console.error("NEXT_PUBLIC_GOOGLE_CLIENT_ID chưa được cấu hình");
       return;
     }
 

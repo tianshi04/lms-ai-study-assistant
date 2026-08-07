@@ -97,6 +97,12 @@ class Settings(BaseSettings):
         default="", description="Google OAuth 2.0 Client Secret (Server-side only)"
     )
 
+    # 8. Dev Mode
+    ENABLE_DEV_MOCK: bool = Field(
+        default=False,
+        description="Cho phép Dev Mode Mock (Google Auth giả lập). KHÔNG BẬT ở Production!",
+    )
+
     @property
     def async_database_url(self) -> str:
         """Ensure database connection URL uses asyncpg driver format."""
