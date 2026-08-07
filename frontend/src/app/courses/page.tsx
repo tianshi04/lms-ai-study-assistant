@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
+import { cacheLife, cacheTag } from "next/cache";
 import { getPublicRpcServerClient } from "@/lib/server_connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CourseCatalogClient } from "./CourseCatalogClient";
 
-export const instant = false;
+export const metadata: Metadata = {
+  title: "Danh Sách Khóa Học | LMS AI Platform",
+  description: "Khám phá danh sách các khóa học chất lượng cao về AI và Công nghệ thông tin.",
+};
 
 /**
  * Best Practice Next.js 16 Cache Components:
@@ -11,7 +16,12 @@ export const instant = false;
  * Immediate cache invalidation is triggered via updateTag("courses") / updateTag("categories").
  */
 async function getInitialCatalogData() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("courses", "categories");
+
   const queryClient = new QueryClient();
+  const client = getPublicRpcServerClient(CatalogService);
 
   const defaultFilters = {
     searchQuery: "",
@@ -21,46 +31,18 @@ async function getInitialCatalogData() {
     pageSize: 10,
   };
 
-  const client = getPublicRpcServerClient(CatalogService);
-
-  const fetchWithTimeout = async <T,>(fn: () => Promise<T>, fallback: T): Promise<T> => {
-    try {
-      const timeoutPromise = new Promise<T>((_, reject) =>
-        setTimeout(() => reject(new Error("Prerender timeout")), 2000),
-      );
-      return await Promise.race([fn(), timeoutPromise]);
-    } catch {
-      return fallback;
-    }
-  };
-
   await Promise.all([
     queryClient.prefetchQuery({
       queryKey: ["courses", defaultFilters],
-      queryFn: async () => {
-        return fetchWithTimeout(async () => {
-          const res = await client.listCourses(defaultFilters);
-          return res.courses;
-        }, []);
-      },
+      queryFn: async () => (await client.listCourses(defaultFilters)).courses,
     }),
     queryClient.prefetchQuery({
       queryKey: ["categories", "SUBJECT"],
-      queryFn: async () => {
-        return fetchWithTimeout(async () => {
-          const res = await client.listCategories({ type: "SUBJECT" });
-          return res.categories;
-        }, []);
-      },
+      queryFn: async () => (await client.listCategories({ type: "SUBJECT" })).categories,
     }),
     queryClient.prefetchQuery({
       queryKey: ["categories", "LEVEL"],
-      queryFn: async () => {
-        return fetchWithTimeout(async () => {
-          const res = await client.listCategories({ type: "LEVEL" });
-          return res.categories;
-        }, []);
-      },
+      queryFn: async () => (await client.listCategories({ type: "LEVEL" })).categories,
     }),
   ]);
 
