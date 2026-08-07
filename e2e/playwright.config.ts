@@ -110,6 +110,13 @@ export default defineConfig({
       dependencies: ['setup'],
     },
   ],
+
+  webServer: {
+    command: 'cd ../frontend && pnpm run dev',
+    url: BASE_URL,
+    reuseExistingServer: true,
+    timeout: 120 * 1000,
+  },
 });
 
 
