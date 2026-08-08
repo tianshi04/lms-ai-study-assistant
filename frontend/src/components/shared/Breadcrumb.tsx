@@ -1,9 +1,9 @@
 import * as React from "react";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, renderPolymorphicElement, type BaseUIRenderProp } from "@/lib/utils";
 
 export function Breadcrumb({ className, ref, ...props }: React.ComponentProps<"nav">) {
-  return <nav ref={ref} aria-label="breadcrumb" className={cn("", className)} {...props} />;
+  return <nav ref={ref} aria-label="Đường dẫn trang" className={cn("", className)} {...props} />;
 }
 
 export function BreadcrumbList({ className, ref, ...props }: React.ComponentProps<"ol">) {
@@ -24,12 +24,12 @@ export function BreadcrumbItem({ className, ref, ...props }: React.ComponentProp
 }
 
 export interface BreadcrumbLinkProps extends React.ComponentProps<"a"> {
-  asChild?: boolean;
+  render?: BaseUIRenderProp;
 }
 
 export function BreadcrumbLink({
   className,
-  asChild = false,
+  render,
   children,
   ref,
   ...props
@@ -39,21 +39,7 @@ export function BreadcrumbLink({
     className,
   );
 
-  if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<any>;
-    return React.cloneElement(child, {
-      ...props,
-      ...child.props,
-      ref,
-      className: cn(compClasses, child.props.className),
-    });
-  }
-
-  return (
-    <a ref={ref} className={compClasses} {...props}>
-      {children}
-    </a>
-  );
+  return renderPolymorphicElement(render, { ref, className: compClasses, children, ...props }, "a");
 }
 
 export function BreadcrumbPage({ className, ref, ...props }: React.ComponentProps<"span">) {
@@ -96,7 +82,7 @@ export function BreadcrumbEllipsis({ className, ref, ...props }: React.Component
       {...props}
     >
       <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
-      <span className="sr-only">More</span>
+      <span className="sr-only">Xem thêm</span>
     </span>
   );
 }

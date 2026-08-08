@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "@/lib/utils";
+import { cn, renderPolymorphicElement, type BaseUIRenderProp } from "@/lib/utils";
 
 export const cardVariants = cva(
   "rounded-2xl transition-colors duration-m3-short-4 ease-m3-emphasized p-6",
@@ -19,26 +19,15 @@ export const cardVariants = cva(
 );
 
 export interface CardProps extends React.ComponentProps<"div">, VariantProps<typeof cardVariants> {
-  asChild?: boolean;
+  render?: BaseUIRenderProp;
 }
 
-export function Card({ className, variant, asChild = false, children, ref, ...props }: CardProps) {
+export function Card({ className, variant, render, children, ref, ...props }: CardProps) {
   const compClasses = cn(cardVariants({ variant, className }));
-
-  if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<any>;
-    return React.cloneElement(child, {
-      ...props,
-      ...child.props,
-      ref,
-      className: cn(compClasses, child.props.className),
-    });
-  }
-
-  return (
-    <div ref={ref} className={compClasses} {...props}>
-      {children}
-    </div>
+  return renderPolymorphicElement(
+    render,
+    { ref, className: compClasses, children, ...props },
+    "div",
   );
 }
 

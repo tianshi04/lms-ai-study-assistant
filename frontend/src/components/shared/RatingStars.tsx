@@ -1,14 +1,14 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Star } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, renderPolymorphicElement, type BaseUIRenderProp } from "@/lib/utils";
 
-export const ratingStarVariants = cva("", {
+export const ratingStarVariants = cva("shrink-0 transition-colors duration-m3-short-4", {
   variants: {
     size: {
-      sm: "w-3.5 h-3.5",
-      md: "w-4 h-4",
-      lg: "w-6 h-6",
+      sm: "h-3.5 w-3.5",
+      md: "h-4 w-4",
+      lg: "h-5 w-5",
     },
   },
   defaultVariants: {
@@ -16,12 +16,8 @@ export const ratingStarVariants = cva("", {
   },
 });
 
-export function RatingScore({ rating, className }: { rating: number; className?: string }) {
-  return (
-    <span className={cn("text-xs font-bold text-on-surface ml-1", className)}>
-      {rating.toFixed(1)}
-    </span>
-  );
+function RatingScore({ rating }: { rating: number }) {
+  return <span className="ml-1 text-xs font-semibold text-on-surface">{rating.toFixed(1)}</span>;
 }
 
 export interface RatingStarsProps
@@ -29,7 +25,7 @@ export interface RatingStarsProps
   rating: number;
   maxStars?: number;
   showScore?: boolean;
-  asChild?: boolean;
+  render?: BaseUIRenderProp;
 }
 
 export function RatingStars({
@@ -38,7 +34,7 @@ export function RatingStars({
   size = "md",
   showScore = false,
   className,
-  asChild = false,
+  render,
   children,
   ref,
   ...props
@@ -70,24 +66,15 @@ export function RatingStars({
     </>
   );
 
-  if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<any>;
-    return React.cloneElement(child, {
-      ...props,
-      ...child.props,
+  return renderPolymorphicElement(
+    render,
+    {
       ref,
-      className: cn(compClasses, child.props.className),
-    });
-  }
-
-  return (
-    <span
-      ref={ref}
-      aria-label={`Đánh giá ${rating.toFixed(1)} trên ${maxStars} sao`}
-      className={compClasses}
-      {...props}
-    >
-      {innerContent}
-    </span>
+      "aria-label": `Đánh giá ${rating.toFixed(1)} trên ${maxStars} sao`,
+      className: compClasses,
+      children: innerContent,
+      ...props,
+    },
+    "span",
   );
 }

@@ -95,8 +95,8 @@ export default function AdminInstructorApplicationsPage() {
           </div>
 
           <PageHeaderActions>
-            <Button variant="outline" asChild>
-              <Link href="/admin/dashboard">Về Dashboard</Link>
+            <Button variant="outline" render={<Link href="/admin/dashboard" />}>
+              Về Dashboard
             </Button>
           </PageHeaderActions>
         </PageHeader>
