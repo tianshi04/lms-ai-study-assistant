@@ -7,7 +7,7 @@ import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { normalizeUserRole } from "@/lib/jwt";
 
 const API_BASE_URL =
-  process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 const ACCESS_TOKEN_MAX_AGE = 60 * 60; // 1 hour (matches backend 60m expiry)
 const REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60; // 7 days (matches backend 7d expiry)

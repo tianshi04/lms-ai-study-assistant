@@ -35,15 +35,36 @@ async function getInitialCatalogData() {
   await Promise.all([
     queryClient.prefetchQuery({
       queryKey: ["courses", defaultFilters],
-      queryFn: async () => (await client.listCourses(defaultFilters)).courses,
+      queryFn: async () => {
+        try {
+          const res = await client.listCourses(defaultFilters);
+          return res.courses;
+        } catch {
+          return [];
+        }
+      },
     }),
     queryClient.prefetchQuery({
       queryKey: ["categories", "SUBJECT"],
-      queryFn: async () => (await client.listCategories({ type: "SUBJECT" })).categories,
+      queryFn: async () => {
+        try {
+          const res = await client.listCategories({ type: "SUBJECT" });
+          return res.categories;
+        } catch {
+          return [];
+        }
+      },
     }),
     queryClient.prefetchQuery({
       queryKey: ["categories", "LEVEL"],
-      queryFn: async () => (await client.listCategories({ type: "LEVEL" })).categories,
+      queryFn: async () => {
+        try {
+          const res = await client.listCategories({ type: "LEVEL" });
+          return res.categories;
+        } catch {
+          return [];
+        }
+      },
     }),
   ]);
 
