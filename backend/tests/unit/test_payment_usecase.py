@@ -592,3 +592,187 @@ async def test_subscribe_coursera_plus_creates_completed_order(mock_scope):
     assert len(repo.orders) == 1
     assert repo.orders[0].status == PaymentOrderStatus.COMPLETED
     assert repo.orders[0].target_type == PaymentTargetType.SYSTEM_SUBSCRIPTION
+
+
+@pytest.mark.asyncio
+@patch("src.modules.payment.application.payment_usecase.async_session_scope")
+async def test_cancel_vnpay_order_success(mock_scope):
+    mock_session = AsyncMock()
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_res
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    repo = InMemoryPaymentRepository()
+    use_case = PaymentUseCase(repo=repo)
+
+    success, msg, pay_url, order_id, txn_ref = await use_case.create_vnpay_payment_url(
+        user_id="user_cancel_1",
+        target_type=PaymentTargetType.COURSE,
+        target_id="course_to_cancel",
+    )
+    assert success is True
+    assert repo.orders[0].status == PaymentOrderStatus.PENDING
+
+    cancel_ok, cancel_msg = await use_case.cancel_vnpay_order(
+        user_id="user_cancel_1",
+        vnp_txn_ref=txn_ref,
+    )
+    assert cancel_ok is True
+    assert "Hủy đơn hàng thành công" in cancel_msg
+    assert repo.orders[0].status == PaymentOrderStatus.CANCELLED
+
+
+@pytest.mark.asyncio
+@patch("src.modules.payment.application.payment_usecase.async_session_scope")
+async def test_cancel_vnpay_order_wrong_user(mock_scope):
+    mock_session = AsyncMock()
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_res
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    repo = InMemoryPaymentRepository()
+    use_case = PaymentUseCase(repo=repo)
+
+    success, msg, pay_url, order_id, txn_ref = await use_case.create_vnpay_payment_url(
+        user_id="user_owner",
+        target_type=PaymentTargetType.COURSE,
+        target_id="course_ownership",
+    )
+
+    cancel_ok, cancel_msg = await use_case.cancel_vnpay_order(
+        user_id="user_attacker",
+        vnp_txn_ref=txn_ref,
+    )
+    assert cancel_ok is False
+    assert "không thuộc về tài khoản" in cancel_msg
+    assert repo.orders[0].status == PaymentOrderStatus.PENDING
+
+
+@pytest.mark.asyncio
+@patch("src.modules.payment.application.payment_usecase.async_session_scope")
+async def test_verify_vnpay_payment_wrong_user_ownership(mock_scope):
+    mock_session = AsyncMock()
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_res
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    repo = InMemoryPaymentRepository()
+    use_case = PaymentUseCase(repo=repo)
+
+    _, _, _, _, txn_ref = await use_case.create_vnpay_payment_url(
+        user_id="user_victim",
+        target_type=PaymentTargetType.COURSE,
+        target_id="course_sec",
+    )
+
+    raw_params = {
+        "vnp_Amount": "119000000",
+        "vnp_BankCode": "NCB",
+        "vnp_Command": "pay",
+        "vnp_OrderInfo": "Thanh toan khoa hoc",
+        "vnp_PayDate": "20260804160000",
+        "vnp_ResponseCode": "00",
+        "vnp_TmnCode": "2QX02MS1",
+        "vnp_TransactionNo": "14500000",
+        "vnp_TransactionStatus": "00",
+        "vnp_TxnRef": txn_ref,
+        "vnp_Version": "2.1.0",
+    }
+
+    from src.modules.payment.infrastructure.vnpay_service import VNPayService
+    from src.shared.config import settings
+
+    sorted_items = sorted(raw_params.items())
+    import urllib.parse
+
+    hash_data = "&".join(
+        f"{urllib.parse.quote_plus(str(k))}={urllib.parse.quote_plus(str(v))}"
+        for k, v in sorted_items
+    )
+    raw_params["vnp_SecureHash"] = VNPayService.calculate_hmac_sha512(
+        settings.VNPAY_HASH_SECRET, hash_data
+    )
+
+    (
+        v_success,
+        v_msg,
+        _,
+        _,
+        _,
+        _,
+        _,
+        _,
+    ) = await use_case.verify_vnpay_payment(
+        user_id="user_attacker",
+        query_params=raw_params,
+    )
+
+    assert v_success is False
+    assert "không thuộc về tài khoản" in v_msg
+
+
+@pytest.mark.asyncio
+@patch("src.modules.payment.application.payment_usecase.async_session_scope")
+async def test_verify_vnpay_payment_code_24_cancelled(mock_scope):
+    mock_session = AsyncMock()
+    mock_res = MagicMock()
+    mock_res.scalar_one_or_none.return_value = None
+    mock_session.execute.return_value = mock_res
+    mock_ctx = AsyncMock()
+    mock_ctx.__aenter__.return_value = mock_session
+    mock_scope.return_value = mock_ctx
+
+    repo = InMemoryPaymentRepository()
+    use_case = PaymentUseCase(repo=repo)
+
+    _, _, _, _, txn_ref = await use_case.create_vnpay_payment_url(
+        user_id="user_cancel_portal",
+        target_type=PaymentTargetType.COURSE,
+        target_id="course_cancel_portal",
+    )
+
+    raw_params = {
+        "vnp_Amount": "119000000",
+        "vnp_BankCode": "NCB",
+        "vnp_Command": "pay",
+        "vnp_OrderInfo": "Thanh toan khoa hoc",
+        "vnp_PayDate": "20260804160000",
+        "vnp_ResponseCode": "24",
+        "vnp_TmnCode": "2QX02MS1",
+        "vnp_TransactionNo": "0",
+        "vnp_TransactionStatus": "02",
+        "vnp_TxnRef": txn_ref,
+        "vnp_Version": "2.1.0",
+    }
+
+    from src.modules.payment.infrastructure.vnpay_service import VNPayService
+    from src.shared.config import settings
+
+    sorted_items = sorted(raw_params.items())
+    import urllib.parse
+
+    hash_data = "&".join(
+        f"{urllib.parse.quote_plus(str(k))}={urllib.parse.quote_plus(str(v))}"
+        for k, v in sorted_items
+    )
+    raw_params["vnp_SecureHash"] = VNPayService.calculate_hmac_sha512(
+        settings.VNPAY_HASH_SECRET, hash_data
+    )
+
+    v_success, v_msg, _, _, _, _, _, _ = await use_case.verify_vnpay_payment(
+        user_id="user_cancel_portal",
+        query_params=raw_params,
+    )
+
+    assert v_success is False
+    assert "hủy bởi người dùng" in v_msg
+    assert repo.orders[0].status == PaymentOrderStatus.CANCELLED
