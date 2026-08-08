@@ -34,6 +34,7 @@ from src.modules.payment.domain.entities import (
 from src.modules.payment.domain.repositories import IPaymentRepository
 from src.modules.payment.infrastructure.repository import PaymentRepository
 from src.modules.payment.infrastructure.vnpay_service import VNPayService
+from src.shared.access_policy import AccessPolicyService
 from src.shared.infrastructure.database import async_session_scope
 
 logger = logging.getLogger(__name__)
@@ -42,6 +43,23 @@ logger = logging.getLogger(__name__)
 class PaymentUseCase:
     def __init__(self, repo: Optional[IPaymentRepository] = None):
         self.repository = repo
+
+    async def get_user_payment_access(
+        self, user_id: str, course_id: str
+    ) -> tuple[bool, str]:
+        """Verify paid mode access for a user and course."""
+        if not user_id:
+            return False, "Yêu cầu đăng nhập để kiểm tra quyền truy cập."
+        if not course_id:
+            return False, "Thiếu thông tin khóa học."
+
+        async with async_session_scope() as session:
+            is_paid, err = await AccessPolicyService.verify_paid_access(
+                session=session,
+                user_id=user_id,
+                course_id=course_id,
+            )
+            return is_paid, err or "Quyền truy cập Paid Mode hợp lệ."
 
     async def purchase_course(
         self, user_id: str, course_id: str, payment_method: str = "MOCK"
@@ -301,6 +319,50 @@ class PaymentUseCase:
                 vnp_txn_ref,
             )
 
+    async def cancel_vnpay_order(
+        self, user_id: str, vnp_txn_ref: str = "", order_id: str = ""
+    ) -> tuple[bool, str]:
+        """Allows user to explicitly cancel a pending payment order."""
+        if not user_id:
+            return False, "Yêu cầu đăng nhập để hủy đơn hàng."
+        if not vnp_txn_ref and not order_id:
+            return False, "Thiếu thông tin nhận diện đơn hàng cần hủy."
+
+        async with async_session_scope() as session:
+            repo = self.repository or PaymentRepository(session)
+            order = None
+            if vnp_txn_ref:
+                order = await repo.get_order_by_txn_ref_for_update(vnp_txn_ref)
+            if not order and order_id:
+                order = await repo.get_order_by_id(order_id)
+
+            if not order:
+                return False, "Không tìm thấy đơn hàng cần hủy."
+
+            if order.user_id != user_id:
+                logger.warning(
+                    "[VNPAY CANCEL] User %s attempted to cancel order %s belonging to %s",
+                    user_id,
+                    order.id,
+                    order.user_id,
+                )
+                return False, "Đơn hàng không thuộc về tài khoản của bạn."
+
+            if order.status == PaymentOrderStatus.COMPLETED:
+                return False, "Không thể hủy đơn hàng đã hoàn tất thanh toán."
+
+            if order.status == PaymentOrderStatus.CANCELLED:
+                return True, "Đơn hàng đã được hủy trước đó."
+
+            await repo.update_order_status(order.id, PaymentOrderStatus.CANCELLED)
+            logger.info(
+                "[VNPAY CANCEL] User %s explicitly cancelled order %s (TxnRef: %s)",
+                user_id,
+                order.id,
+                order.vnp_txn_ref,
+            )
+            return True, "Hủy đơn hàng thành công!"
+
     async def verify_vnpay_payment(
         self, user_id: str, query_params: dict[str, str]
     ) -> tuple[
@@ -343,6 +405,25 @@ class PaymentUseCase:
                     PaymentTargetType.UNSPECIFIED,
                     "",
                     PlanType.UNSPECIFIED,
+                    None,
+                    None,
+                )
+
+            # Security: Verify order ownership
+            if order.user_id != user_id:
+                logger.warning(
+                    "[VNPAY] Security violation: User %s attempted to verify order %s belonging to user %s",
+                    user_id,
+                    order.id,
+                    order.user_id,
+                )
+                return (
+                    False,
+                    "Đơn hàng không thuộc về tài khoản này.",
+                    order.id,
+                    order.target_type,
+                    order.target_id,
+                    order.plan_type,
                     None,
                     None,
                 )
@@ -416,6 +497,22 @@ class PaymentUseCase:
                     order.plan_type,
                     purchase_res,
                     sub_res,
+                )
+            elif vnp_response_code == "24":
+                await repo.update_order_status(order.id, PaymentOrderStatus.CANCELLED)
+                logger.info(
+                    "[VNPAY] Payment cancelled by user on gateway portal for TxnRef %s",
+                    vnp_txn_ref,
+                )
+                return (
+                    False,
+                    "Giao dịch thanh toán đã bị hủy bởi người dùng.",
+                    order.id,
+                    order.target_type,
+                    order.target_id,
+                    order.plan_type,
+                    None,
+                    None,
                 )
             else:
                 await repo.update_order_status(order.id, PaymentOrderStatus.FAILED)
@@ -495,6 +592,9 @@ class PaymentUseCase:
                 logger.info(
                     "[VNPAY IPN] Order %s fulfilled successfully via IPN", order.id
                 )
+            elif vnp_response_code == "24":
+                await repo.update_order_status(order.id, PaymentOrderStatus.CANCELLED)
+                logger.info("[VNPAY IPN] Order %s marked CANCELLED via IPN", order.id)
             else:
                 await repo.update_order_status(order.id, PaymentOrderStatus.FAILED)
                 logger.info("[VNPAY IPN] Order %s marked FAILED via IPN", order.id)
@@ -673,7 +773,16 @@ class PaymentUseCase:
                                     o.id,
                                     user_id,
                                 )
-                            elif resp_code in ("01", "02", "24") or txn_status in (
+                            elif resp_code == "24" or txn_status == "24":
+                                await repo.update_order_status(
+                                    o.id, PaymentOrderStatus.CANCELLED
+                                )
+                                logger.info(
+                                    "[LAZY RECONCILE] Order %s marked CANCELLED for user %s",
+                                    o.id,
+                                    user_id,
+                                )
+                            elif resp_code in ("01", "02") or txn_status in (
                                 "01",
                                 "02",
                                 "99",
