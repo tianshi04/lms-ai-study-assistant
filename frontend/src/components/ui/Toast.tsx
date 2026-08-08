@@ -57,14 +57,26 @@ const VariantIcons: Record<ToastType, React.ReactNode> = {
   ),
 };
 
-const toastBorderVariants: Record<ToastType, string> = {
-  default: "border-outline-variant",
-  success: "border-success/30",
-  error: "border-destructive/30",
-  warning: "border-warning/30",
-  info: "border-info/30",
-  loading: "border-primary/30",
-};
+import { cva } from "class-variance-authority";
+
+export const toastVariants = cva(
+  "pointer-events-auto relative flex w-full items-start justify-between gap-3 overflow-hidden rounded-2xl border p-4 shadow-xl transition-colors duration-m3-medium-2 ease-m3-decelerate bg-surface-container-high/95 backdrop-blur-md text-foreground data-[ending]:animate-out data-[ending]:fade-out-0 data-[ending]:slide-out-to-right-full data-[ending]:duration-m3-short-4 data-[ending]:ease-m3-accelerate data-[starting]:animate-in data-[starting]:fade-in-0 data-[starting]:slide-in-from-top-5 data-[starting]:duration-m3-medium-2 data-[starting]:ease-m3-decelerate",
+  {
+    variants: {
+      type: {
+        default: "border-outline-variant",
+        success: "border-success/30",
+        error: "border-destructive/30",
+        warning: "border-warning/30",
+        info: "border-info/30",
+        loading: "border-primary/30",
+      },
+    },
+    defaultVariants: {
+      type: "default",
+    },
+  },
+);
 
 interface ToastItemProps {
   toast: ReturnType<typeof BaseToast.useToastManager>["toasts"][number];
@@ -76,16 +88,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast }) => {
   const action = (toast.data as { action?: ToastActionOption } | undefined)?.action;
 
   return (
-    <BaseToast.Root
-      toast={toast}
-      className={cn(
-        "pointer-events-auto relative flex w-full items-start justify-between gap-3 overflow-hidden rounded-2xl border p-4 shadow-xl transition-colors duration-m3-medium-2 ease-m3-decelerate",
-        "bg-surface-container-high/95 backdrop-blur-md text-foreground",
-        "data-[ending]:animate-out data-[ending]:fade-out-0 data-[ending]:slide-out-to-right-full data-[ending]:duration-m3-short-4 data-[ending]:ease-m3-accelerate",
-        "data-[starting]:animate-in data-[starting]:fade-in-0 data-[starting]:slide-in-from-top-5 data-[starting]:duration-m3-medium-2 data-[starting]:ease-m3-decelerate",
-        toastBorderVariants[type],
-      )}
-    >
+    <BaseToast.Root toast={toast} className={cn(toastVariants({ type }))}>
       <BaseToast.Content className="flex flex-1 items-start gap-3">
         {icon}
         <div className="flex flex-col gap-1 pt-0.5">

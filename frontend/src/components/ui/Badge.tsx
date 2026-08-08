@@ -26,8 +26,33 @@ export const badgeVariants = cva(
 );
 
 export interface BadgeProps
-  extends React.ComponentProps<"span">, VariantProps<typeof badgeVariants> {}
+  extends React.ComponentProps<"span">, VariantProps<typeof badgeVariants> {
+  asChild?: boolean;
+}
 
-export function Badge({ className, variant, ref, ...props }: BadgeProps) {
-  return <span ref={ref} className={cn(badgeVariants({ variant, className }))} {...props} />;
+export function Badge({
+  className,
+  variant,
+  asChild = false,
+  children,
+  ref,
+  ...props
+}: BadgeProps) {
+  const compClasses = cn(badgeVariants({ variant, className }));
+
+  if (asChild && React.isValidElement(children)) {
+    const child = children as React.ReactElement<any>;
+    return React.cloneElement(child, {
+      ...props,
+      ...child.props,
+      ref,
+      className: cn(compClasses, child.props.className),
+    });
+  }
+
+  return (
+    <span ref={ref} className={compClasses} {...props}>
+      {children}
+    </span>
+  );
 }

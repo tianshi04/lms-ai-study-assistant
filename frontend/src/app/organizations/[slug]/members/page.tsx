@@ -30,7 +30,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import { Modal } from "@/components/ui/Modal";
 import {
   Users,
@@ -368,21 +375,42 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
         </Modal>
 
         {/* Remove Member Confirm Dialog */}
-        {removingMember && (
-          <ConfirmAlertDialog
-            isOpen={Boolean(removingMember)}
-            onClose={() => setRemovingMember(null)}
-            onConfirm={() =>
-              removeMemberMutation.mutate({
-                userId: removingMember.userId,
-                organizationId: slug,
-              })
-            }
-            title="Xóa thành viên khỏi Tổ chức"
-            description={`Bạn có chắc chắn muốn xóa thành viên "${removingMember.memberName}" khỏi tổ chức không? Thao tác này không thể hoàn tác.`}
-            confirmText="Xóa Thành Viên"
-          />
-        )}
+        <AlertDialog
+          open={Boolean(removingMember)}
+          onOpenChange={(open) => {
+            if (!open) setRemovingMember(null);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xóa thành viên khỏi Tổ chức</AlertDialogTitle>
+              <AlertDialogDescription>
+                {removingMember
+                  ? `Bạn có chắc chắn muốn xóa thành viên "${removingMember.memberName}" khỏi tổ chức không? Thao tác này không thể hoàn tác.`
+                  : ""}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <Button variant="outline" onClick={() => setRemovingMember(null)}>
+                Hủy
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  if (removingMember) {
+                    removeMemberMutation.mutate({
+                      userId: removingMember.userId,
+                      organizationId: slug,
+                    });
+                  }
+                }}
+                isLoading={removeMemberMutation.isPending}
+              >
+                Xóa Thành Viên
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );

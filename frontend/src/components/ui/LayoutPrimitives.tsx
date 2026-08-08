@@ -29,11 +29,35 @@ export const containerVariants = cva("w-full mx-auto", {
 });
 
 export interface ContainerProps
-  extends React.ComponentProps<"div">, VariantProps<typeof containerVariants> {}
+  extends React.ComponentProps<"div">, VariantProps<typeof containerVariants> {
+  asChild?: boolean;
+}
 
-export function Container({ className, size, padding, ref, ...props }: ContainerProps) {
+export function Container({
+  className,
+  size,
+  padding,
+  asChild = false,
+  children,
+  ref,
+  ...props
+}: ContainerProps) {
+  const compClasses = cn(containerVariants({ size, padding, className }));
+
+  if (asChild && React.isValidElement(children)) {
+    const child = children as React.ReactElement<any>;
+    return React.cloneElement(child, {
+      ...props,
+      ...child.props,
+      ref,
+      className: cn(compClasses, child.props.className),
+    });
+  }
+
   return (
-    <div ref={ref} className={cn(containerVariants({ size, padding, className }))} {...props} />
+    <div ref={ref} className={compClasses} {...props}>
+      {children}
+    </div>
   );
 }
 
@@ -63,15 +87,35 @@ export const sectionVariants = cva("", {
 });
 
 export interface SectionProps
-  extends React.ComponentProps<"section">, VariantProps<typeof sectionVariants> {}
+  extends React.ComponentProps<"section">, VariantProps<typeof sectionVariants> {
+  asChild?: boolean;
+}
 
-export function Section({ className, spacing, divider, ref, ...props }: SectionProps) {
+export function Section({
+  className,
+  spacing,
+  divider,
+  asChild = false,
+  children,
+  ref,
+  ...props
+}: SectionProps) {
+  const compClasses = cn(sectionVariants({ spacing, divider, className }));
+
+  if (asChild && React.isValidElement(children)) {
+    const child = children as React.ReactElement<any>;
+    return React.cloneElement(child, {
+      ...props,
+      ...child.props,
+      ref,
+      className: cn(compClasses, child.props.className),
+    });
+  }
+
   return (
-    <section
-      ref={ref}
-      className={cn(sectionVariants({ spacing, divider, className }))}
-      {...props}
-    />
+    <section ref={ref} className={compClasses} {...props}>
+      {children}
+    </section>
   );
 }
 
@@ -159,18 +203,34 @@ export function PageHeaderBadge({
   );
 }
 
-export interface PageHeaderProps extends React.ComponentProps<"div"> {}
+export interface PageHeaderProps extends React.ComponentProps<"div"> {
+  asChild?: boolean;
+}
 
-export function PageHeader({ className, children, ref, ...props }: PageHeaderProps) {
+export function PageHeader({
+  className,
+  children,
+  asChild = false,
+  ref,
+  ...props
+}: PageHeaderProps) {
+  const compClasses = cn(
+    "flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-border mb-6",
+    className,
+  );
+
+  if (asChild && React.isValidElement(children)) {
+    const child = children as React.ReactElement<any>;
+    return React.cloneElement(child, {
+      ...props,
+      ...child.props,
+      ref,
+      className: cn(compClasses, child.props.className),
+    });
+  }
+
   return (
-    <div
-      ref={ref}
-      className={cn(
-        "flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-border mb-6",
-        className,
-      )}
-      {...props}
-    >
+    <div ref={ref} className={compClasses} {...props}>
       {children}
     </div>
   );
@@ -225,7 +285,9 @@ export const stackVariants = cva("flex", {
 });
 
 export interface StackProps
-  extends React.ComponentProps<"div">, VariantProps<typeof stackVariants> {}
+  extends React.ComponentProps<"div">, VariantProps<typeof stackVariants> {
+  asChild?: boolean;
+}
 
 export function Stack({
   className,
@@ -234,23 +296,35 @@ export function Stack({
   align,
   justify,
   wrap,
+  asChild = false,
+  children,
   ref,
   ...props
 }: StackProps) {
+  const compClasses = cn(
+    stackVariants({
+      direction,
+      gap,
+      align,
+      justify,
+      wrap,
+      className,
+    }),
+  );
+
+  if (asChild && React.isValidElement(children)) {
+    const child = children as React.ReactElement<any>;
+    return React.cloneElement(child, {
+      ...props,
+      ...child.props,
+      ref,
+      className: cn(compClasses, child.props.className),
+    });
+  }
+
   return (
-    <div
-      ref={ref}
-      className={cn(
-        stackVariants({
-          direction,
-          gap,
-          align,
-          justify,
-          wrap,
-          className,
-        }),
-      )}
-      {...props}
-    />
+    <div ref={ref} className={compClasses} {...props}>
+      {children}
+    </div>
   );
 }

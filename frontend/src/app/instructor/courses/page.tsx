@@ -6,7 +6,14 @@ import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
 import { Modal } from "@/components/ui/Modal";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -523,20 +530,31 @@ export default function InstructorCoursesPage() {
         </form>
       </Modal>
 
-      <ConfirmAlertDialog
-        isOpen={Boolean(deletingCourseTarget)}
-        onClose={() => setDeletingCourseTarget(null)}
-        onConfirm={executeDeleteCourse}
-        title="Xác nhận xóa khóa học"
-        description={
-          deletingCourseTarget
-            ? `Bạn có chắc chắn muốn xóa khóa học "${deletingCourseTarget.title}"? Thao tác này không thể hoàn tác.`
-            : ""
-        }
-        confirmText="Xóa khóa học"
-        cancelText="Hủy"
-        variant="danger"
-      />
+      <AlertDialog
+        open={Boolean(deletingCourseTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeletingCourseTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa khóa học</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deletingCourseTarget
+                ? `Bạn có chắc chắn muốn xóa khóa học "${deletingCourseTarget.title}"? Thao tác này không thể hoàn tác.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setDeletingCourseTarget(null)}>
+              Hủy
+            </Button>
+            <Button variant="danger" onClick={executeDeleteCourse}>
+              Xóa khóa học
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

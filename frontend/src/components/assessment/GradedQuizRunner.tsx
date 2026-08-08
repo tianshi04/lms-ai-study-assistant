@@ -52,7 +52,7 @@ export function GradedQuizRunner({
   isPreviewMode = false,
 }: GradedQuizRunnerProps) {
   const { userId: authUserId } = useAuth();
-  const effectiveUserId = userId || authUserId || "user-demo-1";
+  const _effectiveUserId = userId || authUserId || "user-demo-1";
   const [selectedAnswers, setSelectedAnswers] = useState<number[][]>([]);
   const [isHonorModalOpen, setIsHonorModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -646,7 +646,6 @@ export function GradedQuizRunner({
 
       <HonorCodeModal
         itemId={itemId}
-        userId={effectiveUserId}
         isOpen={isHonorModalOpen}
         isSubmitting={isSubmitting}
         onAgreedAndSubmit={async () => {

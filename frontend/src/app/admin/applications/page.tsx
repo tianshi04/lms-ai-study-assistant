@@ -14,7 +14,14 @@ import { FileText, ExternalLink, PlayCircle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toast";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import {
   PageHeader,
   PageHeaderTitle,
@@ -324,17 +331,30 @@ export default function AdminInstructorApplicationsPage() {
         )}
       </div>
 
-      <ConfirmAlertDialog
-        isOpen={Boolean(approvingAppId)}
-        onClose={() => setApprovingAppId(null)}
-        onConfirm={executeApprove}
-        title="Xác nhận phê duyệt đơn Giảng viên"
-        description="Bạn có chắc chắn muốn phê duyệt đơn này và nâng quyền tài khoản tương ứng thành Giảng viên?"
-        confirmText="Phê Duyệt"
-        cancelText="Hủy"
-        variant="primary"
-        isLoading={reviewMutation.isPending}
-      />
+      <AlertDialog
+        open={Boolean(approvingAppId)}
+        onOpenChange={(open) => {
+          if (!open) setApprovingAppId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận phê duyệt đơn Giảng viên</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn phê duyệt đơn này và nâng quyền tài khoản tương ứng thành Giảng
+              viên?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setApprovingAppId(null)}>
+              Hủy
+            </Button>
+            <Button variant="primary" onClick={executeApprove} isLoading={reviewMutation.isPending}>
+              Phê Duyệt
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

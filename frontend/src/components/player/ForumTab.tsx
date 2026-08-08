@@ -14,7 +14,14 @@ import {
 import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
@@ -525,31 +532,53 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
         isNotificationTarget={targetThreadId === selectedModalThreadId}
       />
 
-      {/* Confirm Dialog Delete Thread */}
-      <ConfirmAlertDialog
-        isOpen={Boolean(deletingThreadId)}
-        onClose={() => setDeletingThreadId(null)}
-        onConfirm={executeDeleteThread}
-        title="Xác nhận xóa bài viết"
-        description="Bạn có chắc chắn muốn xóa bài viết này không? Thao tác này không thể hoàn tác."
-        confirmText="Xóa bài viết"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={isDeletingThread}
-      />
+      <AlertDialog
+        open={Boolean(deletingThreadId)}
+        onOpenChange={(open) => {
+          if (!open) setDeletingThreadId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa bài viết</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa bài viết này không? Thao tác này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setDeletingThreadId(null)}>
+              Hủy
+            </Button>
+            <Button variant="danger" onClick={executeDeleteThread} isLoading={isDeletingThread}>
+              Xóa bài viết
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      {/* Confirm Dialog Delete Reply */}
-      <ConfirmAlertDialog
-        isOpen={Boolean(deletingReplyId)}
-        onClose={() => setDeletingReplyId(null)}
-        onConfirm={executeDeleteReply}
-        title="Xác nhận xóa phản hồi"
-        description="Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác."
-        confirmText="Xóa phản hồi"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={isDeletingReply}
-      />
+      <AlertDialog
+        open={Boolean(deletingReplyId)}
+        onOpenChange={(open) => {
+          if (!open) setDeletingReplyId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa phản hồi</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setDeletingReplyId(null)}>
+              Hủy
+            </Button>
+            <Button variant="danger" onClick={executeDeleteReply} isLoading={isDeletingReply}>
+              Xóa phản hồi
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

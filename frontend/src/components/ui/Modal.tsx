@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
+import { cva, type VariantProps } from "class-variance-authority";
 import { X, AlertTriangle, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./Button";
@@ -26,39 +27,38 @@ export function DialogBackdrop({
   );
 }
 
+export const dialogSizeVariants = cva(
+  "bg-surface-container-high text-foreground rounded-3xl shadow-2xl w-full p-6 border border-outline-variant animate-in fade-in zoom-in-95 duration-m3-medium-4 ease-m3-decelerate relative my-8",
+  {
+    variants: {
+      size: {
+        sm: "max-w-sm",
+        md: "max-w-lg",
+        lg: "max-w-2xl",
+        xl: "max-w-4xl",
+        "2xl": "max-w-5xl",
+        full: "max-w-[95vw] max-h-[90vh] overflow-y-auto",
+      },
+    },
+    defaultVariants: {
+      size: "md",
+    },
+  },
+);
+
 export type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl" | "full";
 
-const sizeClasses: Record<ModalSize, string> = {
-  sm: "max-w-sm",
-  md: "max-w-lg",
-  lg: "max-w-2xl",
-  xl: "max-w-4xl",
-  "2xl": "max-w-5xl",
-  full: "max-w-[95vw] max-h-[90vh] overflow-y-auto",
-};
+export interface DialogContentProps
+  extends React.ComponentProps<typeof BaseDialog.Popup>, VariantProps<typeof dialogSizeVariants> {}
 
-export interface DialogContentProps extends React.ComponentProps<typeof BaseDialog.Popup> {
-  size?: ModalSize;
-}
-
-export function DialogContent({
-  className,
-  children,
-  size = "md",
-  ref,
-  ...props
-}: DialogContentProps) {
+export function DialogContent({ className, children, size, ref, ...props }: DialogContentProps) {
   return (
     <DialogPortal>
       <DialogBackdrop />
       <div className="fixed inset-0 z-modal flex items-center justify-center p-4 overflow-y-auto">
         <BaseDialog.Popup
           ref={ref}
-          className={cn(
-            "bg-surface-container-high text-foreground rounded-3xl shadow-2xl w-full p-6 border border-outline-variant animate-in fade-in zoom-in-95 duration-m3-medium-4 ease-m3-decelerate relative my-8",
-            sizeClasses[size],
-            className,
-          )}
+          className={cn(dialogSizeVariants({ size, className }))}
           {...props}
         >
           {children}

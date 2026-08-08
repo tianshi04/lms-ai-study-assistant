@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Drawer as BaseDrawer } from "@base-ui/react/drawer";
+import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,38 +26,44 @@ export function DrawerBackdrop({
   );
 }
 
-export interface DrawerContentProps extends React.ComponentProps<typeof BaseDrawer.Popup> {
-  side?: "top" | "bottom" | "left" | "right";
+export const drawerSideVariants = cva(
+  "fixed z-modal bg-card p-6 shadow-2xl transition-transform duration-m3-medium-4 ease-m3-decelerate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+  {
+    variants: {
+      side: {
+        top: "inset-x-0 top-0 border-b border-border rounded-b-2xl data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
+        bottom:
+          "inset-x-0 bottom-0 border-t border-border rounded-t-2xl data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+        left: "inset-y-0 left-0 h-full w-3/4 max-w-sm border-r border-border rounded-r-2xl data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left",
+        right:
+          "inset-y-0 right-0 h-full w-3/4 max-w-sm border-l border-border rounded-l-2xl data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
+      },
+    },
+    defaultVariants: {
+      side: "right",
+    },
+  },
+);
+
+export interface DrawerContentProps
+  extends React.ComponentProps<typeof BaseDrawer.Popup>, VariantProps<typeof drawerSideVariants> {
   showCloseButton?: boolean;
 }
 
 export function DrawerContent({
-  side = "right",
+  side,
   showCloseButton = true,
   className,
   children,
   ref,
   ...props
 }: DrawerContentProps) {
-  const sideVariants = {
-    top: "inset-x-0 top-0 border-b border-border rounded-b-2xl data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
-    bottom:
-      "inset-x-0 bottom-0 border-t border-border rounded-t-2xl data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
-    left: "inset-y-0 left-0 h-full w-3/4 max-w-sm border-r border-border rounded-r-2xl data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left",
-    right:
-      "inset-y-0 right-0 h-full w-3/4 max-w-sm border-l border-border rounded-l-2xl data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
-  };
-
   return (
     <DrawerPortal>
       <DrawerBackdrop />
       <BaseDrawer.Popup
         ref={ref}
-        className={cn(
-          "fixed z-modal bg-card p-6 shadow-2xl transition-transform duration-m3-medium-4 ease-m3-decelerate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          sideVariants[side],
-          className,
-        )}
+        className={cn(drawerSideVariants({ side, className }))}
         {...props}
       >
         {children}

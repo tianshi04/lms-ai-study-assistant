@@ -20,7 +20,14 @@ import {
   SelectItem,
 } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import {
   PageHeader,
   PageHeaderTitle,
@@ -205,17 +212,33 @@ export default function AdminCategoriesPage() {
         />
       </div>
 
-      <ConfirmAlertDialog
-        isOpen={Boolean(deleteTarget)}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={executeDelete}
-        title="Xác nhận xóa danh mục"
-        description="Bạn có chắc chắn muốn xóa danh mục này? Thao tác này không thể hoàn tác."
-        confirmText="Xóa danh mục"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={deleteCategoryMutation.isPending}
-      />
+      <AlertDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa danh mục</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa danh mục này? Thao tác này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              Hủy
+            </Button>
+            <Button
+              variant="danger"
+              onClick={executeDelete}
+              isLoading={deleteCategoryMutation.isPending}
+            >
+              Xóa danh mục
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

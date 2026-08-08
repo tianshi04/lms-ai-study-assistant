@@ -11,7 +11,14 @@ import {
 } from "@/lib/query_hooks";
 import { InvitationType, InvitationStatus } from "@/gen/identity/v1/identity_pb";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import {
   Table,
@@ -259,16 +266,36 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
         </section>
 
         {/* Cancel Invitation Confirm Dialog */}
-        {cancelingInvId && (
-          <ConfirmAlertDialog
-            isOpen={Boolean(cancelingInvId)}
-            onClose={() => setCancelingInvId(null)}
-            onConfirm={() => cancelMutation.mutate({ invitationId: cancelingInvId })}
-            title="Hủy Lời mời Gia nhập"
-            description="Bạn có chắc chắn muốn hủy lời mời này không? Người được mời sẽ không thể dùng link token này nữa."
-            confirmText="Hủy Lời Mời"
-          />
-        )}
+        <AlertDialog
+          open={Boolean(cancelingInvId)}
+          onOpenChange={(open) => {
+            if (!open) setCancelingInvId(null);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Hủy Lời mời Gia nhập</AlertDialogTitle>
+              <AlertDialogDescription>
+                Bạn có chắc chắn muốn hủy lời mời này không? Người được mời sẽ không thể dùng link
+                token này nữa.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <Button variant="outline" onClick={() => setCancelingInvId(null)}>
+                Hủy
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  if (cancelingInvId) cancelMutation.mutate({ invitationId: cancelingInvId });
+                }}
+                isLoading={cancelMutation.isPending}
+              >
+                Hủy Lời Mời
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </main>
     </div>
   );

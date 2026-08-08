@@ -1,9 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMyInvitationsQuery, useRespondToInvitationMutation } from "@/lib/query_hooks";
 import { InvitationAction, InvitationStatus, InvitationType } from "@/gen/identity/v1/identity_pb";
 import { Button } from "@/components/ui/Button";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+} from "@/components/ui/Drawer";
 import {
   Mail,
   CheckCircle2,
@@ -12,7 +19,6 @@ import {
   BookOpen,
   Award,
   Loader2,
-  X,
   Inbox,
 } from "lucide-react";
 
@@ -27,15 +33,6 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
     type: "success" | "error";
     text: string;
   } | null>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
 
   const {
     data: invitations,
@@ -69,8 +66,6 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
     },
   });
 
-  if (!isOpen) return null;
-
   const handleAction = (invitationId: string, action: InvitationAction) => {
     setFeedback(null);
     respondMutation.mutate({ invitationId, action });
@@ -88,25 +83,18 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
   const historyList = invitations?.filter((i) => i.status !== InvitationStatus.PENDING);
 
   return (
-    <div
-      role="presentation"
-      onClick={onClose}
-      className="fixed inset-0 z-modal flex justify-end bg-scrim backdrop-blur-xs cursor-pointer"
+    <Drawer
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="bg-card text-foreground border-l border-border w-full max-w-md h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200 cursor-default"
-      >
+      <DrawerContent side="right" className="flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
-          <div className="flex items-center space-x-2">
-            <Mail className="w-5 h-5 text-primary" aria-hidden="true" />
-            <h2 className="text-lg font-semibold">Lời mời của tôi</h2>
-          </div>
-          <Button type="button" variant="ghost" size="icon" onClick={onClose} aria-label="Đóng">
-            <X className="w-5 h-5" aria-hidden="true" />
-          </Button>
-        </div>
+        <DrawerHeader className="flex items-center space-x-2">
+          <Mail className="w-5 h-5 text-primary" aria-hidden="true" />
+          <DrawerTitle className="text-lg font-semibold">Lời mời của tôi</DrawerTitle>
+        </DrawerHeader>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -229,12 +217,12 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border bg-muted/20 flex justify-end">
+        <DrawerFooter>
           <Button type="button" variant="outline" onClick={onClose}>
             Đóng
           </Button>
-        </div>
-      </div>
-    </div>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }

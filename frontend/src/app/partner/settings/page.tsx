@@ -14,7 +14,14 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Check, X, Plus, RefreshCw, Download, Copy, Building2 } from "lucide-react";
 import {
@@ -627,17 +634,33 @@ function PartnerSettingsForm({
         </div>
       </form>
 
-      <ConfirmAlertDialog
-        isOpen={showRotateConfirm}
-        onClose={() => setShowRotateConfirm(false)}
-        onConfirm={executeRotateKeyPair}
-        title="Xác nhận tạo cặp khóa ký số mới"
-        description="Bạn có chắc chắn muốn tạo cặp khóa ký số mới? Cặp khóa cũ sẽ bị xoay và thay thế."
-        confirmText="Tạo khóa mới"
-        cancelText="Hủy"
-        variant="warning"
-        isLoading={rotateKeyPairMutation.isPending}
-      />
+      <AlertDialog
+        open={showRotateConfirm}
+        onOpenChange={(open) => {
+          if (!open) setShowRotateConfirm(false);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận tạo cặp khóa ký số mới</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn tạo cặp khóa ký số mới? Cặp khóa cũ sẽ bị xoay và thay thế.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setShowRotateConfirm(false)}>
+              Hủy
+            </Button>
+            <Button
+              variant="danger"
+              onClick={executeRotateKeyPair}
+              isLoading={rotateKeyPairMutation.isPending}
+            >
+              Tạo khóa mới
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

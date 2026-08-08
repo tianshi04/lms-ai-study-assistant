@@ -13,7 +13,14 @@ import {
 } from "@/lib/query_hooks";
 import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -723,18 +730,33 @@ export default function AdminPartnersPage() {
         </form>
       </Modal>
 
-      {/* Confirm Dialog Xoá Đối tác */}
-      <ConfirmAlertDialog
-        isOpen={!!deletingPartnerId}
-        onClose={() => setDeletingPartnerId(null)}
-        onConfirm={handleDeleteConfirm}
-        title="Xác nhận xoá đối tác"
-        description="Bạn có chắc chắn muốn xoá đối tác này khỏi hệ thống? Thao tác này không thể hoàn tác."
-        confirmText="Xoá đối tác"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={deleteMutation.isPending}
-      />
+      <AlertDialog
+        open={!!deletingPartnerId}
+        onOpenChange={(open) => {
+          if (!open) setDeletingPartnerId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xoá đối tác</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xoá đối tác này khỏi hệ thống? Thao tác này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setDeletingPartnerId(null)}>
+              Hủy
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteConfirm}
+              isLoading={deleteMutation.isPending}
+            >
+              Xoá đối tác
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
