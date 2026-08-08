@@ -75,10 +75,13 @@ Tài liệu này đặc tả chi tiết và chuyên sâu các yêu cầu chức 
 ### 1.7. Luồng Đăng ký & Đăng nhập lai (Google OAuth2 & Mật khẩu Dự phòng)
 * **Khái niệm & Luồng Nghiệp vụ:**
   - **Đăng ký linh hoạt 2 Phương thức**: Hệ thống hỗ trợ cả đăng ký Email/Mật khẩu truyền thống (RPC `Register`) và đăng ký nhanh qua Google OAuth2 (`GoogleRegisterVerify`).
+  - **Ràng buộc Mật khẩu An toàn (`validate_password`)**: Tất cả các thao tác khởi tạo/đặt lại mật khẩu (`Register`, `CompleteGoogleRegistration`, `CompleteResetPassword`) đều phải vượt qua bộ thẩm định mật khẩu trung tâm: độ dài tối thiểu 6 ký tự, có ít nhất 1 chữ cái in hoa (`A-Z`) và 1 chữ số (`0-9`). Giao diện Frontend hiển thị các gợi ý yêu cầu mật khẩu thời gian thực (Real-time hints).
+  - **Giới hạn Đăng nhập Thất bại (Login Rate Limiter)**: Chức năng Đăng nhập (`Login`) được bảo vệ bằng Redis Sliding Window Limiter. Nếu người dùng đăng nhập sai quá 5 lần trong 15 phút, tài khoản/IP sẽ bị khóa 15 phút và hiển thị đếm ngược thời gian chờ trên UI.
   - **Đăng ký qua Google (Step 1)**: Người dùng xác minh email chính chủ qua Google OAuth2 (`GoogleRegisterVerify`).
   - **Thiết lập Mật khẩu Dự phòng (Step 2)**: Ngay sau khi xác minh Google thành công, người dùng khởi tạo Mật khẩu dự phòng (`CompleteGoogleRegistration`). Điều này đảm bảo tài khoản trong DB luôn sở hữu `password_hash`, cho phép đăng nhập độc lập bất kỳ lúc nào ngay cả khi dịch vụ Google bị sự cố (Disaster Recovery).
   - **Đăng nhập 2 Chế độ (Dual Login Options)**: Hỗ trợ nút bấm **Google 1-click** (`GoogleLogin`) và ô nhập **Email & Mật khẩu** truyền thống (`Login`).
   - **Đồng bộ Ảnh đại diện (Google Avatar Synchronization)**: Tự động trích xuất ảnh đại diện chính chủ từ Google (`picture`), lưu trữ vào DB và đồng bộ lên toàn bộ giao diện Navbar Header (`UserDropdown`) và Hồ sơ cá nhân.
+
 
 ### 1.8. Hệ thống Quản lý Lời mời Gia nhập (Invitation Management System)
 * **Khái niệm & Phạm vi Nghiệp vụ:** Cung cấp cơ chế gửi lời mời qua Email để tuyển dụng/cấp quyền cho 3 đối tượng nghiệp vụ chính: Thành viên Tổ chức (`ORGANIZATION_MEMBER`), Giảng viên đồng hành Khóa học (`COURSE_CO_INSTRUCTOR`), và Suất học Doanh nghiệp (`ENTERPRISE_SEAT`).
