@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { User, BookOpen, ArrowRight, Building2 } from "lucide-react";
-import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
+import type { Course } from "@/gen/catalog/v1/catalog_pb";
 import { getRpcClient } from "@/lib/connect_client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/Button";
+import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 
 export function CourseCard({ course }: { course: Course }) {
   const [imgError, setImgError] = useState(false);
@@ -78,18 +78,17 @@ export function CourseCard({ course }: { course: Course }) {
         </div>
 
         {/* Action Link */}
-        <Button
-          variant="primary"
-          size="lg"
-          render={<Link href={`/courses/${course.id}`} transitionTypes={["nav-forward"]} />}
-          className="w-full gap-2 shadow-xs hover:shadow-md"
+        <Link
+          href={`/courses/${course.id}`}
+          transitionTypes={["nav-forward"]}
+          className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 rounded-full bg-primary hover:bg-primary-hover text-on-primary text-sm font-bold transition-colors shadow-xs hover:shadow-md"
         >
           {"Xem Chi Tiết Khóa Học"}
           <ArrowRight
             className="w-4 h-4 transition-transform group-hover:translate-x-1"
             aria-hidden="true"
           />
-        </Button>
+        </Link>
       </div>
     </div>
   );
