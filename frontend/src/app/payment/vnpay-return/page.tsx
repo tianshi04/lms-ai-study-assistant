@@ -3,7 +3,16 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle2, XCircle, Loader2, ArrowRight, BookOpen, RefreshCw } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  ArrowRight,
+  BookOpen,
+  ShoppingBag,
+  RefreshCw,
+} from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
 import { PaymentService, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
 import { useCreateVNPayPaymentUrlMutation } from "@/lib/query_hooks";
@@ -13,6 +22,7 @@ const client = getRpcClient(PaymentService);
 function VNPayReturnContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
@@ -73,6 +83,11 @@ function VNPayReturnContent() {
         } else if (response.targetType === PaymentTargetType.SYSTEM_SUBSCRIPTION) {
           setTargetType("SYSTEM_SUBSCRIPTION");
         }
+
+        if (response.success) {
+          queryClient.invalidateQueries({ queryKey: ["userPurchasesAndOrders"] });
+          queryClient.invalidateQueries({ queryKey: ["userPaymentAccess"] });
+        }
       } catch (err: unknown) {
         setSuccess(false);
         const errMsg = err instanceof Error ? err.message : "Có lỗi xảy ra khi xác thực giao dịch.";
@@ -83,7 +98,7 @@ function VNPayReturnContent() {
     }
 
     verifyPayment();
-  }, [searchParams]);
+  }, [searchParams, queryClient]);
 
   const handleRetryPayment = () => {
     setRetryError(null);
@@ -163,6 +178,14 @@ function VNPayReturnContent() {
                 >
                   <BookOpen aria-hidden="true" className="w-4 h-4" />
                   Vào học ngay
+                </Link>
+              ) : targetType === "SYSTEM_SUBSCRIPTION" ? (
+                <Link
+                  href="/my-purchases"
+                  className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary-hover px-5 py-3 rounded-lg font-medium transition-colors"
+                >
+                  <ShoppingBag aria-hidden="true" className="w-4 h-4" />
+                  Xem quản lý mua hàng
                 </Link>
               ) : (
                 <Link

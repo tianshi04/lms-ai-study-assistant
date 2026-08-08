@@ -181,6 +181,7 @@ class PaymentHandler(PaymentService):
                 plan_type=pb.PlanType.YEARLY
                 if sub.plan_type == PlanType.YEARLY
                 else pb.PlanType.MONTHLY,
+                status=pb.SubscriptionStatus.ACTIVE,
                 starts_at=sub.starts_at,
                 expires_at=sub.expires_at,
                 created_at=sub.created_at,
@@ -241,6 +242,7 @@ class PaymentHandler(PaymentService):
             purchases,
             orders,
             titles_map,
+            active_sub,
         ) = await self._use_case.list_user_purchases(current_user.id)
 
         pb_purchases = [
@@ -307,4 +309,26 @@ class PaymentHandler(PaymentService):
                 )
             )
 
-        return pb.ListUserPurchasesResponse(purchases=pb_purchases, orders=pb_orders)
+        pb_sub = None
+        if active_sub:
+            sub_plan_type = pb.PlanType.UNSPECIFIED
+            if active_sub.plan_type == PlanType.MONTHLY:
+                sub_plan_type = pb.PlanType.MONTHLY
+            elif active_sub.plan_type == PlanType.YEARLY:
+                sub_plan_type = pb.PlanType.YEARLY
+
+            pb_sub = pb.UserSubscription(
+                id=active_sub.id,
+                user_id=active_sub.user_id,
+                plan_type=sub_plan_type,
+                status=pb.SubscriptionStatus.ACTIVE,
+                starts_at=active_sub.starts_at,
+                expires_at=active_sub.expires_at,
+                created_at=active_sub.created_at,
+            )
+
+        return pb.ListUserPurchasesResponse(
+            purchases=pb_purchases,
+            orders=pb_orders,
+            active_subscription=pb_sub,
+        )

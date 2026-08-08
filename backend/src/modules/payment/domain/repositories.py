@@ -38,6 +38,11 @@ class IPaymentRepository(ABC):
         pass
 
     @abstractmethod
+    async def get_user_subscription(self, user_id: str) -> Optional[UserSubscription]:
+        """Fetches latest subscription row for a user regardless of status or expiration."""
+        pass
+
+    @abstractmethod
     async def list_user_purchases(self, user_id: str) -> list[CoursePurchase]:
         """Lists all purchases made by a user."""
         pass

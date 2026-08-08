@@ -16,8 +16,9 @@ import {
   Loader2,
   Sparkles,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useListUserPurchasesQuery, useCreateVNPayPaymentUrlMutation } from "@/lib/query_hooks";
-import { PaymentOrderStatus, PaymentTargetType } from "@/gen/payment/v1/payment_pb";
+import { PaymentOrderStatus, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
 
 type FilterTab = "ALL" | "COMPLETED" | "PENDING" | "EXPIRED";
 
@@ -43,7 +44,14 @@ function formatDate(isoStr: string) {
 
 function MyPurchasesContent() {
   const [activeTab, setActiveTab] = useState<FilterTab>("ALL");
+  const [isMounted, setIsMounted] = useState(false);
+  const queryClient = useQueryClient();
   const { data, isLoading, isFetching, refetch } = useListUserPurchasesQuery();
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const createVNPayMutation = useCreateVNPayPaymentUrlMutation({
     onSuccess: (res) => {
       if (res.success && res.paymentUrl) {
@@ -52,8 +60,81 @@ function MyPurchasesContent() {
     },
   });
 
-  const orders: any[] = data?.orders ?? [];
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["userPurchasesAndOrders"] });
+    await queryClient.invalidateQueries({ queryKey: ["userPaymentAccess"] });
+    await queryClient.invalidateQueries({ queryKey: ["myEnrolledCourses"] });
+    refetch();
+  };
 
+  const orders = isMounted ? (data?.orders ?? []) : [];
+
+  const { daysRemaining, isPlusActive, formattedExpDate } = React.useMemo(() => {
+    if (!isMounted) {
+      return { daysRemaining: 0, isPlusActive: false, formattedExpDate: "" };
+    }
+    const rawSub = data?.activeSubscription ?? (data as any)?.active_subscription;
+    let expStr = rawSub?.expiresAt || (rawSub as any)?.expires_at || "";
+
+    // Fallback: If no activeSubscription object, check completed SYSTEM_SUBSCRIPTION orders
+    if (!expStr && data?.orders?.length) {
+      const completedSubOrders = data.orders.filter(
+        (o) =>
+          o.status === PaymentOrderStatus.COMPLETED &&
+          o.targetType === PaymentTargetType.SYSTEM_SUBSCRIPTION,
+      );
+      if (completedSubOrders.length > 0) {
+        let accumulatedExp: Date | null = null;
+        const sorted = [...completedSubOrders].sort(
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        );
+        for (const o of sorted) {
+          const addDays = o.planType === PlanType.YEARLY ? 365 : 30;
+          const orderDate = new Date(o.createdAt);
+          if (!accumulatedExp || accumulatedExp.getTime() < orderDate.getTime()) {
+            accumulatedExp = new Date(orderDate.getTime() + addDays * 24 * 60 * 60 * 1000);
+          } else {
+            accumulatedExp = new Date(accumulatedExp.getTime() + addDays * 24 * 60 * 60 * 1000);
+          }
+        }
+        if (accumulatedExp) {
+          expStr = accumulatedExp.toISOString();
+        }
+      }
+    }
+
+    if (!expStr) {
+      return { daysRemaining: 0, isPlusActive: false, formattedExpDate: "" };
+    }
+
+    const expTime = new Date(expStr.trim().replace(" ", "T")).getTime();
+    const nowTime = Date.now();
+    const diffDays = Math.ceil((expTime - nowTime) / (1000 * 60 * 60 * 24));
+    const active = !isNaN(expTime) && diffDays > 0;
+    let formattedDate = "";
+    try {
+      formattedDate = new Date(expTime).toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    } catch {
+      formattedDate = expStr;
+    }
+    return {
+      daysRemaining: active ? diffDays : 0,
+      isPlusActive: active,
+      formattedExpDate: formattedDate,
+    };
+  }, [data, isMounted]);
+
+  const handleSubscribePlus = (plan: PlanType) => {
+    createVNPayMutation.mutate({
+      targetType: PaymentTargetType.SYSTEM_SUBSCRIPTION,
+      targetId: plan === PlanType.YEARLY ? "plus_yearly" : "plus_monthly",
+      planType: plan,
+    });
+  };
   // Summary Metrics
   const totalOrders = orders.length;
   const completedCount = orders.filter(
@@ -101,7 +182,7 @@ function MyPurchasesContent() {
         </div>
         <button
           type="button"
-          onClick={() => refetch()}
+          onClick={handleRefresh}
           disabled={isFetching}
           className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-sm font-semibold transition-colors cursor-pointer disabled:opacity-60 shrink-0 self-start md:self-auto"
         >
@@ -111,6 +192,70 @@ function MyPurchasesContent() {
           />
           <span>{isFetching ? "Đang đối soát…" : "Tải lại & Đối soát VNPay"}</span>
         </button>
+      </div>
+
+      {/* Coursera Plus Hero Banner Card */}
+      <div className="mb-8 p-6 rounded-3xl bg-gradient-to-r from-purple-950/40 via-indigo-900/30 to-purple-900/40 border border-purple-500/30 shadow-lg relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                <Sparkles className="w-6 h-6 animate-pulse" />
+              </div>
+              <h2 className="text-xl md:text-2xl font-bold text-foreground">{"Coursera Plus"}</h2>
+              {isPlusActive ? (
+                <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  {"Đang hoạt động"}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                  {"Chưa kích hoạt"}
+                </span>
+              )}
+            </div>
+
+            {isPlusActive ? (
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {"Tài khoản của bạn đang có quyền học không giới hạn tất cả các khóa học. Còn "}
+                <strong className="text-purple-400 font-extrabold text-base">
+                  {daysRemaining} ngày
+                </strong>
+                {" sử dụng (Hết hạn vào "}
+                <span className="text-foreground font-semibold">{formattedExpDate}</span>
+                {")."}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {
+                  "Đăng ký gói Coursera Plus để truy cập không giới hạn hơn 500+ khóa học chất lượng cao và nhận chứng chỉ hoàn tất."
+                }
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            <button
+              type="button"
+              onClick={() => handleSubscribePlus(PlanType.MONTHLY)}
+              disabled={createVNPayMutation.isPending}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm transition-all shadow-md active:scale-95 disabled:opacity-60 cursor-pointer"
+            >
+              <CreditCard className="w-4 h-4" />
+              <span>{isPlusActive ? "Gia hạn Gói Tháng (+30d)" : "Đăng ký Gói Tháng (790k)"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSubscribePlus(PlanType.YEARLY)}
+              disabled={createVNPayMutation.isPending}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-sm transition-all shadow-md active:scale-95 disabled:opacity-60 cursor-pointer border border-purple-400/30"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>{isPlusActive ? "Gia hạn Gói Năm (+365d)" : "Nâng cấp Gói Năm (5.9Tr)"}</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Summary Cards */}

@@ -104,6 +104,11 @@ class PaymentUseCase:
             if plan_type == PlanType.YEARLY
             else DEFAULT_MONTHLY_PLAN_DAYS
         )
+        amount = (
+            DEFAULT_SYSTEM_SUBSCRIPTION_YEARLY_PRICE_VND
+            if plan_type == PlanType.YEARLY
+            else DEFAULT_SYSTEM_SUBSCRIPTION_MONTHLY_PRICE_VND
+        )
         now_dt = datetime.now(timezone.utc)
         expires_dt = now_dt + timedelta(days=days)
 
@@ -111,24 +116,55 @@ class PaymentUseCase:
             repo = self.repository or PaymentRepository(session)
 
             existing_sub = await repo.get_active_subscription(user_id)
+            if not existing_sub:
+                existing_sub = await repo.get_user_subscription(user_id)
+
+            sub_id = existing_sub.id if existing_sub else str(uuid.uuid4())
+
             if existing_sub and existing_sub.is_currently_active():
                 try:
-                    cur_exp = datetime.fromisoformat(existing_sub.expires_at)
+                    cur_exp_str = str(existing_sub.expires_at).replace("Z", "+00:00")
+                    cur_exp = datetime.fromisoformat(cur_exp_str)
+                    if cur_exp.tzinfo is None:
+                        cur_exp = cur_exp.replace(tzinfo=timezone.utc)
                     if cur_exp > now_dt:
                         expires_dt = cur_exp + timedelta(days=days)
                 except Exception:
                     pass
 
             sub = UserSubscription(
-                id=str(uuid.uuid4()),
+                id=sub_id,
                 user_id=user_id,
                 plan_type=plan_type,
                 status=SubscriptionStatus.ACTIVE,
                 starts_at=now_dt.isoformat(),
                 expires_at=expires_dt.isoformat(),
-                created_at=now_dt.isoformat(),
+                created_at=existing_sub.created_at
+                if existing_sub
+                else now_dt.isoformat(),
             )
             saved = await repo.save_subscription(sub)
+
+            # Record completed order for audit & transaction history
+            now_str = now_dt.isoformat()
+            vnp_txn_ref = f"SUB-{uuid.uuid4().hex[:12].upper()}"
+            sub_order = PaymentOrder(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                target_type=PaymentTargetType.SYSTEM_SUBSCRIPTION,
+                target_id="plus_yearly"
+                if plan_type == PlanType.YEARLY
+                else "plus_monthly",
+                plan_type=plan_type,
+                amount=amount,
+                currency=DEFAULT_CURRENCY,
+                status=PaymentOrderStatus.COMPLETED,
+                vnp_txn_ref=vnp_txn_ref,
+                created_at=now_str,
+                updated_at=now_str,
+            )
+            await repo.save_order(sub_order)
+
             logger.info(
                 "User %s successfully subscribed to Coursera Plus (%s) until %s",
                 user_id,
@@ -502,37 +538,84 @@ class PaymentUseCase:
             return None, None
 
         elif target_type == PaymentTargetType.SYSTEM_SUBSCRIPTION:
-            days = (
-                DEFAULT_YEARLY_PLAN_DAYS
-                if plan_type == PlanType.YEARLY
-                else DEFAULT_MONTHLY_PLAN_DAYS
-            )
-            exp_dt = now_dt + timedelta(days=days)
-            existing = await repo.get_active_subscription(user_id)
-            if existing and existing.is_currently_active():
-                try:
-                    cur_exp = datetime.fromisoformat(existing.expires_at)
-                    if cur_exp > now_dt:
-                        exp_dt = cur_exp + timedelta(days=days)
-                except Exception:
-                    pass
-            sub = UserSubscription(
-                id=str(uuid.uuid4()),
-                user_id=user_id,
-                plan_type=plan_type,
-                status=SubscriptionStatus.ACTIVE,
-                starts_at=now_str,
-                expires_at=exp_dt.isoformat(),
-                created_at=now_str,
-            )
-            saved_s = await repo.save_subscription(sub)
-            return None, saved_s
+            synced_sub = await self._sync_user_subscription(repo, user_id)
+            return None, synced_sub
 
         return None, None
 
+    async def _sync_user_subscription(
+        self, repo: IPaymentRepository, user_id: str
+    ) -> Optional[UserSubscription]:
+        """Deterministically calculate and sync active UserSubscription from all COMPLETED SYSTEM_SUBSCRIPTION orders."""
+        orders = await repo.list_user_orders(user_id)
+        completed_sub_orders = [
+            o
+            for o in orders
+            if o.status == PaymentOrderStatus.COMPLETED
+            and o.target_type == PaymentTargetType.SYSTEM_SUBSCRIPTION
+        ]
+        if not completed_sub_orders:
+            return None
+
+        completed_sub_orders.sort(key=lambda x: x.created_at)
+
+        now_dt = datetime.now(timezone.utc)
+        current_exp_dt: Optional[datetime] = None
+        first_start_str = completed_sub_orders[0].created_at
+        latest_plan_type = completed_sub_orders[-1].plan_type
+
+        for o in completed_sub_orders:
+            days = (
+                DEFAULT_YEARLY_PLAN_DAYS
+                if o.plan_type == PlanType.YEARLY
+                else DEFAULT_MONTHLY_PLAN_DAYS
+            )
+            try:
+                order_dt = datetime.fromisoformat(o.created_at)
+                if order_dt.tzinfo is None:
+                    order_dt = order_dt.replace(tzinfo=timezone.utc)
+            except Exception:
+                order_dt = now_dt
+
+            if current_exp_dt is None or current_exp_dt < order_dt:
+                current_exp_dt = order_dt + timedelta(days=days)
+            else:
+                current_exp_dt = current_exp_dt + timedelta(days=days)
+
+        if not current_exp_dt:
+            return None
+
+        is_active = current_exp_dt > now_dt
+        sub_status = (
+            SubscriptionStatus.ACTIVE if is_active else SubscriptionStatus.EXPIRED
+        )
+
+        existing_sub = await repo.get_active_subscription(user_id)
+        if not existing_sub:
+            existing_sub = await repo.get_user_subscription(user_id)
+        sub_id = existing_sub.id if existing_sub else str(uuid.uuid4())
+
+        sub = UserSubscription(
+            id=sub_id,
+            user_id=user_id,
+            plan_type=latest_plan_type,
+            status=sub_status,
+            starts_at=first_start_str,
+            expires_at=current_exp_dt.isoformat(),
+            created_at=completed_sub_orders[0].created_at,
+        )
+
+        saved_s = await repo.save_subscription(sub)
+        return saved_s if is_active else None
+
     async def list_user_purchases(
         self, user_id: str
-    ) -> tuple[list[CoursePurchase], list[PaymentOrder], dict[str, str]]:
+    ) -> tuple[
+        list[CoursePurchase],
+        list[PaymentOrder],
+        dict[str, str],
+        Optional[UserSubscription],
+    ]:
         async with async_session_scope() as session:
             repo = self.repository or PaymentRepository(session)
             orders = await repo.list_user_orders(user_id)
@@ -543,12 +626,15 @@ class PaymentUseCase:
             for o in orders:
                 if o.status == PaymentOrderStatus.PENDING:
                     try:
-                        c_dt = datetime.fromisoformat(o.created_at)
+                        c_dt_str = str(o.created_at).replace("Z", "+00:00")
+                        c_dt = datetime.fromisoformat(c_dt_str)
+                        if c_dt.tzinfo is None:
+                            c_dt = c_dt.replace(tzinfo=timezone.utc)
                         age_minutes = (now_dt - c_dt).total_seconds() / 60.0
                     except Exception:
                         age_minutes = 999.0
 
-                    if age_minutes >= 5.0:
+                    if age_minutes >= 0:
                         reconciled_any = True
                         try:
                             res = await VNPayService.query_dr_transaction(
@@ -578,10 +664,12 @@ class PaymentUseCase:
                             elif resp_code in ("01", "02", "24") or txn_status in (
                                 "01",
                                 "02",
+                                "99",
                             ):
-                                await repo.update_order_status(
-                                    o.id, PaymentOrderStatus.FAILED
-                                )
+                                if age_minutes >= 15.0:
+                                    await repo.update_order_status(
+                                        o.id, PaymentOrderStatus.FAILED
+                                    )
                             else:
                                 if age_minutes >= 15.0:
                                     await repo.update_order_status(
@@ -607,4 +695,10 @@ class PaymentUseCase:
             ]
             titles_map = await repo.get_course_titles(course_ids)
 
-            return purchases, orders, titles_map
+            active_sub = await repo.get_active_subscription(user_id)
+            if not active_sub or not active_sub.is_currently_active():
+                active_sub = await self._sync_user_subscription(repo, user_id)
+            if active_sub and not active_sub.is_currently_active():
+                active_sub = None
+
+            return purchases, orders, titles_map, active_sub

@@ -143,6 +143,7 @@ message ListUserPurchasesRequest {}
 message ListUserPurchasesResponse {
   repeated CoursePurchase purchases = 1;
   repeated PaymentOrderInfo orders = 2;
+  UserSubscription active_subscription = 3;
 }
 
 service PaymentService {
