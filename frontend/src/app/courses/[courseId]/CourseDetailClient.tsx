@@ -16,7 +16,7 @@ import {
   CertificateService,
   type FinancialAidApplication,
 } from "@/gen/certificate/v1/certificate_pb";
-import { Dialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { RatingStars } from "@/components/ui/RatingStars";
 import { useToast } from "@/components/ui/Toast";

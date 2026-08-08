@@ -11,7 +11,7 @@ import {
   useUpdatePartnerMutation,
   useDeletePartnerMutation,
 } from "@/lib/query_hooks";
-import { Dialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { useToast } from "@/components/ui/Toast";
 import {

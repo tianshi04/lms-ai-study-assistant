@@ -10,7 +10,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/Modal";
+} from "@/components/ui/Dialog";
+
 import { Switch } from "@/components/ui/Switch";
 import {
   useNotificationPreferencesQuery,

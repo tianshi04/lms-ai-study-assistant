@@ -7,7 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/Modal";
+} from "@/components/ui/Dialog";
+
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 

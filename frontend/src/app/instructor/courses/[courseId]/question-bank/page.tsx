@@ -4,7 +4,8 @@ import React, { useState, use, Suspense } from "react";
 import Link from "next/link";
 import { Plus, HelpCircle, FolderOpen, Pencil, Trash2, Info } from "lucide-react";
 
-import { Dialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
+
 import {
   AlertDialog,
   AlertDialogContent,

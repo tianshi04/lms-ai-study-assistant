@@ -7,7 +7,8 @@ import {
   useCancelInvitationMutation,
 } from "@/lib/query_hooks";
 import { InvitationType } from "@/gen/identity/v1/identity_pb";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/Modal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/Dialog";
+
 import { Field, FieldLabel } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";

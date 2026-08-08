@@ -13,7 +13,7 @@ import {
   type ForumReply,
 } from "@/gen/forum/v1/forum_pb";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
-import { Dialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { useToast } from "@/components/ui/Toast";
 import {

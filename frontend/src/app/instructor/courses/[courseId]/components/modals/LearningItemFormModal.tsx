@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
 import { ItemType } from "@/gen/catalog/v1/catalog_pb";
 import { type QuestionBank } from "@/gen/assessment/v1/assessment_pb";
-import { Dialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";

@@ -8,7 +8,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/Modal";
+} from "@/components/ui/Dialog";
+
 import { Button } from "@/components/ui/Button";
 import { useCreateVNPayPaymentUrlMutation } from "@/lib/query_hooks";
 import { PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";

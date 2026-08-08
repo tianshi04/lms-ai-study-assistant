@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ThumbsUp, MessageSquare, Pin, ExternalLink } from "lucide-react";
 import type { ForumThread, ForumReply } from "@/gen/forum/v1/forum_pb";
-import { Dialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";

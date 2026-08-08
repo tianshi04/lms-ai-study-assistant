@@ -7,7 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/Modal";
+} from "@/components/ui/Dialog";
+
 import {
   AlertDialog,
   AlertDialogContent,
