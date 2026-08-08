@@ -16,9 +16,21 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useListUserPurchasesQuery, useCreateVNPayPaymentUrlMutation } from "@/lib/query_hooks";
+import {
+  useListUserPurchasesQuery,
+  useCreateVNPayPaymentUrlMutation,
+  useCancelVNPayOrderMutation,
+} from "@/lib/query_hooks";
 import { PaymentOrderStatus, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
 import { Button } from "@/components/ui/Button";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 
 type FilterTab = "ALL" | "COMPLETED" | "PENDING" | "EXPIRED";
 
@@ -45,6 +57,13 @@ function formatDate(isoStr: string) {
 function MyPurchasesContent() {
   const [activeTab, setActiveTab] = useState<FilterTab>("ALL");
   const [isMounted, setIsMounted] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<any | null>(null);
+  const [actionNotice, setActionNotice] = useState<{
+    type: "success" | "error" | "cancelled";
+    title: string;
+    message: string;
+  } | null>(null);
+
   const queryClient = useQueryClient();
   const { data, isLoading, isFetching, refetch } = useListUserPurchasesQuery();
 
@@ -56,9 +75,24 @@ function MyPurchasesContent() {
     onSuccess: (res) => {
       if (res.success && res.paymentUrl) {
         window.location.href = res.paymentUrl;
+      } else if (!res.success) {
+        setActionNotice({
+          type: "error",
+          title: "Không thể khởi tạo thanh toán VNPay",
+          message: res.message || "Cổng thanh toán không phản hồi hoặc thông tin không hợp lệ.",
+        });
       }
     },
+    onError: (err) => {
+      setActionNotice({
+        type: "error",
+        title: "Lỗi kết nối thanh toán",
+        message: err.message || "Không thể kết nối đến máy chủ xử lý đơn hàng VNPay.",
+      });
+    },
   });
+
+  const cancelVNPayMutation = useCancelVNPayOrderMutation();
 
   const handleRefresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["userPurchasesAndOrders"] });
@@ -67,7 +101,7 @@ function MyPurchasesContent() {
     refetch();
   };
 
-  const orders = isMounted ? (data?.orders ?? []) : [];
+  const orders = data?.orders ?? [];
 
   const { daysRemaining, isPlusActive, formattedExpDate } = React.useMemo(() => {
     if (!isMounted) {
@@ -153,7 +187,11 @@ function MyPurchasesContent() {
       return o.status === PaymentOrderStatus.PENDING;
     }
     if (activeTab === "EXPIRED") {
-      return o.status === PaymentOrderStatus.EXPIRED || o.status === PaymentOrderStatus.FAILED;
+      return (
+        o.status === PaymentOrderStatus.EXPIRED ||
+        o.status === PaymentOrderStatus.FAILED ||
+        o.status === PaymentOrderStatus.CANCELLED
+      );
     }
     return true;
   });
@@ -164,6 +202,55 @@ function MyPurchasesContent() {
       targetId: order.targetId,
       planType: order.planType,
     });
+  };
+
+  const handleCancelOrder = (order: (typeof orders)[0]) => {
+    setOrderToCancel(order);
+  };
+
+  const confirmCancelOrder = () => {
+    if (!orderToCancel) return;
+    const targetOrder = orderToCancel;
+    const txnRef = targetOrder.vnpTxnRef || (targetOrder as any).vnp_txn_ref || "";
+    const orderId = targetOrder.id || (targetOrder as any).order_id || "";
+
+    cancelVNPayMutation.mutate(
+      {
+        vnpTxnRef: txnRef,
+        orderId: orderId,
+      },
+      {
+        onSuccess: (res) => {
+          setOrderToCancel(null);
+          if (res.success) {
+            setActionNotice({
+              type: "cancelled",
+              title: "Đã hủy giao dịch thanh toán VNPay",
+              message:
+                res.message ||
+                `Đơn hàng #${txnRef || orderId.substring(0, 8)} đã được hủy thành công. Tài khoản của bạn không bị trừ tiền và bạn có thể đặt lại bất cứ lúc nào.`,
+            });
+            handleRefresh();
+          } else {
+            setActionNotice({
+              type: "error",
+              title: "Không thể hủy đơn hàng",
+              message:
+                res.message || "Không tìm thấy thông tin đơn hàng hoặc giao dịch đã hoàn tất.",
+            });
+          }
+        },
+        onError: (err) => {
+          setOrderToCancel(null);
+          setActionNotice({
+            type: "error",
+            title: "Lỗi xử lý hủy đơn hàng",
+            message:
+              err.message || "Đã xảy ra lỗi kết nối với máy chủ khi gửi yêu cầu hủy đơn hàng.",
+          });
+        },
+      },
+    );
   };
 
   return (
@@ -194,6 +281,49 @@ function MyPurchasesContent() {
           <span>{isFetching ? "Đang đối soát…" : "Tải lại & Đối soát VNPay"}</span>
         </Button>
       </div>
+
+      {/* VNPay Inline Cancellation & Action Notice Banner (NO TOAST) */}
+      {actionNotice && (
+        <div
+          className={`mb-8 p-5 rounded-2xl border shadow-xs transition-all flex items-start justify-between gap-4 ${
+            actionNotice.type === "cancelled"
+              ? "bg-destructive/5 border-destructive/20 text-foreground"
+              : actionNotice.type === "success"
+                ? "bg-success/10 border-success/30 text-foreground"
+                : "bg-destructive/10 border-destructive/30 text-foreground"
+          }`}
+        >
+          <div className="flex items-start gap-3.5">
+            <div
+              className={`p-2.5 rounded-xl shrink-0 ${
+                actionNotice.type === "cancelled" || actionNotice.type === "error"
+                  ? "bg-destructive/15 text-destructive border border-destructive/20"
+                  : "bg-success/15 text-success border border-success/20"
+              }`}
+            >
+              {actionNotice.type === "success" ? (
+                <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
+              ) : (
+                <XCircle className="w-5 h-5" aria-hidden="true" />
+              )}
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-foreground">{actionNotice.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {actionNotice.message}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionNotice(null)}
+            className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors cursor-pointer shrink-0"
+            aria-label="Đóng thông báo"
+          >
+            <span className="text-lg leading-none">✕</span>
+          </button>
+        </div>
+      )}
 
       {/* Coursera Plus Hero Banner Card */}
       <div className="mb-8 p-6 rounded-3xl bg-primary-container/20 border border-primary/20 shadow-xs relative overflow-hidden">
@@ -356,14 +486,16 @@ function MyPurchasesContent() {
           {`Đã hết hạn / Hủy (${
             orders.filter(
               (o: any) =>
-                o.status === PaymentOrderStatus.EXPIRED || o.status === PaymentOrderStatus.FAILED,
+                o.status === PaymentOrderStatus.EXPIRED ||
+                o.status === PaymentOrderStatus.FAILED ||
+                o.status === PaymentOrderStatus.CANCELLED,
             ).length
           })`}
         </Button>
       </div>
 
       {/* Orders List */}
-      {isLoading ? (
+      {!isMounted || isLoading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <div
@@ -406,6 +538,7 @@ function MyPurchasesContent() {
             const isPending = order.status === PaymentOrderStatus.PENDING;
             const isFailed = order.status === PaymentOrderStatus.FAILED;
             const isExpired = order.status === PaymentOrderStatus.EXPIRED;
+            const isCancelled = order.status === PaymentOrderStatus.CANCELLED;
 
             return (
               <div
@@ -437,6 +570,13 @@ function MyPurchasesContent() {
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted text-muted-foreground border border-border text-xs font-bold">
                         <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>{"Đã hết hạn (15 phút)"}</span>
+                      </span>
+                    )}
+
+                    {isCancelled && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-destructive/10 border border-destructive/20 text-destructive text-xs font-bold">
+                        <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>{"Đã hủy giao dịch (VNPay)"}</span>
                       </span>
                     )}
 
@@ -493,16 +633,28 @@ function MyPurchasesContent() {
                   )}
 
                   {isPending && (
-                    <Button
-                      type="button"
-                      onClick={() => handleContinuePayment(order)}
-                      disabled={createVNPayMutation.isPending}
-                      isLoading={createVNPayMutation.isPending}
-                      className="px-5 py-2.5 rounded-xl bg-warning hover:bg-warning/90 text-warning-foreground text-sm font-semibold"
-                    >
-                      <CreditCard className="w-4 h-4" aria-hidden="true" />
-                      <span>{"Tiếp tục thanh toán"}</span>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => handleCancelOrder(order)}
+                        disabled={cancelVNPayMutation.isPending || createVNPayMutation.isPending}
+                        isLoading={cancelVNPayMutation.isPending}
+                        className="px-4 py-2.5 rounded-xl text-xs font-semibold text-destructive hover:bg-destructive/10 hover:border-destructive/30"
+                      >
+                        <span>{"Hủy đơn"}</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => handleContinuePayment(order)}
+                        disabled={createVNPayMutation.isPending || cancelVNPayMutation.isPending}
+                        isLoading={createVNPayMutation.isPending}
+                        className="px-5 py-2.5 rounded-xl bg-warning hover:bg-warning/90 text-warning-foreground text-sm font-semibold"
+                      >
+                        <CreditCard className="w-4 h-4" aria-hidden="true" />
+                        <span>{"Tiếp tục thanh toán"}</span>
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -510,6 +662,55 @@ function MyPurchasesContent() {
           })}
         </div>
       )}
+
+      {/* Confirmation Modal for Order Cancellation */}
+      <AlertDialog
+        open={!!orderToCancel}
+        onOpenChange={(open) => {
+          if (!open && !cancelVNPayMutation.isPending) {
+            setOrderToCancel(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận hủy đơn hàng</AlertDialogTitle>
+            <AlertDialogDescription>
+              {orderToCancel && (
+                <span>
+                  {"Bạn có chắc chắn muốn hủy đơn hàng "}
+                  <strong className="font-mono font-bold text-foreground">
+                    {orderToCancel.vnpTxnRef ||
+                      (orderToCancel as any).vnp_txn_ref ||
+                      orderToCancel.id?.substring(0, 8)}
+                  </strong>
+                  {" ("}
+                  {formatVnd(orderToCancel.amount || 0)}
+                  {
+                    ")? Đơn hàng sẽ chuyển sang trạng thái đã hủy và bạn có thể đăng ký lại bất cứ lúc nào."
+                  }
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setOrderToCancel(null)}
+              disabled={cancelVNPayMutation.isPending}
+            >
+              Quay lại
+            </Button>
+            <Button
+              variant="danger"
+              onClick={confirmCancelOrder}
+              disabled={cancelVNPayMutation.isPending}
+            >
+              {cancelVNPayMutation.isPending ? "Đang xử lý..." : "Đồng ý hủy đơn"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

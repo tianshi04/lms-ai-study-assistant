@@ -212,7 +212,11 @@ function VNPayReturnContent() {
               <XCircle aria-hidden="true" className="w-10 h-10" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Giao dịch không thành công</h1>
+              <h1 className="text-2xl font-bold text-foreground">
+                {message.includes("hủy bởi người dùng")
+                  ? "Đã hủy giao dịch thanh toán"
+                  : "Giao dịch không thành công"}
+              </h1>
               <p className="text-sm text-muted-foreground mt-2">{message}</p>
             </div>
 
