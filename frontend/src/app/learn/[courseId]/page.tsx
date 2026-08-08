@@ -544,6 +544,19 @@ function CoursePlayerContent() {
     }
   };
 
+  // Delete Personal Note
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      const learningClient = getRpcClient(LearningService);
+      const res = await learningClient.deletePersonalNote({ noteId });
+      if (res.success) {
+        setNotes((prev) => prev.filter((n) => n.id !== noteId));
+      }
+    } catch (err) {
+      console.error("Failed to delete note:", err);
+    }
+  };
+
   // Reset My Deadlines
   const handleResetDeadlines = async () => {
     try {
@@ -1023,6 +1036,7 @@ function CoursePlayerContent() {
                         onHighlightTextChange={setHighlightText}
                         onNoteCommentChange={setNoteComment}
                         onSaveNote={handleSaveNote}
+                        onDeleteNote={handleDeleteNote}
                       />
                     )}
 
