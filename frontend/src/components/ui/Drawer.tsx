@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 export const Drawer = BaseDrawer.Root;
 export const DrawerTrigger = BaseDrawer.Trigger;
 export const DrawerPortal = BaseDrawer.Portal;
+export const DrawerViewport = BaseDrawer.Viewport;
 export const DrawerClose = BaseDrawer.Close;
 
 export function DrawerBackdrop({
@@ -61,19 +62,21 @@ export function DrawerContent({
   return (
     <DrawerPortal>
       <DrawerBackdrop />
-      <BaseDrawer.Popup
-        ref={ref}
-        className={cn(drawerSideVariants({ side, className }))}
-        {...props}
-      >
-        {children}
-        {showCloseButton && (
-          <BaseDrawer.Close className="absolute right-4 top-4 rounded-full p-2 text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer">
-            <X aria-hidden="true" className="h-4 w-4" />
-            <span className="sr-only font-medium">Đóng</span>
-          </BaseDrawer.Close>
-        )}
-      </BaseDrawer.Popup>
+      <BaseDrawer.Viewport className="fixed inset-0 z-modal overflow-hidden">
+        <BaseDrawer.Popup
+          ref={ref}
+          className={cn(drawerSideVariants({ side, className }))}
+          {...props}
+        >
+          {children}
+          {showCloseButton && (
+            <BaseDrawer.Close className="absolute right-4 top-4 rounded-full p-2 text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer">
+              <X aria-hidden="true" className="h-4 w-4" />
+              <span className="sr-only font-medium">Đóng</span>
+            </BaseDrawer.Close>
+          )}
+        </BaseDrawer.Popup>
+      </BaseDrawer.Viewport>
     </DrawerPortal>
   );
 }
