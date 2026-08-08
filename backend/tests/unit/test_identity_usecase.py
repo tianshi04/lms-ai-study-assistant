@@ -224,13 +224,14 @@ async def test_refresh_token_success(
     mock_session_scope, mock_identity_repo, mock_tokens
 ):
     mock_acc, mock_ref, mock_dec = mock_tokens
-    mock_dec.return_value = {"type": "refresh", "sub": "u1"}
+    mock_dec.return_value = {"type": "refresh", "sub": "u1", "jti": "jti-1"}
 
     mock_session = AsyncMock()
     mock_session_scope.return_value.__aenter__.return_value = mock_session
 
     mock_repo_instance = AsyncMock()
     mock_identity_repo.return_value = mock_repo_instance
+    mock_repo_instance.is_token_revoked.return_value = False
     user = User(
         id="u1",
         email="test@test.com",
@@ -276,13 +277,14 @@ async def test_refresh_token_user_not_found(
     mock_session_scope, mock_identity_repo, mock_tokens
 ):
     mock_acc, mock_ref, mock_dec = mock_tokens
-    mock_dec.return_value = {"type": "refresh", "sub": "u1"}
+    mock_dec.return_value = {"type": "refresh", "sub": "u1", "jti": "jti-1"}
 
     mock_session = AsyncMock()
     mock_session_scope.return_value.__aenter__.return_value = mock_session
 
     mock_repo_instance = AsyncMock()
     mock_identity_repo.return_value = mock_repo_instance
+    mock_repo_instance.is_token_revoked.return_value = False
     mock_repo_instance.get_by_id.return_value = None
 
     usecase = IdentityUseCase()

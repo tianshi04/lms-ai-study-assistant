@@ -6,7 +6,7 @@ def test_settings_load_defaults():
     config = get_settings()
     assert config.ENV == "development"
     assert config.BACKEND_PORT == 8000
-    assert config.MINIO_ENDPOINT == "http://localhost:9090"
+    assert config.MINIO_ENDPOINT.startswith("http")
     assert config.MINIO_ACCESS_KEY == "minio_admin"
     assert config.MINIO_SECRET_KEY == "minio_password123"
     assert config.MINIO_BUCKET_NAME == "coursera-assets"

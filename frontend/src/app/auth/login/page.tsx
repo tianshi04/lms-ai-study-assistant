@@ -63,10 +63,10 @@ function LoginFormContent() {
     },
   });
 
-  const handleGoogleLogin = async (googleIdToken: string) => {
+  const handleGoogleLogin = async (authCode: string, nonce: string) => {
     setGoogleSubmitting(true);
     try {
-      const res = await googleLoginAction(googleIdToken);
+      const res = await googleLoginAction(authCode, nonce);
       if (res.success && res.user) {
         setAuth({
           userId: res.user.id,

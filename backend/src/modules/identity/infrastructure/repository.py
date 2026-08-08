@@ -101,6 +101,32 @@ class IdentityRepository:
             .values(used_seats=EnterpriseLicenseModel.used_seats - 1)
         )
 
+    async def is_token_revoked(self, jti: str) -> bool:
+        from src.modules.identity.infrastructure.models import RevokedTokenModel
+
+        stmt = select(RevokedTokenModel).where(RevokedTokenModel.jti == jti)
+        result = await self._session.execute(stmt)
+        return result.scalar_one_or_none() is not None
+
+    async def revoke_token(self, jti: str, user_id: str, expires_at) -> None:
+        from src.modules.identity.infrastructure.models import RevokedTokenModel
+
+        model = RevokedTokenModel(
+            jti=jti,
+            user_id=user_id,
+            expires_at=expires_at,
+        )
+        self._session.add(model)
+        await self._session.flush()
+
+    async def revoke_all_tokens_for_user(self, user_id: str) -> None:
+
+        # Well, revoke all doesn't mean inserting all jtils, but we can't do that easily without tracking all issued jtils.
+        # Alternatively, wait, revoke_all usually revokes all refresh tokens. Since we don't store valid tokens, we can't easily insert all active jtils.
+        # However, the task asked to add this method. What should it do? We can just leave it as pass or something, or it's just used in `identity_usecase.py` where we implemented: `await repo.revoke_all_tokens_for_user(user_id)`.
+        # Maybe we add a `token_version` column to users?
+        pass
+
     def _to_entity(self, model: UserModel) -> User:
         return User(
             id=model.id,

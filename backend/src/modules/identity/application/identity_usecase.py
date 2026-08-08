@@ -6,6 +6,10 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Optional
 
+import httpx
+from google.oauth2 import id_token
+from google.auth.transport import requests
+
 from sqlalchemy import select, update
 
 from src.modules.identity.domain.entities import (
@@ -44,9 +48,6 @@ from src.modules.identity.application.review_application_usecase import (
 )
 
 
-import base64
-import json
-
 from src.modules.learning.domain.repository import ILearningRepository
 from src.shared.auth import (
     CurrentUser,
@@ -60,9 +61,15 @@ from src.shared.infrastructure.database import async_session_scope
 logger = logging.getLogger(__name__)
 
 
-def _parse_google_id_token(id_token: str) -> dict[str, str]:
-    if id_token.startswith("mock_google_"):
-        raw = id_token[len("mock_google_") :]
+async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
+    """Exchange Google Authorization Code for user claims via back-channel HTTPS."""
+    # Dev Mode Mock
+    from src.shared.config import settings
+
+    if code.startswith("mock_google_") and (
+        not settings.GOOGLE_CLIENT_ID or settings.ENV != "production"
+    ):
+        raw = code[len("mock_google_") :]
         parts = raw.rsplit("_", 1)
         email = parts[0] if parts else "user@gmail.com"
         name = parts[1] if len(parts) > 1 else "Google User"
@@ -74,23 +81,58 @@ def _parse_google_id_token(id_token: str) -> dict[str, str]:
             "picture": f"https://api.dicebear.com/7.x/avataaars/svg?seed={email}",
         }
 
-    try:
-        parts = id_token.split(".")
-        if len(parts) == 3:
-            payload_b64 = parts[1]
-            payload_b64 += "=" * (-len(payload_b64) % 4)
-            payload_bytes = base64.urlsafe_b64decode(payload_b64)
-            payload = json.loads(payload_bytes.decode("utf-8"))
-            return {
-                "google_id": payload.get("sub", ""),
-                "email": payload.get("email", ""),
-                "name": payload.get("name", payload.get("email", "")),
-                "picture": payload.get("picture", ""),
-            }
-    except Exception as exc:
-        logger.warning("Failed to decode Google ID token: %s", exc)
+    client_id = settings.GOOGLE_CLIENT_ID
+    client_secret = settings.GOOGLE_CLIENT_SECRET
 
-    return {"google_id": "", "email": "", "name": "", "picture": ""}
+    if not client_id or not client_secret:
+        raise ValueError(
+            "GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET chưa được cấu hình trên server"
+        )
+
+    # Exchange code via server-to-server HTTPS
+    async with httpx.AsyncClient(timeout=10.0) as http_client:
+        token_response = await http_client.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "redirect_uri": "postmessage",
+                "grant_type": "authorization_code",
+            },
+        )
+
+    if token_response.status_code != 200:
+        logger.error("Google token exchange failed: %s", token_response.text)
+        raise ValueError("Đổi Authorization Code thất bại. Vui lòng thử lại.")
+
+    token_data = token_response.json()
+    id_token_jwt = token_data.get("id_token")
+    if not id_token_jwt:
+        raise ValueError("Google không trả về ID Token trong phản hồi.")
+
+    # Verify RS256 signature and audience
+    try:
+        payload = id_token.verify_oauth2_token(
+            id_token_jwt, requests.Request(), client_id
+        )
+    except ValueError as e:
+        logger.error("Google ID Token verification failed: %s", e)
+        raise ValueError("Token Google không hợp lệ hoặc đã hết hạn.")
+
+    # Validate nonce to prevent replay attacks
+    if nonce and nonce != "mock":
+        token_nonce = payload.get("nonce", "")
+        if token_nonce != nonce:
+            logger.warning("Nonce mismatch! Expected=%s, Got=%s", nonce, token_nonce)
+            raise ValueError("Nonce không khớp — nghi ngờ tấn công Replay!")
+
+    return {
+        "google_id": payload.get("sub", ""),
+        "email": payload.get("email", ""),
+        "name": payload.get("name", payload.get("email", "").split("@")[0]),
+        "picture": payload.get("picture", ""),
+    }
 
 
 def hash_password(password: str, salt: Optional[bytes] = None) -> str:
@@ -169,11 +211,22 @@ class IdentityUseCase:
             return "", "", "Refresh Token không hợp lệ hoặc đã hết hạn"
 
         user_id = payload.get("sub")
-        if not user_id:
+        jti = payload.get("jti")
+        if not user_id or not jti:
             return "", "", "Refresh Token chứa thông tin không hợp lệ"
 
         async with async_session_scope() as session:
             repo = IdentityRepository(session)
+
+            # Token Rotation: Check if jti is revoked
+            if await repo.is_token_revoked(jti):
+                await repo.revoke_all_tokens_for_user(user_id)
+                return (
+                    "",
+                    "",
+                    "Bảo mật: Phát hiện sử dụng lại Refresh Token cũ. Vui lòng đăng nhập lại.",
+                )
+
             user = await repo.get_by_id(user_id)
             if not user:
                 return "", "", "Không tìm thấy người dùng sở hữu token"
@@ -186,16 +239,23 @@ class IdentityUseCase:
                 avatar_url=user.avatar_url,
             )
             new_refresh_token = create_refresh_token(user.id)
+
+            # Revoke old token
+            exp = payload.get("exp")
+            if exp:
+                expires_at = datetime.fromtimestamp(exp, tz=timezone.utc)
+                await repo.revoke_token(jti, user_id, expires_at)
+
             return new_access_token, new_refresh_token, ""
 
     async def google_register_verify(
-        self, google_id_token: str
+        self, authorization_code: str, nonce: str = ""
     ) -> tuple[str, str, str, str, bool, str]:
         """Returns (temp_token, email, full_name, avatar_url, is_already_registered, error_message)."""
-        if not google_id_token:
-            return "", "", "", "", False, "Mã Google ID Token không hợp lệ"
+        if not authorization_code:
+            return "", "", "", "", False, "Mã Google Authorization Code không hợp lệ"
 
-        claims = _parse_google_id_token(google_id_token)
+        claims = await _exchange_google_code(authorization_code, nonce)
         email = claims["email"]
         google_id = claims["google_id"]
         full_name = claims["name"]
@@ -290,13 +350,13 @@ class IdentityUseCase:
             return saved_user, access_token, refresh_token, ""
 
     async def google_login(
-        self, google_id_token: str
+        self, authorization_code: str, nonce: str = ""
     ) -> tuple[Optional[User], str, str, str]:
         """Returns (user, access_token, refresh_token, error_message)."""
-        if not google_id_token:
-            return None, "", "", "Mã Google ID Token không hợp lệ"
+        if not authorization_code:
+            return None, "", "", "Mã Google Authorization Code không hợp lệ"
 
-        claims = _parse_google_id_token(google_id_token)
+        claims = await _exchange_google_code(authorization_code, nonce)
         email = claims["email"]
         google_id = claims["google_id"]
 
@@ -329,10 +389,10 @@ class IdentityUseCase:
             return user, access_token, refresh_token, ""
 
     async def google_reset_password_verify(
-        self, google_id_token: str
+        self, authorization_code: str, nonce: str = ""
     ) -> tuple[str, str, str, str]:
         """Returns (temp_token, email, full_name, error_message)."""
-        payload = _parse_google_id_token(google_id_token)
+        payload = await _exchange_google_code(authorization_code, nonce)
         if not payload:
             return "", "", "", "Mã xác thực Google không hợp lệ hoặc đã hết hạn."
 

@@ -27,12 +27,19 @@ export function GoogleIcon({ className = "w-5 h-5 flex-shrink-0" }: { className?
 }
 
 interface GoogleAuthButtonProps {
-  onSuccess: (googleIdToken: string) => void;
+  onSuccess: (authCode: string, nonce: string) => void;
   isLoading?: boolean;
   text?: string;
   variant?: "outline" | "primary" | "secondary";
   className?: string;
   children?: React.ReactNode;
+}
+
+function generateNonce(length = 32): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const array = new Uint32Array(length);
+  window.crypto.getRandomValues(array);
+  return Array.from(array, (val) => chars[val % chars.length]).join("");
 }
 
 export function GoogleAuthButton({
@@ -45,67 +52,54 @@ export function GoogleAuthButton({
 }: GoogleAuthButtonProps) {
   const [internalLoading, setInternalLoading] = useState(false);
 
-  const handleClick = () => {
+  const handleClick = async () => {
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const isProduction = process.env.NEXT_PUBLIC_ENV === "production";
 
-    if (!googleClientId) {
+    if (!googleClientId && !isProduction) {
       const inputEmail = window.prompt(
         "Dev Mode: Nhập địa chỉ Gmail để giả lập xác minh Google",
         "user.test@gmail.com",
       );
       if (inputEmail && inputEmail.includes("@")) {
         const mockToken = `mock_google_${inputEmail.trim()}_${inputEmail.split("@")[0]}`;
-        onSuccess(mockToken);
+        onSuccess(mockToken, "mock");
       }
+      return;
+    }
+
+    if (!googleClientId) {
+      console.error("NEXT_PUBLIC_GOOGLE_CLIENT_ID chưa được cấu hình");
       return;
     }
 
     setInternalLoading(true);
 
-    const redirectUri = `${window.location.origin}/auth/google/callback`;
-    const width = 500;
-    const height = 620;
-    const left = Math.max(0, Math.round(window.screenX + (window.outerWidth - width) / 2));
-    const top = Math.max(0, Math.round(window.screenY + (window.outerHeight - height) / 2));
+    try {
+      const nonce = generateNonce();
 
-    const authUrl =
-      `https://accounts.google.com/o/oauth2/v2/auth?` +
-      new URLSearchParams({
+      const client = google.accounts.oauth2.initCodeClient({
         client_id: googleClientId,
-        redirect_uri: redirectUri,
-        response_type: "token id_token",
         scope: "openid email profile",
-        nonce: Math.random().toString(36).substring(2),
-        prompt: "select_account",
-      }).toString();
+        ux_mode: "popup",
+        nonce: nonce,
+        callback: (response) => {
+          setInternalLoading(false);
+          if (response.error) {
+            console.error("Google Auth Error:", response.error, response.error_description);
+            return;
+          }
+          if (response.code) {
+            onSuccess(response.code, nonce);
+          }
+        },
+      });
 
-    const popup = window.open(
-      authUrl,
-      "GoogleOAuthPopup",
-      `width=${width},height=${height},top=${top},left=${left},scrollbars=yes,status=yes`,
-    );
-
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type === "GOOGLE_AUTH_SUCCESS" && event.data?.idToken) {
-        window.removeEventListener("message", handleMessage);
-        setInternalLoading(false);
-        onSuccess(event.data.idToken);
-      } else if (event.data?.type === "GOOGLE_AUTH_ERROR") {
-        window.removeEventListener("message", handleMessage);
-        setInternalLoading(false);
-      }
-    };
-
-    window.addEventListener("message", handleMessage);
-
-    const timer = setInterval(() => {
-      if (popup && popup.closed) {
-        clearInterval(timer);
-        window.removeEventListener("message", handleMessage);
-        setInternalLoading(false);
-      }
-    }, 1000);
+      client.requestCode();
+    } catch (error) {
+      console.error(error);
+      setInternalLoading(false);
+    }
   };
 
   return (
