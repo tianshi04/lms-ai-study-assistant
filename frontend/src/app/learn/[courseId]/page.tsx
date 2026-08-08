@@ -784,7 +784,7 @@ function CoursePlayerContent() {
                                         setActiveItem(item);
                                         setActiveQuiz(null);
                                       }}
-                                      className={`w-full text-left justify-start px-3.5 py-2.5 rounded-2xl h-auto ${
+                                      className={`w-full text-left justify-start items-center gap-3 p-3 rounded-xl h-auto whitespace-normal ${
                                         itemLocked
                                           ? "opacity-60 cursor-not-allowed hover:bg-transparent"
                                           : isActive
@@ -793,7 +793,7 @@ function CoursePlayerContent() {
                                       }`}
                                     >
                                       {/* Status Icon */}
-                                      <div className="shrink-0">
+                                      <div className="shrink-0 flex items-center justify-center">
                                         {itemLocked ? (
                                           <div className="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center">
                                             <Lock
