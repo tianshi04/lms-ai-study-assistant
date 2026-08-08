@@ -235,9 +235,5 @@ export async function logoutAction() {
   const cookieStore = await cookies();
   cookieStore.delete("access_token");
   cookieStore.delete("refresh_token");
-  // Clear legacy cookies if present
-  cookieStore.delete("user_name");
-  cookieStore.delete("user_email");
-  cookieStore.delete("user_role");
   return { success: true };
 }

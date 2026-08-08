@@ -43,9 +43,7 @@ export function CourseCatalogClient() {
   const { data: levels = [] } = useCategoriesQuery("LEVEL");
   const error = queryError ? queryError.message : null;
 
-  const getCategoryTranslation = (_slug: string, fallback: string) => {
-    return fallback;
-  };
+  const getCategoryTranslation = (slug: string, fallback: string) => fallback;
 
   return (
     <main className="w-full max-w-7xl mx-auto px-6 py-12 min-h-[65vh] bg-surface text-on-surface">

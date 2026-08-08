@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { AlertTriangle, Send } from "lucide-react";
 
+import { mapConnectError } from "@/lib/connect_error_mapper";
+
 interface HonorCodeModalProps {
   itemId: string;
   userId?: string;
@@ -41,11 +43,10 @@ export function HonorCodeModal({
         itemId,
         isAgreed: true,
       });
+      await onAgreedAndSubmit();
     } catch (err) {
-      console.warn("RPC submitHonorCode failed, using local fallback:", err);
+      setErrorMsg(mapConnectError(err, "Không thể nộp Cam kết Trung thực. Vui lòng thử lại."));
     }
-
-    await onAgreedAndSubmit();
   };
 
   return (

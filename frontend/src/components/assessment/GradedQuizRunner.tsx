@@ -259,15 +259,10 @@ export function GradedQuizRunner({
       selectedOptionIndexes: indices,
     }));
 
-    const legacySelectedOptionIndexes = selectedAnswers.map((indices) =>
-      indices.length > 0 ? indices[0] : -1,
-    );
-
     try {
       const client = getRpcClient(AssessmentService);
       const res = await client.submitGradedQuiz({
         itemId,
-        selectedOptionIndexes: legacySelectedOptionIndexes,
         questionAnswers: questionAnswersPayload,
         sessionSeed,
         startTimeIso,

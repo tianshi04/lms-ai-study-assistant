@@ -149,7 +149,7 @@ async def test_live_quiz_submission_trigger():
     await assessment_uc.submit_graded_quiz(
         user_id=learner_id,
         item_id=item_id,
-        selected_option_indexes=[0, 0, 0, 0, 0],
+        question_answers=[[0], [0], [0], [0], [0]],
     )
 
     # Verify Learner receives ASSESSMENT notification

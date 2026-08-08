@@ -181,14 +181,12 @@ class AssessmentUseCase:
             correct_indices = [
                 idx for idx, opt in enumerate(opts_data) if opt["is_correct"]
             ]
-            correct_idx = correct_indices[0] if correct_indices else 0
 
             result.append(
                 {
                     "question_id": q.id,
                     "text": q.text,
                     "options": options_text,
-                    "shuffled_correct_index": correct_idx,
                     "shuffled_correct_indices": correct_indices,
                     "explanation": q.explanation or "",
                     "question_type": q.question_type,
@@ -267,12 +265,7 @@ class AssessmentUseCase:
                 )
                 explanations = []
                 for idx, q in enumerate(questions):
-                    corr_indices = set(
-                        q.get(
-                            "shuffled_correct_indices",
-                            [q.get("shuffled_correct_index", 0)],
-                        )
-                    )
+                    corr_indices = set(q.get("shuffled_correct_indices", []))
                     user_ans_idx = (
                         target_sub.selected_option_indexes[idx]
                         if target_sub
@@ -396,7 +389,6 @@ class AssessmentUseCase:
         self,
         user_id: str,
         item_id: str,
-        selected_option_indexes: Optional[list[int]] = None,
         start_time_iso: Optional[str] = None,
         duration_minutes: int = DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
         session_seed: Optional[int] = None,
@@ -476,19 +468,10 @@ class AssessmentUseCase:
             total_questions = len(generated_qs)
             correct_count = 0
 
+            answers = question_answers or []
             for idx, q in enumerate(generated_qs):
-                corr_indices = set(
-                    q.get(
-                        "shuffled_correct_indices", [q.get("shuffled_correct_index", 0)]
-                    )
-                )
-                if question_answers and idx < len(question_answers):
-                    user_ans_set = set(question_answers[idx])
-                elif selected_option_indexes and idx < len(selected_option_indexes):
-                    val = selected_option_indexes[idx]
-                    user_ans_set = {val} if val >= 0 else set()
-                else:
-                    user_ans_set = set()
+                corr_indices = set(q.get("shuffled_correct_indices", []))
+                user_ans_set = set(answers[idx]) if idx < len(answers) else set()
 
                 if user_ans_set and user_ans_set == corr_indices:
                     correct_count += 1
@@ -511,20 +494,10 @@ class AssessmentUseCase:
                     "Kho câu hỏi rỗng hoặc chưa được cấu hình câu hỏi cho bài thi này."
                 )
             else:
+                answers = question_answers or []
                 for idx, q in enumerate(generated_qs):
-                    corr_indices = set(
-                        q.get(
-                            "shuffled_correct_indices",
-                            [q.get("shuffled_correct_index", 0)],
-                        )
-                    )
-                    if question_answers and idx < len(question_answers):
-                        user_ans_set = set(question_answers[idx])
-                    elif selected_option_indexes and idx < len(selected_option_indexes):
-                        val = selected_option_indexes[idx]
-                        user_ans_set = {val} if val >= 0 else set()
-                    else:
-                        user_ans_set = set()
+                    corr_indices = set(q.get("shuffled_correct_indices", []))
+                    user_ans_set = set(answers[idx]) if idx < len(answers) else set()
 
                     is_corr = bool(user_ans_set and user_ans_set == corr_indices)
                     clean_exp = _clean_explanation(q.get("explanation"))
@@ -578,11 +551,12 @@ class AssessmentUseCase:
                 submission_id = f"sub-{uuid.uuid4().hex[:8]}"
                 attempt_number = len(prev_submissions) + 1
 
+                first_selected = [ans[0] if ans else -1 for ans in answers]
                 submission = QuizSubmission(
                     id=submission_id,
                     user_id=user_id,
                     item_id=item_id,
-                    selected_option_indexes=selected_option_indexes or [],
+                    selected_option_indexes=first_selected,
                     score_percent=score_percent,
                     passed=score_percent >= passing_threshold,
                     attempt_number=attempt_number,

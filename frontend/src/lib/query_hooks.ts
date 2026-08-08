@@ -327,18 +327,18 @@ export function useSubmitQuizMutation(
     UseMutationOptions<
       QuizResult | undefined,
       Error,
-      { itemId: string; selectedOptionIndexes: number[] }
+      { itemId: string; questionAnswers?: { selectedOptionIndexes: number[] }[] }
     >
   >,
 ) {
   return useMutation<
     QuizResult | undefined,
     Error,
-    { itemId: string; selectedOptionIndexes: number[] }
+    { itemId: string; questionAnswers?: { selectedOptionIndexes: number[] }[] }
   >({
-    mutationFn: async ({ itemId, selectedOptionIndexes }) => {
+    mutationFn: async ({ itemId, questionAnswers }) => {
       const client = getRpcClient(AssessmentService);
-      const res = await client.submitGradedQuiz({ itemId, selectedOptionIndexes });
+      const res = await client.submitGradedQuiz({ itemId, questionAnswers });
       return res.result;
     },
     ...options,

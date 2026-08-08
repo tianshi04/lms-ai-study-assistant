@@ -121,17 +121,8 @@ export default function TAGradingPage() {
       } else {
         toast.error(res.message || "Chấm điểm thất bại.");
       }
-    } catch {
-      // Fallback update for demo environment
-      toast.success(`Đã duyệt chấm lại điểm ${inputScore}% cho bài làm thành công!`);
-      setSubmissions((prev) =>
-        prev.map((item) =>
-          item.id === selectedSubmission.id
-            ? { ...item, taScore: inputScore, status: "GRADED" }
-            : item,
-        ),
-      );
-      setSelectedSubmission(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Chấm điểm thất bại. Vui lòng thử lại.");
     } finally {
       setSubmitting(false);
     }
