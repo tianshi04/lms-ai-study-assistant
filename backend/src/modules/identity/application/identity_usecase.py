@@ -62,18 +62,8 @@ logger = logging.getLogger(__name__)
 
 
 async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
-    """Exchange Google Authorization Code for user claims via back-channel.
-
-    Security techniques applied:
-    - KT #1: Authorization Code Flow
-    - KT #3: Back-Channel Communication (Server-to-Server HTTPS)
-    - KT #4: Client Secret Zero-Trust
-    - KT #5: RS256 Signature Verification
-    - KT #6: Audience Check
-    - KT #7: Immutable ID (sub)
-    - KT #8: Nonce Validation
-    """
-    # Dev Mode Mock — chỉ hoạt động khi ENABLE_DEV_MOCK=true
+    """Exchange Google Authorization Code for user claims via back-channel HTTPS."""
+    # Dev Mode Mock
     from src.shared.config import settings
 
     if code.startswith("mock_google_") and (
@@ -101,7 +91,7 @@ async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
             "GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET chưa được cấu hình trên server"
         )
 
-    # KT #3 + #4: Exchange code via server-to-server HTTPS with Client Secret
+    # Exchange code via server-to-server HTTPS
     async with httpx.AsyncClient(timeout=10.0) as http_client:
         token_response = await http_client.post(
             "https://oauth2.googleapis.com/token",
@@ -123,7 +113,7 @@ async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
     if not id_token_jwt:
         raise ValueError("Google không trả về ID Token trong phản hồi.")
 
-    # KT #5: Verify RS256 signature + KT #6: Audience check
+    # Verify RS256 signature and audience
     try:
         payload = id_token.verify_oauth2_token(
             id_token_jwt, requests.Request(), client_id
@@ -132,14 +122,13 @@ async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
         logger.error("Google ID Token verification failed: %s", e)
         raise ValueError("Token Google không hợp lệ hoặc đã hết hạn.")
 
-    # KT #8: Nonce Validation — prevent replay attacks
+    # Validate nonce to prevent replay attacks
     if nonce and nonce != "mock":
         token_nonce = payload.get("nonce", "")
         if token_nonce != nonce:
             logger.warning("Nonce mismatch! Expected=%s, Got=%s", nonce, token_nonce)
             raise ValueError("Nonce không khớp — nghi ngờ tấn công Replay!")
 
-    # KT #7: Use immutable 'sub' as google_id
     return {
         "google_id": payload.get("sub", ""),
         "email": payload.get("email", ""),
