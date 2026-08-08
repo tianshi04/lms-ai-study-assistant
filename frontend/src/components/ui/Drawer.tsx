@@ -18,7 +18,7 @@ export function DrawerBackdrop({
     <BaseDrawer.Backdrop
       ref={ref}
       className={cn(
-        "fixed inset-0 z-modal bg-black/60 backdrop-blur-xs transition-opacity duration-m3-medium-2 ease-m3-decelerate data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "fixed inset-0 z-modal bg-scrim/60 backdrop-blur-xs transition-opacity duration-m3-medium-2 ease-m3-decelerate data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         className,
       )}
       {...props}
@@ -27,16 +27,16 @@ export function DrawerBackdrop({
 }
 
 export const drawerSideVariants = cva(
-  "fixed z-modal bg-card p-6 shadow-2xl transition-transform duration-m3-medium-4 ease-m3-decelerate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+  "fixed z-modal bg-surface-container-low text-on-surface p-6 shadow-2xl transition-transform duration-m3-medium-4 ease-m3-decelerate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
   {
     variants: {
       side: {
-        top: "inset-x-0 top-0 border-b border-border rounded-b-2xl data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
+        top: "inset-x-0 top-0 border-b border-outline-variant rounded-b-2xl data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
         bottom:
-          "inset-x-0 bottom-0 border-t border-border rounded-t-2xl data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
-        left: "inset-y-0 left-0 h-full w-3/4 max-w-sm border-r border-border rounded-r-2xl data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left",
+          "inset-x-0 bottom-0 border-t border-outline-variant rounded-t-2xl data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+        left: "inset-y-0 left-0 h-full w-3/4 max-w-sm border-r border-outline-variant rounded-r-2xl data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left",
         right:
-          "inset-y-0 right-0 h-full w-3/4 max-w-sm border-l border-border rounded-l-2xl data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
+          "inset-y-0 right-0 h-full w-3/4 max-w-sm border-l border-outline-variant rounded-l-2xl data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
       },
     },
     defaultVariants: {
@@ -68,7 +68,7 @@ export function DrawerContent({
       >
         {children}
         {showCloseButton && (
-          <BaseDrawer.Close className="absolute right-4 top-4 rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer">
+          <BaseDrawer.Close className="absolute right-4 top-4 rounded-full p-2 text-on-surface-variant hover:bg-surface-container-highest hover:text-on-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer">
             <X aria-hidden="true" className="h-4 w-4" />
             <span className="sr-only font-medium">Đóng</span>
           </BaseDrawer.Close>
@@ -82,7 +82,7 @@ export function DrawerHeader({ className, ...props }: React.HTMLAttributes<HTMLD
   return (
     <div
       className={cn(
-        "flex flex-col space-y-1.5 text-left sm:text-left pb-4 border-b border-border",
+        "flex flex-col space-y-1.5 text-left sm:text-left pb-4 border-b border-outline-variant",
         className,
       )}
       {...props}
@@ -98,7 +98,7 @@ export function DrawerTitle({
   return (
     <BaseDrawer.Title
       ref={ref}
-      className={cn("text-lg font-semibold text-foreground leading-none tracking-tight", className)}
+      className={cn("text-lg font-semibold text-on-surface leading-none tracking-tight", className)}
       {...props}
     />
   );
@@ -112,7 +112,7 @@ export function DrawerDescription({
   return (
     <BaseDrawer.Description
       ref={ref}
-      className={cn("text-sm text-muted-foreground", className)}
+      className={cn("text-sm text-on-surface-variant", className)}
       {...props}
     />
   );
@@ -122,7 +122,7 @@ export function DrawerFooter({ className, ...props }: React.HTMLAttributes<HTMLD
   return (
     <div
       className={cn(
-        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4 mt-auto border-t border-border",
+        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4 mt-auto border-t border-outline-variant",
         className,
       )}
       {...props}

@@ -7,9 +7,9 @@ export const cardVariants = cva(
   {
     variants: {
       variant: {
-        elevated: "bg-surface-container-low text-foreground shadow-sm border-none",
-        filled: "bg-surface-container-highest text-foreground border-none",
-        outlined: "bg-card text-card-foreground border border-outline-variant",
+        elevated: "bg-surface-container-low text-on-surface shadow-sm border-none",
+        filled: "bg-surface-container-highest text-on-surface border-none",
+        outlined: "bg-surface-container-low text-on-surface border border-outline-variant",
       },
     },
     defaultVariants: {
@@ -50,10 +50,7 @@ export function CardTitle({ className, ref, children, ...props }: React.Componen
   return (
     <h3
       ref={ref}
-      className={cn(
-        "text-lg font-semibold leading-none tracking-tight text-card-foreground",
-        className,
-      )}
+      className={cn("text-lg font-semibold leading-none tracking-tight text-on-surface", className)}
       {...props}
     >
       {children}
@@ -62,7 +59,7 @@ export function CardTitle({ className, ref, children, ...props }: React.Componen
 }
 
 export function CardDescription({ className, ref, ...props }: React.ComponentProps<"p">) {
-  return <p ref={ref} className={cn("text-sm text-muted-foreground", className)} {...props} />;
+  return <p ref={ref} className={cn("text-sm text-on-surface-variant", className)} {...props} />;
 }
 
 export function CardContent({ className, ref, ...props }: React.ComponentProps<"div">) {

@@ -37,7 +37,7 @@ export function AlertDialogContent({
         <BaseAlertDialog.Popup
           ref={ref}
           className={cn(
-            "bg-surface-container-high text-foreground rounded-3xl shadow-2xl w-full max-w-md p-6 border border-outline-variant animate-in fade-in zoom-in-95 duration-m3-medium-4 ease-m3-decelerate relative",
+            "bg-surface-container-high text-on-surface rounded-3xl shadow-2xl w-full max-w-md p-6 border border-outline-variant animate-in fade-in zoom-in-95 duration-m3-medium-4 ease-m3-decelerate relative",
             className,
           )}
           {...props}
@@ -57,7 +57,7 @@ export function AlertDialogTitle({
   return (
     <BaseAlertDialog.Title
       ref={ref}
-      className={cn("text-lg font-semibold text-foreground leading-tight", className)}
+      className={cn("text-lg font-semibold text-on-surface leading-tight", className)}
       {...props}
     />
   );
@@ -71,7 +71,7 @@ export function AlertDialogDescription({
   return (
     <BaseAlertDialog.Description
       ref={ref}
-      className={cn("text-sm text-muted-foreground mt-2", className)}
+      className={cn("text-sm text-on-surface-variant mt-2", className)}
       {...props}
     />
   );

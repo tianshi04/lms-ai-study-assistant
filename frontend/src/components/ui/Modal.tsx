@@ -28,7 +28,7 @@ export function DialogBackdrop({
 }
 
 export const dialogSizeVariants = cva(
-  "bg-surface-container-high text-foreground rounded-3xl shadow-2xl w-full p-6 border border-outline-variant animate-in fade-in zoom-in-95 duration-m3-medium-4 ease-m3-decelerate relative my-8",
+  "bg-surface-container-high text-on-surface rounded-3xl shadow-2xl w-full p-6 border border-outline-variant animate-in fade-in zoom-in-95 duration-m3-medium-4 ease-m3-decelerate relative my-8",
   {
     variants: {
       size: {
@@ -95,10 +95,7 @@ export function DialogTitle({
   return (
     <BaseDialog.Title
       ref={ref}
-      className={cn(
-        "text-lg font-semibold text-popover-foreground leading-none tracking-tight",
-        className,
-      )}
+      className={cn("text-lg font-semibold text-on-surface leading-none tracking-tight", className)}
       {...props}
     />
   );
@@ -112,7 +109,7 @@ export function DialogDescription({
   return (
     <BaseDialog.Description
       ref={ref}
-      className={cn("text-sm text-muted-foreground mt-1", className)}
+      className={cn("text-sm text-on-surface-variant mt-1", className)}
       {...props}
     />
   );
