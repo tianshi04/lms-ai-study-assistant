@@ -12,7 +12,7 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from "@/components/ui/Table";
+} from "@/components/shared/Table";
 import { ProgressBar } from "@/components/ui/Progress";
 
 import {
@@ -22,7 +22,7 @@ import {
   BreadcrumbLink,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/Breadcrumb";
+} from "@/components/shared/Breadcrumb";
 
 function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: string }> }) {
   const resolvedParams = use(params);

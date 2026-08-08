@@ -18,12 +18,14 @@ import {
 } from "@/gen/certificate/v1/certificate_pb";
 import { Dialog } from "@/components/ui/Dialog";
 
-import { RatingStars } from "@/components/ui/RatingStars";
+import { RatingStars } from "@/components/shared/RatingStars";
+
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/shared/Card";
+import { Badge } from "@/components/shared/Badge";
+
 import { Avatar } from "@/components/ui/Avatar";
 import { PaymentCheckoutModal } from "@/components/course/PaymentCheckoutModal";
 import { useAuth } from "@/components/providers/AuthProvider";

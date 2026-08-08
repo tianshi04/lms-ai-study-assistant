@@ -6,7 +6,7 @@ import Image from "next/image";
 import { Search, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/shared/Badge";
 
 interface VerifiedCertPayload {
   isValid: boolean;

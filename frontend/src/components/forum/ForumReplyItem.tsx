@@ -4,7 +4,7 @@ import { Check, ThumbsUp } from "lucide-react";
 import { type ForumReply } from "@/gen/forum/v1/forum_pb";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/shared/Badge";
 
 interface ForumReplyItemProps {
   reply: ForumReply;

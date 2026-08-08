@@ -33,7 +33,7 @@ import {
   PageHeaderTitle,
   PageHeaderDescription,
   PageHeaderActions,
-} from "@/components/ui/LayoutPrimitives";
+} from "@/components/shared/LayoutPrimitives";
 
 const CategoryList = ({
   title,

@@ -11,7 +11,8 @@ import { InstructorApplicationStatus } from "@/gen/identity/v1/identity_pb";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/shared/Badge";
+
 import {
   GraduationCap,
   CheckCircle2,

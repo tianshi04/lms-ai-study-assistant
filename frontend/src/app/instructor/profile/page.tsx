@@ -18,7 +18,7 @@ import {
   BreadcrumbLink,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/Breadcrumb";
+} from "@/components/shared/Breadcrumb";
 
 export default function InstructorProfilePage() {
   const router = useRouter();

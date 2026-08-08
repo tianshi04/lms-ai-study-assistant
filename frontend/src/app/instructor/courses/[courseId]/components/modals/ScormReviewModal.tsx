@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/shared/Badge";
+
 import { type Course } from "@/gen/catalog/v1/catalog_pb";
 
 interface ScormReviewModalProps {

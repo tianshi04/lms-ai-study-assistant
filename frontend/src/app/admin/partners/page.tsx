@@ -32,7 +32,7 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from "@/components/ui/Table";
+} from "@/components/shared/Table";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -40,7 +40,7 @@ import {
   BreadcrumbLink,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/Breadcrumb";
+} from "@/components/shared/Breadcrumb";
 
 interface PartnerAdminUser {
   id: string;

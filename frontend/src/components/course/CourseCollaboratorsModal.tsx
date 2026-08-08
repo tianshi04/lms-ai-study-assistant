@@ -20,7 +20,8 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Select, SelectItem } from "@/components/ui/Select";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/shared/Badge";
+
 import {
   useCourseCollaboratorsQuery,
   useAddCourseCollaboratorMutation,

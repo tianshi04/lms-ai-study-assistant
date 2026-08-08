@@ -14,8 +14,9 @@ import { Building2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/shared/Card";
+import { Badge } from "@/components/shared/Badge";
+
 import { Checkbox } from "@/components/ui/Checkbox";
 import {
   Select,

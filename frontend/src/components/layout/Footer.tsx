@@ -11,7 +11,7 @@ import {
   HeartHandshake,
   GraduationCap,
 } from "lucide-react";
-import { BrandLogo } from "@/components/ui/BrandLogo";
+import { BrandLogo } from "./BrandLogo";
 
 export function Footer() {
   const [currentYear, setCurrentYear] = useState(2026);

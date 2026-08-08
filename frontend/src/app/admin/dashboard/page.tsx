@@ -24,7 +24,8 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from "@/components/ui/Table";
+} from "@/components/shared/Table";
+
 import {
   Select,
   SelectTrigger,

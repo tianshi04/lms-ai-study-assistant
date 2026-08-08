@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Home, BookOpen, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/shared/Badge";
 
 export function NotFoundClient() {
   const router = useRouter();

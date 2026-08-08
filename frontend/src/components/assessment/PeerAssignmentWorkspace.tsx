@@ -9,7 +9,8 @@ import { Check, Lock, AlertTriangle, Info, Send, ExternalLink, Scale } from "luc
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/shared/Badge";
+
 import { Slider } from "@/components/ui/Slider";
 import { mapConnectError } from "@/lib/connect_error_mapper";
 

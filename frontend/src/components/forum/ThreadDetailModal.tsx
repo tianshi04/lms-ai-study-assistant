@@ -8,7 +8,8 @@ import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/shared/Badge";
+
 import { Avatar } from "@/components/ui/Avatar";
 import { ForumReplyItem } from "./ForumReplyItem";
 
