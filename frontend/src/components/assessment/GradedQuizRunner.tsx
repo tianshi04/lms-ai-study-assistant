@@ -22,7 +22,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/shared/Badge";
+import { Badge } from "@/components/ui/Badge";
 
 interface QuizSessionQuestionOption {
   optionIndex: number;

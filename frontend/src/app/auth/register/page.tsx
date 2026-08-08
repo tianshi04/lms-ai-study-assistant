@@ -13,8 +13,7 @@ import { UserRole } from "@/gen/identity/v1/identity_pb";
 import { User, Lock, Eye, EyeOff, Users, CheckCircle2, ShieldCheck, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/shared/Card";
-
+import { Card } from "@/components/ui/Card";
 import {
   Select,
   SelectTrigger,

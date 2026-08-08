@@ -27,8 +27,7 @@ import {
   PageHeaderDescription,
   PageHeaderActions,
   PageHeaderBadge,
-} from "@/components/shared/LayoutPrimitives";
-
+} from "@/components/ui/LayoutPrimitives";
 import {
   FileText,
   Plus,

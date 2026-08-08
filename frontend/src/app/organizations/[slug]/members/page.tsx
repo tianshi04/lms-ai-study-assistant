@@ -21,8 +21,7 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from "@/components/shared/Table";
-
+} from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import {

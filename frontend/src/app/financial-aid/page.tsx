@@ -24,8 +24,7 @@ import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
-import { Badge } from "@/components/shared/Badge";
-
+import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/Progress";
 
 function FinancialAidContent() {

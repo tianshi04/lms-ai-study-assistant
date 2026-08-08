@@ -22,7 +22,7 @@ import {
   BreadcrumbLink,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/shared/Breadcrumb";
+} from "@/components/ui/Breadcrumb";
 
 interface Section {
   id: string;

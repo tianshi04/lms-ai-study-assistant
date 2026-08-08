@@ -7,8 +7,7 @@ import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
-import { Badge } from "@/components/shared/Badge";
-
+import { Badge } from "@/components/ui/Badge";
 import {
   Select,
   SelectTrigger,

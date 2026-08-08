@@ -27,7 +27,7 @@ import {
   PageHeaderTitle,
   PageHeaderBreadcrumbs,
   PageHeaderActions,
-} from "@/components/shared/LayoutPrimitives";
+} from "@/components/ui/LayoutPrimitives";
 
 export default function AdminInstructorApplicationsPage() {
   const toast = useToast();

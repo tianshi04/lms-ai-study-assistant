@@ -26,8 +26,7 @@ import { LanguageToggle } from "@/components/providers/LanguageToggle";
 import { UserDropdown } from "@/components/layout/UserDropdown";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
 import { LearnPageAIChatbot } from "@/components/player/ai/LearnPageAIChatbot";
-import { BrandLogo } from "@/components/layout/BrandLogo";
-
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { usePaymentAccessQuery } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 import {

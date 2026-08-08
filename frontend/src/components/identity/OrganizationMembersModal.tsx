@@ -19,8 +19,7 @@ import {
 } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/shared/Badge";
-
+import { Badge } from "@/components/ui/Badge";
 import {
   useOrganizationMembersQuery,
   useAddOrganizationMemberMutation,

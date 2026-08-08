@@ -10,8 +10,7 @@ import { UserDropdown } from "@/components/layout/UserDropdown";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { NotificationBell } from "@/components/notification/NotificationBell";
 import { Button } from "@/components/ui/Button";
-import { BrandLogo } from "./BrandLogo";
-
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {

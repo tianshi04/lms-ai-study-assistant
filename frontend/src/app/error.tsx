@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, RefreshCw, Home, ArrowLeft, ChevronDown, Bug } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/shared/Badge";
+import { Badge } from "@/components/ui/Badge";
 
 export default function ErrorPage({
   error,
