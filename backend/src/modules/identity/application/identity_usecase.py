@@ -67,9 +67,7 @@ async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
     from src.shared.config import settings
 
     if code.startswith("mock_google_") and (
-        settings.ENABLE_DEV_MOCK
-        or not settings.GOOGLE_CLIENT_ID
-        or settings.ENV != "production"
+        not settings.GOOGLE_CLIENT_ID or settings.ENV != "production"
     ):
         raw = code[len("mock_google_") :]
         parts = raw.rsplit("_", 1)

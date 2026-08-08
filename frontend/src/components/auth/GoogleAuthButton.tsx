@@ -55,11 +55,8 @@ export function GoogleAuthButton({
   const handleClick = async () => {
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     const isProduction = process.env.NEXT_PUBLIC_ENV === "production";
-    const devMockEnabled = process.env.NEXT_PUBLIC_ENABLE_DEV_MOCK
-      ? process.env.NEXT_PUBLIC_ENABLE_DEV_MOCK === "true"
-      : !isProduction;
 
-    if (!googleClientId && devMockEnabled) {
+    if (!googleClientId && !isProduction) {
       const inputEmail = window.prompt(
         "Dev Mode: Nhập địa chỉ Gmail để giả lập xác minh Google",
         "user.test@gmail.com",

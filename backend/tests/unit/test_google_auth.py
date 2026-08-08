@@ -25,7 +25,7 @@ def _make_google_jwt(sub: str, email: str, name: str) -> str:
 
 @pytest.mark.asyncio
 async def test_google_register_and_fallback_login_flow(monkeypatch):
-    monkeypatch.setattr(settings, "ENABLE_DEV_MOCK", True)
+    monkeypatch.setattr(settings, "ENV", "development")
     usecase = IdentityUseCase()
     unique_email = f"student_{uuid.uuid4().hex[:8]}@gmail.com"
     sub_id = f"google_sub_{uuid.uuid4().hex[:12]}"
