@@ -24,6 +24,12 @@ from src.modules.identity.domain.constants import (
     ENTERPRISE_REVOCATION_GRACE_PERIOD_DAYS,
     ENTERPRISE_REVOCATION_MAX_PROGRESS_PERCENT,
     DEFAULT_INVITATION_EXPIRATION_DAYS,
+    PASSWORD_MIN_LENGTH,
+)
+from src.shared.infrastructure.rate_limiter import (
+    check_login_rate_limit,
+    record_failed_login,
+    clear_login_attempts,
 )
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
 from src.modules.identity.infrastructure.repository import (
@@ -119,6 +125,24 @@ def verify_password(password: str, password_hash: str) -> bool:
     return hmac.compare_digest(new_hash, hash_hex)
 
 
+def validate_password(password: str) -> Optional[str]:
+    """Validate password strength against policy.
+
+    Returns error message string if invalid, None if valid.
+    Rules:
+      - Minimum PASSWORD_MIN_LENGTH characters
+      - At least 1 uppercase letter
+      - At least 1 digit
+    """
+    if not password or len(password) < PASSWORD_MIN_LENGTH:
+        return f"Mật khẩu phải chứa ít nhất {PASSWORD_MIN_LENGTH} ký tự."
+    if not any(c.isupper() for c in password):
+        return "Mật khẩu phải chứa ít nhất 1 chữ in hoa."
+    if not any(c.isdigit() for c in password):
+        return "Mật khẩu phải chứa ít nhất 1 chữ số."
+    return None
+
+
 def _default_learning_repo_factory(session: Any) -> ILearningRepository:
     from src.modules.learning.infrastructure.repository import (
         SQLAlchemyLearningRepository,
@@ -146,16 +170,52 @@ class IdentityUseCase:
         self, email: str, password: str
     ) -> tuple[Optional[User], str, str, str]:
         """Returns (user, access_token, refresh_token, error_message)."""
+        identifier = email.lower().strip()
+
+        # Rate limit check — chống brute force
+        try:
+            allowed, remaining = await check_login_rate_limit(identifier)
+            if not allowed:
+                minutes = max(remaining // 60, 1)
+                logger.warning(
+                    "Login rate-limited for %s (%ss remaining)",
+                    identifier,
+                    remaining,
+                )
+                return (
+                    None,
+                    "",
+                    "",
+                    f"Quá nhiều lần đăng nhập sai. Vui lòng thử lại sau {minutes} phút.",
+                )
+        except Exception as e:
+            # Nếu Redis không khả dụng, vẫn cho phép đăng nhập (fail-open)
+            logger.error("Rate limiter unavailable: %s", e)
+
         async with async_session_scope() as session:
             repo = IdentityRepository(session)
             user = await repo.get_by_email(email)
             if not user:
                 logger.warning("Login failed for email %s: User not found", email)
-                return None, "", "", "Email hoặc mật khẩu không chính xác"
+                try:
+                    await record_failed_login(identifier)
+                except Exception:
+                    pass
+                return None, "", "", "Email hoặc mật khẩu không chính xác"
 
             if not verify_password(password, user.password_hash):
                 logger.warning("Login failed for email %s: Invalid password", email)
-                return None, "", "", "Email hoặc mật khẩu không chính xác"
+                try:
+                    await record_failed_login(identifier)
+                except Exception:
+                    pass
+                return None, "", "", "Email hoặc mật khẩu không chính xác"
+
+            # Đăng nhập thành công → Xóa bộ đếm
+            try:
+                await clear_login_attempts(identifier)
+            except Exception:
+                pass
 
             logger.info("User %s successfully logged in", user.id)
             access_token = create_access_token(
@@ -253,8 +313,9 @@ class IdentityUseCase:
         if not email or not google_id:
             return None, "", "", "Thông tin Google không hợp lệ."
 
-        if not password or len(password) < 6:
-            return None, "", "", "Mật khẩu phải chứa ít nhất 6 ký tự."
+        pw_err = validate_password(password)
+        if pw_err:
+            return None, "", "", pw_err
 
         try:
             role = UserRole(role_str)
@@ -384,8 +445,9 @@ class IdentityUseCase:
         if not email:
             return None, "", "", "Thông tin xác thực không hợp lệ."
 
-        if not new_password or len(new_password) < 6:
-            return None, "", "", "Mật khẩu mới phải chứa ít nhất 6 ký tự."
+        pw_err = validate_password(new_password)
+        if pw_err:
+            return None, "", "", pw_err
 
         async with async_session_scope() as session:
             repo = IdentityRepository(session)
@@ -419,7 +481,7 @@ class IdentityUseCase:
             existing = await repo.get_by_email(email)
             if existing:
                 logger.warning("Registration failed: Email %s already exists", email)
-                return None, "Email đằng ký đã tồn tại trên hệ thống"
+                return None, "Email đằng ký đã tồn tại trên hệ thống"
 
             user_role = UserRole.LEARNER
             try:
@@ -427,6 +489,10 @@ class IdentityUseCase:
                     user_role = UserRole(role_str)
             except ValueError:
                 user_role = UserRole.LEARNER
+
+            pw_err = validate_password(password)
+            if pw_err:
+                return None, pw_err
 
             new_id = f"user_{uuid.uuid4().hex[:12]}"
             hashed_pw = hash_password(password)
@@ -494,7 +560,7 @@ class IdentityUseCase:
             repo = IdentityRepository(session)
             user = await repo.get_by_id(user_id)
             if not user:
-                return False, "Không tìm thấy người dùng"
+                return False, "Không tìm thấy người dùng"
 
             clean_key = enterprise_seat_key.strip()
 

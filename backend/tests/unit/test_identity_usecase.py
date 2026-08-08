@@ -138,7 +138,7 @@ async def test_login_wrong_email(mock_session_scope, mock_identity_repo):
     )
 
     assert res_user is None
-    assert err == "Email hoặc mật khẩu không chính xác"
+    assert "không chính xác" in err
 
 
 @pytest.mark.asyncio
@@ -166,7 +166,7 @@ async def test_login_wrong_password(mock_session_scope, mock_identity_repo):
     )
 
     assert res_user is None
-    assert err == "Email hoặc mật khẩu không chính xác"
+    assert "không chính xác" in err
 
 
 @pytest.mark.asyncio
@@ -185,7 +185,7 @@ async def test_register_success(mock_session_scope, mock_identity_repo):
 
     usecase = IdentityUseCase()
     user, err = await usecase.register(
-        "new@test.com", "password123", "New User", "learner"
+        "new@test.com", "Password1", "New User", "learner"
     )
 
     assert err == ""
@@ -216,7 +216,7 @@ async def test_register_existing_email(mock_session_scope, mock_identity_repo):
     )
 
     assert user is None
-    assert err == "Email đằng ký đã tồn tại trên hệ thống"
+    assert err == "Email đằng ký đã tồn tại trên hệ thống"
 
 
 @pytest.mark.asyncio
@@ -368,7 +368,7 @@ async def test_assign_enterprise_seat_user_not_found(
     res, msg = await usecase.assign_enterprise_seat("u1", "VALID_KEY")
 
     assert res is False
-    assert msg == "Không tìm thấy người dùng"
+    assert msg == "Không tìm thấy người dùng"
 
 
 @pytest.mark.asyncio

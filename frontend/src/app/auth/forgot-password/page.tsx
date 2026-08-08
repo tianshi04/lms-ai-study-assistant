@@ -57,8 +57,8 @@ function ForgotPasswordContent() {
     e.preventDefault();
     setErrorMsg("");
 
-    if (!newPassword || newPassword.length < 6) {
-      setErrorMsg("Mật khẩu mới phải chứa ít nhất 6 ký tự.");
+    if (newPassword.length < 6 || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      setErrorMsg("Mật khẩu chưa đạt yêu cầu bảo mật.");
       return;
     }
 
@@ -180,6 +180,17 @@ function ForgotPasswordContent() {
                 disabled={isPending}
                 className="rounded-xl"
               />
+              <div className="mt-1.5 space-y-0.5">
+                <p className={`text-xs flex items-center gap-1 ${newPassword.length >= 6 ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                  {newPassword.length >= 6 ? '✓' : '○'} Tối thiểu 6 ký tự
+                </p>
+                <p className={`text-xs flex items-center gap-1 ${/[A-Z]/.test(newPassword) ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                  {/[A-Z]/.test(newPassword) ? '✓' : '○'} Ít nhất 1 chữ in hoa
+                </p>
+                <p className={`text-xs flex items-center gap-1 ${/[0-9]/.test(newPassword) ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                  {/[0-9]/.test(newPassword) ? '✓' : '○'} Ít nhất 1 chữ số
+                </p>
+              </div>
             </div>
 
             <div className="space-y-1.5">

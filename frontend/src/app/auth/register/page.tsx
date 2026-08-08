@@ -43,6 +43,11 @@ export default function RegisterPage() {
       role: UserRole.LEARNER,
     },
     onSubmit: async ({ value }) => {
+      if (value.password.length < 6 || !/[A-Z]/.test(value.password) || !/[0-9]/.test(value.password)) {
+        toast.error("Mật khẩu chưa đạt yêu cầu bảo mật.");
+        return;
+      }
+
       if (value.password !== value.confirmPassword) {
         toast.error("Mật khẩu xác nhận không khớp.");
         return;
@@ -318,6 +323,17 @@ export default function RegisterPage() {
                             <Eye aria-hidden="true" className="w-5 h-5" />
                           )}
                         </Button>
+                      </div>
+                      <div className="mt-1.5 space-y-0.5">
+                        <p className={`text-xs flex items-center gap-1 ${field.state.value.length >= 6 ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                          {field.state.value.length >= 6 ? '✓' : '○'} Tối thiểu 6 ký tự
+                        </p>
+                        <p className={`text-xs flex items-center gap-1 ${/[A-Z]/.test(field.state.value) ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                          {/[A-Z]/.test(field.state.value) ? '✓' : '○'} Ít nhất 1 chữ in hoa
+                        </p>
+                        <p className={`text-xs flex items-center gap-1 ${/[0-9]/.test(field.state.value) ? 'text-emerald-500' : 'text-muted-foreground'}`}>
+                          {/[0-9]/.test(field.state.value) ? '✓' : '○'} Ít nhất 1 chữ số
+                        </p>
                       </div>
                     </div>
                   );
