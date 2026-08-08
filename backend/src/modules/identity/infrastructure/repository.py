@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 import inspect
-from unittest.mock import MagicMock
+import logging
 from typing import Optional, Any
+from unittest.mock import MagicMock
 import uuid
 from sqlalchemy import select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,6 +26,8 @@ from src.modules.identity.infrastructure.models import (
     OrganizationModel,
     UserModel,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class IdentityRepository:
@@ -92,7 +95,7 @@ class IdentityRepository:
         from sqlalchemy import update
         from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
 
-        await self._session.execute(
+        result = await self._session.execute(
             update(EnterpriseLicenseModel)
             .where(
                 EnterpriseLicenseModel.key == seat_key,
@@ -100,6 +103,8 @@ class IdentityRepository:
             )
             .values(used_seats=EnterpriseLicenseModel.used_seats - 1)
         )
+        if getattr(result, "rowcount", 0) == 0:
+            logger.warning("Seat recycle skipped — already 0 for key %s", seat_key)
 
     def _to_entity(self, model: UserModel) -> User:
         return User(
