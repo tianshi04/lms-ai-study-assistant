@@ -3,8 +3,13 @@ import { Checkbox as BaseCheckbox } from "@base-ui/react/checkbox";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { FieldRoot, FieldLabel, FieldError, FieldDescription } from "./Field";
+
 export const CheckboxRoot = BaseCheckbox.Root;
 export const CheckboxIndicator = BaseCheckbox.Indicator;
+export const CheckboxLabel = FieldLabel;
+export const CheckboxError = FieldError;
+export const CheckboxHelperText = FieldDescription;
 
 export interface CheckboxProps extends React.ComponentProps<typeof BaseCheckbox.Root> {
   label?: string;
@@ -46,20 +51,17 @@ export function Checkbox({
   }
 
   return (
-    <div className="space-y-1">
+    <FieldRoot invalid={!!error} className="space-y-1">
       <div className="flex items-center gap-2.5">
         {checkboxElement}
         {label && (
-          <label
-            htmlFor={checkboxId}
-            className="text-sm font-medium text-foreground cursor-pointer select-none leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
+          <FieldLabel htmlFor={checkboxId} className="mb-0 text-sm font-medium cursor-pointer">
             {label}
-          </label>
+          </FieldLabel>
         )}
       </div>
-      {error && <p className="text-xs text-destructive font-medium">{error}</p>}
-      {helperText && !error && <p className="text-xs text-muted-foreground">{helperText}</p>}
-    </div>
+      {error && <FieldError>{error}</FieldError>}
+      {helperText && !error && <FieldDescription>{helperText}</FieldDescription>}
+    </FieldRoot>
   );
 }

@@ -198,14 +198,15 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
           </div>
           {!isYouTubeUrl(videoUrl) && (
             <div className="flex justify-end">
-              <button
+              <Button
                 type="button"
+                variant="outline"
                 onClick={captureCurrentTime}
-                className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="bg-primary/10 text-primary border-primary/20 text-xs font-bold hover:bg-primary/20"
               >
                 <Clock className="w-4 h-4" aria-hidden="true" />
                 <span>Lấy mốc giây hiện tại từ Video</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -226,13 +227,15 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
             {editingIndex !== null ? "Sửa câu hỏi chèn mốc" : "Thêm câu hỏi dừng màn hình mới"}
           </span>
           {editingIndex !== null && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={resetForm}
-              className="text-[11px] font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
+              className="text-[11px] font-semibold text-muted-foreground hover:text-foreground h-auto p-0"
             >
               Hủy sửa
-            </button>
+            </Button>
           )}
         </div>
 
@@ -305,17 +308,21 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                   key={idx}
                   className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg border border-border"
                 >
-                  <input
-                    type="radio"
-                    name="correctOption"
-                    checked={correctOptionIndex === idx}
-                    onChange={() => setCorrectOptionIndex(idx)}
+                  <Button
+                    type="button"
+                    variant={correctOptionIndex === idx ? "primary" : "outline"}
+                    size="sm"
+                    onClick={() => setCorrectOptionIndex(idx)}
                     aria-label={`Chọn phương án ${letter} làm đáp án đúng`}
-                    className="w-4 h-4 text-primary cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  />
-                  <span className="text-xs font-bold text-muted-foreground font-mono">
-                    {letter}.
-                  </span>
+                    className={`h-7 px-2 text-xs font-bold shrink-0 ${
+                      correctOptionIndex === idx ? "bg-primary text-primary-foreground" : ""
+                    }`}
+                    title={
+                      correctOptionIndex === idx ? "Đáp án đúng" : "Bấm để chọn làm đáp án đúng"
+                    }
+                  >
+                    {letter} {correctOptionIndex === idx ? "(Đúng)" : ""}
+                  </Button>
                   <Input
                     value={optText}
                     onChange={(e) => handleOptionChange(idx, e.target.value)}
@@ -404,24 +411,28 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleEditQuiz(idx)}
-                    className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground bg-muted"
                     title="Sửa mốc câu hỏi"
                     aria-label="Sửa mốc câu hỏi"
                   >
                     <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => handleDeleteQuiz(idx)}
-                    className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="h-7 w-7 text-destructive hover:bg-destructive/20 bg-destructive/10"
                     title="Xóa mốc câu hỏi"
                     aria-label="Xóa mốc câu hỏi"
                   >
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}

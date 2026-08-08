@@ -1,8 +1,6 @@
 import * as React from "react";
 import { AlertDialog as BaseAlertDialog } from "@base-ui/react/alert-dialog";
 import { cn } from "@/lib/utils";
-import { Button } from "./Button";
-import { AlertTriangle, AlertCircle, Info } from "lucide-react";
 
 export const AlertDialog = BaseAlertDialog.Root;
 export const AlertDialogTrigger = BaseAlertDialog.Trigger;
@@ -39,7 +37,7 @@ export function AlertDialogContent({
         <BaseAlertDialog.Popup
           ref={ref}
           className={cn(
-            "bg-surface-container-high text-foreground rounded-3xl shadow-2xl w-full max-w-md p-6 border border-outline-variant animate-in fade-in zoom-in-95 duration-m3-medium-4 ease-m3-decelerate relative",
+            "bg-surface-container-high text-on-surface rounded-3xl shadow-2xl w-full max-w-md p-6 border border-outline-variant animate-in fade-in zoom-in-95 duration-m3-medium-4 ease-m3-decelerate relative",
             className,
           )}
           {...props}
@@ -59,7 +57,7 @@ export function AlertDialogTitle({
   return (
     <BaseAlertDialog.Title
       ref={ref}
-      className={cn("text-lg font-semibold text-foreground leading-tight", className)}
+      className={cn("text-lg font-semibold text-on-surface leading-tight", className)}
       {...props}
     />
   );
@@ -73,85 +71,29 @@ export function AlertDialogDescription({
   return (
     <BaseAlertDialog.Description
       ref={ref}
-      className={cn("text-sm text-muted-foreground mt-2", className)}
+      className={cn("text-sm text-on-surface-variant mt-2", className)}
       {...props}
     />
   );
 }
 
-export interface ConfirmAlertDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void | Promise<void>;
-  title: string;
-  description?: React.ReactNode;
-  confirmText?: string;
-  cancelText?: string;
-  variant?: "danger" | "primary" | "warning";
-  isLoading?: boolean;
+export function AlertDialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)}
+      {...props}
+    />
+  );
 }
 
-export const ConfirmAlertDialog: React.FC<ConfirmAlertDialogProps> = ({
-  isOpen,
-  onClose,
-  onConfirm,
-  title,
-  description,
-  confirmText = "Xác nhận",
-  cancelText = "Hủy",
-  variant = "danger",
-  isLoading = false,
-}) => {
-  const getIcon = () => {
-    if (variant === "danger") {
-      return (
-        <div className="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-destructive/15 sm:mx-0 sm:h-10 sm:w-10">
-          <AlertTriangle className="h-6 w-6 text-destructive" aria-hidden="true" />
-        </div>
-      );
-    }
-    if (variant === "warning") {
-      return (
-        <div className="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-warning/15 sm:mx-0 sm:h-10 sm:w-10">
-          <AlertCircle className="h-6 w-6 text-warning" aria-hidden="true" />
-        </div>
-      );
-    }
-    return (
-      <div className="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent sm:mx-0 sm:h-10 sm:w-10">
-        <Info className="h-6 w-6 text-accent-foreground" aria-hidden="true" />
-      </div>
-    );
-  };
-
+export function AlertDialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <AlertDialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open && !isLoading) onClose();
-      }}
-    >
-      <AlertDialogContent>
-        <div className="sm:flex sm:items-start space-x-0 sm:space-x-4">
-          {getIcon()}
-          <div className="mt-3 text-center sm:mt-0 sm:text-left">
-            <AlertDialogTitle>{title}</AlertDialogTitle>
-            {description && <AlertDialogDescription>{description}</AlertDialogDescription>}
-          </div>
-        </div>
-        <div className="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
-            {cancelText}
-          </Button>
-          <Button
-            variant={variant === "danger" ? "danger" : "primary"}
-            onClick={onConfirm}
-            isLoading={isLoading}
-          >
-            {confirmText}
-          </Button>
-        </div>
-      </AlertDialogContent>
-    </AlertDialog>
+    <div
+      className={cn(
+        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 space-y-2 space-y-reverse sm:space-y-0 mt-6",
+        className,
+      )}
+      {...props}
+    />
   );
-};
+}

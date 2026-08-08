@@ -55,6 +55,14 @@ class VNPayService:
         """Generates VNPay payment URL with signed vnp_SecureHash."""
         tmn_code = settings.VNPAY_TMN_CODE
         secret_key = settings.VNPAY_HASH_SECRET
+        if not tmn_code or not tmn_code.strip():
+            raise ValueError(
+                "VNPAY_TMN_CODE chưa được cấu hình hoặc bị trống trong file .env."
+            )
+        if not secret_key or not secret_key.strip():
+            raise ValueError(
+                "VNPAY_HASH_SECRET chưa được cấu hình hoặc bị trống trong file .env."
+            )
         payment_endpoint = settings.VNPAY_PAYMENT_URL
         actual_return_url = return_url or settings.VNPAY_RETURN_URL
 
@@ -135,6 +143,15 @@ class VNPayService:
     ) -> tuple[bool, str]:
         """Verifies VNPay return/IPN callback signature (vnp_SecureHash)."""
         secret_key = settings.VNPAY_HASH_SECRET
+        if not secret_key or not secret_key.strip():
+            logger.error(
+                "[VNPAY] Signature verification failed: VNPAY_HASH_SECRET is empty!"
+            )
+            return (
+                False,
+                "Cấu hình cổng thanh toán chưa có Secret Key (VNPAY_HASH_SECRET).",
+            )
+
         received_hash = query_params.get("vnp_SecureHash", "")
         if not received_hash:
             return False, "Thiếu tham số vnp_SecureHash trong phản hồi từ VNPay."
@@ -182,6 +199,12 @@ class VNPayService:
 
         tmn_code = settings.VNPAY_TMN_CODE
         secret_key = settings.VNPAY_HASH_SECRET
+        if not secret_key or not secret_key.strip():
+            logger.error("[VNPAY QueryDR] API call failed: VNPAY_HASH_SECRET is empty!")
+            return {
+                "vnp_ResponseCode": "99",
+                "vnp_Message": "Cấu hình cổng thanh toán chưa có Secret Key (VNPAY_HASH_SECRET).",
+            }
         api_url = settings.VNPAY_API_URL
 
         # Format dates to GMT+7 (YYYYMMDDHHmmss)

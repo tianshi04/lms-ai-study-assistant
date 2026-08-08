@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const { userName, isInstructorOrAdmin, isSuperAdmin } = useAuth();
-
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -30,8 +29,9 @@ export function Navbar() {
   }, []);
 
   const isActive = (path: string) => {
+    if (!pathname) return false;
     if (path === "/") return pathname === "/";
-    return pathname?.startsWith(path);
+    return pathname.startsWith(path);
   };
 
   const getLinkClasses = (path: string) => {

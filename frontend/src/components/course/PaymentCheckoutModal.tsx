@@ -8,7 +8,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/Modal";
+} from "@/components/ui/Dialog";
+
 import { Button } from "@/components/ui/Button";
 import { useCreateVNPayPaymentUrlMutation } from "@/lib/query_hooks";
 import { PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
@@ -117,17 +118,18 @@ export function PaymentCheckoutModal({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
           {/* Mua lẻ */}
-          <button
+          <Button
             type="button"
+            variant="outline"
             aria-label="Chọn Mua Lẻ Khóa"
             onClick={() => setSelectedOption("SINGLE")}
-            className={`text-left cursor-pointer p-4 rounded-xl border-2 transition-colors flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`text-left cursor-pointer p-4 rounded-xl border-2 h-auto flex-col justify-between items-start ${
               selectedOption === "SINGLE"
                 ? "border-primary bg-primary/5 shadow-md"
                 : "border-border hover:border-primary/50"
             }`}
           >
-            <div>
+            <div className="w-full">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Mua Lẻ Khóa
@@ -141,29 +143,30 @@ export function PaymentCheckoutModal({
               <h4 className="font-semibold text-foreground text-base mb-1 min-w-0 line-clamp-1">
                 {courseTitle}
               </h4>
-              <p className="text-xs text-muted-foreground mb-3">
+              <p className="text-xs text-muted-foreground mb-3 font-normal">
                 Quyền truy cập Paid Mode vĩnh viễn riêng khóa học này.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-border w-full">
+            <div className="mt-4 pt-3 border-t border-border w-full text-left">
               <span className="text-lg font-bold text-primary">
                 {priceVnd.toLocaleString("vi-VN")} VNĐ
               </span>
             </div>
-          </button>
+          </Button>
 
           {/* Coursera Plus - Tháng */}
-          <button
+          <Button
             type="button"
+            variant="outline"
             aria-label="Chọn Coursera Plus Gói Theo Tháng"
             onClick={() => setSelectedOption("PLUS_MONTHLY")}
-            className={`text-left cursor-pointer p-4 rounded-xl border-2 transition-colors flex flex-col justify-between relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`text-left cursor-pointer p-4 rounded-xl border-2 h-auto flex-col justify-between relative items-start ${
               selectedOption === "PLUS_MONTHLY"
                 ? "border-primary bg-primary/5 shadow-md"
                 : "border-border hover:border-primary/50"
             }`}
           >
-            <div>
+            <div className="w-full">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-primary">
                   Coursera Plus
@@ -175,22 +178,23 @@ export function PaymentCheckoutModal({
                 </span>
               </div>
               <h4 className="font-semibold text-foreground text-base mb-1">Gói Theo Tháng</h4>
-              <p className="text-xs text-muted-foreground mb-3">
+              <p className="text-xs text-muted-foreground mb-3 font-normal">
                 Mở khóa 100% khóa học trên nền tảng trong 30 ngày.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-border w-full">
+            <div className="mt-4 pt-3 border-t border-border w-full text-left">
               <span className="text-lg font-bold text-primary">790,000 VNĐ</span>
               <span className="text-xs text-muted-foreground font-normal"> / tháng</span>
             </div>
-          </button>
+          </Button>
 
           {/* Coursera Plus - Năm */}
-          <button
+          <Button
             type="button"
+            variant="outline"
             aria-label="Chọn Coursera Plus Gói Theo Năm"
             onClick={() => setSelectedOption("PLUS_YEARLY")}
-            className={`text-left cursor-pointer p-4 rounded-xl border-2 transition-colors flex flex-col justify-between relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`text-left cursor-pointer p-4 rounded-xl border-2 h-auto flex-col justify-between relative items-start ${
               selectedOption === "PLUS_YEARLY"
                 ? "border-primary bg-primary/5 shadow-md"
                 : "border-border hover:border-primary/50"
@@ -199,7 +203,7 @@ export function PaymentCheckoutModal({
             <span className="absolute -top-3 right-3 bg-warning text-warning-foreground text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow">
               Tiết kiệm hơn
             </span>
-            <div>
+            <div className="w-full">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-warning">
                   Coursera Plus
@@ -211,15 +215,15 @@ export function PaymentCheckoutModal({
                 </span>
               </div>
               <h4 className="font-semibold text-foreground text-base mb-1">Gói Theo Năm</h4>
-              <p className="text-xs text-muted-foreground mb-3">
+              <p className="text-xs text-muted-foreground mb-3 font-normal">
                 Mở khóa 100% khóa học trong 365 ngày liên tục.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-border w-full">
+            <div className="mt-4 pt-3 border-t border-border w-full text-left">
               <span className="text-lg font-bold text-primary">5,900,000 VNĐ</span>
               <span className="text-xs text-muted-foreground font-normal"> / năm</span>
             </div>
-          </button>
+          </Button>
         </div>
 
         <DialogFooter className="flex items-center justify-end gap-3 pt-3 border-t border-border">

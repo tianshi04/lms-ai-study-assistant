@@ -28,7 +28,7 @@ export function PopoverContent({
         <BasePopover.Popup
           ref={ref}
           className={cn(
-            "w-80 sm:w-[400px] rounded-3xl bg-surface-container-high text-on-surface border border-outline-variant/60 shadow-2xl overflow-hidden outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring animate-in fade-in-0 zoom-in-95 duration-m3-short-4 ease-m3-decelerate",
+            "w-80 sm:w-[400px] rounded-3xl bg-surface-container-high text-on-surface border border-outline-variant/60 shadow-2xl overflow-hidden outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-m3-short-4 ease-m3-decelerate",
             className,
           )}
           {...props}

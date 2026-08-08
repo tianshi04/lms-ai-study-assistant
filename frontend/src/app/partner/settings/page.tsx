@@ -14,7 +14,14 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Check, X, Plus, RefreshCw, Download, Copy, Building2 } from "lucide-react";
 import {
@@ -287,14 +294,16 @@ function PartnerSettingsForm({
             )}
             <span>{statusMessage.text}</span>
           </div>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => setStatusMessage(null)}
-            className="text-xs opacity-70 hover:opacity-100 p-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            className="h-6 w-6 opacity-70 hover:opacity-100"
             aria-label="Đóng thông báo"
           >
             <X className="w-4 h-4" aria-hidden="true" />
-          </button>
+          </Button>
         </div>
       )}
 
@@ -625,17 +634,33 @@ function PartnerSettingsForm({
         </div>
       </form>
 
-      <ConfirmAlertDialog
-        isOpen={showRotateConfirm}
-        onClose={() => setShowRotateConfirm(false)}
-        onConfirm={executeRotateKeyPair}
-        title="Xác nhận tạo cặp khóa ký số mới"
-        description="Bạn có chắc chắn muốn tạo cặp khóa ký số mới? Cặp khóa cũ sẽ bị xoay và thay thế."
-        confirmText="Tạo khóa mới"
-        cancelText="Hủy"
-        variant="warning"
-        isLoading={rotateKeyPairMutation.isPending}
-      />
+      <AlertDialog
+        open={showRotateConfirm}
+        onOpenChange={(open) => {
+          if (!open) setShowRotateConfirm(false);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận tạo cặp khóa ký số mới</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn tạo cặp khóa ký số mới? Cặp khóa cũ sẽ bị xoay và thay thế.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setShowRotateConfirm(false)}>
+              Hủy
+            </Button>
+            <Button
+              variant="danger"
+              onClick={executeRotateKeyPair}
+              isLoading={rotateKeyPairMutation.isPending}
+            >
+              Tạo khóa mới
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

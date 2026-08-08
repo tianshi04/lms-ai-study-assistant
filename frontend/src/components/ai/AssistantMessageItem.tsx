@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { renderMarkdown } from "./AIChatMarkdownRenderer";
 
 export function AssistantMessageItem({
@@ -28,10 +29,12 @@ export function AssistantMessageItem({
       <div className="w-full text-xs text-on-surface leading-relaxed">
         {renderMarkdown(text, isStreaming)}
       </div>
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         onClick={handleCopy}
-        className="w-6 h-6 inline-flex items-center justify-center text-on-surface-variant/70 hover:text-primary transition-colors cursor-pointer mt-1 rounded-md hover:bg-surface-container-high border border-transparent hover:border-outline-variant/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="w-6 h-6 text-on-surface-variant/70 hover:text-primary mt-1"
         title="Sao chép câu trả lời"
         aria-label="Sao chép câu trả lời"
       >
@@ -40,7 +43,7 @@ export function AssistantMessageItem({
         ) : (
           <Copy className="w-3.5 h-3.5" aria-hidden="true" />
         )}
-      </button>
+      </Button>
     </div>
   );
 }

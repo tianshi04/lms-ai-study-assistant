@@ -63,13 +63,9 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  const roleStr = payload
-    ? normalizeUserRole(payload.role)
-    : request.cookies.get("user_role")?.value;
-  const role = roleStr ? parseInt(roleStr, 10) : null;
-  const isSystemAdmin = Boolean(
-    role === 3 || payload?.role === "3" || payload?.role?.includes("ADMIN"),
-  );
+  const roleStr = payload ? normalizeUserRole(payload.role) : null;
+  const isSystemAdmin = roleStr === "USER_ROLE_ADMIN" || roleStr === "USER_ROLE_SUPER_ADMIN";
+  const isInstructor = roleStr === "USER_ROLE_INSTRUCTOR" || isSystemAdmin;
 
   const requestHeaders = new Headers(request.headers);
   if (token && !requestHeaders.has("authorization")) {
@@ -102,8 +98,7 @@ export async function proxy(request: NextRequest) {
     if (!payload) {
       return redirectToLogin();
     }
-    const isAllowed = isSystemAdmin || role === 2;
-    if (!isAllowed) {
+    if (!isInstructor) {
       return NextResponse.redirect(new URL("/courses", request.url));
     }
   }

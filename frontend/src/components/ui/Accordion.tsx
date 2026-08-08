@@ -17,7 +17,7 @@ export function AccordionTrigger({
       <BaseAccordion.Trigger
         ref={ref}
         className={cn(
-          "flex flex-1 items-center justify-between py-4 font-medium transition-colors duration-m3-short-4 ease-m3-emphasized hover:no-underline text-foreground cursor-pointer group text-left",
+          "flex flex-1 items-center justify-between py-4 font-medium transition-colors duration-m3-short-4 ease-m3-emphasized hover:no-underline text-foreground cursor-pointer group text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg p-1",
           className,
         )}
         {...props}
@@ -42,7 +42,7 @@ export function AccordionContent({
     <BaseAccordion.Panel
       ref={ref}
       className={cn(
-        "overflow-hidden text-sm transition-colors duration-m3-medium-2 ease-m3-emphasized text-muted-foreground pb-4 pt-0",
+        "overflow-hidden text-sm transition-all duration-m3-medium-2 ease-m3-decelerate text-muted-foreground pb-4 pt-0 data-[state=open]:animate-collapse-down data-[state=closed]:animate-collapse-up",
         className,
       )}
       {...props}

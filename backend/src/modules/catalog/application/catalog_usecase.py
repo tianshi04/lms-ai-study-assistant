@@ -374,9 +374,7 @@ class CatalogUseCase:
 
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            real_course_id, instructor_names = await repo.get_course_id_by_slug_or_id(
-                course_id
-            )
+            real_course_id = await repo.get_course_id_by_slug_or_id(course_id)
 
             # BR_REVIEW_004: Check if user is owner or instructor of THIS SPECIFIC course
             course_detail = await repo.get_course_detail(real_course_id)
@@ -387,10 +385,6 @@ class CatalogUseCase:
                     or user_id in (course_detail.co_instructor_ids or [])
                 ):
                     is_own_course = True
-                elif instructor_names and user_name in instructor_names:
-                    is_own_course = True
-            elif instructor_names and user_name in instructor_names:
-                is_own_course = True
 
             if is_own_course:
                 logger.warning(
@@ -441,7 +435,7 @@ class CatalogUseCase:
     ):
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            real_course_id, _ = await repo.get_course_id_by_slug_or_id(course_id)
+            real_course_id = await repo.get_course_id_by_slug_or_id(course_id)
 
             return await repo.list_course_reviews(
                 course_id=real_course_id, page_size=page_size, page_token=page_token
@@ -615,7 +609,7 @@ class CatalogUseCase:
                     NotificationCategory,
                 )
 
-                real_id, _ = await repo.get_course_id_by_slug_or_id(course_id)
+                real_id = await repo.get_course_id_by_slug_or_id(course_id)
                 target_ids = list({course_id, real_id})
 
                 enrolled_stmt = select(LearningProgressModel.user_id).where(

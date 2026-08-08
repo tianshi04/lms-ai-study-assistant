@@ -13,11 +13,24 @@ import {
   CreditCard,
   Receipt,
   Calendar,
-  Loader2,
   Sparkles,
 } from "lucide-react";
-import { useListUserPurchasesQuery, useCreateVNPayPaymentUrlMutation } from "@/lib/query_hooks";
-import { PaymentOrderStatus, PaymentTargetType } from "@/gen/payment/v1/payment_pb";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  useListUserPurchasesQuery,
+  useCreateVNPayPaymentUrlMutation,
+  useCancelVNPayOrderMutation,
+} from "@/lib/query_hooks";
+import { PaymentOrderStatus, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
+import { Button } from "@/components/ui/Button";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 
 type FilterTab = "ALL" | "COMPLETED" | "PENDING" | "EXPIRED";
 
@@ -43,17 +56,119 @@ function formatDate(isoStr: string) {
 
 function MyPurchasesContent() {
   const [activeTab, setActiveTab] = useState<FilterTab>("ALL");
+  const [isMounted, setIsMounted] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<any | null>(null);
+  const [actionNotice, setActionNotice] = useState<{
+    type: "success" | "error" | "cancelled";
+    title: string;
+    message: string;
+  } | null>(null);
+
+  const queryClient = useQueryClient();
   const { data, isLoading, isFetching, refetch } = useListUserPurchasesQuery();
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const createVNPayMutation = useCreateVNPayPaymentUrlMutation({
     onSuccess: (res) => {
       if (res.success && res.paymentUrl) {
         window.location.href = res.paymentUrl;
+      } else if (!res.success) {
+        setActionNotice({
+          type: "error",
+          title: "Không thể khởi tạo thanh toán VNPay",
+          message: res.message || "Cổng thanh toán không phản hồi hoặc thông tin không hợp lệ.",
+        });
       }
+    },
+    onError: (err) => {
+      setActionNotice({
+        type: "error",
+        title: "Lỗi kết nối thanh toán",
+        message: err.message || "Không thể kết nối đến máy chủ xử lý đơn hàng VNPay.",
+      });
     },
   });
 
-  const orders: any[] = data?.orders ?? [];
+  const cancelVNPayMutation = useCancelVNPayOrderMutation();
 
+  const handleRefresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["userPurchasesAndOrders"] });
+    await queryClient.invalidateQueries({ queryKey: ["userPaymentAccess"] });
+    await queryClient.invalidateQueries({ queryKey: ["myEnrolledCourses"] });
+    refetch();
+  };
+
+  const orders = data?.orders ?? [];
+
+  const { daysRemaining, isPlusActive, formattedExpDate } = React.useMemo(() => {
+    if (!isMounted) {
+      return { daysRemaining: 0, isPlusActive: false, formattedExpDate: "" };
+    }
+    const rawSub = data?.activeSubscription;
+    let expStr = rawSub?.expiresAt || "";
+
+    // Fallback: If no activeSubscription object, check completed SYSTEM_SUBSCRIPTION orders
+    if (!expStr && data?.orders?.length) {
+      const completedSubOrders = data.orders.filter(
+        (o) =>
+          o.status === PaymentOrderStatus.COMPLETED &&
+          o.targetType === PaymentTargetType.SYSTEM_SUBSCRIPTION,
+      );
+      if (completedSubOrders.length > 0) {
+        let accumulatedExp: Date | null = null;
+        const sorted = [...completedSubOrders].sort(
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        );
+        for (const o of sorted) {
+          const addDays = o.planType === PlanType.YEARLY ? 365 : 30;
+          const orderDate = new Date(o.createdAt);
+          if (!accumulatedExp || accumulatedExp.getTime() < orderDate.getTime()) {
+            accumulatedExp = new Date(orderDate.getTime() + addDays * 24 * 60 * 60 * 1000);
+          } else {
+            accumulatedExp = new Date(accumulatedExp.getTime() + addDays * 24 * 60 * 60 * 1000);
+          }
+        }
+        if (accumulatedExp) {
+          expStr = accumulatedExp.toISOString();
+        }
+      }
+    }
+
+    if (!expStr) {
+      return { daysRemaining: 0, isPlusActive: false, formattedExpDate: "" };
+    }
+
+    const expTime = new Date(expStr.trim().replace(" ", "T")).getTime();
+    const nowTime = Date.now();
+    const diffDays = Math.ceil((expTime - nowTime) / (1000 * 60 * 60 * 24));
+    const active = !isNaN(expTime) && diffDays > 0;
+    let formattedDate = "";
+    try {
+      formattedDate = new Date(expTime).toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    } catch {
+      formattedDate = expStr;
+    }
+    return {
+      daysRemaining: active ? diffDays : 0,
+      isPlusActive: active,
+      formattedExpDate: formattedDate,
+    };
+  }, [data, isMounted]);
+
+  const handleSubscribePlus = (plan: PlanType) => {
+    createVNPayMutation.mutate({
+      targetType: PaymentTargetType.SYSTEM_SUBSCRIPTION,
+      targetId: plan === PlanType.YEARLY ? "plus_yearly" : "plus_monthly",
+      planType: plan,
+    });
+  };
   // Summary Metrics
   const totalOrders = orders.length;
   const completedCount = orders.filter(
@@ -72,7 +187,11 @@ function MyPurchasesContent() {
       return o.status === PaymentOrderStatus.PENDING;
     }
     if (activeTab === "EXPIRED") {
-      return o.status === PaymentOrderStatus.EXPIRED || o.status === PaymentOrderStatus.FAILED;
+      return (
+        o.status === PaymentOrderStatus.EXPIRED ||
+        o.status === PaymentOrderStatus.FAILED ||
+        o.status === PaymentOrderStatus.CANCELLED
+      );
     }
     return true;
   });
@@ -83,6 +202,55 @@ function MyPurchasesContent() {
       targetId: order.targetId,
       planType: order.planType,
     });
+  };
+
+  const handleCancelOrder = (order: (typeof orders)[0]) => {
+    setOrderToCancel(order);
+  };
+
+  const confirmCancelOrder = () => {
+    if (!orderToCancel) return;
+    const targetOrder = orderToCancel;
+    const txnRef = targetOrder.vnpTxnRef || (targetOrder as any).vnp_txn_ref || "";
+    const orderId = targetOrder.id || (targetOrder as any).order_id || "";
+
+    cancelVNPayMutation.mutate(
+      {
+        vnpTxnRef: txnRef,
+        orderId: orderId,
+      },
+      {
+        onSuccess: (res) => {
+          setOrderToCancel(null);
+          if (res.success) {
+            setActionNotice({
+              type: "cancelled",
+              title: "Đã hủy giao dịch thanh toán VNPay",
+              message:
+                res.message ||
+                `Đơn hàng #${txnRef || orderId.substring(0, 8)} đã được hủy thành công. Tài khoản của bạn không bị trừ tiền và bạn có thể đặt lại bất cứ lúc nào.`,
+            });
+            handleRefresh();
+          } else {
+            setActionNotice({
+              type: "error",
+              title: "Không thể hủy đơn hàng",
+              message:
+                res.message || "Không tìm thấy thông tin đơn hàng hoặc giao dịch đã hoàn tất.",
+            });
+          }
+        },
+        onError: (err) => {
+          setOrderToCancel(null);
+          setActionNotice({
+            type: "error",
+            title: "Lỗi xử lý hủy đơn hàng",
+            message:
+              err.message || "Đã xảy ra lỗi kết nối với máy chủ khi gửi yêu cầu hủy đơn hàng.",
+          });
+        },
+      },
+    );
   };
 
   return (
@@ -99,18 +267,128 @@ function MyPurchasesContent() {
             }
           </p>
         </div>
-        <button
+        <Button
           type="button"
-          onClick={() => refetch()}
+          variant="outline"
+          onClick={handleRefresh}
           disabled={isFetching}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-sm font-semibold transition-colors cursor-pointer disabled:opacity-60 shrink-0 self-start md:self-auto"
+          className="shrink-0 self-start md:self-auto"
         >
           <RefreshCw
             className={`w-4 h-4 text-primary ${isFetching ? "animate-spin" : ""}`}
             aria-hidden="true"
           />
           <span>{isFetching ? "Đang đối soát…" : "Tải lại & Đối soát VNPay"}</span>
-        </button>
+        </Button>
+      </div>
+
+      {/* VNPay Inline Cancellation & Action Notice Banner (NO TOAST) */}
+      {actionNotice && (
+        <div
+          className={`mb-8 p-5 rounded-2xl border shadow-xs transition-all flex items-start justify-between gap-4 ${
+            actionNotice.type === "cancelled"
+              ? "bg-destructive/5 border-destructive/20 text-foreground"
+              : actionNotice.type === "success"
+                ? "bg-success/10 border-success/30 text-foreground"
+                : "bg-destructive/10 border-destructive/30 text-foreground"
+          }`}
+        >
+          <div className="flex items-start gap-3.5">
+            <div
+              className={`p-2.5 rounded-xl shrink-0 ${
+                actionNotice.type === "cancelled" || actionNotice.type === "error"
+                  ? "bg-destructive/15 text-destructive border border-destructive/20"
+                  : "bg-success/15 text-success border border-success/20"
+              }`}
+            >
+              {actionNotice.type === "success" ? (
+                <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
+              ) : (
+                <XCircle className="w-5 h-5" aria-hidden="true" />
+              )}
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-foreground">{actionNotice.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {actionNotice.message}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionNotice(null)}
+            className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors cursor-pointer shrink-0"
+            aria-label="Đóng thông báo"
+          >
+            <span className="text-lg leading-none">✕</span>
+          </button>
+        </div>
+      )}
+
+      {/* Coursera Plus Hero Banner Card */}
+      <div className="mb-8 p-6 rounded-3xl bg-primary-container/20 border border-primary/20 shadow-xs relative overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <Sparkles className="w-6 h-6 animate-pulse" aria-hidden="true" />
+              </div>
+              <h2 className="text-xl md:text-2xl font-bold text-foreground">{"Coursera Plus"}</h2>
+              {isPlusActive ? (
+                <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-success/10 text-success border border-success/20">
+                  <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
+                  {"Đang hoạt động"}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-warning/10 text-warning border border-warning/20">
+                  {"Chưa kích hoạt"}
+                </span>
+              )}
+            </div>
+
+            {isPlusActive ? (
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {"Tài khoản của bạn đang có quyền học không giới hạn tất cả các khóa học. Còn "}
+                <strong className="text-primary font-extrabold text-base">
+                  {daysRemaining} ngày
+                </strong>
+                {" sử dụng (Hết hạn vào "}
+                <span className="text-foreground font-semibold">{formattedExpDate}</span>
+                {")."}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {
+                  "Đăng ký gói Coursera Plus để truy cập không giới hạn hơn 500+ khóa học chất lượng cao và nhận chứng chỉ hoàn tất."
+                }
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleSubscribePlus(PlanType.MONTHLY)}
+              isLoading={createVNPayMutation.isPending}
+              className="gap-2 px-5 py-3 rounded-xl font-bold text-sm h-auto"
+            >
+              <CreditCard className="w-4 h-4" aria-hidden="true" />
+              <span>{isPlusActive ? "Gia hạn Gói Tháng (+30d)" : "Đăng ký Gói Tháng (790k)"}</span>
+            </Button>
+
+            <Button
+              type="button"
+              variant="primary"
+              onClick={() => handleSubscribePlus(PlanType.YEARLY)}
+              isLoading={createVNPayMutation.isPending}
+              className="gap-2 px-5 py-3 rounded-xl font-bold text-sm h-auto"
+            >
+              <Sparkles className="w-4 h-4" aria-hidden="true" />
+              <span>{isPlusActive ? "Gia hạn Gói Năm (+365d)" : "Nâng cấp Gói Năm (5.9Tr)"}</span>
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -157,32 +435,35 @@ function MyPurchasesContent() {
 
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-border mb-6 overflow-x-auto pb-1">
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => setActiveTab("ALL")}
-          className={`px-4 py-2.5 rounded-t-xl text-sm font-semibold transition-colors cursor-pointer border-b-2 whitespace-nowrap ${
+          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
             activeTab === "ALL"
               ? "border-primary text-primary bg-primary/5"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           {`Tất cả đơn hàng (${totalOrders})`}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => setActiveTab("COMPLETED")}
-          className={`px-4 py-2.5 rounded-t-xl text-sm font-semibold transition-colors cursor-pointer border-b-2 whitespace-nowrap ${
+          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
             activeTab === "COMPLETED"
               ? "border-success text-success bg-success/5"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           {`Đã mở khóa (${completedCount})`}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => setActiveTab("PENDING")}
-          className={`px-4 py-2.5 rounded-t-xl text-sm font-semibold transition-colors cursor-pointer border-b-2 whitespace-nowrap ${
+          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
             activeTab === "PENDING"
               ? "border-warning text-warning bg-warning/5"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -191,11 +472,12 @@ function MyPurchasesContent() {
           {`Đang chờ thanh toán (${
             orders.filter((o: any) => o.status === PaymentOrderStatus.PENDING).length
           })`}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => setActiveTab("EXPIRED")}
-          className={`px-4 py-2.5 rounded-t-xl text-sm font-semibold transition-colors cursor-pointer border-b-2 whitespace-nowrap ${
+          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
             activeTab === "EXPIRED"
               ? "border-muted-foreground text-foreground bg-muted/50"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -204,14 +486,16 @@ function MyPurchasesContent() {
           {`Đã hết hạn / Hủy (${
             orders.filter(
               (o: any) =>
-                o.status === PaymentOrderStatus.EXPIRED || o.status === PaymentOrderStatus.FAILED,
+                o.status === PaymentOrderStatus.EXPIRED ||
+                o.status === PaymentOrderStatus.FAILED ||
+                o.status === PaymentOrderStatus.CANCELLED,
             ).length
           })`}
-        </button>
+        </Button>
       </div>
 
       {/* Orders List */}
-      {isLoading ? (
+      {!isMounted || isLoading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <div
@@ -254,6 +538,7 @@ function MyPurchasesContent() {
             const isPending = order.status === PaymentOrderStatus.PENDING;
             const isFailed = order.status === PaymentOrderStatus.FAILED;
             const isExpired = order.status === PaymentOrderStatus.EXPIRED;
+            const isCancelled = order.status === PaymentOrderStatus.CANCELLED;
 
             return (
               <div
@@ -285,6 +570,13 @@ function MyPurchasesContent() {
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-muted text-muted-foreground border border-border text-xs font-bold">
                         <Clock className="w-3.5 h-3.5" aria-hidden="true" />
                         <span>{"Đã hết hạn (15 phút)"}</span>
+                      </span>
+                    )}
+
+                    {isCancelled && (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-destructive/10 border border-destructive/20 text-destructive text-xs font-bold">
+                        <XCircle className="w-3.5 h-3.5" aria-hidden="true" />
+                        <span>{"Đã hủy giao dịch (VNPay)"}</span>
                       </span>
                     )}
 
@@ -341,19 +633,28 @@ function MyPurchasesContent() {
                   )}
 
                   {isPending && (
-                    <button
-                      type="button"
-                      onClick={() => handleContinuePayment(order)}
-                      disabled={createVNPayMutation.isPending}
-                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-warning hover:bg-warning/90 text-warning-foreground text-sm font-semibold transition-colors cursor-pointer disabled:opacity-60"
-                    >
-                      {createVNPayMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                      ) : (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => handleCancelOrder(order)}
+                        disabled={cancelVNPayMutation.isPending || createVNPayMutation.isPending}
+                        isLoading={cancelVNPayMutation.isPending}
+                        className="px-4 py-2.5 rounded-xl text-xs font-semibold text-destructive hover:bg-destructive/10 hover:border-destructive/30"
+                      >
+                        <span>{"Hủy đơn"}</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => handleContinuePayment(order)}
+                        disabled={createVNPayMutation.isPending || cancelVNPayMutation.isPending}
+                        isLoading={createVNPayMutation.isPending}
+                        className="px-5 py-2.5 rounded-xl bg-warning hover:bg-warning/90 text-warning-foreground text-sm font-semibold"
+                      >
                         <CreditCard className="w-4 h-4" aria-hidden="true" />
-                      )}
-                      <span>{"Tiếp tục thanh toán"}</span>
-                    </button>
+                        <span>{"Tiếp tục thanh toán"}</span>
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -361,6 +662,55 @@ function MyPurchasesContent() {
           })}
         </div>
       )}
+
+      {/* Confirmation Modal for Order Cancellation */}
+      <AlertDialog
+        open={!!orderToCancel}
+        onOpenChange={(open) => {
+          if (!open && !cancelVNPayMutation.isPending) {
+            setOrderToCancel(null);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận hủy đơn hàng</AlertDialogTitle>
+            <AlertDialogDescription>
+              {orderToCancel && (
+                <span>
+                  {"Bạn có chắc chắn muốn hủy đơn hàng "}
+                  <strong className="font-mono font-bold text-foreground">
+                    {orderToCancel.vnpTxnRef ||
+                      (orderToCancel as any).vnp_txn_ref ||
+                      orderToCancel.id?.substring(0, 8)}
+                  </strong>
+                  {" ("}
+                  {formatVnd(orderToCancel.amount || 0)}
+                  {
+                    ")? Đơn hàng sẽ chuyển sang trạng thái đã hủy và bạn có thể đăng ký lại bất cứ lúc nào."
+                  }
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setOrderToCancel(null)}
+              disabled={cancelVNPayMutation.isPending}
+            >
+              Quay lại
+            </Button>
+            <Button
+              variant="danger"
+              onClick={confirmCancelOrder}
+              disabled={cancelVNPayMutation.isPending}
+            >
+              {cancelVNPayMutation.isPending ? "Đang xử lý..." : "Đồng ý hủy đơn"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

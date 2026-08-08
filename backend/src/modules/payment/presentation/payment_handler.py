@@ -6,9 +6,7 @@ from src.gen.payment.v1 import payment_pb as pb
 from src.gen.payment.v1.payment_connect import PaymentService
 from src.modules.payment.application.payment_usecase import PaymentUseCase
 from src.modules.payment.domain.entities import PaymentTargetType, PlanType
-from src.shared.access_policy import AccessPolicyService
 from src.shared.auth import require_current_user
-from src.shared.infrastructure.database import async_session_scope
 
 
 class PaymentHandler(PaymentService):
@@ -181,6 +179,7 @@ class PaymentHandler(PaymentService):
                 plan_type=pb.PlanType.YEARLY
                 if sub.plan_type == PlanType.YEARLY
                 else pb.PlanType.MONTHLY,
+                status=pb.SubscriptionStatus.ACTIVE,
                 starts_at=sub.starts_at,
                 expires_at=sub.expires_at,
                 created_at=sub.created_at,
@@ -220,16 +219,14 @@ class PaymentHandler(PaymentService):
         ],
     ) -> pb.GetUserPaymentAccessResponse:
         current_user = require_current_user()
-        async with async_session_scope() as session:
-            is_paid, err = await AccessPolicyService.verify_paid_access(
-                session=session,
-                user_id=current_user.id,
-                course_id=request.course_id,
-            )
-            return pb.GetUserPaymentAccessResponse(
-                has_paid_access=is_paid,
-                access_reason=err or "Quyền truy cập Paid Mode hợp lệ.",
-            )
+        has_paid_access, access_reason = await self._use_case.get_user_payment_access(
+            user_id=current_user.id,
+            course_id=request.course_id,
+        )
+        return pb.GetUserPaymentAccessResponse(
+            has_paid_access=has_paid_access,
+            access_reason=access_reason,
+        )
 
     async def list_user_purchases(
         self,
@@ -241,6 +238,7 @@ class PaymentHandler(PaymentService):
             purchases,
             orders,
             titles_map,
+            active_sub,
         ) = await self._use_case.list_user_purchases(current_user.id)
 
         pb_purchases = [
@@ -279,6 +277,8 @@ class PaymentHandler(PaymentService):
                 st = pb.PaymentOrderStatus.FAILED
             elif o.status.value == "EXPIRED":
                 st = pb.PaymentOrderStatus.EXPIRED
+            elif o.status.value == "CANCELLED":
+                st = pb.PaymentOrderStatus.CANCELLED
 
             title = "Sản phẩm LMS"
             if o.target_type == PaymentTargetType.COURSE:
@@ -307,4 +307,42 @@ class PaymentHandler(PaymentService):
                 )
             )
 
-        return pb.ListUserPurchasesResponse(purchases=pb_purchases, orders=pb_orders)
+        pb_sub = None
+        if active_sub:
+            sub_plan_type = pb.PlanType.UNSPECIFIED
+            if active_sub.plan_type == PlanType.MONTHLY:
+                sub_plan_type = pb.PlanType.MONTHLY
+            elif active_sub.plan_type == PlanType.YEARLY:
+                sub_plan_type = pb.PlanType.YEARLY
+
+            pb_sub = pb.UserSubscription(
+                id=active_sub.id,
+                user_id=active_sub.user_id,
+                plan_type=sub_plan_type,
+                status=pb.SubscriptionStatus.ACTIVE,
+                starts_at=active_sub.starts_at,
+                expires_at=active_sub.expires_at,
+                created_at=active_sub.created_at,
+            )
+
+        return pb.ListUserPurchasesResponse(
+            purchases=pb_purchases,
+            orders=pb_orders,
+            active_subscription=pb_sub,
+        )
+
+    async def cancel_vn_pay_order(
+        self,
+        request: pb.CancelVNPayOrderRequest,
+        ctx: RequestContext[pb.CancelVNPayOrderRequest, pb.CancelVNPayOrderResponse],
+    ) -> pb.CancelVNPayOrderResponse:
+        current_user = require_current_user()
+        success, msg = await self._use_case.cancel_vnpay_order(
+            user_id=current_user.id,
+            vnp_txn_ref=request.vnp_txn_ref,
+            order_id=request.order_id,
+        )
+        return pb.CancelVNPayOrderResponse(
+            success=success,
+            message=msg,
+        )

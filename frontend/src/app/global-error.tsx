@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import "@/app/globals.css";
 
 export default function GlobalError({
@@ -48,14 +49,10 @@ export default function GlobalError({
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => reset()}
-              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 rounded-full bg-primary text-primary-foreground font-medium hover:bg-primary-hover transition-colors duration-m3-short-4 ease-m3-emphasized cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
+            <Button type="button" onClick={() => reset()} className="w-full sm:w-auto px-6 py-3">
               <RefreshCw className="w-4 h-4 mr-2" aria-hidden="true" />
               Tải lại trang
-            </button>
+            </Button>
 
             <Link
               href="/"

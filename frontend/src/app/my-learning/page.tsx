@@ -128,25 +128,19 @@ function MyLearningContent() {
       </div>
 
       {/* Tabs */}
-      <Tabs
-        tabs={[
-          {
-            id: "IN_PROGRESS",
-            label: "Đang tiến hành",
-          },
-          {
-            id: "COMPLETED",
-            label: "Đã hoàn thành",
-          },
-          {
-            id: "CERTIFICATES",
-            label: "Chứng chỉ",
-          },
-        ]}
-        activeTab={activeTab}
-        onChange={handleTabChange}
-        className="mb-8"
-      />
+      <Tabs.Root value={activeTab} onValueChange={(val) => handleTabChange(val as string)}>
+        <Tabs.List className="mb-8">
+          <Tabs.Tab value="IN_PROGRESS">
+            <span>{"Đang tiến hành"}</span>
+          </Tabs.Tab>
+          <Tabs.Tab value="COMPLETED">
+            <span>{"Đã hoàn thành"}</span>
+          </Tabs.Tab>
+          <Tabs.Tab value="CERTIFICATES">
+            <span>{"Chứng chỉ"}</span>
+          </Tabs.Tab>
+        </Tabs.List>
+      </Tabs.Root>
 
       {/* Content Section */}
       {loading ? (

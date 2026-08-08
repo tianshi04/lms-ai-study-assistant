@@ -2,6 +2,7 @@
 
 import { RotateCcw } from "lucide-react";
 import type { LearningProgress } from "@/gen/learning/v1/learning_pb";
+import { Button } from "@/components/ui/Button";
 
 interface DeadlinesPanelProps {
   progress: LearningProgress | null;
@@ -30,14 +31,14 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
             </p>
           </div>
           {hasOverdue && (
-            <button
+            <Button
               type="button"
               onClick={onResetDeadlines}
-              className="px-4 py-2 bg-warning hover:bg-warning-hover text-warning-foreground text-xs font-bold rounded-full shadow-xs hover:shadow-md transition-colors border border-warning/30 flex items-center gap-2 animate-pulse cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="px-4 py-2 bg-warning hover:bg-warning-hover text-warning-foreground text-xs font-bold rounded-full border border-warning/30 animate-pulse"
             >
               <RotateCcw aria-hidden="true" className="w-3.5 h-3.5" />
               Reset My Deadlines
-            </button>
+            </Button>
           )}
         </div>
 

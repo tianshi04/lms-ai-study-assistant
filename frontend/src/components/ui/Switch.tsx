@@ -2,8 +2,13 @@ import * as React from "react";
 import { Switch as BaseSwitch } from "@base-ui/react/switch";
 import { cn } from "@/lib/utils";
 
+import { FieldRoot, FieldLabel, FieldError, FieldDescription } from "./Field";
+
 export const SwitchRoot = BaseSwitch.Root;
 export const SwitchThumb = BaseSwitch.Thumb;
+export const SwitchLabel = FieldLabel;
+export const SwitchError = FieldError;
+export const SwitchHelperText = FieldDescription;
 
 export interface SwitchProps extends React.ComponentProps<typeof BaseSwitch.Root> {
   label?: string;
@@ -47,20 +52,17 @@ export function Switch({
   }
 
   return (
-    <div className="space-y-1">
+    <FieldRoot invalid={!!error} className="space-y-1">
       <div className="flex items-center gap-3">
         {switchElement}
         {label && (
-          <label
-            htmlFor={switchId}
-            className="text-sm font-medium text-foreground cursor-pointer select-none leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
+          <FieldLabel htmlFor={switchId} className="mb-0 text-sm font-medium cursor-pointer">
             {label}
-          </label>
+          </FieldLabel>
         )}
       </div>
-      {error && <p className="text-xs text-destructive font-medium">{error}</p>}
-      {helperText && !error && <p className="text-xs text-muted-foreground">{helperText}</p>}
-    </div>
+      {error && <FieldError>{error}</FieldError>}
+      {helperText && !error && <FieldDescription>{helperText}</FieldDescription>}
+    </FieldRoot>
   );
 }

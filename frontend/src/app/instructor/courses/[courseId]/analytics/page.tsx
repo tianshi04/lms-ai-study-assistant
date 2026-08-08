@@ -13,7 +13,8 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/Table";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { ProgressBar } from "@/components/ui/Progress";
+
 import {
   Breadcrumb,
   BreadcrumbList,

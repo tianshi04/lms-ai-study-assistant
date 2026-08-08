@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCoursesQuery } from "@/lib/query_hooks";
 import { CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { OrganizationMembersModal } from "@/components/identity/OrganizationMembersModal";
+import { Button } from "@/components/ui/Button";
 import {
   Plus,
   Users,
@@ -61,14 +62,15 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setIsOrgModalOpen(true)}
-              className="px-5 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg transition-colors flex items-center gap-2 cursor-pointer border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="px-5 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg"
             >
               <UserPlus className="w-5 h-5 text-primary" aria-hidden="true" />
               Thành viên Organization
-            </button>
+            </Button>
             <Link
               href="/instructor/courses/new"
               className="px-6 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg transition-colors flex items-center gap-2 cursor-pointer border border-border"

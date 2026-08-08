@@ -120,6 +120,19 @@ class LearningHandler(LearningService):
         )
         return pb.ListPersonalNotesResponse(notes=[_to_pb_note(n) for n in notes])
 
+    async def delete_personal_note(
+        self,
+        request: pb.DeletePersonalNoteRequest,
+        ctx: RequestContext[
+            pb.DeletePersonalNoteRequest, pb.DeletePersonalNoteResponse
+        ],
+    ) -> pb.DeletePersonalNoteResponse:
+        current_user = require_current_user()
+        success = await self.use_case.delete_personal_note(
+            note_id=request.note_id, user_id=current_user.id
+        )
+        return pb.DeletePersonalNoteResponse(success=success)
+
     async def mark_item_complete(
         self,
         request: pb.MarkItemCompleteRequest,

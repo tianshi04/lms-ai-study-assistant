@@ -3,6 +3,7 @@
 import { FileText, Pencil, Trash2, Plus } from "lucide-react";
 import { type Lesson, type LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { LearningItemRow } from "./LearningItemRow";
+import { Button } from "@/components/ui/Button";
 
 interface LessonCardProps {
   lesson: Lesson;
@@ -90,32 +91,37 @@ export function LessonCard({
 
         {isInstructorOrAdmin && (
           <div className="flex items-center gap-1.5">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => onEditLesson(lesson)}
-              className="px-2 py-1 rounded-lg bg-muted text-foreground text-[11px] font-semibold hover:bg-muted/80 transition-colors flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="bg-muted text-foreground text-[11px] font-semibold hover:bg-muted/80 h-7 px-2"
             >
               <Pencil className="w-3 h-3" aria-hidden="true" />
               <span>{"Sửa Bài"}</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => onDeleteLesson(lesson.id, lesson.title)}
-              className="px-2 py-1 rounded-lg bg-destructive/10 text-destructive text-[11px] font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="bg-destructive/10 text-destructive text-[11px] font-semibold hover:bg-destructive/20 h-7 px-2 border-transparent"
             >
               <Trash2 className="w-3 h-3" aria-hidden="true" />
               <span>{"Xóa Bài"}</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
+              size="sm"
               onClick={() => onAddItem(lesson.id)}
-              className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary text-[11px] font-bold hover:bg-primary/20 transition-colors flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="bg-primary/10 text-primary text-[11px] font-bold hover:bg-primary/20 h-7 px-2.5 shadow-none"
             >
               <Plus className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{"Thêm Học liệu"}</span>
-            </button>
+            </Button>
           </div>
         )}
       </div>

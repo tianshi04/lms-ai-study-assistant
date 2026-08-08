@@ -1226,8 +1226,10 @@ class IdentityUseCase:
                         action_url=f"/invitations/{raw_token}",
                         actor_avatar_url=getattr(current_user, "avatar_url", "") or "",
                     )
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to dispatch workspace invitation notification: %s", exc
+                    )
 
             res_dict = self._invitation_to_dict(saved)
             res_dict["token"] = raw_token
@@ -1324,17 +1326,11 @@ class IdentityUseCase:
                     "Bạn không phải người nhận của lời mời này.",
                 )
 
-            inv_status_str = (
-                inv.status.value if hasattr(inv.status, "value") else str(inv.status)
-            )
-            if (
-                inv_status_str != "INVITATION_STATUS_PENDING"
-                and inv_status_str != "PENDING"
-            ):
+            if inv.status != InvitationStatus.PENDING:
                 return (
                     self._invitation_to_dict(inv),
                     False,
-                    f"Lời mời đã ở trạng thái {inv_status_str}.",
+                    f"Lời mời đã ở trạng thái {inv.status}.",
                 )
 
             if inv.expires_at:
@@ -1350,18 +1346,22 @@ class IdentityUseCase:
                             False,
                             "Lời mời đã hết hạn.",
                         )
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to parse invitation expiration date %s: %s",
+                        inv.expires_at,
+                        exc,
+                    )
 
             now_str = datetime.now(timezone.utc).isoformat()
             act_str = str(action).upper()
 
-            if "DECLINE" in act_str or act_str == "2":
+            if "DECLINE" in act_str:
                 inv.status = InvitationStatus.DECLINED
                 inv.responded_at = now_str
                 saved = await inv_repo.save(inv)
                 return self._invitation_to_dict(saved), True, "Đã từ chối lời mời."
-            elif "ACCEPT" in act_str or act_str == "1":
+            elif "ACCEPT" in act_str:
                 inv.status = InvitationStatus.ACCEPTED
                 inv.responded_at = now_str
                 inv.invitee_id = current_user.id

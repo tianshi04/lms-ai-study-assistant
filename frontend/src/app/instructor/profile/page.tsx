@@ -137,14 +137,16 @@ export default function InstructorProfilePage() {
             )}
             <span>{statusMessage.text}</span>
           </div>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => setStatusMessage(null)}
             aria-label="Đóng thông báo"
-            className="p-1 rounded-md opacity-70 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+            className="h-6 w-6 opacity-70 hover:opacity-100"
           >
             <X className="w-4 h-4" aria-hidden="true" />
-          </button>
+          </Button>
         </div>
       )}
 

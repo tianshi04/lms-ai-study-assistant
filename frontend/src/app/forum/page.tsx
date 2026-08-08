@@ -13,9 +13,17 @@ import {
   type ForumReply,
 } from "@/gen/forum/v1/forum_pb";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
-import { Modal } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
+
 import { useToast } from "@/components/ui/Toast";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -77,6 +85,9 @@ function ForumPageContent() {
 
   // Active Expanded Thread IDs
   const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
+
+  // In-flight voting requests state
+  const [votingPostIds, setVotingPostIds] = useState<Set<string>>(new Set());
 
   // Delete confirmations state
   const [deletingThreadId, setDeletingThreadId] = useState<string | null>(null);
@@ -330,6 +341,9 @@ function ForumPageContent() {
 
   // Handle Upvote with Optimistic UI Update
   const handleVote = async (postId: string, isUpvote: boolean) => {
+    if (votingPostIds.has(postId)) return;
+    setVotingPostIds((prev) => new Set(prev).add(postId));
+
     setThreads((prevThreads) =>
       prevThreads.map((th) => {
         if (th.id === postId) {
@@ -378,6 +392,12 @@ function ForumPageContent() {
     } catch (err) {
       console.error("Failed to vote post:", err);
       fetchThreads();
+    } finally {
+      setVotingPostIds((prev) => {
+        const next = new Set(prev);
+        next.delete(postId);
+        return next;
+      });
     }
   };
 
@@ -565,16 +585,17 @@ function ForumPageContent() {
                         )}
                       </div>
 
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
                         onClick={() => setSelectedModalThreadId(thread.id)}
-                        className="text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg cursor-pointer group/title"
+                        className="text-left w-full justify-start h-auto p-0 cursor-pointer group/title hover:bg-transparent shadow-none"
                         title="Bấm để mở rộng xem thảo luận riêng"
                       >
-                        <h2 className="text-xl font-bold text-foreground leading-snug group-hover/title:text-primary transition-colors">
+                        <h2 className="text-xl font-bold text-foreground leading-snug group-hover/title:text-primary transition-colors text-left">
                           {thread.title}
                         </h2>
-                      </button>
+                      </Button>
                     </div>
 
                     {/* Upvote Button */}
@@ -809,125 +830,130 @@ function ForumPageContent() {
       </main>
 
       {/* Modal Create New Thread */}
-      <Modal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        title={"Tạo chủ đề thảo luận mới"}
-        size="lg"
-      >
-        <form onSubmit={handleCreateThread} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1">
-              {"Khóa học"}
-            </label>
-            <Select
-              value={newCourseId}
-              onValueChange={(val) => {
-                if (val) setNewCourseId(val as string);
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Chọn khóa học">
-                  {courses.find((c) => c.id === newCourseId)?.title || newCourseId}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {courses.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <Dialog.Root open={showCreateModal} onOpenChange={(open) => setShowCreateModal(open)}>
+        <Dialog.Content size="lg">
+          <Dialog.Header>
+            <Dialog.Title>{"Tạo chủ đề thảo luận mới"}</Dialog.Title>
+          </Dialog.Header>
+          <form onSubmit={handleCreateThread} className="space-y-4 pt-2">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                {"Khóa học"}
+              </label>
+              <Select
+                value={newCourseId}
+                onValueChange={(val) => {
+                  if (val) setNewCourseId(val as string);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn khóa học">
+                    {courses.find((c) => c.id === newCourseId)?.title || newCourseId}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <Input
-            label="Title *"
-            type="text"
-            required
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            placeholder={"Tiêu đề chủ đề…"}
-            className="bg-muted text-sm p-3 rounded-xl"
-          />
+            <Input
+              label="Title *"
+              type="text"
+              required
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder={"Tiêu đề chủ đề…"}
+              className="bg-muted text-sm p-3 rounded-xl"
+            />
 
-          <Textarea
-            label="Content"
-            rows={4}
-            value={newContent}
-            onChange={(e) => setNewContent(e.target.value)}
-            placeholder={"Nội dung thắc mắc hoặc thảo luận chi tiết…"}
-            className="bg-muted text-sm p-3 rounded-xl"
-          />
+            <Textarea
+              label="Content"
+              rows={4}
+              value={newContent}
+              onChange={(e) => setNewContent(e.target.value)}
+              placeholder={"Nội dung thắc mắc hoặc thảo luận chi tiết…"}
+              className="bg-muted text-sm p-3 rounded-xl"
+            />
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowCreateModal(false)}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold"
-            >
-              {"Hủy"}
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={submittingThread || !newTitle.trim()}
-              isLoading={submittingThread}
-              className="px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
-            >
-              {"Đăng bài"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+            <Dialog.Footer className="pt-4 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowCreateModal(false)}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold"
+              >
+                {"Hủy"}
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={submittingThread || !newTitle.trim()}
+                isLoading={submittingThread}
+                className="px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
+              >
+                {"Đăng bài"}
+              </Button>
+            </Dialog.Footer>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
 
       {/* Modal Edit Thread */}
-      <Modal
-        isOpen={Boolean(editingThread)}
-        onClose={() => setEditingThread(null)}
-        title={"Chỉnh sửa bài viết"}
-        size="lg"
+      <Dialog.Root
+        open={Boolean(editingThread)}
+        onOpenChange={(open) => {
+          if (!open) setEditingThread(null);
+        }}
       >
-        <form onSubmit={handleUpdateThread} className="space-y-4">
-          <Input
-            label="Title *"
-            type="text"
-            required
-            value={editThreadTitle}
-            onChange={(e) => setEditThreadTitle(e.target.value)}
-            className="bg-muted text-sm p-3 rounded-xl"
-          />
+        <Dialog.Content size="lg">
+          <Dialog.Header>
+            <Dialog.Title>{"Chỉnh sửa bài viết"}</Dialog.Title>
+          </Dialog.Header>
+          <form onSubmit={handleUpdateThread} className="space-y-4 pt-2">
+            <Input
+              label="Title *"
+              type="text"
+              required
+              value={editThreadTitle}
+              onChange={(e) => setEditThreadTitle(e.target.value)}
+              className="bg-muted text-sm p-3 rounded-xl"
+            />
 
-          <Textarea
-            label="Content"
-            rows={4}
-            value={editThreadContent}
-            onChange={(e) => setEditThreadContent(e.target.value)}
-            className="bg-muted text-sm p-3 rounded-xl"
-          />
+            <Textarea
+              label="Content"
+              rows={4}
+              value={editThreadContent}
+              onChange={(e) => setEditThreadContent(e.target.value)}
+              className="bg-muted text-sm p-3 rounded-xl"
+            />
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setEditingThread(null)}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold"
-            >
-              {"Hủy"}
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={submittingEditThread || !editThreadTitle.trim()}
-              isLoading={submittingEditThread}
-              className="px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
-            >
-              {"Lưu thay đổi"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+            <Dialog.Footer className="pt-4 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditingThread(null)}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold"
+              >
+                {"Hủy"}
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={submittingEditThread || !editThreadTitle.trim()}
+                isLoading={submittingEditThread}
+                className="px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
+              >
+                {"Lưu thay đổi"}
+              </Button>
+            </Dialog.Footer>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
 
       {/* Thread Detail Modal (Facebook Post Style) */}
       <ThreadDetailModal
@@ -949,30 +975,54 @@ function ForumPageContent() {
       />
 
       {/* Confirm Dialog Delete Thread */}
-      <ConfirmAlertDialog
-        isOpen={Boolean(deletingThreadId)}
-        onClose={() => setDeletingThreadId(null)}
-        onConfirm={executeDeleteThread}
-        title="Xác nhận xóa bài viết"
-        description="Bạn có chắc chắn muốn xóa bài viết này không? Thao tác này không thể hoàn tác."
-        confirmText="Xóa bài viết"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={isDeletingThread}
-      />
+      <AlertDialog
+        open={Boolean(deletingThreadId)}
+        onOpenChange={(open) => {
+          if (!open) setDeletingThreadId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa bài viết</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa bài viết này không? Thao tác này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setDeletingThreadId(null)}>
+              Hủy
+            </Button>
+            <Button variant="danger" onClick={executeDeleteThread} isLoading={isDeletingThread}>
+              Xóa bài viết
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Confirm Dialog Delete Reply */}
-      <ConfirmAlertDialog
-        isOpen={Boolean(deletingReplyId)}
-        onClose={() => setDeletingReplyId(null)}
-        onConfirm={executeDeleteReply}
-        title="Xác nhận xóa phản hồi"
-        description="Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác."
-        confirmText="Xóa phản hồi"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={isDeletingReply}
-      />
+      <AlertDialog
+        open={Boolean(deletingReplyId)}
+        onOpenChange={(open) => {
+          if (!open) setDeletingReplyId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa phản hồi</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outline" onClick={() => setDeletingReplyId(null)}>
+              Hủy
+            </Button>
+            <Button variant="danger" onClick={executeDeleteReply} isLoading={isDeletingReply}>
+              Xóa phản hồi
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
