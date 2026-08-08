@@ -242,7 +242,7 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
                   variant="outline"
                   size="sm"
                   onClick={() => onSeekVideo(block.startTime)}
-                  className="font-mono text-[11px] font-bold text-on-primary-container bg-primary-container hover:bg-primary-container/80 border-primary/20 px-3 py-0.5 rounded-full h-auto"
+                  className="font-mono text-[11px] font-bold text-on-primary-container bg-primary-container hover:bg-primary-container/80 border-primary/20 px-2.5 py-0.5 rounded-lg h-auto"
                   title="Nhảy đến mốc thời gian này"
                 >
                   {formatTime(block.startTime)}
@@ -250,25 +250,31 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
               </div>
 
               {/* Continuous Flowing Paragraph Text */}
-              <p className="text-[13px] sm:text-sm text-on-surface/90 leading-relaxed sm:leading-7 font-sans">
+              <p className="text-[13px] sm:text-sm text-on-surface/90 leading-8 sm:leading-9 font-sans">
                 {block.cues.map((cue) => {
                   const isActive = cue.originalIndex === activeIndex;
 
                   return (
-                    <Button
-                      type="button"
-                      variant="ghost"
+                    <span
                       key={cue.originalIndex}
                       id={`transcript-cue-${cue.originalIndex}`}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => onSeekVideo(cue.startTime)}
-                      className={`inline h-auto p-0 px-1 py-0.5 text-left border-none shadow-none font-normal text-inherit hover:bg-surface-container-high ${
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onSeekVideo(cue.startTime);
+                        }
+                      }}
+                      className={`cursor-pointer transition-colors duration-m3-short-2 rounded-full px-2.5 py-1 [box-decoration-break:clone] [-webkit-box-decoration-break:clone] ${
                         isActive
-                          ? "bg-primary-container text-on-primary-container font-bold shadow-xs ring-1 ring-primary/30"
+                          ? "bg-primary/10 text-primary font-semibold"
                           : "hover:bg-surface-container-high hover:text-on-surface"
                       }`}
                     >
                       {renderHighlightedText(cue.text, searchQuery)}{" "}
-                    </Button>
+                    </span>
                   );
                 })}
               </p>
