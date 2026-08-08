@@ -26,9 +26,13 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_AUTH_002 (Cơ chế Refresh Token Rotation):**
   * Khi `access_token` hết hạn, client gọi RPC `RefreshToken` truyền `refresh_token` hợp lệ (yêu cầu payload claim `type == "refresh"` và tồn tại `user_id` sở hữu trong DB).
   * Hệ thống hủy cặp token cũ và phát hành mới đồng thời cả `access_token` và `refresh_token`.
-* **BR_AUTH_003 (Thuật toán Mã hóa Mật khẩu & Auto-Avatar):**
-  * Mật khẩu người dùng được băm bằng PBKDF2-HMAC-SHA256 với 100,000 vòng lặp (iterations) và muối ngẫu nhiên 16 bytes, lưu dạng `salt_hex:hash_hex`. Việc xác thực mật khẩu sử dụng `hmac.compare_digest` để chống tấn công đo thời gian (Timing Attack).
+* **BR_AUTH_003 (Thuật toán Mã hóa Mật khẩu, Validation & Auto-Avatar):**
+  * **Chính sách Mật khẩu (Password Policy - `validate_password`):** Mật khẩu người dùng áp dụng ràng buộc độ mạnh bắt buộc cho các thao tác đăng ký (`Register`), hoàn tất đăng ký Google (`CompleteGoogleRegistration`) và hoàn tất đặt lại mật khẩu (`CompleteResetPassword`). Mật khẩu tối thiểu 6 ký tự (`PASSWORD_MIN_LENGTH = 6`), phải chứa ít nhất 1 chữ cái in hoa (`A-Z`) và ít nhất 1 chữ số (`0-9`). Mọi mật khẩu yếu hoặc rỗng bị từ chối ngay lập tức ở tầng Application.
+  * **Mã hóa Băm Mật khẩu:** Mật khẩu người dùng được băm bằng PBKDF2-HMAC-SHA256 với 100,000 vòng lặp (iterations) và muối ngẫu nhiên 16 bytes, lưu dạng `salt_hex:hash_hex`. Việc xác thực mật khẩu sử dụng `hmac.compare_digest` để chống tấn công đo thời gian (Timing Attack).
   * Khi người dùng đăng ký mới, hệ thống tự động sinh ảnh đại diện mặc định qua API DiceBear: `https://api.dicebear.com/7.x/avataaars/svg?seed={email}`.
+* **BR_AUTH_004 (Bảo vệ Đăng nhập & Giới hạn Tần suất Khóa Tài khoản - Redis Login Rate Limiter):**
+  * **Bộ kiểm soát Tần suất Đăng nhập (Sliding Window Rate Limiter):** Sử dụng Redis sliding window counter (`check_login_rate_limit`) để phòng chống tấn công dò mật khẩu (Brute-force Attack).
+  * **Quy tắc Khóa Tạm thời (Account Lockout):** Nếu một tài khoản hoặc IP thực hiện đăng nhập sai quá **5 lần** (`LOGIN_MAX_ATTEMPTS = 5`) liên tiếp, hệ thống tự động tạm khóa (Lockout) quyền đăng nhập trong **15 phút** (`LOGIN_LOCKOUT_SECONDS = 900` / 900 giây) và phản hồi thời gian chờ còn lại cho Client.
 * **BR_AUTH_005 (Quy tắc Xét duyệt Quyền Giảng viên Cá nhân & Gán Partner Chuẩn Coursera):**
   * *BR_AUTH_005.1 (Không cấp trực tiếp vai trò Giảng viên):* API Đăng ký công khai (`Register`) tuyệt đối không cấp trực tiếp vai trò `INSTRUCTOR`. Cá nhân muốn trở thành Giảng viên phải nộp Đơn đăng ký (`SubmitInstructorApplication`) để Super Admin thẩm định.
   * *BR_AUTH_005.2 (Ràng buộc Đơn trùng lặp):* Mỗi tài khoản `LEARNER` chỉ được giữ tối đa **01 đơn đăng ký** ở trạng thái `PENDING_REVIEW`. Nếu bị Reject, người dùng phải đợi 14 ngày hoặc cập nhật lại thông tin mới được nộp đơn mới.
