@@ -354,6 +354,7 @@ Run these commands from the `backend/` directory:
 | `make dev` | Start local Python Uvicorn development server with auto-reload (port 8000) |
 | `make seed` | Seed database with sample courses (Idempotent Upsert mode) |
 | `make seed-reset` | Truncate database tables and re-seed clean initial catalog |
+| `make migrate` | Run Alembic database migrations directly (`uv run alembic upgrade head`) |
 | `make format` | Format backend Python code and auto-fix linting issues with Ruff |
 | `make test` | Run Pytest test suite (including Ruff linting and `ty` type checking) |
 
@@ -388,6 +389,8 @@ Run these commands from the `e2e/` directory:
 | `pnpm test` | Run full blackbox E2E test suite in headless mode |
 | `pnpm run test:all` | Run full cross-browser test suite |
 | `pnpm run test:ui` | Run Playwright test runner with interactive UI |
+| `pnpm run test:headed` | Run Playwright E2E tests in visible browser mode |
+| `pnpm run test:debug` | Run Playwright E2E tests in debug mode with Playwright Inspector |
 | `pnpm run test:report` | Show HTML test execution report |
 
 ---
@@ -407,3 +410,6 @@ Detailed specification documents are available in the [`docs/`](docs/) directory
 - [`docs/03_functional_specifications.md`](docs/03_functional_specifications.md) - Detailed functional specifications and API endpoints.
 - [`docs/04_business_rules.md`](docs/04_business_rules.md) - Business rules (Honor Code, Grading, Financial Aid, Vector RAG parameters).
 - [`docs/05_uat_test_cases.md`](docs/05_uat_test_cases.md) - User Acceptance Testing (UAT) scenarios and test scripts.
+- [`docs/06_system_initialization_and_onboarding.md`](docs/06_system_initialization_and_onboarding.md) - System initialization, Super Admin setup, partner organization onboarding, and database seeding spec.
+- [`docs/07_authentication_and_authorization_architecture.md`](docs/07_authentication_and_authorization_architecture.md) - 3-Layer Security Architecture (PBAC, multi-tenant SQL scope pushdown, and ReBAC matrix authorization).
+- [`docs/08_copilotkit_ai_chatbot.md`](docs/08_copilotkit_ai_chatbot.md) - CopilotKit AI Study Assistant integration architecture & vector RAG workflows.
