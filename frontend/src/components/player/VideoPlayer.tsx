@@ -270,7 +270,7 @@ export function VideoPlayer({
               aria-label={activeItem.title || "Video bài giảng"}
               className="w-full h-full object-contain rounded-2xl"
             >
-              <track src="/internet-sample.vtt" kind="subtitles" srcLang="en" label="English" default />
+              <track kind="captions" src="" label="Phụ đề" />
             </video>
           )}
 
