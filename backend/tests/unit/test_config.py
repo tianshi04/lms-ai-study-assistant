@@ -1,9 +1,9 @@
-from src.shared.config import get_settings, settings
+from src.shared.config import Settings, settings
 
 
 def test_settings_load_defaults():
     """Verify essential default configuration settings are loaded properly."""
-    config = get_settings()
+    config = Settings(_env_file=None)
     assert config.ENV == "development"
     assert config.BACKEND_PORT == 8000
     assert config.MINIO_ENDPOINT == "http://localhost:9090"
