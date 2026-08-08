@@ -982,9 +982,12 @@ export function useListUserPurchasesQuery(options?: { enabled?: boolean }) {
       const res = await client.listUserPurchases({});
       return {
         purchases: res.purchases ?? [],
-        orders: (res.purchases as any) ?? [],
+        orders: res.orders ?? [],
+        activeSubscription: res.activeSubscription,
       };
     },
+    staleTime: 0,
+    refetchOnMount: "always",
     ...options,
   });
 }

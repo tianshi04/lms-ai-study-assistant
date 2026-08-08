@@ -6,6 +6,43 @@ from enum import Enum
 import uuid
 
 
+from typing import Any, Type, TypeVar
+
+E = TypeVar("E", bound=Enum)
+
+
+def safe_enum_parse(enum_cls: Type[E], value: Any, default: E) -> E:
+    """Safely parse arbitrary DB string/int/enum representation into domain Enum without raising ValueError."""
+    if value is None:
+        return default
+    if isinstance(value, enum_cls):
+        return value
+    str_val = str(value).strip()
+    if not str_val or str_val.upper() in ("NONE", "NULL", ""):
+        return default
+
+    # Direct match against enum values or names
+    for member in enum_cls:
+        if member.value == str_val or member.name == str_val:
+            return member
+
+    # Normalized match stripping common protobuf/DB prefixes
+    upper_val = str_val.upper()
+    cleaned = (
+        upper_val.replace("PLAN_TYPE_", "")
+        .replace("SUBSCRIPTION_STATUS_", "")
+        .replace("PAYMENT_ORDER_STATUS_", "")
+        .replace("PAYMENT_TARGET_TYPE_", "")
+        .replace("PURCHASE_STATUS_", "")
+    )
+
+    for member in enum_cls:
+        if member.value == cleaned or member.name == cleaned:
+            return member
+
+    return default
+
+
 class PlanType(str, Enum):
     UNSPECIFIED = "UNSPECIFIED"
     MONTHLY = "MONTHLY"
@@ -88,7 +125,10 @@ class UserSubscription:
         if self.status != SubscriptionStatus.ACTIVE:
             return False
         try:
-            exp_time = datetime.fromisoformat(self.expires_at)
+            exp_str = str(self.expires_at).replace("Z", "+00:00")
+            exp_time = datetime.fromisoformat(exp_str)
+            if exp_time.tzinfo is None:
+                exp_time = exp_time.replace(tzinfo=timezone.utc)
             now = datetime.now(timezone.utc)
             return exp_time > now
         except Exception:

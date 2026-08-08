@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { HonorCodeModal } from "./HonorCodeModal";
@@ -17,6 +18,8 @@ import {
   CircleDot,
   CheckSquare,
   HelpCircle,
+  Lock,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -324,6 +327,43 @@ export function GradedQuizRunner({
   }
 
   if (error) {
+    const isAuditModeErr =
+      error.includes("Audit Mode") ||
+      error.includes("Miễn phí") ||
+      error.includes("permission_denied");
+
+    if (isAuditModeErr) {
+      return (
+        <div className="max-w-4xl mx-auto p-8 rounded-2xl bg-surface-container-low text-on-surface text-center space-y-6 border border-border shadow-xs">
+          <div className="w-16 h-16 rounded-full bg-warning/15 text-warning flex items-center justify-center mx-auto shadow-inner">
+            <Lock className="w-8 h-8 stroke-[2.5]" aria-hidden="true" />
+          </div>
+          <div className="max-w-md mx-auto space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20">
+              CHẾ ĐỘ AUDIT (MIỄN PHÍ)
+            </div>
+            <h3 className="text-xl font-extrabold text-foreground">
+              Bài kiểm tra tính điểm đã bị khóa
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Tài khoản của bạn đang ở chế độ Audit Mode (Miễn phí). Vui lòng nâng cấp Coursera Plus
+              hoặc mua khóa học / nhập mã Enterprise Key / Hỗ trợ tài chính để làm bài kiểm tra tính
+              điểm này.
+            </p>
+          </div>
+          <div className="flex justify-center pt-2">
+            <Link
+              href="/my-purchases"
+              className="px-6 py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm transition-all shadow-md flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 fill-current" aria-hidden="true" />
+              Nâng cấp Coursera Plus ngay
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
     const isBlocked =
       error.includes("vượt qua") ||
       error.includes("hết lượt") ||

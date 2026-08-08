@@ -16,6 +16,7 @@ from src.modules.payment.domain.entities import (
     PurchaseStatus,
     SubscriptionStatus,
     PlanType,
+    safe_enum_parse,
 )
 from src.modules.payment.domain.repositories import IPaymentRepository
 from src.modules.payment.infrastructure.models import (
@@ -86,20 +87,47 @@ class PaymentRepository(IPaymentRepository):
             .order_by(UserSubscriptionModel.expires_at.desc())
         )
         res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        for model in models:
+            sub = UserSubscription(
+                id=model.id,
+                user_id=model.user_id,
+                plan_type=safe_enum_parse(
+                    PlanType, model.plan_type, PlanType.UNSPECIFIED
+                ),
+                status=safe_enum_parse(
+                    SubscriptionStatus, model.status, SubscriptionStatus.UNSPECIFIED
+                ),
+                starts_at=model.starts_at,
+                expires_at=model.expires_at,
+                created_at=model.created_at,
+            )
+            if sub.is_currently_active():
+                return sub
+        return None
+
+    async def get_user_subscription(self, user_id: str) -> Optional[UserSubscription]:
+        stmt = (
+            select(UserSubscriptionModel)
+            .where(UserSubscriptionModel.user_id == user_id)
+            .order_by(UserSubscriptionModel.expires_at.desc())
+        )
+        res = await self.session.execute(stmt)
         model = res.scalars().first()
         if not model:
             return None
 
-        sub = UserSubscription(
+        return UserSubscription(
             id=model.id,
             user_id=model.user_id,
-            plan_type=PlanType(model.plan_type),
-            status=SubscriptionStatus(model.status),
+            plan_type=safe_enum_parse(PlanType, model.plan_type, PlanType.UNSPECIFIED),
+            status=safe_enum_parse(
+                SubscriptionStatus, model.status, SubscriptionStatus.UNSPECIFIED
+            ),
             starts_at=model.starts_at,
             expires_at=model.expires_at,
             created_at=model.created_at,
         )
-        return sub if sub.is_currently_active() else None
 
     async def list_user_purchases(self, user_id: str) -> list[CoursePurchase]:
         stmt = select(CoursePurchaseModel).where(CoursePurchaseModel.user_id == user_id)
@@ -112,7 +140,9 @@ class PaymentRepository(IPaymentRepository):
                 course_id=m.course_id,
                 amount=m.amount,
                 currency=m.currency,
-                status=PurchaseStatus(m.status),
+                status=safe_enum_parse(
+                    PurchaseStatus, m.status, PurchaseStatus.UNSPECIFIED
+                ),
                 payment_method=m.payment_method,
                 created_at=m.created_at,
             )
@@ -154,12 +184,16 @@ class PaymentRepository(IPaymentRepository):
         return PaymentOrder(
             id=m.id,
             user_id=m.user_id,
-            target_type=PaymentTargetType(m.target_type),
+            target_type=safe_enum_parse(
+                PaymentTargetType, m.target_type, PaymentTargetType.UNSPECIFIED
+            ),
             target_id=m.target_id,
-            plan_type=PlanType(m.plan_type),
+            plan_type=safe_enum_parse(PlanType, m.plan_type, PlanType.UNSPECIFIED),
             amount=m.amount,
             currency=m.currency,
-            status=PaymentOrderStatus(m.status),
+            status=safe_enum_parse(
+                PaymentOrderStatus, m.status, PaymentOrderStatus.UNSPECIFIED
+            ),
             vnp_txn_ref=m.vnp_txn_ref,
             created_at=m.created_at,
             updated_at=m.updated_at,
@@ -180,12 +214,16 @@ class PaymentRepository(IPaymentRepository):
         return PaymentOrder(
             id=m.id,
             user_id=m.user_id,
-            target_type=PaymentTargetType(m.target_type),
+            target_type=safe_enum_parse(
+                PaymentTargetType, m.target_type, PaymentTargetType.UNSPECIFIED
+            ),
             target_id=m.target_id,
-            plan_type=PlanType(m.plan_type),
+            plan_type=safe_enum_parse(PlanType, m.plan_type, PlanType.UNSPECIFIED),
             amount=m.amount,
             currency=m.currency,
-            status=PaymentOrderStatus(m.status),
+            status=safe_enum_parse(
+                PaymentOrderStatus, m.status, PaymentOrderStatus.UNSPECIFIED
+            ),
             vnp_txn_ref=m.vnp_txn_ref,
             created_at=m.created_at,
             updated_at=m.updated_at,
@@ -230,12 +268,20 @@ class PaymentRepository(IPaymentRepository):
                     return PaymentOrder(
                         id=m.id,
                         user_id=m.user_id,
-                        target_type=PaymentTargetType(m.target_type),
+                        target_type=safe_enum_parse(
+                            PaymentTargetType,
+                            m.target_type,
+                            PaymentTargetType.UNSPECIFIED,
+                        ),
                         target_id=m.target_id,
-                        plan_type=PlanType(m.plan_type),
+                        plan_type=safe_enum_parse(
+                            PlanType, m.plan_type, PlanType.UNSPECIFIED
+                        ),
                         amount=m.amount,
                         currency=m.currency,
-                        status=PaymentOrderStatus(m.status),
+                        status=safe_enum_parse(
+                            PaymentOrderStatus, m.status, PaymentOrderStatus.UNSPECIFIED
+                        ),
                         vnp_txn_ref=m.vnp_txn_ref,
                         created_at=m.created_at,
                         updated_at=m.updated_at,
@@ -267,12 +313,16 @@ class PaymentRepository(IPaymentRepository):
             PaymentOrder(
                 id=m.id,
                 user_id=m.user_id,
-                target_type=PaymentTargetType(m.target_type),
+                target_type=safe_enum_parse(
+                    PaymentTargetType, m.target_type, PaymentTargetType.UNSPECIFIED
+                ),
                 target_id=m.target_id,
-                plan_type=PlanType(m.plan_type),
+                plan_type=safe_enum_parse(PlanType, m.plan_type, PlanType.UNSPECIFIED),
                 amount=m.amount,
                 currency=m.currency,
-                status=PaymentOrderStatus(m.status),
+                status=safe_enum_parse(
+                    PaymentOrderStatus, m.status, PaymentOrderStatus.UNSPECIFIED
+                ),
                 vnp_txn_ref=m.vnp_txn_ref,
                 created_at=m.created_at,
                 updated_at=m.updated_at,
@@ -289,12 +339,16 @@ class PaymentRepository(IPaymentRepository):
         return PaymentOrder(
             id=m.id,
             user_id=m.user_id,
-            target_type=PaymentTargetType(m.target_type),
+            target_type=safe_enum_parse(
+                PaymentTargetType, m.target_type, PaymentTargetType.UNSPECIFIED
+            ),
             target_id=m.target_id,
-            plan_type=PlanType(m.plan_type),
+            plan_type=safe_enum_parse(PlanType, m.plan_type, PlanType.UNSPECIFIED),
             amount=m.amount,
             currency=m.currency,
-            status=PaymentOrderStatus(m.status),
+            status=safe_enum_parse(
+                PaymentOrderStatus, m.status, PaymentOrderStatus.UNSPECIFIED
+            ),
             vnp_txn_ref=m.vnp_txn_ref,
             created_at=m.created_at,
             updated_at=m.updated_at,
@@ -317,12 +371,16 @@ class PaymentRepository(IPaymentRepository):
         return PaymentOrder(
             id=m.id,
             user_id=m.user_id,
-            target_type=PaymentTargetType(m.target_type),
+            target_type=safe_enum_parse(
+                PaymentTargetType, m.target_type, PaymentTargetType.UNSPECIFIED
+            ),
             target_id=m.target_id,
-            plan_type=PlanType(m.plan_type),
+            plan_type=safe_enum_parse(PlanType, m.plan_type, PlanType.UNSPECIFIED),
             amount=m.amount,
             currency=m.currency,
-            status=PaymentOrderStatus(m.status),
+            status=safe_enum_parse(
+                PaymentOrderStatus, m.status, PaymentOrderStatus.UNSPECIFIED
+            ),
             vnp_txn_ref=m.vnp_txn_ref,
             created_at=m.created_at,
             updated_at=now_str,
@@ -357,12 +415,16 @@ class PaymentRepository(IPaymentRepository):
             PaymentOrder(
                 id=m.id,
                 user_id=m.user_id,
-                target_type=PaymentTargetType(m.target_type),
+                target_type=safe_enum_parse(
+                    PaymentTargetType, m.target_type, PaymentTargetType.UNSPECIFIED
+                ),
                 target_id=m.target_id,
-                plan_type=PlanType(m.plan_type),
+                plan_type=safe_enum_parse(PlanType, m.plan_type, PlanType.UNSPECIFIED),
                 amount=m.amount,
                 currency=m.currency,
-                status=PaymentOrderStatus(m.status),
+                status=safe_enum_parse(
+                    PaymentOrderStatus, m.status, PaymentOrderStatus.UNSPECIFIED
+                ),
                 vnp_txn_ref=m.vnp_txn_ref,
                 created_at=m.created_at,
                 updated_at=m.updated_at,
