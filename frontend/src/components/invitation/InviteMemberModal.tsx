@@ -8,6 +8,7 @@ import {
 } from "@/lib/query_hooks";
 import { InvitationType } from "@/gen/identity/v1/identity_pb";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/Modal";
+import { Field, FieldLabel } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -151,10 +152,10 @@ export function InviteMemberModal({
           <div className="p-4 overflow-y-auto space-y-4 flex-1">
             {activeTab === "send" && (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="invitee-email" className="block text-sm font-medium mb-1">
+                <Field>
+                  <FieldLabel htmlFor="invitee-email">
                     Email người nhận <span className="text-destructive">*</span>
-                  </label>
+                  </FieldLabel>
                   <Input
                     id="invitee-email"
                     type="email"
@@ -163,13 +164,11 @@ export function InviteMemberModal({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
-                </div>
+                </Field>
 
                 {rolesList.length > 1 && (
-                  <div>
-                    <label htmlFor="invitee-role" className="block text-sm font-medium mb-1">
-                      Vai trò gán cho người dùng
-                    </label>
+                  <Field>
+                    <FieldLabel htmlFor="invitee-role">Vai trò gán cho người dùng</FieldLabel>
                     <Select value={roleId} onValueChange={(val) => val && setRoleId(val)}>
                       <SelectTrigger id="invitee-role" className="w-full">
                         <SelectValue placeholder="Chọn vai trò" />
@@ -182,13 +181,11 @@ export function InviteMemberModal({
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
+                  </Field>
                 )}
 
-                <div>
-                  <label htmlFor="invitee-message" className="block text-sm font-medium mb-1">
-                    Lời nhắn gửi kèm (Tùy chọn)
-                  </label>
+                <Field>
+                  <FieldLabel htmlFor="invitee-message">Lời nhắn gửi kèm (Tùy chọn)</FieldLabel>
                   <Textarea
                     id="invitee-message"
                     rows={2}
@@ -196,7 +193,7 @@ export function InviteMemberModal({
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                   />
-                </div>
+                </Field>
 
                 {feedback && (
                   <div

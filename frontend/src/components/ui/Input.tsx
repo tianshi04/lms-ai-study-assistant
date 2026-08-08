@@ -3,11 +3,7 @@ import { Field as BaseField } from "@base-ui/react/field";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-export const FieldRoot = BaseField.Root;
-export const FieldLabel = BaseField.Label;
-export const FieldControl = BaseField.Control;
-export const FieldError = BaseField.Error;
-export const FieldDescription = BaseField.Description;
+import { FieldRoot, FieldLabel, FieldError, FieldDescription } from "./Field";
 
 export const inputVariants = cva(
   "w-full px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground transition-colors duration-m3-short-4 ease-m3-emphasized outline-none focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed data-[invalid]:border-destructive data-[invalid]:focus-visible:ring-destructive/50 data-[invalid]:focus-visible:border-destructive",
@@ -63,21 +59,11 @@ export function Input({
   }
 
   return (
-    <BaseField.Root invalid={!!error} className="w-full space-y-1.5">
-      {label && (
-        <BaseField.Label className="block text-xs font-semibold text-foreground">
-          {label}
-        </BaseField.Label>
-      )}
+    <FieldRoot invalid={!!error} className="w-full space-y-1.5">
+      {label && <FieldLabel>{label}</FieldLabel>}
       {inputEl}
-      {error && (
-        <BaseField.Error className="text-xs text-destructive font-medium">{error}</BaseField.Error>
-      )}
-      {helperText && !error && (
-        <BaseField.Description className="text-xs text-muted-foreground">
-          {helperText}
-        </BaseField.Description>
-      )}
-    </BaseField.Root>
+      {error && <FieldError>{error}</FieldError>}
+      {helperText && !error && <FieldDescription>{helperText}</FieldDescription>}
+    </FieldRoot>
   );
 }

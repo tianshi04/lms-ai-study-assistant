@@ -3,49 +3,13 @@ import { Checkbox as BaseCheckbox } from "@base-ui/react/checkbox";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { FieldRoot, FieldLabel, FieldError, FieldDescription } from "./Field";
+
 export const CheckboxRoot = BaseCheckbox.Root;
 export const CheckboxIndicator = BaseCheckbox.Indicator;
-
-export function CheckboxLabel({
-  className,
-  ref,
-  children,
-  ...props
-}: React.ComponentProps<"label">) {
-  return (
-    <label
-      ref={ref}
-      className={cn(
-        "text-sm font-medium text-foreground cursor-pointer select-none leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </label>
-  );
-}
-
-export function CheckboxError({ className, ref, children, ...props }: React.ComponentProps<"p">) {
-  return (
-    <p ref={ref} className={cn("text-xs text-destructive font-medium", className)} {...props}>
-      {children}
-    </p>
-  );
-}
-
-export function CheckboxHelperText({
-  className,
-  ref,
-  children,
-  ...props
-}: React.ComponentProps<"p">) {
-  return (
-    <p ref={ref} className={cn("text-xs text-muted-foreground", className)} {...props}>
-      {children}
-    </p>
-  );
-}
+export const CheckboxLabel = FieldLabel;
+export const CheckboxError = FieldError;
+export const CheckboxHelperText = FieldDescription;
 
 export interface CheckboxProps extends React.ComponentProps<typeof BaseCheckbox.Root> {
   label?: string;
@@ -87,13 +51,17 @@ export function Checkbox({
   }
 
   return (
-    <div className="space-y-1">
+    <FieldRoot invalid={!!error} className="space-y-1">
       <div className="flex items-center gap-2.5">
         {checkboxElement}
-        {label && <CheckboxLabel htmlFor={checkboxId}>{label}</CheckboxLabel>}
+        {label && (
+          <FieldLabel htmlFor={checkboxId} className="mb-0 text-sm font-medium cursor-pointer">
+            {label}
+          </FieldLabel>
+        )}
       </div>
-      {error && <CheckboxError>{error}</CheckboxError>}
-      {helperText && !error && <CheckboxHelperText>{helperText}</CheckboxHelperText>}
-    </div>
+      {error && <FieldError>{error}</FieldError>}
+      {helperText && !error && <FieldDescription>{helperText}</FieldDescription>}
+    </FieldRoot>
   );
 }

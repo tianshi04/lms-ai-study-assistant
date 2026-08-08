@@ -3,34 +3,13 @@ import { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group";
 import { Radio as BaseRadio } from "@base-ui/react/radio";
 import { cn } from "@/lib/utils";
 
+import { FieldLabel, FieldDescription } from "./Field";
+
 export const RadioGroup = BaseRadioGroup;
 export const RadioItem = BaseRadio.Root;
 export const RadioIndicator = BaseRadio.Indicator;
-
-export function RadioLabel({ className, ref, children, ...props }: React.ComponentProps<"label">) {
-  return (
-    <label
-      ref={ref}
-      className={cn("text-sm font-medium text-foreground cursor-pointer select-none", className)}
-      {...props}
-    >
-      {children}
-    </label>
-  );
-}
-
-export function RadioDescription({
-  className,
-  ref,
-  children,
-  ...props
-}: React.ComponentProps<"p">) {
-  return (
-    <p ref={ref} className={cn("text-xs text-muted-foreground", className)} {...props}>
-      {children}
-    </p>
-  );
-}
+export const RadioLabel = FieldLabel;
+export const RadioDescription = FieldDescription;
 
 export interface RadioOptionProps extends React.ComponentProps<typeof BaseRadio.Root> {
   label?: string;
