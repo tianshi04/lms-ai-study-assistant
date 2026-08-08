@@ -11,7 +11,7 @@ export function BreadcrumbList({ className, ref, ...props }: React.ComponentProp
     <ol
       ref={ref}
       className={cn(
-        "flex flex-wrap items-center gap-1.5 break-words text-sm text-on-surface-variant sm:gap-2.5",
+        "flex flex-wrap items-center gap-1.5 break-words text-sm text-muted-foreground sm:gap-2.5",
         className,
       )}
       {...props}
@@ -35,7 +35,7 @@ export function BreadcrumbLink({
   ...props
 }: BreadcrumbLinkProps) {
   const compClasses = cn(
-    "transition-colors hover:text-on-surface text-on-surface-variant focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-sm",
+    "transition-colors hover:text-foreground text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-sm",
     className,
   );
 
@@ -61,7 +61,7 @@ export function BreadcrumbPage({ className, ref, ...props }: React.ComponentProp
     <span
       ref={ref}
       aria-current="page"
-      className={cn("font-semibold text-on-surface", className)}
+      className={cn("font-semibold text-foreground", className)}
       {...props}
     />
   );
@@ -78,7 +78,7 @@ export function BreadcrumbSeparator({
       ref={ref}
       role="presentation"
       aria-hidden="true"
-      className={cn("[&>svg]:w-3.5 [&>svg]:h-3.5 text-on-surface-variant", className)}
+      className={cn("[&>svg]:w-3.5 [&>svg]:h-3.5 text-muted-foreground", className)}
       {...props}
     >
       {children ?? <ChevronRight aria-hidden="true" />}

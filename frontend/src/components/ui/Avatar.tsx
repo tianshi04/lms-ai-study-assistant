@@ -47,8 +47,7 @@ function AvatarComponent({
       ref={ref}
       className={cn(
         avatarVariants({ size }),
-        "inline-flex items-center justify-center overflow-hidden border border-outline-variant/60 bg-primary text-primary-foreground font-bold shadow-sm",
-
+        "inline-flex items-center justify-center overflow-hidden border border-border bg-primary text-primary-foreground font-bold shadow-sm",
         className,
       )}
       {...props}

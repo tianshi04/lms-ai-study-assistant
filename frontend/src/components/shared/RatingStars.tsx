@@ -18,7 +18,7 @@ export const ratingStarVariants = cva("", {
 
 export function RatingScore({ rating, className }: { rating: number; className?: string }) {
   return (
-    <span className={cn("text-xs font-bold text-on-surface ml-1", className)}>
+    <span className={cn("text-xs font-bold text-foreground ml-1", className)}>
       {rating.toFixed(1)}
     </span>
   );
@@ -58,13 +58,12 @@ export function RatingStars({
               aria-hidden="true"
               className={cn(
                 ratingStarVariants({ size }),
-                isFilled ? "fill-amber-400 text-amber-400" : "text-outline-variant fill-none",
+                isFilled ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30 fill-none",
               )}
             />
           );
         })}
       </div>
-
       {showScore && <RatingScore rating={rating} />}
       {children}
     </>
