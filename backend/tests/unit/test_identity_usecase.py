@@ -879,3 +879,72 @@ async def test_remove_organization_member_audit_logging():
         call_kwargs = mock_repo.create_audit_log.call_args[1]
         assert call_kwargs["action"] == "ORGANIZATION_AUDIT_ACTION_MEMBER_KICKED"
         assert call_kwargs["target_user_id"] == "user_member"
+
+
+def test_validate_password_policy():
+    from src.modules.identity.application.identity_usecase import validate_password
+
+    # Empty / None
+    assert validate_password("") == "Mật khẩu phải chứa ít nhất 6 ký tự."
+    
+    # Short password (<6 chars)
+    assert validate_password("Ab1") == "Mật khẩu phải chứa ít nhất 6 ký tự."
+
+    # Missing uppercase
+    assert validate_password("abc1234") == "Mật khẩu phải chứa ít nhất 1 chữ in hoa."
+
+    # Missing digit
+    assert validate_password("Abcdefgh") == "Mật khẩu phải chứa ít nhất 1 chữ số."
+
+    # Valid password
+    assert validate_password("Password123") is None
+    assert validate_password("Abc123") is None
+
+
+@pytest.mark.asyncio
+async def test_register_weak_passwords(mock_session_scope, mock_identity_repo):
+    mock_session = AsyncMock()
+    mock_session_scope.return_value.__aenter__.return_value = mock_session
+
+    mock_repo_instance = AsyncMock()
+    mock_identity_repo.return_value = mock_repo_instance
+    mock_repo_instance.get_by_email.return_value = None
+
+    usecase = IdentityUseCase()
+
+    # Try weak password without uppercase
+    user, err = await usecase.register(
+        "new@test.com", "password123", "New User", "learner"
+    )
+    assert user is None
+    assert "chữ in hoa" in err
+
+    # Try weak password without digit
+    user, err = await usecase.register(
+        "new@test.com", "Password", "New User", "learner"
+    )
+    assert user is None
+    assert "chữ số" in err
+
+    # Try short password
+    user, err = await usecase.register(
+        "new@test.com", "Ab1", "New User", "learner"
+    )
+    assert user is None
+    assert "tối thiểu 6 ký tự" in err.lower() or "ít nhất 6 ký tự" in err.lower()
+
+
+@pytest.mark.asyncio
+async def test_login_rate_limit_blocking():
+    with patch("src.modules.identity.application.identity_usecase.check_login_rate_limit") as mock_check:
+        mock_check.return_value = (False, 900)  # Blocked, 900s remaining
+
+        usecase = IdentityUseCase()
+        user, acc_token, ref_token, err = await usecase.login("target@test.com", "Password123")
+
+        assert user is None
+        assert acc_token == ""
+        assert ref_token == ""
+        assert "Quá nhiều lần đăng nhập sai" in err
+        assert "15 phút" in err
+
