@@ -886,7 +886,7 @@ def test_validate_password_policy():
 
     # Empty / None
     assert validate_password("") == "Mật khẩu phải chứa ít nhất 6 ký tự."
-    
+
     # Short password (<6 chars)
     assert validate_password("Ab1") == "Mật khẩu phải chứa ít nhất 6 ký tự."
 
@@ -927,24 +927,25 @@ async def test_register_weak_passwords(mock_session_scope, mock_identity_repo):
     assert "chữ số" in err
 
     # Try short password
-    user, err = await usecase.register(
-        "new@test.com", "Ab1", "New User", "learner"
-    )
+    user, err = await usecase.register("new@test.com", "Ab1", "New User", "learner")
     assert user is None
     assert "tối thiểu 6 ký tự" in err.lower() or "ít nhất 6 ký tự" in err.lower()
 
 
 @pytest.mark.asyncio
 async def test_login_rate_limit_blocking():
-    with patch("src.modules.identity.application.identity_usecase.check_login_rate_limit") as mock_check:
+    with patch(
+        "src.modules.identity.application.identity_usecase.check_login_rate_limit"
+    ) as mock_check:
         mock_check.return_value = (False, 900)  # Blocked, 900s remaining
 
         usecase = IdentityUseCase()
-        user, acc_token, ref_token, err = await usecase.login("target@test.com", "Password123")
+        user, acc_token, ref_token, err = await usecase.login(
+            "target@test.com", "Password123"
+        )
 
         assert user is None
         assert acc_token == ""
         assert ref_token == ""
         assert "Quá nhiều lần đăng nhập sai" in err
         assert "15 phút" in err
-
