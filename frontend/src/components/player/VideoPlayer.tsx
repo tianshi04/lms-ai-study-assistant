@@ -1,6 +1,7 @@
 "use client";
 
 import { RefObject, useState } from "react";
+import Link from "next/link";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
 import type { LearningItem, InVideoQuiz } from "@/gen/catalog/v1/catalog_pb";
 import { GradedQuizRunner } from "@/components/assessment/GradedQuizRunner";
@@ -15,6 +16,7 @@ import {
   ChevronUp,
   ChevronDown,
   ChevronRight,
+  Lock,
 } from "lucide-react";
 
 interface VideoPlayerProps {
@@ -33,6 +35,7 @@ interface VideoPlayerProps {
   onContinueVideo: () => void;
   onMarkComplete?: (itemId: string) => void;
   isPreviewMode?: boolean;
+  isPaidAccess?: boolean;
   onSelectAiPrompt?: (promptText: string) => void;
   nextItem?: LearningItem | null;
   onNextLesson?: () => void;
@@ -54,6 +57,7 @@ export function VideoPlayer({
   onContinueVideo,
   onMarkComplete,
   isPreviewMode = false,
+  isPaidAccess = true,
   onSelectAiPrompt,
   nextItem,
   onNextLesson,
@@ -82,6 +86,45 @@ export function VideoPlayer({
 
   function renderLessonContent() {
     if (!activeItem) return null;
+
+    // 0. Audit Mode Check for Graded Items (type 4: GRADED_QUIZ, 5: AUTO_GRADED_LAB, 6: PEER_REVIEW)
+    if (
+      !isPaidAccess &&
+      !isPreviewMode &&
+      (activeItem.type === 4 || activeItem.type === 5 || activeItem.type === 6)
+    ) {
+      return (
+        <div className="w-full min-h-[400px] p-6 sm:p-10 flex flex-col items-center justify-center text-center bg-surface-container-low text-on-surface rounded-2xl border border-border shadow-xs space-y-6 animate-in fade-in duration-m3-short-4">
+          <div className="w-16 h-16 rounded-full bg-warning/15 text-warning flex items-center justify-center shadow-inner">
+            <Lock className="w-8 h-8 stroke-[2.5]" aria-hidden="true" />
+          </div>
+
+          <div className="max-w-md space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20">
+              CHẾ ĐỘ AUDIT (MIỄN PHÍ)
+            </div>
+            <h3 className="text-xl font-extrabold text-foreground tracking-tight">
+              Bài kiểm tra tính điểm đã bị khóa
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Tài khoản của bạn đang ở chế độ Audit Mode (Miễn phí). Vui lòng nâng cấp Coursera Plus
+              hoặc mua khóa học / sử dụng mã Enterprise Key / Hỗ trợ tài chính để làm bài kiểm tra
+              tính điểm này.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+            <Link
+              href="/my-purchases"
+              className="px-6 py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm transition-all shadow-md flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 fill-current" aria-hidden="true" />
+              Nâng cấp Coursera Plus ngay
+            </Link>
+          </div>
+        </div>
+      );
+    }
 
     // 1. Reading Item
     if (activeItem.type === 2) {
@@ -193,7 +236,7 @@ export function VideoPlayer({
             <video
               key={activeItem.id}
               ref={videoRef}
-              src={activeItem.videoUrl}
+              src={activeItem.videoUrl || undefined}
               controls
               onTimeUpdate={onTimeUpdate}
               onSeeking={onSeeking}
@@ -201,7 +244,11 @@ export function VideoPlayer({
               aria-label={activeItem.title || "Video bài giảng"}
               className="w-full h-full object-contain rounded-2xl"
             >
-              <track kind="captions" src="" label="Phụ đề" />
+              <track
+                kind="captions"
+                src={(activeItem as any).captionUrl || undefined}
+                label="Phụ đề"
+              />
             </video>
           )}
 

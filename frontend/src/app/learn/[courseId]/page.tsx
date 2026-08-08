@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import {
   CatalogService,
@@ -26,6 +27,7 @@ import { UserDropdown } from "@/components/layout/UserDropdown";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
 import { LearnPageAIChatbot } from "@/components/player/ai/LearnPageAIChatbot";
 import { BrandLogo } from "@/components/ui/BrandLogo";
+import { usePaymentAccessQuery } from "@/lib/query_hooks";
 import {
   X,
   ChevronDown,
@@ -110,9 +112,19 @@ function CoursePlayerContent() {
     }));
   };
 
+  const { data: paymentAccess } = usePaymentAccessQuery(courseId, {
+    enabled: !!courseId && !isPreviewMode,
+  });
+  const isPaidAccess = isPreviewMode ? true : (paymentAccess?.hasPaidAccess ?? false);
+
+  const isGradedItem = useCallback((type: number): boolean => {
+    return type === 4 || type === 5 || type === 6;
+  }, []);
+
   const isWeekUnlocked = useCallback(
     (weekIndex: number): boolean => {
       if (isPreviewMode || weekIndex === 0 || !course) return true;
+      if (!isPaidAccess) return false;
       for (let k = 0; k < weekIndex; k++) {
         const precedingWeek = course.weekModules[k];
         if (!precedingWeek) continue;
@@ -124,7 +136,17 @@ function CoursePlayerContent() {
       }
       return true;
     },
-    [course, progress, isPreviewMode],
+    [course, progress, isPreviewMode, isPaidAccess],
+  );
+
+  const isItemLocked = useCallback(
+    (item: { type: number }, weekIndex: number): boolean => {
+      if (isPreviewMode) return false;
+      if (!isPaidAccess && isGradedItem(item.type)) return true;
+      if (!isWeekUnlocked(weekIndex)) return true;
+      return false;
+    },
+    [isPreviewMode, isPaidAccess, isGradedItem, isWeekUnlocked],
   );
 
   useEffect(() => {
@@ -313,8 +335,6 @@ function CoursePlayerContent() {
     [course, progress, totalCourseItems, courseId, isPreviewMode],
   );
 
-  const router = useRouter();
-
   // Load Course & Progress
   useEffect(() => {
     if (!courseId) return;
@@ -360,31 +380,60 @@ function CoursePlayerContent() {
             lastResetAt: "",
           } as unknown as LearningProgress);
         } else {
-          const learningClient = getRpcClient(LearningService);
-          const progressRes = await learningClient.getProgress({ courseId });
-          setProgress(progressRes.progress ?? null);
+          try {
+            const learningClient = getRpcClient(LearningService);
+            const progressRes = await learningClient.getProgress({ courseId });
+            setProgress(progressRes.progress ?? null);
 
-          if (progressRes.progress && progressRes.progress.overallProgressPercent >= 100) {
-            try {
-              const certClient = getRpcClient(CertificateService);
-              const certRes = await certClient.getVerifiedCertificate({ courseId });
-              if (certRes.certificate?.certificateId) {
-                setCertificateId(certRes.certificate.certificateId);
+            if (progressRes.progress && progressRes.progress.overallProgressPercent >= 100) {
+              try {
+                const certClient = getRpcClient(CertificateService);
+                const certRes = await certClient.getVerifiedCertificate({ courseId });
+                if (certRes.certificate?.certificateId) {
+                  setCertificateId(certRes.certificate.certificateId);
+                }
+              } catch (err) {
+                console.error("Failed to load certificate on load:", err);
               }
-            } catch (err) {
-              console.error("Failed to load certificate on load:", err);
             }
-          }
 
-          const notesRes = await learningClient.listPersonalNotes({ courseId });
-          setNotes(notesRes.notes);
+            const notesRes = await learningClient.listPersonalNotes({ courseId });
+            setNotes(notesRes.notes);
+          } catch (err) {
+            console.error("Failed to load user progress or notes:", err);
+          }
         }
       } catch (err) {
         console.error("Error loading course player data:", err);
       }
     }
     loadData();
-  }, [courseId, router, previewItemId, isPreviewMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId, previewItemId, isPreviewMode]);
+
+  // Adjust active item if currently active item is locked due to Audit Mode
+  useEffect(() => {
+    if (!course || isPreviewMode || isPaidAccess || !activeItem) return;
+    if (isGradedItem(activeItem.type)) {
+      let foundUnlocked = null;
+      for (let wIdx = 0; wIdx < course.weekModules.length; wIdx++) {
+        const wm = course.weekModules[wIdx];
+        for (const l of wm.lessons) {
+          for (const it of l.items) {
+            if (!isItemLocked(it, wIdx)) {
+              foundUnlocked = it;
+              break;
+            }
+          }
+          if (foundUnlocked) break;
+        }
+        if (foundUnlocked) break;
+      }
+      if (foundUnlocked && foundUnlocked.id !== activeItem.id) {
+        setActiveItem(foundUnlocked);
+      }
+    }
+  }, [course, isPreviewMode, isPaidAccess, activeItem, isGradedItem, isItemLocked]);
 
   // Reset in-video quiz state when switching learning items
   const activeItemId = activeItem?.id;
@@ -700,16 +749,29 @@ function CoursePlayerContent() {
                                 {lesson.items.map((item) => {
                                   const isActive = activeItem?.id === item.id;
                                   const isDone = progress?.completedItemIds.includes(item.id);
+                                  const itemLocked = isItemLocked(item, weekIndex);
+                                  const isAuditLocked =
+                                    !isPreviewMode && !isPaidAccess && isGradedItem(item.type);
 
                                   return (
                                     <button
                                       key={item.id}
                                       type="button"
                                       onClick={() => {
-                                        if (!unlocked) {
-                                          setLockNotice(
-                                            `Bạn cần hoàn thành tất cả các bài học ở Tuần ${weekIndex} để mở khóa Tuần ${weekIndex + 1}.`,
-                                          );
+                                        if (itemLocked) {
+                                          if (isAuditLocked) {
+                                            setLockNotice(
+                                              "Tài khoản đang ở chế độ Audit Mode (Miễn phí). Vui lòng nâng cấp Paid Mode hoặc sử dụng mã Enterprise Key / Hỗ trợ tài chính để làm bài kiểm tra tính điểm.",
+                                            );
+                                          } else if (!isPaidAccess && weekIndex > 0) {
+                                            setLockNotice(
+                                              "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký Coursera Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
+                                            );
+                                          } else {
+                                            setLockNotice(
+                                              `Bạn cần hoàn thành tất cả các bài học ở Tuần ${weekIndex} để mở khóa Tuần ${weekIndex + 1}.`,
+                                            );
+                                          }
                                           return;
                                         }
                                         setLockNotice("");
@@ -717,7 +779,7 @@ function CoursePlayerContent() {
                                         setActiveQuiz(null);
                                       }}
                                       className={`w-full text-left px-3.5 py-2.5 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer ${
-                                        !unlocked
+                                        itemLocked
                                           ? "opacity-60 cursor-not-allowed hover:bg-transparent"
                                           : isActive
                                             ? "bg-primary-container text-on-primary-container shadow-xs font-bold"
@@ -726,7 +788,7 @@ function CoursePlayerContent() {
                                     >
                                       {/* Status Icon */}
                                       <div className="shrink-0">
-                                        {!unlocked ? (
+                                        {itemLocked ? (
                                           <div className="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center">
                                             <Lock
                                               aria-hidden="true"
@@ -765,8 +827,10 @@ function CoursePlayerContent() {
                                               : "text-on-surface-variant"
                                           }`}
                                         >
-                                          {!unlocked
-                                            ? `Bị khóa • Hoàn thành Tuần ${weekIndex}`
+                                          {itemLocked
+                                            ? isAuditLocked
+                                              ? "Bị khóa (Audit Mode) • Yêu cầu Paid Mode"
+                                              : `Bị khóa • Hoàn thành Tuần ${weekIndex}`
                                             : `${getItemTypeName(item.type)} • ${item.estimatedMinutes || 5} min`}
                                         </div>
                                       </div>
@@ -790,16 +854,26 @@ function CoursePlayerContent() {
         <main className="flex-1 flex flex-col overflow-hidden relative text-on-surface min-w-0 h-full">
           {/* Lock Notice Banner */}
           {lockNotice && (
-            <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-1 animate-in fade-in duration-m3-short-4 ease-m3-decelerate">
+            <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-1 animate-in fade-in duration-m3-short-4 ease-m3-decelerate gap-3">
               <span>{lockNotice}</span>
-              <button
-                type="button"
-                onClick={() => setLockNotice("")}
-                aria-label="Đóng thông báo"
-                className="p-1 rounded-md text-warning hover:opacity-75 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <X className="w-4 h-4" aria-hidden="true" />
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                {!isPaidAccess && (
+                  <Link
+                    href="/my-purchases"
+                    className="px-3 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition-colors shadow-xs"
+                  >
+                    Nâng cấp Plus
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setLockNotice("")}
+                  aria-label="Đóng thông báo"
+                  className="p-1 rounded-md text-warning hover:opacity-75 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <X className="w-4 h-4" aria-hidden="true" />
+                </button>
+              </div>
             </div>
           )}
 
@@ -824,6 +898,7 @@ function CoursePlayerContent() {
                   onContinueVideo={handleContinueVideo}
                   onMarkComplete={handleMarkItemComplete}
                   isPreviewMode={isPreviewMode}
+                  isPaidAccess={isPaidAccess}
                   onSelectAiPrompt={(promptText) => {
                     setActiveTab("ai_assistant");
                     setIsPanelOpen(true);
@@ -844,15 +919,8 @@ function CoursePlayerContent() {
                         inputEl.dispatchEvent(new Event("input", { bubbles: true }));
                         const formEl = inputEl.closest("form");
                         if (formEl) {
-                          if (
-                            "requestSubmit" in formEl &&
-                            typeof formEl.requestSubmit === "function"
-                          ) {
-                            formEl.requestSubmit();
-                            return;
-                          }
                           formEl.dispatchEvent(
-                            new Event("submit", { bubbles: true, cancelable: true }),
+                            new Event("submit", { cancelable: true, bubbles: true }),
                           );
                         }
                       }
@@ -864,10 +932,20 @@ function CoursePlayerContent() {
                     const nextWeekIndex = course.weekModules.findIndex((wm) =>
                       wm.lessons.some((l) => l.items.some((i) => i.id === nextItem.id)),
                     );
-                    if (nextWeekIndex !== -1 && !isWeekUnlocked(nextWeekIndex)) {
-                      setLockNotice(
-                        `Bạn cần hoàn thành tất cả các bài học ở Tuần ${nextWeekIndex} để mở khóa Tuần ${nextWeekIndex + 1}.`,
-                      );
+                    if (nextWeekIndex !== -1 && isItemLocked(nextItem, nextWeekIndex)) {
+                      if (!isPreviewMode && !isPaidAccess && isGradedItem(nextItem.type)) {
+                        setLockNotice(
+                          "Tài khoản đang ở chế độ Audit Mode (Miễn phí). Vui lòng nâng cấp Paid Mode hoặc sử dụng mã Enterprise Key / Hỗ trợ tài chính để làm bài kiểm tra tính điểm.",
+                        );
+                      } else if (!isPaidAccess && nextWeekIndex > 0) {
+                        setLockNotice(
+                          "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký Coursera Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
+                        );
+                      } else {
+                        setLockNotice(
+                          `Bạn cần hoàn thành tất cả các bài học ở Tuần ${nextWeekIndex} để mở khóa Tuần ${nextWeekIndex + 1}.`,
+                        );
+                      }
                       return;
                     }
                     setLockNotice("");
