@@ -51,39 +51,11 @@ export function TabsContent({
   );
 }
 
-export interface TabItem {
-  id: string;
-  label: string;
-  count?: number;
-}
-
-export interface TabsProps {
-  tabs: TabItem[];
-  activeTab: string;
-  onChange: (tabId: string) => void;
-  className?: string;
-}
-
-export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className = "" }) => {
-  return (
-    <TabsRoot value={activeTab} onValueChange={(val) => onChange(val as string)}>
-      <TabsList className={className}>
-        {tabs.map((tab) => (
-          <TabsTrigger key={tab.id} value={tab.id}>
-            <span>{tab.label}</span>
-            {tab.count !== undefined && (
-              <span
-                className={cn(
-                  "text-xs px-2 py-0.5 rounded-full font-medium transition-colors duration-m3-short-4 ease-m3-emphasized",
-                  "bg-muted text-muted-foreground data-[selected]:bg-primary-container data-[selected]:text-on-primary-container data-[selected]:font-semibold",
-                )}
-              >
-                {tab.count}
-              </span>
-            )}
-          </TabsTrigger>
-        ))}
-      </TabsList>
-    </TabsRoot>
-  );
+export const Tabs = {
+  Root: BaseTabs.Root,
+  List: TabsList,
+  Tab: TabsTrigger,
+  Trigger: TabsTrigger,
+  Panel: TabsContent,
+  Content: TabsContent,
 };

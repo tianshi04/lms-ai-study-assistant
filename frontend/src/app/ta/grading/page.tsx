@@ -5,7 +5,8 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { useToast } from "@/components/ui/Toast";
-import { Modal } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Modal";
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -264,87 +265,93 @@ export default function TAGradingPage() {
         </div>
 
         {/* Modal Chấm Bài / Ghi Nhận Điểm Trợ Giảng */}
-        <Modal
-          isOpen={!!selectedSubmission}
-          onClose={() => setSelectedSubmission(null)}
-          title="Chấm Điểm Bài Tập Tự Luận (TA Evaluation)"
-          size="lg"
+        <Dialog.Root
+          open={!!selectedSubmission}
+          onOpenChange={(open) => {
+            if (!open) setSelectedSubmission(null);
+          }}
         >
-          {selectedSubmission && (
-            <form onSubmit={handleGradingSubmit} className="space-y-6">
-              <div className="space-y-2 p-4 rounded-2xl bg-muted border border-border">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-bold text-sm text-foreground">
-                      {selectedSubmission.itemTitle}
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Học viên: {selectedSubmission.studentName} ({selectedSubmission.studentEmail})
-                    </p>
+          <Dialog.Content size="lg">
+            <Dialog.Header>
+              <Dialog.Title>{"Chấm Điểm Bài Tập Tự Luận (TA Evaluation)"}</Dialog.Title>
+            </Dialog.Header>
+            {selectedSubmission && (
+              <form onSubmit={handleGradingSubmit} className="space-y-6 pt-2">
+                <div className="space-y-2 p-4 rounded-2xl bg-muted border border-border">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-bold text-sm text-foreground">
+                        {selectedSubmission.itemTitle}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Học viên: {selectedSubmission.studentName} (
+                        {selectedSubmission.studentEmail})
+                      </p>
+                    </div>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-card text-foreground">
+                      Điểm Peer gốc: {selectedSubmission.peerScore}%
+                    </span>
                   </div>
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-card text-foreground">
-                    Điểm Peer gốc: {selectedSubmission.peerScore}%
+                </div>
+
+                {/* Submission Content Text */}
+                <div className="space-y-2">
+                  <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Nội dung bài làm của học viên
                   </span>
+                  <div className="p-4 rounded-2xl bg-card border border-border text-xs font-mono text-foreground leading-relaxed max-h-48 overflow-y-auto">
+                    {selectedSubmission.textContent}
+                  </div>
                 </div>
-              </div>
 
-              {/* Submission Content Text */}
-              <div className="space-y-2">
-                <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Nội dung bài làm của học viên
-                </span>
-                <div className="p-4 rounded-2xl bg-card border border-border text-xs font-mono text-foreground leading-relaxed max-h-48 overflow-y-auto">
-                  {selectedSubmission.textContent}
+                {/* Input TA Score */}
+                <div className="space-y-2">
+                  <Input
+                    label="Điểm Trợ Giảng Chấm (Thang điểm 0 - 100%)"
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={inputScore}
+                    onChange={(e) => setInputScore(Number(e.target.value))}
+                    helperText={
+                      inputScore >= 80
+                        ? "Đạt loại Giỏi"
+                        : inputScore >= 60
+                          ? "Đạt yêu cầu"
+                          : "Cần cải thiện"
+                    }
+                    className="w-32 font-mono font-bold text-lg text-primary"
+                    required
+                  />
                 </div>
-              </div>
 
-              {/* Input TA Score */}
-              <div className="space-y-2">
-                <Input
-                  label="Điểm Trợ Giảng Chấm (Thang điểm 0 - 100%)"
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={inputScore}
-                  onChange={(e) => setInputScore(Number(e.target.value))}
-                  helperText={
-                    inputScore >= 80
-                      ? "Đạt loại Giỏi"
-                      : inputScore >= 60
-                        ? "Đạt yêu cầu"
-                        : "Cần cải thiện"
-                  }
-                  className="w-32 font-mono font-bold text-lg text-primary"
-                  required
+                {/* Feedback Note */}
+                <Textarea
+                  label="Nhận xét & Ghi chú hướng dẫn cho Học viên"
+                  rows={3}
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  placeholder="Nhập nhận xét chi tiết về bài làm, điểm mạnh và các điểm cần sửa đổi…"
                 />
-              </div>
 
-              {/* Feedback Note */}
-              <Textarea
-                label="Nhận xét & Ghi chú hướng dẫn cho Học viên"
-                rows={3}
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                placeholder="Nhập nhận xét chi tiết về bài làm, điểm mạnh và các điểm cần sửa đổi…"
-              />
-
-              {/* Actions */}
-              <div className="flex justify-end gap-3 pt-2 border-t border-border">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setSelectedSubmission(null)}
-                >
-                  Hủy
-                </Button>
-                <Button type="submit" isLoading={submitting} size="sm">
-                  Lưu & Xác Nhận Điểm Trợ Giảng
-                </Button>
-              </div>
-            </form>
-          )}
-        </Modal>
+                {/* Actions */}
+                <Dialog.Footer className="pt-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setSelectedSubmission(null)}
+                  >
+                    {"Hủy"}
+                  </Button>
+                  <Button type="submit" isLoading={submitting} size="sm">
+                    {"Lưu & Xác Nhận Điểm Trợ Giảng"}
+                  </Button>
+                </Dialog.Footer>
+              </form>
+            )}
+          </Dialog.Content>
+        </Dialog.Root>
       </main>
     </div>
   );

@@ -36,8 +36,10 @@ export class LearningPage {
 
     this.transcriptTab = page.getByRole('button', { name: /Interactive Transcript|Phụ đề & Transcripts|Transcripts|Phụ đề/i });
     this.forumTab = page.getByRole('button', { name: /Diễn đàn Bài học|Discussion|Thảo luận/i });
-    this.notesTab = page.getByRole('button', { name: /^Ghi chú$|Personal Notes|My Notes/i });
+    this.notesTab = page.getByRole('button', { name: /^Xem Ghi chú Cá nhân$|^Ghi chú$|Personal Notes|My Notes/i });
     this.deadlinesTab = page.getByRole('button', { name: /Deadlines/i });
+
+
 
     this.highlightInput = page.locator('form input').first();
     this.commentInput = page.locator('form input').nth(1);

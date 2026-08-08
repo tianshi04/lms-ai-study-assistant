@@ -5,7 +5,8 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
-import { Modal } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Modal";
+
 import {
   AlertDialog,
   AlertDialogContent,
@@ -426,109 +427,112 @@ export default function InstructorCoursesPage() {
       )}
 
       {/* Modal Soạn / Chỉnh Sửa Khóa Học */}
-      <Modal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title={editingCourseId ? "Chỉnh Sửa Khóa Học" : "Soạn Thảo Khóa Học Mới"}
-      >
-        <form onSubmit={handleSaveCourse} className="space-y-4 pt-2">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-              {"Tên Khóa Học *"}
-            </label>
+      <Dialog.Root open={showModal} onOpenChange={(open) => setShowModal(open)}>
+        <Dialog.Content size="lg">
+          <Dialog.Header>
+            <Dialog.Title>
+              {editingCourseId ? "Chỉnh Sửa Khóa Học" : "Soạn Thảo Khóa Học Mới"}
+            </Dialog.Title>
+          </Dialog.Header>
+          <form onSubmit={handleSaveCourse} className="space-y-4 pt-2">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                {"Tên Khóa Học *"}
+              </label>
+              <Input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={"Ví dụ: Natural Language Processing with Transformers"}
+                required
+              />
+            </div>
+
+            {!editingCourseId && (
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                  {"Slug URL"}
+                </label>
+                <Input
+                  type="text"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  placeholder={"course-nlp-transformers (Tự tạo nếu để trống)"}
+                  className="font-mono"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                {"Mô Tả Nội Dung *"}
+              </label>
+              <Textarea
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={"Tóm tắt tổng quan kiến thức và kỹ năng đạt được sau khóa học…"}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                  {"Đối Tác Phát Hành"}
+                </label>
+                <Input
+                  type="text"
+                  value={partnerName}
+                  onChange={(e) => setPartnerName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                  {"Logo URL Đối Tác"}
+                </label>
+                <Input
+                  type="text"
+                  value={partnerLogoUrl}
+                  onChange={(e) => setPartnerLogoUrl(e.target.value)}
+                  className="font-mono text-xs"
+                />
+              </div>
+            </div>
+
             <Input
+              label="Giảng Viên (cách nhau bởi dấu phẩy)"
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={"Ví dụ: Natural Language Processing with Transformers"}
-              required
+              value={instructorNames}
+              onChange={(e) => setInstructorNames(e.target.value)}
             />
-          </div>
 
-          {!editingCourseId && (
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                {"Slug URL"}
-              </label>
-              <Input
-                type="text"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                placeholder={"course-nlp-transformers (Tự tạo nếu để trống)"}
-                className="font-mono"
+            <div className="p-3.5 rounded-2xl bg-muted border border-border">
+              <Checkbox
+                id="financialAidToggle"
+                checked={financialAidEnabled}
+                onCheckedChange={(checked) => setFinancialAidEnabled(Boolean(checked))}
+                label="Cho phép xin Hỗ trợ Tài chính (Financial Aid available)"
               />
             </div>
-          )}
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-              {"Mô Tả Nội Dung *"}
-            </label>
-            <Textarea
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={"Tóm tắt tổng quan kiến thức và kỹ năng đạt được sau khóa học…"}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                {"Đối Tác Phát Hành"}
-              </label>
-              <Input
-                type="text"
-                value={partnerName}
-                onChange={(e) => setPartnerName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                {"Logo URL Đối Tác"}
-              </label>
-              <Input
-                type="text"
-                value={partnerLogoUrl}
-                onChange={(e) => setPartnerLogoUrl(e.target.value)}
-                className="font-mono text-xs"
-              />
-            </div>
-          </div>
-
-          <Input
-            label="Giảng Viên (cách nhau bởi dấu phẩy)"
-            type="text"
-            value={instructorNames}
-            onChange={(e) => setInstructorNames(e.target.value)}
-          />
-
-          <div className="p-3.5 rounded-2xl bg-muted border border-border">
-            <Checkbox
-              id="financialAidToggle"
-              checked={financialAidEnabled}
-              onCheckedChange={(checked) => setFinancialAidEnabled(Boolean(checked))}
-              label="Cho phép xin Hỗ trợ Tài chính (Financial Aid available)"
-            />
-          </div>
-
-          <div className="pt-4 flex justify-end gap-3 border-t border-border">
-            <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
-              {"Hủy"}
-            </Button>
-            <Button type="submit" variant="primary" disabled={saving}>
-              <span aria-live="polite">
-                {saving
-                  ? "Đang lưu…"
-                  : editingCourseId
-                    ? "Cập Nhật Khóa Học"
-                    : "Lưu & Đăng Khóa Học"}
-              </span>
-            </Button>
-          </div>
-        </form>
-      </Modal>
+            <Dialog.Footer className="pt-4 border-t border-border">
+              <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
+                {"Hủy"}
+              </Button>
+              <Button type="submit" variant="primary" disabled={saving}>
+                <span aria-live="polite">
+                  {saving
+                    ? "Đang lưu…"
+                    : editingCourseId
+                      ? "Cập Nhật Khóa Học"
+                      : "Lưu & Đăng Khóa Học"}
+                </span>
+              </Button>
+            </Dialog.Footer>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
 
       <AlertDialog
         open={Boolean(deletingCourseTarget)}

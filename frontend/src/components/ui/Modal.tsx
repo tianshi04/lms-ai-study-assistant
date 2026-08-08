@@ -1,11 +1,9 @@
 import * as React from "react";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { cva, type VariantProps } from "class-variance-authority";
-import { X, AlertTriangle, AlertCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "./Button";
 
-export const Dialog = BaseDialog.Root;
+export const DialogRoot = BaseDialog.Root;
 export const DialogTrigger = BaseDialog.Trigger;
 export const DialogPortal = BaseDialog.Portal;
 export const DialogClose = BaseDialog.Close;
@@ -115,129 +113,16 @@ export function DialogDescription({
   );
 }
 
-export interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title?: string;
-  description?: string;
-  size?: ModalSize;
-  showCloseButton?: boolean;
-  children: React.ReactNode;
-  className?: string;
-}
-
-export const Modal: React.FC<ModalProps> = ({
-  isOpen,
-  onClose,
-  title,
-  description,
-  size = "md",
-  showCloseButton = true,
-  children,
-  className,
-}) => {
-  return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-    >
-      <DialogContent size={size} className={className}>
-        {(title || showCloseButton) && (
-          <div className="flex items-start justify-between pb-4 border-b border-outline-variant">
-            <div>
-              {title && <DialogTitle>{title}</DialogTitle>}
-              {description && <DialogDescription>{description}</DialogDescription>}
-            </div>
-            {showCloseButton && (
-              <DialogClose
-                onClick={onClose}
-                aria-label="Đóng cửa sổ"
-                className="text-muted-foreground hover:text-foreground transition-colors p-1.5 rounded-lg cursor-pointer hover:bg-accent ml-auto -mr-1 -mt-1"
-              >
-                <X className="w-5 h-5" aria-hidden="true" />
-              </DialogClose>
-            )}
-          </div>
-        )}
-        <div className="pt-4">{children}</div>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
-export interface ConfirmDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void | Promise<void>;
-  title: string;
-  description?: React.ReactNode;
-  confirmText?: string;
-  cancelText?: string;
-  variant?: "danger" | "primary" | "warning";
-  isLoading?: boolean;
-}
-
-export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
-  isOpen,
-  onClose,
-  onConfirm,
-  title,
-  description,
-  confirmText = "Xác nhận",
-  cancelText = "Hủy",
-  variant = "primary",
-  isLoading = false,
-}) => {
-  const getIcon = () => {
-    if (variant === "danger") {
-      return (
-        <div className="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-destructive/15 sm:mx-0 sm:h-10 sm:w-10">
-          <AlertTriangle className="h-6 w-6 text-destructive" aria-hidden="true" />
-        </div>
-      );
-    }
-    if (variant === "warning") {
-      return (
-        <div className="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-warning/15 sm:mx-0 sm:h-10 sm:w-10">
-          <AlertCircle className="h-6 w-6 text-warning" aria-hidden="true" />
-        </div>
-      );
-    }
-    return (
-      <div className="mx-auto flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent sm:mx-0 sm:h-10 sm:w-10">
-        <Info className="h-6 w-6 text-accent-foreground" aria-hidden="true" />
-      </div>
-    );
-  };
-
-  const buttonVariant = variant === "danger" ? "danger" : "primary";
-
-  return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open && !isLoading) onClose();
-      }}
-    >
-      <DialogContent size="sm">
-        <div className="sm:flex sm:items-start space-x-0 sm:space-x-4">
-          {getIcon()}
-          <div className="mt-3 text-center sm:mt-0 sm:text-left">
-            <DialogTitle>{title}</DialogTitle>
-            {description && <DialogDescription>{description}</DialogDescription>}
-          </div>
-        </div>
-        <DialogFooter className="mt-6">
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
-            {cancelText}
-          </Button>
-          <Button variant={buttonVariant} onClick={onConfirm} isLoading={isLoading}>
-            {confirmText}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-};
+export const Dialog = Object.assign(BaseDialog.Root, {
+  Root: BaseDialog.Root,
+  Trigger: BaseDialog.Trigger,
+  Portal: BaseDialog.Portal,
+  Backdrop: DialogBackdrop,
+  Popup: DialogContent,
+  Content: DialogContent,
+  Header: DialogHeader,
+  Footer: DialogFooter,
+  Title: DialogTitle,
+  Description: DialogDescription,
+  Close: DialogClose,
+});

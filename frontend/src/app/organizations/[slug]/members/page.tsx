@@ -39,7 +39,8 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
-import { Modal } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Modal";
+
 import {
   Users,
   UserPlus,
@@ -282,100 +283,108 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
         </section>
 
         {/* Invite Member Modal */}
-        <Modal
-          isOpen={isInviteModalOpen}
-          onClose={() => setIsInviteModalOpen(false)}
-          title="Gửi Lời mời Thành viên Mới"
-        >
-          <form onSubmit={handleSendInvite} className="space-y-5 py-2">
-            <p className="text-xs text-muted-foreground">
-              Nhập email người dùng. Lời mời ở trạng thái <strong>PENDING</strong> sẽ được gửi tới
-              người nhận. Người được mời phải bấm <strong>Chấp nhận</strong> thì mới gia nhập Tổ
-              chức.
-            </p>
+        <Dialog.Root open={isInviteModalOpen} onOpenChange={(open) => setIsInviteModalOpen(open)}>
+          <Dialog.Content size="md">
+            <Dialog.Header>
+              <Dialog.Title>{"Gửi Lời mời Thành viên Mới"}</Dialog.Title>
+            </Dialog.Header>
+            <form onSubmit={handleSendInvite} className="space-y-5 pt-2">
+              <p className="text-xs text-muted-foreground">
+                Nhập email người dùng. Lời mời ở trạng thái <strong>PENDING</strong> sẽ được gửi tới
+                người nhận. Người được mời phải bấm <strong>Chấp nhận</strong> thì mới gia nhập Tổ
+                chức.
+              </p>
 
-            {inviteFeedback && (
-              <div
-                className={`p-4 rounded-2xl text-xs space-y-2 ${
-                  inviteFeedback.type === "success"
-                    ? "bg-success/10 text-success border border-success/20"
-                    : "bg-destructive/10 text-destructive border border-destructive/20"
-                }`}
-              >
-                <p className="font-bold">{inviteFeedback.text}</p>
-                {inviteFeedback.token && (
-                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-success/20">
-                    <span className="font-mono truncate">Token: {inviteFeedback.token}</span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => handleCopyLink(inviteFeedback.token!)}
-                      className="bg-success text-success-foreground hover:bg-success/90 text-[11px] h-7 px-2.5 shrink-0"
-                    >
-                      {copiedToken ? (
-                        <Check className="w-3 h-3" aria-hidden="true" />
-                      ) : (
-                        <Copy className="w-3 h-3" aria-hidden="true" />
-                      )}
-                      {copiedToken ? "Đã chép link!" : "Copy Link"}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
+              {inviteFeedback && (
+                <div
+                  className={`p-4 rounded-2xl text-xs space-y-2 ${
+                    inviteFeedback.type === "success"
+                      ? "bg-success/10 text-success border border-success/20"
+                      : "bg-destructive/10 text-destructive border border-destructive/20"
+                  }`}
+                >
+                  <p className="font-bold">{inviteFeedback.text}</p>
+                  {inviteFeedback.token && (
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-success/20">
+                      <span className="font-mono truncate">Token: {inviteFeedback.token}</span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => handleCopyLink(inviteFeedback.token!)}
+                        className="bg-success text-success-foreground hover:bg-success/90 text-[11px] h-7 px-2.5 shrink-0"
+                      >
+                        {copiedToken ? (
+                          <Check className="w-3 h-3" aria-hidden="true" />
+                        ) : (
+                          <Copy className="w-3 h-3" aria-hidden="true" />
+                        )}
+                        {copiedToken ? "Đã chép link!" : "Copy Link"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
 
-            <div className="space-y-1.5">
-              <label htmlFor="inviteEmail" className="text-xs font-bold text-foreground">
-                Email người nhận
-              </label>
               <Input
-                id="inviteEmail"
+                label="Email Người Dùng *"
                 type="email"
                 required
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="vi-du: giangvien@example.com"
+                placeholder="user@organization.org"
               />
-            </div>
 
-            <div className="space-y-1.5">
-              <label htmlFor="inviteRole" className="text-xs font-bold text-foreground">
-                Vai trò trong Org
-              </label>
-              <Select value={inviteRole} onValueChange={(val) => val && setInviteRole(val)}>
-                <SelectTrigger id="inviteRole" className="w-full">
-                  <SelectValue placeholder="Chọn vai trò" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="INSTRUCTOR">Giảng viên (INSTRUCTOR)</SelectItem>
-                  <SelectItem value="MEMBER">Thành viên / Học viên (MEMBER)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="space-y-1.5">
+                <label htmlFor="inviteRoleSelect" className="text-xs font-bold text-foreground">
+                  Vai trò trong Tổ chức
+                </label>
+                <Select
+                  value={inviteRole}
+                  onValueChange={(val) => {
+                    if (val) setInviteRole(val as string);
+                  }}
+                >
+                  <SelectTrigger id="inviteRoleSelect" className="w-full">
+                    <SelectValue placeholder="Chọn vai trò">
+                      {inviteRole === "ORG_ADMIN"
+                        ? "Quản trị viên Tổ chức (ORG_ADMIN)"
+                        : inviteRole === "INSTRUCTOR"
+                          ? "Giảng viên (INSTRUCTOR)"
+                          : "Thành viên / Học viên (MEMBER)"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ORG_ADMIN">Quản trị viên Tổ chức (ORG_ADMIN)</SelectItem>
+                    <SelectItem value="INSTRUCTOR">Giảng viên (INSTRUCTOR)</SelectItem>
+                    <SelectItem value="MEMBER">Thành viên / Học viên (MEMBER)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-1.5">
-              <label htmlFor="inviteMsg" className="text-xs font-bold text-foreground">
-                Lời nhắn (không bắt buộc)
-              </label>
-              <Textarea
-                id="inviteMsg"
-                rows={2}
-                value={inviteMsg}
-                onChange={(e) => setInviteMsg(e.target.value)}
-                placeholder="Chào mừng bạn đến với tổ chức của chúng tôi..."
-              />
-            </div>
+              <div className="space-y-1.5">
+                <label htmlFor="inviteMsg" className="text-xs font-bold text-foreground">
+                  Lời nhắn (không bắt buộc)
+                </label>
+                <Textarea
+                  id="inviteMsg"
+                  rows={2}
+                  value={inviteMsg}
+                  onChange={(e) => setInviteMsg(e.target.value)}
+                  placeholder="Chào mừng bạn đến với tổ chức của chúng tôi..."
+                />
+              </div>
 
-            <div className="pt-4 flex justify-end gap-3 border-t border-border">
-              <Button type="button" variant="outline" onClick={() => setIsInviteModalOpen(false)}>
-                Hủy
-              </Button>
-              <Button type="submit" isLoading={createInviteMutation.isPending}>
-                Gửi Lời Mời (PENDING)
-              </Button>
-            </div>
-          </form>
-        </Modal>
+              <Dialog.Footer className="pt-4 flex justify-end gap-3 border-t border-border">
+                <Button type="button" variant="outline" onClick={() => setIsInviteModalOpen(false)}>
+                  Hủy
+                </Button>
+                <Button type="submit" isLoading={createInviteMutation.isPending}>
+                  Gửi Lời Mời (PENDING)
+                </Button>
+              </Dialog.Footer>
+            </form>
+          </Dialog.Content>
+        </Dialog.Root>
 
         {/* Remove Member Confirm Dialog */}
         <AlertDialog

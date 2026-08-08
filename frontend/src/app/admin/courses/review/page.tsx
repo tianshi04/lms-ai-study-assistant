@@ -10,7 +10,8 @@ import {
   type Course,
 } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
-import { Modal } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Modal";
+
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -280,29 +281,35 @@ export default function CourseReviewerPortalPage() {
 
       {/* Reject Modal */}
       {rejectingCourseId && (
-        <Modal
-          isOpen={!!rejectingCourseId}
-          onClose={() => setRejectingCourseId(null)}
-          title="Từ chối Phê duyệt Khóa học"
+        <Dialog.Root
+          open={!!rejectingCourseId}
+          onOpenChange={(open) => {
+            if (!open) setRejectingCourseId(null);
+          }}
         >
-          <div className="space-y-4 pt-2">
-            <p className="text-xs text-muted-foreground">
-              {
-                "Vui lòng nhập chi tiết lý do từ chối hoặc các góp ý chỉnh sửa để Giảng viên hoàn thiện bài giảng."
-              }
-            </p>
-            <div>
-              <label className="block text-xs font-bold mb-1 text-foreground">
-                {"Lý do từ chối / Feedback Log *"}
-              </label>
-              <Textarea
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                rows={4}
-                placeholder="Ví dụ: Bài giảng tuần 2 thiếu phụ đề VTT, bài kiểm tra graded quiz chưa được chọn ma trận…"
-              />
+          <Dialog.Content size="md">
+            <Dialog.Header>
+              <Dialog.Title>{"Từ chối Phê duyệt Khóa học"}</Dialog.Title>
+            </Dialog.Header>
+            <div className="space-y-4 pt-2">
+              <p className="text-xs text-muted-foreground">
+                {
+                  "Vui lòng nhập chi tiết lý do từ chối hoặc các góp ý chỉnh sửa để Giảng viên hoàn thiện bài giảng."
+                }
+              </p>
+              <div>
+                <label className="block text-xs font-bold mb-1 text-foreground">
+                  {"Lý do từ chối / Feedback Log *"}
+                </label>
+                <Textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  rows={4}
+                  placeholder="Ví dụ: Bài giảng tuần 2 thiếu phụ đề VTT, bài kiểm tra graded quiz chưa được chọn ma trận…"
+                />
+              </div>
             </div>
-            <div className="flex justify-end gap-3 pt-2">
+            <Dialog.Footer className="mt-4">
               <Button
                 type="button"
                 variant="outline"
@@ -320,9 +327,9 @@ export default function CourseReviewerPortalPage() {
               >
                 <span aria-live="polite">{submitting ? "Đang xử lý…" : "Xác nhận Từ chối"}</span>
               </Button>
-            </div>
-          </div>
-        </Modal>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Root>
       )}
     </div>
   );

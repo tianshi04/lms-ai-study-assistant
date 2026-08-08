@@ -13,7 +13,8 @@ import {
   type ForumReply,
 } from "@/gen/forum/v1/forum_pb";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
-import { Modal } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Modal";
+
 import { useToast } from "@/components/ui/Toast";
 import {
   AlertDialog,
@@ -829,125 +830,130 @@ function ForumPageContent() {
       </main>
 
       {/* Modal Create New Thread */}
-      <Modal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        title={"Tạo chủ đề thảo luận mới"}
-        size="lg"
-      >
-        <form onSubmit={handleCreateThread} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-muted-foreground mb-1">
-              {"Khóa học"}
-            </label>
-            <Select
-              value={newCourseId}
-              onValueChange={(val) => {
-                if (val) setNewCourseId(val as string);
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Chọn khóa học">
-                  {courses.find((c) => c.id === newCourseId)?.title || newCourseId}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {courses.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <Dialog.Root open={showCreateModal} onOpenChange={(open) => setShowCreateModal(open)}>
+        <Dialog.Content size="lg">
+          <Dialog.Header>
+            <Dialog.Title>{"Tạo chủ đề thảo luận mới"}</Dialog.Title>
+          </Dialog.Header>
+          <form onSubmit={handleCreateThread} className="space-y-4 pt-2">
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                {"Khóa học"}
+              </label>
+              <Select
+                value={newCourseId}
+                onValueChange={(val) => {
+                  if (val) setNewCourseId(val as string);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn khóa học">
+                    {courses.find((c) => c.id === newCourseId)?.title || newCourseId}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <Input
-            label="Title *"
-            type="text"
-            required
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            placeholder={"Tiêu đề chủ đề…"}
-            className="bg-muted text-sm p-3 rounded-xl"
-          />
+            <Input
+              label="Title *"
+              type="text"
+              required
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder={"Tiêu đề chủ đề…"}
+              className="bg-muted text-sm p-3 rounded-xl"
+            />
 
-          <Textarea
-            label="Content"
-            rows={4}
-            value={newContent}
-            onChange={(e) => setNewContent(e.target.value)}
-            placeholder={"Nội dung thắc mắc hoặc thảo luận chi tiết…"}
-            className="bg-muted text-sm p-3 rounded-xl"
-          />
+            <Textarea
+              label="Content"
+              rows={4}
+              value={newContent}
+              onChange={(e) => setNewContent(e.target.value)}
+              placeholder={"Nội dung thắc mắc hoặc thảo luận chi tiết…"}
+              className="bg-muted text-sm p-3 rounded-xl"
+            />
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowCreateModal(false)}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold"
-            >
-              {"Hủy"}
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={submittingThread || !newTitle.trim()}
-              isLoading={submittingThread}
-              className="px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
-            >
-              {"Đăng bài"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+            <Dialog.Footer className="pt-4 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowCreateModal(false)}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold"
+              >
+                {"Hủy"}
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={submittingThread || !newTitle.trim()}
+                isLoading={submittingThread}
+                className="px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
+              >
+                {"Đăng bài"}
+              </Button>
+            </Dialog.Footer>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
 
       {/* Modal Edit Thread */}
-      <Modal
-        isOpen={Boolean(editingThread)}
-        onClose={() => setEditingThread(null)}
-        title={"Chỉnh sửa bài viết"}
-        size="lg"
+      <Dialog.Root
+        open={Boolean(editingThread)}
+        onOpenChange={(open) => {
+          if (!open) setEditingThread(null);
+        }}
       >
-        <form onSubmit={handleUpdateThread} className="space-y-4">
-          <Input
-            label="Title *"
-            type="text"
-            required
-            value={editThreadTitle}
-            onChange={(e) => setEditThreadTitle(e.target.value)}
-            className="bg-muted text-sm p-3 rounded-xl"
-          />
+        <Dialog.Content size="lg">
+          <Dialog.Header>
+            <Dialog.Title>{"Chỉnh sửa bài viết"}</Dialog.Title>
+          </Dialog.Header>
+          <form onSubmit={handleUpdateThread} className="space-y-4 pt-2">
+            <Input
+              label="Title *"
+              type="text"
+              required
+              value={editThreadTitle}
+              onChange={(e) => setEditThreadTitle(e.target.value)}
+              className="bg-muted text-sm p-3 rounded-xl"
+            />
 
-          <Textarea
-            label="Content"
-            rows={4}
-            value={editThreadContent}
-            onChange={(e) => setEditThreadContent(e.target.value)}
-            className="bg-muted text-sm p-3 rounded-xl"
-          />
+            <Textarea
+              label="Content"
+              rows={4}
+              value={editThreadContent}
+              onChange={(e) => setEditThreadContent(e.target.value)}
+              className="bg-muted text-sm p-3 rounded-xl"
+            />
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setEditingThread(null)}
-              className="px-4 py-2.5 rounded-xl text-xs font-semibold"
-            >
-              {"Hủy"}
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={submittingEditThread || !editThreadTitle.trim()}
-              isLoading={submittingEditThread}
-              className="px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
-            >
-              {"Lưu thay đổi"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+            <Dialog.Footer className="pt-4 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditingThread(null)}
+                className="px-4 py-2.5 rounded-xl text-xs font-semibold"
+              >
+                {"Hủy"}
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={submittingEditThread || !editThreadTitle.trim()}
+                isLoading={submittingEditThread}
+                className="px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
+              >
+                {"Lưu thay đổi"}
+              </Button>
+            </Dialog.Footer>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
 
       {/* Thread Detail Modal (Facebook Post Style) */}
       <ThreadDetailModal

@@ -16,7 +16,8 @@ import {
   CertificateService,
   type FinancialAidApplication,
 } from "@/gen/certificate/v1/certificate_pb";
-import { Modal } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Modal";
+
 import { RatingStars } from "@/components/ui/RatingStars";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
@@ -632,256 +633,256 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
       </main>
 
       {/* Review & Rating Modal */}
-      <Modal
-        isOpen={isReviewModalOpen}
-        onClose={() => setIsReviewModalOpen(false)}
-        title={"Đánh giá khóa học"}
-        className="max-w-md"
-      >
-        {!canReview && (
-          <div className="bg-warning/10 border border-warning/30 p-3 rounded-xl flex items-center gap-2.5 text-warning text-xs font-medium mb-4">
-            <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
-            <span>{"Cần hoàn thành 50% khóa học để đánh giá"}</span>
-          </div>
-        )}
-        <form onSubmit={handleReviewSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold text-foreground mb-2">
-              {"Chọn số sao đánh giá:"}
-            </label>
-            <div className="flex items-center gap-1.5 justify-center py-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Button
-                  key={star}
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  disabled={!canReview}
-                  onClick={() => setRating(star)}
-                  onMouseEnter={() => setHoverRating(star)}
-                  onMouseLeave={() => setHoverRating(0)}
-                  aria-label={`Đánh giá ${star} sao`}
-                  className="h-8 w-8 p-1"
-                >
-                  <Star
-                    aria-hidden="true"
-                    className={`w-7 h-7 ${
-                      star <= (hoverRating || rating)
-                        ? "fill-amber-400 text-amber-400"
-                        : "text-muted-foreground/40 fill-none"
-                    }`}
-                  />
-                </Button>
-              ))}
+      <Dialog.Root open={isReviewModalOpen} onOpenChange={(open) => setIsReviewModalOpen(open)}>
+        <Dialog.Content size="md">
+          <Dialog.Header>
+            <Dialog.Title>{"Đánh giá khóa học"}</Dialog.Title>
+          </Dialog.Header>
+          {!canReview && (
+            <div className="bg-warning/10 border border-warning/30 p-3 rounded-xl flex items-center gap-2.5 text-warning text-xs font-medium my-4">
+              <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>{"Cần hoàn thành 50% khóa học để đánh giá"}</span>
             </div>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold text-foreground">
-                {"Nội dung nhận xét:"}
-              </label>
-              <span
-                className={`text-[10px] ${comment.length > 2000 ? "text-destructive font-bold" : "text-muted-foreground"}`}
-              >
-                {comment.length}/2000
-              </span>
-            </div>
-            <Textarea
-              rows={4}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              maxLength={2000}
-              disabled={!canReview}
-              placeholder={"Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng…"}
-              className="text-xs p-3 rounded-xl bg-card resize-none"
-            />
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsReviewModalOpen(false)}
-              className="text-xs text-muted-foreground"
-            >
-              {"Hủy"}
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              disabled={submittingReview || !canReview}
-              isLoading={submittingReview}
-              className="text-xs shadow-sm"
-            >
-              {"Gửi đánh giá"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* Financial Aid Modal */}
-      <Modal
-        isOpen={isFinAidModalOpen}
-        onClose={() => setIsFinAidModalOpen(false)}
-        title={`Đơn xin Hỗ trợ Tài chính - ${course?.title}`}
-        className="max-w-2xl"
-      >
-        {existingFinAidStatus ? (
-          <div className="space-y-6 pt-2">
-            <div className="flex items-center justify-between pb-4 border-b border-border">
-              <div>
-                <span className="text-xs font-mono font-semibold text-muted-foreground">
-                  Mã đơn: #{existingFinAidStatus.id}
-                </span>
-                <h3 className="text-base font-bold text-foreground mt-0.5">{course?.title}</h3>
-              </div>
-
-              {existingFinAidStatus.status === "PENDING" && (
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-warning animate-pulse" />
-                  {"Đang xét duyệt"}
-                </span>
-              )}
-              {existingFinAidStatus.status === "APPROVED" && (
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20 flex items-center gap-1.5">
-                  <Check aria-hidden="true" className="w-4 h-4 text-success" />
-                  {"Đã Phê Duyệt"}
-                </span>
-              )}
-              {existingFinAidStatus.status === "REJECTED" && (
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-destructive/10 text-destructive border border-destructive/20 flex items-center gap-1.5">
-                  <X aria-hidden="true" className="w-4 h-4 text-destructive" />
-                  {"Chưa được duyệt"}
-                </span>
-              )}
-            </div>
-
-            <div className="p-4 rounded-2xl bg-muted/50 border border-border text-xs text-muted-foreground space-y-2">
-              <p>{"Bạn đã gửi đơn xin hỗ trợ tài chính cho khóa học này."}</p>
-              {existingFinAidStatus.status === "PENDING" && (
-                <p>
-                  {"Thời gian phản hồi dự kiến còn lại: "}
-                  <strong className="text-primary">
-                    {existingFinAidStatus.reviewDeadlineDaysLeft} ngày
-                  </strong>
-                  .
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                {"Bài luận đã gửi:"}
-              </span>
-              <div className="p-4 rounded-2xl bg-muted/50 border border-border text-xs text-foreground leading-relaxed whitespace-pre-wrap font-sans">
-                {existingFinAidStatus.essay150Words}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-border flex items-center justify-between gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setExistingFinAidStatus(null)}
-                className="rounded-xl text-xs font-semibold"
-              >
-                {"Nộp bài luận mới"}
-              </Button>
-              <Link
-                href="/financial-aid"
-                className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-colors flex items-center gap-1.5"
-              >
-                <span>{"Quản lý danh sách Đơn Hỗ trợ tài chính của tôi"}</span>
-                <ArrowRight aria-hidden="true" className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
-        ) : (
-          <form onSubmit={handleFinAidSubmit} className="space-y-6 pt-2">
+          )}
+          <form onSubmit={handleReviewSubmit} className="space-y-4 pt-2">
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  {"Bài luận giải trình hoàn cảnh & Mục tiêu (Tối thiểu 150 từ)"}
+              <label className="block text-xs font-semibold text-foreground mb-2">
+                {"Chọn số sao đánh giá:"}
+              </label>
+              <div className="flex items-center gap-1.5 justify-center py-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Button
+                    key={star}
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    disabled={!canReview}
+                    onClick={() => setRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    aria-label={`Đánh giá ${star} sao`}
+                    className="h-8 w-8 p-1"
+                  >
+                    <Star
+                      aria-hidden="true"
+                      className={`w-7 h-7 ${
+                        star <= (hoverRating || rating)
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-muted-foreground/40 fill-none"
+                      }`}
+                    />
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-foreground">
+                  {"Nội dung nhận xét:"}
                 </label>
                 <span
-                  className={`text-xs font-bold font-mono px-2.5 py-1 rounded-md ${
-                    isFinAidEnoughWords
-                      ? "bg-success/10 text-success border border-success/20"
-                      : "bg-muted text-muted-foreground"
-                  }`}
+                  className={`text-[10px] ${comment.length > 2000 ? "text-destructive font-bold" : "text-muted-foreground"}`}
                 >
-                  {finAidWordCount} / 150 {"từ"}
+                  {comment.length}/2000
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground mb-3">
-                {
-                  "Hãy giải thích lý do bạn xin hỗ trợ tài chính, dự định học tập và việc hoàn thành khóa học này sẽ giúp ích thế nào cho sự nghiệp của bạn."
-                }
-              </p>
               <Textarea
-                rows={8}
-                value={finAidEssay}
-                onChange={(e) => setFinAidEssay(e.target.value)}
-                placeholder={"Tôi xin nộp đơn xin hỗ trợ tài chính cho khóa học này vì…"}
-                className="p-4 rounded-2xl bg-card text-sm leading-relaxed"
-                required
+                rows={4}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                maxLength={2000}
+                disabled={!canReview}
+                placeholder={"Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng…"}
+                className="text-xs p-3 rounded-xl bg-card resize-none"
               />
-              <div className="w-full bg-muted h-2 rounded-full mt-3 overflow-hidden">
-                <div
-                  className={`h-full transition-colors duration-m3-medium-2 ease-m3-emphasized ${isFinAidEnoughWords ? "bg-success" : "bg-primary"}`}
-                  style={{ width: `${Math.min(100, (finAidWordCount / 150) * 100)}%` }}
-                />
-              </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 text-xs text-warning space-y-1">
-              <p className="font-bold flex items-center gap-1.5">
-                <AlertTriangle aria-hidden="true" className="w-4 h-4 text-warning" />
-                {"Cam kết liêm chính học thuật:"}
-              </p>
-              <p>
-                {
-                  "Tôi cam kết cung cấp thông tin trung thực về hoàn cảnh kinh tế và sẽ hoàn thành tất cả các bài kiểm tra của khóa học."
-                }
-              </p>
-            </div>
-
-            <div className="pt-4 flex items-center justify-between border-t border-border">
-              <Link
-                href="/financial-aid"
-                className="text-xs font-semibold text-muted-foreground hover:text-primary underline"
+            <Dialog.Footer className="pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsReviewModalOpen(false)}
+                className="text-xs text-muted-foreground"
               >
-                {"Xem danh sách các đơn đã gửi →"}
-              </Link>
-              <div className="flex gap-3">
+                {"Hủy"}
+              </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                size="sm"
+                disabled={submittingReview || !canReview}
+                isLoading={submittingReview}
+                className="text-xs shadow-sm"
+              >
+                {"Gửi đánh giá"}
+              </Button>
+            </Dialog.Footer>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
+
+      {/* Financial Aid Modal */}
+      <Dialog.Root open={isFinAidModalOpen} onOpenChange={(open) => setIsFinAidModalOpen(open)}>
+        <Dialog.Content size="lg">
+          <Dialog.Header>
+            <Dialog.Title>{`Đơn xin Hỗ trợ Tài chính - ${course?.title}`}</Dialog.Title>
+          </Dialog.Header>
+          {existingFinAidStatus ? (
+            <div className="space-y-6 pt-2">
+              <div className="flex items-center justify-between pb-4 border-b border-border">
+                <div>
+                  <span className="text-xs font-mono font-semibold text-muted-foreground">
+                    Mã đơn: #{existingFinAidStatus.id}
+                  </span>
+                  <h3 className="text-base font-bold text-foreground mt-0.5">{course?.title}</h3>
+                </div>
+
+                {existingFinAidStatus.status === "PENDING" && (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-warning animate-pulse" />
+                    {"Đang xét duyệt"}
+                  </span>
+                )}
+                {existingFinAidStatus.status === "APPROVED" && (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-success/10 text-success border border-success/20 flex items-center gap-1.5">
+                    <Check aria-hidden="true" className="w-4 h-4 text-success" />
+                    {"Đã Phê Duyệt"}
+                  </span>
+                )}
+                {existingFinAidStatus.status === "REJECTED" && (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-destructive/10 text-destructive border border-destructive/20 flex items-center gap-1.5">
+                    <X aria-hidden="true" className="w-4 h-4 text-destructive" />
+                    {"Chưa được duyệt"}
+                  </span>
+                )}
+              </div>
+
+              <div className="p-4 rounded-2xl bg-muted/50 border border-border text-xs text-muted-foreground space-y-2">
+                <p>{"Bạn đã gửi đơn xin hỗ trợ tài chính cho khóa học này."}</p>
+                {existingFinAidStatus.status === "PENDING" && (
+                  <p>
+                    {"Thời gian phản hồi dự kiến còn lại: "}
+                    <strong className="text-primary">
+                      {existingFinAidStatus.reviewDeadlineDaysLeft} ngày
+                    </strong>
+                    .
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  {"Bài luận đã gửi:"}
+                </span>
+                <div className="p-4 rounded-2xl bg-muted/50 border border-border text-xs text-foreground leading-relaxed whitespace-pre-wrap font-sans">
+                  {existingFinAidStatus.essay150Words}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border flex items-center justify-between gap-3">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsFinAidModalOpen(false)}
+                  onClick={() => setExistingFinAidStatus(null)}
                   className="rounded-xl text-xs font-semibold"
                 >
-                  {"Hủy"}
+                  {"Nộp bài luận mới"}
                 </Button>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  disabled={submittingFinAid || !isFinAidEnoughWords}
-                  isLoading={submittingFinAid}
-                  className="rounded-xl text-xs font-bold shadow-lg"
+                <Link
+                  href="/financial-aid"
+                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-colors flex items-center gap-1.5"
                 >
-                  {"Gửi đơn xin Hỗ trợ"}
-                </Button>
+                  <span>{"Quản lý danh sách Đơn Hỗ trợ tài chính của tôi"}</span>
+                  <ArrowRight aria-hidden="true" className="w-3.5 h-3.5" />
+                </Link>
               </div>
             </div>
-          </form>
-        )}
-      </Modal>
+          ) : (
+            <form onSubmit={handleFinAidSubmit} className="space-y-6 pt-2">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    {"Bài luận giải trình hoàn cảnh & Mục tiêu (Tối thiểu 150 từ)"}
+                  </label>
+                  <span
+                    className={`text-xs font-bold font-mono px-2.5 py-1 rounded-md ${
+                      isFinAidEnoughWords
+                        ? "bg-success/10 text-success border border-success/20"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {finAidWordCount} / 150 {"từ"}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {
+                    "Hãy giải thích lý do bạn xin hỗ trợ tài chính, dự định học tập và việc hoàn thành khóa học này sẽ giúp ích thế nào cho sự nghiệp của bạn."
+                  }
+                </p>
+                <Textarea
+                  rows={8}
+                  value={finAidEssay}
+                  onChange={(e) => setFinAidEssay(e.target.value)}
+                  placeholder={"Tôi xin nộp đơn xin hỗ trợ tài chính cho khóa học này vì…"}
+                  className="p-4 rounded-2xl bg-card text-sm leading-relaxed"
+                  required
+                />
+                <div className="w-full bg-muted h-2 rounded-full mt-3 overflow-hidden">
+                  <div
+                    className={`h-full transition-colors duration-m3-medium-2 ease-m3-emphasized ${isFinAidEnoughWords ? "bg-success" : "bg-primary"}`}
+                    style={{ width: `${Math.min(100, (finAidWordCount / 150) * 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 text-xs text-warning space-y-1">
+                <p className="font-bold flex items-center gap-1.5">
+                  <AlertTriangle aria-hidden="true" className="w-4 h-4 text-warning" />
+                  {"Cam kết liêm chính học thuật:"}
+                </p>
+                <p>
+                  {
+                    "Tôi cam kết cung cấp thông tin trung thực về hoàn cảnh kinh tế và sẽ hoàn thành tất cả các bài kiểm tra của khóa học."
+                  }
+                </p>
+              </div>
+
+              <Dialog.Footer className="pt-4 flex items-center justify-between border-t border-border">
+                <Link
+                  href="/financial-aid"
+                  className="text-xs font-semibold text-muted-foreground hover:text-primary underline"
+                >
+                  {"Xem danh sách các đơn đã gửi →"}
+                </Link>
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsFinAidModalOpen(false)}
+                    className="rounded-xl text-xs font-semibold"
+                  >
+                    {"Hủy"}
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    disabled={submittingFinAid || !isFinAidEnoughWords}
+                    isLoading={submittingFinAid}
+                    className="rounded-xl text-xs font-bold shadow-lg"
+                  >
+                    {"Gửi đơn xin Hỗ trợ"}
+                  </Button>
+                </div>
+              </Dialog.Footer>
+            </form>
+          )}
+        </Dialog.Content>
+      </Dialog.Root>
 
       <PaymentCheckoutModal
         isOpen={isPaymentModalOpen}
