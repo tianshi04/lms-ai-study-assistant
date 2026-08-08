@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Lock,
 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 interface VideoPlayerProps {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -116,7 +117,7 @@ export function VideoPlayer({
           <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
             <Link
               href="/my-purchases"
-              className="px-6 py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm transition-all shadow-md flex items-center gap-2"
+              className="px-6 py-3 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs sm:text-sm transition-all shadow-xs flex items-center gap-2"
             >
               <Sparkles className="w-4 h-4 fill-current" aria-hidden="true" />
               Nâng cấp Coursera Plus ngay
@@ -152,18 +153,19 @@ export function VideoPlayer({
             {/* Coursera-Style Bottom Mark as Complete Action Banner */}
             {!isPreviewMode && (
               <div className="pt-8 border-t border-border flex justify-end">
-                <button
+                <Button
+                  type="button"
                   onClick={() => onMarkComplete?.(activeItem.id)}
                   disabled={isCompleted}
-                  className={`px-6 py-3 rounded-full text-xs font-bold transition-colors flex items-center gap-2 ${
+                  className={`px-6 py-3 rounded-full text-xs font-bold ${
                     isCompleted
                       ? "bg-success/10 text-success border border-success/30 cursor-default"
-                      : "bg-success hover:bg-success-hover text-success-foreground shadow-md cursor-pointer"
+                      : "bg-success hover:bg-success-hover text-success-foreground shadow-md"
                   }`}
                 >
                   <Check className="w-4 h-4" aria-hidden="true" />
                   {isCompleted ? "Đã Hoàn Thành Bài Đọc" : "Đánh dấu Hoàn Thành Bài Đọc này"}
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -297,18 +299,19 @@ export function VideoPlayer({
                     }
 
                     return (
-                      <button
+                      <Button
                         key={idx}
                         type="button"
+                        variant="outline"
                         disabled={quizSubmitted}
                         onClick={() => onSelectOption(idx)}
-                        className={`w-full text-left p-3 rounded-xl border text-xs transition-colors flex items-center justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${optionStyle}`}
+                        className={`w-full text-left p-3 rounded-xl border text-xs h-auto justify-between ${optionStyle}`}
                       >
                         <span>{option}</span>
                         {quizSubmitted && isCorrect && (
                           <Check className="w-4 h-4 text-success" aria-hidden="true" />
                         )}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -322,23 +325,23 @@ export function VideoPlayer({
 
                 <div className="pt-2 flex justify-end gap-3">
                   {!quizSubmitted ? (
-                    <button
+                    <Button
                       type="button"
                       onClick={onSubmitQuiz}
                       disabled={selectedOption === null}
-                      className="px-5 py-2.5 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground font-bold text-xs shadow-md transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="px-5 py-2.5 rounded-full bg-primary hover:bg-primary-hover disabled:opacity-50 text-primary-foreground font-bold text-xs shadow-md"
                     >
                       {"Kiểm Tra Đáp Án"}
-                    </button>
+                    </Button>
                   ) : (
-                    <button
+                    <Button
                       type="button"
                       onClick={onContinueVideo}
-                      className="px-5 py-2.5 rounded-full bg-success hover:bg-success-hover text-success-foreground font-bold text-xs shadow-md transition-colors flex items-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="px-5 py-2.5 rounded-full bg-success hover:bg-success-hover text-success-foreground font-bold text-xs shadow-md"
                     >
                       {"Tiếp Tục Xem Video"}
                       <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -362,10 +365,12 @@ export function VideoPlayer({
                 Tìm hiểu sâu hơn về chủ đề này
               </span>
             </div>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               onClick={() => setIsExpanded((prev) => !prev)}
-              className="p-1 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="p-1 h-7 w-7 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
               title={isExpanded ? "Thu gọn gợi ý AI" : "Mở rộng gợi ý AI"}
               aria-label={isExpanded ? "Thu gọn gợi ý AI" : "Mở rộng gợi ý AI"}
             >
@@ -374,7 +379,7 @@ export function VideoPlayer({
               ) : (
                 <ChevronDown className="w-4 h-4" aria-hidden="true" />
               )}
-            </button>
+            </Button>
           </div>
 
           {isExpanded && (
@@ -385,14 +390,16 @@ export function VideoPlayer({
                 "Cho tôi một bản tóm tắt",
                 "Cho tôi ví dụ thực tế",
               ].map((text) => (
-                <button
+                <Button
                   key={text}
                   type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={() => onSelectAiPrompt?.(text)}
-                  className="text-xs font-semibold px-4 py-2.5 rounded-xl bg-surface-container-high hover:bg-primary-container text-on-surface hover:text-primary border border-outline-variant/40 hover:border-primary/40 transition-colors cursor-pointer shadow-2xs leading-snug w-fit hover:scale-102 active:scale-98 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="text-xs font-semibold px-4 py-2.5 rounded-xl bg-surface-container-high hover:bg-primary-container text-on-surface hover:text-primary border-outline-variant/40 hover:border-primary/40 shadow-2xs leading-snug w-fit h-auto"
                 >
                   <span>{text}</span>
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -409,15 +416,16 @@ export function VideoPlayer({
       {/* Next Lesson Action Button Container - Lifted up 1 layout level to be available on EVERY lesson item */}
       {nextItem && onNextLesson && (
         <div className="w-full flex items-center justify-end pt-1 pb-1 shrink-0">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={onNextLesson}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-surface-container-high text-on-surface hover:bg-primary-container hover:text-primary border border-outline-variant/40 hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized flex items-center gap-1.5 cursor-pointer shadow-2xs hover:scale-102 active:scale-98 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="px-4 py-2 rounded-xl text-xs font-semibold bg-surface-container-high text-on-surface hover:bg-primary-container hover:text-primary border border-outline-variant/40 hover:border-primary/40 transition-colors shadow-2xs hover:scale-102 active:scale-98 shrink-0"
             title="Chuyển sang bài học tiếp theo"
           >
             <span>{"Bài tiếp theo"}</span>
             <ChevronRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-          </button>
+          </Button>
         </div>
       )}
     </div>

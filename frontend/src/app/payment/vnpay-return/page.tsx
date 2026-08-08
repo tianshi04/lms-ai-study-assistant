@@ -16,6 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { getRpcClient } from "@/lib/connect_client";
 import { PaymentService, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
 import { useCreateVNPayPaymentUrlMutation } from "@/lib/query_hooks";
+import { Button } from "@/components/ui/Button";
 
 const client = getRpcClient(PaymentService);
 
@@ -228,19 +229,16 @@ function VNPayReturnContent() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
-              <button
+              <Button
                 type="button"
                 onClick={handleRetryPayment}
                 disabled={isRetrying}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground hover:bg-primary-hover px-5 py-3 rounded-lg font-medium transition-colors disabled:opacity-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                isLoading={isRetrying}
+                className="flex-1 px-5 py-3 rounded-lg font-medium"
               >
-                {isRetrying ? (
-                  <Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" />
-                ) : (
-                  <RefreshCw aria-hidden="true" className="w-4 h-4" />
-                )}
-                {isRetrying ? "Đang tạo giao dịch…" : "Thử lại"}
-              </button>
+                <RefreshCw aria-hidden="true" className="w-4 h-4" />
+                <span>{"Thử lại"}</span>
+              </Button>
               <Link
                 href="/courses"
                 className="inline-flex items-center justify-center gap-2 bg-muted text-muted-foreground hover:bg-muted/80 px-5 py-3 rounded-lg font-medium transition-colors"

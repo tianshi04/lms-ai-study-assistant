@@ -565,16 +565,17 @@ function ForumPageContent() {
                         )}
                       </div>
 
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
                         onClick={() => setSelectedModalThreadId(thread.id)}
-                        className="text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg cursor-pointer group/title"
+                        className="text-left w-full justify-start h-auto p-0 cursor-pointer group/title hover:bg-transparent shadow-none"
                         title="Bấm để mở rộng xem thảo luận riêng"
                       >
-                        <h2 className="text-xl font-bold text-foreground leading-snug group-hover/title:text-primary transition-colors">
+                        <h2 className="text-xl font-bold text-foreground leading-snug group-hover/title:text-primary transition-colors text-left">
                           {thread.title}
                         </h2>
-                      </button>
+                      </Button>
                     </div>
 
                     {/* Upvote Button */}

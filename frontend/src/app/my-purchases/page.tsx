@@ -13,12 +13,12 @@ import {
   CreditCard,
   Receipt,
   Calendar,
-  Loader2,
   Sparkles,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useListUserPurchasesQuery, useCreateVNPayPaymentUrlMutation } from "@/lib/query_hooks";
 import { PaymentOrderStatus, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
+import { Button } from "@/components/ui/Button";
 
 type FilterTab = "ALL" | "COMPLETED" | "PENDING" | "EXPIRED";
 
@@ -180,36 +180,37 @@ function MyPurchasesContent() {
             }
           </p>
         </div>
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={handleRefresh}
           disabled={isFetching}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-sm font-semibold transition-colors cursor-pointer disabled:opacity-60 shrink-0 self-start md:self-auto"
+          className="shrink-0 self-start md:self-auto"
         >
           <RefreshCw
             className={`w-4 h-4 text-primary ${isFetching ? "animate-spin" : ""}`}
             aria-hidden="true"
           />
           <span>{isFetching ? "Đang đối soát…" : "Tải lại & Đối soát VNPay"}</span>
-        </button>
+        </Button>
       </div>
 
       {/* Coursera Plus Hero Banner Card */}
-      <div className="mb-8 p-6 rounded-3xl bg-gradient-to-r from-purple-950/40 via-indigo-900/30 to-purple-900/40 border border-purple-500/30 shadow-lg relative overflow-hidden">
+      <div className="mb-8 p-6 rounded-3xl bg-primary-container/20 border border-primary/20 shadow-xs relative overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30">
-                <Sparkles className="w-6 h-6 animate-pulse" />
+              <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <Sparkles className="w-6 h-6 animate-pulse" aria-hidden="true" />
               </div>
               <h2 className="text-xl md:text-2xl font-bold text-foreground">{"Coursera Plus"}</h2>
               {isPlusActive ? (
-                <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+                <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-success/10 text-success border border-success/20">
+                  <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" />
                   {"Đang hoạt động"}
                 </span>
               ) : (
-                <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                <span className="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full bg-warning/10 text-warning border border-warning/20">
                   {"Chưa kích hoạt"}
                 </span>
               )}
@@ -218,7 +219,7 @@ function MyPurchasesContent() {
             {isPlusActive ? (
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {"Tài khoản của bạn đang có quyền học không giới hạn tất cả các khóa học. Còn "}
-                <strong className="text-purple-400 font-extrabold text-base">
+                <strong className="text-primary font-extrabold text-base">
                   {daysRemaining} ngày
                 </strong>
                 {" sử dụng (Hết hạn vào "}
@@ -235,25 +236,27 @@ function MyPurchasesContent() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => handleSubscribePlus(PlanType.MONTHLY)}
-              disabled={createVNPayMutation.isPending}
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm transition-all shadow-md active:scale-95 disabled:opacity-60 cursor-pointer"
+              isLoading={createVNPayMutation.isPending}
+              className="gap-2 px-5 py-3 rounded-xl font-bold text-sm h-auto"
             >
-              <CreditCard className="w-4 h-4" />
+              <CreditCard className="w-4 h-4" aria-hidden="true" />
               <span>{isPlusActive ? "Gia hạn Gói Tháng (+30d)" : "Đăng ký Gói Tháng (790k)"}</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
+              variant="primary"
               onClick={() => handleSubscribePlus(PlanType.YEARLY)}
-              disabled={createVNPayMutation.isPending}
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-sm transition-all shadow-md active:scale-95 disabled:opacity-60 cursor-pointer border border-purple-400/30"
+              isLoading={createVNPayMutation.isPending}
+              className="gap-2 px-5 py-3 rounded-xl font-bold text-sm h-auto"
             >
-              <Sparkles className="w-4 h-4" />
+              <Sparkles className="w-4 h-4" aria-hidden="true" />
               <span>{isPlusActive ? "Gia hạn Gói Năm (+365d)" : "Nâng cấp Gói Năm (5.9Tr)"}</span>
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -302,32 +305,35 @@ function MyPurchasesContent() {
 
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-border mb-6 overflow-x-auto pb-1">
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => setActiveTab("ALL")}
-          className={`px-4 py-2.5 rounded-t-xl text-sm font-semibold transition-colors cursor-pointer border-b-2 whitespace-nowrap ${
+          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
             activeTab === "ALL"
               ? "border-primary text-primary bg-primary/5"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           {`Tất cả đơn hàng (${totalOrders})`}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => setActiveTab("COMPLETED")}
-          className={`px-4 py-2.5 rounded-t-xl text-sm font-semibold transition-colors cursor-pointer border-b-2 whitespace-nowrap ${
+          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
             activeTab === "COMPLETED"
               ? "border-success text-success bg-success/5"
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           {`Đã mở khóa (${completedCount})`}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => setActiveTab("PENDING")}
-          className={`px-4 py-2.5 rounded-t-xl text-sm font-semibold transition-colors cursor-pointer border-b-2 whitespace-nowrap ${
+          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
             activeTab === "PENDING"
               ? "border-warning text-warning bg-warning/5"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -336,11 +342,12 @@ function MyPurchasesContent() {
           {`Đang chờ thanh toán (${
             orders.filter((o: any) => o.status === PaymentOrderStatus.PENDING).length
           })`}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
           onClick={() => setActiveTab("EXPIRED")}
-          className={`px-4 py-2.5 rounded-t-xl text-sm font-semibold transition-colors cursor-pointer border-b-2 whitespace-nowrap ${
+          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
             activeTab === "EXPIRED"
               ? "border-muted-foreground text-foreground bg-muted/50"
               : "border-transparent text-muted-foreground hover:text-foreground"
@@ -352,7 +359,7 @@ function MyPurchasesContent() {
                 o.status === PaymentOrderStatus.EXPIRED || o.status === PaymentOrderStatus.FAILED,
             ).length
           })`}
-        </button>
+        </Button>
       </div>
 
       {/* Orders List */}
@@ -486,19 +493,16 @@ function MyPurchasesContent() {
                   )}
 
                   {isPending && (
-                    <button
+                    <Button
                       type="button"
                       onClick={() => handleContinuePayment(order)}
                       disabled={createVNPayMutation.isPending}
-                      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-warning hover:bg-warning/90 text-warning-foreground text-sm font-semibold transition-colors cursor-pointer disabled:opacity-60"
+                      isLoading={createVNPayMutation.isPending}
+                      className="px-5 py-2.5 rounded-xl bg-warning hover:bg-warning/90 text-warning-foreground text-sm font-semibold"
                     >
-                      {createVNPayMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                      ) : (
-                        <CreditCard className="w-4 h-4" aria-hidden="true" />
-                      )}
+                      <CreditCard className="w-4 h-4" aria-hidden="true" />
                       <span>{"Tiếp tục thanh toán"}</span>
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>

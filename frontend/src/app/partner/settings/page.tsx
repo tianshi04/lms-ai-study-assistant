@@ -287,14 +287,16 @@ function PartnerSettingsForm({
             )}
             <span>{statusMessage.text}</span>
           </div>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => setStatusMessage(null)}
-            className="text-xs opacity-70 hover:opacity-100 p-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            className="h-6 w-6 opacity-70 hover:opacity-100"
             aria-label="Đóng thông báo"
           >
             <X className="w-4 h-4" aria-hidden="true" />
-          </button>
+          </Button>
         </div>
       )}
 

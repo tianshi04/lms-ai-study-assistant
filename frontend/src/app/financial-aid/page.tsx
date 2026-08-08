@@ -198,11 +198,12 @@ function FinancialAidContent() {
               const partnerName = matchedCourse ? matchedCourse.partnerName : "Coursera AI Partner";
 
               return (
-                <button
+                <Button
                   type="button"
                   key={app.id}
+                  variant="outline"
                   onClick={() => setSelectedApp(app)}
-                  className={`w-full text-left bg-card border rounded-2xl p-5 shadow-sm hover:shadow-md transition-colors cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  className={`w-full justify-between h-auto bg-card border rounded-2xl p-5 shadow-xs hover:shadow-md transition-colors cursor-pointer flex flex-col md:flex-row md:items-center text-left gap-4 ${
                     selectedApp?.id === app.id
                       ? "border-primary ring-2 ring-primary/20"
                       : "border-border"
@@ -244,7 +245,7 @@ function FinancialAidContent() {
                       <ChevronRight aria-hidden="true" className="w-3.5 h-3.5 ml-1" />
                     </span>
                   </div>
-                </button>
+                </Button>
               );
             })}
           </div>

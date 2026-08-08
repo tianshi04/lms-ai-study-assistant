@@ -284,13 +284,15 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                   {[1, 2, 3, 4, 5].map((star) => {
                     const active = star <= (hoverRating || rating);
                     return (
-                      <button
+                      <Button
                         key={star}
                         type="button"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => setRating(star)}
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(0)}
-                        className="p-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="h-9 w-9 p-1"
                         aria-label={`Đánh giá ${star} sao`}
                       >
                         <Star
@@ -299,7 +301,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                             active ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40"
                           }`}
                         />
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>

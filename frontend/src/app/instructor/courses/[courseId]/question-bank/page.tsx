@@ -309,10 +309,12 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                   {banks.map((bank) => {
                     const isSelected = bank.id === selectedBankId;
                     return (
-                      <button
+                      <Button
+                        type="button"
                         key={bank.id}
+                        variant="outline"
                         onClick={() => setSelectedBankId(bank.id)}
-                        className={`w-full text-left p-5 rounded-2xl border transition-colors flex flex-col gap-1 cursor-pointer ${
+                        className={`w-full justify-start h-auto flex-col items-start p-5 rounded-2xl border text-left gap-1 cursor-pointer ${
                           isSelected
                             ? "bg-primary/10 border-primary ring-1 ring-primary"
                             : "bg-card border-border hover:border-muted-foreground/30"
@@ -342,7 +344,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                           <HelpCircle aria-hidden="true" className="w-3.5 h-3.5" />
                           <span>{bank.questions?.length || 0} câu hỏi</span>
                         </div>
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -467,6 +469,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                                     onClick={() => handleOpenEditQuestionModal(q)}
                                     className="h-7 w-7 text-muted-foreground hover:text-primary"
                                     title="Sửa"
+                                    aria-label="Chỉnh sửa câu hỏi"
                                   >
                                     <Pencil aria-hidden="true" className="w-3.5 h-3.5" />
                                   </Button>
@@ -476,6 +479,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                                     onClick={() => setDeletingQuestionId(q.id)}
                                     className="h-7 w-7 text-muted-foreground hover:text-destructive"
                                     title="Xoá"
+                                    aria-label="Xóa câu hỏi"
                                   >
                                     <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
                                   </Button>
@@ -768,6 +772,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                       size="icon"
                       onClick={() => handleRemoveOption(idx)}
                       className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      aria-label={`Xóa phương án ${idx + 1}`}
                     >
                       ✕
                     </Button>

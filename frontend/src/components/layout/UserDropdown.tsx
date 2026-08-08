@@ -186,8 +186,8 @@ export function UserDropdown() {
                 {roleLabel}
               </span>
               {isPlusActive && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-600 dark:text-purple-300 border border-purple-500/30 uppercase tracking-wider">
-                  <Sparkles className="w-2.5 h-2.5" />
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-container text-primary border border-primary/20 uppercase tracking-wider">
+                  <Sparkles className="w-2.5 h-2.5" aria-hidden="true" />
                   {"PLUS"}
                 </span>
               )}
@@ -197,13 +197,13 @@ export function UserDropdown() {
 
         {/* Plus Banner Section */}
         {isPlusActive ? (
-          <div className="mx-1 my-1.5 p-3 rounded-xl bg-gradient-to-br from-purple-950/30 via-indigo-950/20 to-purple-900/30 border border-purple-500/30 flex flex-col gap-2">
+          <div className="mx-1 my-1.5 p-3 rounded-xl bg-primary-container/20 border border-primary/20 flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-purple-600 dark:text-purple-300">
-                <Sparkles className="w-4 h-4 text-purple-500 animate-pulse" />
+              <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
+                <Sparkles className="w-4 h-4 text-primary animate-pulse" aria-hidden="true" />
                 <span>{"Coursera Plus"}</span>
               </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-success/10 text-success border border-success/20">
                 {"Đang hoạt động"}
               </span>
             </div>
@@ -216,15 +216,15 @@ export function UserDropdown() {
             </p>
             <Link
               href="/my-purchases"
-              className="mt-0.5 text-center text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-95 px-3 py-1.5 rounded-lg transition-all shadow-sm"
+              className="mt-0.5 text-center text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover px-3 py-1.5 rounded-lg transition-all shadow-2xs"
             >
               {"Gia hạn Plus"}
             </Link>
           </div>
         ) : (
-          <div className="mx-1 my-1.5 p-3 rounded-xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-500/20 flex flex-col gap-2">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-purple-600 dark:text-purple-300">
-              <Sparkles className="w-4 h-4 text-purple-500" />
+          <div className="mx-1 my-1.5 p-3 rounded-xl bg-surface-container-high border border-outline-variant/40 flex flex-col gap-2">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
+              <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
               <span>{"Coursera Plus"}</span>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -232,7 +232,7 @@ export function UserDropdown() {
             </p>
             <Link
               href="/my-purchases"
-              className="mt-0.5 text-center text-xs font-semibold text-white bg-purple-600 hover:bg-purple-700 active:scale-95 px-3 py-1.5 rounded-lg transition-all shadow-sm"
+              className="mt-0.5 text-center text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover px-3 py-1.5 rounded-lg transition-all shadow-2xs"
             >
               {"Nâng cấp Plus ngay"}
             </Link>

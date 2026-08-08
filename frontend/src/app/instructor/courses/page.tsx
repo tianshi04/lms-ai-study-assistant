@@ -375,21 +375,27 @@ export default function InstructorCoursesPage() {
 
               <div className="pt-4 border-t border-border flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <button
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => handleOpenEditModal(course)}
-                    className="px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-xs font-semibold text-foreground transition-colors flex items-center gap-1.5 cursor-pointer"
+                    className="bg-muted hover:bg-muted/80 text-xs font-semibold text-foreground"
                   >
                     <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{"Sửa thông tin"}</span>
-                  </button>
+                  </Button>
 
-                  <button
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => handleDeleteCourse(course.id, course.title)}
-                    className="px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer"
+                    className="bg-destructive/10 text-destructive border-destructive/20 text-xs font-semibold hover:bg-destructive/20"
                   >
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{"Xóa"}</span>
-                  </button>
+                  </Button>
 
                   <Link
                     href={`/courses/${course.id}`}

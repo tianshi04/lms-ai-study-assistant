@@ -354,7 +354,7 @@ export function GradedQuizRunner({
           <div className="flex justify-center pt-2">
             <Link
               href="/my-purchases"
-              className="px-6 py-3 rounded-full bg-purple-600 hover:bg-purple-700 text-white font-bold text-sm transition-all shadow-md flex items-center gap-2"
+              className="px-6 py-3 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-all shadow-xs flex items-center gap-2"
             >
               <Sparkles className="w-4 h-4 fill-current" aria-hidden="true" />
               Nâng cấp Coursera Plus ngay
@@ -505,12 +505,13 @@ export function GradedQuizRunner({
                 {q.options.map((opt, optIdx) => {
                   const isSelected = currentAnswers.includes(optIdx);
                   return (
-                    <button
+                    <Button
                       key={optIdx}
                       type="button"
+                      variant="outline"
                       disabled={(cooldownCountdown > 0 && !isPreviewMode) || quizResult !== null}
                       onClick={() => handleOptionSelect(qIdx, optIdx, isMultipleChoice)}
-                      className={`p-3.5 rounded-xl text-xs text-left font-medium transition-colors border flex items-center gap-2.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      className={`h-auto justify-start text-left p-3.5 rounded-xl text-xs font-medium border flex items-center gap-2.5 cursor-pointer ${
                         isSelected
                           ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
                           : "bg-card border-border hover:border-primary/50 text-foreground"
@@ -532,7 +533,7 @@ export function GradedQuizRunner({
                         )}
                       </span>
                       <span className="flex-1">{opt.optionText}</span>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>

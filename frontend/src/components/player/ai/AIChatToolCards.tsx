@@ -5,6 +5,7 @@ import { BookmarkPlus, Check, Sparkles, Play } from "lucide-react";
 import { getRpcClient } from "@/lib/connect_client";
 import { LearningService, type PersonalNote } from "@/gen/learning/v1/learning_pb";
 import { formatTime } from "./utils";
+import { Button } from "@/components/ui/Button";
 
 export function SaveNoteCard({
   courseId,
@@ -53,11 +54,12 @@ export function SaveNoteCard({
       <blockquote className="text-xs text-on-surface italic bg-surface/50 p-2 rounded-lg border-l-2 border-primary">
         "{content}"
       </blockquote>
-      <button
+      <Button
         type="button"
+        variant="outline"
         disabled={isSaved || isSaving}
         onClick={handleSave}
-        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer w-fit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+        className={`w-fit font-semibold text-xs border ${
           isSaved
             ? "bg-success/10 text-success border-success/30 cursor-default"
             : "bg-primary/10 hover:bg-primary/20 text-primary border-primary/20"
@@ -74,7 +76,7 @@ export function SaveNoteCard({
             <span>{isSaving ? "Đang lưu…" : "Lưu vào Ghi chú cá nhân"}</span>
           </>
         )}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -98,14 +100,15 @@ export function TimestampSeekCard({
         <span>{reason || "Gợi ý xem đoạn video liên quan:"}</span>
       </div>
       {onSeek && (
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={() => onSeek(seconds)}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold border border-primary/20 transition-colors cursor-pointer w-fit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="w-fit bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold border-primary/20"
         >
           <Play className="w-3.5 h-3.5 fill-primary text-primary" aria-hidden="true" />
           <span>Chuyển đến đoạn [{displayLabel}]</span>
-        </button>
+        </Button>
       )}
     </div>
   );

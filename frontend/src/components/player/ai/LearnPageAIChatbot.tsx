@@ -14,6 +14,7 @@ import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { formatTime, getItemTypeName } from "./utils";
 import { getMessageText } from "@/components/ai/utils";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { SaveNoteCard, TimestampSeekCard } from "./AIChatToolCards";
 import { renderMessageItem } from "./AIChatMessageItem";
 
@@ -264,25 +265,29 @@ export function LearnPageAIChatbot({
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={handleNewChat}
-            className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="w-7 h-7 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
             title="Tạo cuộc trò chuyện mới"
             aria-label="Tạo cuộc trò chuyện mới"
           >
             <MessageSquarePlus className="w-4 h-4" aria-hidden="true" />
-          </button>
+          </Button>
           {onClose && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               onClick={onClose}
-              className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-7 h-7 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
               title="Đóng Trợ lý AI"
               aria-label="Đóng Trợ lý AI"
             >
               <X className="w-4 h-4" aria-hidden="true" />
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -332,14 +337,16 @@ export function LearnPageAIChatbot({
             {suggestions.length > 0 && (
               <div className="flex flex-wrap items-center justify-center gap-2 max-w-md">
                 {suggestions.map((text) => (
-                  <button
+                  <Button
                     key={text}
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => sendMessage(text)}
-                    className="text-xs font-medium px-3.5 py-2 rounded-full bg-surface-container-high text-on-surface hover:bg-primary-container hover:text-primary border border-outline-variant/40 transition-colors cursor-pointer text-center shadow-2xs"
+                    className="text-xs font-medium px-3.5 py-2 rounded-full bg-surface-container-high text-on-surface hover:bg-primary-container hover:text-primary border-outline-variant/40 text-center shadow-2xs h-auto"
                   >
                     {text}
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -356,15 +363,15 @@ export function LearnPageAIChatbot({
         aria-label="Khung gửi tin nhắn cho Trợ lý AI"
         className="p-3 bg-surface-container-lowest flex flex-col gap-2 shrink-0"
       >
-        <div className="flex items-center gap-2 bg-surface-container-low border border-outline-variant/30 rounded-full pl-4 pr-1.5 py-1.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors">
-          <input
+        <div className="flex items-center gap-2 bg-surface-container-low border border-outline-variant/30 rounded-full pl-2 pr-1.5 py-1 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors">
+          <Input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Hỏi tôi bất cứ điều gì…"
             aria-label="Nhập câu hỏi cho Trợ lý AI"
             spellCheck={false}
-            className="flex-1 bg-transparent text-xs text-on-surface placeholder:text-on-surface-variant/70 border-none focus-visible:outline-none py-1"
+            className="flex-1 bg-transparent border-none outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 shadow-none text-xs text-on-surface placeholder:text-on-surface-variant/70 py-1"
           />
           <Button
             type="submit"

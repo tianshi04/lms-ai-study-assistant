@@ -150,14 +150,16 @@ export function PartnersCatalogClient() {
               className="pl-10 pr-9 bg-background border-border text-foreground rounded-xl text-xs"
             />
             {searchQuery && (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => handleSearchChange("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded p-0.5"
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground hover:text-foreground"
                 aria-label="Xóa từ khóa tìm kiếm"
               >
                 <X aria-hidden="true" className="w-4 h-4" />
-              </button>
+              </Button>
             )}
           </div>
 
@@ -326,17 +328,20 @@ export function PartnersCatalogClient() {
                   </Button>
 
                   {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
-                    <button
+                    <Button
+                      type="button"
                       key={page}
+                      variant={currentPage === page ? "primary" : "outline"}
+                      size="icon"
                       onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                      className={`w-8 h-8 rounded-xl text-xs font-bold ${
                         currentPage === page
                           ? "bg-primary text-primary-foreground shadow-xs"
-                          : "bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                          : "bg-card border-border text-muted-foreground hover:text-foreground hover:bg-muted"
                       }`}
                     >
                       {page}
-                    </button>
+                    </Button>
                   ))}
 
                   <Button

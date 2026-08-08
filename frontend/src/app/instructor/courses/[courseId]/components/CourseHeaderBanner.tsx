@@ -14,6 +14,7 @@ import {
   Users,
 } from "lucide-react";
 import { CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
+import { Button } from "@/components/ui/Button";
 
 interface CourseHeaderBannerProps {
   course: Course;
@@ -126,25 +127,27 @@ export function CourseHeaderBanner({
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {(course.status === CourseStatus.DRAFT || course.status === CourseStatus.REJECTED) && (
-            <button
+            <Button
               type="button"
               onClick={onSubmitForLaunch}
               disabled={submittingLaunch}
-              className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-lg shadow-primary/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              isLoading={submittingLaunch}
+              className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-lg shadow-primary/20"
             >
               <Check className="w-4 h-4" aria-hidden="true" />
-              <span aria-live="polite">{submittingLaunch ? "Đang nộp…" : "Gửi duyệt mở lớp"}</span>
-            </button>
+              <span>{"Gửi duyệt mở lớp"}</span>
+            </Button>
           )}
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={onExportScorm}
             disabled={saving}
-            className="px-3.5 py-2.5 rounded-xl bg-warning/10 text-warning border border-warning/20 text-xs font-bold hover:bg-warning/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="bg-warning/10 text-warning border-warning/20 text-xs font-bold hover:bg-warning/20"
           >
             <Download className="w-4 h-4" aria-hidden="true" />
             <span>{"Xuất SCORM 1.2 ZIP"}</span>
-          </button>
+          </Button>
 
           <label className="px-3.5 py-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
             <Upload className="w-4 h-4" aria-hidden="true" />
@@ -190,25 +193,26 @@ export function CourseHeaderBanner({
           </Link>
 
           {onOpenCollaboratorsModal && (
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={onOpenCollaboratorsModal}
-              className="px-4 py-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="bg-primary/10 text-primary border-primary/20 text-xs font-bold hover:bg-primary/20"
             >
               <Users className="w-4 h-4" aria-hidden="true" />
               <span>{"Người hợp tác"}</span>
-            </button>
+            </Button>
           )}
 
           {isInstructorOrAdmin && (
-            <button
+            <Button
               type="button"
               onClick={onAddWeek}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-full sm:w-auto font-bold text-sm shrink-0"
             >
               <Plus className="w-5 h-5" aria-hidden="true" />
               <span>{"Thêm Tuần học"}</span>
-            </button>
+            </Button>
           )}
         </div>
       </div>

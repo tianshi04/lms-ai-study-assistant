@@ -7,17 +7,18 @@ import {
   useCancelInvitationMutation,
 } from "@/lib/query_hooks";
 import { InvitationType } from "@/gen/identity/v1/identity_pb";
+import { Modal } from "@/components/ui/Modal";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import {
-  Mail,
-  Send,
-  Loader2,
-  X,
-  CheckCircle2,
-  AlertCircle,
-  Copy,
-  Check,
-  UserX,
-} from "lucide-react";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
+import { Send, Loader2, CheckCircle2, AlertCircle, Copy, Check, UserX } from "lucide-react";
 
 interface InviteMemberModalProps {
   isOpen: boolean;
@@ -103,40 +104,32 @@ export function InviteMemberModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-      <div className="bg-card text-foreground border border-border w-full max-w-lg rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
-          <div className="flex items-center space-x-2">
-            <Mail className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold">Mời tham gia {targetName}</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Mời tham gia ${targetName}`}
+      className="max-w-lg"
+    >
+      <div className="flex flex-col max-h-[80vh] overflow-hidden">
         {/* Tabs */}
         <div className="flex border-b border-border bg-muted/10 px-6 pt-2">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => setActiveTab("send")}
-            className={`pb-2 px-4 text-sm font-medium border-b-2 transition-colors ${
+            className={`pb-2 px-4 text-sm font-medium border-b-2 rounded-b-none transition-colors ${
               activeTab === "send"
                 ? "border-primary text-primary font-semibold"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             Gửi lời mời mới
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => setActiveTab("pending")}
-            className={`pb-2 px-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
+            className={`pb-2 px-4 text-sm font-medium border-b-2 rounded-b-none transition-colors ${
               activeTab === "pending"
                 ? "border-primary text-primary font-semibold"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -148,7 +141,7 @@ export function InviteMemberModal({
                 {pendingInvitations.length}
               </span>
             )}
-          </button>
+          </Button>
         </div>
 
         {/* Content Body */}
@@ -159,14 +152,13 @@ export function InviteMemberModal({
                 <label htmlFor="invitee-email" className="block text-sm font-medium mb-1">
                   Email người nhận <span className="text-destructive">*</span>
                 </label>
-                <input
+                <Input
                   id="invitee-email"
                   type="email"
                   required
                   placeholder="nhanvien@domain.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
                 />
               </div>
 
@@ -175,18 +167,18 @@ export function InviteMemberModal({
                   <label htmlFor="invitee-role" className="block text-sm font-medium mb-1">
                     Vai trò gán cho người dùng
                   </label>
-                  <select
-                    id="invitee-role"
-                    value={roleId}
-                    onChange={(e) => setRoleId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
-                  >
-                    {rolesList.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.label}
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={roleId} onValueChange={(val) => val && setRoleId(val)}>
+                    <SelectTrigger id="invitee-role" className="w-full">
+                      <SelectValue placeholder="Chọn vai trò" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {rolesList.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>
+                          {r.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 
@@ -194,13 +186,12 @@ export function InviteMemberModal({
                 <label htmlFor="invitee-message" className="block text-sm font-medium mb-1">
                   Lời nhắn gửi kèm (Tùy chọn)
                 </label>
-                <textarea
+                <Textarea
                   id="invitee-message"
                   rows={2}
                   placeholder="Ví dụ: Rất mong bạn tham gia đội ngũ giảng dạy khóa học này..."
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
                 />
               </div>
 
@@ -214,9 +205,9 @@ export function InviteMemberModal({
                 >
                   <div className="flex items-center gap-2 font-medium">
                     {feedback.type === "success" ? (
-                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
                     ) : (
-                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
                     )}
                     <span>{feedback.text}</span>
                   </div>
@@ -228,46 +219,35 @@ export function InviteMemberModal({
                           ? `${window.location.origin}/invitations/${feedback.token}`
                           : feedback.token}
                       </span>
-                      <button
+                      <Button
                         type="button"
+                        size="sm"
                         onClick={() => handleCopyLink(feedback.token!, "new")}
-                        className="px-2.5 py-1 rounded-md bg-success/20 hover:bg-success/30 text-xs font-semibold flex items-center gap-1 transition-colors shrink-0"
+                        className="bg-success/20 hover:bg-success/30 text-success text-xs shrink-0"
                       >
                         {copiedTokenId === "new" ? (
                           <>
-                            <Check className="w-3.5 h-3.5" /> Đã chép
+                            <Check className="w-3.5 h-3.5" aria-hidden="true" /> Đã chép
                           </>
                         ) : (
                           <>
-                            <Copy className="w-3.5 h-3.5" /> Sao chép link
+                            <Copy className="w-3.5 h-3.5" aria-hidden="true" /> Sao chép link
                           </>
                         )}
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
               )}
 
               <div className="pt-2 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 text-sm font-medium border border-input rounded-md hover:bg-muted transition-colors"
-                >
+                <Button type="button" variant="outline" onClick={onClose}>
                   Đóng
-                </button>
-                <button
-                  type="submit"
-                  disabled={createMutation.isPending || !email.trim()}
-                  className="px-4 py-2 text-sm font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  {createMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
+                </Button>
+                <Button type="submit" disabled={!email.trim()} isLoading={createMutation.isPending}>
+                  <Send className="w-4 h-4" aria-hidden="true" />
                   Gửi lời mời
-                </button>
+                </Button>
               </div>
             </form>
           )}
@@ -276,14 +256,14 @@ export function InviteMemberModal({
             <div className="space-y-3">
               {isLoadingPending && (
                 <div className="flex justify-center py-8 text-muted-foreground gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
                   <span className="text-sm">Đang danh sách lời mời...</span>
                 </div>
               )}
 
               {!isLoadingPending && (!pendingInvitations || pendingInvitations.length === 0) && (
                 <div className="text-center py-8 text-muted-foreground space-y-1">
-                  <UserX className="w-8 h-8 mx-auto opacity-50" />
+                  <UserX className="w-8 h-8 mx-auto opacity-50" aria-hidden="true" />
                   <p className="text-sm">Chưa có lời mời nào đang chờ xử lý.</p>
                 </div>
               )}
@@ -301,14 +281,16 @@ export function InviteMemberModal({
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="sm"
                       disabled={cancelMutation.isPending}
                       onClick={() => cancelMutation.mutate({ invitationId: inv.id })}
-                      className="px-2.5 py-1 text-xs rounded-md border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors"
+                      className="text-xs text-destructive hover:bg-destructive/10 border border-destructive/30"
                     >
                       Hủy
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -316,6 +298,6 @@ export function InviteMemberModal({
           )}
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

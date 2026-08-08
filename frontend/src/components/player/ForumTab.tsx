@@ -364,22 +364,26 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                         </span>
                       )}
                       {isThreadAuthor && (
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => startEditThread(thread)}
-                          className="text-[10px] font-bold text-on-surface-variant hover:text-primary cursor-pointer ml-1 rounded-sm p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="text-[10px] font-bold text-on-surface-variant hover:text-primary h-auto p-0.5"
                         >
                           {"Sửa"}
-                        </button>
+                        </Button>
                       )}
                       {canDeleteThread && (
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleDeleteThread(thread.id)}
-                          className="text-[10px] font-bold text-on-surface-variant hover:text-destructive cursor-pointer ml-1 rounded-sm p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="text-[10px] font-bold text-on-surface-variant hover:text-destructive h-auto p-0.5"
                         >
                           {"Xóa"}
-                        </button>
+                        </Button>
                       )}
                     </div>
 
@@ -419,22 +423,25 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                         </div>
                       </div>
                     ) : (
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
                         onClick={() => setSelectedModalThreadId(thread.id)}
-                        className="text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg cursor-pointer group/title"
+                        className="text-left w-full justify-start h-auto p-0 group/title hover:bg-transparent shadow-none"
                         title="Bấm để mở rộng bài viết"
                       >
-                        <h4 className="font-bold text-on-surface text-sm group-hover/title:text-primary transition-colors">
+                        <h4 className="font-bold text-on-surface text-sm group-hover/title:text-primary transition-colors text-left">
                           {thread.title}
                         </h4>
-                      </button>
+                      </Button>
                     )}
                   </div>
 
-                  <button
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={() => handleVote(thread.id, true)}
-                    className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    className={`rounded-full text-xs font-bold ${
                       thread.isUpvotedByMe
                         ? "bg-primary-container border-primary/30 text-on-primary-container"
                         : "bg-surface-container-lowest border-outline-variant text-on-surface hover:bg-surface-container-high"
@@ -444,10 +451,10 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                   >
                     <ChevronUp
                       aria-hidden="true"
-                      className={`w-3.5 h-3.5 ${thread.isUpvotedByMe ? "text-on-primary-container" : "text-primary"}`}
+                      className={`w-4 h-4 ${thread.isUpvotedByMe ? "text-primary font-extrabold" : ""}`}
                     />
                     <span>{thread.upvoteCount}</span>
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Replies */}

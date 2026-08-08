@@ -619,14 +619,16 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
             </label>
             <div className="flex items-center gap-1.5 justify-center py-2">
               {[1, 2, 3, 4, 5].map((star) => (
-                <button
+                <Button
                   key={star}
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setRating(star)}
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
                   aria-label={`Đánh giá ${star} sao`}
-                  className="p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md cursor-pointer"
+                  className="h-8 w-8 p-1"
                 >
                   <Star
                     aria-hidden="true"
@@ -636,7 +638,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                         : "text-muted-foreground/40 fill-none"
                     }`}
                   />
-                </button>
+                </Button>
               ))}
             </div>
           </div>
