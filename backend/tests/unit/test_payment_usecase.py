@@ -18,6 +18,17 @@ from src.modules.payment.domain.entities import (
 )
 
 from src.modules.payment.domain.repositories import IPaymentRepository
+from src.shared.config import settings
+
+
+@pytest.fixture(autouse=True)
+def mock_vnpay_config():
+    """Inject mock VNPay credentials during unit tests when global defaults are empty."""
+    with (
+        patch.object(settings, "VNPAY_TMN_CODE", "TEST_TMN_CODE"),
+        patch.object(settings, "VNPAY_HASH_SECRET", "TEST_HASH_SECRET"),
+    ):
+        yield
 
 
 class InMemoryPaymentRepository(IPaymentRepository):
