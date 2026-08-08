@@ -42,7 +42,7 @@ export function AccordionContent({
     <BaseAccordion.Panel
       ref={ref}
       className={cn(
-        "overflow-hidden text-sm transition-colors duration-m3-medium-2 ease-m3-emphasized text-muted-foreground pb-4 pt-0",
+        "overflow-hidden text-sm transition-all duration-m3-medium-2 ease-m3-decelerate text-muted-foreground pb-4 pt-0 data-[state=open]:animate-collapse-down data-[state=closed]:animate-collapse-up",
         className,
       )}
       {...props}
