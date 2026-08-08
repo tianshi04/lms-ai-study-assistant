@@ -269,7 +269,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                   className="text-primary"
                 >
                   <Pencil className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
-                  <span>{"Viết / Sửa đánh giá"}</span>
+                  <span>{"Đánh giá"}</span>
                 </Button>
               </div>
             </div>
