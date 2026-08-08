@@ -1,11 +1,13 @@
-"use client";
-
 import * as React from "react";
 import { Progress as BaseProgress } from "@base-ui/react/progress";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-function ProgressLabel({
+export const ProgressBarRoot = BaseProgress.Root;
+export const ProgressBarTrack = BaseProgress.Track;
+export const ProgressBarIndicator = BaseProgress.Indicator;
+
+export function ProgressBarLabel({
   className,
   children = "Tiến độ",
   ...props
@@ -17,7 +19,7 @@ function ProgressLabel({
   );
 }
 
-function ProgressValue({
+export function ProgressBarValue({
   value,
   className,
   ...props
@@ -32,7 +34,7 @@ function ProgressValue({
   );
 }
 
-const progressBarVariants = cva(
+export const progressBarVariants = cva(
   "h-full transition-colors duration-m3-long-2 ease-m3-emphasized rounded-full",
   {
     variants: {
@@ -49,7 +51,7 @@ const progressBarVariants = cva(
   },
 );
 
-export interface ProgressProps
+export interface ProgressBarProps
   extends
     Omit<React.ComponentProps<typeof BaseProgress.Root>, "color" | "value">,
     VariantProps<typeof progressBarVariants> {
@@ -58,7 +60,7 @@ export interface ProgressProps
   showLabel?: boolean;
 }
 
-function ProgressComponent({
+export function ProgressBar({
   value,
   progress,
   showLabel = false,
@@ -66,7 +68,7 @@ function ProgressComponent({
   className,
   ref,
   ...props
-}: ProgressProps) {
+}: ProgressBarProps) {
   const rawValue = value ?? progress ?? 0;
   const normalizedProgress = Math.min(100, Math.max(0, rawValue));
 
@@ -80,8 +82,8 @@ function ProgressComponent({
     >
       {showLabel && (
         <div className="flex justify-between text-xs font-medium text-muted-foreground">
-          <ProgressLabel />
-          <ProgressValue value={normalizedProgress} />
+          <ProgressBarLabel />
+          <ProgressBarValue value={normalizedProgress} />
         </div>
       )}
       <BaseProgress.Track className="w-full h-2 bg-secondary-container rounded-full overflow-hidden block">
@@ -94,10 +96,10 @@ function ProgressComponent({
   );
 }
 
-export const Progress = Object.assign(ProgressComponent, {
-  Root: BaseProgress.Root,
-  Track: BaseProgress.Track,
-  Indicator: BaseProgress.Indicator,
-  Label: ProgressLabel,
-  Value: ProgressValue,
+export const Progress = Object.assign(ProgressBar, {
+  Root: ProgressBarRoot,
+  Track: ProgressBarTrack,
+  Indicator: ProgressBarIndicator,
+  Label: ProgressBarLabel,
+  Value: ProgressBarValue,
 });

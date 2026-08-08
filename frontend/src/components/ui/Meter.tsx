@@ -1,15 +1,19 @@
-"use client";
-
 import * as React from "react";
 import { Meter as BaseMeter } from "@base-ui/react/meter";
 import { cn } from "@/lib/utils";
+
+export const MeterRoot = BaseMeter.Root;
+export const MeterTrack = BaseMeter.Track;
+export const MeterIndicator = BaseMeter.Indicator;
+export const MeterLabel = BaseMeter.Label;
+export const MeterValue = BaseMeter.Value;
 
 export interface MeterProps extends React.ComponentProps<typeof BaseMeter.Root> {
   label?: string;
   showValue?: boolean;
 }
 
-export function MeterComponent({ label, showValue = true, className, ref, ...props }: MeterProps) {
+export function Meter({ label, showValue = true, className, ref, ...props }: MeterProps) {
   return (
     <div className="space-y-1.5 w-full">
       {(label || showValue) && (
@@ -32,11 +36,3 @@ export function MeterComponent({ label, showValue = true, className, ref, ...pro
     </div>
   );
 }
-
-export const Meter = Object.assign(MeterComponent, {
-  Root: BaseMeter.Root,
-  Track: BaseMeter.Track,
-  Indicator: BaseMeter.Indicator,
-  Label: BaseMeter.Label,
-  Value: BaseMeter.Value,
-});

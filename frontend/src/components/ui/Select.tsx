@@ -1,11 +1,13 @@
-"use client";
-
 import * as React from "react";
 import { Select as BaseSelect } from "@base-ui/react/select";
 import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-function SelectTrigger({
+export const SelectRoot = BaseSelect.Root;
+export const SelectValue = BaseSelect.Value;
+export const SelectPortal = BaseSelect.Portal;
+
+export function SelectTrigger({
   className,
   children,
   ref,
@@ -28,14 +30,14 @@ function SelectTrigger({
   );
 }
 
-function SelectContent({
+export function SelectContent({
   className,
   children,
   ref,
   ...props
 }: React.ComponentProps<typeof BaseSelect.Popup>) {
   return (
-    <BaseSelect.Portal>
+    <SelectPortal>
       <BaseSelect.Positioner
         sideOffset={6}
         className="z-dropdown outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -51,11 +53,11 @@ function SelectContent({
           {children}
         </BaseSelect.Popup>
       </BaseSelect.Positioner>
-    </BaseSelect.Portal>
+    </SelectPortal>
   );
 }
 
-function SelectItem({
+export function SelectItem({
   className,
   children,
   ref,

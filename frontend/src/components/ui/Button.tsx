@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";

@@ -1,10 +1,10 @@
-"use client";
-
 import * as React from "react";
 import { Collapsible as BaseCollapsible } from "@base-ui/react/collapsible";
 import { cn } from "@/lib/utils";
 
-function CollapsibleTrigger({
+export const Collapsible = BaseCollapsible.Root;
+
+export function CollapsibleTrigger({
   className,
   ref,
   ...props
@@ -21,7 +21,7 @@ function CollapsibleTrigger({
   );
 }
 
-function CollapsibleContent({
+export function CollapsibleContent({
   className,
   ref,
   ...props
@@ -37,10 +37,3 @@ function CollapsibleContent({
     />
   );
 }
-
-export const Collapsible = Object.assign(BaseCollapsible.Root, {
-  Root: BaseCollapsible.Root,
-  Trigger: CollapsibleTrigger,
-  Panel: CollapsibleContent,
-  Content: CollapsibleContent,
-});

@@ -12,7 +12,13 @@ import { Textarea } from "@/components/ui/Textarea";
 import { VideoUploadWidget } from "@/components/course/VideoUploadWidget";
 import { InVideoQuizEditor, type InVideoQuizItem } from "@/components/course/InVideoQuizEditor";
 import type { LearningItemPayload } from "../../hooks/useCourseBuilder";
-import { Select } from "@/components/ui/Select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 import {
   Code,
   FileText,
@@ -204,12 +210,12 @@ export function LearningItemFormModal({
                     if (val) setItemType(Number(val) as ItemType);
                   }}
                 >
-                  <Select.Trigger
+                  <SelectTrigger
                     id="itemTypeSelect"
                     aria-label="Loại nội dung"
                     className="w-full bg-card shadow-2xs"
                   >
-                    <Select.Value placeholder="Chọn loại nội dung">
+                    <SelectValue placeholder="Chọn loại nội dung">
                       {itemType === ItemType.VIDEO
                         ? "🎬 VIDEO (Bài giảng Video)"
                         : itemType === ItemType.READING
@@ -223,28 +229,28 @@ export function LearningItemFormModal({
                                 : itemType === ItemType.GRADED_QUIZ
                                   ? "🏆 GRADED_QUIZ (Trắc nghiệm Tính điểm)"
                                   : ""}
-                    </Select.Value>
-                  </Select.Trigger>
-                  <Select.Content>
-                    <Select.Item value={String(ItemType.VIDEO)}>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={String(ItemType.VIDEO)}>
                       🎬 VIDEO (Bài giảng Video)
-                    </Select.Item>
-                    <Select.Item value={String(ItemType.READING)}>
+                    </SelectItem>
+                    <SelectItem value={String(ItemType.READING)}>
                       📖 READING (Bài đọc Markdown)
-                    </Select.Item>
-                    <Select.Item value={String(ItemType.AUTO_GRADED_LAB)}>
+                    </SelectItem>
+                    <SelectItem value={String(ItemType.AUTO_GRADED_LAB)}>
                       💻 AUTO_GRADED_LAB (Thực hành Code)
-                    </Select.Item>
-                    <Select.Item value={String(ItemType.PEER_REVIEW)}>
+                    </SelectItem>
+                    <SelectItem value={String(ItemType.PEER_REVIEW)}>
                       👥 PEER_REVIEW (Đánh giá chéo)
-                    </Select.Item>
-                    <Select.Item value={String(ItemType.PRACTICE_QUIZ)}>
+                    </SelectItem>
+                    <SelectItem value={String(ItemType.PRACTICE_QUIZ)}>
                       ✏️ PRACTICE_QUIZ (Trắc nghiệm Luyện tập)
-                    </Select.Item>
-                    <Select.Item value={String(ItemType.GRADED_QUIZ)}>
+                    </SelectItem>
+                    <SelectItem value={String(ItemType.GRADED_QUIZ)}>
                       🏆 GRADED_QUIZ (Trắc nghiệm Tính điểm)
-                    </Select.Item>
-                  </Select.Content>
+                    </SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
 
@@ -368,12 +374,12 @@ export function LearningItemFormModal({
                         if (val) setLabLanguage(val as string);
                       }}
                     >
-                      <Select.Trigger
+                      <SelectTrigger
                         id="labLanguage"
                         aria-label="Ngôn ngữ lập trình"
                         className="w-full bg-card"
                       >
-                        <Select.Value placeholder="Chọn ngôn ngữ">
+                        <SelectValue placeholder="Chọn ngôn ngữ">
                           {labLanguage === "python"
                             ? "Python 3"
                             : labLanguage === "javascript"
@@ -381,13 +387,13 @@ export function LearningItemFormModal({
                               : labLanguage === "cpp"
                                 ? "C++"
                                 : labLanguage}
-                        </Select.Value>
-                      </Select.Trigger>
-                      <Select.Content>
-                        <Select.Item value="python">Python 3</Select.Item>
-                        <Select.Item value="javascript">JavaScript (Node.js)</Select.Item>
-                        <Select.Item value="cpp">C++</Select.Item>
-                      </Select.Content>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="python">Python 3</SelectItem>
+                        <SelectItem value="javascript">JavaScript (Node.js)</SelectItem>
+                        <SelectItem value="cpp">C++</SelectItem>
+                      </SelectContent>
                     </Select>
                   </div>
                 </div>
@@ -432,28 +438,28 @@ export function LearningItemFormModal({
                       setQuizBankId((val as string) || "");
                     }}
                   >
-                    <Select.Trigger
+                    <SelectTrigger
                       id="quizBankId"
                       aria-label="Ngân hàng Câu hỏi liên kết"
                       className="w-full bg-card"
                     >
-                      <Select.Value placeholder="-- Chọn Ngân hàng Câu hỏi --">
+                      <SelectValue placeholder="-- Chọn Ngân hàng Câu hỏi --">
                         {(() => {
                           const bank = questionBanks.find((b) => b.id === quizBankId);
                           return bank
                             ? `${bank.title} (${bank.questions?.length || 0} câu hỏi trong ngân hàng)`
                             : "-- Chọn Ngân hàng Câu hỏi --";
                         })()}
-                      </Select.Value>
-                    </Select.Trigger>
-                    <Select.Content>
-                      <Select.Item value="">-- Chọn Ngân hàng Câu hỏi --</Select.Item>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">-- Chọn Ngân hàng Câu hỏi --</SelectItem>
                       {questionBanks.map((bank) => (
-                        <Select.Item key={bank.id} value={bank.id}>
+                        <SelectItem key={bank.id} value={bank.id}>
                           {`${bank.title} (${bank.questions?.length || 0} câu hỏi)`}
-                        </Select.Item>
+                        </SelectItem>
                       ))}
-                    </Select.Content>
+                    </SelectContent>
                   </Select>
                 </div>
 

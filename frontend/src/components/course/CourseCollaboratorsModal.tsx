@@ -1,12 +1,25 @@
 "use client";
 
 import React, { useState } from "react";
-import { Dialog } from "@/components/ui/Dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/Dialog";
 
-import { AlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import { Select, SelectItem } from "@/components/ui/Select";
 import { Badge } from "@/components/shared/Badge";
 
 import {
@@ -134,15 +147,15 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
           if (!open) onClose();
         }}
       >
-        <Dialog.Content size="lg">
-          <Dialog.Header>
-            <Dialog.Title>Quản lý Người hợp tác Khóa học</Dialog.Title>
-            <Dialog.Description>
+        <DialogContent size="lg">
+          <DialogHeader>
+            <DialogTitle>Quản lý Người hợp tác Khóa học</DialogTitle>
+            <DialogDescription>
               {courseTitle
                 ? `Mời Đồng giảng viên (Co-Instructor) hoặc Trợ giảng (TA) tham gia quản lý khóa học "${courseTitle}".`
                 : "Chủ sở hữu khóa học có quyền mời Đồng giảng viên (Co-Instructor) hoặc Trợ giảng (TA)."}
-            </Dialog.Description>
-          </Dialog.Header>
+            </DialogDescription>
+          </DialogHeader>
           <div className="space-y-6">
             {/* Form thêm người hợp tác */}
             <form
@@ -184,8 +197,8 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
                     Vai trò trong Khóa học
                   </label>
                   <Select value={role} onValueChange={(val) => setRole(val || "co_instructor")}>
-                    <Select.Item value="co_instructor">Đồng giảng viên (Co-Instructor)</Select.Item>
-                    <Select.Item value="ta">Trợ giảng (TA)</Select.Item>
+                    <SelectItem value="co_instructor">Đồng giảng viên (Co-Instructor)</SelectItem>
+                    <SelectItem value="ta">Trợ giảng (TA)</SelectItem>
                   </Select>
                 </div>
                 <div className="sm:col-span-2">
@@ -272,7 +285,7 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
               )}
             </div>
           </div>
-        </Dialog.Content>
+        </DialogContent>
       </Dialog>
 
       <AlertDialog
@@ -281,16 +294,16 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
           if (!open) setRemovingMember(null);
         }}
       >
-        <AlertDialog.Content>
-          <AlertDialog.Header>
-            <AlertDialog.Title>Xác nhận xóa thành viên</AlertDialog.Title>
-            <AlertDialog.Description>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa thành viên</AlertDialogTitle>
+            <AlertDialogDescription>
               {removingMember
                 ? `Bạn có chắc chắn muốn xóa "${removingMember.memberName}" khỏi khóa học?`
                 : ""}
-            </AlertDialog.Description>
-          </AlertDialog.Header>
-          <AlertDialog.Footer>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
             <Button variant="outline" onClick={() => setRemovingMember(null)}>
               Hủy
             </Button>
@@ -301,8 +314,8 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
             >
               Xóa thành viên
             </Button>
-          </AlertDialog.Footer>
-        </AlertDialog.Content>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </>
   );

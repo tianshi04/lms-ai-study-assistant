@@ -13,7 +13,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/shared/Table";
-import { Progress } from "@/components/ui/Progress";
+import { ProgressBar } from "@/components/ui/Progress";
 
 import {
   Breadcrumb,
@@ -188,7 +188,7 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-3">
                             <div className="w-32">
-                              <Progress
+                              <ProgressBar
                                 progress={Math.min(100, student.progressPercent)}
                                 color="emerald"
                               />

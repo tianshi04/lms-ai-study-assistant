@@ -14,7 +14,14 @@ import { FileText, ExternalLink, PlayCircle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toast";
-import { AlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import {
   PageHeader,
   PageHeaderTitle,
@@ -330,23 +337,23 @@ export default function AdminInstructorApplicationsPage() {
           if (!open) setApprovingAppId(null);
         }}
       >
-        <AlertDialog.Content>
-          <AlertDialog.Header>
-            <AlertDialog.Title>Xác nhận phê duyệt đơn Giảng viên</AlertDialog.Title>
-            <AlertDialog.Description>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận phê duyệt đơn Giảng viên</AlertDialogTitle>
+            <AlertDialogDescription>
               Bạn có chắc chắn muốn phê duyệt đơn này và nâng quyền tài khoản tương ứng thành Giảng
               viên?
-            </AlertDialog.Description>
-          </AlertDialog.Header>
-          <AlertDialog.Footer>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
             <Button variant="outline" onClick={() => setApprovingAppId(null)}>
               Hủy
             </Button>
             <Button variant="primary" onClick={executeApprove} isLoading={reviewMutation.isPending}>
               Phê Duyệt
             </Button>
-          </AlertDialog.Footer>
-        </AlertDialog.Content>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </div>
   );

@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Dialog } from "@/components/ui/Dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/Dialog";
 
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -49,12 +55,12 @@ export function WeekFormModal({
         if (!open) onClose();
       }}
     >
-      <Dialog.Content size="md">
-        <Dialog.Header>
-          <Dialog.Title>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>
             {isEdit ? "Chỉnh sửa Tuần học" : "Thêm Tuần học Mới (Week Module)"}
-          </Dialog.Title>
-        </Dialog.Header>
+          </DialogTitle>
+        </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 my-2">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
@@ -83,7 +89,7 @@ export function WeekFormModal({
             />
           </div>
 
-          <Dialog.Footer>
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
@@ -103,9 +109,9 @@ export function WeekFormModal({
             >
               {isEdit ? "Cập nhật Tuần học" : "Xác nhận tạo Tuần học"}
             </Button>
-          </Dialog.Footer>
+          </DialogFooter>
         </form>
-      </Dialog.Content>
+      </DialogContent>
     </Dialog>
   );
 }

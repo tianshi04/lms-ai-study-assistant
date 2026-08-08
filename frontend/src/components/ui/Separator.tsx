@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import { Separator as BaseSeparator } from "@base-ui/react/separator";
 import { cn } from "@/lib/utils";
@@ -9,7 +7,7 @@ export interface SeparatorProps extends React.ComponentProps<typeof BaseSeparato
   _decorative?: boolean;
 }
 
-function SeparatorComponent({
+export function Separator({
   orientation = "horizontal",
   _decorative = true,
   className,
@@ -29,7 +27,3 @@ function SeparatorComponent({
     />
   );
 }
-
-export const Separator = Object.assign(SeparatorComponent, {
-  Root: BaseSeparator,
-});

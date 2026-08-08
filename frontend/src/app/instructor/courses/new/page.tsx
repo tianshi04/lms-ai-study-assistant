@@ -18,7 +18,13 @@ import { Card } from "@/components/shared/Card";
 import { Badge } from "@/components/shared/Badge";
 
 import { Checkbox } from "@/components/ui/Checkbox";
-import { Select } from "@/components/ui/Select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 
 const emptySubscribe = () => () => {};
 
@@ -241,32 +247,32 @@ export default function NewCoursePage() {
                     if (val) setSelectedOrgId(val as string);
                   }}
                 >
-                  <Select.Trigger
+                  <SelectTrigger
                     id="orgSelect"
                     aria-label="Partner / Tổ Chức Đại Diện Bảo Chứng"
                     className="w-full"
                   >
-                    <Select.Value placeholder="Chọn Partner / Tổ chức">
+                    <SelectValue placeholder="Chọn Partner / Tổ chức">
                       {selectedOrgId === "partner_community"
                         ? "🌐 Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)"
                         : (() => {
                             const p = partners.find((p) => p.id === selectedOrgId);
                             return p ? `🏛️ ${p.name} (${p.slug})` : selectedOrgId;
                           })()}
-                    </Select.Value>
-                  </Select.Trigger>
-                  <Select.Content>
-                    <Select.Item value="partner_community">
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="partner_community">
                       {"🌐 Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)"}
-                    </Select.Item>
+                    </SelectItem>
                     {partners
                       .filter((p) => p.id !== "partner_community")
                       .map((p) => (
-                        <Select.Item key={p.id} value={p.id}>
+                        <SelectItem key={p.id} value={p.id}>
                           {`🏛️ ${p.name} (${p.slug})`}
-                        </Select.Item>
+                        </SelectItem>
                       ))}
-                  </Select.Content>
+                  </SelectContent>
                 </Select>
               )}
               <p className="text-xs text-muted-foreground">
@@ -334,20 +340,20 @@ export default function NewCoursePage() {
                   if (val) setSubject(val as string);
                 }}
               >
-                <Select.Trigger
+                <SelectTrigger
                   id="courseSubject"
                   aria-label="Lĩnh Vực Chuyên Môn"
                   className="w-full"
                 >
-                  <Select.Value placeholder="Chọn lĩnh vực">{subject}</Select.Value>
-                </Select.Trigger>
-                <Select.Content>
-                  <Select.Item value="Khoa học Máy tính">{"Khoa học Máy tính"}</Select.Item>
-                  <Select.Item value="Trí tuệ Nhân tạo & AI">{"Trí tuệ Nhân tạo & AI"}</Select.Item>
-                  <Select.Item value="Khoa học Dữ liệu">{"Khoa học Dữ liệu"}</Select.Item>
-                  <Select.Item value="Kinh doanh & Quản trị">{"Kinh doanh & Quản trị"}</Select.Item>
-                  <Select.Item value="Thiết kế & Đồ họa">{"Thiết kế & Đồ họa"}</Select.Item>
-                </Select.Content>
+                  <SelectValue placeholder="Chọn lĩnh vực">{subject}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Khoa học Máy tính">{"Khoa học Máy tính"}</SelectItem>
+                  <SelectItem value="Trí tuệ Nhân tạo & AI">{"Trí tuệ Nhân tạo & AI"}</SelectItem>
+                  <SelectItem value="Khoa học Dữ liệu">{"Khoa học Dữ liệu"}</SelectItem>
+                  <SelectItem value="Kinh doanh & Quản trị">{"Kinh doanh & Quản trị"}</SelectItem>
+                  <SelectItem value="Thiết kế & Đồ họa">{"Thiết kế & Đồ họa"}</SelectItem>
+                </SelectContent>
               </Select>
             </div>
 
@@ -365,8 +371,8 @@ export default function NewCoursePage() {
                   if (val) setLevel(val as string);
                 }}
               >
-                <Select.Trigger id="courseLevel" aria-label="Trình Độ Yêu Cầu" className="w-full">
-                  <Select.Value placeholder="Chọn trình độ">
+                <SelectTrigger id="courseLevel" aria-label="Trình Độ Yêu Cầu" className="w-full">
+                  <SelectValue placeholder="Chọn trình độ">
                     {level === "Sơ cấp"
                       ? "Sơ cấp (Beginner)"
                       : level === "Trung cấp"
@@ -374,13 +380,13 @@ export default function NewCoursePage() {
                         : level === "Nâng cao"
                           ? "Nâng cao (Advanced)"
                           : level}
-                  </Select.Value>
-                </Select.Trigger>
-                <Select.Content>
-                  <Select.Item value="Sơ cấp">{"Sơ cấp (Beginner)"}</Select.Item>
-                  <Select.Item value="Trung cấp">{"Trung cấp (Intermediate)"}</Select.Item>
-                  <Select.Item value="Nâng cao">{"Nâng cao (Advanced)"}</Select.Item>
-                </Select.Content>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Sơ cấp">{"Sơ cấp (Beginner)"}</SelectItem>
+                  <SelectItem value="Trung cấp">{"Trung cấp (Intermediate)"}</SelectItem>
+                  <SelectItem value="Nâng cao">{"Nâng cao (Advanced)"}</SelectItem>
+                </SelectContent>
               </Select>
             </div>
 

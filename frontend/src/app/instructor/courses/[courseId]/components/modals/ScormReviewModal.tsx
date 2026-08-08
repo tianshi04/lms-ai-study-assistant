@@ -1,6 +1,12 @@
 "use client";
 
-import { Dialog } from "@/components/ui/Dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/shared/Badge";
@@ -33,10 +39,10 @@ export function ScormReviewModal({
         if (!open) onClose();
       }}
     >
-      <Dialog.Content size="xl">
-        <Dialog.Header>
-          <Dialog.Title>Import Khóa học Native (Level 1)</Dialog.Title>
-        </Dialog.Header>
+      <DialogContent size="xl">
+        <DialogHeader>
+          <DialogTitle>Import Khóa học Native (Level 1)</DialogTitle>
+        </DialogHeader>
 
         <div className="space-y-6 my-4">
           <div className="space-y-4">
@@ -61,7 +67,7 @@ export function ScormReviewModal({
           </div>
         </div>
 
-        <Dialog.Footer>
+        <DialogFooter>
           <Button
             type="button"
             variant="outline"
@@ -82,8 +88,8 @@ export function ScormReviewModal({
           >
             Xác nhận Import
           </Button>
-        </Dialog.Footer>
-      </Dialog.Content>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
   );
 }

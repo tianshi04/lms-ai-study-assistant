@@ -1,10 +1,10 @@
-"use client";
-
 import * as React from "react";
 import { Tabs as BaseTabs } from "@base-ui/react/tabs";
 import { cn } from "@/lib/utils";
 
-function TabsList({ className, ref, ...props }: React.ComponentProps<typeof BaseTabs.List>) {
+export const TabsRoot = BaseTabs.Root;
+
+export function TabsList({ className, ref, ...props }: React.ComponentProps<typeof BaseTabs.List>) {
   return (
     <BaseTabs.List
       ref={ref}
@@ -14,7 +14,11 @@ function TabsList({ className, ref, ...props }: React.ComponentProps<typeof Base
   );
 }
 
-function TabsTrigger({ className, ref, ...props }: React.ComponentProps<typeof BaseTabs.Tab>) {
+export function TabsTrigger({
+  className,
+  ref,
+  ...props
+}: React.ComponentProps<typeof BaseTabs.Tab>) {
   return (
     <BaseTabs.Tab
       ref={ref}
@@ -30,7 +34,11 @@ function TabsTrigger({ className, ref, ...props }: React.ComponentProps<typeof B
   );
 }
 
-function TabsContent({ className, ref, ...props }: React.ComponentProps<typeof BaseTabs.Panel>) {
+export function TabsContent({
+  className,
+  ref,
+  ...props
+}: React.ComponentProps<typeof BaseTabs.Panel>) {
   return (
     <BaseTabs.Panel
       ref={ref}
@@ -43,11 +51,11 @@ function TabsContent({ className, ref, ...props }: React.ComponentProps<typeof B
   );
 }
 
-export const Tabs = Object.assign(BaseTabs.Root, {
+export const Tabs = {
   Root: BaseTabs.Root,
   List: TabsList,
   Tab: TabsTrigger,
   Trigger: TabsTrigger,
   Panel: TabsContent,
   Content: TabsContent,
-});
+};

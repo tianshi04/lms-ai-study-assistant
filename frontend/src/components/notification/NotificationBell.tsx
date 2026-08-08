@@ -11,7 +11,7 @@ import {
 } from "@/lib/query_hooks";
 import { NotificationItem } from "./NotificationItem";
 import { NotificationPreferencesModal } from "./NotificationPreferencesModal";
-import { Popover } from "@/components/ui/Popover";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover";
 import { Button } from "@/components/ui/Button";
 
 export function NotificationBell() {
@@ -35,25 +35,30 @@ export function NotificationBell() {
 
   return (
     <>
-      <Popover.Root open={isOpen} onOpenChange={setIsOpen}>
-        <Popover.Trigger
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger
           type="button"
-          aria-label="Thông báo"
-          className="relative rounded-full p-2.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer group"
+          className="relative p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 transition-colors duration-m3-short-4 ease-m3-emphasized focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+          aria-label={`Thông báo (${unreadCount} chưa đọc)`}
         >
-          <Bell className="w-5 h-5 transition-transform group-hover:rotate-12" aria-hidden="true" />
+          <Bell className="w-5 h-5" aria-hidden="true" />
           {unreadCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[10px] font-bold text-on-error shadow-sm animate-pulse">
+            <span className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-black text-primary-foreground bg-primary rounded-full animate-in zoom-in-50 duration-m3-short-4 ease-m3-decelerate shadow-md">
               {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           )}
-        </Popover.Trigger>
+        </PopoverTrigger>
 
-        <Popover.Content align="end" sideOffset={12}>
+        <PopoverContent align="end" sideOffset={12}>
           {/* Crisp MD3 Popover Header */}
           <div className="p-4 border-b border-outline-variant/40 flex items-center justify-between bg-surface-container-lowest">
             <div className="flex items-center gap-2">
               <h3 className="text-base font-extrabold text-on-surface">Thông báo</h3>
+              {unreadCount > 0 && (
+                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 animate-pulse">
+                  {unreadCount} mới
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-1.5">
@@ -64,10 +69,11 @@ export function NotificationBell() {
                   size="sm"
                   onClick={handleMarkAllAsRead}
                   disabled={markAllAsReadMutation.isPending || unreadCount === 0}
-                  className="h-8 px-2.5 text-xs text-primary hover:bg-primary/10"
+                  className="text-xs font-bold text-primary hover:bg-primary-container/50 disabled:opacity-40"
+                  title="Đánh dấu tất cả đã đọc"
                 >
-                  <CheckCheck className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
-                  Đã đọc tất cả
+                  <CheckCheck className="w-4 h-4" aria-hidden="true" />
+                  <span className="text-xs font-bold">Đọc tất cả</span>
                 </Button>
               )}
 
@@ -75,50 +81,61 @@ export function NotificationBell() {
                 type="button"
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsPrefModalOpen(true)}
-                className="h-8 w-8 text-on-surface-variant hover:text-on-surface"
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsPrefModalOpen(true);
+                }}
+                className="w-8 h-8 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
                 title="Cài đặt thông báo"
+                aria-label="Cài đặt thông báo"
               >
                 <Settings className="w-4 h-4" aria-hidden="true" />
               </Button>
             </div>
           </div>
 
-          {/* List of Notifications */}
-          <div className="max-h-[380px] overflow-y-auto divide-y divide-outline-variant/30">
+          {/* Scrollable Notifications List - Hidden Scrollbar */}
+          <div className="max-h-[380px] overflow-y-auto scrollbar-none p-3 space-y-2 bg-surface-container-lowest">
             {isLoading ? (
-              <div className="p-8 text-center text-on-surface-variant flex flex-col items-center gap-2">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
-                <span className="text-xs">Đang tải thông báo...</span>
+              <div className="py-10 flex justify-center items-center text-on-surface-variant">
+                <Loader2 className="w-6 h-6 animate-spin" aria-hidden="true" />
               </div>
             ) : notifications.length === 0 ? (
-              <div className="p-8 text-center text-on-surface-variant flex flex-col items-center gap-2">
-                <Bell className="w-8 h-8 text-outline opacity-40" aria-hidden="true" />
-                <p className="text-sm font-medium">Không có thông báo nào</p>
-                <p className="text-xs text-muted-foreground">
-                  Bạn sẽ nhận được thông báo về khóa học, diễn đàn và tài khoản tại đây.
+              <div className="py-10 text-center px-4">
+                <Bell
+                  className="w-10 h-10 text-on-surface-variant/30 mx-auto mb-2"
+                  aria-hidden="true"
+                />
+                <p className="text-sm font-bold text-on-surface">Không có thông báo mới</p>
+                <p className="text-xs text-on-surface-variant mt-1">
+                  Bạn đã cập nhật tất cả thông tin mới nhất!
                 </p>
               </div>
             ) : (
               notifications.map((item) => (
-                <NotificationItem key={item.id} item={item} onMarkAsRead={handleMarkAsRead} />
+                <NotificationItem
+                  key={item.id}
+                  item={item}
+                  compact={true}
+                  onMarkAsRead={handleMarkAsRead}
+                />
               ))
             )}
           </div>
 
-          {/* Footer View All Link */}
-          <div className="p-3 border-t border-outline-variant/40 text-center bg-surface-container-lowest">
+          {/* Full Primary Capsule Button Footer */}
+          <div className="p-3 border-t border-outline-variant/40 bg-surface-container-lowest text-center">
             <Link
               href="/notifications"
               onClick={() => setIsOpen(false)}
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:text-primary-hover transition-colors"
+              className="inline-flex items-center justify-center gap-2 text-xs font-bold bg-primary hover:bg-primary-hover text-on-primary transition-colors w-full py-2.5 rounded-full shadow-sm hover:shadow-md cursor-pointer active:scale-[0.98]"
             >
-              Xem tất cả thông báo
-              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>Xem tất cả thông báo</span>
+              <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </Link>
           </div>
-        </Popover.Content>
-      </Popover.Root>
+        </PopoverContent>
+      </Popover>
 
       {/* Preferences Modal */}
       <NotificationPreferencesModal

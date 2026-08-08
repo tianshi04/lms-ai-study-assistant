@@ -26,7 +26,13 @@ import {
   TableCell,
 } from "@/components/shared/Table";
 
-import { Select } from "@/components/ui/Select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 
 const columnHelper = createColumnHelper<EnterpriseSeat>();
 
@@ -400,25 +406,25 @@ export default function AdminEnterpriseDashboardPage() {
                   if (val) setSelectedSeatKey(val as string);
                 }}
               >
-                <Select.Trigger
+                <SelectTrigger
                   id="selectedSeatKey"
                   aria-label="Chọn Mã Enterprise Key"
                   className="w-full font-mono font-semibold"
                 >
-                  <Select.Value placeholder="Chọn Mã Enterprise Key">
+                  <SelectValue placeholder="Chọn Mã Enterprise Key">
                     {(() => {
                       const s = seats.find((seat) => seat.seatKey === selectedSeatKey);
                       return s ? `${s.partnerName} (${s.seatKey})` : selectedSeatKey;
                     })()}
-                  </Select.Value>
-                </Select.Trigger>
-                <Select.Content>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
                   {seats.map((s) => (
-                    <Select.Item key={s.id} value={s.seatKey}>
+                    <SelectItem key={s.id} value={s.seatKey}>
                       {`${s.partnerName} (${s.seatKey})`}
-                    </Select.Item>
+                    </SelectItem>
                   ))}
-                </Select.Content>
+                </SelectContent>
               </Select>
             </div>
 

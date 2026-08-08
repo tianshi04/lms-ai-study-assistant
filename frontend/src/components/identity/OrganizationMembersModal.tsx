@@ -1,9 +1,22 @@
 "use client";
 
 import React, { useState } from "react";
-import { Dialog } from "@/components/ui/Dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/Dialog";
 
-import { AlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/shared/Badge";
@@ -124,14 +137,14 @@ export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> =
           if (!open) onClose();
         }}
       >
-        <Dialog.Content size="lg">
-          <Dialog.Header>
-            <Dialog.Title>Mời Giảng viên vào Tổ chức</Dialog.Title>
-            <Dialog.Description>
+        <DialogContent size="lg">
+          <DialogHeader>
+            <DialogTitle>Mời Giảng viên vào Tổ chức</DialogTitle>
+            <DialogDescription>
               Chỉ Owner/Admin của Tổ chức mới có quyền mời thành viên mới vào làm Giảng viên
               (Instructor) cho Organization.
-            </Dialog.Description>
-          </Dialog.Header>
+            </DialogDescription>
+          </DialogHeader>
 
           <div className="space-y-6 my-4">
             {/* Form thêm giảng viên */}
@@ -242,7 +255,7 @@ export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> =
               )}
             </div>
           </div>
-        </Dialog.Content>
+        </DialogContent>
       </Dialog>
 
       <AlertDialog
@@ -251,16 +264,16 @@ export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> =
           if (!open) setRemovingMember(null);
         }}
       >
-        <AlertDialog.Content>
-          <AlertDialog.Header>
-            <AlertDialog.Title>Xác nhận xóa thành viên</AlertDialog.Title>
-            <AlertDialog.Description>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa thành viên</AlertDialogTitle>
+            <AlertDialogDescription>
               {removingMember
                 ? `Bạn có chắc chắn muốn xóa "${removingMember.memberName}" khỏi tổ chức?`
                 : ""}
-            </AlertDialog.Description>
-          </AlertDialog.Header>
-          <AlertDialog.Footer>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
             <Button variant="outline" onClick={() => setRemovingMember(null)}>
               Hủy
             </Button>
@@ -271,8 +284,8 @@ export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> =
             >
               Xóa thành viên
             </Button>
-          </AlertDialog.Footer>
-        </AlertDialog.Content>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </>
   );

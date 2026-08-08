@@ -1,14 +1,17 @@
-"use client";
-
 import * as React from "react";
 import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 import { cn } from "@/lib/utils";
 
-interface TooltipContentProps extends React.ComponentProps<typeof BaseTooltip.Positioner> {
+export const TooltipProvider = BaseTooltip.Provider;
+export const TooltipRoot = BaseTooltip.Root;
+export const TooltipTrigger = BaseTooltip.Trigger;
+export const TooltipPortal = BaseTooltip.Portal;
+
+export interface TooltipContentProps extends React.ComponentProps<typeof BaseTooltip.Positioner> {
   children?: React.ReactNode;
 }
 
-function TooltipContent({
+export function TooltipContent({
   className,
   children,
   sideOffset = 4,
@@ -32,13 +35,13 @@ function TooltipContent({
   );
 }
 
-interface SimpleTooltipProps {
+export interface SimpleTooltipProps {
   content: React.ReactNode;
   children: React.ReactNode;
   side?: "top" | "right" | "bottom" | "left";
 }
 
-function TooltipComponent({ content, children, side = "top" }: SimpleTooltipProps) {
+export function Tooltip({ content, children, side = "top" }: SimpleTooltipProps) {
   return (
     <BaseTooltip.Root>
       <BaseTooltip.Trigger
@@ -50,14 +53,3 @@ function TooltipComponent({ content, children, side = "top" }: SimpleTooltipProp
     </BaseTooltip.Root>
   );
 }
-
-export const Tooltip = Object.assign(TooltipComponent, {
-  Provider: BaseTooltip.Provider,
-  Root: BaseTooltip.Root,
-  Trigger: BaseTooltip.Trigger,
-  Portal: BaseTooltip.Portal,
-  Positioner: BaseTooltip.Positioner,
-  Popup: BaseTooltip.Popup,
-  Content: TooltipContent,
-  Arrow: BaseTooltip.Arrow,
-});

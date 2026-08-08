@@ -23,7 +23,14 @@ import {
 } from "@/lib/query_hooks";
 import { PaymentOrderStatus, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
 import { Button } from "@/components/ui/Button";
-import { AlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 
 type FilterTab = "ALL" | "COMPLETED" | "PENDING" | "EXPIRED";
 
@@ -665,10 +672,10 @@ function MyPurchasesContent() {
           }
         }}
       >
-        <AlertDialog.Content>
-          <AlertDialog.Header>
-            <AlertDialog.Title>Xác nhận hủy đơn hàng</AlertDialog.Title>
-            <AlertDialog.Description>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận hủy đơn hàng</AlertDialogTitle>
+            <AlertDialogDescription>
               {orderToCancel && (
                 <span>
                   {"Bạn có chắc chắn muốn hủy đơn hàng "}
@@ -684,9 +691,9 @@ function MyPurchasesContent() {
                   }
                 </span>
               )}
-            </AlertDialog.Description>
-          </AlertDialog.Header>
-          <AlertDialog.Footer>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
             <Button
               variant="outline"
               onClick={() => setOrderToCancel(null)}
@@ -701,8 +708,8 @@ function MyPurchasesContent() {
             >
               {cancelVNPayMutation.isPending ? "Đang xử lý..." : "Đồng ý hủy đơn"}
             </Button>
-          </AlertDialog.Footer>
-        </AlertDialog.Content>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </main>
   );

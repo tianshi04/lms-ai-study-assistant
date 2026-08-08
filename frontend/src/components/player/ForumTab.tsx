@@ -14,7 +14,14 @@ import {
 import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { AlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
@@ -543,22 +550,22 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
           if (!open) setDeletingThreadId(null);
         }}
       >
-        <AlertDialog.Content>
-          <AlertDialog.Header>
-            <AlertDialog.Title>Xác nhận xóa bài viết</AlertDialog.Title>
-            <AlertDialog.Description>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa bài viết</AlertDialogTitle>
+            <AlertDialogDescription>
               Bạn có chắc chắn muốn xóa bài viết này không? Thao tác này không thể hoàn tác.
-            </AlertDialog.Description>
-          </AlertDialog.Header>
-          <AlertDialog.Footer>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
             <Button variant="outline" onClick={() => setDeletingThreadId(null)}>
               Hủy
             </Button>
             <Button variant="danger" onClick={executeDeleteThread} isLoading={isDeletingThread}>
               Xóa bài viết
             </Button>
-          </AlertDialog.Footer>
-        </AlertDialog.Content>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog
@@ -567,22 +574,22 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
           if (!open) setDeletingReplyId(null);
         }}
       >
-        <AlertDialog.Content>
-          <AlertDialog.Header>
-            <AlertDialog.Title>Xác nhận xóa phản hồi</AlertDialog.Title>
-            <AlertDialog.Description>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa phản hồi</AlertDialogTitle>
+            <AlertDialogDescription>
               Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác.
-            </AlertDialog.Description>
-          </AlertDialog.Header>
-          <AlertDialog.Footer>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
             <Button variant="outline" onClick={() => setDeletingReplyId(null)}>
               Hủy
             </Button>
             <Button variant="danger" onClick={executeDeleteReply} isLoading={isDeletingReply}>
               Xóa phản hồi
             </Button>
-          </AlertDialog.Footer>
-        </AlertDialog.Content>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </div>
   );

@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useMyInvitationsQuery, useRespondToInvitationMutation } from "@/lib/query_hooks";
 import { InvitationAction, InvitationStatus, InvitationType } from "@/gen/identity/v1/identity_pb";
 import { Button } from "@/components/ui/Button";
-import { Drawer } from "@/components/ui/Drawer";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+} from "@/components/ui/Drawer";
 import {
   Mail,
   CheckCircle2,
@@ -83,12 +89,12 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
         if (!open) onClose();
       }}
     >
-      <Drawer.Content side="right" className="flex flex-col h-full">
+      <DrawerContent side="right" className="flex flex-col h-full">
         {/* Header */}
-        <Drawer.Header className="flex items-center space-x-2">
+        <DrawerHeader className="flex items-center space-x-2">
           <Mail className="w-5 h-5 text-primary" aria-hidden="true" />
-          <Drawer.Title className="text-lg font-semibold">Lời mời của tôi</Drawer.Title>
-        </Drawer.Header>
+          <DrawerTitle className="text-lg font-semibold">Lời mời của tôi</DrawerTitle>
+        </DrawerHeader>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -211,12 +217,12 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
         </div>
 
         {/* Footer */}
-        <Drawer.Footer>
+        <DrawerFooter>
           <Button type="button" variant="outline" onClick={onClose}>
             Đóng
           </Button>
-        </Drawer.Footer>
-      </Drawer.Content>
+        </DrawerFooter>
+      </DrawerContent>
     </Drawer>
   );
 }

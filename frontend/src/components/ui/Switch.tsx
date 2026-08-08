@@ -1,10 +1,14 @@
-"use client";
-
 import * as React from "react";
 import { Switch as BaseSwitch } from "@base-ui/react/switch";
 import { cn } from "@/lib/utils";
 
 import { FieldRoot, FieldLabel, FieldError, FieldDescription } from "./Field";
+
+export const SwitchRoot = BaseSwitch.Root;
+export const SwitchThumb = BaseSwitch.Thumb;
+export const SwitchLabel = FieldLabel;
+export const SwitchError = FieldError;
+export const SwitchHelperText = FieldDescription;
 
 export interface SwitchProps extends React.ComponentProps<typeof BaseSwitch.Root> {
   label?: string;
@@ -12,7 +16,7 @@ export interface SwitchProps extends React.ComponentProps<typeof BaseSwitch.Root
   helperText?: string;
 }
 
-function SwitchComponent({
+export function Switch({
   label,
   error,
   helperText,
@@ -62,11 +66,3 @@ function SwitchComponent({
     </FieldRoot>
   );
 }
-
-export const Switch = Object.assign(SwitchComponent, {
-  Root: BaseSwitch.Root,
-  Thumb: BaseSwitch.Thumb,
-  Label: FieldLabel,
-  Error: FieldError,
-  HelperText: FieldDescription,
-});

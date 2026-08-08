@@ -1,25 +1,14 @@
-"use client";
-
 import * as React from "react";
 import { Drawer as BaseDrawer } from "@base-ui/react/drawer";
 import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Drawer = Object.assign(BaseDrawer.Root, {
-  Root: BaseDrawer.Root,
-  Trigger: BaseDrawer.Trigger,
-  Portal: BaseDrawer.Portal,
-  Viewport: BaseDrawer.Viewport,
-  Close: BaseDrawer.Close,
-  Backdrop: DrawerBackdrop,
-  Content: DrawerContent,
-  Popup: DrawerContent,
-  Header: DrawerHeader,
-  Title: DrawerTitle,
-  Description: DrawerDescription,
-  Footer: DrawerFooter,
-});
+export const Drawer = BaseDrawer.Root;
+export const DrawerTrigger = BaseDrawer.Trigger;
+export const DrawerPortal = BaseDrawer.Portal;
+export const DrawerViewport = BaseDrawer.Viewport;
+export const DrawerClose = BaseDrawer.Close;
 
 export function DrawerBackdrop({
   className,
@@ -71,7 +60,7 @@ export function DrawerContent({
   ...props
 }: DrawerContentProps) {
   return (
-    <BaseDrawer.Portal>
+    <DrawerPortal>
       <DrawerBackdrop />
       <BaseDrawer.Viewport className="fixed inset-0 z-modal overflow-hidden">
         <BaseDrawer.Popup
@@ -88,7 +77,7 @@ export function DrawerContent({
           )}
         </BaseDrawer.Popup>
       </BaseDrawer.Viewport>
-    </BaseDrawer.Portal>
+    </DrawerPortal>
   );
 }
 

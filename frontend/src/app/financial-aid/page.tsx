@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/shared/Badge";
 
-import { Progress } from "@/components/ui/Progress";
+import { ProgressBar } from "@/components/ui/Progress";
 
 function FinancialAidContent() {
   const searchParams = useSearchParams();
@@ -426,7 +426,7 @@ function FinancialAidContent() {
                   required
                 />
                 <div className="mt-3">
-                  <Progress
+                  <ProgressBar
                     progress={Math.min(100, (wordCount / 150) * 100)}
                     color={isEnoughWords ? "emerald" : "blue"}
                   />

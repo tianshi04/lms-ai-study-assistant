@@ -3,7 +3,14 @@
 import { useState, useEffect } from "react";
 import { Bell, Mail, BookOpen, MessageSquare, Megaphone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Dialog } from "@/components/ui/Dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/Dialog";
 
 import { Switch } from "@/components/ui/Switch";
 import {
@@ -39,36 +46,34 @@ export function NotificationPreferencesModal({
     }
   }, [prefs]);
 
-  const handleSave = () => {
-    updateMutation.mutate(
-      {
+  const handleSave = async () => {
+    try {
+      await updateMutation.mutateAsync({
         $typeName: "notification.v1.NotificationPreferences",
         enableInApp,
         enableEmail,
         enableAcademicReminders,
         enableCommunityReplies,
         enableAnnouncements,
-      },
-      {
-        onSuccess: () => {
-          onClose();
-        },
-      },
-    );
+      });
+      onClose();
+    } catch {
+      // Handled via mutation state
+    }
   };
 
   return (
-    <Dialog.Root
+    <Dialog
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <Dialog.Content size="md">
-        <Dialog.Header>
-          <Dialog.Title>Cài đặt Thông báo</Dialog.Title>
-          <Dialog.Description>Tùy chỉnh kênh và danh mục nhận thông báo</Dialog.Description>
-        </Dialog.Header>
+      <DialogContent size="md">
+        <DialogHeader>
+          <DialogTitle>Cài đặt Thông báo</DialogTitle>
+          <DialogDescription>Tùy chỉnh kênh và danh mục nhận thông báo</DialogDescription>
+        </DialogHeader>
 
         {isLoading ? (
           <div className="py-12 flex justify-center items-center text-muted-foreground">
@@ -120,64 +125,64 @@ export function NotificationPreferencesModal({
 
             <div className="space-y-3 pt-2">
               <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Danh mục thông báo
+                Danh mục nội dung
               </h4>
 
               <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-background">
                 <div className="flex items-center gap-3">
-                  <BookOpen className="w-4 h-4 text-primary" aria-hidden="true" />
+                  <BookOpen className="w-4 h-4 text-success" aria-hidden="true" />
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Nhắc nhở học tập</p>
+                    <p className="text-sm font-semibold text-foreground">Học tập & Hạn nộp bài</p>
                     <p className="text-xs text-muted-foreground">
-                      Lịch học, deadline bài tập và tiến độ khóa học
+                      Nhắc nhở bài thi, trễ hạn, đơn Financial Aid
                     </p>
                   </div>
                 </div>
                 <Switch
                   checked={enableAcademicReminders}
                   onCheckedChange={(checked) => setEnableAcademicReminders(checked)}
-                  aria-label="Nhắc nhở học tập"
+                  aria-label="Học tập & Hạn nộp bài"
                 />
               </div>
 
               <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-background">
                 <div className="flex items-center gap-3">
-                  <MessageSquare className="w-4 h-4 text-primary" aria-hidden="true" />
+                  <MessageSquare className="w-4 h-4 text-accent-foreground" aria-hidden="true" />
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Hoạt động thảo luận</p>
+                    <p className="text-sm font-semibold text-foreground">Diễn đàn & Tương tác</p>
                     <p className="text-xs text-muted-foreground">
-                      Phản hồi bài viết, nhắc đến bạn trong diễn đàn
+                      Phản hồi câu hỏi, ghim câu trả lời chuẩn
                     </p>
                   </div>
                 </div>
                 <Switch
                   checked={enableCommunityReplies}
                   onCheckedChange={(checked) => setEnableCommunityReplies(checked)}
-                  aria-label="Hoạt động thảo luận"
+                  aria-label="Diễn đàn & Tương tác"
                 />
               </div>
 
               <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-background">
                 <div className="flex items-center gap-3">
-                  <Megaphone className="w-4 h-4 text-primary" aria-hidden="true" />
+                  <Megaphone className="w-4 h-4 text-destructive" aria-hidden="true" />
                   <div>
-                    <p className="text-sm font-semibold text-foreground">Thông báo hệ thống</p>
+                    <p className="text-sm font-semibold text-foreground">Thông báo từ Khóa học</p>
                     <p className="text-xs text-muted-foreground">
-                      Cập nhật tính năng mới và thông báo từ ban quản trị
+                      Truyền thông, lịch livestream từ Giảng viên
                     </p>
                   </div>
                 </div>
                 <Switch
                   checked={enableAnnouncements}
                   onCheckedChange={(checked) => setEnableAnnouncements(checked)}
-                  aria-label="Thông báo hệ thống"
+                  aria-label="Thông báo từ Khóa học"
                 />
               </div>
             </div>
           </div>
         )}
 
-        <Dialog.Footer>
+        <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Hủy
           </Button>
@@ -191,8 +196,8 @@ export function NotificationPreferencesModal({
             )}
             <span>Lưu cài đặt</span>
           </Button>
-        </Dialog.Footer>
-      </Dialog.Content>
-    </Dialog.Root>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

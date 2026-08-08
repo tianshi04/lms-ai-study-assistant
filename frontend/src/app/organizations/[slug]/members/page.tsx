@@ -25,8 +25,21 @@ import {
 
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { Select } from "@/components/ui/Select";
-import { AlertDialog } from "@/components/ui/AlertDialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import { Dialog } from "@/components/ui/Dialog";
 
 import {
@@ -332,20 +345,20 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                     if (val) setInviteRole(val as string);
                   }}
                 >
-                  <Select.Trigger id="inviteRoleSelect" className="w-full">
-                    <Select.Value placeholder="Chọn vai trò">
+                  <SelectTrigger id="inviteRoleSelect" className="w-full">
+                    <SelectValue placeholder="Chọn vai trò">
                       {inviteRole === "ORG_ADMIN"
                         ? "Quản trị viên Tổ chức (ORG_ADMIN)"
                         : inviteRole === "INSTRUCTOR"
                           ? "Giảng viên (INSTRUCTOR)"
                           : "Thành viên / Học viên (MEMBER)"}
-                    </Select.Value>
-                  </Select.Trigger>
-                  <Select.Content>
-                    <Select.Item value="ORG_ADMIN">Quản trị viên Tổ chức (ORG_ADMIN)</Select.Item>
-                    <Select.Item value="INSTRUCTOR">Giảng viên (INSTRUCTOR)</Select.Item>
-                    <Select.Item value="MEMBER">Thành viên / Học viên (MEMBER)</Select.Item>
-                  </Select.Content>
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ORG_ADMIN">Quản trị viên Tổ chức (ORG_ADMIN)</SelectItem>
+                    <SelectItem value="INSTRUCTOR">Giảng viên (INSTRUCTOR)</SelectItem>
+                    <SelectItem value="MEMBER">Thành viên / Học viên (MEMBER)</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
 
@@ -381,16 +394,16 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
             if (!open) setRemovingMember(null);
           }}
         >
-          <AlertDialog.Content>
-            <AlertDialog.Header>
-              <AlertDialog.Title>Xóa thành viên khỏi Tổ chức</AlertDialog.Title>
-              <AlertDialog.Description>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Xóa thành viên khỏi Tổ chức</AlertDialogTitle>
+              <AlertDialogDescription>
                 {removingMember
                   ? `Bạn có chắc chắn muốn xóa thành viên "${removingMember.memberName}" khỏi tổ chức không? Thao tác này không thể hoàn tác.`
                   : ""}
-              </AlertDialog.Description>
-            </AlertDialog.Header>
-            <AlertDialog.Footer>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
               <Button variant="outline" onClick={() => setRemovingMember(null)}>
                 Hủy
               </Button>
@@ -408,8 +421,8 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               >
                 Xóa Thành Viên
               </Button>
-            </AlertDialog.Footer>
-          </AlertDialog.Content>
+            </AlertDialogFooter>
+          </AlertDialogContent>
         </AlertDialog>
       </main>
     </div>

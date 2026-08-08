@@ -22,7 +22,12 @@ import {
 } from "lucide-react";
 import { useListUserPurchasesQuery } from "@/lib/query_hooks";
 import { PaymentOrderStatus, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
-import { Menu } from "@/components/ui/Menu";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/Menu";
 
 const itemClasses =
   "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/70 font-medium justify-start gap-3 w-full rounded-xl px-3.5 py-2.5 my-0.5 transition-colors cursor-pointer";
@@ -141,8 +146,8 @@ export function UserDropdown() {
   }, [userRole, isSuperAdmin]);
 
   return (
-    <Menu.Root>
-      <Menu.Trigger
+    <DropdownMenu>
+      <DropdownMenuTrigger
         className="relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer group p-0.5 border border-outline-variant hover:border-primary shrink-0"
         aria-label={displayUserName || "Tài khoản người dùng"}
       >
@@ -154,9 +159,9 @@ export function UserDropdown() {
           unoptimized
           className="w-9 h-9 rounded-full bg-primary-container object-cover pointer-events-none"
         />
-      </Menu.Trigger>
+      </DropdownMenuTrigger>
 
-      <Menu.Content
+      <DropdownMenuContent
         sideOffset={14}
         align="end"
         className="w-68 p-1.5 rounded-2xl bg-card border border-outline-variant shadow-xl"
@@ -235,73 +240,73 @@ export function UserDropdown() {
         )}
 
         {/* Menu Items */}
-        <Menu.Item render={<Link href="/my-learning" />} className={itemClasses}>
+        <DropdownMenuItem render={<Link href="/my-learning" />} className={itemClasses}>
           <BookOpen aria-hidden="true" className={iconClasses} />
           <span>{"Việc học của tôi"}</span>
-        </Menu.Item>
+        </DropdownMenuItem>
 
-        <Menu.Item render={<Link href="/my-purchases" />} className={itemClasses}>
+        <DropdownMenuItem render={<Link href="/my-purchases" />} className={itemClasses}>
           <ShoppingBag aria-hidden="true" className={iconClasses} />
           <span>{"Mua hàng của tôi"}</span>
-        </Menu.Item>
+        </DropdownMenuItem>
 
-        <Menu.Item render={<Link href="/my-organizations" />} className={itemClasses}>
+        <DropdownMenuItem render={<Link href="/my-organizations" />} className={itemClasses}>
           <Building2 aria-hidden="true" className={iconClasses} />
           <span>{"Tổ chức của tôi"}</span>
-        </Menu.Item>
+        </DropdownMenuItem>
 
-        <Menu.Item render={<Link href="/account-settings" />} className={itemClasses}>
+        <DropdownMenuItem render={<Link href="/account-settings" />} className={itemClasses}>
           <Settings aria-hidden="true" className={iconClasses} />
           <span>{"Cài đặt"}</span>
-        </Menu.Item>
+        </DropdownMenuItem>
 
         {isInstructorOrAdmin && (
           <>
-            <Menu.Item render={<Link href="/instructor/courses" />} className={itemClasses}>
+            <DropdownMenuItem render={<Link href="/instructor/courses" />} className={itemClasses}>
               <Layers aria-hidden="true" className={iconClasses} />
               <span>{"Giảng Viên"}</span>
-            </Menu.Item>
-            <Menu.Item render={<Link href="/instructor/profile" />} className={itemClasses}>
+            </DropdownMenuItem>
+            <DropdownMenuItem render={<Link href="/instructor/profile" />} className={itemClasses}>
               <Edit aria-hidden="true" className={iconClasses} />
               <span>{"Hồ sơ & Chữ ký Giảng viên"}</span>
-            </Menu.Item>
+            </DropdownMenuItem>
           </>
         )}
 
         {isSuperAdmin && (
-          <Menu.Item render={<Link href="/partner/settings" />} className={itemClasses}>
+          <DropdownMenuItem render={<Link href="/partner/settings" />} className={itemClasses}>
             <Settings aria-hidden="true" className={iconClasses} />
             <span>{"Cấu hình Đối tác"}</span>
-          </Menu.Item>
+          </DropdownMenuItem>
         )}
 
         {isSuperAdmin && (
           <>
-            <Menu.Item render={<Link href="/admin/dashboard" />} className={itemClasses}>
+            <DropdownMenuItem render={<Link href="/admin/dashboard" />} className={itemClasses}>
               <LayoutDashboard aria-hidden="true" className={iconClasses} />
               <span>{"Trang quản trị"}</span>
-            </Menu.Item>
-            <Menu.Item render={<Link href="/admin/applications" />} className={itemClasses}>
+            </DropdownMenuItem>
+            <DropdownMenuItem render={<Link href="/admin/applications" />} className={itemClasses}>
               <CheckCircle2 aria-hidden="true" className={iconClasses} />
               <span>{"Duyệt đơn Giảng viên"}</span>
-            </Menu.Item>
-            <Menu.Item render={<Link href="/admin/partners" />} className={itemClasses}>
+            </DropdownMenuItem>
+            <DropdownMenuItem render={<Link href="/admin/partners" />} className={itemClasses}>
               <Building2 aria-hidden="true" className={iconClasses} />
               <span>{"Quản trị Đối tác"}</span>
-            </Menu.Item>
+            </DropdownMenuItem>
           </>
         )}
 
         <div className="border-t border-outline-variant my-1.5" />
 
-        <Menu.Item
+        <DropdownMenuItem
           onClick={handleLogout}
           className="text-error hover:bg-error-container/40 cursor-pointer px-3.5 py-2.5 text-sm font-medium justify-start gap-3 w-full rounded-xl my-0.5 transition-colors"
         >
           <LogOut aria-hidden="true" className="w-4.5 h-4.5 text-error" />
           <span>{"Thoát"}</span>
-        </Menu.Item>
-      </Menu.Content>
-    </Menu.Root>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

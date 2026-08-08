@@ -6,7 +6,14 @@ import { Plus, HelpCircle, FolderOpen, Pencil, Trash2, Info } from "lucide-react
 
 import { Dialog } from "@/components/ui/Dialog";
 
-import { AlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
@@ -16,7 +23,13 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { Card } from "@/components/shared/Card";
 import { Badge } from "@/components/shared/Badge";
 
-import { Select } from "@/components/ui/Select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 
 import {
   useQuestionBanksQuery,
@@ -574,8 +587,8 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                   if (val) setNewBankCategory(val as string);
                 }}
               >
-                <Select.Trigger className="w-full">
-                  <Select.Value placeholder="Chọn phân loại Kho">
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Chọn phân loại Kho">
                     {newBankCategory === "PRACTICE"
                       ? "Luyện tập (PRACTICE)"
                       : newBankCategory === "MODULE_EXAM"
@@ -583,13 +596,13 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                         : newBankCategory === "FINAL_EXAM"
                           ? "Bài thi Cuối khóa (FINAL_EXAM)"
                           : newBankCategory}
-                  </Select.Value>
-                </Select.Trigger>
-                <Select.Content>
-                  <Select.Item value="PRACTICE">{"Luyện tập (PRACTICE)"}</Select.Item>
-                  <Select.Item value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</Select.Item>
-                  <Select.Item value="FINAL_EXAM">{"Bài thi Cuối khóa (FINAL_EXAM)"}</Select.Item>
-                </Select.Content>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PRACTICE">{"Luyện tập (PRACTICE)"}</SelectItem>
+                  <SelectItem value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</SelectItem>
+                  <SelectItem value="FINAL_EXAM">{"Bài thi Cuối khóa (FINAL_EXAM)"}</SelectItem>
+                </SelectContent>
               </Select>
             </div>
 
@@ -694,8 +707,8 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                     }
                   }}
                 >
-                  <Select.Trigger className="w-full">
-                    <Select.Value placeholder="Chọn dạng câu hỏi">
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn dạng câu hỏi">
                       {qType === "SINGLE_CHOICE"
                         ? "Trắc nghiệm 1 đáp án (Single Choice)"
                         : qType === "MULTIPLE_CHOICE"
@@ -703,17 +716,17 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                           : qType === "TRUE_FALSE"
                             ? "Chọn Đúng/Sai (True/False)"
                             : qType}
-                    </Select.Value>
-                  </Select.Trigger>
-                  <Select.Content>
-                    <Select.Item value="SINGLE_CHOICE">
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="SINGLE_CHOICE">
                       {"Trắc nghiệm 1 đáp án (Single Choice)"}
-                    </Select.Item>
-                    <Select.Item value="MULTIPLE_CHOICE">
+                    </SelectItem>
+                    <SelectItem value="MULTIPLE_CHOICE">
                       {"Trắc nghiệm nhiều đáp án (Multiple Choice)"}
-                    </Select.Item>
-                    <Select.Item value="TRUE_FALSE">{"Chọn Đúng/Sai (True/False)"}</Select.Item>
-                  </Select.Content>
+                    </SelectItem>
+                    <SelectItem value="TRUE_FALSE">{"Chọn Đúng/Sai (True/False)"}</SelectItem>
+                  </SelectContent>
                 </Select>
               </div>
             </div>
@@ -838,14 +851,14 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
           if (!open) setDeletingQuestionId(null);
         }}
       >
-        <AlertDialog.Content>
-          <AlertDialog.Header>
-            <AlertDialog.Title>{"Xác nhận xóa câu hỏi"}</AlertDialog.Title>
-            <AlertDialog.Description>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{"Xác nhận xóa câu hỏi"}</AlertDialogTitle>
+            <AlertDialogDescription>
               {"Bạn có chắc chắn muốn xóa câu hỏi này không? Thao tác này không thể hoàn tác."}
-            </AlertDialog.Description>
-          </AlertDialog.Header>
-          <AlertDialog.Footer>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
             <Button
               variant="outline"
               size="sm"
@@ -862,8 +875,8 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
             >
               {"Xóa"}
             </Button>
-          </AlertDialog.Footer>
-        </AlertDialog.Content>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </div>
   );
