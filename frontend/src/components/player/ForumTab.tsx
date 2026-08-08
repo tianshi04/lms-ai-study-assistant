@@ -60,6 +60,9 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
   // Reply inputs: threadId -> content
   const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
 
+  // In-flight voting requests state
+  const [votingPostIds, setVotingPostIds] = useState<Set<string>>(new Set());
+
   // Reply Edit State
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
   const [editReplyContent, setEditReplyContent] = useState("");
@@ -230,6 +233,9 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
   };
 
   const handleVote = async (postId: string, isUpvote: boolean) => {
+    if (votingPostIds.has(postId)) return;
+    setVotingPostIds((prev) => new Set(prev).add(postId));
+
     setThreads((prevThreads) =>
       prevThreads.map((t) => {
         if (t.id === postId) {
@@ -278,6 +284,12 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
     } catch (err) {
       console.error("Error voting:", err);
       fetchThreads();
+    } finally {
+      setVotingPostIds((prev) => {
+        const next = new Set(prev);
+        next.delete(postId);
+        return next;
+      });
     }
   };
 

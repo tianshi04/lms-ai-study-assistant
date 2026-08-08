@@ -85,6 +85,9 @@ function ForumPageContent() {
   // Active Expanded Thread IDs
   const [expandedThreads, setExpandedThreads] = useState<Record<string, boolean>>({});
 
+  // In-flight voting requests state
+  const [votingPostIds, setVotingPostIds] = useState<Set<string>>(new Set());
+
   // Delete confirmations state
   const [deletingThreadId, setDeletingThreadId] = useState<string | null>(null);
   const [deletingReplyId, setDeletingReplyId] = useState<string | null>(null);
@@ -337,6 +340,9 @@ function ForumPageContent() {
 
   // Handle Upvote with Optimistic UI Update
   const handleVote = async (postId: string, isUpvote: boolean) => {
+    if (votingPostIds.has(postId)) return;
+    setVotingPostIds((prev) => new Set(prev).add(postId));
+
     setThreads((prevThreads) =>
       prevThreads.map((th) => {
         if (th.id === postId) {
@@ -385,6 +391,12 @@ function ForumPageContent() {
     } catch (err) {
       console.error("Failed to vote post:", err);
       fetchThreads();
+    } finally {
+      setVotingPostIds((prev) => {
+        const next = new Set(prev);
+        next.delete(postId);
+        return next;
+      });
     }
   };
 
