@@ -1,3 +1,4 @@
+/* oxlint-disable jsx-a11y/prefer-tag-over-role, jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-tabindex */
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -250,15 +251,16 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
               </div>
 
               {/* Continuous Flowing Paragraph Text */}
-              <p className="text-[13px] sm:text-sm text-on-surface/90 leading-8 sm:leading-9 font-sans">
+              <p className="text-[13px] sm:text-sm text-on-surface/90 leading-relaxed font-sans">
                 {block.cues.map((cue) => {
                   const isActive = cue.originalIndex === activeIndex;
 
                   return (
-                    <button
-                      type="button"
+                    <span
                       key={cue.originalIndex}
                       id={`transcript-cue-${cue.originalIndex}`}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => onSeekVideo(cue.startTime)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
@@ -266,14 +268,14 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
                           onSeekVideo(cue.startTime);
                         }
                       }}
-                      className={`cursor-pointer transition-colors duration-m3-short-2 rounded-full px-2.5 py-1 [box-decoration-break:clone] [-webkit-box-decoration-break:clone] ${
+                      className={`inline cursor-pointer transition-colors duration-m3-short-2 rounded px-1 py-0.5 [box-decoration-break:clone] [-webkit-box-decoration-break:clone] ${
                         isActive
-                          ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                          : "hover:bg-surface-container-highest hover:text-primary"
+                          ? "bg-primary/15 text-primary font-semibold"
+                          : "hover:bg-surface-container-highest/60 hover:text-primary"
                       }`}
                     >
                       {renderHighlightedText(cue.text, searchQuery)}{" "}
-                    </button>
+                    </span>
                   );
                 })}
               </p>
