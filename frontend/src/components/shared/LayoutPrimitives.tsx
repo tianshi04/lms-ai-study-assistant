@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn, renderPolymorphicElement, type BaseUIRenderProp } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 /* -------------------------------------------------------------------------- */
 /* Container Primitive                                                        */
@@ -30,23 +30,34 @@ export const containerVariants = cva("w-full mx-auto", {
 
 export interface ContainerProps
   extends React.ComponentProps<"div">, VariantProps<typeof containerVariants> {
-  render?: BaseUIRenderProp;
+  asChild?: boolean;
 }
 
 export function Container({
   className,
   size,
   padding,
-  render,
+  asChild = false,
   children,
   ref,
   ...props
 }: ContainerProps) {
   const compClasses = cn(containerVariants({ size, padding, className }));
-  return renderPolymorphicElement(
-    render,
-    { ref, className: compClasses, children, ...props },
-    "div",
+
+  if (asChild && React.isValidElement(children)) {
+    const child = children as React.ReactElement<any>;
+    return React.cloneElement(child, {
+      ...props,
+      ...child.props,
+      ref,
+      className: cn(compClasses, child.props.className),
+    });
+  }
+
+  return (
+    <div ref={ref} className={compClasses} {...props}>
+      {children}
+    </div>
   );
 }
 
@@ -77,23 +88,34 @@ export const sectionVariants = cva("", {
 
 export interface SectionProps
   extends React.ComponentProps<"section">, VariantProps<typeof sectionVariants> {
-  render?: BaseUIRenderProp;
+  asChild?: boolean;
 }
 
 export function Section({
   className,
   spacing,
   divider,
-  render,
+  asChild = false,
   children,
   ref,
   ...props
 }: SectionProps) {
   const compClasses = cn(sectionVariants({ spacing, divider, className }));
-  return renderPolymorphicElement(
-    render,
-    { ref, className: compClasses, children, ...props },
-    "section",
+
+  if (asChild && React.isValidElement(children)) {
+    const child = children as React.ReactElement<any>;
+    return React.cloneElement(child, {
+      ...props,
+      ...child.props,
+      ref,
+      className: cn(compClasses, child.props.className),
+    });
+  }
+
+  return (
+    <section ref={ref} className={compClasses} {...props}>
+      {children}
+    </section>
   );
 }
 
@@ -182,18 +204,35 @@ export function PageHeaderBadge({
 }
 
 export interface PageHeaderProps extends React.ComponentProps<"div"> {
-  render?: BaseUIRenderProp;
+  asChild?: boolean;
 }
 
-export function PageHeader({ className, children, render, ref, ...props }: PageHeaderProps) {
+export function PageHeader({
+  className,
+  children,
+  asChild = false,
+  ref,
+  ...props
+}: PageHeaderProps) {
   const compClasses = cn(
     "flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-border mb-6",
     className,
   );
-  return renderPolymorphicElement(
-    render,
-    { ref, className: compClasses, children, ...props },
-    "div",
+
+  if (asChild && React.isValidElement(children)) {
+    const child = children as React.ReactElement<any>;
+    return React.cloneElement(child, {
+      ...props,
+      ...child.props,
+      ref,
+      className: cn(compClasses, child.props.className),
+    });
+  }
+
+  return (
+    <div ref={ref} className={compClasses} {...props}>
+      {children}
+    </div>
   );
 }
 
@@ -247,7 +286,7 @@ export const stackVariants = cva("flex", {
 
 export interface StackProps
   extends React.ComponentProps<"div">, VariantProps<typeof stackVariants> {
-  render?: BaseUIRenderProp;
+  asChild?: boolean;
 }
 
 export function Stack({
@@ -257,7 +296,7 @@ export function Stack({
   align,
   justify,
   wrap,
-  render,
+  asChild = false,
   children,
   ref,
   ...props
@@ -272,9 +311,20 @@ export function Stack({
       className,
     }),
   );
-  return renderPolymorphicElement(
-    render,
-    { ref, className: compClasses, children, ...props },
-    "div",
+
+  if (asChild && React.isValidElement(children)) {
+    const child = children as React.ReactElement<any>;
+    return React.cloneElement(child, {
+      ...props,
+      ...child.props,
+      ref,
+      className: cn(compClasses, child.props.className),
+    });
+  }
+
+  return (
+    <div ref={ref} className={compClasses} {...props}>
+      {children}
+    </div>
   );
 }

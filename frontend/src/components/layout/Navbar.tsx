@@ -122,18 +122,18 @@ export function Navbar() {
               <Button
                 variant="outline"
                 size="sm"
-                render={<Link href="/auth/login" />}
+                asChild
                 className="rounded-xl text-xs font-semibold bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
               >
-                {"Đăng nhập"}
+                <Link href="/auth/login">{"Đăng nhập"}</Link>
               </Button>
               <Button
                 variant="primary"
                 size="sm"
-                render={<Link href="/auth/register" />}
+                asChild
                 className="rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
               >
-                {"Đăng ký"}
+                <Link href="/auth/register">{"Đăng ký"}</Link>
               </Button>
             </div>
           )}

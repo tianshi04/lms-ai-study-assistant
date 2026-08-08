@@ -59,19 +59,18 @@ export function NotFoundClient() {
           {/* Action Buttons */}
           <div className="space-y-4 pt-2">
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <Button id="btn-notfound-home" render={<Link href="/" />} size="lg" variant="primary">
-                <Home className="w-4.5 h-4.5 mr-2" aria-hidden="true" />
-                <span>Về trang chủ</span>
+              <Button id="btn-notfound-home" asChild size="lg" variant="primary">
+                <Link href="/">
+                  <Home className="w-4.5 h-4.5 mr-2" aria-hidden="true" />
+                  <span>Về trang chủ</span>
+                </Link>
               </Button>
 
-              <Button
-                id="btn-notfound-catalog"
-                render={<Link href="/courses" />}
-                variant="outline"
-                size="lg"
-              >
-                <BookOpen className="w-4.5 h-4.5 text-primary mr-2" aria-hidden="true" />
-                <span>Khám phá khóa học</span>
+              <Button id="btn-notfound-catalog" asChild variant="outline" size="lg">
+                <Link href="/courses">
+                  <BookOpen className="w-4.5 h-4.5 text-primary mr-2" aria-hidden="true" />
+                  <span>Khám phá khóa học</span>
+                </Link>
               </Button>
             </div>
 

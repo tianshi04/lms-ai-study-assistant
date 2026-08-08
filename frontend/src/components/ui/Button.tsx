@@ -44,6 +44,7 @@ export const buttonVariants = cva(
 export interface ButtonProps
   extends React.ComponentProps<typeof BaseButton>, VariantProps<typeof buttonVariants> {
   isLoading?: boolean;
+  asChild?: boolean;
 }
 
 export function Button({
@@ -51,12 +52,24 @@ export function Button({
   variant,
   size,
   isLoading = false,
+  asChild = false,
   disabled,
   children,
   ref,
   ...props
 }: ButtonProps) {
   const compClasses = cn(buttonVariants({ variant, size, className }));
+
+  if (asChild && React.isValidElement(children)) {
+    const child = children as React.ReactElement<any>;
+    return React.cloneElement(child, {
+      ...props,
+      ...child.props,
+      ref,
+      className: cn(compClasses, child.props.className),
+      disabled: disabled || isLoading || child.props.disabled,
+    });
+  }
 
   return (
     <BaseButton

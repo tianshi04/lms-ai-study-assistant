@@ -112,14 +112,11 @@ export default function ErrorPage({
             Thử lại trang
           </Button>
 
-          <Button
-            render={<Link href="/" />}
-            variant="outline"
-            size="lg"
-            className="w-full sm:w-auto"
-          >
-            <Home className="w-4.5 h-4.5 mr-2" aria-hidden="true" />
-            Về Trang Chủ
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
+            <Link href="/">
+              <Home className="w-4.5 h-4.5 mr-2" aria-hidden="true" />
+              Về Trang Chủ
+            </Link>
           </Button>
 
           <Button
