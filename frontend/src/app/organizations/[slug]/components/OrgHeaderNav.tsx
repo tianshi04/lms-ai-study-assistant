@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Building2, Users, Mail, Settings, LayoutDashboard, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface OrgHeaderNavProps {
   slug: string;
@@ -104,11 +105,12 @@ export function OrgHeaderNav({
               <Link
                 key={item.id}
                 href={item.href}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-2 whitespace-nowrap ${
+                className={cn(
+                  "px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-2 whitespace-nowrap",
                   isActive
                     ? "bg-card text-primary shadow-xs border border-border"
-                    : "text-muted-foreground hover:text-foreground hover:bg-card/50"
-                }`}
+                    : "text-muted-foreground hover:text-foreground hover:bg-card/50",
+                )}
               >
                 <Icon className="w-4 h-4" aria-hidden="true" />
                 {item.label}

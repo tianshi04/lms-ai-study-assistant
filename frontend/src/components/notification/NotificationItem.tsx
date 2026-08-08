@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Bell, BookOpen, MessageSquare, Megaphone, CheckCircle2, Shield } from "lucide-react";
 import type { NotificationItem as NotificationItemType } from "@/gen/notification/v1/notification_pb";
 import { NotificationCategory } from "@/gen/notification/v1/notification_pb";
+import { cn } from "@/lib/utils";
 
 interface NotificationItemProps {
   item: NotificationItemType;
@@ -66,11 +67,12 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
 
   return (
     <div
-      className={`relative p-3.5 rounded-2xl transition-colors duration-m3-short-4 ease-m3-emphasized ${
+      className={cn(
+        "relative p-3.5 rounded-2xl transition-colors duration-m3-short-4 ease-m3-emphasized",
         item.isRead
           ? "bg-surface-container-low/60 hover:bg-surface-container-low border border-transparent"
-          : "bg-primary-container/25 hover:bg-primary-container/40 border border-primary/20 shadow-2xs"
-      }`}
+          : "bg-primary-container/25 hover:bg-primary-container/40 border border-primary/20 shadow-2xs",
+      )}
     >
       {/* Unread Indicator Pulse Dot */}
       {!item.isRead && (
@@ -80,7 +82,10 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
       <div className="flex items-start gap-3">
         {/* Tonal Category Icon Container */}
         <div
-          className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs ${bgClass}`}
+          className={cn(
+            "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs",
+            bgClass,
+          )}
         >
           <IconComponent className="w-5 h-5" aria-hidden="true" />
         </div>
@@ -88,7 +93,7 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
         <div className="flex-1 min-w-0 pr-2">
           {/* Header Row: Category Badge & Timestamp */}
           <div className="flex items-center justify-between gap-2 mb-1">
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${bgClass}`}>
+            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", bgClass)}>
               {label}
             </span>
             <span className="text-[10px] text-on-surface-variant/80 font-medium">
@@ -108,18 +113,20 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
               className="block group"
             >
               <h4
-                className={`text-xs font-bold tracking-tight text-on-surface group-hover:text-primary transition-colors min-w-0 ${
-                  compact ? "line-clamp-1" : "line-clamp-2"
-                }`}
+                className={cn(
+                  "text-xs font-bold tracking-tight text-on-surface group-hover:text-primary transition-colors min-w-0",
+                  compact ? "line-clamp-1" : "line-clamp-2",
+                )}
               >
                 {item.title}
               </h4>
 
               {item.content && (
                 <p
-                  className={`text-[11px] text-on-surface-variant mt-0.5 leading-relaxed min-w-0 ${
-                    compact ? "line-clamp-2" : "line-clamp-3"
-                  }`}
+                  className={cn(
+                    "text-[11px] text-on-surface-variant mt-0.5 leading-relaxed min-w-0",
+                    compact ? "line-clamp-2" : "line-clamp-3",
+                  )}
                 >
                   {item.content}
                 </p>
@@ -128,18 +135,20 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
           ) : (
             <>
               <h4
-                className={`text-xs font-bold tracking-tight text-on-surface min-w-0 ${
-                  compact ? "line-clamp-1" : "line-clamp-2"
-                }`}
+                className={cn(
+                  "text-xs font-bold tracking-tight text-on-surface min-w-0",
+                  compact ? "line-clamp-1" : "line-clamp-2",
+                )}
               >
                 {item.title}
               </h4>
 
               {item.content && (
                 <p
-                  className={`text-[11px] text-on-surface-variant mt-0.5 leading-relaxed min-w-0 ${
-                    compact ? "line-clamp-2" : "line-clamp-3"
-                  }`}
+                  className={cn(
+                    "text-[11px] text-on-surface-variant mt-0.5 leading-relaxed min-w-0",
+                    compact ? "line-clamp-2" : "line-clamp-3",
+                  )}
                 >
                   {item.content}
                 </p>

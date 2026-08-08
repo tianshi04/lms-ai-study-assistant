@@ -52,17 +52,19 @@ function MyPurchasesContent() {
     },
   });
 
-  const orders = data?.orders ?? [];
+  const orders: any[] = data?.orders ?? [];
 
   // Summary Metrics
   const totalOrders = orders.length;
-  const completedCount = orders.filter((o) => o.status === PaymentOrderStatus.COMPLETED).length;
+  const completedCount = orders.filter(
+    (o: any) => o.status === PaymentOrderStatus.COMPLETED,
+  ).length;
   const totalSpent = orders
-    .filter((o) => o.status === PaymentOrderStatus.COMPLETED)
-    .reduce((acc, o) => acc + (o.amount || 0), 0);
+    .filter((o: any) => o.status === PaymentOrderStatus.COMPLETED)
+    .reduce((acc: number, o: any) => acc + (o.amount || 0), 0);
 
   // Filtered Orders
-  const filteredOrders = orders.filter((o) => {
+  const filteredOrders = orders.filter((o: any) => {
     if (activeTab === "COMPLETED") {
       return o.status === PaymentOrderStatus.COMPLETED;
     }
@@ -187,7 +189,7 @@ function MyPurchasesContent() {
           }`}
         >
           {`Đang chờ thanh toán (${
-            orders.filter((o) => o.status === PaymentOrderStatus.PENDING).length
+            orders.filter((o: any) => o.status === PaymentOrderStatus.PENDING).length
           })`}
         </button>
         <button
@@ -201,7 +203,7 @@ function MyPurchasesContent() {
         >
           {`Đã hết hạn / Hủy (${
             orders.filter(
-              (o) =>
+              (o: any) =>
                 o.status === PaymentOrderStatus.EXPIRED || o.status === PaymentOrderStatus.FAILED,
             ).length
           })`}
@@ -247,7 +249,7 @@ function MyPurchasesContent() {
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredOrders.map((order) => {
+          {filteredOrders.map((order: any) => {
             const isCompleted = order.status === PaymentOrderStatus.COMPLETED;
             const isPending = order.status === PaymentOrderStatus.PENDING;
             const isFailed = order.status === PaymentOrderStatus.FAILED;
