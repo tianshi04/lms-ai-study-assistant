@@ -135,6 +135,12 @@ class InMemoryPaymentRepository(IPaymentRepository):
         self.transactions.append(transaction)
         return transaction
 
+    async def list_user_orders(self, user_id: str) -> list[PaymentOrder]:
+        return [o for o in reversed(self.orders) if o.user_id == user_id]
+
+    async def get_course_titles(self, course_ids: list[str]) -> dict[str, str]:
+        return {cid: f"Course {cid}" for cid in course_ids}
+
 
 @pytest.mark.asyncio
 @patch("src.modules.payment.application.payment_usecase.async_session_scope")
@@ -240,7 +246,7 @@ async def test_verify_vnpay_payment_success(mock_scope):
     import urllib.parse
 
     hash_data = "&".join(
-        f"{urllib.parse.quote_plus(k)}={urllib.parse.quote_plus(v)}"
+        f"{urllib.parse.quote_plus(str(k))}={urllib.parse.quote_plus(str(v))}"
         for k, v in sorted_items
     )
     from src.shared.config import settings
@@ -312,7 +318,7 @@ async def test_process_vnpay_ipn_success(mock_scope):
     import urllib.parse
 
     hash_data = "&".join(
-        f"{urllib.parse.quote_plus(k)}={urllib.parse.quote_plus(v)}"
+        f"{urllib.parse.quote_plus(str(k))}={urllib.parse.quote_plus(str(v))}"
         for k, v in sorted_items
     )
     from src.shared.config import settings
@@ -434,7 +440,7 @@ async def test_amount_tampering_detected(mock_scope):
     import urllib.parse
 
     hash_data = "&".join(
-        f"{urllib.parse.quote_plus(k)}={urllib.parse.quote_plus(v)}"
+        f"{urllib.parse.quote_plus(str(k))}={urllib.parse.quote_plus(str(v))}"
         for k, v in sorted_items
     )
     raw_params["vnp_SecureHash"] = VNPayService.calculate_hmac_sha512(

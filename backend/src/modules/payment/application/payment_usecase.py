@@ -184,7 +184,7 @@ class PaymentUseCase:
                     if plan_type == PlanType.YEARLY
                     else DEFAULT_SYSTEM_SUBSCRIPTION_MONTHLY_PRICE_VND
                 )
-                order_info = f"Thanh toan Coursera Plus ({plan_type.value})"
+                order_info = f"Thanh toan Coursera Plus {plan_type.value}"
             else:
                 return False, "Loại sản phẩm thanh toán không hợp lệ.", "", "", ""
 
@@ -203,6 +203,7 @@ class PaymentUseCase:
                     order_info=order_info,
                     ip_addr=client_ip,
                     return_url=return_url,
+                    created_at=existing_order.created_at,
                 )
                 logger.info(
                     "[VNPAY] Reused active pending order %s (TxnRef: %s) for user %s",
@@ -529,7 +530,81 @@ class PaymentUseCase:
 
         return None, None
 
-    async def list_user_purchases(self, user_id: str) -> list[CoursePurchase]:
+    async def list_user_purchases(
+        self, user_id: str
+    ) -> tuple[list[CoursePurchase], list[PaymentOrder], dict[str, str]]:
         async with async_session_scope() as session:
             repo = self.repository or PaymentRepository(session)
-            return await repo.list_user_purchases(user_id)
+            orders = await repo.list_user_orders(user_id)
+
+            now_dt = datetime.now(timezone.utc)
+            reconciled_any = False
+
+            for o in orders:
+                if o.status == PaymentOrderStatus.PENDING:
+                    try:
+                        c_dt = datetime.fromisoformat(o.created_at)
+                        age_minutes = (now_dt - c_dt).total_seconds() / 60.0
+                    except Exception:
+                        age_minutes = 999.0
+
+                    if age_minutes >= 5.0:
+                        reconciled_any = True
+                        try:
+                            res = await VNPayService.query_dr_transaction(
+                                vnp_txn_ref=o.vnp_txn_ref,
+                                order_created_at_iso=o.created_at,
+                            )
+                            resp_code = res.get("vnp_ResponseCode", "")
+                            txn_status = res.get("vnp_TransactionStatus", "")
+
+                            if resp_code == "00" or txn_status == "00":
+                                await repo.update_order_status(
+                                    o.id, PaymentOrderStatus.COMPLETED
+                                )
+                                await self._fulfill_access(
+                                    repo,
+                                    o.user_id,
+                                    o.target_type,
+                                    o.target_id,
+                                    o.plan_type,
+                                    o.amount,
+                                )
+                                logger.info(
+                                    "[LAZY RECONCILE] Auto-fulfilled order %s for user %s",
+                                    o.id,
+                                    user_id,
+                                )
+                            elif resp_code in ("01", "02", "24") or txn_status in (
+                                "01",
+                                "02",
+                            ):
+                                await repo.update_order_status(
+                                    o.id, PaymentOrderStatus.FAILED
+                                )
+                            else:
+                                if age_minutes >= 15.0:
+                                    await repo.update_order_status(
+                                        o.id, PaymentOrderStatus.EXPIRED
+                                    )
+                        except Exception as ex:
+                            logger.warning(
+                                "[LAZY RECONCILE] Error reconciling order %s: %s",
+                                o.id,
+                                ex,
+                            )
+                            if age_minutes >= 15.0:
+                                await repo.update_order_status(
+                                    o.id, PaymentOrderStatus.EXPIRED
+                                )
+
+            if reconciled_any:
+                orders = await repo.list_user_orders(user_id)
+
+            purchases = await repo.list_user_purchases(user_id)
+            course_ids = [
+                o.target_id for o in orders if o.target_type == PaymentTargetType.COURSE
+            ]
+            titles_map = await repo.get_course_titles(course_ids)
+
+            return purchases, orders, titles_map

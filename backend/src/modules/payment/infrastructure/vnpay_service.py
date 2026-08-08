@@ -24,6 +24,24 @@ class VNPayService:
             hashlib.sha512,
         ).hexdigest()
 
+    @staticmethod
+    def sanitize_order_info(text: str) -> str:
+        """Removes Vietnamese accents and special characters to ensure valid vnp_OrderInfo."""
+        import re
+        import unicodedata
+
+        # Convert accented Vietnamese characters to ASCII equivalents
+        normalized = (
+            unicodedata.normalize("NFKD", text)
+            .encode("ASCII", "ignore")
+            .decode("utf-8")
+        )
+        # Keep only alphanumeric characters and spaces
+        cleaned = re.sub(r"[^a-zA-Z0-9 ]", "", normalized)
+        # Collapse multiple spaces and trim
+        result = re.sub(r"\s+", " ", cleaned).strip()
+        return result or "Thanh toan don hang"
+
     @classmethod
     def generate_payment_url(
         cls,
@@ -32,6 +50,7 @@ class VNPayService:
         order_info: str,
         ip_addr: str = "127.0.0.1",
         return_url: str = "",
+        created_at: str | datetime | None = None,
     ) -> str:
         """Generates VNPay payment URL with signed vnp_SecureHash."""
         tmn_code = settings.VNPAY_TMN_CODE
@@ -39,15 +58,32 @@ class VNPayService:
         payment_endpoint = settings.VNPAY_PAYMENT_URL
         actual_return_url = return_url or settings.VNPAY_RETURN_URL
 
+        # Sanitize order_info to avoid HMAC signature mismatches / Code 70 errors on VNPay
+        safe_order_info = cls.sanitize_order_info(order_info)
+
         # VNPay requires amount in VND * 100 (e.g. 500,000 VND = 50000000)
         vnp_amount = int(round(amount * 100))
 
-        # Current time in GMT+7 (Asia/Ho_Chi_Minh)
-        now_dt = datetime.now(timezone.utc)
-        # Offset to GMT+7
         from datetime import timedelta
 
-        vn_time = now_dt + timedelta(hours=7)
+        # Parse or use created_at to ensure re-generated URLs for pending orders use the original vnp_CreateDate
+        if created_at:
+            if isinstance(created_at, str):
+                try:
+                    now_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                except ValueError:
+                    now_dt = datetime.now(timezone.utc)
+            else:
+                now_dt = created_at
+        else:
+            now_dt = datetime.now(timezone.utc)
+
+        # Ensure datetime is timezone-aware
+        if now_dt.tzinfo is None:
+            now_dt = now_dt.replace(tzinfo=timezone.utc)
+
+        # Offset to GMT+7 (Asia/Ho_Chi_Minh)
+        vn_time = now_dt.astimezone(timezone.utc) + timedelta(hours=7)
         vnp_create_date = vn_time.strftime("%Y%m%d%H%M%S")
         vnp_expire_date = (vn_time + timedelta(minutes=15)).strftime("%Y%m%d%H%M%S")
 
@@ -58,7 +94,7 @@ class VNPayService:
             "vnp_Amount": vnp_amount,
             "vnp_CurrCode": "VND",
             "vnp_TxnRef": vnp_txn_ref,
-            "vnp_OrderInfo": order_info,
+            "vnp_OrderInfo": safe_order_info,
             "vnp_OrderType": "other",
             "vnp_Locale": "vn",
             "vnp_ReturnUrl": actual_return_url,
@@ -70,7 +106,7 @@ class VNPayService:
         # 1. Sort dictionary keys alphabetically
         sorted_params = sorted(params.items())
 
-        # 2. Build query string & hash data string
+        # 2. Build query string (URL encoded) & hash data string (urllib.parse.quote_plus as required by VNPay 2.1.0)
         query_parts = []
         hash_parts = []
         for k, v in sorted_params:
