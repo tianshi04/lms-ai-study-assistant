@@ -16,7 +16,7 @@ export const badgeVariants = cva(
         success: "bg-success/15 text-success",
         warning: "bg-warning/15 text-warning",
         danger: "bg-destructive/15 text-destructive",
-        outline: "border border-outline-variant text-foreground",
+        outline: "border border-outline-variant text-on-surface",
       },
     },
     defaultVariants: {
