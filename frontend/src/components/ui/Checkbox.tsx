@@ -6,6 +6,47 @@ import { cn } from "@/lib/utils";
 export const CheckboxRoot = BaseCheckbox.Root;
 export const CheckboxIndicator = BaseCheckbox.Indicator;
 
+export function CheckboxLabel({
+  className,
+  ref,
+  children,
+  ...props
+}: React.ComponentProps<"label">) {
+  return (
+    <label
+      ref={ref}
+      className={cn(
+        "text-sm font-medium text-foreground cursor-pointer select-none leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </label>
+  );
+}
+
+export function CheckboxError({ className, ref, children, ...props }: React.ComponentProps<"p">) {
+  return (
+    <p ref={ref} className={cn("text-xs text-destructive font-medium", className)} {...props}>
+      {children}
+    </p>
+  );
+}
+
+export function CheckboxHelperText({
+  className,
+  ref,
+  children,
+  ...props
+}: React.ComponentProps<"p">) {
+  return (
+    <p ref={ref} className={cn("text-xs text-muted-foreground", className)} {...props}>
+      {children}
+    </p>
+  );
+}
+
 export interface CheckboxProps extends React.ComponentProps<typeof BaseCheckbox.Root> {
   label?: string;
   error?: string;
@@ -49,17 +90,10 @@ export function Checkbox({
     <div className="space-y-1">
       <div className="flex items-center gap-2.5">
         {checkboxElement}
-        {label && (
-          <label
-            htmlFor={checkboxId}
-            className="text-sm font-medium text-foreground cursor-pointer select-none leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            {label}
-          </label>
-        )}
+        {label && <CheckboxLabel htmlFor={checkboxId}>{label}</CheckboxLabel>}
       </div>
-      {error && <p className="text-xs text-destructive font-medium">{error}</p>}
-      {helperText && !error && <p className="text-xs text-muted-foreground">{helperText}</p>}
+      {error && <CheckboxError>{error}</CheckboxError>}
+      {helperText && !error && <CheckboxHelperText>{helperText}</CheckboxHelperText>}
     </div>
   );
 }

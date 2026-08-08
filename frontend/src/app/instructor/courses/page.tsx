@@ -14,6 +14,13 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
 import {
+  PageHeader,
+  PageHeaderTitle,
+  PageHeaderDescription,
+  PageHeaderActions,
+  PageHeaderBadge,
+} from "@/components/ui/LayoutPrimitives";
+import {
   FileText,
   Plus,
   AlertTriangle,
@@ -251,22 +258,22 @@ export default function InstructorCoursesPage() {
   return (
     <div className="w-full max-w-7xl mx-auto px-6 py-12 flex-1">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-border">
+      <PageHeader>
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-2">
-            {"Instructor Portal"}
-          </div>
-          <h1 className="text-3xl font-extrabold text-foreground text-balance">
-            {"Quản lý Khóa học Giảng dạy"}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <PageHeaderBadge>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-2">
+              {"Instructor Portal"}
+            </div>
+          </PageHeaderBadge>
+          <PageHeaderTitle>{"Quản lý Khóa học Giảng dạy"}</PageHeaderTitle>
+          <PageHeaderDescription>
             {
               "Soạn thảo, quản lý bài giảng, xem thống kê và đăng thông báo cho các khóa học trên nền tảng Coursera AI."
             }
-          </p>
+          </PageHeaderDescription>
         </div>
 
-        <div className="flex items-center gap-3">
+        <PageHeaderActions>
           <Link
             href="/instructor/financial-aid"
             className="px-4 py-3 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-sm transition-colors flex items-center gap-2"
@@ -282,8 +289,8 @@ export default function InstructorCoursesPage() {
             <Plus className="w-5 h-5" aria-hidden="true" />
             <span>{"Soạn Khóa Học Mới"}</span>
           </Link>
-        </div>
-      </div>
+        </PageHeaderActions>
+      </PageHeader>
 
       {/* Role Warning Banner if user is Learner */}
       {isMounted && userRole && !isInstructorOrAdmin && (

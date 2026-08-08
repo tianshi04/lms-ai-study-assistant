@@ -7,6 +7,31 @@ export const RadioGroup = BaseRadioGroup;
 export const RadioItem = BaseRadio.Root;
 export const RadioIndicator = BaseRadio.Indicator;
 
+export function RadioLabel({ className, ref, children, ...props }: React.ComponentProps<"label">) {
+  return (
+    <label
+      ref={ref}
+      className={cn("text-sm font-medium text-foreground cursor-pointer select-none", className)}
+      {...props}
+    >
+      {children}
+    </label>
+  );
+}
+
+export function RadioDescription({
+  className,
+  ref,
+  children,
+  ...props
+}: React.ComponentProps<"p">) {
+  return (
+    <p ref={ref} className={cn("text-xs text-muted-foreground", className)} {...props}>
+      {children}
+    </p>
+  );
+}
+
 export interface RadioOptionProps extends React.ComponentProps<typeof BaseRadio.Root> {
   label?: string;
   description?: string;
@@ -40,15 +65,8 @@ export function RadioOption({
       </BaseRadio.Root>
       {(label || description) && (
         <div className="grid gap-0.5 leading-none">
-          {label && (
-            <label
-              htmlFor={radioId}
-              className="text-sm font-medium text-foreground cursor-pointer select-none"
-            >
-              {label}
-            </label>
-          )}
-          {description && <p className="text-xs text-muted-foreground">{description}</p>}
+          {label && <RadioLabel htmlFor={radioId}>{label}</RadioLabel>}
+          {description && <RadioDescription>{description}</RadioDescription>}
         </div>
       )}
     </div>

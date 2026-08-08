@@ -15,6 +15,12 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toast";
 import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import {
+  PageHeader,
+  PageHeaderTitle,
+  PageHeaderBreadcrumbs,
+  PageHeaderActions,
+} from "@/components/ui/LayoutPrimitives";
 
 export default function AdminInstructorApplicationsPage() {
   const toast = useToast();
@@ -30,66 +36,70 @@ export default function AdminInstructorApplicationsPage() {
     refetch,
   } = useListInstructorApplicationsQuery(statusFilter);
 
-  const reviewMutation = useReviewInstructorApplicationMutation({
-    onSuccess: (updatedApp, variables) => {
-      setRejectingAppId(null);
-      setApprovingAppId(null);
-      setRejectionReason("");
-      setActionSuccessMsg(
-        variables.approve
-          ? "Đã phê duyệt đơn và nâng tài khoản thành Giảng viên thành công!"
-          : "Đã từ chối đơn đăng ký thành công.",
-      );
-      refetch();
-    },
-  });
+  const reviewMutation = useReviewInstructorApplicationMutation();
 
   const handleApprove = (appId: string) => {
     setApprovingAppId(appId);
   };
 
-  const executeApprove = () => {
-    if (approvingAppId) {
-      reviewMutation.mutate({ applicationId: approvingAppId, approve: true });
+  const executeApprove = async () => {
+    if (!approvingAppId) return;
+
+    try {
+      await reviewMutation.mutateAsync({
+        applicationId: approvingAppId,
+        approve: true,
+      });
+      setActionSuccessMsg("Đã phê duyệt đơn đăng ký giảng viên thành công!");
+      toast.success("Phê duyệt đơn đăng ký thành công!");
+      setApprovingAppId(null);
+      refetch();
+    } catch (err: unknown) {
+      toast.error((err as Error).message || "Phê duyệt thất bại.");
     }
   };
 
-  const handleConfirmReject = (appId: string) => {
-    if (!rejectionReason.trim()) {
-      toast.error("Vui lòng nhập lý do từ chối.");
-      return;
+  const handleConfirmReject = async () => {
+    if (!rejectingAppId || !rejectionReason.trim()) return;
+
+    try {
+      await reviewMutation.mutateAsync({
+        applicationId: rejectingAppId,
+        approve: false,
+        rejectionReason: rejectionReason.trim(),
+      });
+      setActionSuccessMsg("Đã từ chối đơn đăng ký.");
+      toast.info("Đã từ chối đơn đăng ký.");
+      setRejectingAppId(null);
+      setRejectionReason("");
+      refetch();
+    } catch (err: unknown) {
+      toast.error((err as Error).message || "Từ chối thất bại.");
     }
-    reviewMutation.mutate({
-      applicationId: appId,
-      approve: false,
-      rejectionReason: rejectionReason.trim(),
-    });
   };
 
   return (
     <div className="min-h-screen bg-background py-10 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header Breadcrumb & Title */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <PageHeader>
           <div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+            <PageHeaderBreadcrumbs>
               <Link href="/admin/dashboard" className="hover:underline">
                 Admin Portal
               </Link>
               <span>/</span>
               <span className="font-semibold text-foreground">Đơn Giảng viên</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight text-balance">
-              Quản Lý Thẩm Định Đơn Giảng Viên
-            </h1>
+            </PageHeaderBreadcrumbs>
+            <PageHeaderTitle>Quản Lý Thẩm Định Đơn Giảng Viên</PageHeaderTitle>
           </div>
 
-          <div className="flex items-center gap-2">
+          <PageHeaderActions>
             <Button variant="outline" asChild>
               <Link href="/admin/dashboard">Về Dashboard</Link>
             </Button>
-          </div>
-        </div>
+          </PageHeaderActions>
+        </PageHeader>
 
         {actionSuccessMsg && (
           <div
@@ -275,7 +285,7 @@ export default function AdminInstructorApplicationsPage() {
                               type="button"
                               variant="danger"
                               size="sm"
-                              onClick={() => handleConfirmReject(app.id)}
+                              onClick={handleConfirmReject}
                               isLoading={reviewMutation.isPending}
                             >
                               Xác nhận Từ chối

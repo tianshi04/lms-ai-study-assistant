@@ -16,10 +16,9 @@ export function TabsList({ className, ref, ...props }: React.ComponentProps<type
 
 export function TabsTrigger({
   className,
-  isActive,
   ref,
   ...props
-}: React.ComponentProps<typeof BaseTabs.Tab> & { isActive?: boolean }) {
+}: React.ComponentProps<typeof BaseTabs.Tab>) {
   return (
     <BaseTabs.Tab
       ref={ref}
@@ -28,7 +27,6 @@ export function TabsTrigger({
         "data-[selected]:text-primary data-[selected]:font-bold data-[selected]:after:bg-primary",
         "aria-selected:text-primary aria-selected:font-bold aria-selected:after:bg-primary",
         "data-[state=active]:text-primary data-[state=active]:font-bold data-[state=active]:after:bg-primary",
-        isActive && "text-primary font-bold after:bg-primary",
         className,
       )}
       {...props}
@@ -70,26 +68,21 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
   return (
     <TabsRoot value={activeTab} onValueChange={(val) => onChange(val as string)}>
       <TabsList className={className}>
-        {tabs.map((tab) => {
-          const isActive = tab.id === activeTab;
-          return (
-            <TabsTrigger key={tab.id} value={tab.id} isActive={isActive}>
-              <span>{tab.label}</span>
-              {tab.count !== undefined && (
-                <span
-                  className={cn(
-                    "text-xs px-2 py-0.5 rounded-full font-medium transition-colors duration-m3-short-4 ease-m3-emphasized",
-                    isActive
-                      ? "bg-primary-container text-on-primary-container font-semibold"
-                      : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {tab.count}
-                </span>
-              )}
-            </TabsTrigger>
-          );
-        })}
+        {tabs.map((tab) => (
+          <TabsTrigger key={tab.id} value={tab.id}>
+            <span>{tab.label}</span>
+            {tab.count !== undefined && (
+              <span
+                className={cn(
+                  "text-xs px-2 py-0.5 rounded-full font-medium transition-colors duration-m3-short-4 ease-m3-emphasized",
+                  "bg-muted text-muted-foreground data-[selected]:bg-primary-container data-[selected]:text-on-primary-container data-[selected]:font-semibold",
+                )}
+              >
+                {tab.count}
+              </span>
+            )}
+          </TabsTrigger>
+        ))}
       </TabsList>
     </TabsRoot>
   );

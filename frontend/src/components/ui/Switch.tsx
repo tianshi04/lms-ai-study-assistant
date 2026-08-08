@@ -5,6 +5,42 @@ import { cn } from "@/lib/utils";
 export const SwitchRoot = BaseSwitch.Root;
 export const SwitchThumb = BaseSwitch.Thumb;
 
+export function SwitchLabel({ className, ref, children, ...props }: React.ComponentProps<"label">) {
+  return (
+    <label
+      ref={ref}
+      className={cn(
+        "text-sm font-medium text-foreground cursor-pointer select-none leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </label>
+  );
+}
+
+export function SwitchError({ className, ref, children, ...props }: React.ComponentProps<"p">) {
+  return (
+    <p ref={ref} className={cn("text-xs text-destructive font-medium", className)} {...props}>
+      {children}
+    </p>
+  );
+}
+
+export function SwitchHelperText({
+  className,
+  ref,
+  children,
+  ...props
+}: React.ComponentProps<"p">) {
+  return (
+    <p ref={ref} className={cn("text-xs text-muted-foreground", className)} {...props}>
+      {children}
+    </p>
+  );
+}
+
 export interface SwitchProps extends React.ComponentProps<typeof BaseSwitch.Root> {
   label?: string;
   error?: string;
@@ -50,17 +86,10 @@ export function Switch({
     <div className="space-y-1">
       <div className="flex items-center gap-3">
         {switchElement}
-        {label && (
-          <label
-            htmlFor={switchId}
-            className="text-sm font-medium text-foreground cursor-pointer select-none leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-          >
-            {label}
-          </label>
-        )}
+        {label && <SwitchLabel htmlFor={switchId}>{label}</SwitchLabel>}
       </div>
-      {error && <p className="text-xs text-destructive font-medium">{error}</p>}
-      {helperText && !error && <p className="text-xs text-muted-foreground">{helperText}</p>}
+      {error && <SwitchError>{error}</SwitchError>}
+      {helperText && !error && <SwitchHelperText>{helperText}</SwitchHelperText>}
     </div>
   );
 }

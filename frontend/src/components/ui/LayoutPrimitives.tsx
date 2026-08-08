@@ -1,42 +1,39 @@
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 /* -------------------------------------------------------------------------- */
 /* Container Primitive                                                        */
 /* -------------------------------------------------------------------------- */
 
-const containerSizeClasses = {
-  sm: "max-w-3xl",
-  md: "max-w-4xl",
-  lg: "max-w-5xl",
-  xl: "max-w-6xl",
-  "7xl": "max-w-7xl",
-  full: "max-w-full",
-} as const;
+export const containerVariants = cva("w-full mx-auto", {
+  variants: {
+    size: {
+      sm: "max-w-3xl",
+      md: "max-w-4xl",
+      lg: "max-w-5xl",
+      xl: "max-w-6xl",
+      "7xl": "max-w-7xl",
+      full: "max-w-full",
+    },
+    padding: {
+      none: "p-0",
+      normal: "px-4 sm:px-6 lg:px-8",
+      relaxed: "px-6 sm:px-8 lg:px-12",
+    },
+  },
+  defaultVariants: {
+    size: "7xl",
+    padding: "normal",
+  },
+});
 
-export interface ContainerProps extends React.ComponentProps<"div"> {
-  size?: keyof typeof containerSizeClasses;
-  padded?: boolean;
-}
+export interface ContainerProps
+  extends React.ComponentProps<"div">, VariantProps<typeof containerVariants> {}
 
-export function Container({
-  className,
-  size = "7xl",
-  padded = true,
-  ref,
-  ...props
-}: ContainerProps) {
+export function Container({ className, size, padding, ref, ...props }: ContainerProps) {
   return (
-    <div
-      ref={ref}
-      className={cn(
-        "w-full mx-auto",
-        containerSizeClasses[size],
-        padded ? "px-4 sm:px-6 lg:px-8" : null,
-        className,
-      )}
-      {...props}
-    />
+    <div ref={ref} className={cn(containerVariants({ size, padding, className }))} {...props} />
   );
 }
 
@@ -44,60 +41,127 @@ export function Container({
 /* Section Primitive                                                          */
 /* -------------------------------------------------------------------------- */
 
-const sectionSpacingClasses = {
-  none: "py-0",
-  sm: "py-6 sm:py-8",
-  md: "py-10 sm:py-12",
-  lg: "py-16 sm:py-20",
-} as const;
+export const sectionVariants = cva("", {
+  variants: {
+    spacing: {
+      none: "py-0",
+      sm: "py-6 sm:py-8",
+      md: "py-10 sm:py-12",
+      lg: "py-16 sm:py-20",
+    },
+    divider: {
+      none: "",
+      bottom: "border-b border-border",
+      top: "border-t border-border",
+      all: "border-y border-border",
+    },
+  },
+  defaultVariants: {
+    spacing: "md",
+    divider: "none",
+  },
+});
 
-export interface SectionProps extends React.ComponentProps<"section"> {
-  spacing?: keyof typeof sectionSpacingClasses;
-  bordered?: boolean;
-}
+export interface SectionProps
+  extends React.ComponentProps<"section">, VariantProps<typeof sectionVariants> {}
 
-export function Section({
-  className,
-  spacing = "md",
-  bordered = false,
-  ref,
-  ...props
-}: SectionProps) {
+export function Section({ className, spacing, divider, ref, ...props }: SectionProps) {
   return (
     <section
       ref={ref}
-      className={cn(
-        sectionSpacingClasses[spacing],
-        bordered ? "border-b border-border" : null,
-        className,
-      )}
+      className={cn(sectionVariants({ spacing, divider, className }))}
       {...props}
     />
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/* PageHeader Primitive                                                       */
+/* PageHeader Compound Primitives                                             */
 /* -------------------------------------------------------------------------- */
 
-export interface PageHeaderProps extends Omit<React.ComponentProps<"div">, "title"> {
-  title: React.ReactNode;
-  description?: React.ReactNode;
-  breadcrumbs?: React.ReactNode;
-  actions?: React.ReactNode;
-  badge?: React.ReactNode;
+export function PageHeaderTitle({
+  className,
+  ref,
+  children,
+  ...props
+}: React.ComponentProps<"h1">) {
+  return (
+    <h1
+      ref={ref}
+      className={cn(
+        "text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground text-balance",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </h1>
+  );
 }
 
-export function PageHeader({
+export function PageHeaderDescription({
   className,
-  title,
-  description,
-  breadcrumbs,
-  actions,
-  badge,
   ref,
+  children,
   ...props
-}: PageHeaderProps) {
+}: React.ComponentProps<"p">) {
+  return (
+    <p
+      ref={ref}
+      className={cn("text-sm text-muted-foreground max-w-3xl leading-relaxed", className)}
+      {...props}
+    >
+      {children}
+    </p>
+  );
+}
+
+export function PageHeaderActions({
+  className,
+  ref,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      ref={ref}
+      className={cn("flex items-center gap-3 shrink-0 flex-wrap", className)}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function PageHeaderBreadcrumbs({
+  className,
+  ref,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div ref={ref} className={cn("text-xs text-muted-foreground mb-2", className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
+export function PageHeaderBadge({
+  className,
+  ref,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div ref={ref} className={className} {...props}>
+      {children}
+    </div>
+  );
+}
+
+export interface PageHeaderProps extends React.ComponentProps<"div"> {}
+
+export function PageHeader({ className, children, ref, ...props }: PageHeaderProps) {
   return (
     <div
       ref={ref}
@@ -107,21 +171,7 @@ export function PageHeader({
       )}
       {...props}
     >
-      <div className="space-y-1.5">
-        {breadcrumbs ? (
-          <div className="text-xs text-muted-foreground mb-2">{breadcrumbs}</div>
-        ) : null}
-        <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground text-balance">
-            {title}
-          </h1>
-          {badge ? <div>{badge}</div> : null}
-        </div>
-        {description ? (
-          <p className="text-sm text-muted-foreground max-w-3xl leading-relaxed">{description}</p>
-        ) : null}
-      </div>
-      {actions ? <div className="flex items-center gap-3 shrink-0 flex-wrap">{actions}</div> : null}
+      {children}
     </div>
   );
 }
@@ -130,47 +180,60 @@ export function PageHeader({
 /* Stack Layout Primitive                                                     */
 /* -------------------------------------------------------------------------- */
 
-const stackGapClasses = {
-  1: "gap-1",
-  2: "gap-2",
-  3: "gap-3",
-  4: "gap-4",
-  6: "gap-6",
-  8: "gap-8",
-  10: "gap-10",
-  12: "gap-12",
-} as const;
+export const stackVariants = cva("flex", {
+  variants: {
+    direction: {
+      column: "flex-col",
+      row: "flex-row",
+    },
+    gap: {
+      1: "gap-1",
+      2: "gap-2",
+      3: "gap-3",
+      4: "gap-4",
+      6: "gap-6",
+      8: "gap-8",
+      10: "gap-10",
+      12: "gap-12",
+    },
+    align: {
+      start: "items-start",
+      center: "items-center",
+      end: "items-end",
+      stretch: "items-stretch",
+    },
+    justify: {
+      start: "justify-start",
+      center: "justify-center",
+      end: "justify-end",
+      between: "justify-between",
+      around: "justify-around",
+    },
+    wrap: {
+      nowrap: "flex-nowrap",
+      wrap: "flex-wrap",
+      reverse: "flex-wrap-reverse",
+    },
+  },
+  defaultVariants: {
+    direction: "column",
+    gap: 4,
+    align: "start",
+    justify: "start",
+    wrap: "nowrap",
+  },
+});
 
-const stackAlignClasses = {
-  start: "items-start",
-  center: "items-center",
-  end: "items-end",
-  stretch: "items-stretch",
-} as const;
-
-const stackJustifyClasses = {
-  start: "justify-start",
-  center: "justify-center",
-  end: "justify-end",
-  between: "justify-between",
-  around: "justify-around",
-} as const;
-
-export interface StackProps extends React.ComponentProps<"div"> {
-  direction?: "row" | "column";
-  gap?: keyof typeof stackGapClasses;
-  align?: keyof typeof stackAlignClasses;
-  justify?: keyof typeof stackJustifyClasses;
-  wrap?: boolean;
-}
+export interface StackProps
+  extends React.ComponentProps<"div">, VariantProps<typeof stackVariants> {}
 
 export function Stack({
   className,
-  direction = "column",
-  gap = 4,
-  align = "start",
-  justify = "start",
-  wrap = false,
+  direction,
+  gap,
+  align,
+  justify,
+  wrap,
   ref,
   ...props
 }: StackProps) {
@@ -178,13 +241,14 @@ export function Stack({
     <div
       ref={ref}
       className={cn(
-        "flex",
-        direction === "column" ? "flex-col" : "flex-row",
-        stackGapClasses[gap],
-        stackAlignClasses[align],
-        stackJustifyClasses[justify],
-        wrap ? "flex-wrap" : null,
-        className,
+        stackVariants({
+          direction,
+          gap,
+          align,
+          justify,
+          wrap,
+          className,
+        }),
       )}
       {...props}
     />
