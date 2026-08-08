@@ -27,6 +27,7 @@ import { LearningItemFormModal } from "./components/modals/LearningItemFormModal
 import { ScormReviewModal } from "./components/modals/ScormReviewModal";
 import { CourseCollaboratorsModal } from "@/components/course/CourseCollaboratorsModal";
 import { AlertDialog } from "@/components/ui/AlertDialog";
+import { Button } from "@/components/ui/Button";
 
 function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId: string }> }) {
   const resolvedParams = use(params);
@@ -320,20 +321,17 @@ function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId
             </AlertDialog.Description>
           </AlertDialog.Header>
           <AlertDialog.Footer>
-            <button
+            <Button
               type="button"
-              className="px-4 py-2 text-xs font-semibold rounded-xl border border-border bg-card hover:bg-muted"
+              variant="outline"
+              size="sm"
               onClick={() => builder.setConfirmDeleteTarget(null)}
             >
               Hủy
-            </button>
-            <button
-              type="button"
-              className="px-4 py-2 text-xs font-semibold rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={builder.executeConfirmDelete}
-            >
+            </Button>
+            <Button type="button" variant="danger" size="sm" onClick={builder.executeConfirmDelete}>
               Xóa vĩnh viễn
-            </button>
+            </Button>
           </AlertDialog.Footer>
         </AlertDialog.Content>
       </AlertDialog>

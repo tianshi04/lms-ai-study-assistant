@@ -14,6 +14,7 @@ import {
   Receipt,
   Calendar,
   Sparkles,
+  X,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -307,14 +308,16 @@ function MyPurchasesContent() {
               </p>
             </div>
           </div>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => setActionNotice(null)}
-            className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors cursor-pointer shrink-0"
+            className="text-muted-foreground hover:text-foreground shrink-0"
             aria-label="Đóng thông báo"
           >
-            <span className="text-lg leading-none">✕</span>
-          </button>
+            <X className="w-4 h-4" aria-hidden="true" />
+          </Button>
         </div>
       )}
 
