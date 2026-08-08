@@ -14,14 +14,7 @@ import {
 import { Dialog } from "@/components/ui/Dialog";
 
 import { useToast } from "@/components/ui/Toast";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
+import { AlertDialog } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -741,14 +734,14 @@ export default function AdminPartnersPage() {
           if (!open) setDeletingPartnerId(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xoá đối tác</AlertDialogTitle>
-            <AlertDialogDescription>
+        <AlertDialog.Content>
+          <AlertDialog.Header>
+            <AlertDialog.Title>Xác nhận xoá đối tác</AlertDialog.Title>
+            <AlertDialog.Description>
               Bạn có chắc chắn muốn xoá đối tác này khỏi hệ thống? Thao tác này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            </AlertDialog.Description>
+          </AlertDialog.Header>
+          <AlertDialog.Footer>
             <Button variant="outline" onClick={() => setDeletingPartnerId(null)}>
               Hủy
             </Button>
@@ -759,8 +752,8 @@ export default function AdminPartnersPage() {
             >
               Xoá đối tác
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
       </AlertDialog>
     </main>
   );

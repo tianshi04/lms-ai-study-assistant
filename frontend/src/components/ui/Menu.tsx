@@ -1,26 +1,24 @@
+"use client";
+
 import * as React from "react";
 import { Menu as BaseMenu } from "@base-ui/react/menu";
 import { cn } from "@/lib/utils";
 
-export const DropdownMenu = BaseMenu.Root;
-export const DropdownMenuTrigger = BaseMenu.Trigger;
-export const DropdownMenuPortal = BaseMenu.Portal;
-
-interface DropdownMenuContentProps extends React.ComponentProps<typeof BaseMenu.Popup> {
+interface MenuContentProps extends React.ComponentProps<typeof BaseMenu.Popup> {
   sideOffset?: number;
   align?: "start" | "center" | "end";
 }
 
-export function DropdownMenuContent({
+function MenuContent({
   className,
   children,
   sideOffset = 12,
   align = "end",
   ref,
   ...props
-}: DropdownMenuContentProps) {
+}: MenuContentProps) {
   return (
-    <DropdownMenuPortal>
+    <BaseMenu.Portal>
       <BaseMenu.Positioner
         sideOffset={sideOffset}
         align={align}
@@ -37,15 +35,11 @@ export function DropdownMenuContent({
           {children}
         </BaseMenu.Popup>
       </BaseMenu.Positioner>
-    </DropdownMenuPortal>
+    </BaseMenu.Portal>
   );
 }
 
-export function DropdownMenuItem({
-  className,
-  ref,
-  ...props
-}: React.ComponentProps<typeof BaseMenu.Item>) {
+function MenuItem({ className, ref, ...props }: React.ComponentProps<typeof BaseMenu.Item>) {
   return (
     <BaseMenu.Item
       ref={ref}
@@ -58,22 +52,13 @@ export function DropdownMenuItem({
   );
 }
 
-export const MenuRoot = BaseMenu.Root;
-export const MenuTrigger = BaseMenu.Trigger;
-export const MenuPortal = BaseMenu.Portal;
-export const MenuPositioner = BaseMenu.Positioner;
-export const MenuContent = DropdownMenuContent;
-export const MenuItem = DropdownMenuItem;
-export const MenuSeparator = BaseMenu.Separator;
-export const MenuGroup = BaseMenu.Group;
-
-export const Menu = Object.assign(MenuRoot, {
-  Root: MenuRoot,
-  Trigger: MenuTrigger,
-  Portal: MenuPortal,
-  Positioner: MenuPositioner,
+export const Menu = Object.assign(BaseMenu.Root, {
+  Root: BaseMenu.Root,
+  Trigger: BaseMenu.Trigger,
+  Portal: BaseMenu.Portal,
+  Positioner: BaseMenu.Positioner,
   Content: MenuContent,
   Item: MenuItem,
-  Separator: MenuSeparator,
-  Group: MenuGroup,
+  Separator: BaseMenu.Separator,
+  Group: BaseMenu.Group,
 });

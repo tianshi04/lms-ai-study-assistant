@@ -1,9 +1,9 @@
+"use client";
+
 import * as React from "react";
 import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
 import { Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-export const NumberFieldRoot = BaseNumberField.Root;
 
 export interface NumberFieldProps extends React.ComponentProps<typeof BaseNumberField.Root> {
   label?: string;
@@ -11,7 +11,7 @@ export interface NumberFieldProps extends React.ComponentProps<typeof BaseNumber
   helperText?: string;
 }
 
-export function NumberField({
+function NumberFieldComponent({
   label,
   error,
   helperText,
@@ -52,3 +52,11 @@ export function NumberField({
     </div>
   );
 }
+
+export const NumberField = Object.assign(NumberFieldComponent, {
+  Root: BaseNumberField.Root,
+  Group: BaseNumberField.Group,
+  Input: BaseNumberField.Input,
+  Increment: BaseNumberField.Increment,
+  Decrement: BaseNumberField.Decrement,
+});

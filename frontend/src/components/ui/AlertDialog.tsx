@@ -1,13 +1,10 @@
+"use client";
+
 import * as React from "react";
 import { AlertDialog as BaseAlertDialog } from "@base-ui/react/alert-dialog";
 import { cn } from "@/lib/utils";
 
-export const AlertDialog = BaseAlertDialog.Root;
-export const AlertDialogTrigger = BaseAlertDialog.Trigger;
-export const AlertDialogPortal = BaseAlertDialog.Portal;
-export const AlertDialogClose = BaseAlertDialog.Close;
-
-export function AlertDialogBackdrop({
+function AlertDialogBackdrop({
   className,
   ref,
   ...props
@@ -24,14 +21,14 @@ export function AlertDialogBackdrop({
   );
 }
 
-export function AlertDialogContent({
+function AlertDialogContent({
   className,
   children,
   ref,
   ...props
 }: React.ComponentProps<typeof BaseAlertDialog.Popup>) {
   return (
-    <AlertDialogPortal>
+    <BaseAlertDialog.Portal>
       <AlertDialogBackdrop />
       <div className="fixed inset-0 z-modal flex items-center justify-center p-4">
         <BaseAlertDialog.Popup
@@ -45,11 +42,11 @@ export function AlertDialogContent({
           {children}
         </BaseAlertDialog.Popup>
       </div>
-    </AlertDialogPortal>
+    </BaseAlertDialog.Portal>
   );
 }
 
-export function AlertDialogTitle({
+function AlertDialogTitle({
   className,
   ref,
   ...props
@@ -63,7 +60,7 @@ export function AlertDialogTitle({
   );
 }
 
-export function AlertDialogDescription({
+function AlertDialogDescription({
   className,
   ref,
   ...props
@@ -77,7 +74,7 @@ export function AlertDialogDescription({
   );
 }
 
-export function AlertDialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function AlertDialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn("flex flex-col space-y-1.5 text-center sm:text-left", className)}
@@ -86,7 +83,7 @@ export function AlertDialogHeader({ className, ...props }: React.HTMLAttributes<
   );
 }
 
-export function AlertDialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function AlertDialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
@@ -97,3 +94,17 @@ export function AlertDialogFooter({ className, ...props }: React.HTMLAttributes<
     />
   );
 }
+
+export const AlertDialog = Object.assign(BaseAlertDialog.Root, {
+  Root: BaseAlertDialog.Root,
+  Trigger: BaseAlertDialog.Trigger,
+  Portal: BaseAlertDialog.Portal,
+  Backdrop: AlertDialogBackdrop,
+  Popup: AlertDialogContent,
+  Content: AlertDialogContent,
+  Title: AlertDialogTitle,
+  Description: AlertDialogDescription,
+  Header: AlertDialogHeader,
+  Footer: AlertDialogFooter,
+  Close: BaseAlertDialog.Close,
+});

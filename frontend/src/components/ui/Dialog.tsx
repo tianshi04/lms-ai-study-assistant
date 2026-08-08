@@ -1,14 +1,11 @@
+"use client";
+
 import * as React from "react";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-export const DialogRoot = BaseDialog.Root;
-export const DialogTrigger = BaseDialog.Trigger;
-export const DialogPortal = BaseDialog.Portal;
-export const DialogClose = BaseDialog.Close;
-
-export function DialogBackdrop({
+function DialogBackdrop({
   className,
   ref,
   ...props
@@ -25,7 +22,7 @@ export function DialogBackdrop({
   );
 }
 
-export const dialogSizeVariants = cva(
+const dialogSizeVariants = cva(
   "bg-surface-container-high text-on-surface rounded-3xl shadow-2xl w-full p-6 border border-outline-variant animate-in fade-in zoom-in-95 duration-m3-medium-4 ease-m3-decelerate relative my-8",
   {
     variants: {
@@ -44,14 +41,12 @@ export const dialogSizeVariants = cva(
   },
 );
 
-export type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl" | "full";
-
-export interface DialogContentProps
+interface DialogContentProps
   extends React.ComponentProps<typeof BaseDialog.Popup>, VariantProps<typeof dialogSizeVariants> {}
 
-export function DialogContent({ className, children, size, ref, ...props }: DialogContentProps) {
+function DialogContent({ className, children, size, ref, ...props }: DialogContentProps) {
   return (
-    <DialogPortal>
+    <BaseDialog.Portal>
       <DialogBackdrop />
       <div className="fixed inset-0 z-modal flex items-center justify-center p-4 overflow-y-auto">
         <BaseDialog.Popup
@@ -62,34 +57,32 @@ export function DialogContent({ className, children, size, ref, ...props }: Dial
           {children}
         </BaseDialog.Popup>
       </div>
-    </DialogPortal>
+    </BaseDialog.Portal>
   );
 }
 
-export const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn("flex flex-col space-y-1.5 pb-4 border-b border-outline-variant", className)}
-    {...props}
-  />
-);
-DialogHeader.displayName = "DialogHeader";
+function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn("flex flex-col space-y-1.5 pb-4 border-b border-outline-variant", className)}
+      {...props}
+    />
+  );
+}
 
-export const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4 border-t border-outline-variant gap-2 sm:gap-0",
-      className,
-    )}
-    {...props}
-  />
-);
-DialogFooter.displayName = "DialogFooter";
+function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4 border-t border-outline-variant gap-2 sm:gap-0",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
 
-export function DialogTitle({
-  className,
-  ref,
-  ...props
-}: React.ComponentProps<typeof BaseDialog.Title>) {
+function DialogTitle({ className, ref, ...props }: React.ComponentProps<typeof BaseDialog.Title>) {
   return (
     <BaseDialog.Title
       ref={ref}
@@ -99,7 +92,7 @@ export function DialogTitle({
   );
 }
 
-export function DialogDescription({
+function DialogDescription({
   className,
   ref,
   ...props
@@ -124,5 +117,5 @@ export const Dialog = Object.assign(BaseDialog.Root, {
   Footer: DialogFooter,
   Title: DialogTitle,
   Description: DialogDescription,
-  Close: DialogClose,
+  Close: BaseDialog.Close,
 });

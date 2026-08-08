@@ -7,19 +7,13 @@ import {
   useCancelInvitationMutation,
 } from "@/lib/query_hooks";
 import { InvitationType } from "@/gen/identity/v1/identity_pb";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/Dialog";
+import { Dialog } from "@/components/ui/Dialog";
 
-import { Field, FieldLabel } from "@/components/ui/Field";
+import { Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 import { Send, Loader2, CheckCircle2, AlertCircle, Copy, Check, UserX } from "lucide-react";
 
 interface InviteMemberModalProps {
@@ -110,10 +104,10 @@ export function InviteMemberModal({
         if (!open) onClose();
       }}
     >
-      <DialogContent size="lg">
-        <DialogHeader>
-          <DialogTitle>{`Mời tham gia ${targetName}`}</DialogTitle>
-        </DialogHeader>
+      <Dialog.Content size="lg">
+        <Dialog.Header>
+          <Dialog.Title>{`Mời tham gia ${targetName}`}</Dialog.Title>
+        </Dialog.Header>
 
         <div className="flex flex-col max-h-[70vh] overflow-hidden my-2">
           {/* Tabs */}
@@ -154,9 +148,9 @@ export function InviteMemberModal({
             {activeTab === "send" && (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <Field>
-                  <FieldLabel htmlFor="invitee-email">
+                  <Field.Label htmlFor="invitee-email">
                     Email người nhận <span className="text-destructive">*</span>
-                  </FieldLabel>
+                  </Field.Label>
                   <Input
                     id="invitee-email"
                     type="email"
@@ -169,24 +163,24 @@ export function InviteMemberModal({
 
                 {rolesList.length > 1 && (
                   <Field>
-                    <FieldLabel htmlFor="invitee-role">Vai trò gán cho người dùng</FieldLabel>
+                    <Field.Label htmlFor="invitee-role">Vai trò gán cho người dùng</Field.Label>
                     <Select value={roleId} onValueChange={(val) => val && setRoleId(val)}>
-                      <SelectTrigger id="invitee-role" className="w-full">
-                        <SelectValue placeholder="Chọn vai trò" />
-                      </SelectTrigger>
-                      <SelectContent>
+                      <Select.Trigger id="invitee-role" className="w-full">
+                        <Select.Value placeholder="Chọn vai trò" />
+                      </Select.Trigger>
+                      <Select.Content>
                         {rolesList.map((r) => (
-                          <SelectItem key={r.id} value={r.id}>
+                          <Select.Item key={r.id} value={r.id}>
                             {r.label}
-                          </SelectItem>
+                          </Select.Item>
                         ))}
-                      </SelectContent>
+                      </Select.Content>
                     </Select>
                   </Field>
                 )}
 
                 <Field>
-                  <FieldLabel htmlFor="invitee-message">Lời nhắn gửi kèm (Tùy chọn)</FieldLabel>
+                  <Field.Label htmlFor="invitee-message">Lời nhắn gửi kèm (Tùy chọn)</Field.Label>
                   <Textarea
                     id="invitee-message"
                     rows={2}
@@ -303,7 +297,7 @@ export function InviteMemberModal({
             )}
           </div>
         </div>
-      </DialogContent>
+      </Dialog.Content>
     </Dialog>
   );
 }

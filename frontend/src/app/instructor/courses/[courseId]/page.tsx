@@ -26,14 +26,7 @@ import { LessonFormModal } from "./components/modals/LessonFormModal";
 import { LearningItemFormModal } from "./components/modals/LearningItemFormModal";
 import { ScormReviewModal } from "./components/modals/ScormReviewModal";
 import { CourseCollaboratorsModal } from "@/components/course/CourseCollaboratorsModal";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
+import { AlertDialog } from "@/components/ui/AlertDialog";
 
 function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId: string }> }) {
   const resolvedParams = use(params);
@@ -309,24 +302,24 @@ function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId
           if (!open) builder.setConfirmDeleteTarget(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
+        <AlertDialog.Content>
+          <AlertDialog.Header>
+            <AlertDialog.Title>
               {builder.confirmDeleteTarget?.type === "week"
                 ? "Xác nhận xóa Tuần học"
                 : builder.confirmDeleteTarget?.type === "lesson"
                   ? "Xác nhận xóa Bài học"
                   : "Xác nhận xóa Học liệu"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
+            </AlertDialog.Title>
+            <AlertDialog.Description>
               {builder.confirmDeleteTarget?.type === "week"
                 ? "Xóa tuần học này sẽ xóa toàn bộ bài học và học liệu bên trong. Bạn có chắc chắn?"
                 : builder.confirmDeleteTarget?.type === "lesson"
                   ? "Xóa bài học này sẽ xóa toàn bộ học liệu thuộc bài học. Bạn có chắc chắn?"
                   : "Hành động này sẽ xóa vĩnh viễn học liệu khỏi bài học. Bạn có chắc chắn?"}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            </AlertDialog.Description>
+          </AlertDialog.Header>
+          <AlertDialog.Footer>
             <button
               type="button"
               className="px-4 py-2 text-xs font-semibold rounded-xl border border-border bg-card hover:bg-muted"
@@ -341,8 +334,8 @@ function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId
             >
               Xóa vĩnh viễn
             </button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
       </AlertDialog>
     </div>
   );

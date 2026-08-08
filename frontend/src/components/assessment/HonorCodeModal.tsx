@@ -3,14 +3,7 @@
 import { useState } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/Dialog";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -34,7 +27,7 @@ export function HonorCodeModal({
   onClose,
 }: HonorCodeModalProps) {
   const [isChecked, setIsChecked] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     if (!isChecked) {
@@ -42,7 +35,7 @@ export function HonorCodeModal({
       return;
     }
 
-    setErrorMsg("");
+    setErrorMsg(null);
 
     try {
       const client = getRpcClient(AssessmentService);
@@ -57,19 +50,19 @@ export function HonorCodeModal({
   };
 
   return (
-    <Dialog
+    <Dialog.Root
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <DialogContent size="md">
-        <DialogHeader>
-          <DialogTitle>Xác nhận Nộp bài & Cam kết Trung thực</DialogTitle>
-          <DialogDescription>
+      <Dialog.Content size="md">
+        <Dialog.Header>
+          <Dialog.Title>Xác nhận Nộp bài & Cam kết Trung thực</Dialog.Title>
+          <Dialog.Description>
             Vui lòng kiểm tra kỹ bài làm và cam kết liêm chính học thuật trước khi nộp.
-          </DialogDescription>
-        </DialogHeader>
+          </Dialog.Description>
+        </Dialog.Header>
 
         <div className="space-y-4 text-sm text-muted-foreground my-4">
           <p className="text-foreground font-medium">
@@ -104,7 +97,7 @@ export function HonorCodeModal({
           )}
         </div>
 
-        <DialogFooter>
+        <Dialog.Footer>
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Hủy / Kiểm tra lại
           </Button>
@@ -117,8 +110,8 @@ export function HonorCodeModal({
             {isSubmitting ? "Đang chấm điểm…" : "Đồng ý & Nộp bài ngay"}
             {!isSubmitting && <Send aria-hidden="true" className="w-3.5 h-3.5 ml-1.5" />}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </Dialog.Footer>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 }

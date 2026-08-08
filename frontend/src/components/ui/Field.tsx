@@ -1,10 +1,8 @@
+"use client";
+
 import * as React from "react";
 import { Field as BaseField } from "@base-ui/react/field";
 import { cn } from "@/lib/utils";
-
-export const FieldRoot = BaseField.Root;
-export const Field = BaseField.Root;
-export const FieldControl = BaseField.Control;
 
 export function FieldLabel({
   className,
@@ -47,3 +45,13 @@ export function FieldDescription({
     />
   );
 }
+
+export const FieldRoot = BaseField.Root;
+
+export const Field = Object.assign(BaseField.Root, {
+  Root: BaseField.Root,
+  Control: BaseField.Control,
+  Label: FieldLabel,
+  Error: FieldError,
+  Description: FieldDescription,
+});

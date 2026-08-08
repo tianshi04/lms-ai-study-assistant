@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { Checkbox as BaseCheckbox } from "@base-ui/react/checkbox";
 import { Check } from "lucide-react";
@@ -5,19 +7,13 @@ import { cn } from "@/lib/utils";
 
 import { FieldRoot, FieldLabel, FieldError, FieldDescription } from "./Field";
 
-export const CheckboxRoot = BaseCheckbox.Root;
-export const CheckboxIndicator = BaseCheckbox.Indicator;
-export const CheckboxLabel = FieldLabel;
-export const CheckboxError = FieldError;
-export const CheckboxHelperText = FieldDescription;
-
 export interface CheckboxProps extends React.ComponentProps<typeof BaseCheckbox.Root> {
   label?: string;
   error?: string;
   helperText?: string;
 }
 
-export function Checkbox({
+function CheckboxComponent({
   label,
   error,
   helperText,
@@ -65,3 +61,11 @@ export function Checkbox({
     </FieldRoot>
   );
 }
+
+export const Checkbox = Object.assign(CheckboxComponent, {
+  Root: BaseCheckbox.Root,
+  Indicator: BaseCheckbox.Indicator,
+  Label: FieldLabel,
+  Error: FieldError,
+  HelperText: FieldDescription,
+});

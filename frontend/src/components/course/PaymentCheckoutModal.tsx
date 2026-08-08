@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/Dialog";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { useCreateVNPayPaymentUrlMutation } from "@/lib/query_hooks";
@@ -87,17 +80,17 @@ export function PaymentCheckoutModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent size="lg" className="p-6">
-        <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-foreground flex items-center gap-2">
+      <Dialog.Content size="lg" className="p-6">
+        <Dialog.Header>
+          <Dialog.Title className="text-xl font-bold text-foreground flex items-center gap-2">
             <CreditCard className="w-6 h-6 text-primary" aria-hidden="true" />
             Nâng Cấp Quyền Truy Cập Paid Mode
-          </DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground mt-1">
+          </Dialog.Title>
+          <Dialog.Description className="text-sm text-muted-foreground mt-1">
             Mở khóa trọn vẹn bài thi tính điểm (Graded Quiz), bài tập thực hành Auto-Graded Lab,
             chấm chéo Peer Review và nhận Chứng chỉ Xác thực qua VNPay Gateway.
-          </DialogDescription>
-        </DialogHeader>
+          </Dialog.Description>
+        </Dialog.Header>
 
         {feedbackMsg && (
           <div
@@ -226,7 +219,7 @@ export function PaymentCheckoutModal({
           </Button>
         </div>
 
-        <DialogFooter className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+        <Dialog.Footer className="flex items-center justify-end gap-3 pt-3 border-t border-border">
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
             Hủy bỏ
           </Button>
@@ -248,8 +241,8 @@ export function PaymentCheckoutModal({
               "Thanh Toán VNPay"
             )}
           </Button>
-        </DialogFooter>
-      </DialogContent>
+        </Dialog.Footer>
+      </Dialog.Content>
     </Dialog>
   );
 }

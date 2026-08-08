@@ -295,6 +295,17 @@ export function ToastProvider({
   );
 }
 
+export const Toast = Object.assign(ToastProvider, {
+  Provider: ToastProvider,
+  Viewport: ToastViewportList,
+  Root: BaseToast.Root,
+  Content: BaseToast.Content,
+  Title: BaseToast.Title,
+  Description: BaseToast.Description,
+  Action: BaseToast.Action,
+  Close: BaseToast.Close,
+});
+
 export function useToast(): ToastContextValue {
   const context = React.useContext(ToastContext);
   if (!context) {

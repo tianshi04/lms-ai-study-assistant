@@ -15,13 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/shared/Card";
 
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -390,23 +384,23 @@ export default function RegisterPage() {
                           if (val) field.handleChange(Number(val) as UserRole);
                         }}
                       >
-                        <SelectTrigger className="pl-10">
-                          <SelectValue placeholder="Chọn vai trò">
+                        <Select.Trigger className="pl-10">
+                          <Select.Value placeholder="Chọn vai trò">
                             {field.state.value === UserRole.LEARNER
                               ? "Học viên (Learner)"
                               : field.state.value === UserRole.INSTRUCTOR
                                 ? "Giảng viên (Instructor)"
                                 : ""}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={String(UserRole.LEARNER)}>
+                          </Select.Value>
+                        </Select.Trigger>
+                        <Select.Content>
+                          <Select.Item value={String(UserRole.LEARNER)}>
                             Học viên (Learner)
-                          </SelectItem>
-                          <SelectItem value={String(UserRole.INSTRUCTOR)}>
+                          </Select.Item>
+                          <Select.Item value={String(UserRole.INSTRUCTOR)}>
                             Giảng viên (Instructor)
-                          </SelectItem>
-                        </SelectContent>
+                          </Select.Item>
+                        </Select.Content>
                       </Select>
                     </div>
                   </div>

@@ -7,14 +7,7 @@ import { CatalogService, CourseStatus, type Course } from "@/gen/catalog/v1/cata
 import { useToast } from "@/components/ui/Toast";
 import { Dialog } from "@/components/ui/Dialog";
 
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
+import { AlertDialog } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -541,24 +534,24 @@ export default function InstructorCoursesPage() {
           if (!open) setDeletingCourseTarget(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa khóa học</AlertDialogTitle>
-            <AlertDialogDescription>
+        <AlertDialog.Content>
+          <AlertDialog.Header>
+            <AlertDialog.Title>Xác nhận xóa khóa học</AlertDialog.Title>
+            <AlertDialog.Description>
               {deletingCourseTarget
                 ? `Bạn có chắc chắn muốn xóa khóa học "${deletingCourseTarget.title}"? Thao tác này không thể hoàn tác.`
                 : ""}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            </AlertDialog.Description>
+          </AlertDialog.Header>
+          <AlertDialog.Footer>
             <Button variant="outline" onClick={() => setDeletingCourseTarget(null)}>
               Hủy
             </Button>
             <Button variant="danger" onClick={executeDeleteCourse}>
               Xóa khóa học
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
       </AlertDialog>
     </div>
   );

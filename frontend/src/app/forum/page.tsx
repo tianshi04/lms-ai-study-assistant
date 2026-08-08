@@ -16,14 +16,7 @@ import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Dialog } from "@/components/ui/Dialog";
 
 import { useToast } from "@/components/ui/Toast";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
+import { AlertDialog } from "@/components/ui/AlertDialog";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -32,13 +25,7 @@ import { Card } from "@/components/shared/Card";
 import { Badge } from "@/components/shared/Badge";
 
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 
 function formatRoleName(role: string): string {
   if (!role) return "Học viên";
@@ -458,21 +445,21 @@ function ForumPageContent() {
                 setSelectedCourseId((val as string) || "");
               }}
             >
-              <SelectTrigger className="w-full md:w-80">
-                <SelectValue placeholder="-- All Courses --">
+              <Select.Trigger className="w-full md:w-80">
+                <Select.Value placeholder="-- All Courses --">
                   {selectedCourseId
                     ? courses.find((c) => c.id === selectedCourseId)?.title || "-- All Courses --"
                     : "-- All Courses --"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">{"-- All Courses --"}</SelectItem>
+                </Select.Value>
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="">{"-- All Courses --"}</Select.Item>
                 {courses.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
+                  <Select.Item key={c.id} value={c.id}>
                     {c.title}
-                  </SelectItem>
+                  </Select.Item>
                 ))}
-              </SelectContent>
+              </Select.Content>
             </Select>
           </div>
 
@@ -847,18 +834,18 @@ function ForumPageContent() {
                   if (val) setNewCourseId(val as string);
                 }}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn khóa học">
+                <Select.Trigger className="w-full">
+                  <Select.Value placeholder="Chọn khóa học">
                     {courses.find((c) => c.id === newCourseId)?.title || newCourseId}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content>
                   {courses.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
+                    <Select.Item key={c.id} value={c.id}>
                       {c.title}
-                    </SelectItem>
+                    </Select.Item>
                   ))}
-                </SelectContent>
+                </Select.Content>
               </Select>
             </div>
 
@@ -982,22 +969,22 @@ function ForumPageContent() {
           if (!open) setDeletingThreadId(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa bài viết</AlertDialogTitle>
-            <AlertDialogDescription>
+        <AlertDialog.Content>
+          <AlertDialog.Header>
+            <AlertDialog.Title>Xác nhận xóa bài viết</AlertDialog.Title>
+            <AlertDialog.Description>
               Bạn có chắc chắn muốn xóa bài viết này không? Thao tác này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            </AlertDialog.Description>
+          </AlertDialog.Header>
+          <AlertDialog.Footer>
             <Button variant="outline" onClick={() => setDeletingThreadId(null)}>
               Hủy
             </Button>
             <Button variant="danger" onClick={executeDeleteThread} isLoading={isDeletingThread}>
               Xóa bài viết
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
       </AlertDialog>
 
       {/* Confirm Dialog Delete Reply */}
@@ -1007,22 +994,22 @@ function ForumPageContent() {
           if (!open) setDeletingReplyId(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa phản hồi</AlertDialogTitle>
-            <AlertDialogDescription>
+        <AlertDialog.Content>
+          <AlertDialog.Header>
+            <AlertDialog.Title>Xác nhận xóa phản hồi</AlertDialog.Title>
+            <AlertDialog.Description>
               Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            </AlertDialog.Description>
+          </AlertDialog.Header>
+          <AlertDialog.Footer>
             <Button variant="outline" onClick={() => setDeletingReplyId(null)}>
               Hủy
             </Button>
             <Button variant="danger" onClick={executeDeleteReply} isLoading={isDeletingReply}>
               Xóa phản hồi
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
       </AlertDialog>
     </>
   );

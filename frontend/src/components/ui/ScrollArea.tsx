@@ -1,25 +1,10 @@
+"use client";
+
 import * as React from "react";
 import { ScrollArea as BaseScrollArea } from "@base-ui/react/scroll-area";
 import { cn } from "@/lib/utils";
 
-export function ScrollArea({
-  className,
-  children,
-  ref,
-  ...props
-}: React.ComponentProps<typeof BaseScrollArea.Root>) {
-  return (
-    <BaseScrollArea.Root ref={ref} className={cn("relative overflow-hidden", className)} {...props}>
-      <BaseScrollArea.Viewport className="h-full w-full rounded-[inherit]">
-        {children}
-      </BaseScrollArea.Viewport>
-      <ScrollBar />
-      <BaseScrollArea.Corner />
-    </BaseScrollArea.Root>
-  );
-}
-
-export function ScrollBar({
+function ScrollBar({
   className,
   orientation = "vertical",
   ref,
@@ -41,3 +26,28 @@ export function ScrollBar({
     </BaseScrollArea.Scrollbar>
   );
 }
+
+function ScrollAreaComponent({
+  className,
+  children,
+  ref,
+  ...props
+}: React.ComponentProps<typeof BaseScrollArea.Root>) {
+  return (
+    <BaseScrollArea.Root ref={ref} className={cn("relative overflow-hidden", className)} {...props}>
+      <BaseScrollArea.Viewport className="h-full w-full rounded-[inherit]">
+        {children}
+      </BaseScrollArea.Viewport>
+      <ScrollBar />
+      <BaseScrollArea.Corner />
+    </BaseScrollArea.Root>
+  );
+}
+
+export const ScrollArea = Object.assign(ScrollAreaComponent, {
+  Root: BaseScrollArea.Root,
+  Viewport: BaseScrollArea.Viewport,
+  Scrollbar: ScrollBar,
+  Thumb: BaseScrollArea.Thumb,
+  Corner: BaseScrollArea.Corner,
+});

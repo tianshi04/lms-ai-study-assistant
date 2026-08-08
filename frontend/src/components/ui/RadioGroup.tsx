@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group";
 import { Radio as BaseRadio } from "@base-ui/react/radio";
@@ -5,25 +7,12 @@ import { cn } from "@/lib/utils";
 
 import { FieldLabel, FieldDescription } from "./Field";
 
-export const RadioGroup = BaseRadioGroup;
-export const RadioItem = BaseRadio.Root;
-export const RadioIndicator = BaseRadio.Indicator;
-export const RadioLabel = FieldLabel;
-export const RadioDescription = FieldDescription;
-
 export interface RadioOptionProps extends React.ComponentProps<typeof BaseRadio.Root> {
   label?: string;
   description?: string;
 }
 
-export function RadioOption({
-  label,
-  description,
-  className,
-  id,
-  ref,
-  ...props
-}: RadioOptionProps) {
+function RadioOption({ label, description, className, id, ref, ...props }: RadioOptionProps) {
   const generatedId = React.useId();
   const radioId = id || (label ? label.toLowerCase().replace(/\s+/g, "-") : generatedId);
 
@@ -44,10 +33,19 @@ export function RadioOption({
       </BaseRadio.Root>
       {(label || description) && (
         <div className="grid gap-0.5 leading-none">
-          {label && <RadioLabel htmlFor={radioId}>{label}</RadioLabel>}
-          {description && <RadioDescription>{description}</RadioDescription>}
+          {label && <FieldLabel htmlFor={radioId}>{label}</FieldLabel>}
+          {description && <FieldDescription>{description}</FieldDescription>}
         </div>
       )}
     </div>
   );
 }
+
+export const RadioGroup = Object.assign(BaseRadioGroup, {
+  Root: BaseRadioGroup,
+  Item: BaseRadio.Root,
+  Indicator: BaseRadio.Indicator,
+  Label: FieldLabel,
+  Description: FieldDescription,
+  Option: RadioOption,
+});

@@ -11,14 +11,7 @@ import {
 } from "@/lib/query_hooks";
 import { InvitationType, InvitationStatus } from "@/gen/identity/v1/identity_pb";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
+import { AlertDialog } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import {
   Table,
@@ -273,15 +266,15 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
             if (!open) setCancelingInvId(null);
           }}
         >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Hủy Lời mời Gia nhập</AlertDialogTitle>
-              <AlertDialogDescription>
+          <AlertDialog.Content>
+            <AlertDialog.Header>
+              <AlertDialog.Title>Hủy Lời mời Gia nhập</AlertDialog.Title>
+              <AlertDialog.Description>
                 Bạn có chắc chắn muốn hủy lời mời này không? Người được mời sẽ không thể dùng link
                 token này nữa.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
+              </AlertDialog.Description>
+            </AlertDialog.Header>
+            <AlertDialog.Footer>
               <Button variant="outline" onClick={() => setCancelingInvId(null)}>
                 Hủy
               </Button>
@@ -294,8 +287,8 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
               >
                 Hủy Lời Mời
               </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
+            </AlertDialog.Footer>
+          </AlertDialog.Content>
         </AlertDialog>
       </main>
     </div>

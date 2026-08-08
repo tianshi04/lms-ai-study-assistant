@@ -12,22 +12,9 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/components/providers/AuthProvider";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
+import { AlertDialog } from "@/components/ui/AlertDialog";
 import {
   PageHeader,
   PageHeaderTitle,
@@ -172,15 +159,15 @@ export default function AdminCategoriesPage() {
                 if (val) setNewType(val as "SUBJECT" | "LEVEL");
               }}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Loại danh mục">
+              <Select.Trigger className="w-full">
+                <Select.Value placeholder="Loại danh mục">
                   {newType === "SUBJECT" ? "Chủ đề" : "Cấp độ"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="SUBJECT">{"Chủ đề"}</SelectItem>
-                <SelectItem value="LEVEL">{"Cấp độ"}</SelectItem>
-              </SelectContent>
+                </Select.Value>
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="SUBJECT">{"Chủ đề"}</Select.Item>
+                <Select.Item value="LEVEL">{"Cấp độ"}</Select.Item>
+              </Select.Content>
             </Select>
           </div>
           <Button
@@ -218,14 +205,14 @@ export default function AdminCategoriesPage() {
           if (!open) setDeleteTarget(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa danh mục</AlertDialogTitle>
-            <AlertDialogDescription>
+        <AlertDialog.Content>
+          <AlertDialog.Header>
+            <AlertDialog.Title>Xác nhận xóa danh mục</AlertDialog.Title>
+            <AlertDialog.Description>
               Bạn có chắc chắn muốn xóa danh mục này? Thao tác này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            </AlertDialog.Description>
+          </AlertDialog.Header>
+          <AlertDialog.Footer>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>
               Hủy
             </Button>
@@ -236,8 +223,8 @@ export default function AdminCategoriesPage() {
             >
               Xóa danh mục
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
       </AlertDialog>
     </main>
   );

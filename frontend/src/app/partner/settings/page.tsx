@@ -15,23 +15,10 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/shared/Badge";
 
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
+import { AlertDialog } from "@/components/ui/AlertDialog";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Check, X, Plus, RefreshCw, Download, Copy, Building2 } from "lucide-react";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 
 export interface Signatory {
   id: string;
@@ -641,14 +628,14 @@ function PartnerSettingsForm({
           if (!open) setShowRotateConfirm(false);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận tạo cặp khóa ký số mới</AlertDialogTitle>
-            <AlertDialogDescription>
+        <AlertDialog.Content>
+          <AlertDialog.Header>
+            <AlertDialog.Title>Xác nhận tạo cặp khóa ký số mới</AlertDialog.Title>
+            <AlertDialog.Description>
               Bạn có chắc chắn muốn tạo cặp khóa ký số mới? Cặp khóa cũ sẽ bị xoay và thay thế.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            </AlertDialog.Description>
+          </AlertDialog.Header>
+          <AlertDialog.Footer>
             <Button variant="outline" onClick={() => setShowRotateConfirm(false)}>
               Hủy
             </Button>
@@ -659,8 +646,8 @@ function PartnerSettingsForm({
             >
               Tạo khóa mới
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
       </AlertDialog>
     </div>
   );
@@ -739,22 +726,22 @@ export default function PartnerSettingsPage() {
               if (val) setSelectedPartnerId(val as string);
             }}
           >
-            <SelectTrigger className="w-[200px] text-sm font-medium">
-              <SelectValue placeholder="Chọn đối tác">
+            <Select.Trigger className="w-[200px] text-sm font-medium">
+              <Select.Value placeholder="Chọn đối tác">
                 {(() => {
                   const currentId = selectedPartnerId || activePartner.id;
                   const p = partners.find((item) => item.id === currentId);
                   return p ? p.name : currentId;
                 })()}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
+              </Select.Value>
+            </Select.Trigger>
+            <Select.Content>
               {partners.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
+                <Select.Item key={p.id} value={p.id}>
                   {p.name}
-                </SelectItem>
+                </Select.Item>
               ))}
-            </SelectContent>
+            </Select.Content>
           </Select>
         )}
       </div>
