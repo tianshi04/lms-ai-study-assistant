@@ -1,16 +1,35 @@
+import base64
+import json
 import uuid
 import pytest
 from src.modules.identity.application.identity_usecase import IdentityUseCase
 from src.modules.identity.domain.entities import UserRole
 
 
+def _make_google_jwt(sub: str, email: str, name: str) -> str:
+    header = (
+        base64.urlsafe_b64encode(json.dumps({"alg": "RS256"}).encode())
+        .decode()
+        .rstrip("=")
+    )
+    payload = (
+        base64.urlsafe_b64encode(
+            json.dumps({"sub": sub, "email": email, "name": name}).encode()
+        )
+        .decode()
+        .rstrip("=")
+    )
+    return f"{header}.{payload}.signature"
+
+
 @pytest.mark.asyncio
 async def test_google_register_and_fallback_login_flow():
     usecase = IdentityUseCase()
     unique_email = f"student_{uuid.uuid4().hex[:8]}@gmail.com"
+    sub_id = f"google_sub_{uuid.uuid4().hex[:12]}"
 
     # Step 1: Google Register Verification
-    mock_token = f"mock_google_{unique_email}_StudentName"
+    test_token = _make_google_jwt(sub_id, unique_email, "Student Name")
     (
         temp_token,
         email,
@@ -18,7 +37,7 @@ async def test_google_register_and_fallback_login_flow():
         _,
         is_already_reg,
         err,
-    ) = await usecase.google_register_verify(mock_token)
+    ) = await usecase.google_register_verify(test_token)
 
     assert err == ""
     assert is_already_reg is False
@@ -41,7 +60,7 @@ async def test_google_register_and_fallback_login_flow():
     assert refresh_token != ""
 
     # Step 3: Test Login via Google 1-Click
-    g_user, _, _, g_err = await usecase.google_login(mock_token)
+    g_user, _, _, g_err = await usecase.google_login(test_token)
     assert g_err == ""
     assert g_user is not None
     assert g_user.id == user.id
@@ -58,7 +77,7 @@ async def test_google_register_and_fallback_login_flow():
         reset_email,
         _,
         reset_err,
-    ) = await usecase.google_reset_password_verify(mock_token)
+    ) = await usecase.google_reset_password_verify(test_token)
     assert reset_err == ""
     assert reset_email == unique_email
     assert reset_temp_token != ""

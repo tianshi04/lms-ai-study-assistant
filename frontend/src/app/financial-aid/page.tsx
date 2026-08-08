@@ -56,8 +56,8 @@ function FinancialAidContent() {
         const certClient = getRpcClient(CertificateService);
 
         const [courseRes, myAppRes] = await Promise.all([
-          catalogClient.listCourses({ pageSize: 50 }).catch(() => ({ courses: [] })),
-          certClient.listMyFinancialAids({}).catch(() => ({ applications: [] })),
+          catalogClient.listCourses({ pageSize: 50 }),
+          certClient.listMyFinancialAids({}),
         ]);
 
         if (!ignore) {

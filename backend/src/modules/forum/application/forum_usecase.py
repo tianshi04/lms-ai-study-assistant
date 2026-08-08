@@ -167,7 +167,7 @@ class ForumUseCase:
             return reply
 
     async def vote_post(
-        self, post_id: str, user_id: str = "", is_upvote: bool = True
+        self, post_id: str, user_id: str, is_upvote: bool = True
     ) -> int:
         async with async_session_scope() as session:
             repo = self._get_repo(session)

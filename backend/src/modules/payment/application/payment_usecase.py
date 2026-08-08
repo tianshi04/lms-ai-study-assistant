@@ -129,8 +129,12 @@ class PaymentUseCase:
                         cur_exp = cur_exp.replace(tzinfo=timezone.utc)
                     if cur_exp > now_dt:
                         expires_dt = cur_exp + timedelta(days=days)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to parse existing subscription expiration date %s: %s",
+                        existing_sub.expires_at,
+                        exc,
+                    )
 
             sub = UserSubscription(
                 id=sub_id,
@@ -574,7 +578,10 @@ class PaymentUseCase:
                 order_dt = datetime.fromisoformat(o.created_at)
                 if order_dt.tzinfo is None:
                     order_dt = order_dt.replace(tzinfo=timezone.utc)
-            except Exception:
+            except Exception as exc:
+                logger.warning(
+                    "Failed to parse order creation timestamp %s: %s", o.created_at, exc
+                )
                 order_dt = now_dt
 
             if current_exp_dt is None or current_exp_dt < order_dt:
@@ -631,7 +638,12 @@ class PaymentUseCase:
                         if c_dt.tzinfo is None:
                             c_dt = c_dt.replace(tzinfo=timezone.utc)
                         age_minutes = (now_dt - c_dt).total_seconds() / 60.0
-                    except Exception:
+                    except Exception as exc:
+                        logger.warning(
+                            "Failed to parse order created_at timestamp %s for age calculation: %s",
+                            o.created_at,
+                            exc,
+                        )
                         age_minutes = 999.0
 
                     if age_minutes >= 0:

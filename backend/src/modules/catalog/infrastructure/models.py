@@ -63,9 +63,7 @@ class CourseModel(Base):
     partner_logo_url: Mapped[str] = mapped_column(
         String(512), nullable=False, default=""
     )
-    instructor_names: Mapped[list[str]] = mapped_column(
-        ARRAY(String(128)), nullable=False, default=list
-    )
+
     subject: Mapped[str] = mapped_column(
         String(64), nullable=False, server_default="UNSPECIFIED"
     )

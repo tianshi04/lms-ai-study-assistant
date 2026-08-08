@@ -49,8 +49,8 @@ export function UserDropdown() {
   const { data: purchasesData } = useListUserPurchasesQuery({ enabled: !!userId });
 
   const { daysRemaining, isPlusActive, formattedExpDate } = useMemo(() => {
-    const rawSub = purchasesData?.activeSubscription ?? (purchasesData as any)?.active_subscription;
-    let expStr = rawSub?.expiresAt || (rawSub as any)?.expires_at || "";
+    const rawSub = purchasesData?.activeSubscription;
+    let expStr = rawSub?.expiresAt || "";
 
     if (!expStr && purchasesData?.orders?.length) {
       const completedSubOrders = purchasesData.orders.filter(

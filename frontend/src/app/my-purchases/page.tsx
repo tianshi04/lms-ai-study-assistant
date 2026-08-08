@@ -73,8 +73,8 @@ function MyPurchasesContent() {
     if (!isMounted) {
       return { daysRemaining: 0, isPlusActive: false, formattedExpDate: "" };
     }
-    const rawSub = data?.activeSubscription ?? (data as any)?.active_subscription;
-    let expStr = rawSub?.expiresAt || (rawSub as any)?.expires_at || "";
+    const rawSub = data?.activeSubscription;
+    let expStr = rawSub?.expiresAt || "";
 
     // Fallback: If no activeSubscription object, check completed SYSTEM_SUBSCRIPTION orders
     if (!expStr && data?.orders?.length) {

@@ -64,8 +64,8 @@ export async function proxy(request: NextRequest) {
   }
 
   const roleStr = payload ? normalizeUserRole(payload.role) : null;
-  const isSystemAdmin = roleStr === "3";
-  const isInstructor = roleStr === "2" || isSystemAdmin;
+  const isSystemAdmin = roleStr === "USER_ROLE_ADMIN" || roleStr === "USER_ROLE_SUPER_ADMIN";
+  const isInstructor = roleStr === "USER_ROLE_INSTRUCTOR" || isSystemAdmin;
 
   const requestHeaders = new Headers(request.headers);
   if (token && !requestHeaders.has("authorization")) {
