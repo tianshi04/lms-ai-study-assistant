@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   useCourseDetailQuery,
   useCourseReviewsQuery,
+  useLearningProgressQuery,
   useMyCertificatesQuery,
   usePaymentAccessQuery,
 } from "@/lib/query_hooks";
@@ -68,6 +69,11 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   }, [course, userId, userName]);
 
   const { data: reviews = [], isLoading: loadingReviews } = useCourseReviewsQuery(courseId);
+  const { data: learningProgress } = useLearningProgressQuery(courseId, {
+    enabled: isAuthenticated && !!courseId,
+  });
+  const progressPercent = learningProgress?.overallProgressPercent ?? 0;
+  const canReview = isAuthenticated && progressPercent >= 50;
 
   const { data: myCertificates = [], isLoading: loadingCerts } = useMyCertificatesQuery();
   const { data: paymentAccess, isLoading: loadingPayment } = usePaymentAccessQuery(courseId);
@@ -148,6 +154,10 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!course) return;
+    if (!canReview) {
+      toast.error("Cần hoàn thành 50% khóa học để đánh giá");
+      return;
+    }
     setSubmittingReview(true);
 
     try {
@@ -516,22 +526,38 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </div>
               )}
               {!isOwnCourse && (
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="sm"
-                  onClick={() => {
-                    if (!isAuthenticated) {
-                      window.location.href = `/auth/login?redirect=/courses/${courseId}`;
-                      return;
-                    }
-                    setIsReviewModalOpen(true);
-                  }}
-                  className="px-4 py-2.5 rounded-xl font-bold shadow-sm gap-2"
+                <span
+                  title={
+                    isAuthenticated && !canReview
+                      ? "Cần hoàn thành 50% khóa học để đánh giá"
+                      : undefined
+                  }
+                  className="inline-block"
                 >
-                  <SquarePen aria-hidden="true" className="w-4 h-4" />
-                  <span>{"Viết / Sửa đánh giá"}</span>
-                </Button>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    disabled={isAuthenticated && !canReview}
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        window.location.href = `/auth/login?redirect=/courses/${courseId}`;
+                        return;
+                      }
+                      if (!canReview) return;
+                      const myReview = reviews.find((r) => r.userId === userId);
+                      if (myReview) {
+                        setRating(myReview.ratingStars);
+                        setComment(myReview.commentText);
+                      }
+                      setIsReviewModalOpen(true);
+                    }}
+                    className="px-4 py-2.5 rounded-xl font-bold shadow-sm gap-2"
+                  >
+                    <SquarePen aria-hidden="true" className="w-4 h-4" />
+                    <span>{"Đánh giá"}</span>
+                  </Button>
+                </span>
               )}
             </div>
           </div>
@@ -612,6 +638,12 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
         title={"Đánh giá khóa học"}
         className="max-w-md"
       >
+        {!canReview && (
+          <div className="bg-warning/10 border border-warning/30 p-3 rounded-xl flex items-center gap-2.5 text-warning text-xs font-medium mb-4">
+            <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>{"Cần hoàn thành 50% khóa học để đánh giá"}</span>
+          </div>
+        )}
         <form onSubmit={handleReviewSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-foreground mb-2">
@@ -624,6 +656,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   type="button"
                   variant="ghost"
                   size="icon"
+                  disabled={!canReview}
                   onClick={() => setRating(star)}
                   onMouseEnter={() => setHoverRating(star)}
                   onMouseLeave={() => setHoverRating(0)}
@@ -659,6 +692,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               maxLength={2000}
+              disabled={!canReview}
               placeholder={"Chia sẻ trải nghiệm học tập, đánh giá nội dung bài giảng…"}
               className="text-xs p-3 rounded-xl bg-card resize-none"
             />
@@ -678,7 +712,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               type="submit"
               variant="primary"
               size="sm"
-              disabled={submittingReview}
+              disabled={submittingReview || !canReview}
               isLoading={submittingReview}
               className="text-xs shadow-sm"
             >
