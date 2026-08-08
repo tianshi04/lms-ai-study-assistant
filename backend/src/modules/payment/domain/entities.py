@@ -76,6 +76,7 @@ class PaymentOrderStatus(str, Enum):
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     EXPIRED = "EXPIRED"
+    CANCELLED = "CANCELLED"
 
 
 @dataclass

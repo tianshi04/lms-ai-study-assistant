@@ -974,6 +974,46 @@ export function useCreateVNPayPaymentUrlMutation(
   });
 }
 
+export function useCancelVNPayOrderMutation(
+  options?: Partial<
+    UseMutationOptions<
+      {
+        success: boolean;
+        message: string;
+      },
+      Error,
+      { vnpTxnRef?: string; orderId?: string }
+    >
+  >,
+) {
+  const queryClient = useQueryClient();
+  return useMutation<
+    {
+      success: boolean;
+      message: string;
+    },
+    Error,
+    { vnpTxnRef?: string; orderId?: string }
+  >({
+    mutationFn: async ({ vnpTxnRef, orderId }) => {
+      const client = getRpcClient(PaymentService);
+      const res = await client.cancelVNPayOrder({
+        vnpTxnRef: vnpTxnRef ?? "",
+        orderId: orderId ?? "",
+      });
+      return {
+        success: res.success,
+        message: res.message,
+      };
+    },
+    ...options,
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["userPurchasesAndOrders"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
+    },
+  });
+}
+
 export function useListUserPurchasesQuery(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["userPurchasesAndOrders"],
