@@ -2,6 +2,7 @@
 
 import { use, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   useOrganizationMembersQuery,
@@ -217,9 +218,11 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
               >
                 <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
                   {m.avatarUrl ? (
-                    <img
+                    <Image
                       src={m.avatarUrl}
-                      alt={m.fullName}
+                      alt={m.fullName || "Avatar"}
+                      width={40}
+                      height={40}
                       className="w-full h-full object-cover rounded-full"
                     />
                   ) : (

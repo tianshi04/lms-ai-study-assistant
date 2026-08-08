@@ -255,11 +255,10 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
                   const isActive = cue.originalIndex === activeIndex;
 
                   return (
-                    <span
+                    <button
+                      type="button"
                       key={cue.originalIndex}
                       id={`transcript-cue-${cue.originalIndex}`}
-                      role="button"
-                      tabIndex={0}
                       onClick={() => onSeekVideo(cue.startTime)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
@@ -269,12 +268,12 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
                       }}
                       className={`cursor-pointer transition-colors duration-m3-short-2 rounded-full px-2.5 py-1 [box-decoration-break:clone] [-webkit-box-decoration-break:clone] ${
                         isActive
-                          ? "bg-primary/10 text-primary font-semibold"
-                          : "hover:bg-surface-container-high hover:text-on-surface"
+                          ? "bg-primary text-primary-foreground font-semibold shadow-xs"
+                          : "hover:bg-surface-container-highest hover:text-primary"
                       }`}
                     >
                       {renderHighlightedText(cue.text, searchQuery)}{" "}
-                    </span>
+                    </button>
                   );
                 })}
               </p>

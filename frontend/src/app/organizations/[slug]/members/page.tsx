@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState, Suspense } from "react";
+import Image from "next/image";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   useOrganizationMembersQuery,
@@ -222,9 +223,11 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                         <div className="flex items-center space-x-3">
                           <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0 text-xs">
                             {m.avatarUrl ? (
-                              <img
+                              <Image
                                 src={m.avatarUrl}
-                                alt={m.fullName}
+                                alt={m.fullName || "Avatar"}
+                                width={36}
+                                height={36}
                                 className="w-full h-full object-cover rounded-full"
                               />
                             ) : (
