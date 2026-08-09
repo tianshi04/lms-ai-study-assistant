@@ -2,16 +2,19 @@ import * as React from "react";
 import { Menu as BaseMenu } from "@base-ui/react/menu";
 import { cn } from "@/lib/utils";
 
-export const DropdownMenu = BaseMenu.Root;
-export const DropdownMenuTrigger = BaseMenu.Trigger;
-export const DropdownMenuPortal = BaseMenu.Portal;
+const MenuRoot = BaseMenu.Root;
+const MenuTrigger = BaseMenu.Trigger;
+const MenuPortal = BaseMenu.Portal;
+const MenuPositioner = BaseMenu.Positioner;
+const MenuSeparator = BaseMenu.Separator;
+const MenuGroup = BaseMenu.Group;
 
 interface DropdownMenuContentProps extends React.ComponentProps<typeof BaseMenu.Popup> {
   sideOffset?: number;
   align?: "start" | "center" | "end";
 }
 
-export function DropdownMenuContent({
+function DropdownMenuContent({
   className,
   children,
   sideOffset = 12,
@@ -20,7 +23,7 @@ export function DropdownMenuContent({
   ...props
 }: DropdownMenuContentProps) {
   return (
-    <DropdownMenuPortal>
+    <MenuPortal>
       <BaseMenu.Positioner
         sideOffset={sideOffset}
         align={align}
@@ -37,11 +40,11 @@ export function DropdownMenuContent({
           {children}
         </BaseMenu.Popup>
       </BaseMenu.Positioner>
-    </DropdownMenuPortal>
+    </MenuPortal>
   );
 }
 
-export function DropdownMenuItem({
+function DropdownMenuItem({
   className,
   ref,
   ...props
@@ -58,14 +61,8 @@ export function DropdownMenuItem({
   );
 }
 
-export const MenuRoot = BaseMenu.Root;
-export const MenuTrigger = BaseMenu.Trigger;
-export const MenuPortal = BaseMenu.Portal;
-export const MenuPositioner = BaseMenu.Positioner;
-export const MenuContent = DropdownMenuContent;
-export const MenuItem = DropdownMenuItem;
-export const MenuSeparator = BaseMenu.Separator;
-export const MenuGroup = BaseMenu.Group;
+const MenuContent = DropdownMenuContent;
+const MenuItem = DropdownMenuItem;
 
 export const Menu = Object.assign(MenuRoot, {
   Root: MenuRoot,
@@ -77,3 +74,5 @@ export const Menu = Object.assign(MenuRoot, {
   Separator: MenuSeparator,
   Group: MenuGroup,
 });
+
+export const DropdownMenu = Menu;

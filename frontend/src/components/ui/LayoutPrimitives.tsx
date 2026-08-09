@@ -125,12 +125,7 @@ export function Section({
 /* PageHeader Compound Primitives                                             */
 /* -------------------------------------------------------------------------- */
 
-export function PageHeaderTitle({
-  className,
-  ref,
-  children,
-  ...props
-}: React.ComponentProps<"h1">) {
+function PageHeaderTitle({ className, ref, children, ...props }: React.ComponentProps<"h1">) {
   return (
     <h1
       ref={ref}
@@ -145,12 +140,7 @@ export function PageHeaderTitle({
   );
 }
 
-export function PageHeaderDescription({
-  className,
-  ref,
-  children,
-  ...props
-}: React.ComponentProps<"p">) {
+function PageHeaderDescription({ className, ref, children, ...props }: React.ComponentProps<"p">) {
   return (
     <p
       ref={ref}
@@ -162,12 +152,7 @@ export function PageHeaderDescription({
   );
 }
 
-export function PageHeaderActions({
-  className,
-  ref,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
+function PageHeaderActions({ className, ref, children, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       ref={ref}
@@ -179,7 +164,7 @@ export function PageHeaderActions({
   );
 }
 
-export function PageHeaderBreadcrumbs({
+function PageHeaderBreadcrumbs({
   className,
   ref,
   children,
@@ -192,12 +177,7 @@ export function PageHeaderBreadcrumbs({
   );
 }
 
-export function PageHeaderBadge({
-  className,
-  ref,
-  children,
-  ...props
-}: React.ComponentProps<"div">) {
+function PageHeaderBadge({ className, ref, children, ...props }: React.ComponentProps<"div">) {
   return (
     <div ref={ref} className={className} {...props}>
       {children}
@@ -209,7 +189,7 @@ export interface PageHeaderProps extends React.ComponentProps<"div"> {
   render?: React.ReactElement<any>;
 }
 
-export function PageHeader({ className, children, render, ref, ...props }: PageHeaderProps) {
+function PageHeaderComponent({ className, children, render, ref, ...props }: PageHeaderProps) {
   const compClasses = cn(
     "flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-border mb-6",
     className,
@@ -232,6 +212,14 @@ export function PageHeader({ className, children, render, ref, ...props }: PageH
     </div>
   );
 }
+
+export const PageHeader = Object.assign(PageHeaderComponent, {
+  Title: PageHeaderTitle,
+  Description: PageHeaderDescription,
+  Actions: PageHeaderActions,
+  Breadcrumbs: PageHeaderBreadcrumbs,
+  Badge: PageHeaderBadge,
+});
 
 /* -------------------------------------------------------------------------- */
 /* Stack Layout Primitive                                                     */

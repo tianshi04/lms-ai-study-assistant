@@ -14,13 +14,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Card } from "@/components/ui/Card";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 
 import {
   useQuestionBanksQuery,
@@ -578,8 +572,8 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                   if (val) setNewBankCategory(val as string);
                 }}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn phân loại Kho">
+                <Select.Trigger className="w-full">
+                  <Select.Value placeholder="Chọn phân loại Kho">
                     {newBankCategory === "PRACTICE"
                       ? "Luyện tập (PRACTICE)"
                       : newBankCategory === "MODULE_EXAM"
@@ -587,13 +581,13 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                         : newBankCategory === "FINAL_EXAM"
                           ? "Bài thi Cuối khóa (FINAL_EXAM)"
                           : newBankCategory}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PRACTICE">{"Luyện tập (PRACTICE)"}</SelectItem>
-                  <SelectItem value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</SelectItem>
-                  <SelectItem value="FINAL_EXAM">{"Bài thi Cuối khóa (FINAL_EXAM)"}</SelectItem>
-                </SelectContent>
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="PRACTICE">{"Luyện tập (PRACTICE)"}</Select.Item>
+                  <Select.Item value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</Select.Item>
+                  <Select.Item value="FINAL_EXAM">{"Bài thi Cuối khóa (FINAL_EXAM)"}</Select.Item>
+                </Select.Content>
               </Select>
             </div>
 
@@ -694,8 +688,8 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                     }
                   }}
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Chọn dạng câu hỏi">
+                  <Select.Trigger className="w-full">
+                    <Select.Value placeholder="Chọn dạng câu hỏi">
                       {qType === "SINGLE_CHOICE"
                         ? "Trắc nghiệm 1 đáp án (Single Choice)"
                         : qType === "MULTIPLE_CHOICE"
@@ -703,17 +697,17 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                           : qType === "TRUE_FALSE"
                             ? "Chọn Đúng/Sai (True/False)"
                             : qType}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SINGLE_CHOICE">
+                    </Select.Value>
+                  </Select.Trigger>
+                  <Select.Content>
+                    <Select.Item value="SINGLE_CHOICE">
                       {"Trắc nghiệm 1 đáp án (Single Choice)"}
-                    </SelectItem>
-                    <SelectItem value="MULTIPLE_CHOICE">
+                    </Select.Item>
+                    <Select.Item value="MULTIPLE_CHOICE">
                       {"Trắc nghiệm nhiều đáp án (Multiple Choice)"}
-                    </SelectItem>
-                    <SelectItem value="TRUE_FALSE">{"Chọn Đúng/Sai (True/False)"}</SelectItem>
-                  </SelectContent>
+                    </Select.Item>
+                    <Select.Item value="TRUE_FALSE">{"Chọn Đúng/Sai (True/False)"}</Select.Item>
+                  </Select.Content>
                 </Select>
               </div>
             </div>

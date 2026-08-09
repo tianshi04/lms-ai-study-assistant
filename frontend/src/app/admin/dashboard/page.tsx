@@ -20,21 +20,8 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/Table";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Table } from "@/components/ui/Table";
+import { Select } from "@/components/ui/Select";
 
 const columnHelper = createColumnHelper<EnterpriseSeat>();
 
@@ -331,34 +318,36 @@ export default function AdminEnterpriseDashboardPage() {
             </div>
           ) : (
             <Table>
-              <TableHeader>
+              <Table.Header>
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
+                  <Table.Row key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
+                      <Table.Head key={header.id}>
                         {header.isPlaceholder
                           ? null
                           : flexRender(header.column.columnDef.header, header.getContext())}
-                      </TableHead>
+                      </Table.Head>
                     ))}
-                    <TableHead className="text-right">Thao tác</TableHead>
-                  </TableRow>
+                    <Table.Head className="text-right">Thao tác</Table.Head>
+                  </Table.Row>
                 ))}
-              </TableHeader>
-              <TableBody>
+              </Table.Header>
+              <Table.Body>
                 {seats.map((seat) => (
-                  <TableRow key={seat.id}>
-                    <TableCell className="font-bold">{seat.partnerName}</TableCell>
-                    <TableCell className="font-mono font-bold text-primary">
+                  <Table.Row key={seat.id}>
+                    <Table.Cell className="font-bold">{seat.partnerName}</Table.Cell>
+                    <Table.Cell className="font-mono font-bold text-primary">
                       {seat.seatKey}
-                    </TableCell>
-                    <TableCell className="font-mono font-semibold">{seat.assignedUserId}</TableCell>
-                    <TableCell>
+                    </Table.Cell>
+                    <Table.Cell className="font-mono font-semibold">
+                      {seat.assignedUserId}
+                    </Table.Cell>
+                    <Table.Cell>
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-success/10 text-success border border-success/20">
                         {seat.status}
                       </span>
-                    </TableCell>
-                    <TableCell className="text-right">
+                    </Table.Cell>
+                    <Table.Cell className="text-right">
                       <Button
                         size="sm"
                         variant="outlined"
@@ -369,10 +358,10 @@ export default function AdminEnterpriseDashboardPage() {
                       >
                         Gán học viên
                       </Button>
-                    </TableCell>
-                  </TableRow>
+                    </Table.Cell>
+                  </Table.Row>
                 ))}
-              </TableBody>
+              </Table.Body>
             </Table>
           )}
         </Card>
@@ -408,25 +397,25 @@ export default function AdminEnterpriseDashboardPage() {
                   if (val) setSelectedSeatKey(val as string);
                 }}
               >
-                <SelectTrigger
+                <Select.Trigger
                   id="selectedSeatKey"
                   aria-label="Chọn Mã Enterprise Key"
                   className="w-full font-mono font-semibold"
                 >
-                  <SelectValue placeholder="Chọn Mã Enterprise Key">
+                  <Select.Value placeholder="Chọn Mã Enterprise Key">
                     {(() => {
                       const s = seats.find((seat) => seat.seatKey === selectedSeatKey);
                       return s ? `${s.partnerName} (${s.seatKey})` : selectedSeatKey;
                     })()}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content>
                   {seats.map((s) => (
-                    <SelectItem key={s.id} value={s.seatKey}>
+                    <Select.Item key={s.id} value={s.seatKey}>
                       {`${s.partnerName} (${s.seatKey})`}
-                    </SelectItem>
+                    </Select.Item>
                   ))}
-                </SelectContent>
+                </Select.Content>
               </Select>
             </div>
 

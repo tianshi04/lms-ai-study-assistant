@@ -15,14 +15,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/Table";
+import { Table } from "@/components/ui/Table";
 import { Progress } from "@/components/ui/Progress";
 import {
   Mail,
@@ -195,31 +188,31 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="px-6 py-3.5">Email Người nhận</TableHead>
-                    <TableHead className="px-6 py-3.5">Vai trò mời</TableHead>
-                    <TableHead className="px-6 py-3.5">Trạng thái</TableHead>
-                    <TableHead className="px-6 py-3.5">Ngày tạo</TableHead>
-                    <TableHead className="px-6 py-3.5 text-right">Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.Head className="px-6 py-3.5">Email Người nhận</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Vai trò mời</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Trạng thái</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Ngày tạo</Table.Head>
+                    <Table.Head className="px-6 py-3.5 text-right">Thao tác</Table.Head>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
                   {invitations.map((inv) => (
-                    <TableRow key={inv.id}>
-                      <TableCell className="px-6 py-4 font-bold text-foreground">
+                    <Table.Row key={inv.id}>
+                      <Table.Cell className="px-6 py-4 font-bold text-foreground">
                         {inv.inviteeEmail}
-                      </TableCell>
-                      <TableCell className="px-6 py-4 font-mono text-xs text-muted-foreground">
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 font-mono text-xs text-muted-foreground">
                         {inv.roleId || "INSTRUCTOR"}
-                      </TableCell>
-                      <TableCell className="px-6 py-4">{getStatusBadge(inv.status)}</TableCell>
-                      <TableCell className="px-6 py-4 text-xs text-muted-foreground">
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4">{getStatusBadge(inv.status)}</Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-xs text-muted-foreground">
                         {inv.createdAt
                           ? new Date(inv.createdAt).toLocaleDateString("vi-VN")
                           : "Gần đây"}
-                      </TableCell>
-                      <TableCell className="px-6 py-4 text-right">
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {inv.status === InvitationStatus.PENDING && inv.token && (
                             <Button
@@ -252,10 +245,10 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
                             </IconButton>
                           )}
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </Table.Cell>
+                    </Table.Row>
                   ))}
-                </TableBody>
+                </Table.Body>
               </Table>
             </div>
           )}

@@ -13,22 +13,11 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/components/providers/AuthProvider";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
 import { Trash2 } from "lucide-react";
 import { Dialog } from "@/components/ui/Dialog";
-import {
-  PageHeader,
-  PageHeaderTitle,
-  PageHeaderDescription,
-  PageHeaderActions,
-} from "@/components/ui/LayoutPrimitives";
+import { PageHeader } from "@/components/ui/LayoutPrimitives";
 
 const CategoryList = ({
   title,
@@ -135,14 +124,14 @@ export default function AdminCategoriesPage() {
     <main className="max-w-5xl mx-auto px-6 py-12 flex-1">
       <PageHeader>
         <div>
-          <PageHeaderTitle>Danh mục quản trị</PageHeaderTitle>
-          <PageHeaderDescription>Quản lý danh mục khóa học</PageHeaderDescription>
+          <PageHeader.Title>Danh mục quản trị</PageHeader.Title>
+          <PageHeader.Description>Quản lý danh mục khóa học</PageHeader.Description>
         </div>
-        <PageHeaderActions>
+        <PageHeader.Actions>
           <Button variant="text" size="sm" onClick={() => router.push("/admin/dashboard")}>
             &larr; {"Về trang quản trị"}
           </Button>
-        </PageHeaderActions>
+        </PageHeader.Actions>
       </PageHeader>
 
       <Card variant="filled" className="p-6 mb-8">
@@ -168,15 +157,15 @@ export default function AdminCategoriesPage() {
                 if (val) setNewType(val as "SUBJECT" | "LEVEL");
               }}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Loại danh mục">
+              <Select.Trigger className="w-full">
+                <Select.Value placeholder="Loại danh mục">
                   {newType === "SUBJECT" ? "Chủ đề" : "Cấp độ"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="SUBJECT">{"Chủ đề"}</SelectItem>
-                <SelectItem value="LEVEL">{"Cấp độ"}</SelectItem>
-              </SelectContent>
+                </Select.Value>
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="SUBJECT">{"Chủ đề"}</Select.Item>
+                <Select.Item value="LEVEL">{"Cấp độ"}</Select.Item>
+              </Select.Content>
             </Select>
           </div>
           <Button

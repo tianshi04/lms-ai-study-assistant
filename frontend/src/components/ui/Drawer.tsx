@@ -4,13 +4,22 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Drawer = BaseDrawer.Root;
-export const DrawerTrigger = BaseDrawer.Trigger;
-export const DrawerPortal = BaseDrawer.Portal;
-export const DrawerViewport = BaseDrawer.Viewport;
-export const DrawerClose = BaseDrawer.Close;
+export const Drawer = Object.assign(BaseDrawer.Root, {
+  Root: BaseDrawer.Root,
+  Trigger: BaseDrawer.Trigger,
+  Portal: BaseDrawer.Portal,
+  Viewport: BaseDrawer.Viewport,
+  Backdrop: DrawerBackdrop,
+  Popup: DrawerContent,
+  Content: DrawerContent,
+  Header: DrawerHeader,
+  Title: DrawerTitle,
+  Description: DrawerDescription,
+  Footer: DrawerFooter,
+  Close: BaseDrawer.Close,
+});
 
-export function DrawerBackdrop({
+function DrawerBackdrop({
   className,
   ref,
   ...props
@@ -51,7 +60,7 @@ export interface DrawerContentProps
   showCloseButton?: boolean;
 }
 
-export function DrawerContent({
+function DrawerContent({
   side,
   showCloseButton = true,
   className,
@@ -60,7 +69,7 @@ export function DrawerContent({
   ...props
 }: DrawerContentProps) {
   return (
-    <DrawerPortal>
+    <BaseDrawer.Portal>
       <DrawerBackdrop />
       <BaseDrawer.Viewport className="fixed inset-0 z-modal overflow-hidden">
         <BaseDrawer.Popup
@@ -77,11 +86,11 @@ export function DrawerContent({
           )}
         </BaseDrawer.Popup>
       </BaseDrawer.Viewport>
-    </DrawerPortal>
+    </BaseDrawer.Portal>
   );
 }
 
-export function DrawerHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function DrawerHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
@@ -93,11 +102,7 @@ export function DrawerHeader({ className, ...props }: React.HTMLAttributes<HTMLD
   );
 }
 
-export function DrawerTitle({
-  className,
-  ref,
-  ...props
-}: React.ComponentProps<typeof BaseDrawer.Title>) {
+function DrawerTitle({ className, ref, ...props }: React.ComponentProps<typeof BaseDrawer.Title>) {
   return (
     <BaseDrawer.Title
       ref={ref}
@@ -107,7 +112,7 @@ export function DrawerTitle({
   );
 }
 
-export function DrawerDescription({
+function DrawerDescription({
   className,
   ref,
   ...props
@@ -121,7 +126,7 @@ export function DrawerDescription({
   );
 }
 
-export function DrawerFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function DrawerFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(

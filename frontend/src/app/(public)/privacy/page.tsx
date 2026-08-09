@@ -17,14 +17,7 @@ import {
   FileCheck,
   AlertCircle,
 } from "lucide-react";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/Breadcrumb";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 interface Section {
   id: string;
@@ -85,15 +78,15 @@ export default function PrivacyPolicyPage() {
       <div className="max-w-6xl mx-auto space-y-10">
         {/* Breadcrumb Navigation */}
         <Breadcrumb>
-          <BreadcrumbList className="text-xs">
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/">Trang chủ</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Chính sách Bảo mật</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
+          <Breadcrumb.List className="text-xs">
+            <Breadcrumb.Item>
+              <Breadcrumb.Link href="/">Trang chủ</Breadcrumb.Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Separator />
+            <Breadcrumb.Item>
+              <Breadcrumb.Page>Chính sách Bảo mật</Breadcrumb.Page>
+            </Breadcrumb.Item>
+          </Breadcrumb.List>
         </Breadcrumb>
 
         {/* Hero Section */}

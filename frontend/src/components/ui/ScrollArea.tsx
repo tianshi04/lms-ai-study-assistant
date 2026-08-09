@@ -2,7 +2,7 @@ import * as React from "react";
 import { ScrollArea as BaseScrollArea } from "@base-ui/react/scroll-area";
 import { cn } from "@/lib/utils";
 
-export function ScrollArea({
+function ScrollAreaComponent({
   className,
   children,
   ref,
@@ -19,7 +19,16 @@ export function ScrollArea({
   );
 }
 
-export function ScrollBar({
+export const ScrollArea = Object.assign(ScrollAreaComponent, {
+  Root: BaseScrollArea.Root,
+  Viewport: BaseScrollArea.Viewport,
+  Scrollbar: ScrollBar,
+  Bar: ScrollBar,
+  Thumb: BaseScrollArea.Thumb,
+  Corner: BaseScrollArea.Corner,
+});
+
+function ScrollBar({
   className,
   orientation = "vertical",
   ref,

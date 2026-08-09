@@ -6,24 +6,10 @@ import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
 import { Users } from "lucide-react";
 import { Card } from "@/components/ui/Card";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/Table";
+import { Table } from "@/components/ui/Table";
 import { Progress } from "@/components/ui/Progress";
 
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/Breadcrumb";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: string }> }) {
   const resolvedParams = use(params);
@@ -55,21 +41,21 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
         {/* Breadcrumb */}
         <div className="flex items-center justify-between">
           <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/instructor/courses">Giảng viên</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink href={`/instructor/courses/${courseId}`}>
+            <Breadcrumb.List className="text-xs">
+              <Breadcrumb.Item>
+                <Breadcrumb.Link href="/instructor/courses">Giảng viên</Breadcrumb.Link>
+              </Breadcrumb.Item>
+              <Breadcrumb.Separator />
+              <Breadcrumb.Item>
+                <Breadcrumb.Link href={`/instructor/courses/${courseId}`}>
                   Chi tiết khóa học
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Thống kê lớp học</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
+                </Breadcrumb.Link>
+              </Breadcrumb.Item>
+              <Breadcrumb.Separator />
+              <Breadcrumb.Item>
+                <Breadcrumb.Page>Thống kê lớp học</Breadcrumb.Page>
+              </Breadcrumb.Item>
+            </Breadcrumb.List>
           </Breadcrumb>
 
           <Link
@@ -166,27 +152,27 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                 </div>
               ) : (
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tên / Email</TableHead>
-                      <TableHead>Mã Học Viên</TableHead>
-                      <TableHead className="text-center">Tiến Độ Học Tập</TableHead>
-                      <TableHead className="text-right">Trạng Thái</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.Head>Tên / Email</Table.Head>
+                      <Table.Head>Mã Học Viên</Table.Head>
+                      <Table.Head className="text-center">Tiến Độ Học Tập</Table.Head>
+                      <Table.Head className="text-right">Trạng Thái</Table.Head>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
                     {analytics.students.map((student) => (
-                      <TableRow key={student.userId}>
-                        <TableCell className="font-semibold">
+                      <Table.Row key={student.userId}>
+                        <Table.Cell className="font-semibold">
                           <div>{student.userName}</div>
                           <div className="text-xs font-mono font-normal text-muted-foreground">
                             {student.userEmail || "Learner"}
                           </div>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">
+                        </Table.Cell>
+                        <Table.Cell className="font-mono text-xs text-muted-foreground">
                           {student.userId}
-                        </TableCell>
-                        <TableCell className="text-center">
+                        </Table.Cell>
+                        <Table.Cell className="text-center">
                           <div className="flex items-center justify-center gap-3">
                             <div className="w-32">
                               <Progress.Linear
@@ -198,8 +184,8 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                               {student.progressPercent.toFixed(1)}%
                             </span>
                           </div>
-                        </TableCell>
-                        <TableCell className="text-right">
+                        </Table.Cell>
+                        <Table.Cell className="text-right">
                           {student.progressPercent >= 100 ? (
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-success/10 text-success">
                               HOÀN THÀNH
@@ -213,10 +199,10 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                               MỚI GHI DANH
                             </span>
                           )}
-                        </TableCell>
-                      </TableRow>
+                        </Table.Cell>
+                      </Table.Row>
                     ))}
-                  </TableBody>
+                  </Table.Body>
                 </Table>
               )}
             </Card>

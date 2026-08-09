@@ -3,7 +3,7 @@ import { Toggle as BaseToggle } from "@base-ui/react/toggle";
 import { ToggleGroup as BaseToggleGroup } from "@base-ui/react/toggle-group";
 import { cn } from "@/lib/utils";
 
-export function Toggle({ className, ref, ...props }: React.ComponentProps<typeof BaseToggle>) {
+function Toggle({ className, ref, ...props }: React.ComponentProps<typeof BaseToggle>) {
   return (
     <BaseToggle
       ref={ref}
@@ -16,7 +16,7 @@ export function Toggle({ className, ref, ...props }: React.ComponentProps<typeof
   );
 }
 
-export function ToggleGroup({
+function ToggleGroupComponent({
   className,
   ref,
   ...props
@@ -32,3 +32,8 @@ export function ToggleGroup({
     />
   );
 }
+
+export const ToggleGroup = Object.assign(ToggleGroupComponent, {
+  Root: BaseToggleGroup,
+  Item: Toggle,
+});

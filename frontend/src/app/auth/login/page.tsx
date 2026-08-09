@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
 import { Eye, EyeOff, Zap } from "lucide-react";
@@ -96,7 +96,7 @@ function LoginFormContent() {
   return (
     <div className="w-full max-w-md">
       <Card variant="elevated" className="rounded-3xl p-8">
-        <CardHeader className="text-center p-0 mb-8 space-y-2">
+        <Card.Header className="text-center p-0 mb-8 space-y-2">
           <Link
             href="/"
             prefetch={true}
@@ -114,17 +114,17 @@ function LoginFormContent() {
               </span>
             </div>
           </Link>
-          <CardTitle className="text-2xl font-bold text-on-surface text-balance">
+          <Card.Title className="text-2xl font-bold text-on-surface text-balance">
             {"Đăng nhập tài khoản"}
-          </CardTitle>
-          <CardDescription className="text-sm text-on-surface-variant">
+          </Card.Title>
+          <Card.Description className="text-sm text-on-surface-variant">
             {searchParams.get("redirect")
               ? "Vui lòng đăng nhập để bắt đầu học bài giảng này"
               : "Chào mừng bạn quay trở lại với hệ thống học tập Coursera LMS"}
-          </CardDescription>
-        </CardHeader>
+          </Card.Description>
+        </Card.Header>
 
-        <CardContent className="p-0">
+        <Card.Content className="p-0">
           {/* Google 1-Click Login Option */}
           <div className="space-y-4 mb-6">
             <GoogleAuthButton
@@ -330,7 +330,7 @@ function LoginFormContent() {
               </Link>
             </p>
           </div>
-        </CardContent>
+        </Card.Content>
       </Card>
     </div>
   );

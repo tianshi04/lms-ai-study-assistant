@@ -8,13 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 import { useCoursesQuery, useCategoriesQuery } from "@/lib/query_hooks";
 import { GraduationCap, Search, RotateCcw } from "lucide-react";
 
@@ -122,8 +116,8 @@ export function CourseCatalogClient() {
             {/* Sort Dropdown */}
             <div className="w-44 sm:w-48">
               <Select value={sortBy} onValueChange={(val) => setSortBy((val as string) || "")}>
-                <SelectTrigger className="w-full h-10 text-xs font-bold bg-surface-container-lowest border border-outline-variant rounded-full px-4 text-on-surface">
-                  <SelectValue placeholder={"Mặc định"}>
+                <Select.Trigger className="w-full h-10 text-xs font-bold bg-surface-container-lowest border border-outline-variant rounded-full px-4 text-on-surface">
+                  <Select.Value placeholder={"Mặc định"}>
                     {sortBy === "rating"
                       ? "Đánh giá cao nhất"
                       : sortBy === "popular"
@@ -131,14 +125,14 @@ export function CourseCatalogClient() {
                         : sortBy === "newest"
                           ? "Mới nhất"
                           : "Mặc định"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent className="bg-surface-container-high border border-outline-variant rounded-2xl shadow-lg">
-                  <SelectItem value="">{"Mặc định"}</SelectItem>
-                  <SelectItem value="rating">{"Đánh giá cao nhất"}</SelectItem>
-                  <SelectItem value="popular">{"Phổ biến nhất"}</SelectItem>
-                  <SelectItem value="newest">{"Mới nhất"}</SelectItem>
-                </SelectContent>
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content className="bg-surface-container-high border border-outline-variant rounded-2xl shadow-lg">
+                  <Select.Item value="">{"Mặc định"}</Select.Item>
+                  <Select.Item value="rating">{"Đánh giá cao nhất"}</Select.Item>
+                  <Select.Item value="popular">{"Phổ biến nhất"}</Select.Item>
+                  <Select.Item value="newest">{"Mới nhất"}</Select.Item>
+                </Select.Content>
               </Select>
             </div>
           </div>

@@ -14,14 +14,7 @@ import { Progress } from "@/components/ui/Progress";
 
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Check, X } from "lucide-react";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/Breadcrumb";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 export default function InstructorProfilePage() {
   const router = useRouter();
@@ -103,20 +96,20 @@ export default function InstructorProfilePage() {
       {/* Header */}
       <div className="pb-6 border-b border-border">
         <Breadcrumb className="mb-1">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink
+          <Breadcrumb.List>
+            <Breadcrumb.Item>
+              <Breadcrumb.Link
                 className="cursor-pointer"
                 onClick={() => router.push("/instructor/courses")}
               >
                 Giảng dạy
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Hồ sơ & Chữ ký Giảng viên</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
+              </Breadcrumb.Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Separator />
+            <Breadcrumb.Item>
+              <Breadcrumb.Page>Hồ sơ & Chữ ký Giảng viên</Breadcrumb.Page>
+            </Breadcrumb.Item>
+          </Breadcrumb.List>
         </Breadcrumb>
         <h1 className="text-3xl font-extrabold text-foreground tracking-tight text-balance">
           Cấu hình Hồ sơ & Chữ ký tay Điện tử

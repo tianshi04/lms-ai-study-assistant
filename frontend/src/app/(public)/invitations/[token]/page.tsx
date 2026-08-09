@@ -7,7 +7,7 @@ import { useGetInvitationByTokenQuery, useRespondToInvitationMutation } from "@/
 import { InvitationAction, InvitationStatus, InvitationType } from "@/gen/identity/v1/identity_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Button } from "@/components/ui/Button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
+import { Card } from "@/components/ui/Card";
 import { Progress } from "@/components/ui/Progress";
 import {
   Mail,
@@ -98,19 +98,19 @@ function AcceptInvitationContent() {
         variant="elevated"
         className="max-w-md w-full rounded-2xl p-6 text-foreground space-y-6"
       >
-        <CardHeader className="flex flex-col items-center text-center space-y-2 p-0">
+        <Card.Header className="flex flex-col items-center text-center space-y-2 p-0">
           <div className="p-3 rounded-full bg-primary/10 mb-2">
             <Mail className="w-8 h-8 text-primary" aria-hidden="true" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight text-on-surface">
+          <Card.Title className="text-2xl font-bold tracking-tight text-on-surface">
             Lời mời tham gia
-          </CardTitle>
-          <CardDescription className="text-sm text-on-surface-variant">
+          </Card.Title>
+          <Card.Description className="text-sm text-on-surface-variant">
             Hệ thống đào tạo trực tuyến LMS
-          </CardDescription>
-        </CardHeader>
+          </Card.Description>
+        </Card.Header>
 
-        <CardContent className="p-0 space-y-6">
+        <Card.Content className="p-0 space-y-6">
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-8 space-y-3">
               <Progress.Circular size="md" />
@@ -238,7 +238,7 @@ function AcceptInvitationContent() {
               )}
             </div>
           )}
-        </CardContent>
+        </Card.Content>
       </Card>
     </div>
   );

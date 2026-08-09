@@ -33,7 +33,7 @@ export interface CardProps extends React.ComponentProps<"div">, VariantProps<typ
   render?: React.ReactNode;
 }
 
-export function Card({ className, variant, render, children, ref, ...props }: CardProps) {
+function CardComponent({ className, variant, render, children, ref, ...props }: CardProps) {
   const compClasses = cn(cardVariants({ variant, className }));
 
   if (render && React.isValidElement(render)) {
@@ -54,7 +54,7 @@ export function Card({ className, variant, render, children, ref, ...props }: Ca
   );
 }
 
-export function CardHeader({ className, ref, ...props }: React.ComponentProps<"div">) {
+function CardHeader({ className, ref, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       ref={ref}
@@ -64,7 +64,7 @@ export function CardHeader({ className, ref, ...props }: React.ComponentProps<"d
   );
 }
 
-export function CardTitle({ className, ref, children, ...props }: React.ComponentProps<"h3">) {
+function CardTitle({ className, ref, children, ...props }: React.ComponentProps<"h3">) {
   return (
     <h3
       ref={ref}
@@ -79,7 +79,7 @@ export function CardTitle({ className, ref, children, ...props }: React.Componen
   );
 }
 
-export function CardDescription({ className, ref, ...props }: React.ComponentProps<"p">) {
+function CardDescription({ className, ref, ...props }: React.ComponentProps<"p">) {
   return (
     <p
       ref={ref}
@@ -89,11 +89,11 @@ export function CardDescription({ className, ref, ...props }: React.ComponentPro
   );
 }
 
-export function CardContent({ className, ref, ...props }: React.ComponentProps<"div">) {
+function CardContent({ className, ref, ...props }: React.ComponentProps<"div">) {
   return <div ref={ref} className={cn("pt-0 text-left", className)} {...props} />;
 }
 
-export function CardFooter({ className, ref, ...props }: React.ComponentProps<"div">) {
+function CardFooter({ className, ref, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       ref={ref}
@@ -108,7 +108,7 @@ export interface CardMediaProps extends React.ComponentProps<"div"> {
   scrim?: boolean;
 }
 
-export function CardMedia({
+function CardMedia({
   className,
   aspect = "video",
   scrim = false,
@@ -150,7 +150,7 @@ export interface CardDividerProps extends React.ComponentProps<"hr"> {
   inset?: boolean;
 }
 
-export function CardDivider({ className, inset = false, ref, ...props }: CardDividerProps) {
+function CardDivider({ className, inset = false, ref, ...props }: CardDividerProps) {
   return (
     <hr
       ref={ref}
@@ -164,3 +164,13 @@ export function CardDivider({ className, inset = false, ref, ...props }: CardDiv
     />
   );
 }
+
+export const Card = Object.assign(CardComponent, {
+  Header: CardHeader,
+  Title: CardTitle,
+  Description: CardDescription,
+  Content: CardContent,
+  Footer: CardFooter,
+  Media: CardMedia,
+  Divider: CardDivider,
+});

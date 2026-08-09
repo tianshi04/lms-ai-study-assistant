@@ -19,12 +19,7 @@ import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import { Dialog } from "@/components/ui/Dialog";
 import { Progress } from "@/components/ui/Progress";
-import {
-  PageHeader,
-  PageHeaderTitle,
-  PageHeaderBreadcrumbs,
-  PageHeaderActions,
-} from "@/components/ui/LayoutPrimitives";
+import { PageHeader } from "@/components/ui/LayoutPrimitives";
 
 export default function AdminInstructorApplicationsPage() {
   const toast = useToast();
@@ -88,21 +83,21 @@ export default function AdminInstructorApplicationsPage() {
         {/* Header Breadcrumb & Title */}
         <PageHeader>
           <div>
-            <PageHeaderBreadcrumbs>
+            <PageHeader.Breadcrumbs>
               <Link href="/admin/dashboard" className="hover:underline">
                 Admin Portal
               </Link>
               <span>/</span>
               <span className="font-semibold text-foreground">Đơn Giảng viên</span>
-            </PageHeaderBreadcrumbs>
-            <PageHeaderTitle>Quản Lý Thẩm Định Đơn Giảng Viên</PageHeaderTitle>
+            </PageHeader.Breadcrumbs>
+            <PageHeader.Title>Quản Lý Thẩm Định Đơn Giảng Viên</PageHeader.Title>
           </div>
 
-          <PageHeaderActions>
+          <PageHeader.Actions>
             <Button variant="outlined" render={<Link href="/admin/dashboard" />}>
               Về Dashboard
             </Button>
-          </PageHeaderActions>
+          </PageHeader.Actions>
         </PageHeader>
 
         {actionSuccessMsg && (

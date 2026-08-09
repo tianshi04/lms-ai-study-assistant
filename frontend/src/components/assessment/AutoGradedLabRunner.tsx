@@ -8,13 +8,7 @@ import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 import { Card } from "@/components/ui/Card";
 import { Progress } from "@/components/ui/Progress";
 import { mapConnectError } from "@/lib/connect_error_mapper";
@@ -122,19 +116,19 @@ export function AutoGradedLabRunner({
               if (val) setLanguage(val as string);
             }}
           >
-            <SelectTrigger className="w-[170px] text-xs font-mono font-medium">
-              <SelectValue placeholder="Ngôn ngữ">
+            <Select.Trigger className="w-[170px] text-xs font-mono font-medium">
+              <Select.Value placeholder="Ngôn ngữ">
                 {language === "python"
                   ? "Python 3.12"
                   : language === "javascript"
                     ? "JavaScript (Node.js)"
                     : language}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="python">{"Python 3.12"}</SelectItem>
-              <SelectItem value="javascript">{"JavaScript (Node.js)"}</SelectItem>
-            </SelectContent>
+              </Select.Value>
+            </Select.Trigger>
+            <Select.Content>
+              <Select.Item value="python">{"Python 3.12"}</Select.Item>
+              <Select.Item value="javascript">{"JavaScript (Node.js)"}</Select.Item>
+            </Select.Content>
           </Select>
           <Button onClick={handleRunCode} disabled={isRunning} size="sm">
             {isRunning ? "Executing in Sandbox…" : "Run & Submit Code"}

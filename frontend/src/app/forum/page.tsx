@@ -23,13 +23,7 @@ import { Card } from "@/components/ui/Card";
 import { Progress } from "@/components/ui/Progress";
 import { Badge } from "@/components/ui/Badge";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 
 function formatRoleName(role: string): string {
   if (!role) return "Học viên";
@@ -452,21 +446,21 @@ function ForumPageContent() {
                 setSelectedCourseId((val as string) || "");
               }}
             >
-              <SelectTrigger className="w-full md:w-80">
-                <SelectValue placeholder="-- All Courses --">
+              <Select.Trigger className="w-full md:w-80">
+                <Select.Value placeholder="-- All Courses --">
                   {selectedCourseId
                     ? courses.find((c) => c.id === selectedCourseId)?.title || "-- All Courses --"
                     : "-- All Courses --"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">{"-- All Courses --"}</SelectItem>
+                </Select.Value>
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="">{"-- All Courses --"}</Select.Item>
                 {courses.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
+                  <Select.Item key={c.id} value={c.id}>
                     {c.title}
-                  </SelectItem>
+                  </Select.Item>
                 ))}
-              </SelectContent>
+              </Select.Content>
             </Select>
           </div>
 
@@ -829,18 +823,18 @@ function ForumPageContent() {
                   if (val) setNewCourseId(val as string);
                 }}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn khóa học">
+                <Select.Trigger className="w-full">
+                  <Select.Value placeholder="Chọn khóa học">
                     {courses.find((c) => c.id === newCourseId)?.title || newCourseId}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content>
                   {courses.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
+                    <Select.Item key={c.id} value={c.id}>
                       {c.title}
-                    </SelectItem>
+                    </Select.Item>
                   ))}
-                </SelectContent>
+                </Select.Content>
               </Select>
             </div>
 

@@ -2,13 +2,7 @@ import * as React from "react";
 import { Switch as BaseSwitch } from "@base-ui/react/switch";
 import { cn } from "@/lib/utils";
 
-import { FieldRoot, FieldLabel, FieldError, FieldDescription } from "./Field";
-
-export const SwitchRoot = BaseSwitch.Root;
-export const SwitchThumb = BaseSwitch.Thumb;
-export const SwitchLabel = FieldLabel;
-export const SwitchError = FieldError;
-export const SwitchHelperText = FieldDescription;
+import { Field } from "./Field";
 
 export interface SwitchProps extends React.ComponentProps<typeof BaseSwitch.Root> {
   label?: string;
@@ -16,7 +10,7 @@ export interface SwitchProps extends React.ComponentProps<typeof BaseSwitch.Root
   helperText?: string;
 }
 
-export function Switch({
+function SwitchComponent({
   label,
   error,
   helperText,
@@ -52,17 +46,26 @@ export function Switch({
   }
 
   return (
-    <FieldRoot invalid={!!error} className="space-y-1">
+    <Field.Root invalid={!!error} className="space-y-1">
       <div className="flex items-center gap-3">
         {switchElement}
         {label && (
-          <FieldLabel htmlFor={switchId} className="mb-0 text-sm font-medium cursor-pointer">
+          <Field.Label htmlFor={switchId} className="mb-0 text-sm font-medium cursor-pointer">
             {label}
-          </FieldLabel>
+          </Field.Label>
         )}
       </div>
-      {error && <FieldError>{error}</FieldError>}
-      {helperText && !error && <FieldDescription>{helperText}</FieldDescription>}
-    </FieldRoot>
+      {error && <Field.Error>{error}</Field.Error>}
+      {helperText && !error && <Field.Description>{helperText}</Field.Description>}
+    </Field.Root>
   );
 }
+
+export const Switch = Object.assign(SwitchComponent, {
+  Root: BaseSwitch.Root,
+  Thumb: BaseSwitch.Thumb,
+  Label: Field.Label,
+  Error: Field.Error,
+  Description: Field.Description,
+  HelperText: Field.Description,
+});

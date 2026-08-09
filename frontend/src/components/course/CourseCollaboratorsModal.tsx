@@ -5,7 +5,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import { Select, SelectItem } from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
 import {
   useCourseCollaboratorsQuery,
@@ -184,8 +184,8 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
                     Vai trò trong Khóa học
                   </label>
                   <Select value={role} onValueChange={(val) => setRole(val || "co_instructor")}>
-                    <SelectItem value="co_instructor">Đồng giảng viên (Co-Instructor)</SelectItem>
-                    <SelectItem value="ta">Trợ giảng (TA)</SelectItem>
+                    <Select.Item value="co_instructor">Đồng giảng viên (Co-Instructor)</Select.Item>
+                    <Select.Item value="ta">Trợ giảng (TA)</Select.Item>
                   </Select>
                 </div>
                 <div className="sm:col-span-2">
