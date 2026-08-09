@@ -76,7 +76,7 @@ class S3StorageService:
                             "Effect": "Allow",
                             "Principal": "*",
                             "Action": ["s3:GetObject"],
-                            "Resource": [f"arn:aws:s3:::{target_bucket}/*"],
+                            "Resource": [f"arn:aws:s3:::{target_bucket}/public/*"],
                         }
                     ],
                 }
