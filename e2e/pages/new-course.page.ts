@@ -15,8 +15,8 @@ export class NewCoursePage {
 
   constructor(page: Page) {
     this.page = page;
-    this.partnerSelect = page.locator('select, button:has-text("Coursera"), button:has-text("Bảo chứng"), [role="combobox"]').first();
-    this.titleInput = page.locator('input[placeholder*="Ví dụ: Lập trình"], input[placeholder*="Lập trình Python"]').first();
+    this.partnerSelect = page.locator('#orgSelect, [aria-label*="Partner"], button[role="combobox"], button:has-text("Coursera")').first();
+    this.titleInput = page.locator('#courseTitle, input[placeholder*="Lập trình"], input[placeholder*="Ví dụ"]').first();
     this.slugInput = page.locator('input[placeholder*="lap-trinh-python"]').first();
     this.descriptionTextarea = page.locator('textarea').first();
     this.subjectSelect = page.locator('select, button:has-text("Khoa học"), button:has-text("lĩnh vực")').first();

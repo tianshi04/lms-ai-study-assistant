@@ -77,10 +77,10 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
     });
   }, [cues, activeItem]);
 
-  // Find index of the currently active transcript cue based on currentTime
+  // Find index of the currently active transcript cue based on currentTime (with 0.25s float tolerance)
   const activeIndex = useMemo(() => {
     return allTranscripts.findIndex(
-      (cue) => currentTime >= cue.startTime && currentTime <= cue.endTime,
+      (cue) => currentTime >= cue.startTime - 0.25 && currentTime <= cue.endTime + 0.25,
     );
   }, [allTranscripts, currentTime]);
 
