@@ -11,7 +11,7 @@ export class AdminApplicationsPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.heading = page.locator('h1', { hasText: 'Quản Lý Thẩm Định Đơn Giảng Viên' });
+    this.heading = page.locator('h1', { hasText: 'Quản Lý Thẩm Định Đơn Giảng Viên' }).first();
     this.allTab = page.locator('button', { hasText: 'Tất cả đơn' });
     this.pendingTab = page.locator('button', { hasText: 'Chờ thẩm định' });
     this.approvedTab = page.locator('button', { hasText: 'Đã phê duyệt' });
