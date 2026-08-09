@@ -22,7 +22,6 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { LinearProgress } from "@/components/ui/Progress";
 
 interface VideoPlayerProps {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -352,21 +351,6 @@ export function VideoPlayer({
           <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
             {activeItem.title}
           </h1>
-          {(_currentTime !== undefined || isCompleted) && (
-            <LinearProgress
-              value={
-                videoRef.current?.duration && _currentTime !== undefined
-                  ? (_currentTime / videoRef.current.duration) * 100
-                  : isCompleted
-                    ? 100
-                    : 0
-              }
-              showLabel
-              label="Tiến độ bài học"
-              wavy
-              className="mt-2"
-            />
-          )}
         </div>
 
         {/* Coursera-style AI Learning Prompts Card ("Tìm hiểu sâu hơn về chủ đề này") - Only for Video Items */}
