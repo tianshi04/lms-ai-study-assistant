@@ -10,13 +10,14 @@ import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
 import { useToast } from "@/components/ui/Toast";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
-import { Building2 } from "lucide-react";
+import { Building2, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
-import { Checkbox } from "@/components/ui/Checkbox";
+import { Switch } from "@/components/ui/Switch";
+import { Field } from "@/components/ui/Field";
 import { Select } from "@/components/ui/Select";
 
 const emptySubscribe = () => () => {};
@@ -443,14 +444,29 @@ export default function NewCoursePage() {
             </div>
 
             {/* Financial Aid Switch */}
-            <div className="md:col-span-2 p-4 rounded-2xl bg-primary/10 border border-primary/20">
-              <Checkbox
-                id="financialAidEnabled"
-                checked={financialAidEnabled}
-                onCheckedChange={(checked) => setFinancialAidEnabled(Boolean(checked))}
-                label="Cho phép Học viên Nộp Đơn Hỗ Trợ Tài Chính (Financial Aid)"
-                helperText="Học viên có hoàn cảnh khó khăn có thể viết bài luận xin cấp học bổng theo học khóa học này."
-              />
+            <div className="md:col-span-2 p-4 rounded-2xl bg-card border border-border">
+              <Field.Root className="space-y-1">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5 min-w-0 flex-1">
+                    <Field.Label
+                      htmlFor="financialAidEnabled"
+                      className="mb-0 text-sm font-medium text-on-surface cursor-pointer select-none"
+                    >
+                      Cho phép Học viên Nộp Đơn Hỗ Trợ Tài Chính (Financial Aid)
+                    </Field.Label>
+                    <Field.Description className="text-xs text-on-surface-variant leading-normal mt-0.5">
+                      Học viên có hoàn cảnh khó khăn có thể viết bài luận xin cấp học bổng theo học
+                      khóa học này.
+                    </Field.Description>
+                  </div>
+                  <Switch
+                    id="financialAidEnabled"
+                    checked={financialAidEnabled}
+                    onCheckedChange={(checked) => setFinancialAidEnabled(Boolean(checked))}
+                    checkedIcon={<Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
+                  />
+                </div>
+              </Field.Root>
             </div>
           </div>
 

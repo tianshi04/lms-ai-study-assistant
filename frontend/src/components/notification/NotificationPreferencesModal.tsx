@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Mail, BookOpen, MessageSquare, Megaphone } from "lucide-react";
+import { Bell, Mail, BookOpen, MessageSquare, Megaphone, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Progress } from "@/components/ui/Progress";
@@ -96,6 +96,7 @@ export function NotificationPreferencesModal({
                 <Switch
                   checked={enableInApp}
                   onCheckedChange={(checked) => setEnableInApp(checked)}
+                  checkedIcon={<Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
                   aria-label="Thông báo Nội sàn"
                 />
               </div>
@@ -113,6 +114,7 @@ export function NotificationPreferencesModal({
                 <Switch
                   checked={enableEmail}
                   onCheckedChange={(checked) => setEnableEmail(checked)}
+                  checkedIcon={<Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
                   aria-label="Thông báo qua Email"
                 />
               </div>
@@ -136,6 +138,7 @@ export function NotificationPreferencesModal({
                 <Switch
                   checked={enableAcademicReminders}
                   onCheckedChange={(checked) => setEnableAcademicReminders(checked)}
+                  checkedIcon={<Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
                   aria-label="Học tập & Hạn nộp bài"
                 />
               </div>
@@ -153,6 +156,7 @@ export function NotificationPreferencesModal({
                 <Switch
                   checked={enableCommunityReplies}
                   onCheckedChange={(checked) => setEnableCommunityReplies(checked)}
+                  checkedIcon={<Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
                   aria-label="Diễn đàn & Tương tác"
                 />
               </div>
@@ -170,6 +174,7 @@ export function NotificationPreferencesModal({
                 <Switch
                   checked={enableAnnouncements}
                   onCheckedChange={(checked) => setEnableAnnouncements(checked)}
+                  checkedIcon={<Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
                   aria-label="Thông báo từ Khóa học"
                 />
               </div>
