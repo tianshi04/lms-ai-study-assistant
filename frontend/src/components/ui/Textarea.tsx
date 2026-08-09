@@ -48,6 +48,7 @@ export function Textarea({
           spellCheck={props.spellCheck ?? false}
           {...controlProps}
           {...props}
+          id={id || controlProps.id}
           className={cn(textareaVariants({ variant, className }))}
         />
       )}

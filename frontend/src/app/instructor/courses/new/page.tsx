@@ -296,6 +296,7 @@ export default function NewCoursePage() {
               </label>
               <Input
                 id="courseTitle"
+                name="title"
                 type="text"
                 required
                 value={title}
