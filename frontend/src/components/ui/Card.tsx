@@ -43,7 +43,7 @@ export function Card({ className, variant, render, children, ref, ...props }: Ca
       ...element.props,
       ref,
       className: cn(compClasses, element.props.className),
-      children,
+      children: children ?? element.props.children,
     });
   }
 

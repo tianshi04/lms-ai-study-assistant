@@ -39,17 +39,19 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
   const latestTimeRef = useRef<number>(0);
 
   const captureCurrentTime = () => {
-    let currentSec = 0;
+    let currentSec = -1;
     if (videoRef.current) {
       if (typeof videoRef.current.getCurrentTime === "function") {
-        currentSec = Math.floor(videoRef.current.getCurrentTime() || 0);
+        const t = videoRef.current.getCurrentTime();
+        if (typeof t === "number" && !isNaN(t)) currentSec = Math.floor(t);
       }
-      if (currentSec === 0 && typeof videoRef.current.currentTime === "number") {
-        currentSec = Math.floor(videoRef.current.currentTime || 0);
+      if (currentSec < 0 && typeof videoRef.current.currentTime === "number") {
+        const t = videoRef.current.currentTime;
+        if (typeof t === "number" && !isNaN(t)) currentSec = Math.floor(t);
       }
     }
-    if (currentSec === 0 && latestTimeRef.current > 0) {
-      currentSec = latestTimeRef.current;
+    if (currentSec < 0) {
+      currentSec = latestTimeRef.current || 0;
     }
     setTimestampSeconds(currentSec);
     toast.info(`Đã chọn mốc thời gian ${currentSec}s từ Video.`);

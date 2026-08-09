@@ -160,8 +160,10 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
                 ytPlayerRef.current = event.target;
                 try {
                   const t = event.target.getCurrentTime();
+                  const state = event.target.getPlayerState?.();
+                  const isPausedOrEnded = state === 2 || state === 0;
                   if (typeof t === "number" && !isNaN(t)) {
-                    if (t === 0 && lastKnownTimeRef.current > 2) return;
+                    if (t === 0 && lastKnownTimeRef.current > 2 && !isPausedOrEnded) return;
                     lastKnownTimeRef.current = t;
                     onTimeUpdateRef.current?.(t);
                   }
@@ -180,8 +182,10 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
           if (player && typeof player.getCurrentTime === "function") {
             try {
               const currentTime = player.getCurrentTime();
+              const state = player.getPlayerState?.();
+              const isPausedOrEnded = state === 2 || state === 0;
               if (typeof currentTime === "number" && !isNaN(currentTime)) {
-                if (currentTime === 0 && lastKnownTimeRef.current > 2) return;
+                if (currentTime === 0 && lastKnownTimeRef.current > 2 && !isPausedOrEnded) return;
                 lastKnownTimeRef.current = currentTime;
                 onTimeUpdateRef.current?.(currentTime);
               }
@@ -211,6 +215,7 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
       if (!isYouTube) return;
 
       const handleWindowMessage = (event: MessageEvent) => {
+        if (event.origin && !event.origin.includes("youtube.com")) return;
         try {
           let data = event.data;
           if (typeof data === "string") {
@@ -219,7 +224,10 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
           if (data && data.event === "infoDelivery" && data.info) {
             if (typeof data.info.currentTime === "number" && !isNaN(data.info.currentTime)) {
               const t = data.info.currentTime;
-              if (t === 0 && lastKnownTimeRef.current > 2) return;
+              const player = ytPlayerRef.current;
+              const state = player?.getPlayerState?.();
+              const isPausedOrEnded = state === 2 || state === 0;
+              if (t === 0 && lastKnownTimeRef.current > 2 && !isPausedOrEnded) return;
               lastKnownTimeRef.current = t;
               onTimeUpdateRef.current?.(t);
             }
