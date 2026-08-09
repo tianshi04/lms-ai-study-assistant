@@ -328,10 +328,14 @@ function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => builder.setConfirmDeleteTarget(null)}>
+            <Button variant="outlined" onClick={() => builder.setConfirmDeleteTarget(null)}>
               Hủy
             </Button>
-            <Button variant="danger" onClick={builder.executeConfirmDelete}>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={builder.executeConfirmDelete}
+            >
               Xóa vĩnh viễn
             </Button>
           </AlertDialogFooter>

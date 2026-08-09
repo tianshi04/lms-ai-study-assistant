@@ -51,8 +51,9 @@ function PartnerPublicContent() {
           Đối tác phát hành với đường dẫn &quot;{slug}&quot; không tồn tại hoặc đã dừng hoạt động.
         </p>
         <Button
+          variant="filled"
           onClick={() => router.push("/")}
-          className="bg-primary hover:bg-primary-hover text-primary-foreground font-medium rounded-xl cursor-pointer"
+          className="rounded-xl cursor-pointer"
         >
           Quay lại trang chủ
         </Button>

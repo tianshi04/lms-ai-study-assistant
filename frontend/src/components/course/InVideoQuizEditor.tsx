@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { Clock, Video, Plus, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 
 export interface InVideoQuizItem {
@@ -200,7 +201,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
             <div className="flex justify-end">
               <Button
                 type="button"
-                variant="outline"
+                variant="outlined"
                 onClick={captureCurrentTime}
                 className="bg-primary/10 text-primary border-primary/20 text-xs font-bold hover:bg-primary/20"
               >
@@ -229,7 +230,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
           {editingIndex !== null && (
             <Button
               type="button"
-              variant="ghost"
+              variant="text"
               size="sm"
               onClick={resetForm}
               className="text-[11px] font-semibold text-muted-foreground hover:text-foreground h-auto p-0"
@@ -290,7 +291,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
             </span>
             <Button
               type="button"
-              variant="ghost"
+              variant="text"
               size="sm"
               onClick={handleAddOption}
               className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer h-auto py-0.5 px-1.5"
@@ -310,7 +311,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                 >
                   <Button
                     type="button"
-                    variant={correctOptionIndex === idx ? "primary" : "outline"}
+                    variant={correctOptionIndex === idx ? "filled" : "outlined"}
                     size="sm"
                     onClick={() => setCorrectOptionIndex(idx)}
                     aria-label={`Chọn phương án ${letter} làm đáp án đúng`}
@@ -332,17 +333,17 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                     className="bg-transparent text-xs py-1"
                   />
                   {optionsList.length > 2 && (
-                    <Button
+                    <IconButton
                       type="button"
-                      variant="ghost"
-                      size="icon"
+                      variant="standard"
+                      size="xs"
                       onClick={() => handleRemoveOption(idx)}
                       className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors cursor-pointer w-7 h-7"
                       title="Xóa phương án này"
                       aria-label="Xóa phương án này"
                     >
                       <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    </Button>
+                    </IconButton>
                   )}
                 </div>
               );
@@ -411,28 +412,28 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <Button
+                  <IconButton
                     type="button"
-                    variant="ghost"
-                    size="icon"
+                    variant="standard"
+                    size="xs"
                     onClick={() => handleEditQuiz(idx)}
                     className="h-7 w-7 text-muted-foreground hover:text-foreground bg-muted"
                     title="Sửa mốc câu hỏi"
                     aria-label="Sửa mốc câu hỏi"
                   >
                     <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                  </Button>
-                  <Button
+                  </IconButton>
+                  <IconButton
                     type="button"
-                    variant="ghost"
-                    size="icon"
+                    variant="standard"
+                    size="xs"
                     onClick={() => handleDeleteQuiz(idx)}
                     className="h-7 w-7 text-destructive hover:bg-destructive/20 bg-destructive/10"
                     title="Xóa mốc câu hỏi"
                     aria-label="Xóa mốc câu hỏi"
                   >
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  </Button>
+                  </IconButton>
                 </div>
               </div>
             ))}

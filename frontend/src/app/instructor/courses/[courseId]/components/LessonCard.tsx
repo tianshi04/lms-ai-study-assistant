@@ -93,7 +93,7 @@ export function LessonCard({
           <div className="flex items-center gap-1.5">
             <Button
               type="button"
-              variant="outline"
+              variant="outlined"
               size="sm"
               onClick={() => onEditLesson(lesson)}
               className="bg-muted text-foreground text-[11px] font-semibold hover:bg-muted/80 h-7 px-2"
@@ -104,7 +104,7 @@ export function LessonCard({
 
             <Button
               type="button"
-              variant="outline"
+              variant="outlined"
               size="sm"
               onClick={() => onDeleteLesson(lesson.id, lesson.title)}
               className="bg-destructive/10 text-destructive text-[11px] font-semibold hover:bg-destructive/20 h-7 px-2 border-transparent"

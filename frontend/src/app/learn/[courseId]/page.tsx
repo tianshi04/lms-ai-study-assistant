@@ -630,8 +630,8 @@ function CoursePlayerContent() {
           {/* AI Assistant Icon Button matching ThemeToggle style with colored icon when supported */}
           <Button
             type="button"
-            variant="ghost"
-            size="icon"
+            variant="text"
+            iconOnly
             disabled={!isAiSupported}
             onClick={handleToggleAiAssistant}
             aria-label="Bật/tắt Trợ lý AI"
@@ -669,8 +669,8 @@ function CoursePlayerContent() {
           <div className="w-14 bg-surface-container-lowest rounded-3xl shadow-xs flex flex-col items-center py-3 shrink-0 select-none">
             <Button
               type="button"
-              variant="ghost"
-              size="icon"
+              variant="text"
+              iconOnly
               onClick={() => setIsSidebarOpen(true)}
               className="w-10 h-10 rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
               title="Mở Lộ trình Bài học"
@@ -693,8 +693,8 @@ function CoursePlayerContent() {
               </h2>
               <Button
                 type="button"
-                variant="ghost"
-                size="icon"
+                variant="text"
+                iconOnly
                 onClick={() => setIsSidebarOpen(false)}
                 className="w-9 h-9 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full shrink-0"
                 title="Ẩn Lộ trình Bài học"
@@ -718,7 +718,7 @@ function CoursePlayerContent() {
                     {/* Module / Week Accordion Header */}
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="text"
                       onClick={() => toggleWeek(week.id)}
                       className="w-full text-left justify-start items-start p-2.5 rounded-2xl hover:bg-surface-container-high/60 h-auto group"
                     >
@@ -775,7 +775,7 @@ function CoursePlayerContent() {
                                     <Button
                                       key={item.id}
                                       type="button"
-                                      variant="ghost"
+                                      variant="text"
                                       onClick={() => {
                                         if (itemLocked) {
                                           if (isAuditLocked) {
@@ -886,8 +886,8 @@ function CoursePlayerContent() {
                 )}
                 <Button
                   type="button"
-                  variant="ghost"
-                  size="icon"
+                  variant="text"
+                  iconOnly
                   onClick={() => setLockNotice("")}
                   aria-label="Đóng thông báo"
                   className="p-1 h-6 w-6 text-warning hover:opacity-75"
@@ -998,8 +998,8 @@ function CoursePlayerContent() {
                     </div>
                     <Button
                       type="button"
-                      variant="ghost"
-                      size="icon"
+                      variant="text"
+                      iconOnly
                       onClick={() => setIsPanelOpen(false)}
                       className="w-7 h-7 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full"
                       title="Đóng bảng công cụ"
@@ -1083,7 +1083,7 @@ function CoursePlayerContent() {
                 {isVideoItem && (
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="text"
                     onClick={() => handleTabClick("transcript")}
                     className="group flex flex-col items-center gap-1 h-auto p-0 hover:bg-transparent shadow-none"
                     title="Phụ đề"
@@ -1116,7 +1116,7 @@ function CoursePlayerContent() {
                     {isLectureItem && (
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="text"
                         onClick={() => handleTabClick("notes")}
                         className="group flex flex-col items-center gap-1 h-auto p-0 hover:bg-transparent shadow-none"
                         title="Ghi chú"
@@ -1147,7 +1147,7 @@ function CoursePlayerContent() {
                     {isLectureItem && (
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="text"
                         onClick={() => handleTabClick("forum")}
                         className="group flex flex-col items-center gap-1 h-auto p-0 hover:bg-transparent shadow-none"
                         title="Thảo luận"
@@ -1177,7 +1177,7 @@ function CoursePlayerContent() {
                     {/* Deadlines Button */}
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="text"
                       onClick={() => handleTabClick("deadlines")}
                       className="group flex flex-col items-center gap-1 h-auto p-0 hover:bg-transparent shadow-none"
                       title="Deadlines"

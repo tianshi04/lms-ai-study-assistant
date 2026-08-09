@@ -63,7 +63,7 @@ export function ForumReplyItem({
           )}
           {isReplyAuthor && (
             <Button
-              variant="ghost"
+              variant="text"
               size="sm"
               onClick={() => onStartEdit(reply)}
               className="text-[10px] font-semibold text-muted-foreground hover:text-primary h-auto p-0.5 ml-1"
@@ -73,7 +73,7 @@ export function ForumReplyItem({
           )}
           {canDeleteReply && (
             <Button
-              variant="ghost"
+              variant="text"
               size="sm"
               onClick={() => onDelete(reply.id)}
               className="text-[10px] font-semibold text-muted-foreground hover:text-destructive h-auto p-0.5 ml-1"
@@ -84,7 +84,7 @@ export function ForumReplyItem({
         </div>
 
         <Button
-          variant={reply.isUpvotedByMe ? "primary" : "outline"}
+          variant={reply.isUpvotedByMe ? "filled" : "outlined"}
           size="sm"
           onClick={() => onVote(reply.id, true)}
           title={reply.isUpvotedByMe ? "Đã Upvote (Bấm để Hủy)" : "Upvote"}
@@ -108,7 +108,7 @@ export function ForumReplyItem({
           />
           <div className="flex justify-end gap-1">
             <Button
-              variant="outline"
+              variant="outlined"
               size="sm"
               onClick={onCancelEdit}
               className="px-2 py-0.5 text-[10px] h-auto"
@@ -116,11 +116,10 @@ export function ForumReplyItem({
               {"Hủy"}
             </Button>
             <Button
-              variant="primary"
+              variant="filled"
               size="sm"
               onClick={() => onSaveEdit(reply.id)}
-              disabled={submittingEditReply || !editReplyContent.trim()}
-              isLoading={submittingEditReply}
+              disabled={submittingEditReply || !editReplyContent.trim() || submittingEditReply}
               className="px-2 py-0.5 text-[10px] font-semibold h-auto"
             >
               {"Lưu thay đổi"}

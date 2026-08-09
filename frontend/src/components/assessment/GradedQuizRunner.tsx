@@ -22,6 +22,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Badge } from "@/components/ui/Badge";
 
 interface QuizSessionQuestionOption {
@@ -503,7 +504,7 @@ export function GradedQuizRunner({
                     <Button
                       key={optIdx}
                       type="button"
-                      variant="outline"
+                      variant="outlined"
                       disabled={(cooldownCountdown > 0 && !isPreviewMode) || quizResult !== null}
                       onClick={() => handleOptionSelect(qIdx, optIdx, isMultipleChoice)}
                       className={`h-auto justify-start text-left p-3.5 rounded-xl text-xs font-medium border flex items-center gap-2.5 cursor-pointer ${
@@ -595,16 +596,16 @@ export function GradedQuizRunner({
       {submitError && (
         <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs font-semibold flex items-center justify-between shadow-xs">
           <span>{submitError}</span>
-          <Button
+          <IconButton
             type="button"
-            variant="ghost"
-            size="icon"
+            variant="standard"
+            size="xs"
             onClick={() => setSubmitError(null)}
-            className="text-destructive hover:text-destructive p-1 h-auto w-auto"
+            className="text-destructive hover:text-destructive p-1"
             aria-label="Đóng thông báo lỗi"
           >
             <X aria-hidden="true" className="w-4 h-4" />
-          </Button>
+          </IconButton>
         </div>
       )}
 
@@ -618,13 +619,13 @@ export function GradedQuizRunner({
 
         <div className="flex items-center gap-3">
           {isPreviewMode && quizResult && (
-            <Button type="button" variant="outline" size="sm" onClick={handleResetPreview}>
+            <Button type="button" variant="outlined" size="sm" onClick={handleResetPreview}>
               <RotateCcw aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
               Làm lại bài thi (Reset)
             </Button>
           )}
           {!isPreviewMode && quizResult && cooldownCountdown === 0 && attemptsLeft > 0 && (
-            <Button type="button" variant="outline" size="sm" onClick={handleRetryQuiz}>
+            <Button type="button" variant="outlined" size="sm" onClick={handleRetryQuiz}>
               <RotateCcw aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
               Làm lại bài thi (Cải thiện điểm)
             </Button>
@@ -633,8 +634,7 @@ export function GradedQuizRunner({
             <Button
               type="button"
               onClick={handleSubmitQuiz}
-              isLoading={isSubmitting}
-              disabled={cooldownCountdown > 0 && !isPreviewMode}
+              disabled={isSubmitting || (cooldownCountdown > 0 && !isPreviewMode)}
               size="sm"
             >
               {isSubmitting ? "Đang chấm điểm…" : "Nộp bài thi"}

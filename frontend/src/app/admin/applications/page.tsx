@@ -12,6 +12,7 @@ import {
 } from "@/gen/identity/v1/identity_pb";
 import { FileText, ExternalLink, PlayCircle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toast";
 import {
@@ -102,8 +103,8 @@ export default function AdminInstructorApplicationsPage() {
           </div>
 
           <PageHeaderActions>
-            <Button variant="outline" asChild>
-              <Link href="/admin/dashboard">Về Dashboard</Link>
+            <Button variant="outlined" render={<Link href="/admin/dashboard" />}>
+              Về Dashboard
             </Button>
           </PageHeaderActions>
         </PageHeader>
@@ -114,16 +115,16 @@ export default function AdminInstructorApplicationsPage() {
             className="p-4 rounded-2xl bg-success/10 border border-success/30 text-success text-sm font-bold flex items-center justify-between"
           >
             <span>{actionSuccessMsg}</span>
-            <Button
-              variant="ghost"
-              size="icon"
+            <IconButton
+              variant="standard"
+              size="xs"
               type="button"
               onClick={() => setActionSuccessMsg("")}
               aria-label="Đóng thông báo"
-              className="text-success hover:text-success h-6 w-6"
+              className="text-success hover:text-success"
             >
               <X className="w-4 h-4" aria-hidden="true" />
-            </Button>
+            </IconButton>
           </div>
         )}
 
@@ -137,7 +138,7 @@ export default function AdminInstructorApplicationsPage() {
           ].map((tab) => (
             <Button
               key={tab.value}
-              variant={statusFilter === tab.value ? "primary" : "outline"}
+              variant={statusFilter === tab.value ? "filled" : "outlined"}
               size="sm"
               onClick={() => setStatusFilter(tab.value)}
             >
@@ -282,7 +283,7 @@ export default function AdminInstructorApplicationsPage() {
                           <div className="flex items-center justify-end gap-2">
                             <Button
                               type="button"
-                              variant="secondary"
+                              variant="outlined"
                               size="sm"
                               onClick={() => setRejectingAppId(null)}
                             >
@@ -290,10 +291,11 @@ export default function AdminInstructorApplicationsPage() {
                             </Button>
                             <Button
                               type="button"
-                              variant="danger"
+                              variant="outlined"
+                              className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
                               size="sm"
                               onClick={handleConfirmReject}
-                              isLoading={reviewMutation.isPending}
+                              disabled={reviewMutation.isPending}
                             >
                               Xác nhận Từ chối
                             </Button>
@@ -303,7 +305,8 @@ export default function AdminInstructorApplicationsPage() {
                         <>
                           <Button
                             type="button"
-                            variant="danger"
+                            variant="outlined"
+                            className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
                             size="sm"
                             onClick={() => setRejectingAppId(app.id)}
                             disabled={reviewMutation.isPending}
@@ -312,10 +315,10 @@ export default function AdminInstructorApplicationsPage() {
                           </Button>
                           <Button
                             type="button"
-                            variant="primary"
+                            variant="filled"
                             size="sm"
                             onClick={() => handleApprove(app.id)}
-                            isLoading={reviewMutation.isPending}
+                            disabled={reviewMutation.isPending}
                           >
                             <Check className="w-4 h-4 mr-1.5" aria-hidden="true" />
                             <span>Phê Duyệt & Nâng Role Giảng Viên</span>
@@ -346,10 +349,10 @@ export default function AdminInstructorApplicationsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setApprovingAppId(null)}>
+            <Button variant="outlined" onClick={() => setApprovingAppId(null)}>
               Hủy
             </Button>
-            <Button variant="primary" onClick={executeApprove} isLoading={reviewMutation.isPending}>
+            <Button variant="filled" onClick={executeApprove} disabled={reviewMutation.isPending}>
               Phê Duyệt
             </Button>
           </AlertDialogFooter>

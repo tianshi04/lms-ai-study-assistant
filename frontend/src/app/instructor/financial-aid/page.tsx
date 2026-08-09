@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ArrowLeft, Check, X, AlertTriangle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Tabs } from "@/components/ui/Tabs";
 
 const emptySubscribe = () => () => {};
@@ -173,16 +174,16 @@ export default function InstructorFinancialAidPage() {
               )}
               <span>{toastMessage.text}</span>
             </div>
-            <Button
+            <IconButton
               type="button"
-              variant="ghost"
-              size="icon"
+              variant="standard"
+              size="xs"
               onClick={() => setToastMessage(null)}
               aria-label="Đóng thông báo"
-              className="h-6 w-6 opacity-60 hover:opacity-100"
+              className="opacity-60 hover:opacity-100"
             >
               <X aria-hidden="true" className="w-4 h-4" />
-            </Button>
+            </IconButton>
           </div>
         )}
 
@@ -293,10 +294,9 @@ export default function InstructorFinancialAidPage() {
                   <div className="flex items-center justify-end gap-3 pt-2">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="outlined"
                       onClick={() => handleReview(app.id, false)}
                       disabled={processingId === app.id}
-                      isLoading={processingId === app.id}
                       className="text-xs font-bold text-destructive bg-destructive/10 border-destructive/30 hover:bg-destructive/20"
                     >
                       <X aria-hidden="true" className="w-4 h-4" />
@@ -306,7 +306,6 @@ export default function InstructorFinancialAidPage() {
                       type="button"
                       onClick={() => handleReview(app.id, true)}
                       disabled={processingId === app.id}
-                      isLoading={processingId === app.id}
                       className="text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover shadow-md shadow-primary/20"
                     >
                       <Check aria-hidden="true" className="w-4 h-4" />

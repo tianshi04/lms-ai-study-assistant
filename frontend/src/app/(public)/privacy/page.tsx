@@ -141,7 +141,7 @@ export default function PrivacyPolicyPage() {
                   <Button
                     type="button"
                     key={sec.id}
-                    variant={isActive ? "primary" : "ghost"}
+                    variant={isActive ? "filled" : "text"}
                     onClick={() => scrollToSection(sec.id)}
                     className={`w-full justify-start gap-2.5 px-3 py-2.5 rounded-2xl text-left text-xs font-medium cursor-pointer ${
                       isActive

@@ -183,18 +183,17 @@ function AcceptInvitationContent() {
                   mời này.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
-                  <Link
-                    href={`/login?redirect=/invitations/${token}`}
-                    className="flex items-center justify-center py-2.5 px-4 rounded-md border border-input bg-background hover:bg-muted text-sm font-semibold transition-colors"
-                  >
-                    Đăng nhập
-                  </Link>
-                  <Link
-                    href={`/register?email=${encodeURIComponent(invitation.inviteeEmail)}&invite_token=${token}`}
-                    className="flex items-center justify-center py-2.5 px-4 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold transition-colors gap-1"
-                  >
-                    Đăng ký <ArrowRight className="w-4 h-4" aria-hidden="true" />
-                  </Link>
+                  <Button variant="outlined">
+                    <Link href={`/login?redirect=/invitations/${token}`}>Đăng nhập</Link>
+                  </Button>
+                  <Button variant="filled">
+                    <Link
+                      href={`/register?email=${encodeURIComponent(invitation.inviteeEmail)}&invite_token=${token}`}
+                    >
+                      <span>Đăng ký</span>{" "}
+                      <ArrowRight className="w-4 h-4 ml-1" aria-hidden="true" />
+                    </Link>
+                  </Button>
                 </div>
               </div>
             ) : userEmail?.toLowerCase() !== invitation.inviteeEmail.toLowerCase() ? (
@@ -211,7 +210,7 @@ function AcceptInvitationContent() {
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="outlined"
                   disabled={respondMutation.isPending}
                   onClick={() => handleAction(InvitationAction.DECLINE)}
                   className="w-full"
@@ -220,7 +219,7 @@ function AcceptInvitationContent() {
                 </Button>
                 <Button
                   type="button"
-                  isLoading={respondMutation.isPending}
+                  disabled={respondMutation.isPending}
                   onClick={() => handleAction(InvitationAction.ACCEPT)}
                   className="w-full"
                 >

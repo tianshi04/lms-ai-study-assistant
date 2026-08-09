@@ -90,7 +90,7 @@ export function LessonFormModal({
           <DialogFooter>
             <Button
               type="button"
-              variant="outline"
+              variant="outlined"
               size="sm"
               onClick={onClose}
               className="rounded-xl text-xs font-bold"
@@ -99,10 +99,9 @@ export function LessonFormModal({
             </Button>
             <Button
               type="submit"
-              variant="primary"
+              variant="filled"
               size="sm"
               disabled={saving}
-              isLoading={saving}
               className="rounded-xl text-xs font-bold shadow-md"
             >
               {isEdit ? "Cập nhật Bài học" : "Xác nhận tạo Bài học"}

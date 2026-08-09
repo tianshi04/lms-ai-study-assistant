@@ -231,7 +231,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
         <div className="flex items-center gap-1 bg-muted p-1 rounded-xl">
           <Button
             type="button"
-            variant={activeTab === "submit" ? "secondary" : "ghost"}
+            variant={activeTab === "submit" ? "tonal" : "text"}
             size="sm"
             onClick={() => handleTabClick("submit")}
             className="flex items-center gap-1"
@@ -242,7 +242,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
 
           <Button
             type="button"
-            variant={activeTab === "grade" ? "secondary" : "ghost"}
+            variant={activeTab === "grade" ? "tonal" : "text"}
             size="sm"
             disabled={!hasSubmitted}
             onClick={() => handleTabClick("grade")}
@@ -254,7 +254,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
 
           <Button
             type="button"
-            variant={activeTab === "appeal" ? "secondary" : "ghost"}
+            variant={activeTab === "appeal" ? "tonal" : "text"}
             size="sm"
             disabled={!hasSubmitted}
             onClick={() => handleTabClick("appeal")}
@@ -314,7 +314,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             <Button
               type="button"
               onClick={handleSubmitAssignment}
-              isLoading={isSubmitting}
+              disabled={isSubmitting}
               size="sm"
             >
               {isSubmitting ? "Submitting…" : "Submit Peer Assignment"}

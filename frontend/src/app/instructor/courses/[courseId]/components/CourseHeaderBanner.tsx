@@ -131,7 +131,6 @@ export function CourseHeaderBanner({
               type="button"
               onClick={onSubmitForLaunch}
               disabled={submittingLaunch}
-              isLoading={submittingLaunch}
               className="bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs shadow-lg shadow-primary/20"
             >
               <Check className="w-4 h-4" aria-hidden="true" />
@@ -140,7 +139,7 @@ export function CourseHeaderBanner({
           )}
           <Button
             type="button"
-            variant="outline"
+            variant="outlined"
             onClick={onExportScorm}
             disabled={saving}
             className="bg-warning/10 text-warning border-warning/20 text-xs font-bold hover:bg-warning/20"
@@ -195,7 +194,7 @@ export function CourseHeaderBanner({
           {onOpenCollaboratorsModal && (
             <Button
               type="button"
-              variant="outline"
+              variant="outlined"
               onClick={onOpenCollaboratorsModal}
               className="bg-primary/10 text-primary border-primary/20 text-xs font-bold hover:bg-primary/20"
             >
@@ -207,6 +206,7 @@ export function CourseHeaderBanner({
           {isInstructorOrAdmin && (
             <Button
               type="button"
+              variant="tonal"
               onClick={onAddWeek}
               className="w-full sm:w-auto font-bold text-sm shrink-0"
             >

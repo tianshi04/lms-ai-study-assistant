@@ -244,7 +244,8 @@ export default function CourseReviewerPortalPage() {
                     <>
                       <Button
                         size="sm"
-                        variant="danger"
+                        variant="outlined"
+                        className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
                         onClick={() => setRejectingCourseId(course.id)}
                         disabled={submitting}
                       >
@@ -253,7 +254,7 @@ export default function CourseReviewerPortalPage() {
 
                       <Button
                         size="sm"
-                        variant="primary"
+                        variant="filled"
                         onClick={() => handleApprove(course.id, course.title)}
                         disabled={submitting}
                       >
@@ -301,7 +302,7 @@ export default function CourseReviewerPortalPage() {
             <Dialog.Footer className="mt-4">
               <Button
                 type="button"
-                variant="outline"
+                variant="outlined"
                 size="sm"
                 onClick={() => setRejectingCourseId(null)}
               >
@@ -309,7 +310,8 @@ export default function CourseReviewerPortalPage() {
               </Button>
               <Button
                 type="button"
-                variant="danger"
+                variant="filled"
+                className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
                 size="sm"
                 onClick={handleConfirmReject}
                 disabled={submitting || !rejectionReason.trim()}

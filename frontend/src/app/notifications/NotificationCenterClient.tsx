@@ -107,7 +107,7 @@ export function NotificationCenterClient() {
             {unreadCount > 0 && (
               <Button
                 type="button"
-                variant="outline"
+                variant="outlined"
                 onClick={handleMarkAllAsRead}
                 disabled={markAllAsReadMutation.isPending}
                 className="rounded-full text-xs font-bold bg-surface-container-high text-primary hover:bg-primary-container/40 border border-outline-variant/40"
@@ -123,7 +123,7 @@ export function NotificationCenterClient() {
 
             <Button
               type="button"
-              variant="outline"
+              variant="outlined"
               onClick={() => setIsPrefModalOpen(true)}
               className="rounded-full text-xs font-bold bg-surface-container-high text-on-surface hover:bg-surface-container-highest border border-outline-variant/40"
             >
@@ -144,7 +144,7 @@ export function NotificationCenterClient() {
                 <Button
                   key={cat.id}
                   type="button"
-                  variant={isSelected ? "primary" : "ghost"}
+                  variant={isSelected ? "filled" : "text"}
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`rounded-full text-xs font-bold whitespace-nowrap ${
                     isSelected
@@ -162,7 +162,7 @@ export function NotificationCenterClient() {
           {/* Unread Only MD3 Filter Chip */}
           <Button
             type="button"
-            variant="outline"
+            variant="outlined"
             onClick={() => setUnreadOnly(!unreadOnly)}
             className={`rounded-full text-xs font-bold whitespace-nowrap select-none self-end md:self-auto ${
               unreadOnly

@@ -324,12 +324,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
               rows={2}
               className="flex-1 min-h-[60px]"
             />
-            <Button
-              type="submit"
-              disabled={submitting || !newTitle.trim()}
-              isLoading={submitting}
-              size="sm"
-            >
+            <Button type="submit" disabled={submitting || !newTitle.trim() || submitting} size="sm">
               Đăng Thảo Luận
             </Button>
           </div>
@@ -385,7 +380,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                       {isThreadAuthor && (
                         <Button
                           type="button"
-                          variant="ghost"
+                          variant="text"
                           size="sm"
                           onClick={() => startEditThread(thread)}
                           className="text-[10px] font-bold text-on-surface-variant hover:text-primary h-auto p-0.5"
@@ -396,7 +391,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                       {canDeleteThread && (
                         <Button
                           type="button"
-                          variant="ghost"
+                          variant="text"
                           size="sm"
                           onClick={() => handleDeleteThread(thread.id)}
                           className="text-[10px] font-bold text-on-surface-variant hover:text-destructive h-auto p-0.5"
@@ -423,7 +418,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                         />
                         <div className="flex justify-end gap-1.5">
                           <Button
-                            variant="outline"
+                            variant="outlined"
                             size="sm"
                             type="button"
                             onClick={() => setEditingThreadId(null)}
@@ -434,8 +429,11 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                             size="sm"
                             type="button"
                             onClick={() => handleUpdateThread(thread.id)}
-                            disabled={submittingEditThread || !editThreadTitle.trim()}
-                            isLoading={submittingEditThread}
+                            disabled={
+                              submittingEditThread ||
+                              !editThreadTitle.trim() ||
+                              submittingEditThread
+                            }
                           >
                             {"Lưu thay đổi"}
                           </Button>
@@ -444,7 +442,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                     ) : (
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="text"
                         onClick={() => setSelectedModalThreadId(thread.id)}
                         className="text-left w-full justify-start h-auto p-0 group/title hover:bg-transparent shadow-none"
                         title="Bấm để mở rộng bài viết"
@@ -458,7 +456,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
 
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="outlined"
                     onClick={() => handleVote(thread.id, true)}
                     className={`rounded-full text-xs font-bold ${
                       thread.isUpvotedByMe
@@ -558,10 +556,15 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setDeletingThreadId(null)}>
+            <Button variant="outlined" onClick={() => setDeletingThreadId(null)}>
               Hủy
             </Button>
-            <Button variant="danger" onClick={executeDeleteThread} isLoading={isDeletingThread}>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={executeDeleteThread}
+              disabled={isDeletingThread}
+            >
               Xóa bài viết
             </Button>
           </AlertDialogFooter>
@@ -582,10 +585,15 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setDeletingReplyId(null)}>
+            <Button variant="outlined" onClick={() => setDeletingReplyId(null)}>
               Hủy
             </Button>
-            <Button variant="danger" onClick={executeDeleteReply} isLoading={isDeletingReply}>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={executeDeleteReply}
+              disabled={isDeletingReply}
+            >
               Xóa phản hồi
             </Button>
           </AlertDialogFooter>

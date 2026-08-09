@@ -68,7 +68,8 @@ const CategoryList = ({
               <p className="text-xs text-muted-foreground">Slug: {item.slug}</p>
             </div>
             <Button
-              variant="danger"
+              variant="outlined"
+              className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
               size="sm"
               onClick={() => handleDelete(item.id, type)}
               title={deleteText}
@@ -143,7 +144,7 @@ export default function AdminCategoriesPage() {
           <PageHeaderDescription>Quản lý danh mục khóa học</PageHeaderDescription>
         </div>
         <PageHeaderActions>
-          <Button variant="ghost" size="sm" onClick={() => router.push("/admin/dashboard")}>
+          <Button variant="text" size="sm" onClick={() => router.push("/admin/dashboard")}>
             &larr; {"Về trang quản trị"}
           </Button>
         </PageHeaderActions>
@@ -185,7 +186,7 @@ export default function AdminCategoriesPage() {
           </div>
           <Button
             type="submit"
-            isLoading={createCategoryMutation.isPending}
+            disabled={createCategoryMutation.isPending}
             className="w-full md:w-auto"
           >
             Thêm danh mục
@@ -226,13 +227,14 @@ export default function AdminCategoriesPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+            <Button variant="outlined" onClick={() => setDeleteTarget(null)}>
               Hủy
             </Button>
             <Button
-              variant="danger"
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
               onClick={executeDelete}
-              isLoading={deleteCategoryMutation.isPending}
+              disabled={deleteCategoryMutation.isPending}
             >
               Xóa danh mục
             </Button>

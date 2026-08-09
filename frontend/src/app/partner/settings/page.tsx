@@ -11,6 +11,7 @@ import {
   useRotatePartnerKeyPairMutation,
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
@@ -294,16 +295,16 @@ function PartnerSettingsForm({
             )}
             <span>{statusMessage.text}</span>
           </div>
-          <Button
+          <IconButton
             type="button"
-            variant="ghost"
-            size="icon"
+            variant="standard"
+            size="xs"
             onClick={() => setStatusMessage(null)}
-            className="h-6 w-6 opacity-70 hover:opacity-100"
+            className="opacity-70 hover:opacity-100"
             aria-label="Đóng thông báo"
           >
             <X className="w-4 h-4" aria-hidden="true" />
-          </Button>
+          </IconButton>
         </div>
       )}
 
@@ -461,7 +462,7 @@ function PartnerSettingsForm({
                     ) : (
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="text"
                         size="sm"
                         onClick={() => handleSetDefaultSignatory(sig)}
                         className="text-xs text-primary"
@@ -494,7 +495,7 @@ function PartnerSettingsForm({
                   {!sig.isDefault && (
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="text"
                       size="sm"
                       onClick={() => handleRemoveSignatory(sig.id)}
                       className="text-xs text-destructive hover:text-destructive"
@@ -540,7 +541,7 @@ function PartnerSettingsForm({
               />
             </div>
             <div className="flex justify-end">
-              <Button type="button" onClick={handleAddSignatory} variant="primary" size="sm">
+              <Button type="button" onClick={handleAddSignatory} variant="filled" size="sm">
                 <Plus aria-hidden="true" className="w-3.5 h-3.5 mr-1" />
                 Thêm Người ký
               </Button>
@@ -567,8 +568,8 @@ function PartnerSettingsForm({
               <Button
                 type="button"
                 onClick={handleRotateKeyPair}
-                isLoading={rotateKeyPairMutation.isPending}
-                variant="primary"
+                disabled={rotateKeyPairMutation.isPending}
+                variant="tonal"
                 size="sm"
               >
                 <RefreshCw aria-hidden="true" className="w-4 h-4 mr-1.5" />
@@ -577,7 +578,7 @@ function PartnerSettingsForm({
               <Button
                 type="button"
                 onClick={handleDownloadOpenBadgesJson}
-                variant="outline"
+                variant="outlined"
                 size="sm"
               >
                 <Download aria-hidden="true" className="w-4 h-4 text-primary mr-1.5" />
@@ -595,7 +596,7 @@ function PartnerSettingsForm({
                 Public Key PEM (Khóa Công khai Ký số Hiện tại)
               </label>
               {publicKeyPem && (
-                <Button type="button" variant="ghost" size="sm" onClick={handleCopyPublicKey}>
+                <Button type="button" variant="text" size="sm" onClick={handleCopyPublicKey}>
                   {copiedKey ? (
                     <>
                       <Check aria-hidden="true" className="w-3.5 h-3.5 text-success mr-1" />
@@ -625,7 +626,7 @@ function PartnerSettingsForm({
         <div className="flex items-center justify-end space-x-4 pt-4">
           <Button
             type="submit"
-            isLoading={updateMutation.isPending}
+            disabled={updateMutation.isPending}
             className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-xl px-6 py-3 text-sm shadow-md flex items-center gap-2"
           >
             <Check aria-hidden="true" className="w-4 h-4" />
@@ -648,13 +649,14 @@ function PartnerSettingsForm({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setShowRotateConfirm(false)}>
+            <Button variant="outlined" onClick={() => setShowRotateConfirm(false)}>
               Hủy
             </Button>
             <Button
-              variant="danger"
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
               onClick={executeRotateKeyPair}
-              isLoading={rotateKeyPairMutation.isPending}
+              disabled={rotateKeyPairMutation.isPending}
             >
               Tạo khóa mới
             </Button>
@@ -698,7 +700,7 @@ export default function PartnerSettingsPage() {
         <p className="text-muted-foreground text-sm">
           Trang này dành riêng cho Quản trị viên Tổ chức.
         </p>
-        <Button onClick={() => router.push("/")} className="mt-4" variant="outline">
+        <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
         </Button>
       </div>

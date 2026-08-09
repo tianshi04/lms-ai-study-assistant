@@ -134,7 +134,7 @@ function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId
             }`}
           >
             <span>{message.text}</span>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setMessage(null)}>
+            <Button type="button" variant="text" size="sm" onClick={() => setMessage(null)}>
               Đóng
             </Button>
           </div>

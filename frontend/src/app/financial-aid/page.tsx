@@ -202,7 +202,7 @@ function FinancialAidContent() {
                 <Button
                   type="button"
                   key={app.id}
-                  variant="outline"
+                  variant="outlined"
                   onClick={() => setSelectedApp(app)}
                   className={`w-full justify-between h-auto bg-card border rounded-2xl p-5 shadow-xs hover:shadow-md transition-colors cursor-pointer flex flex-col md:flex-row md:items-center text-left gap-4 ${
                     selectedApp?.id === app.id
@@ -347,7 +347,7 @@ function FinancialAidContent() {
                 {selectedApp.status === "REJECTED" && (
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="tonal"
                     size="sm"
                     onClick={() => {
                       setSelectedCourseId(selectedApp.courseId);
@@ -435,7 +435,7 @@ function FinancialAidContent() {
               <Dialog.Footer className="pt-4 flex justify-end gap-3 border-t border-border">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="outlined"
                   size="sm"
                   onClick={() => {
                     setShowCreateModal(false);
@@ -446,8 +446,9 @@ function FinancialAidContent() {
                 </Button>
                 <Button
                   type="submit"
-                  isLoading={submitting}
-                  disabled={!isEnoughWords || selectedCourse?.financialAidEnabled === false}
+                  disabled={
+                    submitting || !isEnoughWords || selectedCourse?.financialAidEnabled === false
+                  }
                   size="sm"
                 >
                   {selectedCourse?.financialAidEnabled === false

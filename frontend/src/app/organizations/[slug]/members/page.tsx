@@ -14,6 +14,7 @@ import { InvitationType } from "@/gen/identity/v1/identity_pb";
 import { mapConnectError } from "@/lib/connect_error_mapper";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import {
   Table,
   TableHeader,
@@ -257,10 +258,10 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                       </TableCell>
                       {isOwnerOrAdmin && (
                         <TableCell className="px-6 py-4 text-right">
-                          <Button
+                          <IconButton
                             type="button"
-                            variant="ghost"
-                            size="icon"
+                            variant="standard"
+                            size="xs"
                             onClick={() =>
                               setRemovingMember({
                                 userId: m.userId,
@@ -271,7 +272,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                             aria-label={`Xóa thành viên ${m.fullName || m.email}`}
                           >
                             <Trash2 className="w-4 h-4" aria-hidden="true" />
-                          </Button>
+                          </IconButton>
                         </TableCell>
                       )}
                     </TableRow>
@@ -309,9 +310,10 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                       <span className="font-mono truncate">Token: {inviteFeedback.token}</span>
                       <Button
                         type="button"
+                        variant="outlined"
                         size="sm"
                         onClick={() => handleCopyLink(inviteFeedback.token!)}
-                        className="bg-success text-success-foreground hover:bg-success/90 text-[11px] h-7 px-2.5 shrink-0"
+                        className="text-[11px] h-7 px-2.5 shrink-0"
                       >
                         {copiedToken ? (
                           <Check className="w-3 h-3" aria-hidden="true" />
@@ -375,10 +377,14 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               </div>
 
               <Dialog.Footer className="pt-4 flex justify-end gap-3 border-t border-border">
-                <Button type="button" variant="outline" onClick={() => setIsInviteModalOpen(false)}>
+                <Button
+                  type="button"
+                  variant="outlined"
+                  onClick={() => setIsInviteModalOpen(false)}
+                >
                   Hủy
                 </Button>
-                <Button type="submit" isLoading={createInviteMutation.isPending}>
+                <Button type="submit" disabled={createInviteMutation.isPending}>
                   Gửi Lời Mời (PENDING)
                 </Button>
               </Dialog.Footer>
@@ -403,11 +409,12 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <Button variant="outline" onClick={() => setRemovingMember(null)}>
+              <Button variant="outlined" onClick={() => setRemovingMember(null)}>
                 Hủy
               </Button>
               <Button
-                variant="danger"
+                variant="filled"
+                className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
                 onClick={() => {
                   if (removingMember) {
                     removeMemberMutation.mutate({
@@ -416,7 +423,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                     });
                   }
                 }}
-                isLoading={removeMemberMutation.isPending}
+                disabled={removeMemberMutation.isPending}
               >
                 Xóa Thành Viên
               </Button>

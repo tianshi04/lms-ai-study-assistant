@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import type { PersonalNote } from "@/gen/learning/v1/learning_pb";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 
 interface NotesPanelProps {
   notes: PersonalNote[];
@@ -52,9 +53,8 @@ export function NotesPanel({
         </div>
         <Button
           type="submit"
-          disabled={savingNote || !highlightText.trim()}
-          isLoading={savingNote}
-          variant="primary"
+          disabled={savingNote || !highlightText.trim() || savingNote}
+          variant="filled"
           className="w-full sm:w-auto"
         >
           Lưu ghi chú
@@ -78,17 +78,17 @@ export function NotesPanel({
                   &quot;{note.highlightedText}&quot;
                 </p>
                 {onDeleteNote && (
-                  <Button
+                  <IconButton
                     type="button"
-                    variant="ghost"
-                    size="icon"
+                    variant="standard"
+                    size="xs"
                     onClick={() => onDeleteNote(note.id)}
                     className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 w-7 rounded-lg shrink-0 transition-colors"
                     title="Xóa ghi chú này"
                     aria-label="Xóa ghi chú"
                   >
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  </Button>
+                  </IconButton>
                 )}
               </div>
               {note.noteComment && (

@@ -156,7 +156,7 @@ export default function AccountSettingsPage() {
               {user?.isIdentityVerified ? (
                 <Button
                   disabled
-                  variant="outline"
+                  variant="outlined"
                   size="sm"
                   className="rounded-full bg-success/10 text-success border-success/20 font-bold cursor-default px-4"
                 >
@@ -166,8 +166,8 @@ export default function AccountSettingsPage() {
               ) : (
                 <Button
                   onClick={handleVerifyIdentity}
-                  isLoading={verifyingIdentity}
-                  variant="primary"
+                  disabled={verifyingIdentity}
+                  variant="filled"
                   size="sm"
                   className="rounded-full px-6 py-2.5 bg-primary hover:bg-primary-hover text-on-primary font-bold shadow-xs hover:shadow-md transition-colors"
                 >
@@ -205,9 +205,8 @@ export default function AccountSettingsPage() {
             />
             <Button
               type="submit"
-              isLoading={savingKey}
-              disabled={!enterpriseKey}
-              variant="primary"
+              disabled={savingKey || !enterpriseKey}
+              variant="filled"
               size="md"
               className="rounded-full px-8 font-bold shadow-xs hover:shadow-md transition-colors"
             >

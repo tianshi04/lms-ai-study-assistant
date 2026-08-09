@@ -10,6 +10,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useCourseDetailQuery } from "@/lib/query_hooks";
 import { Trophy, AlertTriangle, CheckCircle2, Check, Pencil, Star } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
 
 export interface CourseCompletionModalProps {
@@ -272,7 +273,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                 <div className="pt-2">
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="text"
                     size="sm"
                     onClick={() => setSubmitted(false)}
                     className="text-primary"
@@ -293,11 +294,11 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                     {[1, 2, 3, 4, 5].map((star) => {
                       const active = star <= (hoverRating || rating);
                       return (
-                        <Button
+                        <IconButton
                           key={star}
                           type="button"
-                          variant="ghost"
-                          size="icon"
+                          variant="standard"
+                          size="sm"
                           onClick={() => setRating(star)}
                           onMouseEnter={() => setHoverRating(star)}
                           onMouseLeave={() => setHoverRating(0)}
@@ -310,7 +311,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                               active ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40"
                             }`}
                           />
-                        </Button>
+                        </IconButton>
                       );
                     })}
                   </div>
@@ -332,10 +333,10 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                 )}
 
                 <div className="flex items-center justify-end gap-3 pt-2">
-                  <Button type="button" variant="outline" size="sm" onClick={onClose}>
+                  <Button type="button" variant="outlined" size="sm" onClick={onClose}>
                     {"Hủy"}
                   </Button>
-                  <Button type="submit" isLoading={submitting} size="sm">
+                  <Button type="submit" disabled={submitting} size="sm">
                     {"Gửi đánh giá"}
                   </Button>
                 </div>

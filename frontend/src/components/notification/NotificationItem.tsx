@@ -162,7 +162,7 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
             <div className="flex justify-end mt-2">
               <Button
                 type="button"
-                variant="ghost"
+                variant="text"
                 size="sm"
                 onClick={() => onMarkAsRead(item.id)}
                 className="text-[11px] font-bold text-on-surface-variant hover:text-primary p-1 h-auto"

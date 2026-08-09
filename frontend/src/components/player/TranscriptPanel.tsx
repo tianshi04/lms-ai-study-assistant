@@ -7,6 +7,7 @@ import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { parseVTT, type VTTCue } from "@/lib/vtt_parser";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 
 interface TranscriptPanelProps {
   activeItem: LearningItem | null;
@@ -211,16 +212,16 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
           className="w-4 h-4 text-on-surface-variant absolute left-3 top-3 pointer-events-none"
         />
         {searchQuery && (
-          <Button
+          <IconButton
             type="button"
-            variant="ghost"
-            size="icon"
+            variant="standard"
+            size="xs"
             onClick={() => setSearchQuery("")}
             className="absolute right-3 top-2.5 h-6 w-6 text-on-surface-variant hover:text-on-surface"
             aria-label="Xóa từ khóa tìm kiếm"
           >
             <X className="w-3.5 h-3.5" aria-hidden="true" />
-          </Button>
+          </IconButton>
         )}
       </div>
 
@@ -240,7 +241,7 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
               <div className="flex items-center gap-2 pt-2 pb-0.5">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="outlined"
                   size="sm"
                   onClick={() => onSeekVideo(block.startTime)}
                   className="font-mono text-[11px] font-bold text-on-primary-container bg-primary-container hover:bg-primary-container/80 border-primary/20 px-2.5 py-0.5 rounded-lg h-auto"

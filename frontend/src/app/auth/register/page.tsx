@@ -12,6 +12,7 @@ import { UserRole } from "@/gen/identity/v1/identity_pb";
 
 import { User, Lock, Eye, EyeOff, Users, CheckCircle2, ShieldCheck, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import {
@@ -176,9 +177,9 @@ export default function RegisterPage() {
 
               <GoogleAuthButton
                 onSuccess={handleGoogleVerify}
-                isLoading={googleVerifying}
+                disabled={googleVerifying}
                 text="Xác minh bằng Google"
-                variant="primary"
+                variant="filled"
                 className="py-4 text-base"
               />
 
@@ -216,7 +217,7 @@ export default function RegisterPage() {
                 </div>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="text"
                   size="sm"
                   onClick={() => setStep(1)}
                   className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium shrink-0"
@@ -306,10 +307,10 @@ export default function RegisterPage() {
                           className="pl-10 pr-11 py-3 rounded-xl bg-muted"
                           required
                         />
-                        <Button
+                        <IconButton
                           type="button"
-                          variant="ghost"
-                          size="icon"
+                          variant="standard"
+                          size="xs"
                           onClick={() => setShowPassword(!showPassword)}
                           aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
                           className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
@@ -319,7 +320,7 @@ export default function RegisterPage() {
                           ) : (
                             <Eye aria-hidden="true" className="w-5 h-5" />
                           )}
-                        </Button>
+                        </IconButton>
                       </div>
                     </div>
                   );
@@ -417,9 +418,8 @@ export default function RegisterPage() {
                 {([canSubmit]) => (
                   <Button
                     type="submit"
-                    disabled={submitting || !canSubmit}
-                    isLoading={submitting}
-                    variant="primary"
+                    disabled={submitting || !canSubmit || submitting}
+                    variant="filled"
                     className="w-full py-3.5 rounded-xl font-semibold text-sm shadow-lg mt-2"
                   >
                     Hoàn tất Đăng ký & Đăng nhập

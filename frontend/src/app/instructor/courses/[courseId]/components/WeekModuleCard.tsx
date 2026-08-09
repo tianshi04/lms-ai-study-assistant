@@ -108,7 +108,7 @@ export function WeekModuleCard({
           <div className="flex items-center gap-2">
             <Button
               type="button"
-              variant="outline"
+              variant="outlined"
               size="sm"
               onClick={() => onEditWeek(week)}
               className="bg-muted text-foreground border-border text-xs font-semibold hover:bg-muted/80"
@@ -119,7 +119,7 @@ export function WeekModuleCard({
 
             <Button
               type="button"
-              variant="outline"
+              variant="outlined"
               size="sm"
               onClick={() => onDeleteWeek(week.id, week.title)}
               className="bg-destructive/10 text-destructive border-destructive/20 text-xs font-semibold hover:bg-destructive/20"
@@ -130,7 +130,7 @@ export function WeekModuleCard({
 
             <Button
               type="button"
-              variant="outline"
+              variant="outlined"
               size="sm"
               onClick={() => onAddLesson(week.id)}
               className="bg-muted hover:bg-muted/80 text-foreground text-xs font-bold"

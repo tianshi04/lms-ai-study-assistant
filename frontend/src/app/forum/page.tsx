@@ -435,7 +435,7 @@ function ForumPageContent() {
 
           <div className="flex items-center gap-3">
             <Button
-              variant="primary"
+              variant="filled"
               onClick={() => setShowCreateModal(true)}
               className="px-5 py-2.5 rounded-xl font-semibold text-sm shadow-md shadow-primary/20 gap-2"
             >
@@ -563,7 +563,7 @@ function ForumPageContent() {
                           <div className="ml-auto flex items-center gap-2">
                             {isThreadAuthor && (
                               <Button
-                                variant="ghost"
+                                variant="text"
                                 size="sm"
                                 onClick={() => openEditThreadModal(thread)}
                                 className="text-xs text-muted-foreground hover:text-primary h-auto p-1"
@@ -573,7 +573,7 @@ function ForumPageContent() {
                             )}
                             {canDeleteThread && (
                               <Button
-                                variant="ghost"
+                                variant="text"
                                 size="sm"
                                 onClick={() => handleDeleteThread(thread.id)}
                                 className="text-xs text-muted-foreground hover:text-destructive h-auto p-1"
@@ -587,7 +587,7 @@ function ForumPageContent() {
 
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="text"
                         onClick={() => setSelectedModalThreadId(thread.id)}
                         className="text-left w-full justify-start h-auto p-0 cursor-pointer group/title hover:bg-transparent shadow-none"
                         title="Bấm để mở rộng xem thảo luận riêng"
@@ -600,7 +600,7 @@ function ForumPageContent() {
 
                     {/* Upvote Button */}
                     <Button
-                      variant={thread.isUpvotedByMe ? "primary" : "outline"}
+                      variant={thread.isUpvotedByMe ? "filled" : "outlined"}
                       onClick={() => handleVote(thread.id, true)}
                       aria-label="Tăng điểm thảo luận"
                       className="group flex-col h-auto px-3.5 py-2.5 rounded-xl min-w-[54px]"
@@ -622,7 +622,7 @@ function ForumPageContent() {
                   {/* Toggle Replies View */}
                   <div className="flex items-center justify-between border-t border-border pt-4 mt-4">
                     <Button
-                      variant="ghost"
+                      variant="text"
                       size="sm"
                       onClick={() => toggleThreadExpand(thread.id)}
                       className="text-xs text-primary hover:underline gap-1 p-0 h-auto font-semibold"
@@ -684,7 +684,7 @@ function ForumPageContent() {
                               <div className="flex items-center gap-2">
                                 {isReplyAuthor && (
                                   <Button
-                                    variant="ghost"
+                                    variant="text"
                                     size="sm"
                                     onClick={() => startEditReply(reply)}
                                     className="text-xs text-muted-foreground hover:text-primary h-auto p-1"
@@ -694,7 +694,7 @@ function ForumPageContent() {
                                 )}
                                 {canDeleteReply && (
                                   <Button
-                                    variant="ghost"
+                                    variant="text"
                                     size="sm"
                                     onClick={() => handleDeleteReply(reply.id)}
                                     className="text-xs text-muted-foreground hover:text-destructive h-auto p-1"
@@ -705,7 +705,7 @@ function ForumPageContent() {
 
                                 {isStaffOrAdmin && !reply.isStaffAnswer && (
                                   <Button
-                                    variant="outline"
+                                    variant="outlined"
                                     size="sm"
                                     onClick={() => handlePinStaffAnswer(reply.id)}
                                     className="text-xs text-warning bg-warning/10 hover:bg-warning/20 border-warning/30 px-3 py-1 rounded-full h-auto"
@@ -715,7 +715,7 @@ function ForumPageContent() {
                                 )}
 
                                 <Button
-                                  variant={reply.isUpvotedByMe ? "primary" : "outline"}
+                                  variant={reply.isUpvotedByMe ? "filled" : "outlined"}
                                   size="sm"
                                   onClick={() => handleVote(reply.id, true)}
                                   className="rounded-full text-xs gap-1 px-3 py-1 h-auto"
@@ -736,7 +736,7 @@ function ForumPageContent() {
                                 />
                                 <div className="flex justify-end gap-2">
                                   <Button
-                                    variant="outline"
+                                    variant="text"
                                     size="sm"
                                     onClick={() => setEditingReplyId(null)}
                                     className="text-xs font-medium"
@@ -744,11 +744,14 @@ function ForumPageContent() {
                                     {"Hủy"}
                                   </Button>
                                   <Button
-                                    variant="primary"
+                                    variant="filled"
                                     size="sm"
                                     onClick={() => handleUpdateReply(reply.id)}
-                                    disabled={submittingEditReply || !editReplyContent.trim()}
-                                    isLoading={submittingEditReply}
+                                    disabled={
+                                      submittingEditReply ||
+                                      !editReplyContent.trim() ||
+                                      submittingEditReply
+                                    }
                                     className="text-xs font-semibold"
                                   >
                                     {"Lưu thay đổi"}
@@ -768,7 +771,7 @@ function ForumPageContent() {
                       <div className="pt-2">
                         {!activeReplyBoxIds[thread.id] && !(replyInputs[thread.id] || "").trim() ? (
                           <Button
-                            variant="outline"
+                            variant="outlined"
                             onClick={() =>
                               setActiveReplyBoxIds((prev) => ({ ...prev, [thread.id]: true }))
                             }
@@ -793,7 +796,7 @@ function ForumPageContent() {
                             />
                             <div className="flex justify-end gap-2">
                               <Button
-                                variant="outline"
+                                variant="text"
                                 size="sm"
                                 onClick={() => {
                                   setActiveReplyBoxIds((prev) => ({ ...prev, [thread.id]: false }));
@@ -804,14 +807,14 @@ function ForumPageContent() {
                                 {"Hủy"}
                               </Button>
                               <Button
-                                variant="primary"
+                                variant="filled"
                                 size="sm"
                                 onClick={() => handlePostReply(thread.id)}
                                 disabled={
                                   submittingReply[thread.id] ||
-                                  !(replyInputs[thread.id] || "").trim()
+                                  !(replyInputs[thread.id] || "").trim() ||
+                                  submittingReply[thread.id]
                                 }
-                                isLoading={submittingReply[thread.id]}
                                 className="text-xs font-semibold"
                               >
                                 {"Đăng bài"}
@@ -883,7 +886,7 @@ function ForumPageContent() {
             <Dialog.Footer className="pt-4 border-t border-border">
               <Button
                 type="button"
-                variant="outline"
+                variant="text"
                 onClick={() => setShowCreateModal(false)}
                 className="px-4 py-2.5 rounded-xl text-xs font-semibold"
               >
@@ -891,9 +894,8 @@ function ForumPageContent() {
               </Button>
               <Button
                 type="submit"
-                variant="primary"
-                disabled={submittingThread || !newTitle.trim()}
-                isLoading={submittingThread}
+                variant="filled"
+                disabled={submittingThread || !newTitle.trim() || submittingThread}
                 className="px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
               >
                 {"Đăng bài"}
@@ -935,7 +937,7 @@ function ForumPageContent() {
             <Dialog.Footer className="pt-4 border-t border-border">
               <Button
                 type="button"
-                variant="outline"
+                variant="text"
                 onClick={() => setEditingThread(null)}
                 className="px-4 py-2.5 rounded-xl text-xs font-semibold"
               >
@@ -943,9 +945,8 @@ function ForumPageContent() {
               </Button>
               <Button
                 type="submit"
-                variant="primary"
-                disabled={submittingEditThread || !editThreadTitle.trim()}
-                isLoading={submittingEditThread}
+                variant="filled"
+                disabled={submittingEditThread || !editThreadTitle.trim() || submittingEditThread}
                 className="px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
               >
                 {"Lưu thay đổi"}
@@ -989,10 +990,15 @@ function ForumPageContent() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setDeletingThreadId(null)}>
+            <Button variant="text" onClick={() => setDeletingThreadId(null)}>
               Hủy
             </Button>
-            <Button variant="danger" onClick={executeDeleteThread} isLoading={isDeletingThread}>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={executeDeleteThread}
+              disabled={isDeletingThread}
+            >
               Xóa bài viết
             </Button>
           </AlertDialogFooter>
@@ -1014,10 +1020,15 @@ function ForumPageContent() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setDeletingReplyId(null)}>
+            <Button variant="text" onClick={() => setDeletingReplyId(null)}>
               Hủy
             </Button>
-            <Button variant="danger" onClick={executeDeleteReply} isLoading={isDeletingReply}>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={executeDeleteReply}
+              disabled={isDeletingReply}
+            >
               Xóa phản hồi
             </Button>
           </AlertDialogFooter>

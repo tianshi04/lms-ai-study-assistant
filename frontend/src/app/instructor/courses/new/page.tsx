@@ -436,9 +436,8 @@ export default function NewCoursePage() {
             </Link>
             <Button
               type="submit"
-              variant="primary"
+              variant="filled"
               disabled={submitting}
-              isLoading={submitting}
               className="px-6 py-2.5 rounded-xl text-xs font-bold"
             >
               <span>🚀 Bắt Đầu Tạo Khóa Học</span>

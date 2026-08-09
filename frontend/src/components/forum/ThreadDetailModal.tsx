@@ -154,7 +154,7 @@ export function ThreadDetailModal({
               <div className="flex items-center gap-2">
                 {canDeleteThread && onDeleteThread && (
                   <Button
-                    variant="ghost"
+                    variant="text"
                     size="sm"
                     onClick={() => onDeleteThread(thread.id)}
                     className="text-xs text-muted-foreground hover:text-destructive h-auto p-1.5"
@@ -163,7 +163,7 @@ export function ThreadDetailModal({
                   </Button>
                 )}
                 <Button
-                  variant={thread.isUpvotedByMe ? "primary" : "outline"}
+                  variant={thread.isUpvotedByMe ? "filled" : "outlined"}
                   size="sm"
                   onClick={() => onVote(thread.id, true)}
                   className="gap-1.5 font-bold shadow-xs"
@@ -217,7 +217,7 @@ export function ThreadDetailModal({
                   <div key={reply.id} className="relative">
                     {onPinStaffAnswer && isStaffOrAdmin && !reply.isStaffAnswer && (
                       <Button
-                        variant="ghost"
+                        variant="text"
                         size="sm"
                         onClick={() => onPinStaffAnswer(reply.id)}
                         className="absolute right-2 top-2 text-[10px] text-muted-foreground hover:text-warning"
@@ -258,10 +258,9 @@ export function ThreadDetailModal({
             className="flex-1 bg-card text-xs rounded-xl"
           />
           <Button
-            variant="primary"
+            variant="filled"
             onClick={handleSendReply}
-            disabled={!replyContent.trim() || submittingReply}
-            isLoading={submittingReply}
+            disabled={!replyContent.trim() || submittingReply || submittingReply}
             className="shrink-0 font-semibold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-primary/20"
           >
             {"Đăng phản hồi"}

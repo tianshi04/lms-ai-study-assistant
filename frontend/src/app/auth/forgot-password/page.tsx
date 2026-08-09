@@ -148,9 +148,9 @@ function ForgotPasswordContent() {
 
             <GoogleAuthButton
               onSuccess={handleGoogleSuccess}
-              isLoading={isPending}
+              disabled={isPending}
               text="Xác minh bằng Google để đổi MK"
-              variant="outline"
+              variant="outlined"
             />
           </div>
         )}
@@ -200,8 +200,7 @@ function ForgotPasswordContent() {
 
             <Button
               type="submit"
-              variant="primary"
-              isLoading={isPending}
+              variant="filled"
               disabled={isPending}
               className="w-full py-3 rounded-xl font-bold text-sm shadow-md"
             >

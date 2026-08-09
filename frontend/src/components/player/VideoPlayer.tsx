@@ -19,6 +19,7 @@ import {
   Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 
 interface VideoPlayerProps {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -302,7 +303,7 @@ export function VideoPlayer({
                       <Button
                         key={idx}
                         type="button"
-                        variant="outline"
+                        variant="outlined"
                         disabled={quizSubmitted}
                         onClick={() => onSelectOption(idx)}
                         className={`w-full text-left p-3 rounded-xl border text-xs h-auto justify-between ${optionStyle}`}
@@ -365,10 +366,10 @@ export function VideoPlayer({
                 Tìm hiểu sâu hơn về chủ đề này
               </span>
             </div>
-            <Button
+            <IconButton
               type="button"
-              variant="ghost"
-              size="icon"
+              variant="standard"
+              size="xs"
               onClick={() => setIsExpanded((prev) => !prev)}
               className="p-1 h-7 w-7 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
               title={isExpanded ? "Thu gọn gợi ý AI" : "Mở rộng gợi ý AI"}
@@ -379,7 +380,7 @@ export function VideoPlayer({
               ) : (
                 <ChevronDown className="w-4 h-4" aria-hidden="true" />
               )}
-            </Button>
+            </IconButton>
           </div>
 
           {isExpanded && (
@@ -393,7 +394,7 @@ export function VideoPlayer({
                 <Button
                   key={text}
                   type="button"
-                  variant="outline"
+                  variant="outlined"
                   size="sm"
                   onClick={() => onSelectAiPrompt?.(text)}
                   className="text-xs font-semibold px-4 py-2.5 rounded-xl bg-surface-container-high hover:bg-primary-container text-on-surface hover:text-primary border-outline-variant/40 hover:border-primary/40 shadow-2xs leading-snug w-fit h-auto"
@@ -418,7 +419,7 @@ export function VideoPlayer({
         <div className="w-full flex items-center justify-end pt-1 pb-1 shrink-0">
           <Button
             type="button"
-            variant="ghost"
+            variant="text"
             onClick={onNextLesson}
             className="px-4 py-2 rounded-xl text-xs font-semibold bg-surface-container-high text-on-surface hover:bg-primary-container hover:text-primary border border-outline-variant/40 hover:border-primary/40 transition-colors shadow-2xs hover:scale-102 active:scale-98 shrink-0"
             title="Chuyển sang bài học tiếp theo"

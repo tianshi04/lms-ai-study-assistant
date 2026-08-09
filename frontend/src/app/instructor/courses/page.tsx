@@ -392,7 +392,7 @@ export default function InstructorCoursesPage() {
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="outlined"
                     size="sm"
                     onClick={() => handleOpenEditModal(course)}
                     className="bg-muted hover:bg-muted/80 text-xs font-semibold text-foreground"
@@ -403,7 +403,7 @@ export default function InstructorCoursesPage() {
 
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="outlined"
                     size="sm"
                     onClick={() => handleDeleteCourse(course.id, course.title)}
                     className="bg-destructive/10 text-destructive border-destructive/20 text-xs font-semibold hover:bg-destructive/20"
@@ -517,10 +517,10 @@ export default function InstructorCoursesPage() {
             </div>
 
             <Dialog.Footer className="pt-4 border-t border-border">
-              <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
+              <Button type="button" variant="outlined" onClick={() => setShowModal(false)}>
                 {"Hủy"}
               </Button>
-              <Button type="submit" variant="primary" disabled={saving}>
+              <Button type="submit" variant="filled" disabled={saving}>
                 <span aria-live="polite">
                   {saving
                     ? "Đang lưu…"
@@ -550,10 +550,14 @@ export default function InstructorCoursesPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setDeletingCourseTarget(null)}>
+            <Button variant="outlined" onClick={() => setDeletingCourseTarget(null)}>
               Hủy
             </Button>
-            <Button variant="danger" onClick={executeDeleteCourse}>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={executeDeleteCourse}
+            >
               Xóa khóa học
             </Button>
           </AlertDialogFooter>

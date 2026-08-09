@@ -98,7 +98,7 @@ export function SyllabusTree({
           </div>
           {isInstructorOrAdmin && (
             <Button
-              variant="primary"
+              variant="filled"
               onClick={onAddWeek}
               className="px-4 py-2 rounded-xl font-bold text-xs shadow-md gap-1.5"
             >

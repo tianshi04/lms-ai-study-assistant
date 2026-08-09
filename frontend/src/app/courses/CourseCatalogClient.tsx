@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { CourseCard } from "@/components/course/CourseCard";
 import { CourseGridSkeleton } from "@/components/course/CourseGridSkeleton";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import {
   Select,
@@ -83,16 +84,16 @@ export function CourseCatalogClient() {
               className="w-full pl-11 pr-9 py-2.5 text-xs sm:text-sm bg-surface-container-lowest border border-outline-variant rounded-full text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary"
             />
             {searchQuery && (
-              <Button
+              <IconButton
                 type="button"
-                variant="ghost"
-                size="icon"
+                variant="standard"
+                size="xs"
                 onClick={() => setSearchQuery("")}
                 aria-label="Xóa tìm kiếm"
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-xs font-bold text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-full"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant"
               >
                 ✕
-              </Button>
+              </IconButton>
             )}
           </div>
 
@@ -101,7 +102,7 @@ export function CourseCatalogClient() {
             {subject || level || searchQuery || sortBy ? (
               <Button
                 type="button"
-                variant="ghost"
+                variant="text"
                 size="sm"
                 onClick={() => {
                   setSubject("");
@@ -150,7 +151,7 @@ export function CourseCatalogClient() {
             </span>
             <Button
               type="button"
-              variant={subject === "" ? "secondary" : "outline"}
+              variant={subject === "" ? "tonal" : "outlined"}
               size="sm"
               onClick={() => setSubject("")}
               className={`rounded-full text-xs font-bold ${
@@ -165,7 +166,7 @@ export function CourseCatalogClient() {
               <Button
                 key={s.id}
                 type="button"
-                variant={subject === s.id ? "secondary" : "outline"}
+                variant={subject === s.id ? "tonal" : "outlined"}
                 size="sm"
                 onClick={() => setSubject(s.id)}
                 className={`rounded-full text-xs font-bold ${
@@ -186,7 +187,7 @@ export function CourseCatalogClient() {
             </span>
             <Button
               type="button"
-              variant={level === "" ? "secondary" : "outline"}
+              variant={level === "" ? "tonal" : "outlined"}
               size="sm"
               onClick={() => setLevel("")}
               className={`rounded-full text-xs font-bold ${
@@ -201,7 +202,7 @@ export function CourseCatalogClient() {
               <Button
                 key={l.id}
                 type="button"
-                variant={level === l.id ? "secondary" : "outline"}
+                variant={level === l.id ? "tonal" : "outlined"}
                 size="sm"
                 onClick={() => setLevel(l.id)}
                 className={`rounded-full text-xs font-bold ${
@@ -242,7 +243,7 @@ export function CourseCatalogClient() {
           </p>
           {(subject || level || searchQuery || sortBy) && (
             <Button
-              variant="primary"
+              variant="filled"
               size="sm"
               onClick={() => {
                 setSubject("");

@@ -16,6 +16,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
 import { Plus, UserPlus, AlertTriangle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import {
   Table,
@@ -205,7 +206,7 @@ export default function AdminEnterpriseDashboardPage() {
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
               <Button
                 onClick={() => setShowCreateModal(true)}
-                variant="outline"
+                variant="outlined"
                 className="w-full sm:w-auto border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
               >
                 <Plus className="w-4 h-4 mr-1.5" aria-hidden="true" />
@@ -214,7 +215,7 @@ export default function AdminEnterpriseDashboardPage() {
 
               <Button
                 onClick={() => setShowAssignModal(true)}
-                variant="secondary"
+                variant="tonal"
                 className="w-full sm:w-auto"
               >
                 <UserPlus className="w-4 h-4 mr-1.5 text-primary" aria-hidden="true" />
@@ -252,15 +253,15 @@ export default function AdminEnterpriseDashboardPage() {
               )}
               <span>{message.text}</span>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
+            <IconButton
+              variant="standard"
+              size="xs"
               onClick={() => setMessage(null)}
               aria-label="Đóng thông báo"
-              className="h-6 w-6 opacity-60 hover:opacity-100"
+              className="opacity-60 hover:opacity-100"
             >
               <X className="w-4 h-4" aria-hidden="true" />
-            </Button>
+            </IconButton>
           </div>
         )}
 
@@ -358,7 +359,7 @@ export default function AdminEnterpriseDashboardPage() {
                     <TableCell className="text-right">
                       <Button
                         size="sm"
-                        variant="secondary"
+                        variant="outlined"
                         onClick={() => {
                           setSelectedSeatKey(seat.seatKey);
                           setShowAssignModal(true);
@@ -430,13 +431,13 @@ export default function AdminEnterpriseDashboardPage() {
             <Dialog.Footer className="pt-2">
               <Button
                 type="button"
-                variant="secondary"
+                variant="outlined"
                 size="sm"
                 onClick={() => setShowAssignModal(false)}
               >
                 {"Hủy"}
               </Button>
-              <Button type="submit" isLoading={saving} size="sm">
+              <Button type="submit" disabled={saving} size="sm">
                 {"Kích hoạt gán suất học"}
               </Button>
             </Dialog.Footer>
@@ -473,13 +474,13 @@ export default function AdminEnterpriseDashboardPage() {
             <Dialog.Footer className="pt-2">
               <Button
                 type="button"
-                variant="secondary"
+                variant="outlined"
                 size="sm"
                 onClick={() => setShowCreateModal(false)}
               >
                 {"Hủy"}
               </Button>
-              <Button type="submit" isLoading={saving} size="sm">
+              <Button type="submit" disabled={saving} size="sm">
                 {"Xác nhận tạo Giấy phép"}
               </Button>
             </Dialog.Footer>

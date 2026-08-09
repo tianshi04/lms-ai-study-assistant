@@ -23,6 +23,7 @@ import {
 } from "@/lib/query_hooks";
 import { PaymentOrderStatus, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -270,7 +271,7 @@ function MyPurchasesContent() {
         </div>
         <Button
           type="button"
-          variant="outline"
+          variant="outlined"
           onClick={handleRefresh}
           disabled={isFetching}
           className="shrink-0 self-start md:self-auto"
@@ -315,16 +316,16 @@ function MyPurchasesContent() {
               </p>
             </div>
           </div>
-          <Button
+          <IconButton
             type="button"
-            variant="ghost"
-            size="icon"
+            variant="standard"
+            size="xs"
             onClick={() => setActionNotice(null)}
             aria-label="Đóng thông báo"
             className="shrink-0 text-muted-foreground hover:text-foreground"
           >
             <span className="text-lg leading-none">✕</span>
-          </Button>
+          </IconButton>
         </div>
       )}
 
@@ -371,9 +372,9 @@ function MyPurchasesContent() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
             <Button
               type="button"
-              variant="outline"
+              variant="outlined"
               onClick={() => handleSubscribePlus(PlanType.MONTHLY)}
-              isLoading={createVNPayMutation.isPending}
+              disabled={createVNPayMutation.isPending}
               className="gap-2 px-5 py-3 rounded-xl font-bold text-sm h-auto"
             >
               <CreditCard className="w-4 h-4" aria-hidden="true" />
@@ -382,9 +383,9 @@ function MyPurchasesContent() {
 
             <Button
               type="button"
-              variant="primary"
+              variant="filled"
               onClick={() => handleSubscribePlus(PlanType.YEARLY)}
-              isLoading={createVNPayMutation.isPending}
+              disabled={createVNPayMutation.isPending}
               className="gap-2 px-5 py-3 rounded-xl font-bold text-sm h-auto"
             >
               <Sparkles className="w-4 h-4" aria-hidden="true" />
@@ -605,10 +606,13 @@ function MyPurchasesContent() {
                     <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="outlined"
                         onClick={() => handleCancelOrder(order)}
-                        disabled={cancelVNPayMutation.isPending || createVNPayMutation.isPending}
-                        isLoading={cancelVNPayMutation.isPending}
+                        disabled={
+                          cancelVNPayMutation.isPending ||
+                          createVNPayMutation.isPending ||
+                          cancelVNPayMutation.isPending
+                        }
                         className="px-4 py-2.5 rounded-xl text-xs font-semibold text-destructive hover:bg-destructive/10 hover:border-destructive/30"
                       >
                         <span>{"Hủy đơn"}</span>
@@ -616,8 +620,11 @@ function MyPurchasesContent() {
                       <Button
                         type="button"
                         onClick={() => handleContinuePayment(order)}
-                        disabled={createVNPayMutation.isPending || cancelVNPayMutation.isPending}
-                        isLoading={createVNPayMutation.isPending}
+                        disabled={
+                          createVNPayMutation.isPending ||
+                          cancelVNPayMutation.isPending ||
+                          createVNPayMutation.isPending
+                        }
                         className="px-5 py-2.5 rounded-xl bg-warning hover:bg-warning/90 text-warning-foreground text-sm font-semibold"
                       >
                         <CreditCard className="w-4 h-4" aria-hidden="true" />
@@ -664,14 +671,15 @@ function MyPurchasesContent() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <Button
-              variant="outline"
+              variant="outlined"
               onClick={() => setOrderToCancel(null)}
               disabled={cancelVNPayMutation.isPending}
             >
               Quay lại
             </Button>
             <Button
-              variant="danger"
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
               onClick={confirmCancelOrder}
               disabled={cancelVNPayMutation.isPending}
             >

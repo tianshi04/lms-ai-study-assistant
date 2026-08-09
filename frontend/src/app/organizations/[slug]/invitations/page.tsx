@@ -20,6 +20,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import {
   Table,
   TableHeader,
@@ -229,9 +230,10 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
                           {inv.status === InvitationStatus.PENDING && inv.token && (
                             <Button
                               type="button"
+                              variant="outlined"
                               size="sm"
                               onClick={() => handleCopyInviteLink(inv.id, inv.token)}
-                              className="bg-primary/10 text-primary hover:bg-primary/20 text-xs shrink-0"
+                              className="text-xs shrink-0"
                             >
                               {copiedTokenId === inv.id ? (
                                 <Check className="w-3.5 h-3.5 text-success" aria-hidden="true" />
@@ -243,17 +245,17 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
                           )}
 
                           {inv.status === InvitationStatus.PENDING && (
-                            <Button
+                            <IconButton
                               type="button"
-                              variant="ghost"
-                              size="icon"
+                              variant="standard"
+                              size="xs"
                               onClick={() => setCancelingInvId(inv.id)}
                               className="text-destructive hover:bg-destructive/10"
                               title="Hủy lời mời"
                               aria-label="Hủy lời mời gia nhập"
                             >
                               <Trash2 className="w-4 h-4" aria-hidden="true" />
-                            </Button>
+                            </IconButton>
                           )}
                         </div>
                       </TableCell>
@@ -281,15 +283,16 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <Button variant="outline" onClick={() => setCancelingInvId(null)}>
+              <Button variant="outlined" onClick={() => setCancelingInvId(null)}>
                 Hủy
               </Button>
               <Button
-                variant="danger"
+                variant="filled"
+                className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
                 onClick={() => {
                   if (cancelingInvId) cancelMutation.mutate({ invitationId: cancelingInvId });
                 }}
-                isLoading={cancelMutation.isPending}
+                disabled={cancelMutation.isPending}
               >
                 Hủy Lời Mời
               </Button>

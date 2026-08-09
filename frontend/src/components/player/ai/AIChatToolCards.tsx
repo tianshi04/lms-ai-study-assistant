@@ -56,7 +56,7 @@ export function SaveNoteCard({
       </blockquote>
       <Button
         type="button"
-        variant="outline"
+        variant="outlined"
         disabled={isSaved || isSaving}
         onClick={handleSave}
         className={`w-fit font-semibold text-xs border ${
@@ -102,7 +102,7 @@ export function TimestampSeekCard({
       {onSeek && (
         <Button
           type="button"
-          variant="outline"
+          variant="outlined"
           onClick={() => onSeek(seconds)}
           className="w-fit bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold border-primary/20"
         >

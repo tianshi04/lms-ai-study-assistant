@@ -120,7 +120,7 @@ export function InviteMemberModal({
           <div className="flex border-b border-border bg-muted/10 px-2 pt-2">
             <Button
               type="button"
-              variant="ghost"
+              variant="text"
               onClick={() => setActiveTab("send")}
               className={`pb-2 px-4 text-sm font-medium border-b-2 rounded-b-none transition-colors ${
                 activeTab === "send"
@@ -132,7 +132,7 @@ export function InviteMemberModal({
             </Button>
             <Button
               type="button"
-              variant="ghost"
+              variant="text"
               onClick={() => setActiveTab("pending")}
               className={`pb-2 px-4 text-sm font-medium border-b-2 rounded-b-none transition-colors ${
                 activeTab === "pending"
@@ -242,14 +242,10 @@ export function InviteMemberModal({
                 )}
 
                 <div className="pt-2 flex justify-end gap-3">
-                  <Button type="button" variant="outline" onClick={onClose}>
+                  <Button type="button" variant="outlined" onClick={onClose}>
                     Đóng
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={!email.trim()}
-                    isLoading={createMutation.isPending}
-                  >
+                  <Button type="submit" disabled={!email.trim() || createMutation.isPending}>
                     <Send className="w-4 h-4" aria-hidden="true" />
                     Gửi lời mời
                   </Button>
@@ -288,7 +284,7 @@ export function InviteMemberModal({
                     <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="text"
                         size="sm"
                         disabled={cancelMutation.isPending}
                         onClick={() => cancelMutation.mutate({ invitationId: inv.id })}

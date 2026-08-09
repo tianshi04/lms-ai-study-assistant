@@ -23,6 +23,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import {
@@ -116,7 +117,7 @@ export default function AdminPartnersPage() {
         <p className="text-muted-foreground text-sm">
           Bạn cần quyền Super Admin để truy cập trang quản trị đối tác.
         </p>
-        <Button onClick={() => router.push("/")} className="mt-4" variant="outline">
+        <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
         </Button>
       </div>
@@ -404,7 +405,7 @@ export default function AdminPartnersPage() {
                   </TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button
-                      variant="outline"
+                      variant="outlined"
                       size="sm"
                       onClick={() => router.push(`/partners/${partner.slug}`)}
                       title="Xem trang công khai"
@@ -412,12 +413,13 @@ export default function AdminPartnersPage() {
                       <Eye className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
                       Xem
                     </Button>
-                    <Button variant="secondary" size="sm" onClick={() => handleOpenEdit(partner)}>
+                    <Button variant="outlined" size="sm" onClick={() => handleOpenEdit(partner)}>
                       <Pencil className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
                       Sửa
                     </Button>
                     <Button
-                      variant="danger"
+                      variant="outlined"
+                      className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
                       size="sm"
                       onClick={() => setDeletingPartnerId(partner.id)}
                     >
@@ -657,16 +659,16 @@ export default function AdminPartnersPage() {
                           </span>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                      <IconButton
+                        variant="standard"
+                        size="xs"
                         type="button"
                         onClick={() => handleRemovePartnerAdmin(admin.id)}
                         className="text-destructive hover:bg-destructive/10"
                         aria-label="Gỡ Quản trị viên"
                       >
                         <X className="w-4 h-4" aria-hidden="true" />
-                      </Button>
+                      </IconButton>
                     </div>
                   ))
                 )}
@@ -690,7 +692,7 @@ export default function AdminPartnersPage() {
                 />
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="outlined"
                   size="sm"
                   onClick={handleAddPartnerAdmin}
                   className="sm:col-span-1 text-xs font-semibold"
@@ -720,13 +722,13 @@ export default function AdminPartnersPage() {
             </div>
 
             <Dialog.Footer className="pt-4 border-t border-border">
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+              <Button type="button" variant="outlined" onClick={() => setIsModalOpen(false)}>
                 {"Hủy"}
               </Button>
               <Button
                 type="submit"
                 className="bg-primary hover:bg-primary-hover text-primary-foreground font-medium rounded-xl"
-                isLoading={createMutation.isPending || updateMutation.isPending}
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
                 {editingPartner ? "Cập nhật đối tác" : "Thêm đối tác"}
               </Button>
@@ -749,13 +751,14 @@ export default function AdminPartnersPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setDeletingPartnerId(null)}>
+            <Button variant="outlined" onClick={() => setDeletingPartnerId(null)}>
               Hủy
             </Button>
             <Button
-              variant="danger"
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
               onClick={handleDeleteConfirm}
-              isLoading={deleteMutation.isPending}
+              disabled={deleteMutation.isPending}
             >
               Xoá đối tác
             </Button>

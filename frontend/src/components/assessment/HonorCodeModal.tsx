@@ -105,14 +105,13 @@ export function HonorCodeModal({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+          <Button variant="outlined" onClick={onClose} disabled={isSubmitting}>
             Hủy / Kiểm tra lại
           </Button>
           <Button
-            variant="primary"
+            variant="filled"
             onClick={handleSubmit}
-            disabled={!isChecked || isSubmitting}
-            isLoading={isSubmitting}
+            disabled={!isChecked || isSubmitting || isSubmitting}
           >
             {isSubmitting ? "Đang chấm điểm…" : "Đồng ý & Nộp bài ngay"}
             {!isSubmitting && <Send aria-hidden="true" className="w-3.5 h-3.5 ml-1.5" />}

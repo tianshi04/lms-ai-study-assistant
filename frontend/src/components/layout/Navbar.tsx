@@ -10,6 +10,7 @@ import { UserDropdown } from "@/components/layout/UserDropdown";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { NotificationBell } from "@/components/notification/NotificationBell";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { NavigationMenu } from "@/components/ui/NavigationMenu";
 import { cn } from "@/lib/utils";
@@ -134,29 +135,28 @@ export function Navbar() {
           ) : (
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant="outlined"
                 size="sm"
-                asChild
+                render={<Link href="/auth/login" />}
                 className="rounded-xl text-xs font-semibold bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
               >
-                <Link href="/auth/login">{"Đăng nhập"}</Link>
+                {"Đăng nhập"}
               </Button>
               <Button
-                variant="primary"
+                variant="filled"
                 size="sm"
-                asChild
+                render={<Link href="/auth/register" />}
                 className="rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
               >
-                <Link href="/auth/register">{"Đăng ký"}</Link>
+                {"Đăng ký"}
               </Button>
             </div>
           )}
 
           {/* Mobile Hamburger Toggle Button */}
-          <Button
+          <IconButton
             type="button"
-            variant="ghost"
-            size="icon"
+            variant="standard"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden rounded-xl text-muted-foreground hover:bg-muted"
             aria-label="Bật/tắt menu điều hướng"
@@ -166,7 +166,7 @@ export function Navbar() {
             ) : (
               <Menu className="w-6 h-6" aria-hidden="true" />
             )}
-          </Button>
+          </IconButton>
         </div>
       </div>
 

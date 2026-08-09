@@ -18,6 +18,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Select, SelectItem } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
@@ -203,9 +204,9 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
                 <div className="sm:col-span-2">
                   <Button
                     type="submit"
-                    variant="primary"
+                    variant="filled"
                     className="w-full"
-                    isLoading={addCollaboratorMutation.isPending}
+                    disabled={addCollaboratorMutation.isPending}
                   >
                     Mời
                   </Button>
@@ -267,17 +268,17 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
                         </div>
                       </div>
 
-                      <Button
-                        variant="ghost"
+                      <IconButton
+                        variant="standard"
                         size="sm"
                         className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={() => handleRemoveCollaborator(c.userId, c.fullName || c.email)}
-                        isLoading={removeCollaboratorMutation.isPending}
+                        disabled={removeCollaboratorMutation.isPending}
                         title="Xóa khỏi khóa học"
                         aria-label="Xóa khỏi khóa học"
                       >
                         <Trash2 className="w-4 h-4" aria-hidden="true" />
-                      </Button>
+                      </IconButton>
                     </div>
                   ))}
                 </div>
@@ -303,13 +304,14 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setRemovingMember(null)}>
+            <Button variant="outlined" onClick={() => setRemovingMember(null)}>
               Hủy
             </Button>
             <Button
-              variant="danger"
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
               onClick={executeRemoveCollaborator}
-              isLoading={removeCollaboratorMutation.isPending}
+              disabled={removeCollaboratorMutation.isPending}
             >
               Xóa thành viên
             </Button>

@@ -134,7 +134,7 @@ export function AutoGradedLabRunner({
               <SelectItem value="javascript">{"JavaScript (Node.js)"}</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={handleRunCode} isLoading={isRunning} size="sm">
+          <Button onClick={handleRunCode} disabled={isRunning} size="sm">
             {isRunning ? "Executing in Sandbox…" : "Run & Submit Code"}
           </Button>
         </div>

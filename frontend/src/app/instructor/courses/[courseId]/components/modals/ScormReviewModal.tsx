@@ -69,7 +69,7 @@ export function ScormReviewModal({
         <DialogFooter>
           <Button
             type="button"
-            variant="outline"
+            variant="outlined"
             size="sm"
             onClick={onClose}
             className="rounded-xl text-xs font-bold"
@@ -78,11 +78,10 @@ export function ScormReviewModal({
           </Button>
           <Button
             type="button"
-            variant="primary"
+            variant="filled"
             size="sm"
             onClick={() => onConfirmImport(scormObjectKey, courseId)}
             disabled={scormImporting}
-            isLoading={scormImporting}
             className="rounded-xl text-xs font-bold shadow-md"
           >
             Xác nhận Import

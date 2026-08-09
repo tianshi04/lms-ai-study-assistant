@@ -311,7 +311,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
               </div>
 
               <div className="pt-6 border-t border-border flex justify-end">
-                <Button type="submit" isLoading={updateMutation.isPending}>
+                <Button type="submit" disabled={updateMutation.isPending}>
                   <Save className="w-4.5 h-4.5" aria-hidden="true" />
                   Lưu Thay Đổi
                 </Button>

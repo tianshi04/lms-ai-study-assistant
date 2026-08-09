@@ -161,7 +161,7 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="outlined"
                       size="sm"
                       disabled={respondMutation.isPending}
                       onClick={() => handleAction(inv.id, InvitationAction.DECLINE)}
@@ -172,7 +172,7 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                     <Button
                       type="button"
                       size="sm"
-                      isLoading={respondMutation.isPending}
+                      disabled={respondMutation.isPending}
                       onClick={() => handleAction(inv.id, InvitationAction.ACCEPT)}
                       className="w-full"
                     >
@@ -218,7 +218,7 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
 
         {/* Footer */}
         <DrawerFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outlined" onClick={onClose}>
             Đóng
           </Button>
         </DrawerFooter>
