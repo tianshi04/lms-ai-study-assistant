@@ -58,8 +58,8 @@ function ForgotPasswordContent() {
     e.preventDefault();
     setErrorMsg("");
 
-    if (!newPassword || newPassword.length < 6) {
-      setErrorMsg("Mật khẩu mới phải chứa ít nhất 6 ký tự.");
+    if (newPassword.length < 6 || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      setErrorMsg("Mật khẩu chưa đạt yêu cầu bảo mật.");
       return;
     }
 
