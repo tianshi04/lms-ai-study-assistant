@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { CourseCard } from "@/components/course/CourseCard";
 import { CourseGridSkeleton } from "@/components/course/CourseGridSkeleton";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import {
   Select,
@@ -43,9 +46,7 @@ export function CourseCatalogClient() {
   const { data: levels = [] } = useCategoriesQuery("LEVEL");
   const error = queryError ? queryError.message : null;
 
-  const getCategoryTranslation = (_slug: string, fallback: string) => {
-    return fallback;
-  };
+  const getCategoryTranslation = (slug: string, fallback: string) => fallback;
 
   return (
     <main className="w-full max-w-7xl mx-auto px-6 py-12 min-h-[65vh] bg-surface text-on-surface">
@@ -65,7 +66,7 @@ export function CourseCatalogClient() {
       </div>
 
       {/* Controls Section: Search & Filters (MD3 Surface Container) */}
-      <div className="w-full mb-10 p-5 md:p-6 rounded-3xl bg-surface-container-low border border-outline-variant space-y-5 shadow-xs">
+      <Card variant="filled" className="w-full mb-10 p-5 md:p-6 rounded-3xl space-y-5">
         {/* Top Toolbar: Search Bar + Controls */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-4 border-b border-outline-variant">
           {/* Search Bar (MD3 Pill Input) */}
@@ -85,16 +86,16 @@ export function CourseCatalogClient() {
               className="w-full pl-11 pr-9 py-2.5 text-xs sm:text-sm bg-surface-container-lowest border border-outline-variant rounded-full text-on-surface placeholder:text-on-surface-variant/70 focus:border-primary focus:ring-1 focus:ring-primary"
             />
             {searchQuery && (
-              <Button
+              <IconButton
                 type="button"
-                variant="ghost"
-                size="icon"
+                variant="standard"
+                size="xs"
                 onClick={() => setSearchQuery("")}
                 aria-label="Xóa tìm kiếm"
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-xs font-bold text-on-surface-variant hover:text-on-surface hover:bg-surface-variant rounded-full"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant"
               >
                 ✕
-              </Button>
+              </IconButton>
             )}
           </div>
 
@@ -103,7 +104,7 @@ export function CourseCatalogClient() {
             {subject || level || searchQuery || sortBy ? (
               <Button
                 type="button"
-                variant="ghost"
+                variant="text"
                 size="sm"
                 onClick={() => {
                   setSubject("");
@@ -143,41 +144,25 @@ export function CourseCatalogClient() {
           </div>
         </div>
 
-        {/* Filter Chips Section (MD3 Filter Chips using Design System Button Primitive) */}
+        {/* Filter Chips Section (MD3 Filter Chips) */}
         <div className="space-y-3">
           {/* Subject Chips */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider w-16 shrink-0 hidden md:inline-block">
               {"Chủ đề"}
             </span>
-            <Button
-              type="button"
-              variant={subject === "" ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => setSubject("")}
-              className={`rounded-full text-xs font-bold ${
-                subject === ""
-                  ? "bg-secondary-container text-on-secondary-container border-secondary-container shadow-xs"
-                  : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-outline hover:text-on-surface"
-              }`}
-            >
+            <Chip variant="filter" selected={subject === ""} onClick={() => setSubject("")}>
               {"Tất cả chủ đề"}
-            </Button>
+            </Chip>
             {subjects.map((s) => (
-              <Button
+              <Chip
                 key={s.id}
-                type="button"
-                variant={subject === s.id ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => setSubject(subject === s.id ? "" : s.id)}
-                className={`rounded-full text-xs font-bold ${
-                  subject === s.id
-                    ? "bg-secondary-container text-on-secondary-container border-secondary-container shadow-xs"
-                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-outline hover:text-on-surface"
-                }`}
+                variant="filter"
+                selected={subject === s.id}
+                onClick={() => setSubject(s.id)}
               >
                 {getCategoryTranslation(s.slug, s.name)}
-              </Button>
+              </Chip>
             ))}
           </div>
 
@@ -186,38 +171,22 @@ export function CourseCatalogClient() {
             <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider w-16 shrink-0 hidden md:inline-block">
               {"Cấp độ"}
             </span>
-            <Button
-              type="button"
-              variant={level === "" ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => setLevel("")}
-              className={`rounded-full text-xs font-bold ${
-                level === ""
-                  ? "bg-secondary-container text-on-secondary-container border-secondary-container shadow-xs"
-                  : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-outline hover:text-on-surface"
-              }`}
-            >
+            <Chip variant="filter" selected={level === ""} onClick={() => setLevel("")}>
               {"Tất cả cấp độ"}
-            </Button>
+            </Chip>
             {levels.map((l) => (
-              <Button
+              <Chip
                 key={l.id}
-                type="button"
-                variant={level === l.id ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => setLevel(level === l.id ? "" : l.id)}
-                className={`rounded-full text-xs font-bold ${
-                  level === l.id
-                    ? "bg-secondary-container text-on-secondary-container border-secondary-container shadow-xs"
-                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-outline hover:text-on-surface"
-                }`}
+                variant="filter"
+                selected={level === l.id}
+                onClick={() => setLevel(l.id)}
               >
                 {getCategoryTranslation(l.slug, l.name)}
-              </Button>
+              </Chip>
             ))}
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Content Section: Course Cards Grid */}
       {loading ? (
@@ -244,7 +213,7 @@ export function CourseCatalogClient() {
           </p>
           {(subject || level || searchQuery || sortBy) && (
             <Button
-              variant="primary"
+              variant="filled"
               size="sm"
               onClick={() => {
                 setSubject("");

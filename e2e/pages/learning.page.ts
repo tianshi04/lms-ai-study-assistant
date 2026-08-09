@@ -34,13 +34,13 @@ export class LearningPage {
     this.sidebarItems = page.locator('aside').first().locator('button');
     this.lockNotice = page.locator('div:has-text("mở khóa Tuần")');
 
-    this.transcriptTab = page.getByRole('button', { name: /Interactive Transcript|Phụ đề & Transcripts|Transcripts|Phụ đề/i });
-    this.forumTab = page.getByRole('button', { name: /Diễn đàn Bài học|Discussion|Thảo luận/i });
-    this.notesTab = page.getByRole('button', { name: /^Ghi chú$|Personal Notes|My Notes/i });
-    this.deadlinesTab = page.getByRole('button', { name: /Deadlines/i });
+    this.transcriptTab = page.getByRole('button', { name: /Xem Phụ đề Tương tác/i }).or(page.locator('button[title="Phụ đề"]')).first();
+    this.forumTab = page.getByRole('button', { name: /Mở Thảo luận Bài học/i }).or(page.locator('button[title="Thảo luận"]')).first();
+    this.notesTab = page.getByRole('button', { name: /Xem Ghi chú Cá nhân/i }).or(page.locator('button[title="Ghi chú"]')).first();
+    this.deadlinesTab = page.getByRole('button', { name: /Xem Deadlines & Tiến độ/i }).or(page.locator('button[title="Deadlines"]')).first();
 
-    this.highlightInput = page.locator('form input').first();
-    this.commentInput = page.locator('form input').nth(1);
+    this.highlightInput = page.locator('input[placeholder*="trích dẫn"]').or(page.locator('input[placeholder*="ý chính"]')).first();
+    this.commentInput = page.locator('input[placeholder*="bình luận"]').or(page.locator('input[placeholder*="suy nghĩ"]')).first();
     this.saveNoteButton = page.getByRole('button', { name: /Lưu ghi chú|Save Note/i }).or(page.locator('form button[type="submit"]').first());
 
     this.deadlinesHeading = page.locator('text=/Lịch Nộp Bài Hàng Tuần|Upcoming Course Deadlines|Các mốc Deadline/i');

@@ -27,13 +27,30 @@ export interface BreadcrumbLinkProps extends React.ComponentProps<"a"> {
   asChild?: boolean;
 }
 
-export function BreadcrumbLink({ className, ref, children, ...props }: BreadcrumbLinkProps) {
+export function BreadcrumbLink({
+  className,
+  asChild = false,
+  children,
+  ref,
+  ...props
+}: BreadcrumbLinkProps) {
+  const compClasses = cn(
+    "transition-colors hover:text-foreground text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-sm",
+    className,
+  );
+
+  if (asChild && React.isValidElement(children)) {
+    const child = children as React.ReactElement<any>;
+    return React.cloneElement(child, {
+      ...props,
+      ...child.props,
+      ref,
+      className: cn(compClasses, child.props.className),
+    });
+  }
+
   return (
-    <a
-      ref={ref}
-      className={cn("transition-colors hover:text-foreground text-muted-foreground", className)}
-      {...props}
-    >
+    <a ref={ref} className={compClasses} {...props}>
       {children}
     </a>
   );

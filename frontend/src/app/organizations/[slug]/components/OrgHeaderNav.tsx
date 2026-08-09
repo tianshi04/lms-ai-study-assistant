@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Building2, Users, Mail, Settings, LayoutDashboard, ChevronRight } from "lucide-react";
@@ -75,9 +76,11 @@ export function OrgHeaderNav({
         <div className="flex items-center space-x-4">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-2xl shrink-0 border border-primary/20">
             {avatarUrl ? (
-              <img
+              <Image
                 src={avatarUrl}
-                alt={orgName}
+                alt={orgName || "Org"}
+                width={64}
+                height={64}
                 className="w-full h-full object-cover rounded-2xl"
               />
             ) : (

@@ -36,17 +36,12 @@ class AssessmentHandler(AssessmentService):
         ctx: RequestContext[pb.SubmitGradedQuizRequest, pb.SubmitGradedQuizResponse],
     ) -> pb.SubmitGradedQuizResponse:
         current_user = require_current_user()
-        qa_list = (
-            [list(qa.selected_option_indexes) for qa in request.question_answers]
-            if request.question_answers
-            else None
-        )
+        qa_list = [list(qa.selected_option_indexes) for qa in request.question_answers]
 
         try:
             res = await self.use_case.submit_graded_quiz(
                 user_id=current_user.id,
                 item_id=request.item_id,
-                selected_option_indexes=list(request.selected_option_indexes),
                 question_answers=qa_list,
                 session_seed=request.session_seed or None,
                 start_time_iso=request.start_time_iso or None,

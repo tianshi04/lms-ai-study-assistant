@@ -15,6 +15,8 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/Select";
+import { Card } from "@/components/ui/Card";
+import { mapConnectError } from "@/lib/connect_error_mapper";
 
 interface AutoGradedLabRunnerProps {
   itemId: string;
@@ -85,32 +87,26 @@ export function AutoGradedLabRunner({
         }
       }
     } catch (err) {
-      console.warn("RPC submitAutoGradedLab failed, evaluating locally:", err);
-      // Fallback local evaluation
-      const hasReturn = sourceCode.includes("return") || sourceCode.includes("def");
+      const errorMsg = mapConnectError(err, "Chấm bài Lab tự động thất bại. Vui lòng thử lại.");
       setLabResult({
-        scorePercent: hasReturn ? 100.0 : 0.0,
-        passed: hasReturn,
+        scorePercent: 0.0,
+        passed: false,
         totalTestCases: 1,
-        passedTestCases: hasReturn ? 1 : 0,
-        testLogs: hasReturn
-          ? "[PASS] Test Case #1: Passed local syntax validation check."
-          : "[FAIL] Test Case #1: Failed - No return statement or function definition found in implementation.",
+        passedTestCases: 0,
+        testLogs: `[ERROR] ${errorMsg}`,
       });
-
-      if (hasReturn && onComplete) onComplete();
     } finally {
       setIsRunning(false);
     }
   };
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto p-4 sm:p-6 bg-card text-foreground border border-border rounded-2xl shadow-xl">
+    <Card variant="outlined" className="space-y-4 max-w-5xl mx-auto p-4 sm:p-6 shadow-xl">
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <Badge variant="verified">SANDBOX LAB</Badge>
+            <Badge variant="primary">SANDBOX LAB</Badge>
             <span className="text-xs text-muted-foreground">Timeout: 30s • Memory: 512MB</span>
           </div>
           <h3 className="text-lg font-bold text-foreground mt-1">
@@ -139,7 +135,7 @@ export function AutoGradedLabRunner({
               <SelectItem value="javascript">{"JavaScript (Node.js)"}</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={handleRunCode} isLoading={isRunning} size="sm">
+          <Button onClick={handleRunCode} disabled={isRunning} size="sm">
             {isRunning ? "Executing in Sandbox…" : "Run & Submit Code"}
           </Button>
         </div>
@@ -226,6 +222,6 @@ export function AutoGradedLabRunner({
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

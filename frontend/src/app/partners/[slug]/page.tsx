@@ -2,9 +2,12 @@
 
 import { Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import { usePartnersQuery, useCoursesQuery } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
 import { AlertTriangle, ExternalLink, BookOpen, PenTool, Globe, GraduationCap } from "lucide-react";
 
 function PartnerPublicContent() {
@@ -38,7 +41,7 @@ function PartnerPublicContent() {
 
   if (!partner) {
     return (
-      <div className="max-w-md mx-auto my-20 p-8 bg-card border border-border rounded-2xl text-center shadow-sm text-foreground">
+      <Card variant="elevated" className="max-w-md mx-auto my-20 p-8 text-center text-foreground">
         <AlertTriangle
           aria-hidden="true"
           className="w-16 h-16 mx-auto text-muted-foreground mb-4"
@@ -50,12 +53,13 @@ function PartnerPublicContent() {
           Đối tác phát hành với đường dẫn &quot;{slug}&quot; không tồn tại hoặc đã dừng hoạt động.
         </p>
         <Button
+          variant="filled"
           onClick={() => router.push("/")}
-          className="bg-primary hover:bg-primary-hover text-primary-foreground font-medium rounded-xl cursor-pointer"
+          className="rounded-xl cursor-pointer"
         >
           Quay lại trang chủ
         </Button>
-      </div>
+      </Card>
     );
   }
 
@@ -181,12 +185,16 @@ function PartnerPublicContent() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {partnerCourses.map((course) => (
-                    <button
-                      type="button"
+                    <Card
                       key={course.id}
-                      aria-label={`Khóa học ${course.title}`}
-                      onClick={() => router.push(`/courses/${course.slug}`)}
-                      className="text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring bg-card rounded-2xl border border-border p-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-colors cursor-pointer flex flex-col justify-between"
+                      variant="outlined"
+                      render={
+                        <Link
+                          href={`/courses/${course.slug}`}
+                          aria-label={`Khóa học ${course.title}`}
+                          className="text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-2xl p-5 hover:border-primary/50 transition-colors flex flex-col justify-between"
+                        />
+                      }
                     >
                       <div>
                         <div className="flex items-center space-x-2 mb-2">
@@ -200,13 +208,13 @@ function PartnerPublicContent() {
                         <h3 className="text-base font-bold text-foreground min-w-0 line-clamp-2 hover:text-primary transition-colors">
                           {course.title}
                         </h3>
-                        <p className="text-xs text-muted-foreground mt-2 min-w-0 line-clamp-2">
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {course.description}
                         </p>
                       </div>
 
-                      <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
-                        <div className="flex items-center space-x-1 text-warning text-xs font-semibold">
+                      <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
+                        <div className="flex items-center space-x-1 text-xs font-semibold text-amber-400">
                           <span>
                             ★ {course.averageRating ? course.averageRating.toFixed(1) : "5.0"}
                           </span>
@@ -218,7 +226,7 @@ function PartnerPublicContent() {
                           Xem khóa học &rarr;
                         </span>
                       </div>
-                    </button>
+                    </Card>
                   ))}
                 </div>
               )}
@@ -229,7 +237,7 @@ function PartnerPublicContent() {
           <div className="space-y-6">
             {/* Signer Info Box */}
             {(partner.signerName || partner.signerTitle) && (
-              <div className="bg-card rounded-2xl p-6 border border-border shadow-sm">
+              <Card variant="outlined" className="rounded-2xl p-6">
                 <h3 className="text-sm font-bold uppercase text-muted-foreground tracking-wider mb-4">
                   Đại diện Phát hành
                 </h3>
@@ -264,12 +272,12 @@ function PartnerPublicContent() {
                     </div>
                   </div>
                 )}
-              </div>
+              </Card>
             )}
 
             {/* Allowed Domains Box */}
             {partner.allowedDomains && partner.allowedDomains.length > 0 && (
-              <div className="bg-card rounded-2xl p-6 border border-border shadow-sm">
+              <Card variant="outlined" className="rounded-2xl p-6">
                 <h3 className="text-sm font-bold uppercase text-muted-foreground tracking-wider mb-3">
                   Tên miền Cấp Chứng chỉ
                 </h3>
@@ -279,16 +287,18 @@ function PartnerPublicContent() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {partner.allowedDomains.map((domain, i) => (
-                    <span
+                    <Chip
                       key={i}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-muted text-foreground font-mono text-xs rounded-lg border border-border"
+                      variant="assist"
+                      leadingIcon={
+                        <Globe aria-hidden="true" className="w-3.5 h-3.5 text-primary" />
+                      }
                     >
-                      <Globe aria-hidden="true" className="w-3.5 h-3.5 text-primary" />
                       {domain}
-                    </span>
+                    </Chip>
                   ))}
                 </div>
-              </div>
+              </Card>
             )}
 
             {/* OpenBadges Compliance Badge */}

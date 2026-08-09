@@ -143,3 +143,31 @@ async def test_forum_update_permission_denied_for_other_user():
             current_user_id="user_attacker",
             is_staff=False,
         )
+
+
+@pytest.mark.asyncio
+async def test_forum_repository_vote_post_integrity_error():
+    from unittest.mock import AsyncMock, MagicMock
+
+    from sqlalchemy.exc import IntegrityError
+
+    from src.modules.forum.infrastructure.repository import ForumRepository
+
+    mock_session = AsyncMock()
+    mock_session.add = MagicMock()
+    mock_res_vote = MagicMock()
+    mock_res_vote.scalar_one_or_none.return_value = None
+
+    mock_res_count = MagicMock()
+    mock_res_count.scalar_one_or_none.return_value = 5
+
+    mock_session.execute.side_effect = [
+        mock_res_vote,
+        IntegrityError("INSERT STATEMENT", params={}, orig=Exception("duplicate key")),
+        mock_res_count,
+    ]
+
+    repo = ForumRepository(mock_session)
+    count = await repo.vote_post(post_id="thread-dl-01", user_id="user_learner_demo")
+    assert count == 5
+    mock_session.rollback.assert_awaited_once()

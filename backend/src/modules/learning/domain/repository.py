@@ -38,6 +38,10 @@ class ILearningRepository(ABC):
         pass
 
     @abstractmethod
+    async def delete_personal_note(self, note_id: str, user_id: str) -> bool:
+        pass
+
+    @abstractmethod
     async def mark_item_complete(
         self,
         user_id: str,

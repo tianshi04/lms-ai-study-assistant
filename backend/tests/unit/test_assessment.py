@@ -289,13 +289,15 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     )
 
     correct_answers = [
-        q["shuffled_correct_index"]
+        q["shuffled_correct_indices"]
         for q in await usecase.generate_quiz_session_questions(repo, item_id, seed=42)
     ]
-    wrong_answers = [(ans + 1) % 4 for ans in correct_answers]
+    wrong_answers = [[(ans[0] + 1) % 4] if ans else [0] for ans in correct_answers]
 
     # 1. Without Honor Code -> Should fail
-    res_no_honor = await usecase.submit_graded_quiz(user_id, item_id, correct_answers)
+    res_no_honor = await usecase.submit_graded_quiz(
+        user_id, item_id, question_answers=correct_answers
+    )
     assert res_no_honor["passed"] is False
     assert "Cam kết Trung thực" in res_no_honor["answer_explanations"][0]
 
@@ -303,7 +305,9 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     await usecase.submit_honor_code(user_id, item_id, True)
 
     # 3. Submit Perfect Score -> 100% Pass (still deducts 1 attempt)
-    res_pass = await usecase.submit_graded_quiz(user_id, item_id, correct_answers)
+    res_pass = await usecase.submit_graded_quiz(
+        user_id, item_id, question_answers=correct_answers
+    )
     assert res_pass["score_percent"] == 100.0
     assert res_pass["passed"] is True
     assert res_pass["attempts_left"] == 2
@@ -314,7 +318,9 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     await usecase.submit_honor_code(user_fail, item_id, True)
 
     # Attempt 1 (Fail)
-    r1 = await usecase.submit_graded_quiz(user_fail, item_id, wrong_answers)
+    r1 = await usecase.submit_graded_quiz(
+        user_fail, item_id, question_answers=wrong_answers
+    )
     assert r1["passed"] is False
     assert r1["attempts_left"] == 2
 
@@ -327,18 +333,24 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     assert sess_fail["previous_result"]["attempts_left"] == 2
 
     # Attempt 2 (Fail)
-    r2 = await usecase.submit_graded_quiz(user_fail, item_id, wrong_answers)
+    r2 = await usecase.submit_graded_quiz(
+        user_fail, item_id, question_answers=wrong_answers
+    )
     assert r2["passed"] is False
     assert r2["attempts_left"] == 1
 
     # Attempt 3 (Fail) -> Cooldown activated
-    r3 = await usecase.submit_graded_quiz(user_fail, item_id, wrong_answers)
+    r3 = await usecase.submit_graded_quiz(
+        user_fail, item_id, question_answers=wrong_answers
+    )
     assert r3["passed"] is False
     assert r3["attempts_left"] == 0
     assert r3["cooldown_seconds_left"] == 28800
 
     # Attempt 4 (Blocked by Cooldown)
-    r4 = await usecase.submit_graded_quiz(user_fail, item_id, [0, 1, 2, 0, 1])
+    r4 = await usecase.submit_graded_quiz(
+        user_fail, item_id, question_answers=[[0], [1], [2], [0], [1]]
+    )
     assert r4["passed"] is False
     assert r4["cooldown_seconds_left"] > 0
     assert "giãn cách" in r4["answer_explanations"][0]
@@ -482,9 +494,9 @@ async def test_quiz_session_timer_and_timeout():
     res_timeout = await usecase.submit_graded_quiz(
         user_id,
         item_id,
-        [0, 1, 2, 0, 1],
         start_time_iso=expired_start,
         duration_minutes=45,
+        question_answers=[[0], [1], [2], [0], [1]],
     )
     assert "tự động nộp bài" in res_timeout["answer_explanations"][0]
 
@@ -540,7 +552,9 @@ async def test_audit_mode_access_blocking():
             await repo.save(user)
 
         # Attempt submitting graded quiz in audit mode -> Should be blocked
-        res = await usecase.submit_graded_quiz(audit_user_id, "item_quiz_audit", [0, 1])
+        res = await usecase.submit_graded_quiz(
+            audit_user_id, "item_quiz_audit", question_answers=[[0], [1]]
+        )
         assert res["passed"] is False
         assert "Audit Mode" in res["answer_explanations"][0]
 
@@ -578,14 +592,14 @@ async def test_quiz_question_pool_and_option_shuffling():
     assert len(questions) == 5  # Sampled 5 questions from pool
 
     session_seed = session_info["session_seed"]
-    shuffled_answers = [q["shuffled_correct_index"] for q in questions]
+    shuffled_answers = [q["shuffled_correct_indices"] for q in questions]
 
     # Agree Honor Code
     await usecase.submit_honor_code(user_id, item_id, True)
 
     # Submit answers matching shuffled indices -> Should pass 100%
     res = await usecase.submit_graded_quiz(
-        user_id, item_id, shuffled_answers, session_seed=session_seed
+        user_id, item_id, question_answers=shuffled_answers, session_seed=session_seed
     )
     assert res["score_percent"] == 100.0
     assert res["passed"] is True
@@ -642,7 +656,9 @@ async def test_quiz_submission_empty_question_pool(monkeypatch: pytest.MonkeyPat
         mock_empty_questions.__get__(usecase, AssessmentUseCase),
     )
 
-    res = await usecase.submit_graded_quiz(user_id, item_id, [], session_seed=12345)
+    res = await usecase.submit_graded_quiz(
+        user_id, item_id, question_answers=[], session_seed=12345
+    )
     assert res["score_percent"] == 0.0
     assert res["passed"] is False
     assert any("rỗng" in exp or "empty" in exp for exp in res["answer_explanations"])
@@ -674,7 +690,7 @@ async def test_graded_quiz_preview_mode():
     res = await usecase.submit_graded_quiz(
         user_id,
         item_id,
-        [0, 1, 2, 0, 1],
+        question_answers=[[0], [1], [2], [0], [1]],
         session_seed=sess["session_seed"],
         preview=True,
     )
@@ -709,7 +725,7 @@ async def test_anti_cheat_feedback_hidden_on_failure():
     res = await usecase.submit_graded_quiz(
         user_id,
         item_id,
-        [-1, -1, -1, -1, -1],
+        question_answers=[[], [], [], [], []],
         session_seed=sess["session_seed"],
     )
     assert res["passed"] is False

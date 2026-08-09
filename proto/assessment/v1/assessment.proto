@@ -20,7 +20,6 @@ message QuizQuestionAnswer {
 
 message SubmitGradedQuizRequest {
   string item_id = 1;
-  repeated int32 selected_option_indexes = 2;
   int32 session_seed = 3;
   string start_time_iso = 4;
   bool preview = 5;

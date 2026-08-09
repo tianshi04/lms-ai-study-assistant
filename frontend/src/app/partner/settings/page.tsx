@@ -11,12 +11,13 @@ import {
   useRotatePartnerKeyPairMutation,
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { Badge } from "@/components/ui/Badge";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import { Dialog } from "@/components/ui/Dialog";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Check, X, Plus, RefreshCw, Download, Copy, Building2 } from "lucide-react";
+import { Check, X, Plus, RefreshCw, Download, Copy, Building2, KeyRound } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -97,7 +98,7 @@ function PartnerSettingsForm({
   const [newSigTitle, setNewSigTitle] = useState("");
   const [newSigDept, setNewSigDept] = useState("");
   const [newSigImage, setNewSigImage] = useState("");
-  const [sigErrorMsg, setSigErrorMsg] = useState("");
+  const [_sigErrorMsg, setSigErrorMsg] = useState("");
 
   const [statusMessage, setStatusMessage] = useState<{
     type: "success" | "error";
@@ -287,14 +288,16 @@ function PartnerSettingsForm({
             )}
             <span>{statusMessage.text}</span>
           </div>
-          <button
+          <IconButton
             type="button"
+            variant="standard"
+            size="xs"
             onClick={() => setStatusMessage(null)}
-            className="text-xs opacity-70 hover:opacity-100 p-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            className="opacity-70 hover:opacity-100"
             aria-label="Đóng thông báo"
           >
             <X className="w-4 h-4" aria-hidden="true" />
-          </button>
+          </IconButton>
         </div>
       )}
 
@@ -414,45 +417,28 @@ function PartnerSettingsForm({
                 trường.
               </p>
             </div>
-            <Badge variant="success" className="w-fit">
-              {signatories.length} Người ký
-            </Badge>
           </div>
 
-          {sigErrorMsg && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-xs rounded-xl">
-              {sigErrorMsg}
-            </div>
-          )}
-
-          {/* List of Signatories */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {signatories.map((sig) => (
               <div
                 key={sig.id}
-                className={`p-4 rounded-xl border transition-colors flex flex-col justify-between ${
-                  sig.isDefault
-                    ? "bg-primary/10 border-primary/30 shadow-sm"
-                    : "bg-muted border-border"
-                }`}
+                className="p-4 rounded-xl border border-border bg-background flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <Badge variant="default" className="text-[10px] uppercase">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-secondary-container text-on-secondary-container">
                       {sig.department}
-                    </Badge>
+                    </span>
                     {sig.isDefault ? (
-                      <Badge
-                        variant="verified"
-                        className="text-[10px] uppercase flex items-center gap-1"
-                      >
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-primary text-on-primary">
                         <Check aria-hidden="true" className="w-3 h-3" />
                         Mặc định
-                      </Badge>
+                      </span>
                     ) : (
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="text"
                         size="sm"
                         onClick={() => handleSetDefaultSignatory(sig)}
                         className="text-xs text-primary"
@@ -482,17 +468,17 @@ function PartnerSettingsForm({
                       Chưa có ảnh chữ ký
                     </span>
                   )}
-                  {!sig.isDefault && (
+                  {!sig.isDefault ? (
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="text"
                       size="sm"
                       onClick={() => handleRemoveSignatory(sig.id)}
                       className="text-xs text-destructive hover:text-destructive"
                     >
                       Gỡ bỏ
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -531,7 +517,7 @@ function PartnerSettingsForm({
               />
             </div>
             <div className="flex justify-end">
-              <Button type="button" onClick={handleAddSignatory} variant="primary" size="sm">
+              <Button type="button" onClick={handleAddSignatory} variant="filled" size="sm">
                 <Plus aria-hidden="true" className="w-3.5 h-3.5 mr-1" />
                 Thêm Người ký
               </Button>
@@ -558,8 +544,8 @@ function PartnerSettingsForm({
               <Button
                 type="button"
                 onClick={handleRotateKeyPair}
-                isLoading={rotateKeyPairMutation.isPending}
-                variant="primary"
+                disabled={rotateKeyPairMutation.isPending}
+                variant="tonal"
                 size="sm"
               >
                 <RefreshCw aria-hidden="true" className="w-4 h-4 mr-1.5" />
@@ -568,7 +554,7 @@ function PartnerSettingsForm({
               <Button
                 type="button"
                 onClick={handleDownloadOpenBadgesJson}
-                variant="outline"
+                variant="outlined"
                 size="sm"
               >
                 <Download aria-hidden="true" className="w-4 h-4 text-primary mr-1.5" />
@@ -586,7 +572,7 @@ function PartnerSettingsForm({
                 Public Key PEM (Khóa Công khai Ký số Hiện tại)
               </label>
               {publicKeyPem && (
-                <Button type="button" variant="ghost" size="sm" onClick={handleCopyPublicKey}>
+                <Button type="button" variant="text" size="sm" onClick={handleCopyPublicKey}>
                   {copiedKey ? (
                     <>
                       <Check aria-hidden="true" className="w-3.5 h-3.5 text-success mr-1" />
@@ -616,7 +602,7 @@ function PartnerSettingsForm({
         <div className="flex items-center justify-end space-x-4 pt-4">
           <Button
             type="submit"
-            isLoading={updateMutation.isPending}
+            disabled={updateMutation.isPending}
             className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-xl px-6 py-3 text-sm shadow-md flex items-center gap-2"
           >
             <Check aria-hidden="true" className="w-4 h-4" />
@@ -625,17 +611,35 @@ function PartnerSettingsForm({
         </div>
       </form>
 
-      <ConfirmAlertDialog
-        isOpen={showRotateConfirm}
-        onClose={() => setShowRotateConfirm(false)}
-        onConfirm={executeRotateKeyPair}
-        title="Xác nhận tạo cặp khóa ký số mới"
-        description="Bạn có chắc chắn muốn tạo cặp khóa ký số mới? Cặp khóa cũ sẽ bị xoay và thay thế."
-        confirmText="Tạo khóa mới"
-        cancelText="Hủy"
-        variant="warning"
-        isLoading={rotateKeyPairMutation.isPending}
-      />
+      <Dialog.Root
+        open={showRotateConfirm}
+        onOpenChange={(open: boolean) => {
+          if (!open) setShowRotateConfirm(false);
+        }}
+      >
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon icon={<KeyRound className="w-6 h-6 text-primary" aria-hidden="true" />} />
+            <Dialog.Title>Xác nhận tạo cặp khóa ký số mới</Dialog.Title>
+            <Dialog.Description>
+              Bạn có chắc chắn muốn tạo cặp khóa ký số mới? Cặp khóa cũ sẽ bị xoay và thay thế.
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Button variant="text" onClick={() => setShowRotateConfirm(false)}>
+              Hủy
+            </Button>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={executeRotateKeyPair}
+              disabled={rotateKeyPairMutation.isPending}
+            >
+              Tạo khóa mới
+            </Button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
     </div>
   );
 }
@@ -668,28 +672,31 @@ export default function PartnerSettingsPage() {
 
   if (!isPartnerAdmin) {
     return (
-      <div className="max-w-md mx-auto my-16 p-8 bg-destructive/10 border border-destructive/20 rounded-2xl text-center">
+      <Card
+        variant="outlined"
+        className="max-w-md mx-auto my-16 p-8 text-center bg-destructive/10 border-destructive/20"
+      >
         <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
         <p className="text-muted-foreground text-sm">
           Trang này dành riêng cho Quản trị viên Tổ chức.
         </p>
-        <Button onClick={() => router.push("/")} className="mt-4" variant="outline">
+        <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
         </Button>
-      </div>
+      </Card>
     );
   }
 
   if (partners.length === 0 || !activePartner) {
     return (
-      <div className="max-w-2xl mx-auto my-16 p-8 bg-card border border-border rounded-2xl text-center shadow-sm">
+      <Card variant="outlined" className="max-w-2xl mx-auto my-16 p-8 text-center">
         <Building2 aria-hidden="true" className="w-16 h-16 mx-auto text-muted-foreground/60 mb-4" />
         <h2 className="text-xl font-bold text-foreground mb-2">Chưa tìm thấy hồ sơ Đối tác</h2>
         <p className="text-muted-foreground text-sm">
           Tài khoản của bạn chưa gắn liền với thông tin đối tác nào. Vui lòng liên hệ Super Admin để
           khởi tạo hồ sơ đối tác.
         </p>
-      </div>
+      </Card>
     );
   }
 

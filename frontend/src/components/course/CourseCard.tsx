@@ -9,6 +9,9 @@ import { getRpcClient } from "@/lib/connect_client";
 import { useQueryClient } from "@tanstack/react-query";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 
+import { Card } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
+
 export function CourseCard({ course }: { course: Course }) {
   const [imgError, setImgError] = useState(false);
 
@@ -26,9 +29,10 @@ export function CourseCard({ course }: { course: Course }) {
   };
 
   return (
-    <div
+    <Card
+      variant="outlined"
       onMouseEnter={handlePrefetch}
-      className="group relative hover:z-10 bg-surface-container-low text-on-surface border border-outline-variant hover:border-outline hover:bg-surface-container rounded-3xl p-6 transition-colors duration-m3-medium-2 ease-m3-emphasized shadow-xs hover:shadow-md flex flex-col justify-between"
+      className="group relative hover:z-10 rounded-3xl p-6 flex flex-col justify-between"
     >
       <div>
         {/* Partner Header */}
@@ -45,10 +49,13 @@ export function CourseCard({ course }: { course: Course }) {
             ) : null}
 
             {(imgError || !course.partnerLogoUrl) && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-on-primary-container bg-primary-container px-3 py-1 rounded-full border border-primary/20 shadow-xs">
-                <Building2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+              <Chip
+                variant="assist"
+                className="h-7 text-xs font-bold bg-primary-container text-on-primary-container border-primary/20 hover:bg-primary-container pointer-events-none cursor-default shadow-xs"
+                leadingIcon={<Building2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />}
+              >
                 {course.partnerName || "Coursera Partner"}
-              </span>
+              </Chip>
             )}
           </div>
         </div>
@@ -90,6 +97,6 @@ export function CourseCard({ course }: { course: Course }) {
           />
         </Link>
       </div>
-    </div>
+    </Card>
   );
 }

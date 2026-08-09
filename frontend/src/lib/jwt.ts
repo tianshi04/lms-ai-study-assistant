@@ -9,11 +9,11 @@ export interface JwtPayload {
 }
 
 export function normalizeUserRole(role: string | null | undefined): string {
-  if (!role) return "1";
+  if (!role) return "USER_ROLE_LEARNER";
   const r = String(role).toUpperCase();
-  if (r === "2" || r.includes("INSTRUCTOR")) return "2";
-  if (r === "3" || r.includes("ADMIN")) return "3";
-  return "1";
+  if (r === "3" || r.includes("ADMIN")) return "USER_ROLE_ADMIN";
+  if (r === "2" || r.includes("INSTRUCTOR")) return "USER_ROLE_INSTRUCTOR";
+  return "USER_ROLE_LEARNER";
 }
 
 /**

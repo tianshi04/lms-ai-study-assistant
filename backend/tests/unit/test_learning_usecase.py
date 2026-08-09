@@ -109,6 +109,15 @@ async def test_list_personal_notes(use_case, mock_repo, mock_session_scope):
 
 
 @pytest.mark.asyncio
+async def test_delete_personal_note(use_case, mock_repo, mock_session_scope):
+    mock_repo.delete_personal_note.return_value = True
+
+    result = await use_case.delete_personal_note("note_1", "user_1")
+    assert result is True
+    mock_repo.delete_personal_note.assert_awaited_once_with("note_1", "user_1")
+
+
+@pytest.mark.asyncio
 async def test_mark_item_complete(mock_repo, mock_session_scope):
     mock_catalog_repo = AsyncMock()
 

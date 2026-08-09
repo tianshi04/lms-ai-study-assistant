@@ -138,22 +138,9 @@ class ForumUseCase:
             # Trigger COMMUNITY notification to thread author
             try:
                 thread = await repo.get_thread_by_id(thread_id)
-                if thread:
+                if thread and thread.author_user_id:
                     recipient_id = thread.author_user_id
-                    if not recipient_id and thread.author_name:
-                        # Fallback lookup by author_name/email prefix
-                        from sqlalchemy import select
-                        from src.modules.identity.infrastructure.models import UserModel
-
-                        res_user = await session.execute(
-                            select(UserModel.id).where(
-                                (UserModel.email.ilike(f"{thread.author_name}%"))
-                                | (UserModel.id == thread.author_name)
-                            )
-                        )
-                        recipient_id = res_user.scalar_one_or_none() or ""
-
-                    if recipient_id and recipient_id != author_user_id:
+                    if recipient_id != author_user_id:
                         from src.modules.notification.application.use_cases import (
                             NotificationUseCase,
                         )
@@ -180,7 +167,7 @@ class ForumUseCase:
             return reply
 
     async def vote_post(
-        self, post_id: str, user_id: str = "", is_upvote: bool = True
+        self, post_id: str, user_id: str, is_upvote: bool = True
     ) -> int:
         async with async_session_scope() as session:
             repo = self._get_repo(session)

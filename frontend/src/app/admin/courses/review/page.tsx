@@ -10,12 +10,16 @@ import {
   type Course,
 } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
-import { Modal } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
+
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
+import { Card } from "@/components/ui/Card";
+import { Tabs } from "@/components/ui/Tabs";
 import { Textarea } from "@/components/ui/Textarea";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
-import { Eye } from "lucide-react";
+import { Eye, XCircle } from "lucide-react";
 
 const emptySubscribe = () => () => {};
 
@@ -166,36 +170,24 @@ export default function CourseReviewerPortalPage() {
         )}
 
         {/* Status Tabs */}
-        <div className="flex items-center gap-2 border-b border-border mb-6 pb-2 overflow-x-auto">
-          <Button
-            size="sm"
-            variant={activeTab === CourseStatus.PENDING_REVIEW ? "primary" : "outline"}
-            onClick={() => setActiveTab(CourseStatus.PENDING_REVIEW)}
-          >
-            {"Chờ kiểm duyệt (PENDING_REVIEW)"}
-          </Button>
-          <Button
-            size="sm"
-            variant={activeTab === CourseStatus.PUBLISHED ? "primary" : "outline"}
-            onClick={() => setActiveTab(CourseStatus.PUBLISHED)}
-          >
-            {"Đã xuất bản (PUBLISHED)"}
-          </Button>
-          <Button
-            size="sm"
-            variant={activeTab === CourseStatus.DRAFT ? "primary" : "outline"}
-            onClick={() => setActiveTab(CourseStatus.DRAFT)}
-          >
-            {"Bản nháp (DRAFT)"}
-          </Button>
-          <Button
-            size="sm"
-            variant={activeTab === CourseStatus.REJECTED ? "danger" : "outline"}
-            onClick={() => setActiveTab(CourseStatus.REJECTED)}
-          >
-            {"Từ chối (REJECTED)"}
-          </Button>
-        </div>
+        <Tabs.Root
+          value={activeTab}
+          onValueChange={(val) => {
+            if (val != null) {
+              setActiveTab(Number(val) as CourseStatus);
+            }
+          }}
+          className="mb-6"
+        >
+          <Tabs.List className="overflow-x-auto pb-1">
+            <Tabs.Tab value={CourseStatus.PENDING_REVIEW}>
+              {"Chờ kiểm duyệt (PENDING_REVIEW)"}
+            </Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.PUBLISHED}>{"Đã xuất bản (PUBLISHED)"}</Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.DRAFT}>{"Bản nháp (DRAFT)"}</Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.REJECTED}>{"Từ chối (REJECTED)"}</Tabs.Tab>
+          </Tabs.List>
+        </Tabs.Root>
 
         {/* Content */}
         {loading ? (
@@ -204,17 +196,18 @@ export default function CourseReviewerPortalPage() {
             <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
           </div>
         ) : courses.length === 0 ? (
-          <div className="text-center py-16 bg-card rounded-3xl border border-border">
+          <Card variant="outlined" className="text-center py-16">
             <p className="text-muted-foreground text-sm">
               {"Không tìm thấy khóa học nào trong danh mục này."}
             </p>
-          </div>
+          </Card>
         ) : (
           <div className="space-y-4">
             {courses.map((course) => (
-              <div
+              <Card
                 key={course.id}
-                className="bg-card border border-border rounded-3xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
+                variant="outlined"
+                className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
               >
                 <div className="space-y-2 max-w-2xl">
                   <div className="flex items-center gap-2">
@@ -241,20 +234,20 @@ export default function CourseReviewerPortalPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-                  <Link
-                    href={`/courses/${course.id}`}
-                    target="_blank"
-                    className="px-3.5 py-2 rounded-xl bg-muted text-foreground text-xs font-bold hover:bg-muted/80 transition-colors flex items-center gap-1 border border-border"
+                  <Chip
+                    variant="assist"
+                    leadingIcon={<Eye className="w-4 h-4" aria-hidden="true" />}
+                    render={<Link href={`/courses/${course.id}`} target="_blank" />}
                   >
-                    <Eye className="w-4 h-4" aria-hidden="true" />
-                    <span>{"Xem trước (Student Mode)"}</span>
-                  </Link>
+                    Xem trước (Student Mode)
+                  </Chip>
 
                   {activeTab === CourseStatus.PENDING_REVIEW && (
                     <>
                       <Button
                         size="sm"
-                        variant="danger"
+                        variant="outlined"
+                        className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
                         onClick={() => setRejectingCourseId(course.id)}
                         disabled={submitting}
                       >
@@ -263,7 +256,7 @@ export default function CourseReviewerPortalPage() {
 
                       <Button
                         size="sm"
-                        variant="primary"
+                        variant="filled"
                         onClick={() => handleApprove(course.id, course.title)}
                         disabled={submitting}
                       >
@@ -272,7 +265,7 @@ export default function CourseReviewerPortalPage() {
                     </>
                   )}
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}
@@ -280,32 +273,39 @@ export default function CourseReviewerPortalPage() {
 
       {/* Reject Modal */}
       {rejectingCourseId && (
-        <Modal
-          isOpen={!!rejectingCourseId}
-          onClose={() => setRejectingCourseId(null)}
-          title="Từ chối Phê duyệt Khóa học"
+        <Dialog
+          open={!!rejectingCourseId}
+          onOpenChange={(open) => {
+            if (!open) setRejectingCourseId(null);
+          }}
         >
-          <div className="space-y-4 pt-2">
-            <p className="text-xs text-muted-foreground">
-              {
-                "Vui lòng nhập chi tiết lý do từ chối hoặc các góp ý chỉnh sửa để Giảng viên hoàn thiện bài giảng."
-              }
-            </p>
-            <div>
-              <label className="block text-xs font-bold mb-1 text-foreground">
-                {"Lý do từ chối / Feedback Log *"}
-              </label>
-              <Textarea
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                rows={4}
-                placeholder="Ví dụ: Bài giảng tuần 2 thiếu phụ đề VTT, bài kiểm tra graded quiz chưa được chọn ma trận…"
-              />
+          <Dialog.Content size="md">
+            <Dialog.Header>
+              <Dialog.Icon icon={<XCircle className="w-6 h-6 text-error" aria-hidden="true" />} />
+              <Dialog.Title>{"Từ chối Phê duyệt Khóa học"}</Dialog.Title>
+            </Dialog.Header>
+            <div className="space-y-4 pt-2">
+              <p className="text-xs text-on-surface-variant">
+                {
+                  "Vui lòng nhập chi tiết lý do từ chối hoặc các góp ý chỉnh sửa để Giảng viên hoàn thiện bài giảng."
+                }
+              </p>
+              <div>
+                <label className="block text-xs font-bold mb-1 text-on-surface">
+                  {"Lý do từ chối / Feedback Log *"}
+                </label>
+                <Textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  rows={4}
+                  placeholder="Ví dụ: Bài giảng tuần 2 thiếu phụ đề VTT, bài kiểm tra graded quiz chưa được chọn ma trận…"
+                />
+              </div>
             </div>
-            <div className="flex justify-end gap-3 pt-2">
+            <Dialog.Footer className="mt-4">
               <Button
                 type="button"
-                variant="outline"
+                variant="text"
                 size="sm"
                 onClick={() => setRejectingCourseId(null)}
               >
@@ -313,16 +313,17 @@ export default function CourseReviewerPortalPage() {
               </Button>
               <Button
                 type="button"
-                variant="danger"
+                variant="filled"
+                className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
                 size="sm"
                 onClick={handleConfirmReject}
                 disabled={submitting || !rejectionReason.trim()}
               >
                 <span aria-live="polite">{submitting ? "Đang xử lý…" : "Xác nhận Từ chối"}</span>
               </Button>
-            </div>
-          </div>
-        </Modal>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog>
       )}
     </div>
   );

@@ -10,6 +10,11 @@ import {
 } from "@/lib/query_hooks";
 import { mapConnectError } from "@/lib/connect_error_mapper";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
+import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import {
   Settings,
   Building2,
@@ -17,7 +22,7 @@ import {
   Loader2,
   Globe,
   Shield,
-  Image,
+  ImageIcon,
   ShieldAlert,
 } from "lucide-react";
 
@@ -64,7 +69,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
             activeTab="settings"
             isOwnerOrAdmin={false}
           />
-          <div className="p-12 text-center bg-card border border-border rounded-3xl space-y-4 max-w-xl mx-auto">
+          <Card variant="outlined" className="p-12 text-center space-y-4 max-w-xl mx-auto">
             <div className="w-14 h-14 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
               <ShieldAlert className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -79,7 +84,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
             >
               Quay lại Tổng quan
             </Link>
-          </div>
+          </Card>
         </main>
       </div>
     );
@@ -158,7 +163,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
         />
 
         {/* Settings Form Container */}
-        <section className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-xs max-w-3xl">
+        <Card variant="filled" className="p-6 sm:p-8 max-w-3xl">
           <div className="flex items-center space-x-3 pb-6 border-b border-border">
             <Settings className="w-6 h-6 text-primary" aria-hidden="true" />
             <div>
@@ -195,17 +200,16 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                     htmlFor="orgNameInput"
                     className="text-xs font-bold text-foreground flex items-center gap-1.5"
                   >
-                    <Building2 className="w-3.5 h-3.5 text-primary" />
+                    <Building2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                     Tên Tổ chức / Partner
                   </label>
-                  <input
+                  <Input
                     id="orgNameInput"
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="ví dụ: Đại học Bách Khoa TP.HCM"
-                    className="w-full px-4 py-2.5 rounded-xl bg-muted/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
 
@@ -213,12 +217,12 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                   <label htmlFor="orgSlugInput" className="text-xs font-bold text-foreground">
                     Slug định danh (URL)
                   </label>
-                  <input
+                  <Input
                     id="orgSlugInput"
                     type="text"
                     disabled
                     value={slug}
-                    className="w-full px-4 py-2.5 rounded-xl bg-muted/20 border border-border text-sm font-mono text-muted-foreground cursor-not-allowed"
+                    className="font-mono cursor-not-allowed opacity-70"
                   />
                 </div>
 
@@ -227,16 +231,15 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                     htmlFor="orgWebsiteInput"
                     className="text-xs font-bold text-foreground flex items-center gap-1.5"
                   >
-                    <Globe className="w-3.5 h-3.5 text-primary" />
+                    <Globe className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                     Website chính thức
                   </label>
-                  <input
+                  <Input
                     id="orgWebsiteInput"
                     type="url"
                     value={websiteUrl}
                     onChange={(e) => setWebsiteUrl(e.target.value)}
                     placeholder="https://example.edu.vn"
-                    className="w-full px-4 py-2.5 rounded-xl bg-muted/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
 
@@ -245,16 +248,15 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                     htmlFor="orgLogoInput"
                     className="text-xs font-bold text-foreground flex items-center gap-1.5"
                   >
-                    <Image className="w-3.5 h-3.5 text-primary" />
+                    <ImageIcon className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                     URL Logo Tổ chức
                   </label>
-                  <input
+                  <Input
                     id="orgLogoInput"
                     type="url"
                     value={logoUrl}
                     onChange={(e) => setLogoUrl(e.target.value)}
                     placeholder="https://example.com/logo.png"
-                    className="w-full px-4 py-2.5 rounded-xl bg-muted/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
 
@@ -263,16 +265,15 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                     htmlFor="orgBannerInput"
                     className="text-xs font-bold text-foreground flex items-center gap-1.5"
                   >
-                    <Image className="w-3.5 h-3.5 text-primary" />
+                    <ImageIcon className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                     URL Ảnh Banner Tổ chức
                   </label>
-                  <input
+                  <Input
                     id="orgBannerInput"
                     type="url"
                     value={bannerUrl}
                     onChange={(e) => setBannerUrl(e.target.value)}
                     placeholder="https://example.com/banner.png"
-                    className="w-full px-4 py-2.5 rounded-xl bg-muted/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
 
@@ -281,17 +282,38 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                     htmlFor="orgDomainsInput"
                     className="text-xs font-bold text-foreground flex items-center gap-1.5"
                   >
-                    <Shield className="w-3.5 h-3.5 text-primary" />
+                    <Shield className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                     Domain Email Bảo chứng (`allowed_domains`)
                   </label>
-                  <input
+                  <Input
                     id="orgDomainsInput"
                     type="text"
                     value={allowedDomainsStr}
                     onChange={(e) => setAllowedDomainsStr(e.target.value)}
                     placeholder="hcmut.edu.vn, stanford.edu (phân cách bằng dấu phẩy)"
-                    className="w-full px-4 py-2.5 rounded-xl bg-muted/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   />
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {allowedDomainsStr
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                      .map((domain) => (
+                        <Chip
+                          key={domain}
+                          variant="input"
+                          onRemove={() => {
+                            const updated = allowedDomainsStr
+                              .split(",")
+                              .map((s) => s.trim())
+                              .filter((s) => s && s !== domain)
+                              .join(", ");
+                            setAllowedDomainsStr(updated);
+                          }}
+                        >
+                          {domain}
+                        </Chip>
+                      ))}
+                  </div>
                   <p className="text-[11px] text-muted-foreground">
                     Các tài khoản có email thuộc domain này sẽ được tự động kích hoạt quyền thành
                     viên của Tổ chức.
@@ -302,34 +324,25 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                   <label htmlFor="orgDescInput" className="text-xs font-bold text-foreground">
                     Mô tả về Tổ chức
                   </label>
-                  <textarea
+                  <Textarea
                     id="orgDescInput"
                     rows={3}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Giới thiệu về trường đại học hoặc tổ chức đối tác..."
-                    className="w-full px-4 py-2.5 rounded-xl bg-muted/50 border border-border text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   />
                 </div>
               </div>
 
               <div className="pt-6 border-t border-border flex justify-end">
-                <button
-                  type="submit"
-                  disabled={updateMutation.isPending}
-                  className="px-6 py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-colors flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
-                >
-                  {updateMutation.isPending ? (
-                    <Loader2 className="w-4.5 h-4.5 animate-spin" />
-                  ) : (
-                    <Save className="w-4.5 h-4.5" />
-                  )}
+                <Button type="submit" disabled={updateMutation.isPending}>
+                  <Save className="w-4.5 h-4.5" aria-hidden="true" />
                   Lưu Thay Đổi
-                </button>
+                </Button>
               </div>
             </form>
           )}
-        </section>
+        </Card>
       </main>
     </div>
   );
@@ -340,7 +353,7 @@ export default function OrgSettingsPage({ params }: { params: Promise<{ slug: st
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
           <span className="text-sm">Đang tải cài đặt tổ chức...</span>
         </div>
       }

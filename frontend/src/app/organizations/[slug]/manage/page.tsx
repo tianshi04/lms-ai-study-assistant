@@ -2,6 +2,7 @@
 
 import { use, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   useOrganizationMembersQuery,
@@ -13,6 +14,7 @@ import {
 import { InvitationType, InvitationStatus } from "@/gen/identity/v1/identity_pb";
 import { CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
+import { Card } from "@/components/ui/Card";
 import {
   Users,
   Mail,
@@ -69,7 +71,10 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
 
         {/* Dynamic KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-xs flex items-center gap-5 hover:border-primary/40 transition-colors">
+          <Card
+            variant="elevated"
+            className="flex items-center gap-5 hover:border-primary/40 transition-colors"
+          >
             <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Users className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -79,9 +84,12 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
               </p>
               <p className="text-3xl font-black text-foreground font-mono">{members.length}</p>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-xs flex items-center gap-5 hover:border-primary/40 transition-colors">
+          <Card
+            variant="elevated"
+            className="flex items-center gap-5 hover:border-primary/40 transition-colors"
+          >
             <div className="w-14 h-14 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
               <Mail className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -93,9 +101,12 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
                 {pendingInvitations.length}
               </p>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-xs flex items-center gap-5 hover:border-primary/40 transition-colors">
+          <Card
+            variant="elevated"
+            className="flex items-center gap-5 hover:border-primary/40 transition-colors"
+          >
             <div className="w-14 h-14 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0">
               <BadgeCheck className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -107,9 +118,12 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
                 {publishedCourses.length}
               </p>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-xs flex items-center gap-5 hover:border-primary/40 transition-colors">
+          <Card
+            variant="elevated"
+            className="flex items-center gap-5 hover:border-primary/40 transition-colors"
+          >
             <div className="w-14 h-14 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
               <BookOpen className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -119,14 +133,15 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
               </p>
               <p className="text-3xl font-black text-foreground font-mono">{orgCourses.length}</p>
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* Quick Action Navigation Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Link
-            href={`/organizations/${slug}/members`}
-            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-xs transition-colors group flex items-start gap-4"
+          <Card
+            variant="outlined"
+            render={<Link href={`/organizations/${slug}/members`} />}
+            className="hover:border-primary/50 transition-colors group flex items-start gap-4"
           >
             <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <UserPlus className="w-6 h-6" aria-hidden="true" />
@@ -134,19 +149,23 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
             <div className="space-y-1 min-w-0">
               <h3 className="font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5 text-base">
                 Thành viên Tổ chức
-                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                <ArrowRight
+                  aria-hidden="true"
+                  className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors"
+                />
               </h3>
               <p className="text-xs text-muted-foreground">
                 Xem danh sách giảng viên & đồng nghiệp thuộc Tổ chức.
               </p>
             </div>
-          </Link>
+          </Card>
 
           {isOwnerOrAdmin && (
             <>
-              <Link
-                href={`/organizations/${slug}/invitations`}
-                className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-xs transition-colors group flex items-start gap-4"
+              <Card
+                variant="outlined"
+                render={<Link href={`/organizations/${slug}/invitations`} />}
+                className="hover:border-primary/50 transition-colors group flex items-start gap-4"
               >
                 <div className="w-12 h-12 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
                   <Mail className="w-6 h-6" aria-hidden="true" />
@@ -154,17 +173,21 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
                 <div className="space-y-1 min-w-0">
                   <h3 className="font-bold text-foreground group-hover:text-warning transition-colors flex items-center gap-1.5 text-base">
                     Lời mời đã gửi ({pendingInvitations.length})
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-warning transition-colors" />
+                    <ArrowRight
+                      aria-hidden="true"
+                      className="w-4 h-4 text-muted-foreground group-hover:text-warning transition-colors"
+                    />
                   </h3>
                   <p className="text-xs text-muted-foreground">
                     Theo dõi các lời mời gia nhập đang chờ phản hồi và sao chép link token.
                   </p>
                 </div>
-              </Link>
+              </Card>
 
-              <Link
-                href={`/organizations/${slug}/settings`}
-                className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-xs transition-colors group flex items-start gap-4"
+              <Card
+                variant="outlined"
+                render={<Link href={`/organizations/${slug}/settings`} />}
+                className="hover:border-primary/50 transition-colors group flex items-start gap-4"
               >
                 <div className="w-12 h-12 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center shrink-0">
                   <Settings className="w-6 h-6" aria-hidden="true" />
@@ -172,19 +195,19 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
                 <div className="space-y-1 min-w-0">
                   <h3 className="font-bold text-foreground group-hover:text-foreground transition-colors flex items-center gap-1.5 text-base">
                     Cài đặt Tổ chức
-                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    <ArrowRight aria-hidden="true" className="w-4 h-4 text-muted-foreground" />
                   </h3>
                   <p className="text-xs text-muted-foreground">
                     Cập nhật Tên, Logo, Banner, Domain bảo chứng và thông tin thương hiệu.
                   </p>
                 </div>
-              </Link>
+              </Card>
             </>
           )}
         </div>
 
         {/* Recent Members Preview */}
-        <section className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-6">
+        <Card variant="outlined" className="p-6 sm:p-8 space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -211,9 +234,11 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
               >
                 <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
                   {m.avatarUrl ? (
-                    <img
+                    <Image
                       src={m.avatarUrl}
-                      alt={m.fullName}
+                      alt={m.fullName || "Avatar"}
+                      width={40}
+                      height={40}
                       className="w-full h-full object-cover rounded-full"
                     />
                   ) : (
@@ -229,7 +254,7 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
               </div>
             ))}
           </div>
-        </section>
+        </Card>
       </main>
     </div>
   );
@@ -240,7 +265,7 @@ export default function OrgManagePage({ params }: { params: Promise<{ slug: stri
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
           <span className="text-sm">Đang tải bảng điều khiển...</span>
         </div>
       }

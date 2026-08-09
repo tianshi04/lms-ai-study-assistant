@@ -37,6 +37,7 @@ enum PaymentOrderStatus {
   PAYMENT_ORDER_STATUS_COMPLETED = 2;
   PAYMENT_ORDER_STATUS_FAILED = 3;
   PAYMENT_ORDER_STATUS_EXPIRED = 4;
+  PAYMENT_ORDER_STATUS_CANCELLED = 5;
 }
 
 message CoursePurchase {
@@ -143,6 +144,17 @@ message ListUserPurchasesRequest {}
 message ListUserPurchasesResponse {
   repeated CoursePurchase purchases = 1;
   repeated PaymentOrderInfo orders = 2;
+  UserSubscription active_subscription = 3;
+}
+
+message CancelVNPayOrderRequest {
+  string vnp_txn_ref = 1;
+  string order_id = 2;
+}
+
+message CancelVNPayOrderResponse {
+  bool success = 1;
+  string message = 2;
 }
 
 service PaymentService {
@@ -162,6 +174,9 @@ service PaymentService {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
   rpc ListUserPurchases(ListUserPurchasesRequest) returns (ListUserPurchasesResponse) {
+    option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
+  }
+  rpc CancelVNPayOrder(CancelVNPayOrderRequest) returns (CancelVNPayOrderResponse) {
     option (auth.v1.policy) = AUTH_POLICY_AUTHENTICATED;
   }
 }

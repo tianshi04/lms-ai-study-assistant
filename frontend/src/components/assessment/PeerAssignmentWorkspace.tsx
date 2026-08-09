@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
 import { Slider } from "@/components/ui/Slider";
+import { mapConnectError } from "@/lib/connect_error_mapper";
+import { Card } from "@/components/ui/Card";
 
 interface PeerAssignmentWorkspaceProps {
   itemId: string;
@@ -152,17 +154,9 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
       toast.success("Assignment submitted successfully!");
       setActiveTab("grade");
     } catch (err) {
-      console.warn("RPC submitPeerAssignment failed, using fallback:", err);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(`peer_submitted_${itemId}_${effectiveUserId}`, "true");
-      }
-      setHasSubmitted(true);
-      setLockNotice("");
-      setSubmitStatus(
-        "Assignment submitted successfully. Please grade 3 peer submissions to unlock your final score.",
-      );
-      toast.success("Assignment submitted successfully!");
-      setActiveTab("grade");
+      const msg = mapConnectError(err, "Nộp bài tập chấm chéo thất bại. Vui lòng thử lại.");
+      toast.error(msg);
+      setLockNotice(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -224,11 +218,11 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 bg-card border border-border rounded-2xl shadow-sm">
+    <Card variant="outlined" className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 shadow-sm">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div>
-          <Badge variant="verified">PEER REVIEW ASSIGNMENT</Badge>
+          <Badge variant="primary">PEER REVIEW ASSIGNMENT</Badge>
           <h2 className="text-xl font-bold text-foreground mt-1">
             {title || "Bài tập nộp chấm chéo"}
           </h2>
@@ -238,7 +232,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
         <div className="flex items-center gap-1 bg-muted p-1 rounded-xl">
           <Button
             type="button"
-            variant={activeTab === "submit" ? "secondary" : "ghost"}
+            variant={activeTab === "submit" ? "tonal" : "text"}
             size="sm"
             onClick={() => handleTabClick("submit")}
             className="flex items-center gap-1"
@@ -249,7 +243,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
 
           <Button
             type="button"
-            variant={activeTab === "grade" ? "secondary" : "ghost"}
+            variant={activeTab === "grade" ? "tonal" : "text"}
             size="sm"
             disabled={!hasSubmitted}
             onClick={() => handleTabClick("grade")}
@@ -261,7 +255,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
 
           <Button
             type="button"
-            variant={activeTab === "appeal" ? "secondary" : "ghost"}
+            variant={activeTab === "appeal" ? "tonal" : "text"}
             size="sm"
             disabled={!hasSubmitted}
             onClick={() => handleTabClick("appeal")}
@@ -321,7 +315,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
             <Button
               type="button"
               onClick={handleSubmitAssignment}
-              isLoading={isSubmitting}
+              disabled={isSubmitting}
               size="sm"
             >
               {isSubmitting ? "Submitting…" : "Submit Peer Assignment"}
@@ -342,10 +336,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
           </div>
 
           {peerItems.map((peer, pIdx) => (
-            <div
-              key={peer.reviewId}
-              className="p-5 rounded-2xl border border-border bg-card space-y-4"
-            >
+            <Card key={peer.reviewId} variant="outlined" className="p-5 rounded-2xl space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <h4 className="font-bold text-sm text-foreground">
                   Peer Submission #{pIdx + 1} ({peer.reviewId})
@@ -402,7 +393,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                   Nộp điểm cho Bài làm #{pIdx + 1}
                 </Button>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}
@@ -443,6 +434,6 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

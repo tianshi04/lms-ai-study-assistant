@@ -1,8 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMyInvitationsQuery, useRespondToInvitationMutation } from "@/lib/query_hooks";
 import { InvitationAction, InvitationStatus, InvitationType } from "@/gen/identity/v1/identity_pb";
+import { Button } from "@/components/ui/Button";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerFooter,
+} from "@/components/ui/Drawer";
 import {
   Mail,
   CheckCircle2,
@@ -11,9 +19,10 @@ import {
   BookOpen,
   Award,
   Loader2,
-  X,
   Inbox,
 } from "lucide-react";
+import { Card } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
 
 interface MyInvitationsDrawerProps {
   isOpen: boolean;
@@ -26,15 +35,6 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
     type: "success" | "error";
     text: string;
   } | null>(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
 
   const {
     data: invitations,
@@ -68,8 +68,6 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
     },
   });
 
-  if (!isOpen) return null;
-
   const handleAction = (invitationId: string, action: InvitationAction) => {
     setFeedback(null);
     respondMutation.mutate({ invitationId, action });
@@ -77,52 +75,41 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
 
   const getTargetIcon = (type: InvitationType) => {
     if (type === InvitationType.ORGANIZATION_MEMBER)
-      return <Building2 className="w-5 h-5 text-primary" />;
+      return <Building2 className="w-5 h-5 text-primary" aria-hidden="true" />;
     if (type === InvitationType.COURSE_CO_INSTRUCTOR)
-      return <BookOpen className="w-5 h-5 text-primary" />;
-    return <Award className="w-5 h-5 text-primary" />;
+      return <BookOpen className="w-5 h-5 text-primary" aria-hidden="true" />;
+    return <Award className="w-5 h-5 text-primary" aria-hidden="true" />;
   };
 
   const pendingList = invitations?.filter((i) => i.status === InvitationStatus.PENDING);
   const historyList = invitations?.filter((i) => i.status !== InvitationStatus.PENDING);
 
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-modal flex justify-end bg-scrim backdrop-blur-xs cursor-pointer"
+    <Drawer
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="bg-card text-foreground border-l border-border w-full max-w-md h-full flex flex-col shadow-2xl animate-in slide-in-from-right duration-200 cursor-default"
-      >
+      <DrawerContent side="right" className="flex flex-col h-full">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
-          <div className="flex items-center space-x-2">
-            <Mail className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold">Lời mời của tôi</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Đóng"
-            className="p-1.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        <DrawerHeader className="flex items-center space-x-2">
+          <Mail className="w-5 h-5 text-primary" aria-hidden="true" />
+          <DrawerTitle className="text-lg font-semibold">Lời mời của tôi</DrawerTitle>
+        </DrawerHeader>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {isLoading && (
             <div className="flex justify-center py-12 text-muted-foreground gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
               <span className="text-sm">Đang tải danh sách lời mời...</span>
             </div>
           )}
 
           {!isLoading && (!invitations || invitations.length === 0) && (
             <div className="text-center py-16 text-muted-foreground space-y-2">
-              <Inbox className="w-10 h-10 mx-auto opacity-40" />
+              <Inbox className="w-10 h-10 mx-auto opacity-40" aria-hidden="true" />
               <p className="text-sm font-medium">Bạn chưa có lời mời nào.</p>
             </div>
           )}
@@ -134,8 +121,9 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                 Đang chờ xử lý ({pendingList.length})
               </h3>
               {pendingList.map((inv) => (
-                <div
+                <Card
                   key={inv.id}
+                  variant="outlined"
                   className="p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-3"
                 >
                   <div className="flex items-start gap-3">
@@ -174,29 +162,27 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                   )}
 
                   <div className="grid grid-cols-2 gap-2 pt-1">
-                    <button
+                    <Button
                       type="button"
+                      variant="outlined"
+                      size="sm"
                       disabled={respondMutation.isPending}
                       onClick={() => handleAction(inv.id, InvitationAction.DECLINE)}
-                      className="py-1.5 px-3 rounded-lg border border-border bg-card hover:bg-muted text-xs font-semibold text-foreground transition-colors"
+                      className="w-full"
                     >
                       Từ chối
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      size="sm"
                       disabled={respondMutation.isPending}
                       onClick={() => handleAction(inv.id, InvitationAction.ACCEPT)}
-                      className="py-1.5 px-3 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-semibold transition-colors flex items-center justify-center gap-1"
+                      className="w-full"
                     >
-                      {respondMutation.isPending ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                      )}
                       Chấp nhận
-                    </button>
+                    </Button>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}
@@ -218,13 +204,28 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                   </div>
                   <div className="shrink-0 flex items-center gap-1">
                     {inv.status === InvitationStatus.ACCEPTED ? (
-                      <span className="px-2 py-0.5 rounded-full bg-success/10 text-success font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Đã nhận
-                      </span>
+                      <Chip
+                        variant="assist"
+                        className="h-6 text-[10px] bg-success/10 text-success border-success/20 hover:bg-success/15 pointer-events-none cursor-default font-semibold"
+                        leadingIcon={
+                          <CheckCircle2 className="w-3.5 h-3.5 text-success" aria-hidden="true" />
+                        }
+                      >
+                        Đã nhận
+                      </Chip>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold flex items-center gap-1">
-                        <XCircle className="w-3 h-3" /> Từ chối/Hủy
-                      </span>
+                      <Chip
+                        variant="assist"
+                        className="h-6 text-[10px] bg-surface-container-high text-on-surface-variant border-outline-variant hover:bg-surface-container-high pointer-events-none cursor-default font-semibold"
+                        leadingIcon={
+                          <XCircle
+                            className="w-3.5 h-3.5 text-on-surface-variant"
+                            aria-hidden="true"
+                          />
+                        }
+                      >
+                        Từ chối/Hủy
+                      </Chip>
                     )}
                   </div>
                 </div>
@@ -234,16 +235,12 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border bg-muted/20 flex justify-end">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2 rounded-xl bg-muted text-foreground hover:bg-muted/80 font-bold text-xs transition-colors cursor-pointer border border-border"
-          >
+        <DrawerFooter>
+          <Button type="button" variant="outlined" onClick={onClose}>
             Đóng
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
   );
 }

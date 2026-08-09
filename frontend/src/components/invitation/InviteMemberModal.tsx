@@ -7,11 +7,23 @@ import {
   useCancelInvitationMutation,
 } from "@/lib/query_hooks";
 import { InvitationType } from "@/gen/identity/v1/identity_pb";
+import { Dialog } from "@/components/ui/Dialog";
+
+import { Field, FieldLabel } from "@/components/ui/Field";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
 import {
-  Mail,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/Select";
+import {
+  UserPlus,
   Send,
   Loader2,
-  X,
   CheckCircle2,
   AlertCircle,
   Copy,
@@ -78,8 +90,6 @@ export function InviteMemberModal({
 
   const cancelMutation = useCancelInvitationMutation();
 
-  if (!isOpen) return null;
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
@@ -103,219 +113,203 @@ export function InviteMemberModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-      <div className="bg-card text-foreground border border-border w-full max-w-lg rounded-xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-muted/30">
-          <div className="flex items-center space-x-2">
-            <Mail className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold">Mời tham gia {targetName}</h2>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <Dialog.Content size="lg">
+        <Dialog.Header>
+          <Dialog.Icon icon={<UserPlus className="w-6 h-6 text-primary" aria-hidden="true" />} />
+          <Dialog.Title>{`Mời tham gia ${targetName}`}</Dialog.Title>
+        </Dialog.Header>
+
+        <div className="flex flex-col max-h-[70vh] overflow-hidden my-2">
+          {/* Tabs */}
+          <div className="flex border-b border-border bg-muted/10 px-2 pt-2">
+            <Button
+              type="button"
+              variant="text"
+              onClick={() => setActiveTab("send")}
+              className={`pb-2 px-4 text-sm font-medium border-b-2 rounded-b-none transition-colors ${
+                activeTab === "send"
+                  ? "border-primary text-primary font-semibold"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Gửi lời mời mới
+            </Button>
+            <Button
+              type="button"
+              variant="text"
+              onClick={() => setActiveTab("pending")}
+              className={`pb-2 px-4 text-sm font-medium border-b-2 rounded-b-none transition-colors ${
+                activeTab === "pending"
+                  ? "border-primary text-primary font-semibold"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Lời mời đang chờ
+              {pendingInvitations && pendingInvitations.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full text-xs bg-primary/10 text-primary">
+                  {pendingInvitations.length}
+                </span>
+              )}
+            </Button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-border bg-muted/10 px-6 pt-2">
-          <button
-            type="button"
-            onClick={() => setActiveTab("send")}
-            className={`pb-2 px-4 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === "send"
-                ? "border-primary text-primary font-semibold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Gửi lời mời mới
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("pending")}
-            className={`pb-2 px-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
-              activeTab === "pending"
-                ? "border-primary text-primary font-semibold"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Lời mời đang chờ
-            {pendingInvitations && pendingInvitations.length > 0 && (
-              <span className="ml-1 px-1.5 py-0.5 rounded-full text-xs bg-primary/10 text-primary">
-                {pendingInvitations.length}
-              </span>
-            )}
-          </button>
-        </div>
+          {/* Content Body */}
+          <div className="p-4 overflow-y-auto space-y-4 flex-1">
+            {activeTab === "send" && (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <Field>
+                  <FieldLabel htmlFor="invitee-email">
+                    Email người nhận <span className="text-destructive">*</span>
+                  </FieldLabel>
+                  <Input
+                    id="invitee-email"
+                    type="email"
+                    required
+                    placeholder="nhanvien@domain.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </Field>
 
-        {/* Content Body */}
-        <div className="p-6 overflow-y-auto space-y-4 flex-1">
-          {activeTab === "send" && (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="invitee-email" className="block text-sm font-medium mb-1">
-                  Email người nhận <span className="text-destructive">*</span>
-                </label>
-                <input
-                  id="invitee-email"
-                  type="email"
-                  required
-                  placeholder="nhanvien@domain.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
-                />
-              </div>
+                {rolesList.length > 1 && (
+                  <Field>
+                    <FieldLabel htmlFor="invitee-role">Vai trò gán cho người dùng</FieldLabel>
+                    <Select value={roleId} onValueChange={(val) => val && setRoleId(val)}>
+                      <SelectTrigger id="invitee-role" className="w-full">
+                        <SelectValue placeholder="Chọn vai trò" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {rolesList.map((r) => (
+                          <SelectItem key={r.id} value={r.id}>
+                            {r.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                )}
 
-              {rolesList.length > 1 && (
-                <div>
-                  <label htmlFor="invitee-role" className="block text-sm font-medium mb-1">
-                    Vai trò gán cho người dùng
-                  </label>
-                  <select
-                    id="invitee-role"
-                    value={roleId}
-                    onChange={(e) => setRoleId(e.target.value)}
-                    className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
+                <Field>
+                  <FieldLabel htmlFor="invitee-message">Lời nhắn gửi kèm (Tùy chọn)</FieldLabel>
+                  <Textarea
+                    id="invitee-message"
+                    rows={2}
+                    placeholder="Ví dụ: Rất mong bạn tham gia đội ngũ giảng dạy khóa học này..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                  />
+                </Field>
+
+                {feedback && (
+                  <div
+                    className={`p-3 rounded-md text-sm space-y-2 ${
+                      feedback.type === "success"
+                        ? "bg-success/10 text-success border border-success/20"
+                        : "bg-destructive/10 text-destructive border border-destructive/20"
+                    }`}
                   >
-                    {rolesList.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <div>
-                <label htmlFor="invitee-message" className="block text-sm font-medium mb-1">
-                  Lời nhắn gửi kèm (Tùy chọn)
-                </label>
-                <textarea
-                  id="invitee-message"
-                  rows={2}
-                  placeholder="Ví dụ: Rất mong bạn tham gia đội ngũ giảng dạy khóa học này..."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-hidden focus:ring-2 focus:ring-ring"
-                />
-              </div>
-
-              {feedback && (
-                <div
-                  className={`p-3 rounded-md text-sm space-y-2 ${
-                    feedback.type === "success"
-                      ? "bg-success/10 text-success border border-success/20"
-                      : "bg-destructive/10 text-destructive border border-destructive/20"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-medium">
-                    {feedback.type === "success" ? (
-                      <CheckCircle2 className="w-4 h-4 shrink-0" />
-                    ) : (
-                      <AlertCircle className="w-4 h-4 shrink-0" />
-                    )}
-                    <span>{feedback.text}</span>
-                  </div>
-
-                  {feedback.token && (
-                    <div className="pt-2 border-t border-success/20 flex items-center justify-between gap-2">
-                      <span className="text-xs truncate font-mono text-muted-foreground">
-                        {typeof window !== "undefined"
-                          ? `${window.location.origin}/invitations/${feedback.token}`
-                          : feedback.token}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleCopyLink(feedback.token!, "new")}
-                        className="px-2.5 py-1 rounded-md bg-success/20 hover:bg-success/30 text-xs font-semibold flex items-center gap-1 transition-colors shrink-0"
-                      >
-                        {copiedTokenId === "new" ? (
-                          <>
-                            <Check className="w-3.5 h-3.5" /> Đã chép
-                          </>
-                        ) : (
-                          <>
-                            <Copy className="w-3.5 h-3.5" /> Sao chép link
-                          </>
-                        )}
-                      </button>
+                    <div className="flex items-center gap-2 font-medium">
+                      {feedback.type === "success" ? (
+                        <CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      )}
+                      <span>{feedback.text}</span>
                     </div>
-                  )}
-                </div>
-              )}
 
-              <div className="pt-2 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 text-sm font-medium border border-input rounded-md hover:bg-muted transition-colors"
-                >
-                  Đóng
-                </button>
-                <button
-                  type="submit"
-                  disabled={createMutation.isPending || !email.trim()}
-                  className="px-4 py-2 text-sm font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  {createMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Send className="w-4 h-4" />
-                  )}
-                  Gửi lời mời
-                </button>
+                    {feedback.token && (
+                      <div className="pt-2 border-t border-success/20 flex items-center justify-between gap-2">
+                        <span className="text-xs truncate font-mono text-muted-foreground">
+                          {typeof window !== "undefined"
+                            ? `${window.location.origin}/invitations/${feedback.token}`
+                            : feedback.token}
+                        </span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => handleCopyLink(feedback.token!, "new")}
+                          className="bg-success/20 hover:bg-success/30 text-success text-xs shrink-0"
+                        >
+                          {copiedTokenId === "new" ? (
+                            <>
+                              <Check className="w-3.5 h-3.5" aria-hidden="true" /> Đã chép
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" aria-hidden="true" /> Sao chép link
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="pt-2 flex justify-end gap-3">
+                  <Button type="button" variant="text" onClick={onClose}>
+                    Đóng
+                  </Button>
+                  <Button type="submit" disabled={!email.trim() || createMutation.isPending}>
+                    <Send className="w-4 h-4" aria-hidden="true" />
+                    Gửi lời mời
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {activeTab === "pending" && (
+              <div className="space-y-3">
+                {isLoadingPending && (
+                  <div className="flex justify-center py-8 text-muted-foreground gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+                    <span className="text-sm">Đang danh sách lời mời...</span>
+                  </div>
+                )}
+
+                {!isLoadingPending && (!pendingInvitations || pendingInvitations.length === 0) && (
+                  <div className="text-center py-8 text-muted-foreground space-y-1">
+                    <UserX className="w-8 h-8 mx-auto opacity-50" aria-hidden="true" />
+                    <p className="text-sm">Chưa có lời mời nào đang chờ xử lý.</p>
+                  </div>
+                )}
+
+                {pendingInvitations?.map((inv) => (
+                  <div
+                    key={inv.id}
+                    className="p-3 rounded-lg border border-border bg-muted/30 flex items-center justify-between gap-3 text-sm"
+                  >
+                    <div className="min-w-0 flex-1 space-y-0.5">
+                      <p className="font-semibold truncate">{inv.inviteeEmail}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Vai trò: <span className="font-medium text-foreground">{inv.roleId}</span> •
+                        Tạo ngày: {new Date(inv.createdAt).toLocaleDateString("vi-VN")}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="text"
+                        size="sm"
+                        disabled={cancelMutation.isPending}
+                        onClick={() => cancelMutation.mutate({ invitationId: inv.id })}
+                        className="text-xs text-destructive hover:bg-destructive/10 border border-destructive/30"
+                      >
+                        Hủy
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </form>
-          )}
-
-          {activeTab === "pending" && (
-            <div className="space-y-3">
-              {isLoadingPending && (
-                <div className="flex justify-center py-8 text-muted-foreground gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span className="text-sm">Đang danh sách lời mời...</span>
-                </div>
-              )}
-
-              {!isLoadingPending && (!pendingInvitations || pendingInvitations.length === 0) && (
-                <div className="text-center py-8 text-muted-foreground space-y-1">
-                  <UserX className="w-8 h-8 mx-auto opacity-50" />
-                  <p className="text-sm">Chưa có lời mời nào đang chờ xử lý.</p>
-                </div>
-              )}
-
-              {pendingInvitations?.map((inv) => (
-                <div
-                  key={inv.id}
-                  className="p-3 rounded-lg border border-border bg-muted/30 flex items-center justify-between gap-3 text-sm"
-                >
-                  <div className="min-w-0 flex-1 space-y-0.5">
-                    <p className="font-semibold truncate">{inv.inviteeEmail}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Vai trò: <span className="font-medium text-foreground">{inv.roleId}</span> •
-                      Tạo ngày: {new Date(inv.createdAt).toLocaleDateString("vi-VN")}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      disabled={cancelMutation.isPending}
-                      onClick={() => cancelMutation.mutate({ invitationId: inv.id })}
-                      className="px-2.5 py-1 text-xs rounded-md border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors"
-                    >
-                      Hủy
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </Dialog.Content>
+    </Dialog>
   );
 }

@@ -4,7 +4,12 @@ import React, { useState, useRef } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { Clock, Video, Plus, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
+import {
+  UniversalVideoPlayer,
+  type UniversalVideoRef,
+} from "@/components/player/UniversalVideoPlayer";
 
 export interface InVideoQuizItem {
   timestampSeconds: number;
@@ -21,7 +26,7 @@ interface InVideoQuizEditorProps {
 }
 
 export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEditorProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<UniversalVideoRef | HTMLVideoElement | any>(null);
   const toast = useToast();
 
   const [timestampSeconds, setTimestampSeconds] = useState<number>(0);
@@ -31,12 +36,25 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
   const [explanation, setExplanation] = useState<string>("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
+  const latestTimeRef = useRef<number>(0);
+
   const captureCurrentTime = () => {
+    let currentSec = -1;
     if (videoRef.current) {
-      const currentSec = Math.floor(videoRef.current.currentTime);
-      setTimestampSeconds(currentSec);
-      toast.info(`Đã chọn mốc thời gian ${currentSec}s từ Video.`);
+      if (typeof videoRef.current.getCurrentTime === "function") {
+        const t = videoRef.current.getCurrentTime();
+        if (typeof t === "number" && !isNaN(t)) currentSec = Math.floor(t);
+      }
+      if (currentSec < 0 && typeof videoRef.current.currentTime === "number") {
+        const t = videoRef.current.currentTime;
+        if (typeof t === "number" && !isNaN(t)) currentSec = Math.floor(t);
+      }
     }
+    if (currentSec < 0) {
+      currentSec = latestTimeRef.current || 0;
+    }
+    setTimestampSeconds(currentSec);
+    toast.info(`Đã chọn mốc thời gian ${currentSec}s từ Video.`);
   };
 
   const handleAddOption = () => {
@@ -142,22 +160,6 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  const isYouTubeUrl = (url: string) => {
-    return url.includes("youtube.com") || url.includes("youtu.be");
-  };
-
-  const getYouTubeEmbedUrl = (url: string) => {
-    let videoId = "";
-    if (url.includes("youtu.be/")) {
-      videoId = url.split("youtu.be/")[1]?.split("?")[0] || "";
-    } else if (url.includes("watch?v=")) {
-      videoId = url.split("watch?v=")[1]?.split("&")[0] || "";
-    } else if (url.includes("embed/")) {
-      videoId = url.split("embed/")[1]?.split("?")[0] || "";
-    }
-    return `https://www.youtube-nocookie.com/embed/${videoId}`;
-  };
-
   return (
     <div className="space-y-4 p-4 rounded-2xl bg-card border border-border">
       <div className="flex items-center justify-between border-b border-border pb-2">
@@ -176,38 +178,26 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
       {videoUrl ? (
         <div className="space-y-2">
           <div className="aspect-video w-full rounded-xl overflow-hidden bg-black relative shadow-md">
-            {isYouTubeUrl(videoUrl) ? (
-              <iframe
-                src={getYouTubeEmbedUrl(videoUrl)}
-                title="YouTube Video Preview"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full border-0"
-              />
-            ) : (
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                controls
-                aria-label="Xem trước video bài giảng"
-                className="w-full h-full object-contain"
-              >
-                <track kind="captions" src="" label="Phụ đề" />
-              </video>
-            )}
+            <UniversalVideoPlayer
+              ref={videoRef}
+              videoUrl={videoUrl}
+              onTimeUpdate={(time) => {
+                latestTimeRef.current = Math.floor(time);
+              }}
+              title="Xem trước video bài giảng"
+            />
           </div>
-          {!isYouTubeUrl(videoUrl) && (
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={captureCurrentTime}
-                className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <Clock className="w-4 h-4" aria-hidden="true" />
-                <span>Lấy mốc giây hiện tại từ Video</span>
-              </button>
-            </div>
-          )}
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="outlined"
+              onClick={captureCurrentTime}
+              className="bg-primary/10 text-primary border-primary/20 text-xs font-bold hover:bg-primary/20"
+            >
+              <Clock className="w-4 h-4" aria-hidden="true" />
+              <span>Lấy mốc giây hiện tại từ Video</span>
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-2xl bg-muted/40 text-muted-foreground text-xs shadow-2xs">
@@ -226,13 +216,15 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
             {editingIndex !== null ? "Sửa câu hỏi chèn mốc" : "Thêm câu hỏi dừng màn hình mới"}
           </span>
           {editingIndex !== null && (
-            <button
+            <Button
               type="button"
+              variant="text"
+              size="sm"
               onClick={resetForm}
-              className="text-[11px] font-semibold text-muted-foreground hover:text-foreground cursor-pointer"
+              className="text-[11px] font-semibold text-muted-foreground hover:text-foreground h-auto p-0"
             >
               Hủy sửa
-            </button>
+            </Button>
           )}
         </div>
 
@@ -287,7 +279,7 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
             </span>
             <Button
               type="button"
-              variant="ghost"
+              variant="text"
               size="sm"
               onClick={handleAddOption}
               className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer h-auto py-0.5 px-1.5"
@@ -305,17 +297,21 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                   key={idx}
                   className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg border border-border"
                 >
-                  <input
-                    type="radio"
-                    name="correctOption"
-                    checked={correctOptionIndex === idx}
-                    onChange={() => setCorrectOptionIndex(idx)}
+                  <Button
+                    type="button"
+                    variant={correctOptionIndex === idx ? "filled" : "outlined"}
+                    size="sm"
+                    onClick={() => setCorrectOptionIndex(idx)}
                     aria-label={`Chọn phương án ${letter} làm đáp án đúng`}
-                    className="w-4 h-4 text-primary cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  />
-                  <span className="text-xs font-bold text-muted-foreground font-mono">
-                    {letter}.
-                  </span>
+                    className={`h-7 px-2 text-xs font-bold shrink-0 ${
+                      correctOptionIndex === idx ? "bg-primary text-primary-foreground" : ""
+                    }`}
+                    title={
+                      correctOptionIndex === idx ? "Đáp án đúng" : "Bấm để chọn làm đáp án đúng"
+                    }
+                  >
+                    {letter} {correctOptionIndex === idx ? "(Đúng)" : ""}
+                  </Button>
                   <Input
                     value={optText}
                     onChange={(e) => handleOptionChange(idx, e.target.value)}
@@ -325,17 +321,17 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                     className="bg-transparent text-xs py-1"
                   />
                   {optionsList.length > 2 && (
-                    <Button
+                    <IconButton
                       type="button"
-                      variant="ghost"
-                      size="icon"
+                      variant="standard"
+                      size="xs"
                       onClick={() => handleRemoveOption(idx)}
                       className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors cursor-pointer w-7 h-7"
                       title="Xóa phương án này"
                       aria-label="Xóa phương án này"
                     >
                       <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    </Button>
+                    </IconButton>
                   )}
                 </div>
               );
@@ -404,24 +400,28 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <button
+                  <IconButton
                     type="button"
+                    variant="standard"
+                    size="xs"
                     onClick={() => handleEditQuiz(idx)}
-                    className="p-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground bg-muted"
                     title="Sửa mốc câu hỏi"
                     aria-label="Sửa mốc câu hỏi"
                   >
                     <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                  </button>
-                  <button
+                  </IconButton>
+                  <IconButton
                     type="button"
+                    variant="standard"
+                    size="xs"
                     onClick={() => handleDeleteQuiz(idx)}
-                    className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="h-7 w-7 text-destructive hover:bg-destructive/20 bg-destructive/10"
                     title="Xóa mốc câu hỏi"
                     aria-label="Xóa mốc câu hỏi"
                   >
                     <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                  </button>
+                  </IconButton>
                 </div>
               </div>
             ))}
