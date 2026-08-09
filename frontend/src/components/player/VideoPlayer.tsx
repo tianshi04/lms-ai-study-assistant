@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
 
 interface VideoPlayerProps {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -353,7 +354,7 @@ export function VideoPlayer({
         </div>
 
         {/* Coursera-style AI Learning Prompts Card ("Tìm hiểu sâu hơn về chủ đề này") - Only for Video Items */}
-        <div className="w-full my-1 p-4 rounded-2xl bg-surface-container-low shadow-2xs transition-colors">
+        <Card variant="elevated" className="w-full my-1 p-4 rounded-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
@@ -399,7 +400,7 @@ export function VideoPlayer({
               ))}
             </div>
           )}
-        </div>
+        </Card>
       </div>
     );
   }

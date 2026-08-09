@@ -9,6 +9,8 @@ import { getRpcClient } from "@/lib/connect_client";
 import { useQueryClient } from "@tanstack/react-query";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 
+import { Card } from "@/components/ui/Card";
+
 export function CourseCard({ course }: { course: Course }) {
   const [imgError, setImgError] = useState(false);
 
@@ -26,9 +28,10 @@ export function CourseCard({ course }: { course: Course }) {
   };
 
   return (
-    <div
+    <Card
+      variant="outlined"
       onMouseEnter={handlePrefetch}
-      className="group relative hover:z-10 bg-surface-container-low text-on-surface border border-outline-variant hover:border-outline hover:bg-surface-container rounded-3xl p-6 transition-colors duration-m3-medium-2 ease-m3-emphasized shadow-xs hover:shadow-md flex flex-col justify-between"
+      className="group relative hover:z-10 rounded-3xl p-6 flex flex-col justify-between"
     >
       <div>
         {/* Partner Header */}
@@ -90,6 +93,6 @@ export function CourseCard({ course }: { course: Course }) {
           />
         </Link>
       </div>
-    </div>
+    </Card>
   );
 }

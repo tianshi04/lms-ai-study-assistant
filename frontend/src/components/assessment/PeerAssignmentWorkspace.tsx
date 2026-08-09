@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
 import { Slider } from "@/components/ui/Slider";
 import { mapConnectError } from "@/lib/connect_error_mapper";
+import { Card } from "@/components/ui/Card";
 
 interface PeerAssignmentWorkspaceProps {
   itemId: string;
@@ -217,7 +218,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 bg-card border border-border rounded-2xl shadow-sm">
+    <Card variant="outlined" className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 shadow-sm">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div>
@@ -335,10 +336,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
           </div>
 
           {peerItems.map((peer, pIdx) => (
-            <div
-              key={peer.reviewId}
-              className="p-5 rounded-2xl border border-border bg-card space-y-4"
-            >
+            <Card key={peer.reviewId} variant="outlined" className="p-5 rounded-2xl space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <h4 className="font-bold text-sm text-foreground">
                   Peer Submission #{pIdx + 1} ({peer.reviewId})
@@ -395,7 +393,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
                   Nộp điểm cho Bài làm #{pIdx + 1}
                 </Button>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}
@@ -436,6 +434,6 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

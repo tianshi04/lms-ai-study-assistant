@@ -16,6 +16,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -320,16 +321,17 @@ export default function InstructorCoursesPage() {
           <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
         </div>
       ) : courses.length === 0 ? (
-        <div className="text-center py-16 bg-card rounded-3xl border border-border">
+        <Card variant="outlined" className="text-center py-16">
           <p className="text-muted-foreground mb-4">{"Chưa có khóa học nào được tạo."}</p>
           <Button onClick={handleOpenCreateModal}>{"Tạo khóa học đầu tiên"}</Button>
-        </div>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => (
-            <div
+            <Card
               key={course.id}
-              className="bg-card border border-border hover:border-primary/50 rounded-3xl p-6 transition-colors flex flex-col justify-between h-full"
+              variant="outlined"
+              className="hover:border-primary/50 flex flex-col justify-between h-full"
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
@@ -421,7 +423,7 @@ export default function InstructorCoursesPage() {
                   </Link>
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

@@ -311,7 +311,10 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           </div>
 
           {/* Enrollment Card (M3 Elevated & Glassmorphism Container Item 1.3) */}
-          <div className="relative overflow-hidden bg-card/90 backdrop-blur-xl border border-primary/20 p-6 rounded-3xl shadow-xl shadow-primary/5 space-y-6 transition-colors hover:border-primary/30">
+          <Card
+            variant="elevated"
+            className="relative overflow-hidden border border-primary/20 backdrop-blur-xl p-6 rounded-3xl space-y-6 transition-colors hover:border-primary/30"
+          >
             {/* M3 Top Gradient Accent Bar */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-primary/80 to-accent" />
 
@@ -412,7 +415,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </li>
               )}
             </ul>
-          </div>
+          </Card>
         </div>
       </div>
 
@@ -579,7 +582,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {reviews.map((rev) => (
-                <Card key={rev.id} className="rounded-2xl shadow-sm space-y-3 p-6">
+                <Card key={rev.id} variant="outlined" className="rounded-2xl space-y-3 p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar name={rev.userName || "Học viên LMS"} size="md" />

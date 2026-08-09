@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ArrowLeft, Check, X, AlertTriangle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { Tabs } from "@/components/ui/Tabs";
 
@@ -224,7 +225,7 @@ export default function InstructorFinancialAidPage() {
             </p>
           </div>
         ) : filteredApps.length === 0 ? (
-          <div className="py-16 text-center bg-card rounded-2xl border border-border p-8">
+          <Card variant="outlined" className="py-16 text-center p-8">
             <FileText aria-hidden="true" className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
             <p className="text-base font-bold text-foreground">
               Không có đơn nộp nào trong danh mục này
@@ -232,14 +233,11 @@ export default function InstructorFinancialAidPage() {
             <p className="text-xs text-muted-foreground mt-1">
               Các đơn Hỗ trợ tài chính mới từ học viên sẽ xuất hiện ở đây.
             </p>
-          </div>
+          </Card>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {filteredApps.map((app) => (
-              <div
-                key={app.id}
-                className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-md transition-colors space-y-4 text-foreground"
-              >
+              <Card key={app.id} variant="outlined" className="p-6 space-y-4 text-foreground">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -313,7 +311,7 @@ export default function InstructorFinancialAidPage() {
                     </Button>
                   </div>
                 )}
-              </div>
+              </Card>
             ))}
           </div>
         )}

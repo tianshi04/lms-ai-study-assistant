@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { usePartnersQuery, useCoursesQuery } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Dialog } from "@/components/ui/Dialog";
@@ -216,10 +217,15 @@ export function PartnersCatalogClient() {
               {paginatedPartners.map((partner) => {
                 const courseCount = partnerCourseCounts[partner.id] || 0;
                 return (
-                  <Link
+                  <Card
                     key={partner.id}
-                    href={`/partners/${partner.slug || partner.id}`}
-                    className="bg-card border border-border rounded-3xl overflow-hidden hover:shadow-xl hover:border-primary/40 transition-colors duration-300 flex flex-col justify-between group cursor-pointer"
+                    variant="outlined"
+                    render={
+                      <Link
+                        href={`/partners/${partner.slug || partner.id}`}
+                        className="rounded-3xl overflow-hidden hover:border-primary/40 transition-colors duration-300 flex flex-col justify-between group cursor-pointer"
+                      />
+                    }
                   >
                     <div>
                       {/* Partner Banner Header */}
@@ -296,7 +302,7 @@ export function PartnersCatalogClient() {
                         </a>
                       )}
                     </div>
-                  </Link>
+                  </Card>
                 );
               })}
             </div>

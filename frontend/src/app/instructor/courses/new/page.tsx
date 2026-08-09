@@ -172,7 +172,7 @@ export default function NewCoursePage() {
         </div>
 
         {/* Live Preview Card */}
-        <Card className="rounded-3xl p-6 sm:p-8 border border-border relative overflow-hidden space-y-4">
+        <Card variant="elevated" className="p-6 sm:p-8 relative overflow-hidden space-y-4">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center rounded-full bg-primary/10 text-primary border border-primary/20 px-3 py-1 text-xs font-bold uppercase tracking-wider">
@@ -219,10 +219,7 @@ export default function NewCoursePage() {
         </Card>
 
         {/* Main Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="bg-card rounded-3xl p-6 sm:p-8 border border-border space-y-6"
-        >
+        <Card variant="filled" render={<form onSubmit={handleSubmit} />} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Organization / Partner Scoping Selection */}
             {/* Organization / Partner Scoping Selection */}
@@ -439,7 +436,7 @@ export default function NewCoursePage() {
               <span>🚀 Bắt Đầu Tạo Khóa Học</span>
             </Button>
           </div>
-        </form>
+        </Card>
       </div>
     </div>
   );

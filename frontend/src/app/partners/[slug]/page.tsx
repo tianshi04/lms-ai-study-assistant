@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePartnersQuery, useCoursesQuery } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { AlertTriangle, ExternalLink, BookOpen, PenTool, Globe, GraduationCap } from "lucide-react";
 
 function PartnerPublicContent() {
@@ -39,7 +40,7 @@ function PartnerPublicContent() {
 
   if (!partner) {
     return (
-      <div className="max-w-md mx-auto my-20 p-8 bg-card border border-border rounded-2xl text-center shadow-sm text-foreground">
+      <Card variant="elevated" className="max-w-md mx-auto my-20 p-8 text-center text-foreground">
         <AlertTriangle
           aria-hidden="true"
           className="w-16 h-16 mx-auto text-muted-foreground mb-4"
@@ -57,7 +58,7 @@ function PartnerPublicContent() {
         >
           Quay lại trang chủ
         </Button>
-      </div>
+      </Card>
     );
   }
 
@@ -183,11 +184,16 @@ function PartnerPublicContent() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {partnerCourses.map((course) => (
-                    <Link
+                    <Card
                       key={course.id}
-                      href={`/courses/${course.slug}`}
-                      aria-label={`Khóa học ${course.title}`}
-                      className="text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring bg-card rounded-2xl border border-border p-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-colors flex flex-col justify-between"
+                      variant="outlined"
+                      render={
+                        <Link
+                          href={`/courses/${course.slug}`}
+                          aria-label={`Khóa học ${course.title}`}
+                          className="text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-2xl p-5 hover:border-primary/50 transition-colors flex flex-col justify-between"
+                        />
+                      }
                     >
                       <div>
                         <div className="flex items-center space-x-2 mb-2">
@@ -219,7 +225,7 @@ function PartnerPublicContent() {
                           Xem khóa học &rarr;
                         </span>
                       </div>
-                    </Link>
+                    </Card>
                   ))}
                 </div>
               )}
@@ -230,7 +236,7 @@ function PartnerPublicContent() {
           <div className="space-y-6">
             {/* Signer Info Box */}
             {(partner.signerName || partner.signerTitle) && (
-              <div className="bg-card rounded-2xl p-6 border border-border shadow-sm">
+              <Card variant="outlined" className="rounded-2xl p-6">
                 <h3 className="text-sm font-bold uppercase text-muted-foreground tracking-wider mb-4">
                   Đại diện Phát hành
                 </h3>
@@ -265,12 +271,12 @@ function PartnerPublicContent() {
                     </div>
                   </div>
                 )}
-              </div>
+              </Card>
             )}
 
             {/* Allowed Domains Box */}
             {partner.allowedDomains && partner.allowedDomains.length > 0 && (
-              <div className="bg-card rounded-2xl p-6 border border-border shadow-sm">
+              <Card variant="outlined" className="rounded-2xl p-6">
                 <h3 className="text-sm font-bold uppercase text-muted-foreground tracking-wider mb-3">
                   Tên miền Cấp Chứng chỉ
                 </h3>
@@ -289,7 +295,7 @@ function PartnerPublicContent() {
                     </span>
                   ))}
                 </div>
-              </div>
+              </Card>
             )}
 
             {/* OpenBadges Compliance Badge */}

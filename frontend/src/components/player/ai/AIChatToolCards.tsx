@@ -6,6 +6,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { LearningService, type PersonalNote } from "@/gen/learning/v1/learning_pb";
 import { formatTime } from "./utils";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 
 export function SaveNoteCard({
   courseId,
@@ -46,7 +47,10 @@ export function SaveNoteCard({
   };
 
   return (
-    <div className="my-2 p-3 rounded-xl bg-surface-container-high border border-outline-variant/40 flex flex-col gap-2 shadow-xs">
+    <Card
+      variant="elevated"
+      className="my-2 p-3 rounded-xl flex flex-col gap-2 border border-outline-variant/40"
+    >
       <div className="text-xs text-on-surface-variant font-medium flex items-center gap-1.5">
         <BookmarkPlus className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />
         <span>Gợi ý lưu vào Ghi chú cá nhân:</span>
@@ -77,7 +81,7 @@ export function SaveNoteCard({
           </>
         )}
       </Button>
-    </div>
+    </Card>
   );
 }
 
@@ -94,7 +98,10 @@ export function TimestampSeekCard({
 }) {
   const displayLabel = label || formatTime(seconds);
   return (
-    <div className="my-2 p-3 rounded-xl bg-surface-container-high border border-outline-variant/40 flex flex-col gap-2 shadow-xs w-full max-w-md">
+    <Card
+      variant="elevated"
+      className="my-2 p-3 rounded-xl flex flex-col gap-2 border border-outline-variant/40 w-full max-w-md"
+    >
       <div className="text-xs text-on-surface-variant font-medium flex items-center gap-1.5">
         <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />
         <span>{reason || "Gợi ý xem đoạn video liên quan:"}</span>
@@ -110,6 +117,6 @@ export function TimestampSeekCard({
           <span>Chuyển đến đoạn [{displayLabel}]</span>
         </Button>
       )}
-    </div>
+    </Card>
   );
 }

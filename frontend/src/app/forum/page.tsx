@@ -446,7 +446,10 @@ function ForumPageContent() {
         </div>
 
         {/* Filter Bar */}
-        <Card className="rounded-2xl p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+        <Card
+          variant="filled"
+          className="rounded-2xl p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4"
+        >
           <div className="flex items-center gap-3 w-full md:w-auto">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
               {"Khóa học"}:
@@ -517,11 +520,12 @@ function ForumPageContent() {
 
               return (
                 <Card
+                  variant="outlined"
                   key={thread.id}
                   id={`thread-${thread.id}`}
-                  className={`rounded-2xl p-6 transition-colors shadow-sm ${
+                  className={`rounded-2xl p-6 transition-colors ${
                     isTargetThread
-                      ? "border-primary ring-2 ring-primary/50 shadow-lg bg-primary/5"
+                      ? "border-primary ring-2 ring-primary/50 bg-primary/5"
                       : "hover:border-accent-hover"
                   }`}
                 >

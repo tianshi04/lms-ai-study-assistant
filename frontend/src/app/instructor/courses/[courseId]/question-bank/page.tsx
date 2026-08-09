@@ -271,7 +271,10 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
         </div>
 
         {/* Page Header */}
-        <Card className="rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <Card
+          variant="elevated"
+          className="p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+        >
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-extrabold uppercase mb-2">
               Question Pool Engine
@@ -382,7 +385,10 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
               ) : (
                 <div className="space-y-6">
                   {/* Selected Bank Banner */}
-                  <Card className="p-6 rounded-3xl shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <Card
+                    variant="outlined"
+                    className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+                  >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-black text-foreground">{selectedBank.title}</h2>
@@ -437,7 +443,8 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                         return (
                           <Card
                             key={q.id}
-                            className="rounded-2xl p-5 shadow-xs space-y-3 hover:border-muted-foreground/30 transition-colors"
+                            variant="outlined"
+                            className="p-5 space-y-3 hover:border-muted-foreground/30 transition-colors"
                           >
                             {/* Question Meta */}
                             <div className="flex items-center justify-between">

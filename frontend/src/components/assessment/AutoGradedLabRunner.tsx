@@ -15,6 +15,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/Select";
+import { Card } from "@/components/ui/Card";
 import { mapConnectError } from "@/lib/connect_error_mapper";
 
 interface AutoGradedLabRunnerProps {
@@ -100,7 +101,7 @@ export function AutoGradedLabRunner({
   };
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto p-4 sm:p-6 bg-card text-foreground border border-border rounded-2xl shadow-xl">
+    <Card variant="outlined" className="space-y-4 max-w-5xl mx-auto p-4 sm:p-6 shadow-xl">
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div>
@@ -221,6 +222,6 @@ export function AutoGradedLabRunner({
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

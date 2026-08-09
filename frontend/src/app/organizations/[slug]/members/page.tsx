@@ -14,6 +14,7 @@ import { InvitationType } from "@/gen/identity/v1/identity_pb";
 import { mapConnectError } from "@/lib/connect_error_mapper";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import {
   Table,
@@ -156,7 +157,10 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
         />
 
         {/* Action Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card border border-border rounded-3xl p-6 shadow-xs">
+        <Card
+          variant="outlined"
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6"
+        >
           <div className="relative flex-1 max-w-md">
             <Search
               className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground z-10"
@@ -183,10 +187,10 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               Gửi Lời mời Thành viên Mới
             </Button>
           )}
-        </div>
+        </Card>
 
         {/* Members Table */}
-        <section className="bg-card border border-border rounded-3xl overflow-hidden shadow-xs">
+        <Card variant="outlined" className="p-0 overflow-hidden">
           <div className="p-6 border-b border-border flex items-center justify-between">
             <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" aria-hidden="true" />
@@ -281,7 +285,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               </Table>
             </div>
           )}
-        </section>
+        </Card>
 
         {/* Invite Member Modal */}
         <Dialog.Root open={isInviteModalOpen} onOpenChange={(open) => setIsInviteModalOpen(open)}>

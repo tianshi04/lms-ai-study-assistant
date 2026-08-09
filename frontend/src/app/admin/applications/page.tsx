@@ -14,6 +14,7 @@ import { FileText, ExternalLink, PlayCircle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
+import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import {
   AlertDialog,
@@ -149,14 +150,14 @@ export default function AdminInstructorApplicationsPage() {
 
         {/* Content List */}
         {isLoading ? (
-          <div className="bg-card rounded-3xl p-12 text-center border border-border shadow-sm">
+          <Card variant="outlined" className="p-12 text-center">
             <div className="inline-block animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-3" />
             <p aria-live="polite" className="text-muted-foreground text-sm font-medium">
               Đang tải danh sách đơn thẩm định…
             </p>
-          </div>
+          </Card>
         ) : applications.length === 0 ? (
-          <div className="bg-card rounded-3xl p-12 text-center border border-border shadow-sm space-y-3">
+          <Card variant="outlined" className="p-12 text-center space-y-3">
             <div className="w-12 h-12 bg-muted text-muted-foreground rounded-2xl flex items-center justify-center mx-auto">
               <FileText className="w-6 h-6" aria-hidden="true" />
             </div>
@@ -164,7 +165,7 @@ export default function AdminInstructorApplicationsPage() {
             <p className="text-muted-foreground text-sm max-w-sm mx-auto">
               Hiện tại chưa có đơn xin cấp quyền Giảng viên cá nhân nào phù hợp với bộ lọc đã chọn.
             </p>
-          </div>
+          </Card>
         ) : (
           <div className="space-y-6">
             {applications.map((app: InstructorApplication) => {
@@ -173,10 +174,7 @@ export default function AdminInstructorApplicationsPage() {
               const isRejected = app.status === InstructorApplicationStatus.REJECTED;
 
               return (
-                <div
-                  key={app.id}
-                  className="bg-card rounded-3xl p-6 sm:p-8 border border-border space-y-6"
-                >
+                <Card key={app.id} variant="outlined" className="p-6 sm:p-8 space-y-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
                     <div>
                       <div className="flex items-center gap-3">
@@ -327,7 +325,7 @@ export default function AdminInstructorApplicationsPage() {
                       )}
                     </div>
                   )}
-                </div>
+                </Card>
               );
             })}
           </div>

@@ -7,6 +7,7 @@ import { NotificationCategory } from "@/gen/notification/v1/notification_pb";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
 
 interface NotificationItemProps {
   item: NotificationItemType;
@@ -68,7 +69,8 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
   };
 
   return (
-    <div
+    <Card
+      variant="filled"
       className={cn(
         "relative p-3.5 rounded-2xl transition-colors duration-m3-short-4 ease-m3-emphasized",
         item.isRead
@@ -174,6 +176,6 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

@@ -5,6 +5,7 @@ import type { PersonalNote } from "@/gen/learning/v1/learning_pb";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
+import { Card } from "@/components/ui/Card";
 
 interface NotesPanelProps {
   notes: PersonalNote[];
@@ -30,9 +31,14 @@ export function NotesPanel({
   return (
     <div className="max-w-4xl mx-auto space-y-5">
       {/* Create Note Form */}
-      <form
-        onSubmit={onSaveNote}
-        className="bg-surface-container-low p-4 rounded-2xl border border-outline-variant space-y-3.5 shadow-xs"
+      <Card
+        variant="filled"
+        render={
+          <form
+            onSubmit={onSaveNote}
+            className="p-4 rounded-2xl border border-outline-variant space-y-3.5"
+          />
+        }
       >
         <h4 className="text-xs font-bold text-on-surface uppercase tracking-wider">
           {"Ghi chú của tôi"}
@@ -59,19 +65,23 @@ export function NotesPanel({
         >
           Lưu ghi chú
         </Button>
-      </form>
+      </Card>
 
       {/* List Saved Notes */}
       {notes.length === 0 ? (
-        <div className="bg-surface-container-low border border-outline-variant p-6 rounded-2xl text-center text-xs text-on-surface-variant">
+        <Card
+          variant="filled"
+          className="border border-outline-variant p-6 rounded-2xl text-center text-xs text-on-surface-variant"
+        >
           {"Chưa có ghi chú nào cho bài học này."}
-        </div>
+        </Card>
       ) : (
         <div className="space-y-3">
           {notes.map((note) => (
-            <div
+            <Card
               key={note.id}
-              className="group bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-xs space-y-1.5 shadow-xs relative"
+              variant="filled"
+              className="group border border-outline-variant p-4 rounded-2xl text-xs space-y-1.5 relative"
             >
               <div className="flex items-start justify-between gap-3">
                 <p className="text-primary font-medium italic bg-primary-container/40 p-2.5 rounded-xl border border-primary/10 leading-relaxed flex-1">
@@ -94,7 +104,7 @@ export function NotesPanel({
               {note.noteComment && (
                 <p className="text-on-surface text-xs pt-1 leading-relaxed">{note.noteComment}</p>
               )}
-            </div>
+            </Card>
           ))}
         </div>
       )}

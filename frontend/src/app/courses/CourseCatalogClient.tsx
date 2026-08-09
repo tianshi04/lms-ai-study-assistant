@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { CourseCard } from "@/components/course/CourseCard";
 import { CourseGridSkeleton } from "@/components/course/CourseGridSkeleton";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import {
@@ -64,7 +65,7 @@ export function CourseCatalogClient() {
       </div>
 
       {/* Controls Section: Search & Filters (MD3 Surface Container) */}
-      <div className="w-full mb-10 p-5 md:p-6 rounded-3xl bg-surface-container-low border border-outline-variant space-y-5 shadow-xs">
+      <Card variant="filled" className="w-full mb-10 p-5 md:p-6 rounded-3xl space-y-5">
         {/* Top Toolbar: Search Bar + Controls */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-4 border-b border-outline-variant">
           {/* Search Bar (MD3 Pill Input) */}
@@ -216,7 +217,7 @@ export function CourseCatalogClient() {
             ))}
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Content Section: Course Cards Grid */}
       {loading ? (

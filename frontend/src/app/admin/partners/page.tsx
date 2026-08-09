@@ -23,6 +23,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -112,7 +113,10 @@ export default function AdminPartnersPage() {
 
   if (!isAdmin) {
     return (
-      <div className="max-w-md mx-auto my-16 p-8 bg-destructive/10 border border-destructive/30 rounded-2xl text-center">
+      <Card
+        variant="outlined"
+        className="max-w-md mx-auto my-16 p-8 text-center bg-destructive/10 border-destructive/30"
+      >
         <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
         <p className="text-muted-foreground text-sm">
           Bạn cần quyền Super Admin để truy cập trang quản trị đối tác.
@@ -120,7 +124,7 @@ export default function AdminPartnersPage() {
         <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
         </Button>
-      </div>
+      </Card>
     );
   }
 
@@ -320,7 +324,7 @@ export default function AdminPartnersPage() {
       </div>
 
       {/* Partners List Table */}
-      <div className="mt-8 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+      <Card variant="outlined" className="mt-8 p-0 overflow-hidden">
         {partners.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">
             <Building2
@@ -432,7 +436,7 @@ export default function AdminPartnersPage() {
             </TableBody>
           </Table>
         )}
-      </div>
+      </Card>
 
       {/* Modal Thêm/Sửa Đối tác */}
       <Dialog.Root open={isModalOpen} onOpenChange={(open) => setIsModalOpen(open)}>

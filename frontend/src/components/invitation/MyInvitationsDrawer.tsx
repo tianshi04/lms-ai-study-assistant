@@ -21,6 +21,7 @@ import {
   Loader2,
   Inbox,
 } from "lucide-react";
+import { Card } from "@/components/ui/Card";
 
 interface MyInvitationsDrawerProps {
   isOpen: boolean;
@@ -119,8 +120,9 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                 Đang chờ xử lý ({pendingList.length})
               </h3>
               {pendingList.map((inv) => (
-                <div
+                <Card
                   key={inv.id}
+                  variant="outlined"
                   className="p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-3"
                 >
                   <div className="flex items-start gap-3">
@@ -179,7 +181,7 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                       Chấp nhận
                     </Button>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}

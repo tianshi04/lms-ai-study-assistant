@@ -11,6 +11,7 @@ import {
   useRotatePartnerKeyPairMutation,
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -104,7 +105,7 @@ function PartnerSettingsForm({
   const [newSigTitle, setNewSigTitle] = useState("");
   const [newSigDept, setNewSigDept] = useState("");
   const [newSigImage, setNewSigImage] = useState("");
-  const [sigErrorMsg, setSigErrorMsg] = useState("");
+  const [_sigErrorMsg, setSigErrorMsg] = useState("");
 
   const [statusMessage, setStatusMessage] = useState<{
     type: "success" | "error";
@@ -423,27 +424,13 @@ function PartnerSettingsForm({
                 trường.
               </p>
             </div>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-success/15 text-success border border-success/30 w-fit">
-              {signatories.length} Người ký
-            </span>
           </div>
 
-          {sigErrorMsg && (
-            <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-xs rounded-xl">
-              {sigErrorMsg}
-            </div>
-          )}
-
-          {/* List of Signatories */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {signatories.map((sig) => (
               <div
                 key={sig.id}
-                className={`p-4 rounded-xl border transition-colors flex flex-col justify-between ${
-                  sig.isDefault
-                    ? "bg-primary/10 border-primary/30 shadow-sm"
-                    : "bg-muted border-border"
-                }`}
+                className="p-4 rounded-xl border border-border bg-background flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -488,7 +475,7 @@ function PartnerSettingsForm({
                       Chưa có ảnh chữ ký
                     </span>
                   )}
-                  {!sig.isDefault && (
+                  {!sig.isDefault ? (
                     <Button
                       type="button"
                       variant="text"
@@ -498,7 +485,7 @@ function PartnerSettingsForm({
                     >
                       Gỡ bỏ
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -691,7 +678,10 @@ export default function PartnerSettingsPage() {
 
   if (!isPartnerAdmin) {
     return (
-      <div className="max-w-md mx-auto my-16 p-8 bg-destructive/10 border border-destructive/20 rounded-2xl text-center">
+      <Card
+        variant="outlined"
+        className="max-w-md mx-auto my-16 p-8 text-center bg-destructive/10 border-destructive/20"
+      >
         <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
         <p className="text-muted-foreground text-sm">
           Trang này dành riêng cho Quản trị viên Tổ chức.
@@ -699,20 +689,20 @@ export default function PartnerSettingsPage() {
         <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
         </Button>
-      </div>
+      </Card>
     );
   }
 
   if (partners.length === 0 || !activePartner) {
     return (
-      <div className="max-w-2xl mx-auto my-16 p-8 bg-card border border-border rounded-2xl text-center shadow-sm">
+      <Card variant="outlined" className="max-w-2xl mx-auto my-16 p-8 text-center">
         <Building2 aria-hidden="true" className="w-16 h-16 mx-auto text-muted-foreground/60 mb-4" />
         <h2 className="text-xl font-bold text-foreground mb-2">Chưa tìm thấy hồ sơ Đối tác</h2>
         <p className="text-muted-foreground text-sm">
           Tài khoản của bạn chưa gắn liền với thông tin đối tác nào. Vui lòng liên hệ Super Admin để
           khởi tạo hồ sơ đối tác.
         </p>
-      </div>
+      </Card>
     );
   }
 

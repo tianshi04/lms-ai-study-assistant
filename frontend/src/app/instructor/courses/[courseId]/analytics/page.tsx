@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
 import { Users } from "lucide-react";
+import { Card } from "@/components/ui/Card";
 import {
   Table,
   TableHeader,
@@ -101,14 +102,14 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
             <span aria-live="polite">Đang tổng hợp dữ liệu học tập…</span>
           </div>
         ) : !analytics ? (
-          <div className="py-12 text-center bg-card rounded-3xl border border-border text-muted-foreground">
+          <Card variant="outlined" className="py-12 text-center text-muted-foreground">
             Không tìm thấy dữ liệu thống kê cho khóa học này.
-          </div>
+          </Card>
         ) : (
           <div className="space-y-8">
             {/* Stat Cards Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-card p-6 rounded-3xl border border-border shadow-sm space-y-2">
+              <Card variant="elevated" className="space-y-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Tổng Học Viên
                 </span>
@@ -116,9 +117,9 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                   {analytics.totalEnrolledStudents}
                 </div>
                 <p className="text-xs text-muted-foreground">Học viên đã ghi danh</p>
-              </div>
+              </Card>
 
-              <div className="bg-card p-6 rounded-3xl border border-border shadow-sm space-y-2">
+              <Card variant="elevated" className="space-y-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Tỷ Lệ Hoàn Thành
                 </span>
@@ -126,9 +127,9 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                   {analytics.averageCompletionRate}%
                 </div>
                 <p className="text-xs text-muted-foreground">Tiến độ hoàn thành trung bình</p>
-              </div>
+              </Card>
 
-              <div className="bg-card p-6 rounded-3xl border border-border shadow-sm space-y-2">
+              <Card variant="elevated" className="space-y-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Đánh Giá Trung Bình
                 </span>
@@ -139,19 +140,19 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                 <p className="text-xs text-muted-foreground">
                   Dựa trên {analytics.reviewCount} nhận xét
                 </p>
-              </div>
+              </Card>
 
-              <div className="bg-card p-6 rounded-3xl border border-border shadow-sm space-y-2">
+              <Card variant="elevated" className="space-y-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Trạng Thái Khóa Học
                 </span>
                 <div className="text-xl font-bold text-primary pt-1">Đang hoạt động</div>
                 <p className="text-xs text-muted-foreground">Mở ghi danh công khai</p>
-              </div>
+              </Card>
             </div>
 
             {/* Enrolled Students Table */}
-            <div className="bg-card rounded-3xl border border-border shadow-sm space-y-4 p-6">
+            <Card variant="outlined" className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                   <Users className="w-5 h-5 text-success" aria-hidden="true" />
@@ -218,7 +219,7 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                   </TableBody>
                 </Table>
               )}
-            </div>
+            </Card>
           </div>
         )}
       </main>

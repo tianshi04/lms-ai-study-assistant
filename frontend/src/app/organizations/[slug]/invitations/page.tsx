@@ -20,6 +20,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import {
   Table,
@@ -83,7 +84,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
             activeTab="invitations"
             isOwnerOrAdmin={false}
           />
-          <div className="p-12 text-center bg-card border border-border rounded-3xl space-y-4 max-w-xl mx-auto">
+          <Card variant="outlined" className="p-12 text-center space-y-4 max-w-xl mx-auto">
             <div className="w-14 h-14 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
               <ShieldAlert className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -98,7 +99,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
             >
               Quay lại Tổng quan
             </Link>
-          </div>
+          </Card>
         </main>
       </div>
     );
@@ -175,7 +176,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
         />
 
         {/* Invitations Table */}
-        <section className="bg-card border border-border rounded-3xl overflow-hidden shadow-xs">
+        <Card variant="outlined" className="p-0 overflow-hidden">
           <div className="p-6 border-b border-border flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -265,7 +266,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
               </Table>
             </div>
           )}
-        </section>
+        </Card>
 
         {/* Cancel Invitation Confirm Dialog */}
         <AlertDialog

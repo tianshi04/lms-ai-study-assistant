@@ -7,6 +7,7 @@ import { CatalogService, type CourseAnnouncement } from "@/gen/catalog/v1/catalo
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Plus, User } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 
@@ -142,7 +143,7 @@ function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId
 
         {/* Post Announcement Form */}
         {isInstructorOrAdmin && (
-          <div className="bg-card rounded-3xl p-6 sm:p-8 border border-border shadow-sm space-y-4">
+          <Card variant="filled" className="space-y-4">
             <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
               <Plus className="w-5 h-5 text-primary" aria-hidden="true" />
               Tạo Thông báo Mới
@@ -189,7 +190,7 @@ function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId
                 </Button>
               </div>
             </form>
-          </div>
+          </Card>
         )}
 
         {/* Announcements List */}
@@ -204,16 +205,13 @@ function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId
               <span aria-live="polite">Đang tải danh sách thông báo…</span>
             </div>
           ) : announcements.length === 0 ? (
-            <div className="py-12 text-center bg-card rounded-3xl border border-border p-6 text-muted-foreground text-sm">
+            <Card variant="outlined" className="py-12 text-center text-muted-foreground text-sm">
               Chưa có thông báo nào được đăng cho khóa học này.
-            </div>
+            </Card>
           ) : (
             <div className="space-y-4">
               {announcements.map((ann) => (
-                <div
-                  key={ann.id}
-                  className="bg-card rounded-3xl p-6 border border-border shadow-sm space-y-3"
-                >
+                <Card key={ann.id} variant="outlined" className="space-y-3">
                   <div className="flex justify-between items-start gap-4">
                     <h3 className="font-extrabold text-base text-foreground">{ann.title}</h3>
                     <span className="text-[11px] font-mono text-muted-foreground flex-shrink-0">
@@ -233,7 +231,7 @@ function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId
                       Người đăng: <strong>{ann.authorName}</strong>
                     </span>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}

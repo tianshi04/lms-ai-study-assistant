@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { Tabs } from "@/components/ui/Tabs";
 import { Textarea } from "@/components/ui/Textarea";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -194,17 +195,18 @@ export default function CourseReviewerPortalPage() {
             <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
           </div>
         ) : courses.length === 0 ? (
-          <div className="text-center py-16 bg-card rounded-3xl border border-border">
+          <Card variant="outlined" className="text-center py-16">
             <p className="text-muted-foreground text-sm">
               {"Không tìm thấy khóa học nào trong danh mục này."}
             </p>
-          </div>
+          </Card>
         ) : (
           <div className="space-y-4">
             {courses.map((course) => (
-              <div
+              <Card
                 key={course.id}
-                className="bg-card border border-border rounded-3xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
+                variant="outlined"
+                className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6"
               >
                 <div className="space-y-2 max-w-2xl">
                   <div className="flex items-center gap-2">
@@ -263,7 +265,7 @@ export default function CourseReviewerPortalPage() {
                     </>
                   )}
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         )}
