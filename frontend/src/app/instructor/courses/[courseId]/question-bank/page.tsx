@@ -767,6 +767,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                 {qOptions.map((opt, idx) => (
                   <div key={idx} className="flex items-center gap-2">
                     <Checkbox
+                      id={`opt-correct-${idx}`}
                       checked={opt.isCorrect}
                       onCheckedChange={(checked) =>
                         handleOptionCorrectChange(idx, Boolean(checked))

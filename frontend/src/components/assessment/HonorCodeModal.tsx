@@ -91,6 +91,7 @@ export function HonorCodeModal({
 
           <div className="p-3 rounded-xl bg-background border border-border">
             <Checkbox
+              id="honor-code-agreement-checkbox"
               checked={isChecked}
               onCheckedChange={(checked) => setIsChecked(!!checked)}
               label="Tôi xác nhận các đáp án trên và đồng ý tuân thủ Quy tắc Liêm chính Học thuật."

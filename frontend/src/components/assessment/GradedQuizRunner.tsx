@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { Checkbox } from "@/components/ui/Checkbox";
 
 interface QuizSessionQuestionOption {
   optionIndex: number;
@@ -511,21 +512,24 @@ export function GradedQuizRunner({
                           : "bg-card border-border hover:border-primary/50 text-foreground"
                       }`}
                     >
-                      <span
-                        className={`w-5 h-5 ${
-                          isMultipleChoice ? "rounded-md" : "rounded-full"
-                        } flex items-center justify-center text-[10px] font-bold transition-colors ${
-                          isSelected
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {isMultipleChoice && isSelected ? (
-                          <Check aria-hidden="true" className="w-3 h-3 text-primary-foreground" />
-                        ) : (
-                          String.fromCharCode(65 + optIdx)
-                        )}
-                      </span>
+                      {isMultipleChoice ? (
+                        <Checkbox
+                          checked={isSelected}
+                          readOnly
+                          className="pointer-events-none"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <span
+                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${
+                            isSelected
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {String.fromCharCode(65 + optIdx)}
+                        </span>
+                      )}
                       <span className="flex-1">{opt.optionText}</span>
                     </Button>
                   );

@@ -401,20 +401,13 @@ export default function NewCoursePage() {
             </div>
 
             {/* Financial Aid Switch */}
-            <div className="md:col-span-2 p-4 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-between">
-              <div>
-                <span className="text-sm font-bold text-foreground block">
-                  Cho phép Học viên Nộp Đơn Hỗ Trợ Tài Chính (Financial Aid)
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Học viên có hoàn cảnh khó khăn có thể viết bài luận xin cấp học bổng theo học khóa
-                  học này.
-                </span>
-              </div>
+            <div className="md:col-span-2 p-4 rounded-2xl bg-primary/10 border border-primary/20">
               <Checkbox
+                id="financialAidEnabled"
                 checked={financialAidEnabled}
                 onCheckedChange={(checked) => setFinancialAidEnabled(Boolean(checked))}
-                aria-label="Cho phép nộp đơn hỗ trợ tài chính"
+                label="Cho phép Học viên Nộp Đơn Hỗ Trợ Tài Chính (Financial Aid)"
+                helperText="Học viên có hoàn cảnh khó khăn có thể viết bài luận xin cấp học bổng theo học khóa học này."
               />
             </div>
           </div>
