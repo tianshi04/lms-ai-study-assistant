@@ -7,6 +7,7 @@ import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { useUserProfileQuery } from "@/lib/query_hooks";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Avatar } from "@/components/ui/Avatar";
 import { getAvatarDataUri } from "@/lib/avatar";
@@ -92,7 +93,7 @@ export default function AccountSettingsPage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12 w-full flex-1 bg-surface text-on-surface">
-      <div className="rounded-3xl p-6 sm:p-8 bg-surface-container-low border border-outline-variant shadow-xs">
+      <Card variant="elevated" className="p-6 sm:p-8 space-y-8">
         {/* User Banner */}
         <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-outline-variant">
           <Avatar
@@ -156,7 +157,7 @@ export default function AccountSettingsPage() {
               {user?.isIdentityVerified ? (
                 <Button
                   disabled
-                  variant="outline"
+                  variant="outlined"
                   size="sm"
                   className="rounded-full bg-success/10 text-success border-success/20 font-bold cursor-default px-4"
                 >
@@ -166,8 +167,8 @@ export default function AccountSettingsPage() {
               ) : (
                 <Button
                   onClick={handleVerifyIdentity}
-                  isLoading={verifyingIdentity}
-                  variant="primary"
+                  disabled={verifyingIdentity}
+                  variant="filled"
                   size="sm"
                   className="rounded-full px-6 py-2.5 bg-primary hover:bg-primary-hover text-on-primary font-bold shadow-xs hover:shadow-md transition-colors"
                 >
@@ -205,9 +206,8 @@ export default function AccountSettingsPage() {
             />
             <Button
               type="submit"
-              isLoading={savingKey}
-              disabled={!enterpriseKey}
-              variant="primary"
+              disabled={savingKey || !enterpriseKey}
+              variant="filled"
               size="md"
               className="rounded-full px-8 font-bold shadow-xs hover:shadow-md transition-colors"
             >
@@ -215,7 +215,7 @@ export default function AccountSettingsPage() {
             </Button>
           </form>
         </div>
-      </div>
+      </Card>
     </main>
   );
 }

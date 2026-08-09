@@ -10,7 +10,7 @@ import {
 import { useRouter, usePathname } from "next/navigation";
 import { z } from "zod";
 import { Sparkles, X, BotMessageSquare, MessageSquarePlus, ArrowUp } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { AssistantMessageItem } from "@/components/ai/AssistantMessageItem";
@@ -210,28 +210,28 @@ export function AIChatbot() {
               <h3 className="font-bold text-sm text-on-surface tracking-wide">Trợ lý AI</h3>
             </div>
             <div className="flex items-center gap-1">
-              <Button
+              <IconButton
                 type="button"
-                variant="ghost"
-                size="icon"
+                variant="standard"
+                size="xs"
                 onClick={handleNewChat}
                 className="w-8 h-8 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
                 title="Tạo cuộc trò chuyện mới"
                 aria-label="Tạo cuộc trò chuyện mới"
               >
                 <MessageSquarePlus className="w-4 h-4" aria-hidden="true" />
-              </Button>
-              <Button
+              </IconButton>
+              <IconButton
                 type="button"
-                variant="ghost"
-                size="icon"
+                variant="standard"
+                size="xs"
                 onClick={() => setIsOpen(false)}
                 className="w-8 h-8 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
                 title="Đóng Trợ lý AI"
                 aria-label="Đóng Trợ lý AI"
               >
                 <X className="w-4 h-4" aria-hidden="true" />
-              </Button>
+              </IconButton>
             </div>
           </div>
 
@@ -323,9 +323,10 @@ export function AIChatbot() {
                 spellCheck={false}
                 className="flex-1 bg-transparent border-none outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 shadow-none text-xs text-on-surface placeholder:text-on-surface-variant/70 py-1"
               />
-              <Button
+              <IconButton
                 type="submit"
-                size="icon"
+                variant="filled"
+                size="xs"
                 disabled={!inputValue.trim() || agent?.isRunning}
                 className={`w-8 h-8 rounded-full shrink-0 ${
                   !inputValue.trim() || agent?.isRunning
@@ -336,7 +337,7 @@ export function AIChatbot() {
                 aria-label="Gửi tin nhắn"
               >
                 <ArrowUp className="w-4 h-4" aria-hidden="true" />
-              </Button>
+              </IconButton>
             </div>
 
             <p className="text-xs text-center text-on-surface-variant/70">
@@ -349,9 +350,9 @@ export function AIChatbot() {
       {/* Floating Action Circular Button (MD3 Primary FAB) */}
       <div className="relative flex items-center">
         <Tooltip content="Trợ lý AI" side="left">
-          <Button
-            variant="primary"
-            size="icon"
+          <IconButton
+            variant="filled"
+            size="md"
             onClick={() => setIsOpen((prev) => !prev)}
             className="w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-colors duration-m3-short-4 ease-m3-emphasized relative border-none"
             aria-label="Trợ lý AI"
@@ -369,7 +370,7 @@ export function AIChatbot() {
                 <span className="absolute top-1 right-1 w-3.5 h-3.5 bg-success border-2 border-background rounded-full" />
               </>
             )}
-          </Button>
+          </IconButton>
         </Tooltip>
       </div>
     </div>

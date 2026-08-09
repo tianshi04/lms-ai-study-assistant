@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { ItemType, type LearningItem } from "@/gen/catalog/v1/catalog_pb";
-import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 
 interface LearningItemRowProps {
   item: LearningItem;
@@ -103,26 +103,26 @@ export function LearningItemRow({
 
         {isInstructorOrAdmin && (
           <>
-            <Button
-              variant="ghost"
-              size="icon"
+            <IconButton
+              variant="standard"
+              size="xs"
               onClick={() => onEdit(item)}
-              className="h-6 w-6 text-muted-foreground hover:text-primary hover:bg-muted"
+              className="text-muted-foreground hover:text-primary hover:bg-muted"
               title={"Sửa nội dung học liệu"}
               aria-label={"Sửa nội dung học liệu"}
             >
               <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
+            </IconButton>
+            <IconButton
+              variant="standard"
+              size="xs"
               onClick={() => onDelete(item.id, item.title)}
-              className="h-6 w-6 text-destructive hover:bg-destructive/10"
+              className="text-destructive hover:bg-destructive/10"
               title={"Xóa học liệu"}
               aria-label={"Xóa học liệu"}
             >
               <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-            </Button>
+            </IconButton>
           </>
         )}
       </div>

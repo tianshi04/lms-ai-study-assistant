@@ -11,6 +11,7 @@ import {
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Card } from "@/components/ui/Card";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   Select,
@@ -50,7 +51,7 @@ const CategoryList = ({
   noCategoriesText: string;
   deleteText: string;
 }) => (
-  <div className="bg-card rounded-2xl shadow-sm border border-border p-6 flex-1">
+  <Card variant="outlined" className="p-6 flex-1">
     <h3 className="text-xl font-bold mb-4 text-foreground">
       {title} ({items.length})
     </h3>
@@ -68,7 +69,8 @@ const CategoryList = ({
               <p className="text-xs text-muted-foreground">Slug: {item.slug}</p>
             </div>
             <Button
-              variant="danger"
+              variant="outlined"
+              className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
               size="sm"
               onClick={() => handleDelete(item.id, type)}
               title={deleteText}
@@ -79,7 +81,7 @@ const CategoryList = ({
         ))}
       </ul>
     )}
-  </div>
+  </Card>
 );
 
 export default function AdminCategoriesPage() {
@@ -143,13 +145,13 @@ export default function AdminCategoriesPage() {
           <PageHeaderDescription>Quản lý danh mục khóa học</PageHeaderDescription>
         </div>
         <PageHeaderActions>
-          <Button variant="ghost" size="sm" onClick={() => router.push("/admin/dashboard")}>
+          <Button variant="text" size="sm" onClick={() => router.push("/admin/dashboard")}>
             &larr; {"Về trang quản trị"}
           </Button>
         </PageHeaderActions>
       </PageHeader>
 
-      <div className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-8">
+      <Card variant="filled" className="p-6 mb-8">
         <h2 className="text-lg font-semibold mb-4 text-foreground">{"Thêm danh mục mới"}</h2>
         <form onSubmit={handleCreate} className="flex flex-col md:flex-row gap-4 items-end">
           <div className="flex-1 w-full">
@@ -185,13 +187,13 @@ export default function AdminCategoriesPage() {
           </div>
           <Button
             type="submit"
-            isLoading={createCategoryMutation.isPending}
+            disabled={createCategoryMutation.isPending}
             className="w-full md:w-auto"
           >
             Thêm danh mục
           </Button>
         </form>
-      </div>
+      </Card>
 
       <div className="flex flex-col md:flex-row gap-6">
         <CategoryList
@@ -226,13 +228,14 @@ export default function AdminCategoriesPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+            <Button variant="outlined" onClick={() => setDeleteTarget(null)}>
               Hủy
             </Button>
             <Button
-              variant="danger"
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
               onClick={executeDelete}
-              isLoading={deleteCategoryMutation.isPending}
+              disabled={deleteCategoryMutation.isPending}
             >
               Xóa danh mục
             </Button>

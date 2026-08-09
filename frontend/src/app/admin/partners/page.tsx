@@ -11,7 +11,7 @@ import {
   useUpdatePartnerMutation,
   useDeletePartnerMutation,
 } from "@/lib/query_hooks";
-import { Dialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { useToast } from "@/components/ui/Toast";
 import {
@@ -23,6 +23,9 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
+import { Card } from "@/components/ui/Card";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import {
@@ -111,15 +114,18 @@ export default function AdminPartnersPage() {
 
   if (!isAdmin) {
     return (
-      <div className="max-w-md mx-auto my-16 p-8 bg-destructive/10 border border-destructive/30 rounded-2xl text-center">
+      <Card
+        variant="outlined"
+        className="max-w-md mx-auto my-16 p-8 text-center bg-destructive/10 border-destructive/30"
+      >
         <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
         <p className="text-muted-foreground text-sm">
           Bạn cần quyền Super Admin để truy cập trang quản trị đối tác.
         </p>
-        <Button onClick={() => router.push("/")} className="mt-4" variant="outline">
+        <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
         </Button>
-      </div>
+      </Card>
     );
   }
 
@@ -319,7 +325,7 @@ export default function AdminPartnersPage() {
       </div>
 
       {/* Partners List Table */}
-      <div className="mt-8 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+      <Card variant="outlined" className="mt-8 p-0 overflow-hidden">
         {partners.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">
             <Building2
@@ -404,7 +410,7 @@ export default function AdminPartnersPage() {
                   </TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button
-                      variant="outline"
+                      variant="outlined"
                       size="sm"
                       onClick={() => router.push(`/partners/${partner.slug}`)}
                       title="Xem trang công khai"
@@ -412,12 +418,13 @@ export default function AdminPartnersPage() {
                       <Eye className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
                       Xem
                     </Button>
-                    <Button variant="secondary" size="sm" onClick={() => handleOpenEdit(partner)}>
+                    <Button variant="outlined" size="sm" onClick={() => handleOpenEdit(partner)}>
                       <Pencil className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
                       Sửa
                     </Button>
                     <Button
-                      variant="danger"
+                      variant="outlined"
+                      className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
                       size="sm"
                       onClick={() => setDeletingPartnerId(partner.id)}
                     >
@@ -430,7 +437,7 @@ export default function AdminPartnersPage() {
             </TableBody>
           </Table>
         )}
-      </div>
+      </Card>
 
       {/* Modal Thêm/Sửa Đối tác */}
       <Dialog.Root open={isModalOpen} onOpenChange={(open) => setIsModalOpen(open)}>
@@ -564,6 +571,28 @@ export default function AdminPartnersPage() {
                 onChange={(e) => setAllowedDomainsStr(e.target.value)}
                 placeholder="hcmut.edu.vn, vnuhcm.edu.vn"
               />
+              <div className="flex flex-wrap gap-2 pt-2">
+                {allowedDomainsStr
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((domain) => (
+                    <Chip
+                      key={domain}
+                      variant="input"
+                      onRemove={() => {
+                        const updated = allowedDomainsStr
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter((s) => s && s !== domain)
+                          .join(", ");
+                        setAllowedDomainsStr(updated);
+                      }}
+                    >
+                      {domain}
+                    </Chip>
+                  ))}
+              </div>
             </div>
 
             {/* Section: Thông tin Người ký mặc định */}
@@ -657,16 +686,16 @@ export default function AdminPartnersPage() {
                           </span>
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
+                      <IconButton
+                        variant="standard"
+                        size="xs"
                         type="button"
                         onClick={() => handleRemovePartnerAdmin(admin.id)}
                         className="text-destructive hover:bg-destructive/10"
                         aria-label="Gỡ Quản trị viên"
                       >
                         <X className="w-4 h-4" aria-hidden="true" />
-                      </Button>
+                      </IconButton>
                     </div>
                   ))
                 )}
@@ -690,7 +719,7 @@ export default function AdminPartnersPage() {
                 />
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="outlined"
                   size="sm"
                   onClick={handleAddPartnerAdmin}
                   className="sm:col-span-1 text-xs font-semibold"
@@ -720,13 +749,13 @@ export default function AdminPartnersPage() {
             </div>
 
             <Dialog.Footer className="pt-4 border-t border-border">
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+              <Button type="button" variant="outlined" onClick={() => setIsModalOpen(false)}>
                 {"Hủy"}
               </Button>
               <Button
                 type="submit"
                 className="bg-primary hover:bg-primary-hover text-primary-foreground font-medium rounded-xl"
-                isLoading={createMutation.isPending || updateMutation.isPending}
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
                 {editingPartner ? "Cập nhật đối tác" : "Thêm đối tác"}
               </Button>
@@ -749,13 +778,14 @@ export default function AdminPartnersPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setDeletingPartnerId(null)}>
+            <Button variant="outlined" onClick={() => setDeletingPartnerId(null)}>
               Hủy
             </Button>
             <Button
-              variant="danger"
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
               onClick={handleDeleteConfirm}
-              isLoading={deleteMutation.isPending}
+              disabled={deleteMutation.isPending}
             >
               Xoá đối tác
             </Button>

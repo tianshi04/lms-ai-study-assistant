@@ -20,12 +20,12 @@ import {
 } from "@/gen/certificate/v1/certificate_pb";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
-import { Dialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { ProgressBar } from "@/components/ui/Progress";
 
 function FinancialAidContent() {
   const searchParams = useSearchParams();
@@ -202,7 +202,7 @@ function FinancialAidContent() {
                 <Button
                   type="button"
                   key={app.id}
-                  variant="outline"
+                  variant="outlined"
                   onClick={() => setSelectedApp(app)}
                   className={`w-full justify-between h-auto bg-card border rounded-2xl p-5 shadow-xs hover:shadow-md transition-colors cursor-pointer flex flex-col md:flex-row md:items-center text-left gap-4 ${
                     selectedApp?.id === app.id
@@ -235,7 +235,7 @@ function FinancialAidContent() {
                       </Badge>
                     )}
                     {app.status === "REJECTED" && (
-                      <Badge variant="danger" className="flex items-center gap-1.5">
+                      <Badge variant="error" className="flex items-center gap-1.5">
                         <X aria-hidden="true" className="w-3.5 h-3.5 text-destructive" />
                         {"Chưa được duyệt"}
                       </Badge>
@@ -290,7 +290,7 @@ function FinancialAidContent() {
                   </Badge>
                 )}
                 {selectedApp.status === "REJECTED" && (
-                  <Badge variant="danger" className="flex items-center gap-1.5">
+                  <Badge variant="error" className="flex items-center gap-1.5">
                     <X aria-hidden="true" className="w-4 h-4 text-destructive" />
                     {"Chưa được duyệt"}
                   </Badge>
@@ -347,7 +347,7 @@ function FinancialAidContent() {
                 {selectedApp.status === "REJECTED" && (
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="tonal"
                     size="sm"
                     onClick={() => {
                       setSelectedCourseId(selectedApp.courseId);
@@ -413,7 +413,7 @@ function FinancialAidContent() {
                   <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     {"Bài luận giải trình hoàn cảnh & Mục tiêu (Tối thiểu 150 từ)"}
                   </label>
-                  <Badge variant={isEnoughWords ? "success" : "default"}>
+                  <Badge variant={isEnoughWords ? "success" : "secondary"}>
                     {wordCount} / 150 {"từ"}
                   </Badge>
                 </div>
@@ -435,7 +435,7 @@ function FinancialAidContent() {
               <Dialog.Footer className="pt-4 flex justify-end gap-3 border-t border-border">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="outlined"
                   size="sm"
                   onClick={() => {
                     setShowCreateModal(false);
@@ -446,8 +446,9 @@ function FinancialAidContent() {
                 </Button>
                 <Button
                   type="submit"
-                  isLoading={submitting}
-                  disabled={!isEnoughWords || selectedCourse?.financialAidEnabled === false}
+                  disabled={
+                    submitting || !isEnoughWords || selectedCourse?.financialAidEnabled === false
+                  }
                   size="sm"
                 >
                   {selectedCourse?.financialAidEnabled === false

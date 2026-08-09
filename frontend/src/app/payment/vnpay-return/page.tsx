@@ -237,7 +237,6 @@ function VNPayReturnContent() {
                 type="button"
                 onClick={handleRetryPayment}
                 disabled={isRetrying}
-                isLoading={isRetrying}
                 className="flex-1 px-5 py-3 rounded-lg font-medium"
               >
                 <RefreshCw aria-hidden="true" className="w-4 h-4" />

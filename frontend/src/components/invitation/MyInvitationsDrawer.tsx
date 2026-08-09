@@ -21,6 +21,8 @@ import {
   Loader2,
   Inbox,
 } from "lucide-react";
+import { Card } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
 
 interface MyInvitationsDrawerProps {
   isOpen: boolean;
@@ -119,8 +121,9 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                 Đang chờ xử lý ({pendingList.length})
               </h3>
               {pendingList.map((inv) => (
-                <div
+                <Card
                   key={inv.id}
+                  variant="outlined"
                   className="p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-3"
                 >
                   <div className="flex items-start gap-3">
@@ -161,7 +164,7 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="outlined"
                       size="sm"
                       disabled={respondMutation.isPending}
                       onClick={() => handleAction(inv.id, InvitationAction.DECLINE)}
@@ -172,14 +175,14 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                     <Button
                       type="button"
                       size="sm"
-                      isLoading={respondMutation.isPending}
+                      disabled={respondMutation.isPending}
                       onClick={() => handleAction(inv.id, InvitationAction.ACCEPT)}
                       className="w-full"
                     >
                       Chấp nhận
                     </Button>
                   </div>
-                </div>
+                </Card>
               ))}
             </div>
           )}
@@ -201,13 +204,28 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                   </div>
                   <div className="shrink-0 flex items-center gap-1">
                     {inv.status === InvitationStatus.ACCEPTED ? (
-                      <span className="px-2 py-0.5 rounded-full bg-success/10 text-success font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" aria-hidden="true" /> Đã nhận
-                      </span>
+                      <Chip
+                        variant="assist"
+                        className="h-6 text-[10px] bg-success/10 text-success border-success/20 hover:bg-success/15 pointer-events-none cursor-default font-semibold"
+                        leadingIcon={
+                          <CheckCircle2 className="w-3.5 h-3.5 text-success" aria-hidden="true" />
+                        }
+                      >
+                        Đã nhận
+                      </Chip>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-semibold flex items-center gap-1">
-                        <XCircle className="w-3 h-3" aria-hidden="true" /> Từ chối/Hủy
-                      </span>
+                      <Chip
+                        variant="assist"
+                        className="h-6 text-[10px] bg-surface-container-high text-on-surface-variant border-outline-variant hover:bg-surface-container-high pointer-events-none cursor-default font-semibold"
+                        leadingIcon={
+                          <XCircle
+                            className="w-3.5 h-3.5 text-on-surface-variant"
+                            aria-hidden="true"
+                          />
+                        }
+                      >
+                        Từ chối/Hủy
+                      </Chip>
                     )}
                   </div>
                 </div>
@@ -218,7 +236,7 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
 
         {/* Footer */}
         <DrawerFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outlined" onClick={onClose}>
             Đóng
           </Button>
         </DrawerFooter>

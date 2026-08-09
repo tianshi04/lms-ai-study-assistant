@@ -10,7 +10,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/Modal";
+} from "@/components/ui/Dialog";
+
 import { Switch } from "@/components/ui/Switch";
 import {
   useNotificationPreferencesQuery,
@@ -182,7 +183,7 @@ export function NotificationPreferencesModal({
         )}
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outlined" onClick={onClose}>
             Hủy
           </Button>
           <Button

@@ -95,3 +95,11 @@ export function ProgressBar({
     </BaseProgress.Root>
   );
 }
+
+export const Progress = Object.assign(ProgressBar, {
+  Root: ProgressBarRoot,
+  Track: ProgressBarTrack,
+  Indicator: ProgressBarIndicator,
+  Label: ProgressBarLabel,
+  Value: ProgressBarValue,
+});

@@ -16,11 +16,13 @@ import {
   CertificateService,
   type FinancialAidApplication,
 } from "@/gen/certificate/v1/certificate_pb";
-import { Dialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { RatingStars } from "@/components/ui/RatingStars";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
+import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -261,13 +263,15 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 {"Khóa học Chuyên sâu (Specialization)"}
               </div>
               {isInstructorOrAdmin && (
-                <Link
-                  href={`/instructor/courses/${course.id}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-extrabold shadow-md transition-colors cursor-pointer"
-                >
-                  <Pencil aria-hidden="true" className="w-3.5 h-3.5" />
-                  <span>{"Biên soạn Bài giảng (Instructor Builder)"}</span>
-                </Link>
+                <Chip
+                  variant="assist"
+                  leadingIcon={<Pencil aria-hidden="true" className="w-3.5 h-3.5" />}
+                  render={
+                    <Link href={`/instructor/courses/${course.id}`}>
+                      {"Biên soạn Bài giảng (Instructor Builder)"}
+                    </Link>
+                  }
+                />
               )}
               {hasCert && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 border border-success/20 text-success text-xs font-bold">
@@ -310,7 +314,10 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           </div>
 
           {/* Enrollment Card (M3 Elevated & Glassmorphism Container Item 1.3) */}
-          <div className="relative overflow-hidden bg-card/90 backdrop-blur-xl border border-primary/20 p-6 rounded-3xl shadow-xl shadow-primary/5 space-y-6 transition-colors hover:border-primary/30">
+          <Card
+            variant="elevated"
+            className="relative overflow-hidden border border-primary/20 backdrop-blur-xl p-6 rounded-3xl space-y-6 transition-colors hover:border-primary/30"
+          >
             {/* M3 Top Gradient Accent Bar */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-primary/80 to-accent" />
 
@@ -373,7 +380,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </Link>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="outlined"
                   onClick={() => setIsPaymentModalOpen(true)}
                   className="w-full py-3 px-6 rounded-full bg-primary/10 hover:bg-primary/20 border-primary/30 text-primary font-semibold text-sm justify-center gap-2"
                 >
@@ -397,7 +404,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   <CircleDollarSign aria-hidden="true" className="w-4 h-4 text-success" />
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="text"
                     size="sm"
                     onClick={handleOpenFinAidModal}
                     disabled={checkingFinAidStatus}
@@ -411,7 +418,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </li>
               )}
             </ul>
-          </div>
+          </Card>
         </div>
       </div>
 
@@ -537,7 +544,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 >
                   <Button
                     type="button"
-                    variant="primary"
+                    variant="filled"
                     size="sm"
                     disabled={isAuthenticated && !canReview}
                     onClick={() => {
@@ -578,7 +585,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {reviews.map((rev) => (
-                <Card key={rev.id} className="rounded-2xl shadow-sm space-y-3 p-6">
+                <Card key={rev.id} variant="outlined" className="rounded-2xl space-y-3 p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar name={rev.userName || "Học viên LMS"} size="md" />
@@ -588,19 +595,9 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                             {rev.userName || "Học viên LMS"}
                           </h4>
                           {rev.isVerifiedCompleter ? (
-                            <Badge
-                              variant="success"
-                              className="px-1.5 py-0.5 text-[10px] font-bold"
-                            >
-                              ✓ Verified Completer
-                            </Badge>
+                            <Badge variant="success">✓</Badge>
                           ) : (
-                            <Badge
-                              variant="outline"
-                              className="px-1.5 py-0.5 text-[10px] font-bold bg-muted text-muted-foreground"
-                            >
-                              Active Learner Review
-                            </Badge>
+                            <Badge variant="outlined">HỌC</Badge>
                           )}
                         </div>
                         <span className="text-[11px] text-muted-foreground">
@@ -651,17 +648,16 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               </label>
               <div className="flex items-center gap-1.5 justify-center py-2">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Button
+                  <IconButton
                     key={star}
                     type="button"
-                    variant="ghost"
-                    size="icon"
+                    variant="standard"
+                    size="sm"
                     disabled={!canReview}
                     onClick={() => setRating(star)}
                     onMouseEnter={() => setHoverRating(star)}
                     onMouseLeave={() => setHoverRating(0)}
                     aria-label={`Đánh giá ${star} sao`}
-                    className="h-8 w-8 p-1"
                   >
                     <Star
                       aria-hidden="true"
@@ -671,7 +667,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                           : "text-muted-foreground/40 fill-none"
                       }`}
                     />
-                  </Button>
+                  </IconButton>
                 ))}
               </div>
             </div>
@@ -701,7 +697,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
             <Dialog.Footer className="pt-2">
               <Button
                 type="button"
-                variant="ghost"
+                variant="text"
                 size="sm"
                 onClick={() => setIsReviewModalOpen(false)}
                 className="text-xs text-muted-foreground"
@@ -710,10 +706,9 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               </Button>
               <Button
                 type="submit"
-                variant="primary"
+                variant="filled"
                 size="sm"
-                disabled={submittingReview || !canReview}
-                isLoading={submittingReview}
+                disabled={submittingReview || !canReview || submittingReview}
                 className="text-xs shadow-sm"
               >
                 {"Gửi đánh giá"}
@@ -784,7 +779,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <div className="pt-4 border-t border-border flex items-center justify-between gap-3">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="outlined"
                   size="sm"
                   onClick={() => setExistingFinAidStatus(null)}
                   className="rounded-xl text-xs font-semibold"
@@ -860,7 +855,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 <div className="flex gap-3">
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="text"
                     size="sm"
                     onClick={() => setIsFinAidModalOpen(false)}
                     className="rounded-xl text-xs font-semibold"
@@ -869,10 +864,9 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   </Button>
                   <Button
                     type="submit"
-                    variant="primary"
+                    variant="filled"
                     size="sm"
-                    disabled={submittingFinAid || !isFinAidEnoughWords}
-                    isLoading={submittingFinAid}
+                    disabled={submittingFinAid || !isFinAidEnoughWords || submittingFinAid}
                     className="rounded-xl text-xs font-bold shadow-lg"
                   >
                     {"Gửi đơn xin Hỗ trợ"}

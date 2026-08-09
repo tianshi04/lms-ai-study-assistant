@@ -6,6 +6,8 @@ import Image from "next/image";
 import { UserRole } from "@/gen/identity/v1/identity_pb";
 import { useUserProfileQuery, useUpdateInstructorProfileMutation } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Avatar } from "@/components/ui/Avatar";
 
@@ -59,15 +61,18 @@ export default function InstructorProfilePage() {
 
   if (!isInstructorOrTA) {
     return (
-      <div className="max-w-md mx-auto my-16 p-8 bg-destructive/10 border border-destructive/30 rounded-2xl text-center">
+      <Card
+        variant="outlined"
+        className="max-w-md mx-auto my-16 p-8 text-center bg-destructive/10 border-destructive/30"
+      >
         <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
         <p className="text-muted-foreground text-sm">
           Trang này chỉ dành cho Giảng viên (Instructor) thiết lập hồ sơ và chữ ký tay điện tử.
         </p>
-        <Button onClick={() => router.push("/")} className="mt-4" variant="outline">
+        <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
         </Button>
-      </div>
+      </Card>
     );
   }
 
@@ -137,23 +142,23 @@ export default function InstructorProfilePage() {
             )}
             <span>{statusMessage.text}</span>
           </div>
-          <Button
+          <IconButton
             type="button"
-            variant="ghost"
-            size="icon"
+            variant="standard"
+            size="xs"
             onClick={() => setStatusMessage(null)}
             aria-label="Đóng thông báo"
-            className="h-6 w-6 opacity-70 hover:opacity-100"
+            className="opacity-70 hover:opacity-100"
           >
             <X className="w-4 h-4" aria-hidden="true" />
-          </Button>
+          </IconButton>
         </div>
       )}
 
       {/* Main Profile Form */}
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
         {/* User General Info Card (Read-only) */}
-        <div className="bg-card rounded-2xl p-6 border border-border shadow-sm flex items-center space-x-5">
+        <Card variant="outlined" className="p-6 flex items-center space-x-5">
           <Avatar
             name={userProfile?.fullName || "Giảng viên"}
             src={userProfile?.avatarUrl}
@@ -166,10 +171,10 @@ export default function InstructorProfilePage() {
               {userProfile?.role === UserRole.INSTRUCTOR ? "Giảng viên" : "Quản trị viên / Nhân sự"}
             </span>
           </div>
-        </div>
+        </Card>
 
         {/* Academic Title & Signature Form */}
-        <div className="bg-card rounded-2xl p-6 sm:p-8 border border-border shadow-sm space-y-6">
+        <Card variant="filled" className="p-6 sm:p-8 space-y-6">
           <div>
             <label
               htmlFor="academicTitle"
@@ -212,7 +217,7 @@ export default function InstructorProfilePage() {
 
           {/* Signature Preview Card */}
           {signatureImageUrl && (
-            <div className="p-4 bg-muted rounded-2xl border border-border">
+            <Card variant="outlined" className="p-4 bg-muted space-y-3">
               <p className="text-xs font-semibold uppercase text-muted-foreground mb-3 tracking-wider">
                 Xem trước Chữ ký hiển thị trên Giấy chứng nhận:
               </p>
@@ -234,15 +239,15 @@ export default function InstructorProfilePage() {
                   <p className="text-xs text-muted-foreground">Giảng viên Xác nhận</p>
                 </div>
               </div>
-            </div>
+            </Card>
           )}
-        </div>
+        </Card>
 
         {/* Submit Actions */}
         <div className="flex items-center justify-end space-x-4 pt-2">
           <Button
             type="submit"
-            isLoading={updateMutation.isPending}
+            disabled={updateMutation.isPending}
             className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-xl px-6 py-3 text-sm shadow-md flex items-center gap-2"
           >
             <Check className="w-4 h-4" aria-hidden="true" />

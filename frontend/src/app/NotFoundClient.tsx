@@ -17,7 +17,7 @@ export function NotFoundClient() {
           {/* Badge */}
           <div className="flex justify-center">
             <Badge
-              variant="outline"
+              variant="outlined"
               className="px-3.5 py-1 text-xs font-semibold uppercase tracking-wider gap-2"
             >
               <span className="w-2 h-2 rounded-full bg-info animate-pulse" aria-hidden="true" />
@@ -59,18 +59,19 @@ export function NotFoundClient() {
           {/* Action Buttons */}
           <div className="space-y-4 pt-2">
             <div className="flex flex-wrap items-center justify-center gap-3">
-              <Button id="btn-notfound-home" asChild size="lg" variant="primary">
-                <Link href="/">
-                  <Home className="w-4.5 h-4.5 mr-2" aria-hidden="true" />
-                  <span>Về trang chủ</span>
-                </Link>
+              <Button id="btn-notfound-home" render={<Link href="/" />} size="lg" variant="filled">
+                <Home className="w-4.5 h-4.5 mr-2" aria-hidden="true" />
+                <span>Về trang chủ</span>
               </Button>
 
-              <Button id="btn-notfound-catalog" asChild variant="outline" size="lg">
-                <Link href="/courses">
-                  <BookOpen className="w-4.5 h-4.5 text-primary mr-2" aria-hidden="true" />
-                  <span>Khám phá khóa học</span>
-                </Link>
+              <Button
+                id="btn-notfound-catalog"
+                render={<Link href="/courses" />}
+                variant="outlined"
+                size="lg"
+              >
+                <BookOpen className="w-4.5 h-4.5 text-primary mr-2" aria-hidden="true" />
+                <span>Khám phá khóa học</span>
               </Button>
             </div>
 
@@ -78,11 +79,11 @@ export function NotFoundClient() {
               <Button
                 id="btn-notfound-goback"
                 type="button"
-                variant="ghost"
+                variant="text"
                 size="sm"
+                leadingIcon={<ArrowLeft className="w-4 h-4" aria-hidden="true" />}
                 onClick={() => router.back()}
               >
-                <ArrowLeft className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 <span>Quay lại trang trước</span>
               </Button>
             </div>

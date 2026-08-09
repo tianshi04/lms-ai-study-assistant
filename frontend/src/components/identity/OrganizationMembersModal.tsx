@@ -7,7 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/Modal";
+} from "@/components/ui/Dialog";
+
 import {
   AlertDialog,
   AlertDialogContent,
@@ -17,6 +18,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import {
@@ -167,9 +169,9 @@ export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> =
                 <div className="sm:col-span-3">
                   <Button
                     type="submit"
-                    variant="primary"
+                    variant="filled"
                     className="w-full"
-                    isLoading={addMemberMutation.isPending}
+                    disabled={addMemberMutation.isPending}
                   >
                     Mời Giảng viên
                   </Button>
@@ -235,18 +237,18 @@ export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> =
                         </div>
                       </div>
 
-                      <Button
-                        variant="ghost"
+                      <IconButton
+                        variant="standard"
                         size="sm"
                         onClick={() =>
                           handleRemoveMember(member.userId, member.fullName || member.email)
                         }
-                        isLoading={removeMemberMutation.isPending}
+                        disabled={removeMemberMutation.isPending}
                         aria-label={`Xóa thành viên ${member.fullName || member.email}`}
                         className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                       >
                         <Trash2 className="w-4 h-4" aria-hidden="true" />
-                      </Button>
+                      </IconButton>
                     </div>
                   ))}
                 </div>
@@ -272,13 +274,14 @@ export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> =
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setRemovingMember(null)}>
+            <Button variant="outlined" onClick={() => setRemovingMember(null)}>
               Hủy
             </Button>
             <Button
-              variant="danger"
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
               onClick={executeRemoveMember}
-              isLoading={removeMemberMutation.isPending}
+              disabled={removeMemberMutation.isPending}
             >
               Xóa thành viên
             </Button>

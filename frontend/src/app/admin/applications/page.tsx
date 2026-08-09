@@ -12,7 +12,10 @@ import {
 } from "@/gen/identity/v1/identity_pb";
 import { FileText, ExternalLink, PlayCircle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
+import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
+import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import {
   AlertDialog,
@@ -102,8 +105,8 @@ export default function AdminInstructorApplicationsPage() {
           </div>
 
           <PageHeaderActions>
-            <Button variant="outline" asChild>
-              <Link href="/admin/dashboard">Về Dashboard</Link>
+            <Button variant="outlined" render={<Link href="/admin/dashboard" />}>
+              Về Dashboard
             </Button>
           </PageHeaderActions>
         </PageHeader>
@@ -114,16 +117,16 @@ export default function AdminInstructorApplicationsPage() {
             className="p-4 rounded-2xl bg-success/10 border border-success/30 text-success text-sm font-bold flex items-center justify-between"
           >
             <span>{actionSuccessMsg}</span>
-            <Button
-              variant="ghost"
-              size="icon"
+            <IconButton
+              variant="standard"
+              size="xs"
               type="button"
               onClick={() => setActionSuccessMsg("")}
               aria-label="Đóng thông báo"
-              className="text-success hover:text-success h-6 w-6"
+              className="text-success hover:text-success"
             >
               <X className="w-4 h-4" aria-hidden="true" />
-            </Button>
+            </IconButton>
           </div>
         )}
 
@@ -135,27 +138,27 @@ export default function AdminInstructorApplicationsPage() {
             { label: "Đã phê duyệt", value: "APPROVED" },
             { label: "Đã từ chối", value: "REJECTED" },
           ].map((tab) => (
-            <Button
+            <Chip
               key={tab.value}
-              variant={statusFilter === tab.value ? "primary" : "outline"}
-              size="sm"
+              variant="filter"
+              selected={statusFilter === tab.value}
               onClick={() => setStatusFilter(tab.value)}
             >
               {tab.label}
-            </Button>
+            </Chip>
           ))}
         </div>
 
         {/* Content List */}
         {isLoading ? (
-          <div className="bg-card rounded-3xl p-12 text-center border border-border shadow-sm">
+          <Card variant="outlined" className="p-12 text-center">
             <div className="inline-block animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-3" />
             <p aria-live="polite" className="text-muted-foreground text-sm font-medium">
               Đang tải danh sách đơn thẩm định…
             </p>
-          </div>
+          </Card>
         ) : applications.length === 0 ? (
-          <div className="bg-card rounded-3xl p-12 text-center border border-border shadow-sm space-y-3">
+          <Card variant="outlined" className="p-12 text-center space-y-3">
             <div className="w-12 h-12 bg-muted text-muted-foreground rounded-2xl flex items-center justify-center mx-auto">
               <FileText className="w-6 h-6" aria-hidden="true" />
             </div>
@@ -163,7 +166,7 @@ export default function AdminInstructorApplicationsPage() {
             <p className="text-muted-foreground text-sm max-w-sm mx-auto">
               Hiện tại chưa có đơn xin cấp quyền Giảng viên cá nhân nào phù hợp với bộ lọc đã chọn.
             </p>
-          </div>
+          </Card>
         ) : (
           <div className="space-y-6">
             {applications.map((app: InstructorApplication) => {
@@ -172,10 +175,7 @@ export default function AdminInstructorApplicationsPage() {
               const isRejected = app.status === InstructorApplicationStatus.REJECTED;
 
               return (
-                <div
-                  key={app.id}
-                  className="bg-card rounded-3xl p-6 sm:p-8 border border-border space-y-6"
-                >
+                <Card key={app.id} variant="outlined" className="p-6 sm:p-8 space-y-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
                     <div>
                       <div className="flex items-center gap-3">
@@ -223,39 +223,60 @@ export default function AdminInstructorApplicationsPage() {
                     </div>
 
                     {/* External Links */}
-                    <div className="flex flex-wrap gap-4 pt-2">
+                    <div className="flex flex-wrap gap-3 pt-2">
                       {app.linkedinUrl && (
-                        <a
-                          href={app.linkedinUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-info/10 text-info border border-info/20 text-xs font-semibold hover:bg-info/20 transition-colors"
+                        <Chip
+                          variant="assist"
+                          leadingIcon={<ExternalLink className="w-4 h-4" aria-hidden="true" />}
+                          render={
+                            <a
+                              href={app.linkedinUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label="Xem LinkedIn/Portfolio"
+                            >
+                              Xem LinkedIn/Portfolio
+                            </a>
+                          }
                         >
-                          <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                          <span>Xem LinkedIn/Portfolio</span>
-                        </a>
+                          Xem LinkedIn/Portfolio
+                        </Chip>
                       )}
                       {app.cvUrl && (
-                        <a
-                          href={app.cvUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-muted text-foreground border border-border text-xs font-semibold hover:bg-muted/80 transition-colors"
+                        <Chip
+                          variant="assist"
+                          leadingIcon={<FileText className="w-4 h-4" aria-hidden="true" />}
+                          render={
+                            <a
+                              href={app.cvUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label="Xem Hồ sơ CV (.pdf)"
+                            >
+                              Xem Hồ sơ CV (.pdf)
+                            </a>
+                          }
                         >
-                          <FileText className="w-4 h-4 text-destructive" aria-hidden="true" />
-                          <span>Xem Hồ sơ CV (.pdf)</span>
-                        </a>
+                          Xem Hồ sơ CV (.pdf)
+                        </Chip>
                       )}
                       {app.demoVideoUrl && (
-                        <a
-                          href={app.demoVideoUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors"
+                        <Chip
+                          variant="assist"
+                          leadingIcon={<PlayCircle className="w-4 h-4" aria-hidden="true" />}
+                          render={
+                            <a
+                              href={app.demoVideoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label="Xem Video Giảng Thử Demo"
+                            >
+                              Xem Video Giảng Thử Demo
+                            </a>
+                          }
                         >
-                          <PlayCircle className="w-4 h-4 text-destructive" aria-hidden="true" />
-                          <span>Xem Video Giảng Thử Demo</span>
-                        </a>
+                          Xem Video Giảng Thử Demo
+                        </Chip>
                       )}
                     </div>
 
@@ -282,7 +303,7 @@ export default function AdminInstructorApplicationsPage() {
                           <div className="flex items-center justify-end gap-2">
                             <Button
                               type="button"
-                              variant="secondary"
+                              variant="outlined"
                               size="sm"
                               onClick={() => setRejectingAppId(null)}
                             >
@@ -290,10 +311,11 @@ export default function AdminInstructorApplicationsPage() {
                             </Button>
                             <Button
                               type="button"
-                              variant="danger"
+                              variant="outlined"
+                              className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
                               size="sm"
                               onClick={handleConfirmReject}
-                              isLoading={reviewMutation.isPending}
+                              disabled={reviewMutation.isPending}
                             >
                               Xác nhận Từ chối
                             </Button>
@@ -303,7 +325,8 @@ export default function AdminInstructorApplicationsPage() {
                         <>
                           <Button
                             type="button"
-                            variant="danger"
+                            variant="outlined"
+                            className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
                             size="sm"
                             onClick={() => setRejectingAppId(app.id)}
                             disabled={reviewMutation.isPending}
@@ -312,10 +335,10 @@ export default function AdminInstructorApplicationsPage() {
                           </Button>
                           <Button
                             type="button"
-                            variant="primary"
+                            variant="filled"
                             size="sm"
                             onClick={() => handleApprove(app.id)}
-                            isLoading={reviewMutation.isPending}
+                            disabled={reviewMutation.isPending}
                           >
                             <Check className="w-4 h-4 mr-1.5" aria-hidden="true" />
                             <span>Phê Duyệt & Nâng Role Giảng Viên</span>
@@ -324,7 +347,7 @@ export default function AdminInstructorApplicationsPage() {
                       )}
                     </div>
                   )}
-                </div>
+                </Card>
               );
             })}
           </div>
@@ -346,10 +369,10 @@ export default function AdminInstructorApplicationsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <Button variant="outline" onClick={() => setApprovingAppId(null)}>
+            <Button variant="outlined" onClick={() => setApprovingAppId(null)}>
               Hủy
             </Button>
-            <Button variant="primary" onClick={executeApprove} isLoading={reviewMutation.isPending}>
+            <Button variant="filled" onClick={executeApprove} disabled={reviewMutation.isPending}>
               Phê Duyệt
             </Button>
           </AlertDialogFooter>

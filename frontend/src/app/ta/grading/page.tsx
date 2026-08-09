@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { useToast } from "@/components/ui/Toast";
-import { Dialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -168,7 +168,7 @@ export default function TAGradingPage() {
             ].map((tab) => (
               <Button
                 key={tab.id}
-                variant={filterStatus === tab.id ? "primary" : "secondary"}
+                variant={filterStatus === tab.id ? "filled" : "tonal"}
                 size="sm"
                 onClick={() => setFilterStatus(tab.id as typeof filterStatus)}
               >
@@ -249,11 +249,7 @@ export default function TAGradingPage() {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => handleOpenGradeModal(sub)}
-                      >
+                      <Button size="sm" variant="tonal" onClick={() => handleOpenGradeModal(sub)}>
                         {sub.status === "GRADED" ? "Xem & Sửa điểm" : "Chấm điểm ngay"}
                       </Button>
                     </TableCell>
@@ -338,13 +334,13 @@ export default function TAGradingPage() {
                 <Dialog.Footer className="pt-2">
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="tonal"
                     size="sm"
                     onClick={() => setSelectedSubmission(null)}
                   >
                     {"Hủy"}
                   </Button>
-                  <Button type="submit" isLoading={submitting} size="sm">
+                  <Button type="submit" disabled={submitting} size="sm">
                     {"Lưu & Xác Nhận Điểm Trợ Giảng"}
                   </Button>
                 </Dialog.Footer>

@@ -10,7 +10,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/Modal";
+} from "@/components/ui/Dialog";
+
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { AlertTriangle, Send } from "lucide-react";
@@ -90,6 +91,7 @@ export function HonorCodeModal({
 
           <div className="p-3 rounded-xl bg-background border border-border">
             <Checkbox
+              id="honor-code-agreement-checkbox"
               checked={isChecked}
               onCheckedChange={(checked) => setIsChecked(!!checked)}
               label="Tôi xác nhận các đáp án trên và đồng ý tuân thủ Quy tắc Liêm chính Học thuật."
@@ -104,14 +106,13 @@ export function HonorCodeModal({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+          <Button variant="outlined" onClick={onClose} disabled={isSubmitting}>
             Hủy / Kiểm tra lại
           </Button>
           <Button
-            variant="primary"
+            variant="filled"
             onClick={handleSubmit}
-            disabled={!isChecked || isSubmitting}
-            isLoading={isSubmitting}
+            disabled={!isChecked || isSubmitting || isSubmitting}
           >
             {isSubmitting ? "Đang chấm điểm…" : "Đồng ý & Nộp bài ngay"}
             {!isSubmitting && <Send aria-hidden="true" className="w-3.5 h-3.5 ml-1.5" />}

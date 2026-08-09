@@ -57,3 +57,23 @@ export function DropdownMenuItem({
     />
   );
 }
+
+export const MenuRoot = BaseMenu.Root;
+export const MenuTrigger = BaseMenu.Trigger;
+export const MenuPortal = BaseMenu.Portal;
+export const MenuPositioner = BaseMenu.Positioner;
+export const MenuContent = DropdownMenuContent;
+export const MenuItem = DropdownMenuItem;
+export const MenuSeparator = BaseMenu.Separator;
+export const MenuGroup = BaseMenu.Group;
+
+export const Menu = Object.assign(MenuRoot, {
+  Root: MenuRoot,
+  Trigger: MenuTrigger,
+  Portal: MenuPortal,
+  Positioner: MenuPositioner,
+  Content: MenuContent,
+  Item: MenuItem,
+  Separator: MenuSeparator,
+  Group: MenuGroup,
+});

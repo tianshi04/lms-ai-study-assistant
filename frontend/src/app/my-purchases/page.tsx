@@ -23,6 +23,9 @@ import {
 } from "@/lib/query_hooks";
 import { PaymentOrderStatus, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
+import { Card } from "@/components/ui/Card";
+import { IconButton } from "@/components/ui/IconButton";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -269,7 +272,7 @@ function MyPurchasesContent() {
         </div>
         <Button
           type="button"
-          variant="outline"
+          variant="outlined"
           onClick={handleRefresh}
           disabled={isFetching}
           className="shrink-0 self-start md:self-auto"
@@ -314,19 +317,24 @@ function MyPurchasesContent() {
               </p>
             </div>
           </div>
-          <button
+          <IconButton
             type="button"
+            variant="standard"
+            size="xs"
             onClick={() => setActionNotice(null)}
-            className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors cursor-pointer shrink-0"
             aria-label="Đóng thông báo"
+            className="shrink-0 text-muted-foreground hover:text-foreground"
           >
             <span className="text-lg leading-none">✕</span>
-          </button>
+          </IconButton>
         </div>
       )}
 
       {/* Coursera Plus Hero Banner Card */}
-      <div className="mb-8 p-6 rounded-3xl bg-primary-container/20 border border-primary/20 shadow-xs relative overflow-hidden">
+      <Card
+        variant="elevated"
+        className="mb-8 p-6 relative overflow-hidden bg-primary-container/20 border-primary/20"
+      >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
           <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-2.5">
@@ -368,9 +376,9 @@ function MyPurchasesContent() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
             <Button
               type="button"
-              variant="outline"
+              variant="outlined"
               onClick={() => handleSubscribePlus(PlanType.MONTHLY)}
-              isLoading={createVNPayMutation.isPending}
+              disabled={createVNPayMutation.isPending}
               className="gap-2 px-5 py-3 rounded-xl font-bold text-sm h-auto"
             >
               <CreditCard className="w-4 h-4" aria-hidden="true" />
@@ -379,9 +387,9 @@ function MyPurchasesContent() {
 
             <Button
               type="button"
-              variant="primary"
+              variant="filled"
               onClick={() => handleSubscribePlus(PlanType.YEARLY)}
-              isLoading={createVNPayMutation.isPending}
+              disabled={createVNPayMutation.isPending}
               className="gap-2 px-5 py-3 rounded-xl font-bold text-sm h-auto"
             >
               <Sparkles className="w-4 h-4" aria-hidden="true" />
@@ -389,11 +397,11 @@ function MyPurchasesContent() {
             </Button>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="bg-card border border-border rounded-2xl p-5 shadow-xs flex items-center gap-4">
+        <Card variant="elevated" className="p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <Receipt className="w-6 h-6" aria-hidden="true" />
           </div>
@@ -403,9 +411,9 @@ function MyPurchasesContent() {
             </p>
             <p className="text-2xl font-bold text-foreground mt-0.5">{totalOrders}</p>
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-card border border-border rounded-2xl p-5 shadow-xs flex items-center gap-4">
+        <Card variant="elevated" className="p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-success/15 text-success flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-6 h-6" aria-hidden="true" />
           </div>
@@ -418,9 +426,9 @@ function MyPurchasesContent() {
               <span className="text-xs font-normal text-muted-foreground">{"giao dịch"}</span>
             </p>
           </div>
-        </div>
+        </Card>
 
-        <div className="bg-card border border-border rounded-2xl p-5 shadow-xs flex items-center gap-4">
+        <Card variant="elevated" className="p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <CreditCard className="w-6 h-6" aria-hidden="true" />
           </div>
@@ -430,68 +438,41 @@ function MyPurchasesContent() {
             </p>
             <p className="text-2xl font-bold text-primary mt-0.5">{formatVnd(totalSpent)}</p>
           </div>
-        </div>
+        </Card>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-border mb-6 overflow-x-auto pb-1">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => setActiveTab("ALL")}
-          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
-            activeTab === "ALL"
-              ? "border-primary text-primary bg-primary/5"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {`Tất cả đơn hàng (${totalOrders})`}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => setActiveTab("COMPLETED")}
-          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
-            activeTab === "COMPLETED"
-              ? "border-success text-success bg-success/5"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {`Đã mở khóa (${completedCount})`}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => setActiveTab("PENDING")}
-          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
-            activeTab === "PENDING"
-              ? "border-warning text-warning bg-warning/5"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {`Đang chờ thanh toán (${
-            orders.filter((o: any) => o.status === PaymentOrderStatus.PENDING).length
-          })`}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => setActiveTab("EXPIRED")}
-          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
-            activeTab === "EXPIRED"
-              ? "border-muted-foreground text-foreground bg-muted/50"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {`Đã hết hạn / Hủy (${
-            orders.filter(
-              (o: any) =>
-                o.status === PaymentOrderStatus.EXPIRED ||
-                o.status === PaymentOrderStatus.FAILED ||
-                o.status === PaymentOrderStatus.CANCELLED,
-            ).length
-          })`}
-        </Button>
+      {/* Filter Chips */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border mb-6">
+        {[
+          { label: `Tất cả đơn hàng (${totalOrders})`, value: "ALL" },
+          { label: `Đã mở khóa (${completedCount})`, value: "COMPLETED" },
+          {
+            label: `Đang chờ thanh toán (${
+              orders.filter((o: any) => o.status === PaymentOrderStatus.PENDING).length
+            })`,
+            value: "PENDING",
+          },
+          {
+            label: `Đã hết hạn / Hủy (${
+              orders.filter(
+                (o: any) =>
+                  o.status === PaymentOrderStatus.EXPIRED ||
+                  o.status === PaymentOrderStatus.FAILED ||
+                  o.status === PaymentOrderStatus.CANCELLED,
+              ).length
+            })`,
+            value: "EXPIRED",
+          },
+        ].map((tab) => (
+          <Chip
+            key={tab.value}
+            variant="filter"
+            selected={activeTab === tab.value}
+            onClick={() => setActiveTab(tab.value as FilterTab)}
+          >
+            {tab.label}
+          </Chip>
+        ))}
       </div>
 
       {/* Orders List */}
@@ -505,7 +486,7 @@ function MyPurchasesContent() {
           ))}
         </div>
       ) : filteredOrders.length === 0 ? (
-        <div className="bg-card border border-border rounded-3xl p-12 text-center max-w-xl mx-auto shadow-xs my-8">
+        <Card variant="outlined" className="p-12 text-center max-w-xl mx-auto my-8">
           <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-5">
             <ShoppingBag className="w-8 h-8" aria-hidden="true" />
           </div>
@@ -530,7 +511,7 @@ function MyPurchasesContent() {
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </Link>
           </div>
-        </div>
+        </Card>
       ) : (
         <div className="space-y-4">
           {filteredOrders.map((order: any) => {
@@ -541,9 +522,10 @@ function MyPurchasesContent() {
             const isCancelled = order.status === PaymentOrderStatus.CANCELLED;
 
             return (
-              <div
+              <Card
                 key={order.id}
-                className="bg-card border border-border rounded-2xl p-6 shadow-xs hover:border-primary/40 transition-all flex flex-col md:flex-row md:items-center justify-between gap-6"
+                variant="outlined"
+                className="p-6 hover:border-primary/40 flex flex-col md:flex-row md:items-center justify-between gap-6"
               >
                 <div className="space-y-2 flex-1">
                   <div className="flex flex-wrap items-center gap-3">
@@ -636,10 +618,13 @@ function MyPurchasesContent() {
                     <div className="flex items-center gap-2">
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="outlined"
                         onClick={() => handleCancelOrder(order)}
-                        disabled={cancelVNPayMutation.isPending || createVNPayMutation.isPending}
-                        isLoading={cancelVNPayMutation.isPending}
+                        disabled={
+                          cancelVNPayMutation.isPending ||
+                          createVNPayMutation.isPending ||
+                          cancelVNPayMutation.isPending
+                        }
                         className="px-4 py-2.5 rounded-xl text-xs font-semibold text-destructive hover:bg-destructive/10 hover:border-destructive/30"
                       >
                         <span>{"Hủy đơn"}</span>
@@ -647,8 +632,11 @@ function MyPurchasesContent() {
                       <Button
                         type="button"
                         onClick={() => handleContinuePayment(order)}
-                        disabled={createVNPayMutation.isPending || cancelVNPayMutation.isPending}
-                        isLoading={createVNPayMutation.isPending}
+                        disabled={
+                          createVNPayMutation.isPending ||
+                          cancelVNPayMutation.isPending ||
+                          createVNPayMutation.isPending
+                        }
                         className="px-5 py-2.5 rounded-xl bg-warning hover:bg-warning/90 text-warning-foreground text-sm font-semibold"
                       >
                         <CreditCard className="w-4 h-4" aria-hidden="true" />
@@ -657,7 +645,7 @@ function MyPurchasesContent() {
                     </div>
                   )}
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -695,14 +683,15 @@ function MyPurchasesContent() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <Button
-              variant="outline"
+              variant="outlined"
               onClick={() => setOrderToCancel(null)}
               disabled={cancelVNPayMutation.isPending}
             >
               Quay lại
             </Button>
             <Button
-              variant="danger"
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
               onClick={confirmCancelOrder}
               disabled={cancelVNPayMutation.isPending}
             >

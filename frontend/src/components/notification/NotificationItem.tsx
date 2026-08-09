@@ -6,6 +6,9 @@ import type { NotificationItem as NotificationItemType } from "@/gen/notificatio
 import { NotificationCategory } from "@/gen/notification/v1/notification_pb";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
 
 interface NotificationItemProps {
   item: NotificationItemType;
@@ -67,7 +70,8 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
   };
 
   return (
-    <div
+    <Card
+      variant="filled"
       className={cn(
         "relative p-3.5 rounded-2xl transition-colors duration-m3-short-4 ease-m3-emphasized",
         item.isRead
@@ -76,9 +80,7 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
       )}
     >
       {/* Unread Indicator Pulse Dot */}
-      {!item.isRead && (
-        <span className="absolute top-3.5 right-3.5 w-2 h-2 rounded-full bg-primary animate-pulse" />
-      )}
+      {!item.isRead && <Badge dot variant="error" className="absolute top-3.5 right-3.5" />}
 
       <div className="flex items-start gap-3">
         {/* Tonal Category Icon Container */}
@@ -94,9 +96,15 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
         <div className="flex-1 min-w-0 pr-2">
           {/* Header Row: Category Badge & Timestamp */}
           <div className="flex items-center justify-between gap-2 mb-1">
-            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", bgClass)}>
+            <Chip
+              variant="assist"
+              className={cn(
+                "h-5 text-[10px] py-0 px-2 cursor-default border pointer-events-none font-bold",
+                bgClass,
+              )}
+            >
               {label}
-            </span>
+            </Chip>
             <span className="text-[10px] text-on-surface-variant/80 font-medium">
               {formatTime(item.createdAt)}
             </span>
@@ -162,7 +170,7 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
             <div className="flex justify-end mt-2">
               <Button
                 type="button"
-                variant="ghost"
+                variant="text"
                 size="sm"
                 onClick={() => onMarkAsRead(item.id)}
                 className="text-[11px] font-bold text-on-surface-variant hover:text-primary p-1 h-auto"
@@ -175,6 +183,6 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

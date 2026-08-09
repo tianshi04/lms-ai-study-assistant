@@ -81,7 +81,7 @@ function MyOrganizationsContent() {
           <div className="flex items-center gap-3 shrink-0">
             <Button
               type="button"
-              variant="outline"
+              variant="outlined"
               onClick={() => setIsInvitationsOpen(true)}
               className="px-4 py-2.5 rounded-2xl bg-muted text-foreground hover:bg-muted/80 font-bold text-sm"
             >

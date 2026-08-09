@@ -36,7 +36,7 @@ export default function AssessmentsPage() {
         <div className="flex items-center gap-1.5 bg-muted p-1.5 rounded-2xl border border-border shadow-inner">
           <Button
             type="button"
-            variant="ghost"
+            variant="text"
             onClick={() => setActiveAssessment("quiz")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
               activeAssessment === "quiz"
@@ -49,7 +49,7 @@ export default function AssessmentsPage() {
           </Button>
           <Button
             type="button"
-            variant="ghost"
+            variant="text"
             onClick={() => setActiveAssessment("lab")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
               activeAssessment === "lab"
@@ -62,7 +62,7 @@ export default function AssessmentsPage() {
           </Button>
           <Button
             type="button"
-            variant="ghost"
+            variant="text"
             onClick={() => setActiveAssessment("peer")}
             className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer ${
               activeAssessment === "peer"

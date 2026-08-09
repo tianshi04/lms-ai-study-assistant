@@ -4,7 +4,8 @@ import React, { useState, use, Suspense } from "react";
 import Link from "next/link";
 import { Plus, HelpCircle, FolderOpen, Pencil, Trash2, Info } from "lucide-react";
 
-import { Dialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
+
 import {
   AlertDialog,
   AlertDialogContent,
@@ -16,11 +17,11 @@ import {
 
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import {
   Select,
   SelectTrigger,
@@ -270,7 +271,10 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
         </div>
 
         {/* Page Header */}
-        <Card className="rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <Card
+          variant="elevated"
+          className="p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+        >
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-extrabold uppercase mb-2">
               Question Pool Engine
@@ -285,7 +289,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
             </p>
           </div>
           <Button
-            variant="primary"
+            variant="filled"
             onClick={() => setShowCreateBankModal(true)}
             className="px-5 py-3 rounded-xl font-bold text-sm shadow-md gap-2"
           >
@@ -321,7 +325,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                       <Button
                         type="button"
                         key={bank.id}
-                        variant="outline"
+                        variant="outlined"
                         onClick={() => setSelectedBankId(bank.id)}
                         className={`w-full justify-start h-auto flex-col items-start p-5 rounded-2xl border text-left gap-1 cursor-pointer ${
                           isSelected
@@ -381,16 +385,16 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
               ) : (
                 <div className="space-y-6">
                   {/* Selected Bank Banner */}
-                  <Card className="p-6 rounded-3xl shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <Card
+                    variant="outlined"
+                    className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+                  >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-black text-foreground">{selectedBank.title}</h2>
-                        <Badge
-                          variant="outline"
-                          className="text-xs font-mono px-2 py-0.5 bg-muted text-muted-foreground"
-                        >
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono bg-surface-container-high text-on-surface-variant border border-outline-variant">
                           ID: {selectedBank.id}
-                        </Badge>
+                        </span>
                       </div>
                       {selectedBank.description && (
                         <p className="text-xs text-muted-foreground">{selectedBank.description}</p>
@@ -401,7 +405,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                     </div>
 
                     <Button
-                      variant="primary"
+                      variant="filled"
                       size="sm"
                       onClick={() => {
                         setEditingQuestionId(null);
@@ -439,7 +443,8 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                         return (
                           <Card
                             key={q.id}
-                            className="rounded-2xl p-5 shadow-xs space-y-3 hover:border-muted-foreground/30 transition-colors"
+                            variant="outlined"
+                            className="p-5 space-y-3 hover:border-muted-foreground/30 transition-colors"
                           >
                             {/* Question Meta */}
                             <div className="flex items-center justify-between">
@@ -448,50 +453,46 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                               </span>
 
                               <div className="flex items-center gap-2">
-                                <Badge
-                                  variant={
+                                <span
+                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
                                     q.difficulty === "EASY"
-                                      ? "success"
+                                      ? "bg-success/15 text-success border-success/30"
                                       : q.difficulty === "MEDIUM"
-                                        ? "warning"
-                                        : "danger"
-                                  }
-                                  className="text-[10px] font-black uppercase px-2 py-0.5"
+                                        ? "bg-warning/15 text-warning border-warning/30"
+                                        : "bg-error/15 text-error border-error/30"
+                                  }`}
                                 >
                                   {q.difficulty === "EASY"
                                     ? "Dễ (Easy)"
                                     : q.difficulty === "MEDIUM"
                                       ? "Trung bình (Medium)"
                                       : "Khó (Hard)"}
-                                </Badge>
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px] font-mono bg-muted text-muted-foreground px-1.5 py-0.5"
-                                >
+                                </span>
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-surface-container-high text-on-surface-variant border border-outline-variant">
                                   {q.questionType}
-                                </Badge>
+                                </span>
 
                                 <div className="flex items-center gap-1 border-l border-border pl-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
+                                  <IconButton
+                                    variant="standard"
+                                    size="xs"
                                     onClick={() => handleOpenEditQuestionModal(q)}
-                                    className="h-7 w-7 text-muted-foreground hover:text-primary"
+                                    className="text-muted-foreground hover:text-primary"
                                     title="Sửa"
                                     aria-label="Chỉnh sửa câu hỏi"
                                   >
                                     <Pencil aria-hidden="true" className="w-3.5 h-3.5" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
+                                  </IconButton>
+                                  <IconButton
+                                    variant="standard"
+                                    size="xs"
                                     onClick={() => setDeletingQuestionId(q.id)}
-                                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                    className="text-muted-foreground hover:text-destructive"
                                     title="Xoá"
                                     aria-label="Xóa câu hỏi"
                                   >
                                     <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
-                                  </Button>
+                                  </IconButton>
                                 </div>
                               </div>
                             </div>
@@ -620,7 +621,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
             <Dialog.Footer className="pt-4 border-t border-border">
               <Button
                 type="button"
-                variant="outline"
+                variant="outlined"
                 size="sm"
                 onClick={() => setShowCreateBankModal(false)}
                 className="rounded-xl text-xs font-bold"
@@ -629,10 +630,9 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
               </Button>
               <Button
                 type="submit"
-                variant="primary"
+                variant="filled"
                 size="sm"
                 disabled={creatingBank}
-                isLoading={creatingBank}
                 className="rounded-xl text-xs font-bold"
               >
                 {"Xác nhận tạo Kho"}
@@ -755,7 +755,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                 </span>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="text"
                   size="sm"
                   onClick={handleAddOption}
                   className="text-xs font-bold text-primary hover:underline p-0 h-auto"
@@ -767,6 +767,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                 {qOptions.map((opt, idx) => (
                   <div key={idx} className="flex items-center gap-2">
                     <Checkbox
+                      id={`opt-correct-${idx}`}
                       checked={opt.isCorrect}
                       onCheckedChange={(checked) =>
                         handleOptionCorrectChange(idx, Boolean(checked))
@@ -785,16 +786,16 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                       className="flex-1 py-1.5 rounded-lg bg-card text-xs"
                     />
                     {qOptions.length > 2 && (
-                      <Button
+                      <IconButton
                         type="button"
-                        variant="ghost"
-                        size="icon"
+                        variant="standard"
+                        size="xs"
                         onClick={() => handleRemoveOption(idx)}
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        className="text-muted-foreground hover:text-destructive"
                         aria-label={`Xóa phương án ${idx + 1}`}
                       >
                         ✕
-                      </Button>
+                      </IconButton>
                     )}
                   </div>
                 ))}
@@ -821,7 +822,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
             <Dialog.Footer className="pt-2">
               <Button
                 type="button"
-                variant="outline"
+                variant="outlined"
                 size="sm"
                 onClick={() => setShowAddQuestionModal(false)}
                 className="rounded-xl text-xs font-bold"
@@ -830,10 +831,9 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
               </Button>
               <Button
                 type="submit"
-                variant="primary"
+                variant="filled"
                 size="sm"
                 disabled={submittingQuestion}
-                isLoading={submittingQuestion}
                 className="rounded-xl text-xs font-bold"
               >
                 {editingQuestionId ? "Lưu thay đổi" : "Lưu câu hỏi"}
@@ -858,7 +858,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <Button
-              variant="outline"
+              variant="outlined"
               size="sm"
               onClick={() => setDeletingQuestionId(null)}
               disabled={deleteQuestionMutation.isPending}
@@ -866,10 +866,11 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
               {"Hủy"}
             </Button>
             <Button
-              variant="danger"
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
               size="sm"
               onClick={handleDeleteQuestion}
-              isLoading={deleteQuestionMutation.isPending}
+              disabled={deleteQuestionMutation.isPending}
             >
               {"Xóa"}
             </Button>

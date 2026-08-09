@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { renderMarkdown } from "@/components/ai/AIChatMarkdownRenderer";
 import { ItemType } from "@/gen/catalog/v1/catalog_pb";
 import { type QuestionBank } from "@/gen/assessment/v1/assessment_pb";
-import { Dialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -580,7 +580,7 @@ export function LearningItemFormModal({
           <Dialog.Footer className="pt-3 border-t border-border mt-3 shrink-0">
             <Button
               type="button"
-              variant="outline"
+              variant="outlined"
               size="sm"
               onClick={onClose}
               className="rounded-xl text-xs font-bold"
@@ -589,10 +589,9 @@ export function LearningItemFormModal({
             </Button>
             <Button
               type="submit"
-              variant="primary"
+              variant="filled"
               size="sm"
               disabled={saving}
-              isLoading={saving}
               className="rounded-xl text-xs font-bold shadow-md"
             >
               {isEdit ? "Cập nhật Học liệu" : "Xác nhận tạo Học liệu"}

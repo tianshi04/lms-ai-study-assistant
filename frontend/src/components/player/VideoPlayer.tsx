@@ -19,6 +19,9 @@ import {
   Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
 
 interface VideoPlayerProps {
   videoRef: RefObject<HTMLVideoElement | null>;
@@ -101,9 +104,7 @@ export function VideoPlayer({
           </div>
 
           <div className="max-w-md space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20">
-              CHẾ ĐỘ AUDIT (MIỄN PHÍ)
-            </div>
+            <Badge variant="warning">CHẾ ĐỘ AUDIT (MIỄN PHÍ)</Badge>
             <h3 className="text-xl font-extrabold text-foreground tracking-tight">
               Bài kiểm tra tính điểm đã bị khóa
             </h3>
@@ -137,11 +138,7 @@ export function VideoPlayer({
               <h2 className="text-2xl font-bold text-foreground flex items-center gap-3">
                 <FileText className="w-7 h-7 text-success" aria-hidden="true" />
                 <span>{activeItem.title}</span>
-                {isPreviewMode && (
-                  <span className="px-2 py-0.5 rounded-full text-xs font-extrabold uppercase bg-warning/10 text-warning border border-warning/20 animate-pulse">
-                    {"Xem trước"}
-                  </span>
-                )}
+                {isPreviewMode && <Badge variant="warning">{"Xem trước"}</Badge>}
               </h2>
             </div>
 
@@ -302,7 +299,7 @@ export function VideoPlayer({
                       <Button
                         key={idx}
                         type="button"
-                        variant="outline"
+                        variant="outlined"
                         disabled={quizSubmitted}
                         onClick={() => onSelectOption(idx)}
                         className={`w-full text-left p-3 rounded-xl border text-xs h-auto justify-between ${optionStyle}`}
@@ -357,7 +354,7 @@ export function VideoPlayer({
         </div>
 
         {/* Coursera-style AI Learning Prompts Card ("Tìm hiểu sâu hơn về chủ đề này") - Only for Video Items */}
-        <div className="w-full my-1 p-4 rounded-2xl bg-surface-container-low shadow-2xs transition-colors">
+        <Card variant="elevated" className="w-full my-1 p-4 rounded-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
@@ -365,10 +362,10 @@ export function VideoPlayer({
                 Tìm hiểu sâu hơn về chủ đề này
               </span>
             </div>
-            <Button
+            <IconButton
               type="button"
-              variant="ghost"
-              size="icon"
+              variant="standard"
+              size="xs"
               onClick={() => setIsExpanded((prev) => !prev)}
               className="p-1 h-7 w-7 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
               title={isExpanded ? "Thu gọn gợi ý AI" : "Mở rộng gợi ý AI"}
@@ -379,7 +376,7 @@ export function VideoPlayer({
               ) : (
                 <ChevronDown className="w-4 h-4" aria-hidden="true" />
               )}
-            </Button>
+            </IconButton>
           </div>
 
           {isExpanded && (
@@ -393,7 +390,7 @@ export function VideoPlayer({
                 <Button
                   key={text}
                   type="button"
-                  variant="outline"
+                  variant="outlined"
                   size="sm"
                   onClick={() => onSelectAiPrompt?.(text)}
                   className="text-xs font-semibold px-4 py-2.5 rounded-xl bg-surface-container-high hover:bg-primary-container text-on-surface hover:text-primary border-outline-variant/40 hover:border-primary/40 shadow-2xs leading-snug w-fit h-auto"
@@ -403,7 +400,7 @@ export function VideoPlayer({
               ))}
             </div>
           )}
-        </div>
+        </Card>
       </div>
     );
   }
@@ -418,7 +415,7 @@ export function VideoPlayer({
         <div className="w-full flex items-center justify-end pt-1 pb-1 shrink-0">
           <Button
             type="button"
-            variant="ghost"
+            variant="text"
             onClick={onNextLesson}
             className="px-4 py-2 rounded-xl text-xs font-semibold bg-surface-container-high text-on-surface hover:bg-primary-container hover:text-primary border border-outline-variant/40 hover:border-primary/40 transition-colors shadow-2xs hover:scale-102 active:scale-98 shrink-0"
             title="Chuyển sang bài học tiếp theo"

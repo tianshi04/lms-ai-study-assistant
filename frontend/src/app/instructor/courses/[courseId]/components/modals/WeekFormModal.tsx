@@ -7,7 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/Modal";
+} from "@/components/ui/Dialog";
+
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
@@ -91,7 +92,7 @@ export function WeekFormModal({
           <DialogFooter>
             <Button
               type="button"
-              variant="outline"
+              variant="outlined"
               size="sm"
               onClick={onClose}
               className="rounded-xl text-xs font-bold"
@@ -100,10 +101,9 @@ export function WeekFormModal({
             </Button>
             <Button
               type="submit"
-              variant="primary"
+              variant="filled"
               size="sm"
               disabled={saving}
-              isLoading={saving}
               className="rounded-xl text-xs font-bold shadow-md"
             >
               {isEdit ? "Cập nhật Tuần học" : "Xác nhận tạo Tuần học"}

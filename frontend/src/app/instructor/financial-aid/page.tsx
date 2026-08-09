@@ -11,6 +11,9 @@ import {
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ArrowLeft, Check, X, AlertTriangle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
+import { Card } from "@/components/ui/Card";
+import { IconButton } from "@/components/ui/IconButton";
 
 const emptySubscribe = () => () => {};
 
@@ -172,16 +175,16 @@ export default function InstructorFinancialAidPage() {
               )}
               <span>{toastMessage.text}</span>
             </div>
-            <Button
+            <IconButton
               type="button"
-              variant="ghost"
-              size="icon"
+              variant="standard"
+              size="xs"
               onClick={() => setToastMessage(null)}
               aria-label="Đóng thông báo"
-              className="h-6 w-6 opacity-60 hover:opacity-100"
+              className="opacity-60 hover:opacity-100"
             >
               <X aria-hidden="true" className="w-4 h-4" />
-            </Button>
+            </IconButton>
           </div>
         )}
 
@@ -200,30 +203,22 @@ export default function InstructorFinancialAidPage() {
         )}
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-2 border-b border-border pb-3 overflow-x-auto">
-          {(["ALL", "PENDING", "APPROVED", "REJECTED"] as const).map((tab) => {
-            const labels = {
-              ALL: "Tất cả đơn",
-              PENDING: "Chờ xét duyệt (Pending)",
-              APPROVED: "Đã phê duyệt (Approved)",
-              REJECTED: "Đã từ chối (Rejected)",
-            };
-            return (
-              <Button
-                key={tab}
-                type="button"
-                variant={activeTab === tab ? "primary" : "outline"}
-                onClick={() => setActiveTab(tab)}
-                className={`rounded-xl text-xs font-bold whitespace-nowrap ${
-                  activeTab === tab
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                    : "bg-card text-muted-foreground hover:text-foreground border-border"
-                }`}
-              >
-                {labels[tab]}
-              </Button>
-            );
-          })}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border mb-6">
+          {[
+            { label: "Tất cả đơn", value: "ALL" },
+            { label: "Chờ xét duyệt (Pending)", value: "PENDING" },
+            { label: "Đã phê duyệt (Approved)", value: "APPROVED" },
+            { label: "Đã từ chối (Rejected)", value: "REJECTED" },
+          ].map((tab) => (
+            <Chip
+              key={tab.value}
+              variant="filter"
+              selected={activeTab === tab.value}
+              onClick={() => setActiveTab(tab.value as any)}
+            >
+              {tab.label}
+            </Chip>
+          ))}
         </div>
 
         {/* Application Cards List */}
@@ -235,7 +230,7 @@ export default function InstructorFinancialAidPage() {
             </p>
           </div>
         ) : filteredApps.length === 0 ? (
-          <div className="py-16 text-center bg-card rounded-2xl border border-border p-8">
+          <Card variant="outlined" className="py-16 text-center p-8">
             <FileText aria-hidden="true" className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
             <p className="text-base font-bold text-foreground">
               Không có đơn nộp nào trong danh mục này
@@ -243,14 +238,11 @@ export default function InstructorFinancialAidPage() {
             <p className="text-xs text-muted-foreground mt-1">
               Các đơn Hỗ trợ tài chính mới từ học viên sẽ xuất hiện ở đây.
             </p>
-          </div>
+          </Card>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {filteredApps.map((app) => (
-              <div
-                key={app.id}
-                className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-md transition-colors space-y-4 text-foreground"
-              >
+              <Card key={app.id} variant="outlined" className="p-6 space-y-4 text-foreground">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -305,10 +297,9 @@ export default function InstructorFinancialAidPage() {
                   <div className="flex items-center justify-end gap-3 pt-2">
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="outlined"
                       onClick={() => handleReview(app.id, false)}
                       disabled={processingId === app.id}
-                      isLoading={processingId === app.id}
                       className="text-xs font-bold text-destructive bg-destructive/10 border-destructive/30 hover:bg-destructive/20"
                     >
                       <X aria-hidden="true" className="w-4 h-4" />
@@ -318,7 +309,6 @@ export default function InstructorFinancialAidPage() {
                       type="button"
                       onClick={() => handleReview(app.id, true)}
                       disabled={processingId === app.id}
-                      isLoading={processingId === app.id}
                       className="text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover shadow-md shadow-primary/20"
                     >
                       <Check aria-hidden="true" className="w-4 h-4" />
@@ -326,7 +316,7 @@ export default function InstructorFinancialAidPage() {
                     </Button>
                   </div>
                 )}
-              </div>
+              </Card>
             ))}
           </div>
         )}

@@ -21,8 +21,10 @@ import {
 } from "lucide-react";
 import { usePartnersQuery, useCoursesQuery } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import { Dialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -150,16 +152,16 @@ export function PartnersCatalogClient() {
               className="pl-10 pr-9 bg-background border-border text-foreground rounded-xl text-xs"
             />
             {searchQuery && (
-              <Button
+              <IconButton
                 type="button"
-                variant="ghost"
-                size="icon"
+                variant="standard"
+                size="xs"
                 onClick={() => handleSearchChange("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground hover:text-foreground"
                 aria-label="Xóa từ khóa tìm kiếm"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 <X aria-hidden="true" className="w-4 h-4" />
-              </Button>
+              </IconButton>
             )}
           </div>
 
@@ -203,7 +205,7 @@ export function PartnersCatalogClient() {
               onClick={() => {
                 handleSearchChange("");
               }}
-              variant="outline"
+              variant="outlined"
               className="text-xs cursor-pointer"
             >
               Đặt lại tìm kiếm
@@ -215,10 +217,15 @@ export function PartnersCatalogClient() {
               {paginatedPartners.map((partner) => {
                 const courseCount = partnerCourseCounts[partner.id] || 0;
                 return (
-                  <Link
+                  <Card
                     key={partner.id}
-                    href={`/partners/${partner.slug || partner.id}`}
-                    className="bg-card border border-border rounded-3xl overflow-hidden hover:shadow-xl hover:border-primary/40 transition-colors duration-300 flex flex-col justify-between group cursor-pointer"
+                    variant="outlined"
+                    render={
+                      <Link
+                        href={`/partners/${partner.slug || partner.id}`}
+                        className="rounded-3xl overflow-hidden hover:border-primary/40 transition-colors duration-300 flex flex-col justify-between group cursor-pointer"
+                      />
+                    }
                   >
                     <div>
                       {/* Partner Banner Header */}
@@ -295,7 +302,7 @@ export function PartnersCatalogClient() {
                         </a>
                       )}
                     </div>
-                  </Link>
+                  </Card>
                 );
               })}
             </div>
@@ -317,22 +324,24 @@ export function PartnersCatalogClient() {
                 </p>
 
                 <div className="flex items-center space-x-1.5">
-                  <Button
+                  <IconButton
+                    type="button"
+                    variant="outlined"
+                    size="xs"
                     onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    variant="outline"
-                    className="p-2 rounded-xl text-xs cursor-pointer disabled:opacity-40"
                     aria-label="Trang trước"
+                    className="rounded-xl disabled:opacity-40"
                   >
                     <ChevronLeft aria-hidden="true" className="w-4 h-4" />
-                  </Button>
+                  </IconButton>
 
                   {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
                     <Button
                       type="button"
                       key={page}
-                      variant={currentPage === page ? "primary" : "outline"}
-                      size="icon"
+                      variant={currentPage === page ? "filled" : "outlined"}
+                      iconOnly
                       onClick={() => setCurrentPage(page)}
                       className={`w-8 h-8 rounded-xl text-xs font-bold ${
                         currentPage === page
@@ -344,15 +353,17 @@ export function PartnersCatalogClient() {
                     </Button>
                   ))}
 
-                  <Button
+                  <IconButton
+                    type="button"
+                    variant="outlined"
+                    size="xs"
                     onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    variant="outline"
-                    className="p-2 rounded-xl text-xs cursor-pointer disabled:opacity-40"
                     aria-label="Trang tiếp"
+                    className="rounded-xl disabled:opacity-40"
                   >
                     <ChevronRight aria-hidden="true" className="w-4 h-4" />
-                  </Button>
+                  </IconButton>
                 </div>
               </div>
             )}
@@ -462,8 +473,10 @@ export function PartnersCatalogClient() {
 
             <Dialog.Footer className="pt-2">
               <Button
+                type="button"
+                variant="filled"
                 onClick={() => setIsContactModalOpen(false)}
-                className="bg-primary text-primary-foreground text-xs font-semibold rounded-xl"
+                className="text-xs font-semibold rounded-xl"
               >
                 {"Đã hiểu"}
               </Button>

@@ -8,7 +8,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@/components/ui/Modal";
+} from "@/components/ui/Dialog";
+
 import { Button } from "@/components/ui/Button";
 import { useCreateVNPayPaymentUrlMutation } from "@/lib/query_hooks";
 import { PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
@@ -119,7 +120,7 @@ export function PaymentCheckoutModal({
           {/* Mua lẻ */}
           <Button
             type="button"
-            variant="outline"
+            variant="outlined"
             aria-label="Chọn Mua Lẻ Khóa"
             onClick={() => setSelectedOption("SINGLE")}
             className={`text-left cursor-pointer p-4 rounded-xl border-2 h-auto flex-col justify-between items-start ${
@@ -156,7 +157,7 @@ export function PaymentCheckoutModal({
           {/* Coursera Plus - Tháng */}
           <Button
             type="button"
-            variant="outline"
+            variant="outlined"
             aria-label="Chọn Coursera Plus Gói Theo Tháng"
             onClick={() => setSelectedOption("PLUS_MONTHLY")}
             className={`text-left cursor-pointer p-4 rounded-xl border-2 h-auto flex-col justify-between relative items-start ${
@@ -190,7 +191,7 @@ export function PaymentCheckoutModal({
           {/* Coursera Plus - Năm */}
           <Button
             type="button"
-            variant="outline"
+            variant="outlined"
             aria-label="Chọn Coursera Plus Gói Theo Năm"
             onClick={() => setSelectedOption("PLUS_YEARLY")}
             className={`text-left cursor-pointer p-4 rounded-xl border-2 h-auto flex-col justify-between relative items-start ${
@@ -226,13 +227,13 @@ export function PaymentCheckoutModal({
         </div>
 
         <DialogFooter className="flex items-center justify-end gap-3 pt-3 border-t border-border">
-          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+          <Button variant="outlined" onClick={onClose} disabled={isLoading}>
             Hủy bỏ
           </Button>
           <Button
             onClick={handleCheckout}
             disabled={isLoading}
-            variant="primary"
+            variant="filled"
             className="min-w-[160px]"
           >
             {isLoading ? (

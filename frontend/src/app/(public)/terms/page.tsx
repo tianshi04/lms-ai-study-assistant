@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import {
   FileText,
   UserCheck,
@@ -95,7 +96,10 @@ export default function TermsOfServicePage() {
         </Breadcrumb>
 
         {/* Hero Section */}
-        <div className="bg-card rounded-3xl p-8 sm:p-12 border border-border relative overflow-hidden text-center sm:text-left">
+        <Card
+          variant="outlined"
+          className="rounded-3xl p-8 sm:p-12 relative overflow-hidden text-center sm:text-left"
+        >
           <div className="absolute top-0 right-0 -mt-16 -mr-16 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 space-y-4 max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider border border-primary/20">
@@ -123,12 +127,17 @@ export default function TermsOfServicePage() {
               </span>
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Main Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           {/* Sticky Table of Contents Sidebar */}
-          <aside className="lg:col-span-1 bg-card rounded-3xl p-5 border border-border lg:sticky lg:top-24 space-y-3">
+          <Card
+            variant="outlined"
+            render={
+              <aside className="lg:col-span-1 rounded-3xl p-5 lg:sticky lg:top-24 space-y-3" />
+            }
+          >
             <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2">
               Mục lục điều khoản
             </h2>
@@ -140,7 +149,7 @@ export default function TermsOfServicePage() {
                   <Button
                     type="button"
                     key={sec.id}
-                    variant={isActive ? "primary" : "ghost"}
+                    variant={isActive ? "filled" : "text"}
                     onClick={() => scrollToSection(sec.id)}
                     className={`w-full justify-start gap-2.5 px-3 py-2.5 rounded-2xl text-left text-xs font-medium cursor-pointer ${
                       isActive
@@ -154,7 +163,7 @@ export default function TermsOfServicePage() {
                 );
               })}
             </nav>
-          </aside>
+          </Card>
 
           {/* Policy Content Sections */}
           <main className="lg:col-span-3 space-y-8">

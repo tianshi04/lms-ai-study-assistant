@@ -11,6 +11,8 @@ import {
 import { mapConnectError } from "@/lib/connect_error_mapper";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
+import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import {
@@ -20,7 +22,7 @@ import {
   Loader2,
   Globe,
   Shield,
-  Image,
+  ImageIcon,
   ShieldAlert,
 } from "lucide-react";
 
@@ -67,7 +69,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
             activeTab="settings"
             isOwnerOrAdmin={false}
           />
-          <div className="p-12 text-center bg-card border border-border rounded-3xl space-y-4 max-w-xl mx-auto">
+          <Card variant="outlined" className="p-12 text-center space-y-4 max-w-xl mx-auto">
             <div className="w-14 h-14 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
               <ShieldAlert className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -82,7 +84,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
             >
               Quay lại Tổng quan
             </Link>
-          </div>
+          </Card>
         </main>
       </div>
     );
@@ -161,7 +163,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
         />
 
         {/* Settings Form Container */}
-        <section className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-xs max-w-3xl">
+        <Card variant="filled" className="p-6 sm:p-8 max-w-3xl">
           <div className="flex items-center space-x-3 pb-6 border-b border-border">
             <Settings className="w-6 h-6 text-primary" aria-hidden="true" />
             <div>
@@ -246,7 +248,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                     htmlFor="orgLogoInput"
                     className="text-xs font-bold text-foreground flex items-center gap-1.5"
                   >
-                    <Image className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                    <ImageIcon className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                     URL Logo Tổ chức
                   </label>
                   <Input
@@ -263,7 +265,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                     htmlFor="orgBannerInput"
                     className="text-xs font-bold text-foreground flex items-center gap-1.5"
                   >
-                    <Image className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                    <ImageIcon className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
                     URL Ảnh Banner Tổ chức
                   </label>
                   <Input
@@ -290,6 +292,28 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                     onChange={(e) => setAllowedDomainsStr(e.target.value)}
                     placeholder="hcmut.edu.vn, stanford.edu (phân cách bằng dấu phẩy)"
                   />
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {allowedDomainsStr
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                      .map((domain) => (
+                        <Chip
+                          key={domain}
+                          variant="input"
+                          onRemove={() => {
+                            const updated = allowedDomainsStr
+                              .split(",")
+                              .map((s) => s.trim())
+                              .filter((s) => s && s !== domain)
+                              .join(", ");
+                            setAllowedDomainsStr(updated);
+                          }}
+                        >
+                          {domain}
+                        </Chip>
+                      ))}
+                  </div>
                   <p className="text-[11px] text-muted-foreground">
                     Các tài khoản có email thuộc domain này sẽ được tự động kích hoạt quyền thành
                     viên của Tổ chức.
@@ -311,14 +335,14 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
               </div>
 
               <div className="pt-6 border-t border-border flex justify-end">
-                <Button type="submit" isLoading={updateMutation.isPending}>
+                <Button type="submit" disabled={updateMutation.isPending}>
                   <Save className="w-4.5 h-4.5" aria-hidden="true" />
                   Lưu Thay Đổi
                 </Button>
               </div>
             </form>
           )}
-        </section>
+        </Card>
       </main>
     </div>
   );

@@ -26,6 +26,7 @@ import { LessonFormModal } from "./components/modals/LessonFormModal";
 import { LearningItemFormModal } from "./components/modals/LearningItemFormModal";
 import { ScormReviewModal } from "./components/modals/ScormReviewModal";
 import { CourseCollaboratorsModal } from "@/components/course/CourseCollaboratorsModal";
+import { Button } from "@/components/ui/Button";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -327,20 +328,16 @@ function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <button
-              type="button"
-              className="px-4 py-2 text-xs font-semibold rounded-xl border border-border bg-card hover:bg-muted"
-              onClick={() => builder.setConfirmDeleteTarget(null)}
-            >
+            <Button variant="outlined" onClick={() => builder.setConfirmDeleteTarget(null)}>
               Hủy
-            </button>
-            <button
-              type="button"
-              className="px-4 py-2 text-xs font-semibold rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            </Button>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
               onClick={builder.executeConfirmDelete}
             >
               Xóa vĩnh viễn
-            </button>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

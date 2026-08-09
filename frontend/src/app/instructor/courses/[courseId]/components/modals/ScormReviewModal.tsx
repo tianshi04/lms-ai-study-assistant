@@ -6,9 +6,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/Modal";
+} from "@/components/ui/Dialog";
+
 import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
 import { type Course } from "@/gen/catalog/v1/catalog_pb";
 
 interface ScormReviewModalProps {
@@ -46,9 +46,9 @@ export function ScormReviewModal({
           <div className="space-y-4">
             <div className="bg-success/10 p-4 rounded-2xl border border-success/20 space-y-2">
               <div className="flex items-center gap-2">
-                <Badge variant="success" className="px-2.5 py-0.5 text-xs font-bold">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-success/15 text-success border border-success/30">
                   Full Fidelity Native
-                </Badge>
+                </span>
                 <span className="text-[10px] font-mono text-muted-foreground">Level 1 Support</span>
               </div>
               <h4 className="text-sm font-bold text-success">Phát hiện khóa học Native OpenLMS</h4>
@@ -68,7 +68,7 @@ export function ScormReviewModal({
         <DialogFooter>
           <Button
             type="button"
-            variant="outline"
+            variant="outlined"
             size="sm"
             onClick={onClose}
             className="rounded-xl text-xs font-bold"
@@ -77,11 +77,10 @@ export function ScormReviewModal({
           </Button>
           <Button
             type="button"
-            variant="primary"
+            variant="filled"
             size="sm"
             onClick={() => onConfirmImport(scormObjectKey, courseId)}
             disabled={scormImporting}
-            isLoading={scormImporting}
             className="rounded-xl text-xs font-bold shadow-md"
           >
             Xác nhận Import

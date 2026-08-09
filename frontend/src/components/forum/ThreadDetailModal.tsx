@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ThumbsUp, MessageSquare, Pin, ExternalLink } from "lucide-react";
 import type { ForumThread, ForumReply } from "@/gen/forum/v1/forum_pb";
-import { Dialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
@@ -98,7 +98,7 @@ export function ThreadDetailModal({
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
                 {isNotificationTarget && (
-                  <Badge variant="verified" className="gap-1 px-3 py-1 shadow-xs font-bold text-xs">
+                  <Badge variant="primary" className="gap-1 px-3 py-1 shadow-xs font-bold text-xs">
                     <span>📌 Bài viết từ thông báo</span>
                   </Badge>
                 )}
@@ -134,7 +134,7 @@ export function ThreadDetailModal({
                     <h4 className="font-bold text-foreground text-sm">
                       {thread.authorName || "Thành viên LMS"}
                     </h4>
-                    <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-semibold">
+                    <Badge variant="outlined" className="text-[10px] py-0 px-1.5 font-semibold">
                       {formatRoleName(thread.authorRole)}
                     </Badge>
                   </div>
@@ -154,7 +154,7 @@ export function ThreadDetailModal({
               <div className="flex items-center gap-2">
                 {canDeleteThread && onDeleteThread && (
                   <Button
-                    variant="ghost"
+                    variant="text"
                     size="sm"
                     onClick={() => onDeleteThread(thread.id)}
                     className="text-xs text-muted-foreground hover:text-destructive h-auto p-1.5"
@@ -163,7 +163,7 @@ export function ThreadDetailModal({
                   </Button>
                 )}
                 <Button
-                  variant={thread.isUpvotedByMe ? "primary" : "outline"}
+                  variant={thread.isUpvotedByMe ? "filled" : "outlined"}
                   size="sm"
                   onClick={() => onVote(thread.id, true)}
                   className="gap-1.5 font-bold shadow-xs"
@@ -217,7 +217,7 @@ export function ThreadDetailModal({
                   <div key={reply.id} className="relative">
                     {onPinStaffAnswer && isStaffOrAdmin && !reply.isStaffAnswer && (
                       <Button
-                        variant="ghost"
+                        variant="text"
                         size="sm"
                         onClick={() => onPinStaffAnswer(reply.id)}
                         className="absolute right-2 top-2 text-[10px] text-muted-foreground hover:text-warning"
@@ -258,10 +258,9 @@ export function ThreadDetailModal({
             className="flex-1 bg-card text-xs rounded-xl"
           />
           <Button
-            variant="primary"
+            variant="filled"
             onClick={handleSendReply}
-            disabled={!replyContent.trim() || submittingReply}
-            isLoading={submittingReply}
+            disabled={!replyContent.trim() || submittingReply || submittingReply}
             className="shrink-0 font-semibold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-primary/20"
           >
             {"Đăng phản hồi"}

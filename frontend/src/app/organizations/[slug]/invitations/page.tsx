@@ -20,6 +20,8 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { IconButton } from "@/components/ui/IconButton";
 import {
   Table,
   TableHeader,
@@ -82,7 +84,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
             activeTab="invitations"
             isOwnerOrAdmin={false}
           />
-          <div className="p-12 text-center bg-card border border-border rounded-3xl space-y-4 max-w-xl mx-auto">
+          <Card variant="outlined" className="p-12 text-center space-y-4 max-w-xl mx-auto">
             <div className="w-14 h-14 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
               <ShieldAlert className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -97,7 +99,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
             >
               Quay lại Tổng quan
             </Link>
-          </div>
+          </Card>
         </main>
       </div>
     );
@@ -174,7 +176,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
         />
 
         {/* Invitations Table */}
-        <section className="bg-card border border-border rounded-3xl overflow-hidden shadow-xs">
+        <Card variant="outlined" className="p-0 overflow-hidden">
           <div className="p-6 border-b border-border flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -229,9 +231,10 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
                           {inv.status === InvitationStatus.PENDING && inv.token && (
                             <Button
                               type="button"
+                              variant="outlined"
                               size="sm"
                               onClick={() => handleCopyInviteLink(inv.id, inv.token)}
-                              className="bg-primary/10 text-primary hover:bg-primary/20 text-xs shrink-0"
+                              className="text-xs shrink-0"
                             >
                               {copiedTokenId === inv.id ? (
                                 <Check className="w-3.5 h-3.5 text-success" aria-hidden="true" />
@@ -243,17 +246,17 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
                           )}
 
                           {inv.status === InvitationStatus.PENDING && (
-                            <Button
+                            <IconButton
                               type="button"
-                              variant="ghost"
-                              size="icon"
+                              variant="standard"
+                              size="xs"
                               onClick={() => setCancelingInvId(inv.id)}
                               className="text-destructive hover:bg-destructive/10"
                               title="Hủy lời mời"
                               aria-label="Hủy lời mời gia nhập"
                             >
                               <Trash2 className="w-4 h-4" aria-hidden="true" />
-                            </Button>
+                            </IconButton>
                           )}
                         </div>
                       </TableCell>
@@ -263,7 +266,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
               </Table>
             </div>
           )}
-        </section>
+        </Card>
 
         {/* Cancel Invitation Confirm Dialog */}
         <AlertDialog
@@ -281,15 +284,16 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <Button variant="outline" onClick={() => setCancelingInvId(null)}>
+              <Button variant="outlined" onClick={() => setCancelingInvId(null)}>
                 Hủy
               </Button>
               <Button
-                variant="danger"
+                variant="filled"
+                className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
                 onClick={() => {
                   if (cancelingInvId) cancelMutation.mutate({ invitationId: cancelingInvId });
                 }}
-                isLoading={cancelMutation.isPending}
+                disabled={cancelMutation.isPending}
               >
                 Hủy Lời Mời
               </Button>

@@ -152,7 +152,7 @@ export function VideoUploadWidget({
         <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg text-xs">
           <Button
             type="button"
-            variant="ghost"
+            variant="text"
             size="sm"
             onClick={() => setActiveTab("upload")}
             className={`px-2.5 py-1 text-xs font-semibold ${
@@ -165,7 +165,7 @@ export function VideoUploadWidget({
           </Button>
           <Button
             type="button"
-            variant="ghost"
+            variant="text"
             size="sm"
             onClick={() => setActiveTab("url")}
             className={`px-2.5 py-1 text-xs font-semibold ${
@@ -202,7 +202,7 @@ export function VideoUploadWidget({
           <div className="flex items-center gap-1.5 shrink-0">
             <Button
               type="button"
-              variant="outline"
+              variant="outlined"
               size="sm"
               onClick={() => {
                 if (activeTab === "upload") {
@@ -217,7 +217,7 @@ export function VideoUploadWidget({
             </Button>
             <Button
               type="button"
-              variant="ghost"
+              variant="text"
               size="sm"
               onClick={() => onChange("")}
               className="text-xs font-bold text-destructive hover:bg-destructive/10"
@@ -230,7 +230,7 @@ export function VideoUploadWidget({
         <div className="space-y-3">
           <Button
             type="button"
-            variant="ghost"
+            variant="text"
             onDragOver={(e) => {
               e.preventDefault();
               setDragOver(true);
