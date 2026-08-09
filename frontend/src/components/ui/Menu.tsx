@@ -52,6 +52,7 @@ function DropdownMenuItem({
   return (
     <BaseMenu.Item
       ref={ref}
+      nativeButton={props.render ? false : undefined}
       className={cn(
         "relative flex cursor-pointer select-none items-center justify-start gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors duration-m3-short-4 ease-m3-emphasized hover:bg-surface-container-highest text-on-surface data-[highlighted]:bg-surface-container-highest",
         className,

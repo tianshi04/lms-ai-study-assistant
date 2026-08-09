@@ -7,6 +7,7 @@ import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { ButtonGroup } from "@/components/ui/ButtonGroup";
 import { Progress } from "@/components/ui/Progress";
 
 interface VideoUploadWidgetProps {
@@ -150,34 +151,18 @@ export function VideoUploadWidget({
         <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {label}
         </label>
-        <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg text-xs">
-          <Button
-            type="button"
-            variant="text"
-            size="sm"
-            onClick={() => setActiveTab("upload")}
-            className={`px-2.5 py-1 text-xs font-semibold ${
-              activeTab === "upload"
-                ? "bg-card text-primary shadow-2xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Upload Tải lên
-          </Button>
-          <Button
-            type="button"
-            variant="text"
-            size="sm"
-            onClick={() => setActiveTab("url")}
-            className={`px-2.5 py-1 text-xs font-semibold ${
-              activeTab === "url"
-                ? "bg-card text-primary shadow-2xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Nhập Đường dẫn URL
-          </Button>
-        </div>
+        <ButtonGroup
+          variant="connected"
+          size="xs"
+          colorStyle="tonal"
+          value={activeTab}
+          onValueChange={(val) => {
+            if (val[0]) setActiveTab(val[0] as "upload" | "url");
+          }}
+        >
+          <ButtonGroup.Item value="upload">Upload Tải lên</ButtonGroup.Item>
+          <ButtonGroup.Item value="url">Nhập Đường dẫn URL</ButtonGroup.Item>
+        </ButtonGroup>
       </div>
 
       {value && !isUploading ? (
