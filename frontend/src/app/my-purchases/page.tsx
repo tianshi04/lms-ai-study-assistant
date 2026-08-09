@@ -14,6 +14,7 @@ import {
   Receipt,
   Calendar,
   Sparkles,
+  AlertTriangle,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -26,14 +27,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
+import { Dialog } from "@/components/ui/Dialog";
 
 type FilterTab = "ALL" | "COMPLETED" | "PENDING" | "EXPIRED";
 
@@ -652,18 +646,21 @@ function MyPurchasesContent() {
       )}
 
       {/* Confirmation Modal for Order Cancellation */}
-      <AlertDialog
+      <Dialog.Root
         open={!!orderToCancel}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean) => {
           if (!open && !cancelVNPayMutation.isPending) {
             setOrderToCancel(null);
           }
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận hủy đơn hàng</AlertDialogTitle>
-            <AlertDialogDescription>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon
+              icon={<AlertTriangle className="w-6 h-6 text-error" aria-hidden="true" />}
+            />
+            <Dialog.Title>Xác nhận hủy đơn hàng</Dialog.Title>
+            <Dialog.Description>
               {orderToCancel && (
                 <span>
                   {"Bạn có chắc chắn muốn hủy đơn hàng "}
@@ -679,9 +676,9 @@ function MyPurchasesContent() {
                   }
                 </span>
               )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
             <Button
               variant="outlined"
               onClick={() => setOrderToCancel(null)}
@@ -697,9 +694,9 @@ function MyPurchasesContent() {
             >
               {cancelVNPayMutation.isPending ? "Đang xử lý..." : "Đồng ý hủy đơn"}
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
     </main>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { MessageSquare, Plus, ChevronUp, ChevronDown, Reply } from "lucide-react";
+import { MessageSquare, Plus, ChevronUp, ChevronDown, Reply, AlertTriangle } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import {
@@ -14,16 +14,7 @@ import {
 } from "@/gen/forum/v1/forum_pb";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Dialog } from "@/components/ui/Dialog";
-
 import { useToast } from "@/components/ui/Toast";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -964,20 +955,24 @@ function ForumPageContent() {
       />
 
       {/* Confirm Dialog Delete Thread */}
-      <AlertDialog
+      <Dialog.Root
         open={Boolean(deletingThreadId)}
         onOpenChange={(open) => {
           if (!open) setDeletingThreadId(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa bài viết</AlertDialogTitle>
-            <AlertDialogDescription>
+        <Dialog.Content>
+          <Dialog.Icon
+            icon={<AlertTriangle className="w-6 h-6 text-error" aria-hidden="true" />}
+            className="bg-error/10 text-error"
+          />
+          <Dialog.Header>
+            <Dialog.Title>Xác nhận xóa bài viết</Dialog.Title>
+            <Dialog.Description>
               Bạn có chắc chắn muốn xóa bài viết này không? Thao tác này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
             <Button variant="text" onClick={() => setDeletingThreadId(null)}>
               Hủy
             </Button>
@@ -989,25 +984,29 @@ function ForumPageContent() {
             >
               Xóa bài viết
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
 
       {/* Confirm Dialog Delete Reply */}
-      <AlertDialog
+      <Dialog.Root
         open={Boolean(deletingReplyId)}
         onOpenChange={(open) => {
           if (!open) setDeletingReplyId(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa phản hồi</AlertDialogTitle>
-            <AlertDialogDescription>
+        <Dialog.Content>
+          <Dialog.Icon
+            icon={<AlertTriangle className="w-6 h-6 text-error" aria-hidden="true" />}
+            className="bg-error/10 text-error"
+          />
+          <Dialog.Header>
+            <Dialog.Title>Xác nhận xóa phản hồi</Dialog.Title>
+            <Dialog.Description>
               Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
             <Button variant="text" onClick={() => setDeletingReplyId(null)}>
               Hủy
             </Button>
@@ -1019,9 +1018,9 @@ function ForumPageContent() {
             >
               Xóa phản hồi
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
     </>
   );
 }

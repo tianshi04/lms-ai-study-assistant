@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/Dialog";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
@@ -202,13 +202,13 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
   };
 
   return (
-    <Dialog
+    <Dialog.Root
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
     >
-      <DialogContent size="lg" className="max-w-lg p-0 overflow-hidden">
+      <Dialog.Content size="lg" className="max-w-lg p-0 overflow-hidden">
         <div className="relative bg-primary p-6 text-primary-foreground text-center rounded-t-2xl overflow-hidden">
           {/* Celebration Canvas */}
           <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none z-10" />
@@ -344,7 +344,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
             )}
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </Dialog.Content>
+    </Dialog.Root>
   );
 };

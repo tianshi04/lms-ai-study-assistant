@@ -6,15 +6,6 @@ import { Plus, HelpCircle, FolderOpen, Pencil, Trash2, Info } from "lucide-react
 
 import { Dialog } from "@/components/ui/Dialog";
 
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
-
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -555,7 +546,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
       </main>
 
       {/* --- Modal Create Bank --- */}
-      <Dialog.Root open={showCreateBankModal} onOpenChange={(open) => setShowCreateBankModal(open)}>
+      <Dialog open={showCreateBankModal} onOpenChange={(open) => setShowCreateBankModal(open)}>
         <Dialog.Content size="md">
           <Dialog.Header>
             <Dialog.Title>{"Tạo Kho Ngân hàng Đề mới"}</Dialog.Title>
@@ -640,13 +631,10 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
             </Dialog.Footer>
           </form>
         </Dialog.Content>
-      </Dialog.Root>
+      </Dialog>
 
       {/* --- Modal Add Question --- */}
-      <Dialog.Root
-        open={showAddQuestionModal}
-        onOpenChange={(open) => setShowAddQuestionModal(open)}
-      >
+      <Dialog open={showAddQuestionModal} onOpenChange={(open) => setShowAddQuestionModal(open)}>
         <Dialog.Content size="lg">
           <Dialog.Header>
             <Dialog.Title>
@@ -841,22 +829,23 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
             </Dialog.Footer>
           </form>
         </Dialog.Content>
-      </Dialog.Root>
+      </Dialog>
 
-      <AlertDialog
+      <Dialog
         open={deletingQuestionId !== null}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean) => {
           if (!open) setDeletingQuestionId(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{"Xác nhận xóa câu hỏi"}</AlertDialogTitle>
-            <AlertDialogDescription>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon icon={<Trash2 className="w-6 h-6 text-error" aria-hidden="true" />} />
+            <Dialog.Title>{"Xác nhận xóa câu hỏi"}</Dialog.Title>
+            <Dialog.Description>
               {"Bạn có chắc chắn muốn xóa câu hỏi này không? Thao tác này không thể hoàn tác."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
             <Button
               variant="outlined"
               size="sm"
@@ -874,9 +863,9 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
             >
               {"Xóa"}
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog>
     </div>
   );
 }

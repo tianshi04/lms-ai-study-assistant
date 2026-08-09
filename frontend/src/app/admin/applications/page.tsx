@@ -17,14 +17,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
+import { Dialog } from "@/components/ui/Dialog";
 import {
   PageHeader,
   PageHeaderTitle,
@@ -354,30 +347,31 @@ export default function AdminInstructorApplicationsPage() {
         )}
       </div>
 
-      <AlertDialog
+      <Dialog
         open={Boolean(approvingAppId)}
         onOpenChange={(open) => {
           if (!open) setApprovingAppId(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận phê duyệt đơn Giảng viên</AlertDialogTitle>
-            <AlertDialogDescription>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon icon={<Check className="w-6 h-6 text-primary" aria-hidden="true" />} />
+            <Dialog.Title>Xác nhận phê duyệt đơn Giảng viên</Dialog.Title>
+            <Dialog.Description>
               Bạn có chắc chắn muốn phê duyệt đơn này và nâng quyền tài khoản tương ứng thành Giảng
               viên?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
             <Button variant="outlined" onClick={() => setApprovingAppId(null)}>
               Hủy
             </Button>
             <Button variant="filled" onClick={executeApprove} disabled={reviewMutation.isPending}>
               Phê Duyệt
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog>
     </div>
   );
 }

@@ -21,14 +21,8 @@ import {
   SelectItem,
 } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
+import { Trash2 } from "lucide-react";
+import { Dialog } from "@/components/ui/Dialog";
 import {
   PageHeader,
   PageHeaderTitle,
@@ -214,20 +208,21 @@ export default function AdminCategoriesPage() {
         />
       </div>
 
-      <AlertDialog
+      <Dialog
         open={Boolean(deleteTarget)}
         onOpenChange={(open) => {
           if (!open) setDeleteTarget(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa danh mục</AlertDialogTitle>
-            <AlertDialogDescription>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon icon={<Trash2 className="w-6 h-6 text-error" aria-hidden="true" />} />
+            <Dialog.Title>Xác nhận xóa danh mục</Dialog.Title>
+            <Dialog.Description>
               Bạn có chắc chắn muốn xóa danh mục này? Thao tác này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
             <Button variant="outlined" onClick={() => setDeleteTarget(null)}>
               Hủy
             </Button>
@@ -239,9 +234,9 @@ export default function AdminCategoriesPage() {
             >
               Xóa danh mục
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog>
     </main>
   );
 }

@@ -12,16 +12,7 @@ import {
   useDeletePartnerMutation,
 } from "@/lib/query_hooks";
 import { Dialog } from "@/components/ui/Dialog";
-
 import { useToast } from "@/components/ui/Toast";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Card } from "@/components/ui/Card";
@@ -440,7 +431,7 @@ export default function AdminPartnersPage() {
       </Card>
 
       {/* Modal Thêm/Sửa Đối tác */}
-      <Dialog.Root open={isModalOpen} onOpenChange={(open) => setIsModalOpen(open)}>
+      <Dialog open={isModalOpen} onOpenChange={(open) => setIsModalOpen(open)}>
         <Dialog.Content size="lg">
           <Dialog.Header>
             <Dialog.Title>
@@ -754,7 +745,7 @@ export default function AdminPartnersPage() {
               </Button>
               <Button
                 type="submit"
-                className="bg-primary hover:bg-primary-hover text-primary-foreground font-medium rounded-xl"
+                variant="filled"
                 disabled={createMutation.isPending || updateMutation.isPending}
               >
                 {editingPartner ? "Cập nhật đối tác" : "Thêm đối tác"}
@@ -762,22 +753,23 @@ export default function AdminPartnersPage() {
             </Dialog.Footer>
           </form>
         </Dialog.Content>
-      </Dialog.Root>
+      </Dialog>
 
-      <AlertDialog
+      <Dialog
         open={!!deletingPartnerId}
         onOpenChange={(open) => {
           if (!open) setDeletingPartnerId(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xoá đối tác</AlertDialogTitle>
-            <AlertDialogDescription>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon icon={<Trash2 className="w-6 h-6 text-error" aria-hidden="true" />} />
+            <Dialog.Title>Xác nhận xoá đối tác</Dialog.Title>
+            <Dialog.Description>
               Bạn có chắc chắn muốn xoá đối tác này khỏi hệ thống? Thao tác này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
             <Button variant="outlined" onClick={() => setDeletingPartnerId(null)}>
               Hủy
             </Button>
@@ -789,9 +781,9 @@ export default function AdminPartnersPage() {
             >
               Xoá đối tác
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog>
     </main>
   );
 }

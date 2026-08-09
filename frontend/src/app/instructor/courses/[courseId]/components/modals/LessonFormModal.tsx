@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/Dialog";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -54,10 +48,10 @@ export function LessonFormModal({
         if (!open) onClose();
       }}
     >
-      <DialogContent size="md">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Chỉnh sửa Bài học" : "Thêm Bài học Mới (Lesson)"}</DialogTitle>
-        </DialogHeader>
+      <Dialog.Content size="md">
+        <Dialog.Header>
+          <Dialog.Title>{isEdit ? "Chỉnh sửa Bài học" : "Thêm Bài học Mới (Lesson)"}</Dialog.Title>
+        </Dialog.Header>
         <form onSubmit={handleSubmit} className="space-y-4 my-2">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
@@ -87,7 +81,7 @@ export function LessonFormModal({
             />
           </div>
 
-          <DialogFooter>
+          <Dialog.Footer>
             <Button
               type="button"
               variant="outlined"
@@ -106,9 +100,9 @@ export function LessonFormModal({
             >
               {isEdit ? "Cập nhật Bài học" : "Xác nhận tạo Bài học"}
             </Button>
-          </DialogFooter>
+          </Dialog.Footer>
         </form>
-      </DialogContent>
+      </Dialog.Content>
     </Dialog>
   );
 }

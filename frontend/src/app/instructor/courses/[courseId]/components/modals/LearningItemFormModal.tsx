@@ -169,7 +169,7 @@ export function LearningItemFormModal({
   };
 
   return (
-    <Dialog.Root
+    <Dialog
       open={isOpen}
       onOpenChange={(open) => {
         if (!open) onClose();
@@ -599,6 +599,6 @@ export function LearningItemFormModal({
           </Dialog.Footer>
         </form>
       </Dialog.Content>
-    </Dialog.Root>
+    </Dialog>
   );
 }

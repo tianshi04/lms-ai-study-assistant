@@ -11,14 +11,7 @@ import {
 } from "@/lib/query_hooks";
 import { InvitationType, InvitationStatus } from "@/gen/identity/v1/identity_pb";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
+import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
@@ -269,21 +262,22 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
         </Card>
 
         {/* Cancel Invitation Confirm Dialog */}
-        <AlertDialog
+        <Dialog.Root
           open={Boolean(cancelingInvId)}
-          onOpenChange={(open) => {
+          onOpenChange={(open: boolean) => {
             if (!open) setCancelingInvId(null);
           }}
         >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Hủy Lời mời Gia nhập</AlertDialogTitle>
-              <AlertDialogDescription>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Icon icon={<XCircle className="w-6 h-6 text-error" aria-hidden="true" />} />
+              <Dialog.Title>Hủy Lời mời Gia nhập</Dialog.Title>
+              <Dialog.Description>
                 Bạn có chắc chắn muốn hủy lời mời này không? Người được mời sẽ không thể dùng link
                 token này nữa.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
+              </Dialog.Description>
+            </Dialog.Header>
+            <Dialog.Footer>
               <Button variant="outlined" onClick={() => setCancelingInvId(null)}>
                 Hủy
               </Button>
@@ -297,9 +291,9 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
               >
                 Hủy Lời Mời
               </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Root>
       </main>
     </div>
   );

@@ -7,7 +7,7 @@ import {
   useCancelInvitationMutation,
 } from "@/lib/query_hooks";
 import { InvitationType } from "@/gen/identity/v1/identity_pb";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/Dialog";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { Field, FieldLabel } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
@@ -20,7 +20,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import { Send, Loader2, CheckCircle2, AlertCircle, Copy, Check, UserX } from "lucide-react";
+import {
+  UserPlus,
+  Send,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  Copy,
+  Check,
+  UserX,
+} from "lucide-react";
 
 interface InviteMemberModalProps {
   isOpen: boolean;
@@ -110,10 +119,11 @@ export function InviteMemberModal({
         if (!open) onClose();
       }}
     >
-      <DialogContent size="lg">
-        <DialogHeader>
-          <DialogTitle>{`Mời tham gia ${targetName}`}</DialogTitle>
-        </DialogHeader>
+      <Dialog.Content size="lg">
+        <Dialog.Header>
+          <Dialog.Icon icon={<UserPlus className="w-6 h-6 text-primary" aria-hidden="true" />} />
+          <Dialog.Title>{`Mời tham gia ${targetName}`}</Dialog.Title>
+        </Dialog.Header>
 
         <div className="flex flex-col max-h-[70vh] overflow-hidden my-2">
           {/* Tabs */}
@@ -299,7 +309,7 @@ export function InviteMemberModal({
             )}
           </div>
         </div>
-      </DialogContent>
+      </Dialog.Content>
     </Dialog>
   );
 }

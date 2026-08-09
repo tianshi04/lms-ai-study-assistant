@@ -3,14 +3,7 @@
 import { useState, useEffect } from "react";
 import { Bell, Mail, BookOpen, MessageSquare, Megaphone, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/Dialog";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { Switch } from "@/components/ui/Switch";
 import {
@@ -69,11 +62,12 @@ export function NotificationPreferencesModal({
         if (!open) onClose();
       }}
     >
-      <DialogContent size="md">
-        <DialogHeader>
-          <DialogTitle>Cài đặt Thông báo</DialogTitle>
-          <DialogDescription>Tùy chỉnh kênh và danh mục nhận thông báo</DialogDescription>
-        </DialogHeader>
+      <Dialog.Content size="md">
+        <Dialog.Header>
+          <Dialog.Icon icon={<Bell className="w-6 h-6 text-primary" aria-hidden="true" />} />
+          <Dialog.Title>Cài đặt Thông báo</Dialog.Title>
+          <Dialog.Description>Tùy chỉnh kênh và danh mục nhận thông báo</Dialog.Description>
+        </Dialog.Header>
 
         {isLoading ? (
           <div className="py-12 flex justify-center items-center text-muted-foreground">
@@ -182,7 +176,7 @@ export function NotificationPreferencesModal({
           </div>
         )}
 
-        <DialogFooter>
+        <Dialog.Footer>
           <Button variant="outlined" onClick={onClose}>
             Hủy
           </Button>
@@ -196,8 +190,8 @@ export function NotificationPreferencesModal({
             )}
             <span>Lưu cài đặt</span>
           </Button>
-        </DialogFooter>
-      </DialogContent>
+        </Dialog.Footer>
+      </Dialog.Content>
     </Dialog>
   );
 }
