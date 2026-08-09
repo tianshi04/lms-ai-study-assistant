@@ -264,7 +264,7 @@ export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> =
             </Dialog.Description>
           </Dialog.Header>
           <Dialog.Footer>
-            <Button variant="outlined" onClick={() => setRemovingMember(null)}>
+            <Button variant="text" onClick={() => setRemovingMember(null)}>
               Hủy
             </Button>
             <Button

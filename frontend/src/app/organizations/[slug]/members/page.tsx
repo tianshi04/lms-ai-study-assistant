@@ -373,11 +373,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               </div>
 
               <Dialog.Footer className="pt-4 flex justify-end gap-3 border-t border-border">
-                <Button
-                  type="button"
-                  variant="outlined"
-                  onClick={() => setIsInviteModalOpen(false)}
-                >
+                <Button type="button" variant="text" onClick={() => setIsInviteModalOpen(false)}>
                   Hủy
                 </Button>
                 <Button type="submit" variant="filled" disabled={createInviteMutation.isPending}>
@@ -406,7 +402,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               </Dialog.Description>
             </Dialog.Header>
             <Dialog.Footer>
-              <Button variant="outlined" onClick={() => setRemovingMember(null)}>
+              <Button variant="text" onClick={() => setRemovingMember(null)}>
                 Hủy
               </Button>
               <Button

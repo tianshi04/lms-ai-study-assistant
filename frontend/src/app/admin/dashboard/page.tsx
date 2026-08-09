@@ -432,7 +432,7 @@ export default function AdminEnterpriseDashboardPage() {
             <Dialog.Footer className="pt-2">
               <Button
                 type="button"
-                variant="outlined"
+                variant="text"
                 size="sm"
                 onClick={() => setShowAssignModal(false)}
               >
@@ -475,7 +475,7 @@ export default function AdminEnterpriseDashboardPage() {
             <Dialog.Footer className="pt-2">
               <Button
                 type="button"
-                variant="outlined"
+                variant="text"
                 size="sm"
                 onClick={() => setShowCreateModal(false)}
               >

@@ -347,7 +347,7 @@ function FinancialAidContent() {
                 {selectedApp.status === "REJECTED" && (
                   <Button
                     type="button"
-                    variant="tonal"
+                    variant="text"
                     size="sm"
                     onClick={() => {
                       setSelectedCourseId(selectedApp.courseId);
@@ -435,7 +435,7 @@ function FinancialAidContent() {
               <Dialog.Footer className="pt-4 flex justify-end gap-3 border-t border-border">
                 <Button
                   type="button"
-                  variant="outlined"
+                  variant="text"
                   size="sm"
                   onClick={() => {
                     setShowCreateModal(false);

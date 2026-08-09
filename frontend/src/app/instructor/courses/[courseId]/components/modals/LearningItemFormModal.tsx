@@ -580,7 +580,7 @@ export function LearningItemFormModal({
           <Dialog.Footer className="pt-3 border-t border-border mt-3 shrink-0">
             <Button
               type="button"
-              variant="outlined"
+              variant="text"
               size="sm"
               onClick={onClose}
               className="rounded-xl text-xs font-bold"

@@ -278,7 +278,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
               </Dialog.Description>
             </Dialog.Header>
             <Dialog.Footer>
-              <Button variant="outlined" onClick={() => setCancelingInvId(null)}>
+              <Button variant="text" onClick={() => setCancelingInvId(null)}>
                 Hủy
               </Button>
               <Button

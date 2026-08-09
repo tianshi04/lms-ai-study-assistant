@@ -626,7 +626,7 @@ function PartnerSettingsForm({
             </Dialog.Description>
           </Dialog.Header>
           <Dialog.Footer>
-            <Button variant="outlined" onClick={() => setShowRotateConfirm(false)}>
+            <Button variant="text" onClick={() => setShowRotateConfirm(false)}>
               Hủy
             </Button>
             <Button

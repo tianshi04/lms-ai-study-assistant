@@ -740,7 +740,7 @@ export default function AdminPartnersPage() {
             </div>
 
             <Dialog.Footer className="pt-4 border-t border-border">
-              <Button type="button" variant="outlined" onClick={() => setIsModalOpen(false)}>
+              <Button type="button" variant="text" onClick={() => setIsModalOpen(false)}>
                 {"Hủy"}
               </Button>
               <Button
@@ -770,7 +770,7 @@ export default function AdminPartnersPage() {
             </Dialog.Description>
           </Dialog.Header>
           <Dialog.Footer>
-            <Button variant="outlined" onClick={() => setDeletingPartnerId(null)}>
+            <Button variant="text" onClick={() => setDeletingPartnerId(null)}>
               Hủy
             </Button>
             <Button

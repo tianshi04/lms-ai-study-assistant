@@ -323,7 +323,7 @@ function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId
             </Dialog.Description>
           </Dialog.Header>
           <Dialog.Footer>
-            <Button variant="outlined" onClick={() => builder.setConfirmDeleteTarget(null)}>
+            <Button variant="text" onClick={() => builder.setConfirmDeleteTarget(null)}>
               Hủy
             </Button>
             <Button

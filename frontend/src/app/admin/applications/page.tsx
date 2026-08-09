@@ -363,7 +363,7 @@ export default function AdminInstructorApplicationsPage() {
             </Dialog.Description>
           </Dialog.Header>
           <Dialog.Footer>
-            <Button variant="outlined" onClick={() => setApprovingAppId(null)}>
+            <Button variant="text" onClick={() => setApprovingAppId(null)}>
               Hủy
             </Button>
             <Button variant="filled" onClick={executeApprove} disabled={reviewMutation.isPending}>

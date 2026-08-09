@@ -513,7 +513,7 @@ export default function InstructorCoursesPage() {
             </div>
 
             <Dialog.Footer className="pt-4 border-t border-border">
-              <Button type="button" variant="outlined" onClick={() => setShowModal(false)}>
+              <Button type="button" variant="text" onClick={() => setShowModal(false)}>
                 {"Hủy"}
               </Button>
               <Button type="submit" variant="filled" disabled={saving}>
@@ -547,7 +547,7 @@ export default function InstructorCoursesPage() {
             </Dialog.Description>
           </Dialog.Header>
           <Dialog.Footer>
-            <Button variant="outlined" onClick={() => setDeletingCourseTarget(null)}>
+            <Button variant="text" onClick={() => setDeletingCourseTarget(null)}>
               Hủy
             </Button>
             <Button

@@ -100,7 +100,7 @@ export function HonorCodeModal({
         </div>
 
         <Dialog.Footer>
-          <Button variant="outlined" onClick={onClose} disabled={isSubmitting}>
+          <Button variant="text" onClick={onClose} disabled={isSubmitting}>
             Hủy / Kiểm tra lại
           </Button>
           <Button

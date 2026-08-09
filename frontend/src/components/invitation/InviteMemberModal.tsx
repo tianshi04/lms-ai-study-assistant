@@ -252,7 +252,7 @@ export function InviteMemberModal({
                 )}
 
                 <div className="pt-2 flex justify-end gap-3">
-                  <Button type="button" variant="outlined" onClick={onClose}>
+                  <Button type="button" variant="text" onClick={onClose}>
                     Đóng
                   </Button>
                   <Button type="submit" disabled={!email.trim() || createMutation.isPending}>

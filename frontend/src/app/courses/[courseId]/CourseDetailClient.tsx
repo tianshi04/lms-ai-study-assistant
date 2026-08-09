@@ -779,7 +779,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <Dialog.Footer className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
                 <Button
                   type="button"
-                  variant="outlined"
+                  variant="text"
                   size="sm"
                   onClick={() => setExistingFinAidStatus(null)}
                   className="rounded-xl text-xs font-semibold w-full sm:w-auto"

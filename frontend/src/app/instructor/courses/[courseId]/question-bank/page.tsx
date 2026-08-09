@@ -612,7 +612,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
             <Dialog.Footer className="pt-4 border-t border-border">
               <Button
                 type="button"
-                variant="outlined"
+                variant="text"
                 size="sm"
                 onClick={() => setShowCreateBankModal(false)}
                 className="rounded-xl text-xs font-bold"
@@ -810,7 +810,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
             <Dialog.Footer className="pt-2">
               <Button
                 type="button"
-                variant="outlined"
+                variant="text"
                 size="sm"
                 onClick={() => setShowAddQuestionModal(false)}
                 className="rounded-xl text-xs font-bold"
@@ -847,7 +847,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
           </Dialog.Header>
           <Dialog.Footer>
             <Button
-              variant="outlined"
+              variant="text"
               size="sm"
               onClick={() => setDeletingQuestionId(null)}
               disabled={deleteQuestionMutation.isPending}

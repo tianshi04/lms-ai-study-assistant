@@ -294,7 +294,7 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
             </Dialog.Description>
           </Dialog.Header>
           <Dialog.Footer>
-            <Button variant="outlined" onClick={() => setRemovingMember(null)}>
+            <Button variant="text" onClick={() => setRemovingMember(null)}>
               Hủy
             </Button>
             <Button

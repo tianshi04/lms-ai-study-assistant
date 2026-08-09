@@ -218,7 +218,7 @@ export function PaymentCheckoutModal({
         </div>
 
         <Dialog.Footer className="flex items-center justify-end gap-3 pt-3 border-t border-border">
-          <Button variant="outlined" onClick={onClose} disabled={isLoading}>
+          <Button variant="text" onClick={onClose} disabled={isLoading}>
             Hủy bỏ
           </Button>
           <Button

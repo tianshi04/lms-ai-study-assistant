@@ -223,7 +223,7 @@ export default function AdminCategoriesPage() {
             </Dialog.Description>
           </Dialog.Header>
           <Dialog.Footer>
-            <Button variant="outlined" onClick={() => setDeleteTarget(null)}>
+            <Button variant="text" onClick={() => setDeleteTarget(null)}>
               Hủy
             </Button>
             <Button

@@ -680,7 +680,7 @@ function MyPurchasesContent() {
           </Dialog.Header>
           <Dialog.Footer>
             <Button
-              variant="outlined"
+              variant="text"
               onClick={() => setOrderToCancel(null)}
               disabled={cancelVNPayMutation.isPending}
             >

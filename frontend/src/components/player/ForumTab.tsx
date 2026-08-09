@@ -555,7 +555,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
             </Dialog.Description>
           </Dialog.Header>
           <Dialog.Footer>
-            <Button variant="outlined" onClick={() => setDeletingThreadId(null)}>
+            <Button variant="text" onClick={() => setDeletingThreadId(null)}>
               Hủy
             </Button>
             <Button
@@ -588,7 +588,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
             </Dialog.Description>
           </Dialog.Header>
           <Dialog.Footer>
-            <Button variant="outlined" onClick={() => setDeletingReplyId(null)}>
+            <Button variant="text" onClick={() => setDeletingReplyId(null)}>
               Hủy
             </Button>
             <Button

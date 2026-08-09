@@ -177,7 +177,7 @@ export function NotificationPreferencesModal({
         )}
 
         <Dialog.Footer>
-          <Button variant="outlined" onClick={onClose}>
+          <Button variant="text" onClick={onClose}>
             Hủy
           </Button>
           <Button

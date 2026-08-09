@@ -334,7 +334,7 @@ export default function TAGradingPage() {
                 <Dialog.Footer className="pt-2">
                   <Button
                     type="button"
-                    variant="tonal"
+                    variant="text"
                     size="sm"
                     onClick={() => setSelectedSubmission(null)}
                   >

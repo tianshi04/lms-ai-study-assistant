@@ -86,7 +86,7 @@ export function WeekFormModal({
           <Dialog.Footer>
             <Button
               type="button"
-              variant="outlined"
+              variant="text"
               size="sm"
               onClick={onClose}
               className="rounded-xl text-xs font-bold"

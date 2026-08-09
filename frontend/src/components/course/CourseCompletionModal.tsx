@@ -333,7 +333,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
                 )}
 
                 <div className="flex items-center justify-end gap-3 pt-2">
-                  <Button type="button" variant="outlined" size="sm" onClick={onClose}>
+                  <Button type="button" variant="text" size="sm" onClick={onClose}>
                     {"Hủy"}
                   </Button>
                   <Button type="submit" disabled={submitting} size="sm">

@@ -305,7 +305,7 @@ export default function CourseReviewerPortalPage() {
             <Dialog.Footer className="mt-4">
               <Button
                 type="button"
-                variant="outlined"
+                variant="text"
                 size="sm"
                 onClick={() => setRejectingCourseId(null)}
               >
