@@ -217,7 +217,7 @@ export default function RegisterPage() {
                 </div>
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="text"
                   size="sm"
                   onClick={() => setStep(1)}
                   className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium shrink-0"
