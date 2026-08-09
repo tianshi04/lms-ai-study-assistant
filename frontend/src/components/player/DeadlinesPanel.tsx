@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Calendar } from "lucide-react";
 import type { LearningProgress } from "@/gen/learning/v1/learning_pb";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -23,12 +23,18 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
   const hasOverdue = progress.weeklyDeadlines.some((d) => d.status === 2);
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5">
-      <Card variant="filled" className="border border-outline-variant p-4 rounded-2xl space-y-4">
-        <div className="flex items-center justify-between">
+    <div className="w-full space-y-4">
+      <Card
+        variant="outlined"
+        className="w-full bg-surface-container-low/50 border border-outline-variant/60 p-4 rounded-2xl space-y-4"
+      >
+        <div className="flex items-center justify-between gap-2">
           <div>
-            <h4 className="font-bold text-sm text-on-surface">{"Các mốc Deadline sắp tới"}</h4>
-            <p className="text-xs text-on-surface-variant">
+            <h4 className="text-xs font-bold text-on-surface uppercase tracking-wider flex items-center gap-2">
+              <Calendar className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+              <span>{"Các mốc Deadline sắp tới"}</span>
+            </h4>
+            <p className="text-xs text-on-surface-variant mt-0.5">
               {"Hạn nộp linh hoạt (Flexible Deadlines)"}
             </p>
           </div>
@@ -36,29 +42,29 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
             <Button
               type="button"
               onClick={onResetDeadlines}
-              className="px-4 py-2 bg-warning hover:bg-warning-hover text-warning-foreground text-xs font-bold rounded-full border border-warning/30 animate-pulse"
+              className="px-3.5 py-1.5 bg-warning hover:bg-warning-hover text-warning-foreground text-xs font-bold rounded-full border border-warning/30 animate-pulse shrink-0"
             >
               <RotateCcw aria-hidden="true" className="w-3.5 h-3.5" />
-              Reset My Deadlines
+              Reset Deadlines
             </Button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+        <div className="grid grid-cols-1 gap-2.5 pt-1">
           {progress.weeklyDeadlines.map((d) => (
             <div
               key={d.weekNumber}
-              className={`p-3.5 rounded-2xl border text-xs flex items-center justify-between transition-colors ${
+              className={`p-3.5 rounded-2xl border text-xs flex items-center justify-between transition-all ${
                 d.status === 2
-                  ? "bg-warning/10 border-warning/30 text-warning"
-                  : "bg-surface-container-high border-outline-variant text-on-surface"
+                  ? "bg-error-container/30 border-error/30 text-on-error-container font-medium"
+                  : "bg-surface-container-lowest border-outline-variant/70 text-on-surface hover:border-primary/40 shadow-2xs"
               }`}
             >
               <div>
                 <span className="font-bold block">
                   {"Tuần"} {d.weekNumber}
                 </span>
-                <span className="text-[10px] opacity-80">{d.dueDate}</span>
+                <span className="text-[10px] text-on-surface-variant">{d.dueDate}</span>
               </div>
               <Badge variant={d.status === 2 ? "error" : "primary"}>
                 {d.status === 2 ? "OVERDUE" : "ON TRACK"}
