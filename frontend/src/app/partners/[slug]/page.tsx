@@ -7,6 +7,7 @@ import Image from "next/image";
 import { usePartnersQuery, useCoursesQuery } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Progress } from "@/components/ui/Progress";
 import { Chip } from "@/components/ui/Chip";
 import { AlertTriangle, ExternalLink, BookOpen, PenTool, Globe, GraduationCap } from "lucide-react";
 
@@ -32,7 +33,7 @@ function PartnerPublicContent() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-muted-foreground">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <Progress.Circular size="sm" />
           <span aria-live="polite">Đang tải thông tin đối tác…</span>
         </div>
       </div>
@@ -326,7 +327,7 @@ export default function PartnerPublicPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[60vh] text-muted-foreground">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-3" />
+          <Progress.Circular size="sm" className="mr-3" />
           <span aria-live="polite">Đang tải thông tin đối tác…</span>
         </div>
       }

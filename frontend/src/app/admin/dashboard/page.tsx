@@ -11,6 +11,7 @@ import {
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
 import { Dialog } from "@/components/ui/Dialog";
+import { Progress } from "@/components/ui/Progress";
 
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
@@ -169,7 +170,7 @@ export default function AdminEnterpriseDashboardPage() {
     return (
       <div className="flex-1 flex items-center justify-center py-24">
         <div className="flex items-center gap-3 text-muted-foreground">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <Progress.Circular size="md" />
           <span aria-live="polite" className="text-sm font-medium">
             Đang tải bảng điều khiển Enterprise Admin…
           </span>

@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { Progress } from "@/components/ui/Progress";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Chip } from "@/components/ui/Chip";
 
@@ -317,7 +318,7 @@ export function GradedQuizRunner({
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <Progress.Circular size="md" ariaLabel="Đang tạo phiên làm bài và tải câu hỏi" />
         <p aria-live="polite" className="text-sm text-muted-foreground font-semibold">
           Đang tạo phiên làm bài và tải câu hỏi…
         </p>
@@ -443,6 +444,17 @@ export function GradedQuizRunner({
           <h2 className="text-xl font-bold text-foreground mt-1">
             {title || "Bài thi trắc nghiệm"}
           </h2>
+          <Progress.Linear
+            value={
+              questions.length > 0
+                ? (Object.keys(selectedAnswers).length / questions.length) * 100
+                : 0
+            }
+            showLabel
+            label={`Tiến độ làm bài (${Object.keys(selectedAnswers).length}/${questions.length} câu)`}
+            wavy
+            className="mt-3"
+          />
         </div>
       </div>
 

@@ -35,17 +35,8 @@ import {
 } from "@/components/ui/Select";
 import { Dialog } from "@/components/ui/Dialog";
 
-import {
-  Users,
-  UserPlus,
-  Trash2,
-  Shield,
-  Loader2,
-  CheckCircle2,
-  Search,
-  Copy,
-  Check,
-} from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
+import { Users, UserPlus, Trash2, Shield, CheckCircle2, Search, Copy, Check } from "lucide-react";
 
 function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -192,7 +183,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
 
           {isLoading ? (
             <div className="p-12 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
-              <Loader2 className="w-7 h-7 text-primary animate-spin" aria-hidden="true" />
+              <Progress.Circular size="md" />
               <p className="text-sm">Đang tải danh sách thành viên...</p>
             </div>
           ) : filteredMembers.length === 0 ? (
@@ -433,7 +424,7 @@ export default function OrgMembersPage({ params }: { params: Promise<{ slug: str
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
+          <Progress.Circular size="sm" />
           <span className="text-sm">Đang tải danh sách thành viên...</span>
         </div>
       }

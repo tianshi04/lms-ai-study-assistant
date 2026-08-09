@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Mail, BookOpen, MessageSquare, Megaphone, Loader2 } from "lucide-react";
+import { Bell, Mail, BookOpen, MessageSquare, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
+import { Progress } from "@/components/ui/Progress";
 
 import { Switch } from "@/components/ui/Switch";
 import {
@@ -71,7 +72,7 @@ export function NotificationPreferencesModal({
 
         {isLoading ? (
           <div className="py-12 flex justify-center items-center text-muted-foreground">
-            <Loader2 className="w-6 h-6 animate-spin" aria-hidden="true" />
+            <Progress.Circular size="md" ariaLabel="Đang tải cài đặt" />
           </div>
         ) : (
           <div className="py-2 space-y-4 max-h-[60vh] overflow-y-auto pr-1 my-2">
@@ -186,7 +187,7 @@ export function NotificationPreferencesModal({
             className="flex items-center gap-2"
           >
             {updateMutation.isPending && (
-              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+              <Progress.Circular size="sm" className="w-4 h-4" ariaLabel="Đang lưu cài đặt" />
             )}
             <span>Lưu cài đặt</span>
           </Button>

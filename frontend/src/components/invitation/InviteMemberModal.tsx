@@ -20,16 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import {
-  UserPlus,
-  Send,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  Copy,
-  Check,
-  UserX,
-} from "lucide-react";
+import { UserPlus, Send, CheckCircle2, AlertCircle, UserX, Check, Copy } from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
 
 interface InviteMemberModalProps {
   isOpen: boolean;
@@ -266,8 +258,8 @@ export function InviteMemberModal({
             {activeTab === "pending" && (
               <div className="space-y-3">
                 {isLoadingPending && (
-                  <div className="flex justify-center py-8 text-muted-foreground gap-2">
-                    <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+                  <div className="flex justify-center py-8 text-muted-foreground gap-2 items-center">
+                    <Progress.Circular size="sm" ariaLabel="Đang tải danh sách lời mời" />
                     <span className="text-sm">Đang danh sách lời mời...</span>
                   </div>
                 )}

@@ -8,14 +8,9 @@ import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CourseDetailClient } from "./CourseDetailClient";
 
 /**
- * Best Practice Next.js 16 Cache Components:
- * Metadata is cached for days and invalidated on-demand via updateTag(`course-${courseId}`).
+ * Metadata retrieval for Course Detail page.
  */
 async function getCourseMetadata(courseId: string): Promise<Metadata> {
-  "use cache";
-  cacheLife("days");
-  cacheTag("courses", `course-${courseId}`);
-
   try {
     const client = getPublicRpcServerClient(CatalogService);
     const res = await client.getCourseDetail({ idOrSlug: courseId });

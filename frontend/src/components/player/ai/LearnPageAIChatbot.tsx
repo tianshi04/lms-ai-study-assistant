@@ -18,6 +18,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { SaveNoteCard, TimestampSeekCard } from "./AIChatToolCards";
 import { renderMessageItem } from "./AIChatMessageItem";
+import { Progress } from "@/components/ui/Progress";
 
 interface LearnPageAIChatbotProps {
   courseId: string;
@@ -313,7 +314,11 @@ export function LearnPageAIChatbot({
                 aria-live="polite"
                 className="flex items-center gap-2 text-xs text-on-surface-variant italic py-1 animate-pulse"
               >
-                <Sparkles className="w-3.5 h-3.5 text-primary animate-spin" aria-hidden="true" />
+                <Progress.Circular
+                  size="sm"
+                  className="w-3.5 h-3.5"
+                  ariaLabel="Trợ lý AI đang suy nghĩ"
+                />
                 <span>Trợ lý AI đang suy nghĩ…</span>
               </output>
             )}

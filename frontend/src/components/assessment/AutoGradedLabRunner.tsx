@@ -16,6 +16,7 @@ import {
   SelectItem,
 } from "@/components/ui/Select";
 import { Card } from "@/components/ui/Card";
+import { Progress } from "@/components/ui/Progress";
 import { mapConnectError } from "@/lib/connect_error_mapper";
 
 interface AutoGradedLabRunnerProps {
@@ -178,8 +179,8 @@ export function AutoGradedLabRunner({
             )}
 
             {isRunning && (
-              <div className="flex items-center gap-2 text-warning animate-pulse">
-                <span className="w-2 h-2 rounded-full bg-warning animate-ping"></span>
+              <div className="flex items-center gap-2 text-warning">
+                <Progress.Circular size="sm" ariaLabel="Đang thực thi test case" />
                 <span aria-live="polite">Compiling &amp; executing test cases in Sandbox…</span>
               </div>
             )}

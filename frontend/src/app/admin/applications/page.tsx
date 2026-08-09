@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
 import { useToast } from "@/components/ui/Toast";
 import { Dialog } from "@/components/ui/Dialog";
+import { Progress } from "@/components/ui/Progress";
 import {
   PageHeader,
   PageHeaderTitle,
@@ -144,8 +145,11 @@ export default function AdminInstructorApplicationsPage() {
 
         {/* Content List */}
         {isLoading ? (
-          <Card variant="outlined" className="p-12 text-center">
-            <div className="inline-block animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-3" />
+          <Card
+            variant="outlined"
+            className="p-12 text-center flex flex-col items-center justify-center"
+          >
+            <Progress.Circular size="md" className="mb-3" />
             <p aria-live="polite" className="text-muted-foreground text-sm font-medium">
               Đang tải danh sách đơn thẩm định…
             </p>

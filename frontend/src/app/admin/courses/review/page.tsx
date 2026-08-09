@@ -17,6 +17,7 @@ import { Chip } from "@/components/ui/Chip";
 import { Card } from "@/components/ui/Card";
 import { Tabs } from "@/components/ui/Tabs";
 import { Textarea } from "@/components/ui/Textarea";
+import { Progress } from "@/components/ui/Progress";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
 import { Eye, XCircle } from "lucide-react";
@@ -192,7 +193,7 @@ export default function CourseReviewerPortalPage() {
         {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center py-20 text-muted-foreground">
-            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-3" />
+            <Progress.Circular size="sm" className="mr-3" />
             <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
           </div>
         ) : courses.length === 0 ? (

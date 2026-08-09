@@ -23,9 +23,9 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/Table";
+import { Progress } from "@/components/ui/Progress";
 import {
   Mail,
-  Loader2,
   Copy,
   Check,
   XCircle,
@@ -184,7 +184,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
 
           {isLoading ? (
             <div className="p-12 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
-              <Loader2 className="w-7 h-7 text-primary animate-spin" aria-hidden="true" />
+              <Progress.Circular size="md" />
               <p className="text-sm">Đang tải danh sách lời mời...</p>
             </div>
           ) : invitations.length === 0 ? (
@@ -304,7 +304,7 @@ export default function OrgInvitationsPage({ params }: { params: Promise<{ slug:
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
+          <Progress.Circular size="sm" />
           <span className="text-sm">Đang tải danh sách lời mời...</span>
         </div>
       }

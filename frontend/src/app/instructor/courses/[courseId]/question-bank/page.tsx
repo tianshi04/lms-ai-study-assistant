@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus, HelpCircle, FolderOpen, Pencil, Trash2, Info } from "lucide-react";
 
 import { Dialog } from "@/components/ui/Dialog";
+import { Progress } from "@/components/ui/Progress";
 
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
@@ -290,8 +291,8 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
         </Card>
 
         {isLoading ? (
-          <div className="py-20 text-center text-muted-foreground">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="py-20 text-center text-muted-foreground flex flex-col items-center justify-center">
+            <Progress.Circular size="md" className="mx-auto mb-3" />
             <span aria-live="polite">{"Đang tải cấu trúc bài giảng khóa học…"}</span>
           </div>
         ) : (

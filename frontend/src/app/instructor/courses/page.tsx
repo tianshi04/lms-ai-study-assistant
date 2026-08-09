@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { Progress } from "@/components/ui/Progress";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
 import {
@@ -309,7 +310,7 @@ export default function InstructorCoursesPage() {
       {/* Courses Table / Cards */}
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-3" />
+          <Progress.Circular size="sm" className="mr-3" />
           <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
         </div>
       ) : courses.length === 0 ? (

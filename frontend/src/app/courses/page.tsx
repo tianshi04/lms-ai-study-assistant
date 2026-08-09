@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { cacheLife, cacheTag } from "next/cache";
 import { getPublicRpcServerClient } from "@/lib/server_connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CourseCatalogClient } from "./CourseCatalogClient";
@@ -12,15 +11,9 @@ export const metadata: Metadata = {
 };
 
 /**
- * Best Practice Next.js 16 Cache Components:
- * High read-to-write catalog data cached for hours with explicit tag invalidation.
- * Immediate cache invalidation is triggered via updateTag("courses") / updateTag("categories").
+ * Catalog data prefetching for Client Hydration.
  */
 async function getInitialCatalogData() {
-  "use cache";
-  cacheLife("hours");
-  cacheTag("courses", "categories");
-
   const queryClient = new QueryClient();
   const client = getPublicRpcServerClient(CatalogService);
 

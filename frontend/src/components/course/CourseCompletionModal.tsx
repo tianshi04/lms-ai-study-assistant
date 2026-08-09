@@ -12,6 +12,7 @@ import { Trophy, AlertTriangle, CheckCircle2, Check, Pencil, Star } from "lucide
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
+import { Progress } from "@/components/ui/Progress";
 
 export interface CourseCompletionModalProps {
   isOpen: boolean;
@@ -227,7 +228,12 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
 
           {loadingCert ? (
             <div className="relative z-20 mt-5 mx-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-foreground/15 text-primary-foreground text-xs font-semibold backdrop-blur-sm border border-primary-foreground/10">
-              <div className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+              <Progress.Circular
+                size="sm"
+                className="w-3.5 h-3.5"
+                color="warning"
+                ariaLabel="Đang tải chứng chỉ"
+              />
               <span aria-live="polite">{"Đang tải…"}</span>
             </div>
           ) : certError ? (

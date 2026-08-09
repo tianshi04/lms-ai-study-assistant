@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import { Toast as BaseToast } from "@base-ui/react/toast";
-import { Bell, CheckCircle2, AlertCircle, AlertTriangle, Info, Loader2, X } from "lucide-react";
+import { Bell, CheckCircle2, AlertCircle, AlertTriangle, Info, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Progress } from "./Progress";
 
 export type ToastType = "default" | "success" | "error" | "warning" | "info" | "loading";
 
@@ -52,7 +53,7 @@ const VariantIcons: Record<ToastType, React.ReactNode> = {
   ),
   loading: (
     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-      <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+      <Progress.Circular size="sm" ariaLabel="Đang xử lý" />
     </div>
   ),
 };

@@ -10,6 +10,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { LearningService, type EnrolledCourseSummary } from "@/gen/learning/v1/learning_pb";
 import { CertificateService, type VerifiedCertificate } from "@/gen/certificate/v1/certificate_pb";
 import { Tabs } from "@/components/ui/Tabs";
+import { Progress } from "@/components/ui/Progress";
 import { useAuth } from "@/components/providers/AuthProvider";
 
 type Tab = "IN_PROGRESS" | "COMPLETED" | "CERTIFICATES";
@@ -310,23 +311,8 @@ function MyLearningContent() {
                   </h3>
                 </Link>
 
-                <div className="space-y-1.5 mb-2">
-                  <div className="flex justify-between text-xs font-medium text-muted-foreground tabular-nums">
-                    <span>{"Tiến độ:"}</span>
-                    <span>{course.progressPercent}%</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-colors duration-m3-long-2 ease-m3-emphasized ${
-                        course.progressPercent === 100
-                          ? "bg-success"
-                          : course.progressPercent > 0
-                            ? "bg-primary"
-                            : "bg-transparent"
-                      }`}
-                      style={{ width: `${Math.max(0, course.progressPercent)}%` }}
-                    />
-                  </div>
+                <div className="mb-2">
+                  <Progress.Linear value={course.progressPercent} showLabel label="Tiến độ" />
                 </div>
               </div>
 
