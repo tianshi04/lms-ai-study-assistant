@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
+import { Tabs } from "@/components/ui/Tabs";
 import { Textarea } from "@/components/ui/Textarea";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
@@ -167,36 +168,24 @@ export default function CourseReviewerPortalPage() {
         )}
 
         {/* Status Tabs */}
-        <div className="flex items-center gap-2 border-b border-border mb-6 pb-2 overflow-x-auto">
-          <Button
-            size="sm"
-            variant={activeTab === CourseStatus.PENDING_REVIEW ? "primary" : "outline"}
-            onClick={() => setActiveTab(CourseStatus.PENDING_REVIEW)}
-          >
-            {"Chờ kiểm duyệt (PENDING_REVIEW)"}
-          </Button>
-          <Button
-            size="sm"
-            variant={activeTab === CourseStatus.PUBLISHED ? "primary" : "outline"}
-            onClick={() => setActiveTab(CourseStatus.PUBLISHED)}
-          >
-            {"Đã xuất bản (PUBLISHED)"}
-          </Button>
-          <Button
-            size="sm"
-            variant={activeTab === CourseStatus.DRAFT ? "primary" : "outline"}
-            onClick={() => setActiveTab(CourseStatus.DRAFT)}
-          >
-            {"Bản nháp (DRAFT)"}
-          </Button>
-          <Button
-            size="sm"
-            variant={activeTab === CourseStatus.REJECTED ? "danger" : "outline"}
-            onClick={() => setActiveTab(CourseStatus.REJECTED)}
-          >
-            {"Từ chối (REJECTED)"}
-          </Button>
-        </div>
+        <Tabs.Root
+          value={activeTab}
+          onValueChange={(val) => {
+            if (val != null) {
+              setActiveTab(Number(val) as CourseStatus);
+            }
+          }}
+          className="mb-6"
+        >
+          <Tabs.List className="overflow-x-auto pb-1">
+            <Tabs.Tab value={CourseStatus.PENDING_REVIEW}>
+              {"Chờ kiểm duyệt (PENDING_REVIEW)"}
+            </Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.PUBLISHED}>{"Đã xuất bản (PUBLISHED)"}</Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.DRAFT}>{"Bản nháp (DRAFT)"}</Tabs.Tab>
+            <Tabs.Tab value={CourseStatus.REJECTED}>{"Từ chối (REJECTED)"}</Tabs.Tab>
+          </Tabs.List>
+        </Tabs.Root>
 
         {/* Content */}
         {loading ? (

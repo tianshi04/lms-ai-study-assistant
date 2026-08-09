@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ArrowLeft, Check, X, AlertTriangle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Tabs } from "@/components/ui/Tabs";
 
 const emptySubscribe = () => () => {};
 
@@ -200,31 +201,18 @@ export default function InstructorFinancialAidPage() {
         )}
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-2 border-b border-border pb-3 overflow-x-auto">
-          {(["ALL", "PENDING", "APPROVED", "REJECTED"] as const).map((tab) => {
-            const labels = {
-              ALL: "Tất cả đơn",
-              PENDING: "Chờ xét duyệt (Pending)",
-              APPROVED: "Đã phê duyệt (Approved)",
-              REJECTED: "Đã từ chối (Rejected)",
-            };
-            return (
-              <Button
-                key={tab}
-                type="button"
-                variant={activeTab === tab ? "primary" : "outline"}
-                onClick={() => setActiveTab(tab)}
-                className={`rounded-xl text-xs font-bold whitespace-nowrap ${
-                  activeTab === tab
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                    : "bg-card text-muted-foreground hover:text-foreground border-border"
-                }`}
-              >
-                {labels[tab]}
-              </Button>
-            );
-          })}
-        </div>
+        <Tabs.Root
+          value={activeTab}
+          onValueChange={(val) => setActiveTab(val as "ALL" | "PENDING" | "APPROVED" | "REJECTED")}
+          className="mb-6"
+        >
+          <Tabs.List className="overflow-x-auto pb-1">
+            <Tabs.Tab value="ALL">Tất cả đơn</Tabs.Tab>
+            <Tabs.Tab value="PENDING">Chờ xét duyệt (Pending)</Tabs.Tab>
+            <Tabs.Tab value="APPROVED">Đã phê duyệt (Approved)</Tabs.Tab>
+            <Tabs.Tab value="REJECTED">Đã từ chối (Rejected)</Tabs.Tab>
+          </Tabs.List>
+        </Tabs.Root>
 
         {/* Application Cards List */}
         {loading ? (

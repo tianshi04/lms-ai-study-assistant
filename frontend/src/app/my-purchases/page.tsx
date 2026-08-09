@@ -31,6 +31,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
+import { Tabs } from "@/components/ui/Tabs";
 
 type FilterTab = "ALL" | "COMPLETED" | "PENDING" | "EXPIRED";
 
@@ -434,65 +435,31 @@ function MyPurchasesContent() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-border mb-6 overflow-x-auto pb-1">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => setActiveTab("ALL")}
-          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
-            activeTab === "ALL"
-              ? "border-primary text-primary bg-primary/5"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {`Tất cả đơn hàng (${totalOrders})`}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => setActiveTab("COMPLETED")}
-          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
-            activeTab === "COMPLETED"
-              ? "border-success text-success bg-success/5"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {`Đã mở khóa (${completedCount})`}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => setActiveTab("PENDING")}
-          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
-            activeTab === "PENDING"
-              ? "border-warning text-warning bg-warning/5"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {`Đang chờ thanh toán (${
-            orders.filter((o: any) => o.status === PaymentOrderStatus.PENDING).length
-          })`}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => setActiveTab("EXPIRED")}
-          className={`rounded-t-xl text-sm font-semibold border-b-2 whitespace-nowrap rounded-b-none ${
-            activeTab === "EXPIRED"
-              ? "border-muted-foreground text-foreground bg-muted/50"
-              : "border-transparent text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          {`Đã hết hạn / Hủy (${
-            orders.filter(
-              (o: any) =>
-                o.status === PaymentOrderStatus.EXPIRED ||
-                o.status === PaymentOrderStatus.FAILED ||
-                o.status === PaymentOrderStatus.CANCELLED,
-            ).length
-          })`}
-        </Button>
-      </div>
+      <Tabs.Root
+        value={activeTab}
+        onValueChange={(val) => setActiveTab(val as FilterTab)}
+        className="mb-6"
+      >
+        <Tabs.List className="overflow-x-auto pb-1">
+          <Tabs.Tab value="ALL">{`Tất cả đơn hàng (${totalOrders})`}</Tabs.Tab>
+          <Tabs.Tab value="COMPLETED">{`Đã mở khóa (${completedCount})`}</Tabs.Tab>
+          <Tabs.Tab value="PENDING">
+            {`Đang chờ thanh toán (${
+              orders.filter((o: any) => o.status === PaymentOrderStatus.PENDING).length
+            })`}
+          </Tabs.Tab>
+          <Tabs.Tab value="EXPIRED">
+            {`Đã hết hạn / Hủy (${
+              orders.filter(
+                (o: any) =>
+                  o.status === PaymentOrderStatus.EXPIRED ||
+                  o.status === PaymentOrderStatus.FAILED ||
+                  o.status === PaymentOrderStatus.CANCELLED,
+              ).length
+            })`}
+          </Tabs.Tab>
+        </Tabs.List>
+      </Tabs.Root>
 
       {/* Orders List */}
       {!isMounted || isLoading ? (
