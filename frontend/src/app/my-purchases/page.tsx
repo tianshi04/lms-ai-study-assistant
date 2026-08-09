@@ -315,14 +315,16 @@ function MyPurchasesContent() {
               </p>
             </div>
           </div>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => setActionNotice(null)}
-            className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors cursor-pointer shrink-0"
             aria-label="Đóng thông báo"
+            className="shrink-0 text-muted-foreground hover:text-foreground"
           >
             <span className="text-lg leading-none">✕</span>
-          </button>
+          </Button>
         </div>
       )}
 
