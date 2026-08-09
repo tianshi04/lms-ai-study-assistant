@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 import jwt
+import uuid
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 
@@ -92,6 +93,7 @@ def create_access_token(
 def create_refresh_token(user_id: str) -> str:
     now = datetime.now(timezone.utc)
     payload: dict[str, Any] = {
+        "jti": str(uuid.uuid4()),
         "sub": user_id,
         "type": "refresh",
         "iat": now,

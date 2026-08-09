@@ -152,7 +152,9 @@ class IdentityHandler(IdentityService):
             avatar_url,
             is_already_registered,
             err,
-        ) = await self._use_case.google_register_verify(request.google_id_token)
+        ) = await self._use_case.google_register_verify(
+            request.authorization_code, request.nonce
+        )
         if err and not is_already_registered:
             raise ConnectError(Code.INVALID_ARGUMENT, err)
 
@@ -200,7 +202,7 @@ class IdentityHandler(IdentityService):
         ctx: RequestContext[pb.GoogleLoginRequest, pb.GoogleLoginResponse],
     ) -> pb.GoogleLoginResponse:
         user, access_token, refresh_token, err = await self._use_case.google_login(
-            request.google_id_token
+            request.authorization_code, request.nonce
         )
         if err or not user:
             raise ConnectError(Code.UNAUTHENTICATED, err or "Đăng nhập Google thất bại")
@@ -223,7 +225,9 @@ class IdentityHandler(IdentityService):
             email,
             full_name,
             err,
-        ) = await self._use_case.google_reset_password_verify(request.google_id_token)
+        ) = await self._use_case.google_reset_password_verify(
+            request.authorization_code, request.nonce
+        )
         if err:
             raise ConnectError(Code.INVALID_ARGUMENT, err)
 

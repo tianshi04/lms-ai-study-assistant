@@ -35,10 +35,10 @@ function ForgotPasswordContent() {
   const [errorMsg, setErrorMsg] = useState("");
 
   // Handle Step 1: Google verification success
-  const handleGoogleSuccess = async (googleIdToken: string) => {
+  const handleGoogleSuccess = async (authCode: string, nonce: string) => {
     setErrorMsg("");
     startTransition(async () => {
-      const res = await googleResetPasswordVerifyAction(googleIdToken);
+      const res = await googleResetPasswordVerifyAction(authCode, nonce);
       if (res.success && res.tempToken) {
         setTempToken(res.tempToken);
         setUserEmail(res.email || "");
