@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 
 export function GoogleIcon({ className = "w-5 h-5 flex-shrink-0" }: { className?: string }) {
@@ -69,7 +68,7 @@ export function GoogleAuthButton({
 
     // Fix #3: Guard against GIS script not loaded yet
     if (typeof google === "undefined" || !google.accounts?.oauth2) {
-      toast.error("Hệ thống xác thực Google đang khởi tạo. Vui lòng thử lại sau giây lát.");
+      alert("Hệ thống xác thực Google đang khởi tạo. Vui lòng thử lại sau giây lát.");
       return;
     }
 
