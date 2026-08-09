@@ -15,16 +15,9 @@ import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
+import { Dialog } from "@/components/ui/Dialog";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Check, X, Plus, RefreshCw, Download, Copy, Building2 } from "lucide-react";
+import { Check, X, Plus, RefreshCw, Download, Copy, Building2, KeyRound } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -618,21 +611,22 @@ function PartnerSettingsForm({
         </div>
       </form>
 
-      <AlertDialog
+      <Dialog.Root
         open={showRotateConfirm}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean) => {
           if (!open) setShowRotateConfirm(false);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận tạo cặp khóa ký số mới</AlertDialogTitle>
-            <AlertDialogDescription>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon icon={<KeyRound className="w-6 h-6 text-primary" aria-hidden="true" />} />
+            <Dialog.Title>Xác nhận tạo cặp khóa ký số mới</Dialog.Title>
+            <Dialog.Description>
               Bạn có chắc chắn muốn tạo cặp khóa ký số mới? Cặp khóa cũ sẽ bị xoay và thay thế.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button variant="outlined" onClick={() => setShowRotateConfirm(false)}>
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Button variant="text" onClick={() => setShowRotateConfirm(false)}>
               Hủy
             </Button>
             <Button
@@ -643,9 +637,9 @@ function PartnerSettingsForm({
             >
               Tạo khóa mới
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
     </div>
   );
 }

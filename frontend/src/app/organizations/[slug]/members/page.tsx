@@ -33,14 +33,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/Select";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
 import { Dialog } from "@/components/ui/Dialog";
 
 import {
@@ -381,14 +373,10 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               </div>
 
               <Dialog.Footer className="pt-4 flex justify-end gap-3 border-t border-border">
-                <Button
-                  type="button"
-                  variant="outlined"
-                  onClick={() => setIsInviteModalOpen(false)}
-                >
+                <Button type="button" variant="text" onClick={() => setIsInviteModalOpen(false)}>
                   Hủy
                 </Button>
-                <Button type="submit" disabled={createInviteMutation.isPending}>
+                <Button type="submit" variant="filled" disabled={createInviteMutation.isPending}>
                   Gửi Lời Mời (PENDING)
                 </Button>
               </Dialog.Footer>
@@ -397,23 +385,24 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
         </Dialog.Root>
 
         {/* Remove Member Confirm Dialog */}
-        <AlertDialog
+        <Dialog.Root
           open={Boolean(removingMember)}
-          onOpenChange={(open) => {
+          onOpenChange={(open: boolean) => {
             if (!open) setRemovingMember(null);
           }}
         >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Xóa thành viên khỏi Tổ chức</AlertDialogTitle>
-              <AlertDialogDescription>
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Icon icon={<Trash2 className="w-6 h-6 text-error" aria-hidden="true" />} />
+              <Dialog.Title>Xóa thành viên khỏi Tổ chức</Dialog.Title>
+              <Dialog.Description>
                 {removingMember
                   ? `Bạn có chắc chắn muốn xóa thành viên "${removingMember.memberName}" khỏi tổ chức không? Thao tác này không thể hoàn tác.`
                   : ""}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <Button variant="outlined" onClick={() => setRemovingMember(null)}>
+              </Dialog.Description>
+            </Dialog.Header>
+            <Dialog.Footer>
+              <Button variant="text" onClick={() => setRemovingMember(null)}>
                 Hủy
               </Button>
               <Button
@@ -431,9 +420,9 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               >
                 Xóa Thành Viên
               </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Root>
       </main>
     </div>
   );

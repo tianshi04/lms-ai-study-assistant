@@ -6,15 +6,6 @@ import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
 import { Dialog } from "@/components/ui/Dialog";
-
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Card } from "@/components/ui/Card";
@@ -522,7 +513,7 @@ export default function InstructorCoursesPage() {
             </div>
 
             <Dialog.Footer className="pt-4 border-t border-border">
-              <Button type="button" variant="outlined" onClick={() => setShowModal(false)}>
+              <Button type="button" variant="text" onClick={() => setShowModal(false)}>
                 {"Hủy"}
               </Button>
               <Button type="submit" variant="filled" disabled={saving}>
@@ -539,23 +530,24 @@ export default function InstructorCoursesPage() {
         </Dialog.Content>
       </Dialog.Root>
 
-      <AlertDialog
+      <Dialog
         open={Boolean(deletingCourseTarget)}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean) => {
           if (!open) setDeletingCourseTarget(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa khóa học</AlertDialogTitle>
-            <AlertDialogDescription>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon icon={<Trash2 className="w-6 h-6 text-error" aria-hidden="true" />} />
+            <Dialog.Title>Xác nhận xóa khóa học</Dialog.Title>
+            <Dialog.Description>
               {deletingCourseTarget
                 ? `Bạn có chắc chắn muốn xóa khóa học "${deletingCourseTarget.title}"? Thao tác này không thể hoàn tác.`
                 : ""}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button variant="outlined" onClick={() => setDeletingCourseTarget(null)}>
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Button variant="text" onClick={() => setDeletingCourseTarget(null)}>
               Hủy
             </Button>
             <Button
@@ -565,9 +557,9 @@ export default function InstructorCoursesPage() {
             >
               Xóa khóa học
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog>
     </div>
   );
 }

@@ -14,14 +14,8 @@ import {
 import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { useAuth } from "@/components/providers/AuthProvider";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
+import { Dialog } from "@/components/ui/Dialog";
+import { Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Textarea } from "@/components/ui/Textarea";
@@ -543,21 +537,25 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
         isNotificationTarget={targetThreadId === selectedModalThreadId}
       />
 
-      <AlertDialog
+      <Dialog.Root
         open={Boolean(deletingThreadId)}
         onOpenChange={(open) => {
           if (!open) setDeletingThreadId(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa bài viết</AlertDialogTitle>
-            <AlertDialogDescription>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon
+              className="bg-destructive/10 text-destructive"
+              icon={<Trash2 className="w-6 h-6 text-destructive" aria-hidden="true" />}
+            />
+            <Dialog.Title>Xác nhận xóa bài viết</Dialog.Title>
+            <Dialog.Description>
               Bạn có chắc chắn muốn xóa bài viết này không? Thao tác này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button variant="outlined" onClick={() => setDeletingThreadId(null)}>
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Button variant="text" onClick={() => setDeletingThreadId(null)}>
               Hủy
             </Button>
             <Button
@@ -568,25 +566,29 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
             >
               Xóa bài viết
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
 
-      <AlertDialog
+      <Dialog.Root
         open={Boolean(deletingReplyId)}
         onOpenChange={(open) => {
           if (!open) setDeletingReplyId(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa phản hồi</AlertDialogTitle>
-            <AlertDialogDescription>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon
+              className="bg-destructive/10 text-destructive"
+              icon={<Trash2 className="w-6 h-6 text-destructive" aria-hidden="true" />}
+            />
+            <Dialog.Title>Xác nhận xóa phản hồi</Dialog.Title>
+            <Dialog.Description>
               Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button variant="outlined" onClick={() => setDeletingReplyId(null)}>
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Button variant="text" onClick={() => setDeletingReplyId(null)}>
               Hủy
             </Button>
             <Button
@@ -597,9 +599,9 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
             >
               Xóa phản hồi
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
     </div>
   );
 }

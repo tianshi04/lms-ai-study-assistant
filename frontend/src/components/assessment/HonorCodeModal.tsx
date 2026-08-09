@@ -3,18 +3,11 @@
 import { useState } from "react";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/Dialog";
+import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { AlertTriangle, Send } from "lucide-react";
+import { ShieldCheck, AlertTriangle, Send } from "lucide-react";
 
 import { mapConnectError } from "@/lib/connect_error_mapper";
 
@@ -63,13 +56,14 @@ export function HonorCodeModal({
         if (!open) onClose();
       }}
     >
-      <DialogContent size="md">
-        <DialogHeader>
-          <DialogTitle>Xác nhận Nộp bài & Cam kết Trung thực</DialogTitle>
-          <DialogDescription>
+      <Dialog.Content size="md">
+        <Dialog.Header>
+          <Dialog.Icon icon={<ShieldCheck className="w-6 h-6 text-primary" aria-hidden="true" />} />
+          <Dialog.Title>Xác nhận Nộp bài & Cam kết Trung thực</Dialog.Title>
+          <Dialog.Description>
             Vui lòng kiểm tra kỹ bài làm và cam kết liêm chính học thuật trước khi nộp.
-          </DialogDescription>
-        </DialogHeader>
+          </Dialog.Description>
+        </Dialog.Header>
 
         <div className="space-y-4 text-sm text-muted-foreground my-4">
           <p className="text-foreground font-medium">
@@ -105,8 +99,8 @@ export function HonorCodeModal({
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outlined" onClick={onClose} disabled={isSubmitting}>
+        <Dialog.Footer>
+          <Button variant="text" onClick={onClose} disabled={isSubmitting}>
             Hủy / Kiểm tra lại
           </Button>
           <Button
@@ -117,8 +111,8 @@ export function HonorCodeModal({
             {isSubmitting ? "Đang chấm điểm…" : "Đồng ý & Nộp bài ngay"}
             {!isSubmitting && <Send aria-hidden="true" className="w-3.5 h-3.5 ml-1.5" />}
           </Button>
-        </DialogFooter>
-      </DialogContent>
+        </Dialog.Footer>
+      </Dialog.Content>
     </Dialog>
   );
 }

@@ -6,6 +6,10 @@ import { Clock, Video, Plus, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
+import {
+  UniversalVideoPlayer,
+  type UniversalVideoRef,
+} from "@/components/player/UniversalVideoPlayer";
 
 export interface InVideoQuizItem {
   timestampSeconds: number;
@@ -22,7 +26,7 @@ interface InVideoQuizEditorProps {
 }
 
 export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEditorProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<UniversalVideoRef | HTMLVideoElement | any>(null);
   const toast = useToast();
 
   const [timestampSeconds, setTimestampSeconds] = useState<number>(0);
@@ -32,12 +36,25 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
   const [explanation, setExplanation] = useState<string>("");
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
+  const latestTimeRef = useRef<number>(0);
+
   const captureCurrentTime = () => {
+    let currentSec = -1;
     if (videoRef.current) {
-      const currentSec = Math.floor(videoRef.current.currentTime);
-      setTimestampSeconds(currentSec);
-      toast.info(`Đã chọn mốc thời gian ${currentSec}s từ Video.`);
+      if (typeof videoRef.current.getCurrentTime === "function") {
+        const t = videoRef.current.getCurrentTime();
+        if (typeof t === "number" && !isNaN(t)) currentSec = Math.floor(t);
+      }
+      if (currentSec < 0 && typeof videoRef.current.currentTime === "number") {
+        const t = videoRef.current.currentTime;
+        if (typeof t === "number" && !isNaN(t)) currentSec = Math.floor(t);
+      }
     }
+    if (currentSec < 0) {
+      currentSec = latestTimeRef.current || 0;
+    }
+    setTimestampSeconds(currentSec);
+    toast.info(`Đã chọn mốc thời gian ${currentSec}s từ Video.`);
   };
 
   const handleAddOption = () => {
@@ -143,22 +160,6 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
     return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
   };
 
-  const isYouTubeUrl = (url: string) => {
-    return url.includes("youtube.com") || url.includes("youtu.be");
-  };
-
-  const getYouTubeEmbedUrl = (url: string) => {
-    let videoId = "";
-    if (url.includes("youtu.be/")) {
-      videoId = url.split("youtu.be/")[1]?.split("?")[0] || "";
-    } else if (url.includes("watch?v=")) {
-      videoId = url.split("watch?v=")[1]?.split("&")[0] || "";
-    } else if (url.includes("embed/")) {
-      videoId = url.split("embed/")[1]?.split("?")[0] || "";
-    }
-    return `https://www.youtube-nocookie.com/embed/${videoId}`;
-  };
-
   return (
     <div className="space-y-4 p-4 rounded-2xl bg-card border border-border">
       <div className="flex items-center justify-between border-b border-border pb-2">
@@ -177,39 +178,26 @@ export function InVideoQuizEditor({ videoUrl, quizzes, onChange }: InVideoQuizEd
       {videoUrl ? (
         <div className="space-y-2">
           <div className="aspect-video w-full rounded-xl overflow-hidden bg-black relative shadow-md">
-            {isYouTubeUrl(videoUrl) ? (
-              <iframe
-                src={getYouTubeEmbedUrl(videoUrl)}
-                title="YouTube Video Preview"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full border-0"
-              />
-            ) : (
-              <video
-                ref={videoRef}
-                src={videoUrl}
-                controls
-                aria-label="Xem trước video bài giảng"
-                className="w-full h-full object-contain"
-              >
-                <track kind="captions" src="" label="Phụ đề" />
-              </video>
-            )}
+            <UniversalVideoPlayer
+              ref={videoRef}
+              videoUrl={videoUrl}
+              onTimeUpdate={(time) => {
+                latestTimeRef.current = Math.floor(time);
+              }}
+              title="Xem trước video bài giảng"
+            />
           </div>
-          {!isYouTubeUrl(videoUrl) && (
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="outlined"
-                onClick={captureCurrentTime}
-                className="bg-primary/10 text-primary border-primary/20 text-xs font-bold hover:bg-primary/20"
-              >
-                <Clock className="w-4 h-4" aria-hidden="true" />
-                <span>Lấy mốc giây hiện tại từ Video</span>
-              </Button>
-            </div>
-          )}
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="outlined"
+              onClick={captureCurrentTime}
+              className="bg-primary/10 text-primary border-primary/20 text-xs font-bold hover:bg-primary/20"
+            >
+              <Clock className="w-4 h-4" aria-hidden="true" />
+              <span>Lấy mốc giây hiện tại từ Video</span>
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-2xl bg-muted/40 text-muted-foreground text-xs shadow-2xs">

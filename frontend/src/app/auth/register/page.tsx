@@ -93,10 +93,10 @@ export default function RegisterPage() {
     },
   });
 
-  const handleGoogleVerify = async (googleIdToken: string) => {
+  const handleGoogleVerify = async (authCode: string, nonce: string) => {
     setGoogleVerifying(true);
     try {
-      const res = await googleRegisterVerifyAction(googleIdToken);
+      const res = await googleRegisterVerifyAction(authCode, nonce);
       if (res.isAlreadyRegistered) {
         toast.error("Email này đã được đăng ký tài khoản. Vui lòng Đăng nhập!");
         setTimeout(() => router.push("/auth/login"), 1500);

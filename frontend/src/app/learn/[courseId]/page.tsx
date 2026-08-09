@@ -17,6 +17,7 @@ import {
 } from "@/gen/learning/v1/learning_pb";
 import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
 import { VideoPlayer } from "@/components/player/VideoPlayer";
+import type { UniversalVideoRef } from "@/components/player/UniversalVideoPlayer";
 import { TranscriptPanel } from "@/components/player/TranscriptPanel";
 import { NotesPanel } from "@/components/player/NotesPanel";
 import { DeadlinesPanel } from "@/components/player/DeadlinesPanel";
@@ -228,7 +229,7 @@ function CoursePlayerContent() {
   const [certificateId, setCertificateId] = useState<string>("");
 
   // Video & In-Video Quiz State
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<UniversalVideoRef | HTMLVideoElement | any>(null);
   const maxTimeRef = useRef<number>(0);
   const isMarkingRef = useRef<boolean>(false);
   const markedItemIdsRef = useRef<Set<string>>(new Set());
@@ -452,21 +453,36 @@ function CoursePlayerContent() {
   // Mark Item as Complete is now moved above useEffect hooks.
 
   // Video timeupdate handler for In-Video Quiz interruption & Auto Progress Update at 80%
-  const handleTimeUpdate = () => {
-    if (!videoRef.current || !activeItem) return;
+  const handleTimeUpdate = (passedTime?: number) => {
+    if (!activeItem) return;
 
-    const video = videoRef.current;
-    if (video.currentTime > maxTimeRef.current) {
-      maxTimeRef.current = video.currentTime;
+    let currentSeconds = 0;
+    if (typeof passedTime === "number" && !isNaN(passedTime)) {
+      currentSeconds = passedTime;
+    } else if (videoRef.current) {
+      currentSeconds = videoRef.current.currentTime || 0;
     }
 
-    const time = Math.floor(video.currentTime);
-    setCurrentTime(time);
+    if (currentSeconds === 0 && maxTimeRef.current > 2) {
+      return;
+    }
+
+    if (currentSeconds > maxTimeRef.current) {
+      maxTimeRef.current = currentSeconds;
+    }
+
+    // Keep exact float precision for currentTime state to prevent clipping end words in transcripts
+    const currentFloat = Math.round(currentSeconds * 100) / 100;
+    setCurrentTime((prev) => (Math.abs(prev - currentFloat) < 0.1 ? prev : currentFloat));
+
+    const integerTime = Math.floor(currentSeconds);
 
     // Auto mark as completed if watched >= 80% of video duration
+    const videoDuration =
+      (videoRef.current as any)?.duration || (videoRef.current as any)?.getDuration?.() || 0;
     if (
-      videoRef.current.duration > 0 &&
-      videoRef.current.currentTime >= videoRef.current.duration * 0.8 &&
+      videoDuration > 0 &&
+      currentSeconds >= videoDuration * 0.8 &&
       !progress?.completedItemIds.includes(activeItem.id) &&
       !markedItemIdsRef.current.has(activeItem.id)
     ) {
@@ -478,11 +494,13 @@ function CoursePlayerContent() {
     if (activeItem.inVideoQuizzes && activeItem.inVideoQuizzes.length > 0) {
       for (const quiz of activeItem.inVideoQuizzes) {
         if (
-          Math.abs(time - quiz.timestampSeconds) <= 1 &&
+          Math.abs(integerTime - quiz.timestampSeconds) <= 1 &&
           !answeredQuizTimestamps.has(quiz.timestampSeconds) &&
           !activeQuiz
         ) {
-          videoRef.current.pause();
+          if (videoRef.current) {
+            videoRef.current.pause();
+          }
           setActiveQuiz(quiz);
           setSelectedOption(null);
           setQuizSubmitted(false);

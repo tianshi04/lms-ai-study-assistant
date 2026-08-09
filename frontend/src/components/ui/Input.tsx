@@ -48,6 +48,7 @@ export function Input({
           spellCheck={props.spellCheck ?? false}
           {...controlProps}
           {...props}
+          id={id || controlProps.id}
           className={cn(inputVariants({ variant, className }))}
         />
       )}

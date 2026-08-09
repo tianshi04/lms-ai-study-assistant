@@ -776,24 +776,26 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-border flex items-center justify-between gap-3">
+              <Dialog.Footer className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
                 <Button
                   type="button"
-                  variant="outlined"
+                  variant="text"
                   size="sm"
                   onClick={() => setExistingFinAidStatus(null)}
-                  className="rounded-xl text-xs font-semibold"
+                  className="rounded-xl text-xs font-semibold w-full sm:w-auto"
                 >
                   {"Nộp bài luận mới"}
                 </Button>
-                <Link
-                  href="/financial-aid"
-                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-colors flex items-center gap-1.5"
+                <Button
+                  render={<Link href="/financial-aid" />}
+                  variant="filled"
+                  size="sm"
+                  className="rounded-xl text-xs font-bold w-full sm:w-auto"
                 >
                   <span>{"Quản lý danh sách Đơn Hỗ trợ tài chính của tôi"}</span>
-                  <ArrowRight aria-hidden="true" className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+                  <ArrowRight aria-hidden="true" className="w-3.5 h-3.5 ml-1.5" />
+                </Button>
+              </Dialog.Footer>
             </div>
           ) : (
             <form onSubmit={handleFinAidSubmit} className="space-y-6 pt-2">

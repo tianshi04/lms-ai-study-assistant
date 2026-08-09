@@ -19,7 +19,7 @@ import { Tabs } from "@/components/ui/Tabs";
 import { Textarea } from "@/components/ui/Textarea";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
-import { Eye } from "lucide-react";
+import { Eye, XCircle } from "lucide-react";
 
 const emptySubscribe = () => () => {};
 
@@ -273,7 +273,7 @@ export default function CourseReviewerPortalPage() {
 
       {/* Reject Modal */}
       {rejectingCourseId && (
-        <Dialog.Root
+        <Dialog
           open={!!rejectingCourseId}
           onOpenChange={(open) => {
             if (!open) setRejectingCourseId(null);
@@ -281,16 +281,17 @@ export default function CourseReviewerPortalPage() {
         >
           <Dialog.Content size="md">
             <Dialog.Header>
+              <Dialog.Icon icon={<XCircle className="w-6 h-6 text-error" aria-hidden="true" />} />
               <Dialog.Title>{"Từ chối Phê duyệt Khóa học"}</Dialog.Title>
             </Dialog.Header>
             <div className="space-y-4 pt-2">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-on-surface-variant">
                 {
                   "Vui lòng nhập chi tiết lý do từ chối hoặc các góp ý chỉnh sửa để Giảng viên hoàn thiện bài giảng."
                 }
               </p>
               <div>
-                <label className="block text-xs font-bold mb-1 text-foreground">
+                <label className="block text-xs font-bold mb-1 text-on-surface">
                   {"Lý do từ chối / Feedback Log *"}
                 </label>
                 <Textarea
@@ -304,7 +305,7 @@ export default function CourseReviewerPortalPage() {
             <Dialog.Footer className="mt-4">
               <Button
                 type="button"
-                variant="outlined"
+                variant="text"
                 size="sm"
                 onClick={() => setRejectingCourseId(null)}
               >
@@ -322,7 +323,7 @@ export default function CourseReviewerPortalPage() {
               </Button>
             </Dialog.Footer>
           </Dialog.Content>
-        </Dialog.Root>
+        </Dialog>
       )}
     </div>
   );

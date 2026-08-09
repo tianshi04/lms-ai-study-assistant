@@ -27,14 +27,8 @@ import { LearningItemFormModal } from "./components/modals/LearningItemFormModal
 import { ScormReviewModal } from "./components/modals/ScormReviewModal";
 import { CourseCollaboratorsModal } from "@/components/course/CourseCollaboratorsModal";
 import { Button } from "@/components/ui/Button";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-} from "@/components/ui/AlertDialog";
+import { Trash2 } from "lucide-react";
+import { Dialog } from "@/components/ui/Dialog";
 
 function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId: string }> }) {
   const resolvedParams = use(params);
@@ -304,31 +298,32 @@ function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId
       />
 
       {/* Confirm Delete Alert Dialog */}
-      <AlertDialog
+      <Dialog
         open={Boolean(builder.confirmDeleteTarget)}
         onOpenChange={(open) => {
           if (!open) builder.setConfirmDeleteTarget(null);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon icon={<Trash2 className="w-6 h-6 text-error" aria-hidden="true" />} />
+            <Dialog.Title>
               {builder.confirmDeleteTarget?.type === "week"
                 ? "Xác nhận xóa Tuần học"
                 : builder.confirmDeleteTarget?.type === "lesson"
                   ? "Xác nhận xóa Bài học"
                   : "Xác nhận xóa Học liệu"}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
+            </Dialog.Title>
+            <Dialog.Description>
               {builder.confirmDeleteTarget?.type === "week"
                 ? "Xóa tuần học này sẽ xóa toàn bộ bài học và học liệu bên trong. Bạn có chắc chắn?"
                 : builder.confirmDeleteTarget?.type === "lesson"
                   ? "Xóa bài học này sẽ xóa toàn bộ học liệu thuộc bài học. Bạn có chắc chắn?"
                   : "Hành động này sẽ xóa vĩnh viễn học liệu khỏi bài học. Bạn có chắc chắn?"}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button variant="outlined" onClick={() => builder.setConfirmDeleteTarget(null)}>
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Button variant="text" onClick={() => builder.setConfirmDeleteTarget(null)}>
               Hủy
             </Button>
             <Button
@@ -338,9 +333,9 @@ function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId
             >
               Xóa vĩnh viễn
             </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog>
     </div>
   );
 }

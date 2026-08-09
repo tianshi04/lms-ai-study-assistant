@@ -378,7 +378,7 @@ export default function AdminEnterpriseDashboardPage() {
       </main>
 
       {/* Modal: Gán Suất học cho Học viên */}
-      <Dialog.Root open={showAssignModal} onOpenChange={(open) => setShowAssignModal(open)}>
+      <Dialog open={showAssignModal} onOpenChange={(open) => setShowAssignModal(open)}>
         <Dialog.Content size="md">
           <Dialog.Header>
             <Dialog.Title>{"Gán Suất học Enterprise"}</Dialog.Title>
@@ -432,22 +432,22 @@ export default function AdminEnterpriseDashboardPage() {
             <Dialog.Footer className="pt-2">
               <Button
                 type="button"
-                variant="outlined"
+                variant="text"
                 size="sm"
                 onClick={() => setShowAssignModal(false)}
               >
                 {"Hủy"}
               </Button>
-              <Button type="submit" disabled={saving} size="sm">
+              <Button type="submit" variant="filled" disabled={saving} size="sm">
                 {"Kích hoạt gán suất học"}
               </Button>
             </Dialog.Footer>
           </form>
         </Dialog.Content>
-      </Dialog.Root>
+      </Dialog>
 
       {/* Modal: Tạo Mã Enterprise Key Mới */}
-      <Dialog.Root open={showCreateModal} onOpenChange={(open) => setShowCreateModal(open)}>
+      <Dialog open={showCreateModal} onOpenChange={(open) => setShowCreateModal(open)}>
         <Dialog.Content size="md">
           <Dialog.Header>
             <Dialog.Title>{"Tạo Mã Enterprise Mới"}</Dialog.Title>
@@ -475,19 +475,19 @@ export default function AdminEnterpriseDashboardPage() {
             <Dialog.Footer className="pt-2">
               <Button
                 type="button"
-                variant="outlined"
+                variant="text"
                 size="sm"
                 onClick={() => setShowCreateModal(false)}
               >
                 {"Hủy"}
               </Button>
-              <Button type="submit" disabled={saving} size="sm">
+              <Button type="submit" variant="filled" disabled={saving} size="sm">
                 {"Xác nhận tạo Giấy phép"}
               </Button>
             </Dialog.Footer>
           </form>
         </Dialog.Content>
-      </Dialog.Root>
+      </Dialog>
     </>
   );
 }

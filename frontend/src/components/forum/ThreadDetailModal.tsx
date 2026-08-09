@@ -89,6 +89,9 @@ export function ThreadDetailModal({
     >
       <Dialog.Content size="xl" className="p-6 max-h-[90vh] flex flex-col">
         <Dialog.Header>
+          <Dialog.Icon
+            icon={<MessageSquare className="w-6 h-6 text-primary" aria-hidden="true" />}
+          />
           <Dialog.Title>{"Chi tiết bài thảo luận"}</Dialog.Title>
           <Dialog.Description>{"Xem thông tin câu hỏi và toàn bộ thảo luận"}</Dialog.Description>
         </Dialog.Header>
