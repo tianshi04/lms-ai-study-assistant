@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 
 export function GoogleIcon({ className = "w-5 h-5 flex-shrink-0" }: { className?: string }) {
@@ -35,13 +36,6 @@ interface GoogleAuthButtonProps {
   children?: React.ReactNode;
 }
 
-function generateNonce(length = 32): string {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  const array = new Uint32Array(length);
-  window.crypto.getRandomValues(array);
-  return Array.from(array, (val) => chars[val % chars.length]).join("");
-}
-
 export function GoogleAuthButton({
   onSuccess,
   disabled = false,
@@ -73,16 +67,23 @@ export function GoogleAuthButton({
       return;
     }
 
+    // Fix #3: Guard against GIS script not loaded yet
+    if (typeof google === "undefined" || !google.accounts?.oauth2) {
+      toast.error("Hệ thống xác thực Google đang khởi tạo. Vui lòng thử lại sau giây lát.");
+      return;
+    }
+
     setInternalLoading(true);
 
     try {
-      const nonce = generateNonce();
-
+      // Fix #1: Don't pass nonce to initCodeClient — Authorization Code Flow
+      // doesn't forward nonce to the ID Token. Nonce validation is removed
+      // on the backend side as well. Anti-replay is handled by the one-time
+      // nature of the authorization code itself.
       const client = google.accounts.oauth2.initCodeClient({
         client_id: googleClientId,
         scope: "openid email profile",
         ux_mode: "popup",
-        nonce: nonce,
         callback: (response) => {
           setInternalLoading(false);
           if (response.error) {
@@ -90,7 +91,7 @@ export function GoogleAuthButton({
             return;
           }
           if (response.code) {
-            onSuccess(response.code, nonce);
+            onSuccess(response.code, "");
           }
         },
       });
@@ -111,7 +112,7 @@ export function GoogleAuthButton({
       leadingIcon={<GoogleIcon />}
       className={`w-full py-3 font-semibold text-sm shadow-sm ${className}`}
     >
-      <GoogleIcon />
+      {/* Fix #2: Removed duplicate <GoogleIcon /> — leadingIcon already renders it */}
       <span>{children ?? text}</span>
     </Button>
   );

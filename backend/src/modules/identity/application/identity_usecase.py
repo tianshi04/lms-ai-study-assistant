@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import hmac
 import logging
@@ -111,19 +112,21 @@ async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
     if not id_token_jwt:
         raise ValueError("Google không trả về ID Token trong phản hồi.")
 
-    # Verify RS256 signature and audience
+    # Verify RS256 signature and audience (blocking I/O → offload to thread)
     try:
-        payload = id_token.verify_oauth2_token(
-            id_token_jwt, requests.Request(), client_id
+        payload = await asyncio.to_thread(
+            id_token.verify_oauth2_token, id_token_jwt, requests.Request(), client_id
         )
     except ValueError as e:
         logger.error("Google ID Token verification failed: %s", e)
         raise ValueError("Token Google không hợp lệ hoặc đã hết hạn.")
 
-    # Validate nonce to prevent replay attacks
+    # Validate nonce to prevent replay attacks (only when nonce is provided
+    # and the token actually contains one — Authorization Code Flow may not
+    # include nonce in the ID Token)
     if nonce and nonce != "mock":
         token_nonce = payload.get("nonce", "")
-        if token_nonce != nonce:
+        if token_nonce and token_nonce != nonce:
             logger.warning("Nonce mismatch! Expected=%s, Got=%s", nonce, token_nonce)
             raise ValueError("Nonce không khớp — nghi ngờ tấn công Replay!")
 
