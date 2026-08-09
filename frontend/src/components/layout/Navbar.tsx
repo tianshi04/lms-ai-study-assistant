@@ -11,6 +11,7 @@ import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { NotificationBell } from "@/components/notification/NotificationBell";
 import { Button } from "@/components/ui/Button";
 import { BrandLogo } from "@/components/ui/BrandLogo";
+import { NavigationMenu } from "@/components/ui/NavigationMenu";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -69,42 +70,56 @@ export function Navbar() {
           <BrandLogo size="md" />
 
           {/* Navigation Links (Desktop) */}
-          <nav className="hidden md:flex items-center gap-2 text-sm font-semibold">
-            <Link href="/courses" prefetch={true} className={getLinkClasses("/courses")}>
-              {"Khóa học"}
-            </Link>
-            {userName && (
-              <Link href="/my-learning" prefetch={true} className={getLinkClasses("/my-learning")}>
-                {"Việc học của tôi"}
-              </Link>
-            )}
+          <NavigationMenu.Root className="hidden md:flex items-center">
+            <NavigationMenu.List className="gap-2">
+              <NavigationMenu.Item>
+                <Link href="/courses" prefetch={true} className={getLinkClasses("/courses")}>
+                  {"Khóa học"}
+                </Link>
+              </NavigationMenu.Item>
+              {userName && (
+                <NavigationMenu.Item>
+                  <Link
+                    href="/my-learning"
+                    prefetch={true}
+                    className={getLinkClasses("/my-learning")}
+                  >
+                    {"Việc học của tôi"}
+                  </Link>
+                </NavigationMenu.Item>
+              )}
 
-            {/* Render Instructor Portal for authorized roles */}
-            {isInstructorOrAdmin && (
-              <Link
-                href="/instructor/courses"
-                className={`${getLinkClasses("/instructor")} flex items-center gap-1.5`}
-              >
-                <span>{"Giảng Viên"}</span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                  Portal
-                </span>
-              </Link>
-            )}
+              {/* Render Instructor Portal for authorized roles */}
+              {isInstructorOrAdmin && (
+                <NavigationMenu.Item>
+                  <Link
+                    href="/instructor/courses"
+                    className={`${getLinkClasses("/instructor")} flex items-center gap-1.5`}
+                  >
+                    <span>{"Giảng Viên"}</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                      Portal
+                    </span>
+                  </Link>
+                </NavigationMenu.Item>
+              )}
 
-            {/* Render Admin Enterprise Dashboard Link */}
-            {isSuperAdmin && (
-              <Link
-                href="/admin/dashboard"
-                className={`${getLinkClasses("/admin")} flex items-center gap-1.5`}
-              >
-                <span>Admin</span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                  Enterprise
-                </span>
-              </Link>
-            )}
-          </nav>
+              {/* Render Admin Enterprise Dashboard Link */}
+              {isSuperAdmin && (
+                <NavigationMenu.Item>
+                  <Link
+                    href="/admin/dashboard"
+                    className={`${getLinkClasses("/admin")} flex items-center gap-1.5`}
+                  >
+                    <span>Admin</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                      Enterprise
+                    </span>
+                  </Link>
+                </NavigationMenu.Item>
+              )}
+            </NavigationMenu.List>
+          </NavigationMenu.Root>
         </div>
 
         {/* User Auth & Actions Section */}
