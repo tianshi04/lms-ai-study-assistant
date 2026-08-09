@@ -23,6 +23,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
 import { Input } from "@/components/ui/Input";
+import { Badge } from "@/components/ui/Badge";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
 
@@ -358,15 +359,15 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                   <div className="flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
                       {isTarget && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-primary-container px-2 py-0.5 rounded-full border border-primary/20">
+                        <Badge variant="primary" className="text-[10px]">
                           📌 Thảo luận từ thông báo
-                        </span>
+                        </Badge>
                       )}
                       {thread.isStaffPinned && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-warning bg-warning/10 px-2 py-0.5 rounded-full border border-warning/20">
+                        <Badge variant="warning" className="gap-1 text-[10px]">
                           <Pin aria-hidden="true" className="w-3 h-3 text-warning" />
                           Staff Pinned
-                        </span>
+                        </Badge>
                       )}
                       <span className="font-bold text-on-surface">{thread.authorName}</span>
                       <span className="text-[10px] text-on-surface-variant">

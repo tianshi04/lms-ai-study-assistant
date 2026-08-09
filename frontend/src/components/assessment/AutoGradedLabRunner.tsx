@@ -105,7 +105,7 @@ export function AutoGradedLabRunner({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <Badge variant="verified">SANDBOX LAB</Badge>
+            <Badge variant="primary">SANDBOX LAB</Badge>
             <span className="text-xs text-muted-foreground">Timeout: 30s • Memory: 512MB</span>
           </div>
           <h3 className="text-lg font-bold text-foreground mt-1">

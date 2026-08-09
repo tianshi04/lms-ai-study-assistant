@@ -17,7 +17,7 @@ export function NotFoundClient() {
           {/* Badge */}
           <div className="flex justify-center">
             <Badge
-              variant="outline"
+              variant="outlined"
               className="px-3.5 py-1 text-xs font-semibold uppercase tracking-wider gap-2"
             >
               <span className="w-2 h-2 rounded-full bg-info animate-pulse" aria-hidden="true" />

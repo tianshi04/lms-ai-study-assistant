@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { Badge } from "@/components/ui/Badge";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -424,9 +423,9 @@ function PartnerSettingsForm({
                 trường.
               </p>
             </div>
-            <Badge variant="success" className="w-fit">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-success/15 text-success border border-success/30 w-fit">
               {signatories.length} Người ký
-            </Badge>
+            </span>
           </div>
 
           {sigErrorMsg && (
@@ -448,17 +447,14 @@ function PartnerSettingsForm({
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <Badge variant="default" className="text-[10px] uppercase">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-secondary-container text-on-secondary-container">
                       {sig.department}
-                    </Badge>
+                    </span>
                     {sig.isDefault ? (
-                      <Badge
-                        variant="verified"
-                        className="text-[10px] uppercase flex items-center gap-1"
-                      >
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase bg-primary text-on-primary">
                         <Check aria-hidden="true" className="w-3 h-3" />
                         Mặc định
-                      </Badge>
+                      </span>
                     ) : (
                       <Button
                         type="button"

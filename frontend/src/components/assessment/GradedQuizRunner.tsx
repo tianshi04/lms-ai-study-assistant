@@ -416,13 +416,13 @@ export function GradedQuizRunner({
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             {isPreviewMode ? (
-              <Badge variant="verified">CHẾ ĐỘ XEM TRƯỚC (PREVIEW)</Badge>
+              <Badge variant="primary">CHẾ ĐỘ XEM TRƯỚC (PREVIEW)</Badge>
             ) : (
               <Badge variant="warning">BÀI THI CÓ TÍNH ĐIỂM</Badge>
             )}
             {!isPreviewMode && (
               <Badge
-                variant={attemptsLeft <= 1 ? "danger" : "outline"}
+                variant={attemptsLeft <= 1 ? "error" : "outlined"}
                 className="text-xs font-semibold"
               >
                 Lượt làm còn lại: {attemptsLeft}/{maxAttempts}
@@ -488,7 +488,7 @@ export function GradedQuizRunner({
                   </span>
                 ) : (
                   <Badge
-                    variant="default"
+                    variant="secondary"
                     className="text-[10px] py-0.5 px-2.5 font-medium text-muted-foreground shrink-0 flex items-center gap-1"
                   >
                     <CircleDot aria-hidden="true" className="w-3 h-3" />

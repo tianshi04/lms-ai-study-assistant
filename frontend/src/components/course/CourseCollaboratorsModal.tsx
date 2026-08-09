@@ -119,7 +119,7 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
       case "co_instructor":
       case "đồng giảng viên":
         return (
-          <Badge variant="verified" className="gap-1">
+          <Badge variant="primary" className="gap-1">
             <UserCheck className="w-3.5 h-3.5" aria-hidden="true" /> Đồng giảng viên
           </Badge>
         );
@@ -132,7 +132,7 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
         );
       default:
         return (
-          <Badge variant="default" className="gap-1">
+          <Badge variant="secondary" className="gap-1">
             {collabRole}
           </Badge>
         );

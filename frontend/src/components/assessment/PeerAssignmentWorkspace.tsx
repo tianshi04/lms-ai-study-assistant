@@ -221,7 +221,7 @@ export function PeerAssignmentWorkspace({ itemId, title, userId }: PeerAssignmen
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div>
-          <Badge variant="verified">PEER REVIEW ASSIGNMENT</Badge>
+          <Badge variant="primary">PEER REVIEW ASSIGNMENT</Badge>
           <h2 className="text-xl font-bold text-foreground mt-1">
             {title || "Bài tập nộp chấm chéo"}
           </h2>

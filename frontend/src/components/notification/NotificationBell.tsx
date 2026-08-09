@@ -14,6 +14,7 @@ import { NotificationPreferencesModal } from "./NotificationPreferencesModal";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
+import { Badge } from "@/components/ui/Badge";
 
 export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
@@ -44,9 +45,12 @@ export function NotificationBell() {
         >
           <Bell className="w-5 h-5" aria-hidden="true" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-black text-primary-foreground bg-primary rounded-full animate-in zoom-in-50 duration-m3-short-4 ease-m3-decelerate shadow-md">
+            <Badge
+              variant="error"
+              className="absolute top-0 right-0 font-black shadow-md animate-in zoom-in-50 duration-m3-short-4 ease-m3-decelerate"
+            >
               {unreadCount > 99 ? "99+" : unreadCount}
-            </span>
+            </Badge>
           )}
         </PopoverTrigger>
 
@@ -56,9 +60,7 @@ export function NotificationBell() {
             <div className="flex items-center gap-2">
               <h3 className="text-base font-extrabold text-on-surface">Thông báo</h3>
               {unreadCount > 0 && (
-                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 animate-pulse">
-                  {unreadCount} mới
-                </span>
+                <Badge variant="primary">{unreadCount > 99 ? "99+" : unreadCount}</Badge>
               )}
             </div>
 

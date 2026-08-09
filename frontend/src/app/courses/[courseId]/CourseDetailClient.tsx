@@ -589,19 +589,9 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                             {rev.userName || "Học viên LMS"}
                           </h4>
                           {rev.isVerifiedCompleter ? (
-                            <Badge
-                              variant="success"
-                              className="px-1.5 py-0.5 text-[10px] font-bold"
-                            >
-                              ✓ Verified Completer
-                            </Badge>
+                            <Badge variant="success">✓</Badge>
                           ) : (
-                            <Badge
-                              variant="outline"
-                              className="px-1.5 py-0.5 text-[10px] font-bold bg-muted text-muted-foreground"
-                            >
-                              Active Learner Review
-                            </Badge>
+                            <Badge variant="outlined">HỌC</Badge>
                           )}
                         </div>
                         <span className="text-[11px] text-muted-foreground">

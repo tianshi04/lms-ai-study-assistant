@@ -126,7 +126,7 @@ export function VerifyDetailClient({
             <div className="flex items-center justify-between border-b border-border pb-8 mb-8">
               <div>
                 <Badge
-                  variant="verified"
+                  variant="primary"
                   className="font-mono text-primary uppercase tracking-widest block mb-1"
                 >
                   COURSERA VERIFIED SPECIALIZATION CERTIFICATE

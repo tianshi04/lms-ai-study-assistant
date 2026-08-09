@@ -6,6 +6,7 @@ import type { NotificationItem as NotificationItemType } from "@/gen/notificatio
 import { NotificationCategory } from "@/gen/notification/v1/notification_pb";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 
 interface NotificationItemProps {
   item: NotificationItemType;
@@ -76,9 +77,7 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
       )}
     >
       {/* Unread Indicator Pulse Dot */}
-      {!item.isRead && (
-        <span className="absolute top-3.5 right-3.5 w-2 h-2 rounded-full bg-primary animate-pulse" />
-      )}
+      {!item.isRead && <Badge dot variant="error" className="absolute top-3.5 right-3.5" />}
 
       <div className="flex items-start gap-3">
         {/* Tonal Category Icon Container */}

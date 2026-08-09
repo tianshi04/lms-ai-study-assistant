@@ -235,7 +235,7 @@ function FinancialAidContent() {
                       </Badge>
                     )}
                     {app.status === "REJECTED" && (
-                      <Badge variant="danger" className="flex items-center gap-1.5">
+                      <Badge variant="error" className="flex items-center gap-1.5">
                         <X aria-hidden="true" className="w-3.5 h-3.5 text-destructive" />
                         {"Chưa được duyệt"}
                       </Badge>
@@ -290,7 +290,7 @@ function FinancialAidContent() {
                   </Badge>
                 )}
                 {selectedApp.status === "REJECTED" && (
-                  <Badge variant="danger" className="flex items-center gap-1.5">
+                  <Badge variant="error" className="flex items-center gap-1.5">
                     <X aria-hidden="true" className="w-4 h-4 text-destructive" />
                     {"Chưa được duyệt"}
                   </Badge>
@@ -413,7 +413,7 @@ function FinancialAidContent() {
                   <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     {"Bài luận giải trình hoàn cảnh & Mục tiêu (Tối thiểu 150 từ)"}
                   </label>
-                  <Badge variant={isEnoughWords ? "success" : "default"}>
+                  <Badge variant={isEnoughWords ? "success" : "secondary"}>
                     {wordCount} / 150 {"từ"}
                   </Badge>
                 </div>

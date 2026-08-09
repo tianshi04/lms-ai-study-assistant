@@ -3,6 +3,7 @@
 import { RotateCcw } from "lucide-react";
 import type { LearningProgress } from "@/gen/learning/v1/learning_pb";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 
 interface DeadlinesPanelProps {
   progress: LearningProgress | null;
@@ -58,15 +59,9 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
                 </span>
                 <span className="text-[10px] opacity-80">{d.dueDate}</span>
               </div>
-              <span
-                className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                  d.status === 2
-                    ? "bg-warning text-warning-foreground"
-                    : "bg-primary-container text-on-primary-container border border-primary/20"
-                }`}
-              >
+              <Badge variant={d.status === 2 ? "error" : "primary"}>
                 {d.status === 2 ? "OVERDUE" : "ON TRACK"}
-              </span>
+              </Badge>
             </div>
           ))}
         </div>

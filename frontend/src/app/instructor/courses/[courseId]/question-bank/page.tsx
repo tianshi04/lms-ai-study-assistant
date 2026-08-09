@@ -22,7 +22,6 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import {
   Select,
   SelectTrigger,
@@ -387,12 +386,9 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-black text-foreground">{selectedBank.title}</h2>
-                        <Badge
-                          variant="outline"
-                          className="text-xs font-mono px-2 py-0.5 bg-muted text-muted-foreground"
-                        >
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono bg-surface-container-high text-on-surface-variant border border-outline-variant">
                           ID: {selectedBank.id}
-                        </Badge>
+                        </span>
                       </div>
                       {selectedBank.description && (
                         <p className="text-xs text-muted-foreground">{selectedBank.description}</p>
@@ -450,28 +446,24 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                               </span>
 
                               <div className="flex items-center gap-2">
-                                <Badge
-                                  variant={
+                                <span
+                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase border ${
                                     q.difficulty === "EASY"
-                                      ? "success"
+                                      ? "bg-success/15 text-success border-success/30"
                                       : q.difficulty === "MEDIUM"
-                                        ? "warning"
-                                        : "danger"
-                                  }
-                                  className="text-[10px] font-black uppercase px-2 py-0.5"
+                                        ? "bg-warning/15 text-warning border-warning/30"
+                                        : "bg-error/15 text-error border-error/30"
+                                  }`}
                                 >
                                   {q.difficulty === "EASY"
                                     ? "Dễ (Easy)"
                                     : q.difficulty === "MEDIUM"
                                       ? "Trung bình (Medium)"
                                       : "Khó (Hard)"}
-                                </Badge>
-                                <Badge
-                                  variant="outline"
-                                  className="text-[10px] font-mono bg-muted text-muted-foreground px-1.5 py-0.5"
-                                >
+                                </span>
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-mono bg-surface-container-high text-on-surface-variant border border-outline-variant">
                                   {q.questionType}
-                                </Badge>
+                                </span>
 
                                 <div className="flex items-center gap-1 border-l border-border pl-2">
                                   <IconButton

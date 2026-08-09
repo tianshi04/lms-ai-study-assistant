@@ -179,7 +179,7 @@ export default function BecomeAnInstructorPage() {
                 </p>
               </div>
               <Badge variant="warning" className="uppercase tracking-wider">
-                Chờ Thẩm Định (PENDING_REVIEW)
+                CHỜ
               </Badge>
             </div>
 
@@ -270,8 +270,8 @@ export default function BecomeAnInstructorPage() {
                     : "Trước"}
                 </p>
               </div>
-              <Badge variant="danger" className="uppercase tracking-wider">
-                Từ Chối (REJECTED)
+              <Badge variant="error" className="uppercase tracking-wider">
+                HUỶ
               </Badge>
             </div>
 

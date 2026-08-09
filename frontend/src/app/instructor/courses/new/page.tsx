@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { Checkbox } from "@/components/ui/Checkbox";
 import {
   Select,
@@ -176,12 +175,9 @@ export default function NewCoursePage() {
         <Card className="rounded-3xl p-6 sm:p-8 border border-border relative overflow-hidden space-y-4">
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="flex items-center justify-between">
-            <Badge
-              variant="outline"
-              className="bg-primary/10 text-primary border-primary/20 px-3 py-1 font-bold uppercase tracking-wider"
-            >
+            <span className="inline-flex items-center rounded-full bg-primary/10 text-primary border border-primary/20 px-3 py-1 text-xs font-bold uppercase tracking-wider">
               Live Badge Preview
-            </Badge>
+            </span>
             <span className="text-xs text-muted-foreground font-mono">Bản nháp DRAFT</span>
           </div>
 

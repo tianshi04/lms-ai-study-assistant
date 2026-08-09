@@ -26,7 +26,7 @@ export default function ErrorPage({
         {/* Status Badge */}
         <div className="flex justify-center">
           <Badge
-            variant="danger"
+            variant="error"
             className="px-3.5 py-1 text-xs font-semibold uppercase tracking-wider gap-2"
           >
             <span

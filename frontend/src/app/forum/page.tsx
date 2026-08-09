@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { MessageSquare, Plus, Pin, ChevronUp, ChevronDown, Reply } from "lucide-react";
+import { MessageSquare, Plus, ChevronUp, ChevronDown, Reply } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import {
@@ -529,17 +529,8 @@ function ForumPageContent() {
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap mb-2">
-                        {isTargetThread && (
-                          <Badge variant="verified" className="gap-1 px-3 py-1 shadow-xs font-bold">
-                            <span>📌 Bài viết từ thông báo</span>
-                          </Badge>
-                        )}
-                        {thread.isStaffPinned && (
-                          <Badge variant="warning" className="gap-1.5 px-3 py-1 shadow-xs">
-                            <Pin aria-hidden="true" className="w-3.5 h-3.5 text-warning shrink-0" />
-                            <span>Staff Pinned</span>
-                          </Badge>
-                        )}
+                        {isTargetThread && <Badge variant="primary">📌 TB</Badge>}
+                        {thread.isStaffPinned && <Badge variant="warning">GHIM</Badge>}
                         <span className="text-xs font-medium text-muted-foreground">
                           By{" "}
                           <strong className="text-foreground">
@@ -663,14 +654,7 @@ function ForumPageContent() {
                                 <span className="font-semibold text-foreground">
                                   {reply.authorName || "Thành viên LMS"}
                                 </span>
-                                {reply.isStaffAnswer && (
-                                  <Badge
-                                    variant="warning"
-                                    className="text-[11px] font-extrabold uppercase tracking-wider px-3 py-1"
-                                  >
-                                    Official Staff Answer
-                                  </Badge>
-                                )}
+                                {reply.isStaffAnswer && <Badge variant="warning">BQT</Badge>}
                                 <span className="text-xs text-muted-foreground">
                                   ({formatRoleName(reply.authorRole)})
                                 </span>

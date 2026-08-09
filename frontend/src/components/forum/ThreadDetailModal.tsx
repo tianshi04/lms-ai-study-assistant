@@ -98,7 +98,7 @@ export function ThreadDetailModal({
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
                 {isNotificationTarget && (
-                  <Badge variant="verified" className="gap-1 px-3 py-1 shadow-xs font-bold text-xs">
+                  <Badge variant="primary" className="gap-1 px-3 py-1 shadow-xs font-bold text-xs">
                     <span>📌 Bài viết từ thông báo</span>
                   </Badge>
                 )}
@@ -134,7 +134,7 @@ export function ThreadDetailModal({
                     <h4 className="font-bold text-foreground text-sm">
                       {thread.authorName || "Thành viên LMS"}
                     </h4>
-                    <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-semibold">
+                    <Badge variant="outlined" className="text-[10px] py-0 px-1.5 font-semibold">
                       {formatRoleName(thread.authorRole)}
                     </Badge>
                   </div>
