@@ -25,24 +25,41 @@ async function getInitialCatalogData() {
     pageSize: 10,
   };
 
-  try {
-    await Promise.all([
-      queryClient.prefetchQuery({
-        queryKey: ["courses", defaultFilters],
-        queryFn: async () => (await client.listCourses(defaultFilters)).courses,
-      }),
-      queryClient.prefetchQuery({
-        queryKey: ["categories", "SUBJECT"],
-        queryFn: async () => (await client.listCategories({ type: "SUBJECT" })).categories,
-      }),
-      queryClient.prefetchQuery({
-        queryKey: ["categories", "LEVEL"],
-        queryFn: async () => (await client.listCategories({ type: "LEVEL" })).categories,
-      }),
-    ]);
-  } catch {
-    // Graceful fallback for static build prerendering when backend server is offline
-  }
+  await Promise.all([
+    queryClient.prefetchQuery({
+      queryKey: ["courses", defaultFilters],
+      queryFn: async () => {
+        try {
+          const res = await client.listCourses(defaultFilters);
+          return res.courses;
+        } catch {
+          return [];
+        }
+      },
+    }),
+    queryClient.prefetchQuery({
+      queryKey: ["categories", "SUBJECT"],
+      queryFn: async () => {
+        try {
+          const res = await client.listCategories({ type: "SUBJECT" });
+          return res.categories;
+        } catch {
+          return [];
+        }
+      },
+    }),
+    queryClient.prefetchQuery({
+      queryKey: ["categories", "LEVEL"],
+      queryFn: async () => {
+        try {
+          const res = await client.listCategories({ type: "LEVEL" });
+          return res.categories;
+        } catch {
+          return [];
+        }
+      },
+    }),
+  ]);
 
   return dehydrate(queryClient);
 }
