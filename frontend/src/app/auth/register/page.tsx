@@ -44,6 +44,15 @@ export default function RegisterPage() {
       role: UserRole.LEARNER,
     },
     onSubmit: async ({ value }) => {
+      if (
+        value.password.length < 6 ||
+        !/[A-Z]/.test(value.password) ||
+        !/[0-9]/.test(value.password)
+      ) {
+        toast.error("Mật khẩu chưa đạt yêu cầu bảo mật.");
+        return;
+      }
+
       if (value.password !== value.confirmPassword) {
         toast.error("Mật khẩu xác nhận không khớp.");
         return;
