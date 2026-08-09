@@ -12,6 +12,8 @@ import {
 import { NotificationItem } from "./NotificationItem";
 import { NotificationPreferencesModal } from "./NotificationPreferencesModal";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover";
+import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 
 export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,30 +64,34 @@ export function NotificationBell() {
 
             <div className="flex items-center gap-1.5">
               {notifications.length > 0 && (
-                <button
+                <Button
                   type="button"
+                  variant="text"
+                  size="sm"
                   onClick={handleMarkAllAsRead}
                   disabled={markAllAsReadMutation.isPending || unreadCount === 0}
-                  className="px-3 py-1.5 rounded-full text-xs font-bold text-primary hover:bg-primary-container/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="text-xs font-bold text-primary hover:bg-primary-container/50 disabled:opacity-40"
                   title="Đánh dấu tất cả đã đọc"
                 >
                   <CheckCheck className="w-4 h-4" aria-hidden="true" />
                   <span className="text-xs font-bold">Đọc tất cả</span>
-                </button>
+                </Button>
               )}
 
-              <button
+              <IconButton
                 type="button"
+                variant="standard"
+                size="xs"
                 onClick={() => {
                   setIsOpen(false);
                   setIsPrefModalOpen(true);
                 }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="w-8 h-8 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
                 title="Cài đặt thông báo"
                 aria-label="Cài đặt thông báo"
               >
                 <Settings className="w-4 h-4" aria-hidden="true" />
-              </button>
+              </IconButton>
             </div>
           </div>
 
@@ -120,14 +126,12 @@ export function NotificationBell() {
 
           {/* Full Primary Capsule Button Footer */}
           <div className="p-3 border-t border-outline-variant/40 bg-surface-container-lowest text-center">
-            <Link
-              href="/notifications"
-              onClick={() => setIsOpen(false)}
-              className="inline-flex items-center justify-center gap-2 text-xs font-bold bg-primary hover:bg-primary-hover text-on-primary transition-colors w-full py-2.5 rounded-full shadow-sm hover:shadow-md cursor-pointer active:scale-[0.98]"
-            >
-              <span>Xem tất cả thông báo</span>
-              <ArrowRight className="w-4 h-4" aria-hidden="true" />
-            </Link>
+            <Button variant="filled" size="sm" className="w-full shadow-sm">
+              <Link href="/notifications" onClick={() => setIsOpen(false)}>
+                <span>Xem tất cả thông báo</span>
+                <ArrowRight className="w-4 h-4" aria-hidden="true" />
+              </Link>
+            </Button>
           </div>
         </PopoverContent>
       </Popover>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, Suspense } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import {
   CatalogService,
@@ -26,6 +27,8 @@ import { UserDropdown } from "@/components/layout/UserDropdown";
 import { CourseCompletionModal } from "@/components/course/CourseCompletionModal";
 import { LearnPageAIChatbot } from "@/components/player/ai/LearnPageAIChatbot";
 import { BrandLogo } from "@/components/ui/BrandLogo";
+import { usePaymentAccessQuery } from "@/lib/query_hooks";
+import { Button } from "@/components/ui/Button";
 import {
   X,
   ChevronDown,
@@ -110,9 +113,19 @@ function CoursePlayerContent() {
     }));
   };
 
+  const { data: paymentAccess } = usePaymentAccessQuery(courseId, {
+    enabled: !!courseId && !isPreviewMode,
+  });
+  const isPaidAccess = isPreviewMode ? true : (paymentAccess?.hasPaidAccess ?? false);
+
+  const isGradedItem = useCallback((type: number): boolean => {
+    return type === 4 || type === 5 || type === 6;
+  }, []);
+
   const isWeekUnlocked = useCallback(
     (weekIndex: number): boolean => {
       if (isPreviewMode || weekIndex === 0 || !course) return true;
+      if (!isPaidAccess) return false;
       for (let k = 0; k < weekIndex; k++) {
         const precedingWeek = course.weekModules[k];
         if (!precedingWeek) continue;
@@ -124,7 +137,17 @@ function CoursePlayerContent() {
       }
       return true;
     },
-    [course, progress, isPreviewMode],
+    [course, progress, isPreviewMode, isPaidAccess],
+  );
+
+  const isItemLocked = useCallback(
+    (item: { type: number }, weekIndex: number): boolean => {
+      if (isPreviewMode) return false;
+      if (!isPaidAccess && isGradedItem(item.type)) return true;
+      if (!isWeekUnlocked(weekIndex)) return true;
+      return false;
+    },
+    [isPreviewMode, isPaidAccess, isGradedItem, isWeekUnlocked],
   );
 
   useEffect(() => {
@@ -313,8 +336,6 @@ function CoursePlayerContent() {
     [course, progress, totalCourseItems, courseId, isPreviewMode],
   );
 
-  const router = useRouter();
-
   // Load Course & Progress
   useEffect(() => {
     if (!courseId) return;
@@ -360,31 +381,60 @@ function CoursePlayerContent() {
             lastResetAt: "",
           } as unknown as LearningProgress);
         } else {
-          const learningClient = getRpcClient(LearningService);
-          const progressRes = await learningClient.getProgress({ courseId });
-          setProgress(progressRes.progress ?? null);
+          try {
+            const learningClient = getRpcClient(LearningService);
+            const progressRes = await learningClient.getProgress({ courseId });
+            setProgress(progressRes.progress ?? null);
 
-          if (progressRes.progress && progressRes.progress.overallProgressPercent >= 100) {
-            try {
-              const certClient = getRpcClient(CertificateService);
-              const certRes = await certClient.getVerifiedCertificate({ courseId });
-              if (certRes.certificate?.certificateId) {
-                setCertificateId(certRes.certificate.certificateId);
+            if (progressRes.progress && progressRes.progress.overallProgressPercent >= 100) {
+              try {
+                const certClient = getRpcClient(CertificateService);
+                const certRes = await certClient.getVerifiedCertificate({ courseId });
+                if (certRes.certificate?.certificateId) {
+                  setCertificateId(certRes.certificate.certificateId);
+                }
+              } catch (err) {
+                console.error("Failed to load certificate on load:", err);
               }
-            } catch (err) {
-              console.error("Failed to load certificate on load:", err);
             }
-          }
 
-          const notesRes = await learningClient.listPersonalNotes({ courseId });
-          setNotes(notesRes.notes);
+            const notesRes = await learningClient.listPersonalNotes({ courseId });
+            setNotes(notesRes.notes);
+          } catch (err) {
+            console.error("Failed to load user progress or notes:", err);
+          }
         }
       } catch (err) {
         console.error("Error loading course player data:", err);
       }
     }
     loadData();
-  }, [courseId, router, previewItemId, isPreviewMode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId, previewItemId, isPreviewMode]);
+
+  // Adjust active item if currently active item is locked due to Audit Mode
+  useEffect(() => {
+    if (!course || isPreviewMode || isPaidAccess || !activeItem) return;
+    if (isGradedItem(activeItem.type)) {
+      let foundUnlocked = null;
+      for (let wIdx = 0; wIdx < course.weekModules.length; wIdx++) {
+        const wm = course.weekModules[wIdx];
+        for (const l of wm.lessons) {
+          for (const it of l.items) {
+            if (!isItemLocked(it, wIdx)) {
+              foundUnlocked = it;
+              break;
+            }
+          }
+          if (foundUnlocked) break;
+        }
+        if (foundUnlocked) break;
+      }
+      if (foundUnlocked && foundUnlocked.id !== activeItem.id) {
+        setActiveItem(foundUnlocked);
+      }
+    }
+  }, [course, isPreviewMode, isPaidAccess, activeItem, isGradedItem, isItemLocked]);
 
   // Reset in-video quiz state when switching learning items
   const activeItemId = activeItem?.id;
@@ -494,6 +544,19 @@ function CoursePlayerContent() {
     }
   };
 
+  // Delete Personal Note
+  const handleDeleteNote = async (noteId: string) => {
+    try {
+      const learningClient = getRpcClient(LearningService);
+      const res = await learningClient.deletePersonalNote({ noteId });
+      if (res.success) {
+        setNotes((prev) => prev.filter((n) => n.id !== noteId));
+      }
+    } catch (err) {
+      console.error("Failed to delete note:", err);
+    }
+  };
+
   // Reset My Deadlines
   const handleResetDeadlines = async () => {
     try {
@@ -545,13 +608,14 @@ function CoursePlayerContent() {
             progress &&
             (progress.overallProgressPercent >= 100 ||
               progress.completedItemIds.length >= totalCourseItems) && (
-              <button
+              <Button
+                type="button"
                 onClick={() => setShowCompletionModal(true)}
-                className="px-4 py-1.5 rounded-full bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-xs shadow-xs hover:shadow transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-1.5 rounded-full bg-warning hover:bg-warning-hover text-warning-foreground font-bold text-xs shadow-xs hover:shadow"
               >
                 <CheckCircle2 className="w-4 h-4 text-warning-foreground" aria-hidden="true" />
                 <span>{"Xem Chứng Chỉ"}</span>
-              </button>
+              </Button>
             )}
 
           {isPreviewMode && (
@@ -564,16 +628,19 @@ function CoursePlayerContent() {
           <ThemeToggle />
 
           {/* AI Assistant Icon Button matching ThemeToggle style with colored icon when supported */}
-          <button
+          <Button
             type="button"
+            variant="text"
+            iconOnly
             disabled={!isAiSupported}
             onClick={handleToggleAiAssistant}
-            className={`p-2 rounded-full transition-colors shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            aria-label="Bật/tắt Trợ lý AI"
+            className={`p-2 rounded-full h-9 w-9 shrink-0 ${
               !isAiSupported
                 ? "text-on-surface-variant/30 opacity-40 cursor-not-allowed"
                 : isPanelOpen && activeTab === "ai_assistant"
-                  ? "bg-primary/15 text-primary cursor-pointer"
-                  : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 cursor-pointer"
+                  ? "bg-primary/15 text-primary"
+                  : "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60"
             }`}
             title={
               isAiSupported
@@ -584,19 +651,12 @@ function CoursePlayerContent() {
                     ? "Trợ lý AI tạm khóa trong bài kiểm tra tính điểm"
                     : "Trợ lý AI chưa hỗ trợ ở trang này"
             }
-            aria-label={
-              isAiSupported
-                ? "Mở Trợ lý AI Học tập"
-                : activeItem?.type === 4
-                  ? "Trợ lý AI tạm khóa trong bài kiểm tra tính điểm"
-                  : "Trợ lý AI chưa hỗ trợ ở trang này"
-            }
           >
             <Sparkles
               className={`w-5 h-5 ${isAiSupported ? "text-primary" : "text-on-surface-variant/30"}`}
               aria-hidden="true"
             />
-          </button>
+          </Button>
 
           <UserDropdown />
         </div>
@@ -607,14 +667,17 @@ function CoursePlayerContent() {
         {/* Left Sidebar Icon Strip when collapsed */}
         {!isSidebarOpen && !isPreviewMode && (
           <div className="w-14 bg-surface-container-lowest rounded-3xl shadow-xs flex flex-col items-center py-3 shrink-0 select-none">
-            <button
+            <Button
+              type="button"
+              variant="text"
+              iconOnly
               onClick={() => setIsSidebarOpen(true)}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors cursor-pointer"
+              className="w-10 h-10 rounded-full text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
               title="Mở Lộ trình Bài học"
               aria-label="Mở Lộ trình Bài học"
             >
               <Menu className="w-5 h-5" aria-hidden="true" />
-            </button>
+            </Button>
           </div>
         )}
 
@@ -628,14 +691,17 @@ function CoursePlayerContent() {
               >
                 {course.title}
               </h2>
-              <button
+              <Button
+                type="button"
+                variant="text"
+                iconOnly
                 onClick={() => setIsSidebarOpen(false)}
-                className="w-9 h-9 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer shrink-0"
+                className="w-9 h-9 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full shrink-0"
                 title="Ẩn Lộ trình Bài học"
                 aria-label="Ẩn Lộ trình Bài học"
               >
                 <X className="w-5 h-5" aria-hidden="true" />
-              </button>
+              </Button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -650,10 +716,11 @@ function CoursePlayerContent() {
                 return (
                   <div key={week.id} className="space-y-3">
                     {/* Module / Week Accordion Header */}
-                    <button
+                    <Button
                       type="button"
+                      variant="text"
                       onClick={() => toggleWeek(week.id)}
-                      className="w-full text-left flex items-start justify-between p-2.5 rounded-2xl hover:bg-surface-container-high/60 transition-colors group cursor-pointer"
+                      className="w-full text-left justify-start items-start p-2.5 rounded-2xl hover:bg-surface-container-high/60 h-auto group"
                     >
                       <div className="flex-1 min-w-0 pr-2">
                         <div className="flex items-center gap-2">
@@ -677,7 +744,7 @@ function CoursePlayerContent() {
                           <ChevronUp aria-hidden="true" className="w-4 h-4" />
                         )}
                       </div>
-                    </button>
+                    </Button>
 
                     {/* Collapsible Lessons & Items List */}
                     {!isCollapsed && (
@@ -700,33 +767,47 @@ function CoursePlayerContent() {
                                 {lesson.items.map((item) => {
                                   const isActive = activeItem?.id === item.id;
                                   const isDone = progress?.completedItemIds.includes(item.id);
+                                  const itemLocked = isItemLocked(item, weekIndex);
+                                  const isAuditLocked =
+                                    !isPreviewMode && !isPaidAccess && isGradedItem(item.type);
 
                                   return (
-                                    <button
+                                    <Button
                                       key={item.id}
                                       type="button"
+                                      variant="text"
                                       onClick={() => {
-                                        if (!unlocked) {
-                                          setLockNotice(
-                                            `Bạn cần hoàn thành tất cả các bài học ở Tuần ${weekIndex} để mở khóa Tuần ${weekIndex + 1}.`,
-                                          );
+                                        if (itemLocked) {
+                                          if (isAuditLocked) {
+                                            setLockNotice(
+                                              "Tài khoản đang ở chế độ Audit Mode (Miễn phí). Vui lòng nâng cấp Paid Mode hoặc sử dụng mã Enterprise Key / Hỗ trợ tài chính để làm bài kiểm tra tính điểm.",
+                                            );
+                                          } else if (!isPaidAccess && weekIndex > 0) {
+                                            setLockNotice(
+                                              "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký Coursera Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
+                                            );
+                                          } else {
+                                            setLockNotice(
+                                              `Bạn cần hoàn thành tất cả các bài học ở Tuần ${weekIndex} để mở khóa Tuần ${weekIndex + 1}.`,
+                                            );
+                                          }
                                           return;
                                         }
                                         setLockNotice("");
                                         setActiveItem(item);
                                         setActiveQuiz(null);
                                       }}
-                                      className={`w-full text-left px-3.5 py-2.5 rounded-2xl flex items-center gap-3 transition-colors cursor-pointer ${
-                                        !unlocked
+                                      className={`w-full text-left justify-start items-center gap-3 p-3 rounded-xl h-auto whitespace-normal ${
+                                        itemLocked
                                           ? "opacity-60 cursor-not-allowed hover:bg-transparent"
                                           : isActive
-                                            ? "bg-primary-container text-on-primary-container shadow-xs font-bold"
+                                            ? "bg-primary-container text-on-primary-container shadow-xs font-bold hover:bg-primary-container"
                                             : "hover:bg-surface-container-high/60 text-on-surface"
                                       }`}
                                     >
                                       {/* Status Icon */}
-                                      <div className="shrink-0">
-                                        {!unlocked ? (
+                                      <div className="shrink-0 flex items-center justify-center">
+                                        {itemLocked ? (
                                           <div className="w-5 h-5 rounded-full bg-surface-container flex items-center justify-center">
                                             <Lock
                                               aria-hidden="true"
@@ -765,12 +846,14 @@ function CoursePlayerContent() {
                                               : "text-on-surface-variant"
                                           }`}
                                         >
-                                          {!unlocked
-                                            ? `Bị khóa • Hoàn thành Tuần ${weekIndex}`
+                                          {itemLocked
+                                            ? isAuditLocked
+                                              ? "Bị khóa (Audit Mode) • Yêu cầu Paid Mode"
+                                              : `Bị khóa • Hoàn thành Tuần ${weekIndex}`
                                             : `${getItemTypeName(item.type)} • ${item.estimatedMinutes || 5} min`}
                                         </div>
                                       </div>
-                                    </button>
+                                    </Button>
                                   );
                                 })}
                               </div>
@@ -790,16 +873,28 @@ function CoursePlayerContent() {
         <main className="flex-1 flex flex-col overflow-hidden relative text-on-surface min-w-0 h-full">
           {/* Lock Notice Banner */}
           {lockNotice && (
-            <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-1 animate-in fade-in duration-m3-short-4 ease-m3-decelerate">
+            <div className="p-3 bg-warning/10 text-warning text-xs font-semibold flex items-center justify-between px-6 z-1 animate-in fade-in duration-m3-short-4 ease-m3-decelerate gap-3">
               <span>{lockNotice}</span>
-              <button
-                type="button"
-                onClick={() => setLockNotice("")}
-                aria-label="Đóng thông báo"
-                className="p-1 rounded-md text-warning hover:opacity-75 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <X className="w-4 h-4" aria-hidden="true" />
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                {!isPaidAccess && (
+                  <Link
+                    href="/my-purchases"
+                    className="px-3 py-1 rounded-lg bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-xs transition-colors shadow-xs"
+                  >
+                    Nâng cấp Plus
+                  </Link>
+                )}
+                <Button
+                  type="button"
+                  variant="text"
+                  iconOnly
+                  onClick={() => setLockNotice("")}
+                  aria-label="Đóng thông báo"
+                  className="p-1 h-6 w-6 text-warning hover:opacity-75"
+                >
+                  <X className="w-4 h-4" aria-hidden="true" />
+                </Button>
+              </div>
             </div>
           )}
 
@@ -824,6 +919,7 @@ function CoursePlayerContent() {
                   onContinueVideo={handleContinueVideo}
                   onMarkComplete={handleMarkItemComplete}
                   isPreviewMode={isPreviewMode}
+                  isPaidAccess={isPaidAccess}
                   onSelectAiPrompt={(promptText) => {
                     setActiveTab("ai_assistant");
                     setIsPanelOpen(true);
@@ -844,15 +940,8 @@ function CoursePlayerContent() {
                         inputEl.dispatchEvent(new Event("input", { bubbles: true }));
                         const formEl = inputEl.closest("form");
                         if (formEl) {
-                          if (
-                            "requestSubmit" in formEl &&
-                            typeof formEl.requestSubmit === "function"
-                          ) {
-                            formEl.requestSubmit();
-                            return;
-                          }
                           formEl.dispatchEvent(
-                            new Event("submit", { bubbles: true, cancelable: true }),
+                            new Event("submit", { cancelable: true, bubbles: true }),
                           );
                         }
                       }
@@ -864,10 +953,20 @@ function CoursePlayerContent() {
                     const nextWeekIndex = course.weekModules.findIndex((wm) =>
                       wm.lessons.some((l) => l.items.some((i) => i.id === nextItem.id)),
                     );
-                    if (nextWeekIndex !== -1 && !isWeekUnlocked(nextWeekIndex)) {
-                      setLockNotice(
-                        `Bạn cần hoàn thành tất cả các bài học ở Tuần ${nextWeekIndex} để mở khóa Tuần ${nextWeekIndex + 1}.`,
-                      );
+                    if (nextWeekIndex !== -1 && isItemLocked(nextItem, nextWeekIndex)) {
+                      if (!isPreviewMode && !isPaidAccess && isGradedItem(nextItem.type)) {
+                        setLockNotice(
+                          "Tài khoản đang ở chế độ Audit Mode (Miễn phí). Vui lòng nâng cấp Paid Mode hoặc sử dụng mã Enterprise Key / Hỗ trợ tài chính để làm bài kiểm tra tính điểm.",
+                        );
+                      } else if (!isPaidAccess && nextWeekIndex > 0) {
+                        setLockNotice(
+                          "Tài khoản của bạn đang ở chế độ Audit (Miễn phí). Vui lòng đăng ký Coursera Plus hoặc mua khóa học để mở khóa từ Tuần 2 trở đi.",
+                        );
+                      } else {
+                        setLockNotice(
+                          `Bạn cần hoàn thành tất cả các bài học ở Tuần ${nextWeekIndex} để mở khóa Tuần ${nextWeekIndex + 1}.`,
+                        );
+                      }
                       return;
                     }
                     setLockNotice("");
@@ -897,13 +996,17 @@ function CoursePlayerContent() {
                         {activeTab === "deadlines" && "Deadlines & Tiến độ"}
                       </span>
                     </div>
-                    <button
+                    <Button
+                      type="button"
+                      variant="text"
+                      iconOnly
                       onClick={() => setIsPanelOpen(false)}
-                      className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer"
+                      className="w-7 h-7 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full"
                       title="Đóng bảng công cụ"
+                      aria-label="Đóng bảng công cụ"
                     >
                       <X className="w-4 h-4" aria-hidden="true" />
-                    </button>
+                    </Button>
                   </div>
 
                   {/* Tab Body Content - Unified Background */}
@@ -933,6 +1036,7 @@ function CoursePlayerContent() {
                         onHighlightTextChange={setHighlightText}
                         onNoteCommentChange={setNoteComment}
                         onSaveNote={handleSaveNote}
+                        onDeleteNote={handleDeleteNote}
                       />
                     )}
 
@@ -977,10 +1081,13 @@ function CoursePlayerContent() {
               <div className="w-16 lg:w-20 bg-surface-container-low flex flex-col items-center justify-start py-5 gap-5 shrink-0 h-full select-none">
                 {/* Transcript Button: Only for Video Items */}
                 {isVideoItem && (
-                  <button
+                  <Button
+                    type="button"
+                    variant="text"
                     onClick={() => handleTabClick("transcript")}
-                    className="group flex flex-col items-center gap-1 cursor-pointer transition-colors"
+                    className="group flex flex-col items-center gap-1 h-auto p-0 hover:bg-transparent shadow-none"
                     title="Phụ đề"
+                    aria-label="Xem Phụ đề Tương tác"
                   >
                     <div
                       className={`w-12 h-7 rounded-full flex items-center justify-center transition-colors ${
@@ -1000,17 +1107,20 @@ function CoursePlayerContent() {
                     >
                       Phụ đề
                     </span>
-                  </button>
+                  </Button>
                 )}
 
                 {!isPreviewMode && (
                   <>
                     {/* Notes Button: For Video & Reading Lecture Items */}
                     {isLectureItem && (
-                      <button
+                      <Button
+                        type="button"
+                        variant="text"
                         onClick={() => handleTabClick("notes")}
-                        className="group flex flex-col items-center gap-1 cursor-pointer transition-colors"
+                        className="group flex flex-col items-center gap-1 h-auto p-0 hover:bg-transparent shadow-none"
                         title="Ghi chú"
+                        aria-label="Xem Ghi chú Cá nhân"
                       >
                         <div
                           className={`w-12 h-7 rounded-full flex items-center justify-center transition-colors ${
@@ -1030,15 +1140,18 @@ function CoursePlayerContent() {
                         >
                           Ghi chú
                         </span>
-                      </button>
+                      </Button>
                     )}
 
                     {/* Forum Button: For Video & Reading Lecture Items */}
                     {isLectureItem && (
-                      <button
+                      <Button
+                        type="button"
+                        variant="text"
                         onClick={() => handleTabClick("forum")}
-                        className="group flex flex-col items-center gap-1 cursor-pointer transition-colors"
+                        className="group flex flex-col items-center gap-1 h-auto p-0 hover:bg-transparent shadow-none"
                         title="Thảo luận"
+                        aria-label="Mở Thảo luận Bài học"
                       >
                         <div
                           className={`w-12 h-7 rounded-full flex items-center justify-center transition-colors ${
@@ -1058,14 +1171,17 @@ function CoursePlayerContent() {
                         >
                           Thảo luận
                         </span>
-                      </button>
+                      </Button>
                     )}
 
                     {/* Deadlines Button */}
-                    <button
+                    <Button
+                      type="button"
+                      variant="text"
                       onClick={() => handleTabClick("deadlines")}
-                      className="group flex flex-col items-center gap-1 cursor-pointer transition-colors"
+                      className="group flex flex-col items-center gap-1 h-auto p-0 hover:bg-transparent shadow-none"
                       title="Deadlines"
+                      aria-label="Xem Deadlines & Tiến độ"
                     >
                       <div
                         className={`w-12 h-7 rounded-full flex items-center justify-center transition-colors ${
@@ -1085,7 +1201,7 @@ function CoursePlayerContent() {
                       >
                         Deadlines
                       </span>
-                    </button>
+                    </Button>
                   </>
                 )}
               </div>

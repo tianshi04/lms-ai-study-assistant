@@ -1,27 +1,44 @@
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-export interface CardProps extends React.ComponentProps<"div"> {
-  variant?: "elevated" | "filled" | "outlined";
+export const cardVariants = cva(
+  "rounded-2xl transition-colors duration-m3-short-4 ease-m3-emphasized p-6",
+  {
+    variants: {
+      variant: {
+        elevated: "bg-surface-container-low text-on-surface shadow-sm border-none",
+        filled: "bg-surface-container-highest text-on-surface border-none",
+        outlined: "bg-surface-container-low text-on-surface border border-outline-variant",
+      },
+    },
+    defaultVariants: {
+      variant: "elevated",
+    },
+  },
+);
+
+export interface CardProps extends React.ComponentProps<"div">, VariantProps<typeof cardVariants> {
+  asChild?: boolean;
 }
 
-export function Card({ className, variant = "elevated", ref, ...props }: CardProps) {
-  const variantStyles = {
-    elevated: "bg-surface-container-low text-foreground shadow-sm border-none",
-    filled: "bg-surface-container-highest text-foreground border-none",
-    outlined: "bg-card text-card-foreground border border-outline-variant",
-  };
+export function Card({ className, variant, asChild = false, children, ref, ...props }: CardProps) {
+  const compClasses = cn(cardVariants({ variant, className }));
+
+  if (asChild && React.isValidElement(children)) {
+    const child = children as React.ReactElement<any>;
+    return React.cloneElement(child, {
+      ...props,
+      ...child.props,
+      ref,
+      className: cn(compClasses, child.props.className),
+    });
+  }
 
   return (
-    <div
-      ref={ref}
-      className={cn(
-        "rounded-2xl transition-colors duration-m3-short-4 ease-m3-emphasized p-6",
-        variantStyles[variant],
-        className,
-      )}
-      {...props}
-    />
+    <div ref={ref} className={compClasses} {...props}>
+      {children}
+    </div>
   );
 }
 
@@ -33,10 +50,7 @@ export function CardTitle({ className, ref, children, ...props }: React.Componen
   return (
     <h3
       ref={ref}
-      className={cn(
-        "text-lg font-semibold leading-none tracking-tight text-card-foreground",
-        className,
-      )}
+      className={cn("text-lg font-semibold leading-none tracking-tight text-on-surface", className)}
       {...props}
     >
       {children}
@@ -45,7 +59,7 @@ export function CardTitle({ className, ref, children, ...props }: React.Componen
 }
 
 export function CardDescription({ className, ref, ...props }: React.ComponentProps<"p">) {
-  return <p ref={ref} className={cn("text-sm text-muted-foreground", className)} {...props} />;
+  return <p ref={ref} className={cn("text-sm text-on-surface-variant", className)} {...props} />;
 }
 
 export function CardContent({ className, ref, ...props }: React.ComponentProps<"div">) {

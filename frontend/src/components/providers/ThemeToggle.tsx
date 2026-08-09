@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 
-import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 
 export function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme();
@@ -31,9 +31,8 @@ export function ThemeToggle() {
   const isDark = mounted && resolvedTheme === "dark";
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
+    <IconButton
+      variant="standard"
       type="button"
       onClick={toggleTheme}
       className="rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 shrink-0"
@@ -45,6 +44,6 @@ export function ThemeToggle() {
       ) : (
         <Sun className="w-5 h-5" aria-hidden="true" />
       )}
-    </Button>
+    </IconButton>
   );
 }

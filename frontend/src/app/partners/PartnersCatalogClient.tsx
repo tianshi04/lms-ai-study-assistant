@@ -21,8 +21,9 @@ import {
 } from "lucide-react";
 import { usePartnersQuery, useCoursesQuery } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import { Modal } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -150,14 +151,16 @@ export function PartnersCatalogClient() {
               className="pl-10 pr-9 bg-background border-border text-foreground rounded-xl text-xs"
             />
             {searchQuery && (
-              <button
+              <IconButton
                 type="button"
+                variant="standard"
+                size="xs"
                 onClick={() => handleSearchChange("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded p-0.5"
                 aria-label="Xóa từ khóa tìm kiếm"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               >
                 <X aria-hidden="true" className="w-4 h-4" />
-              </button>
+              </IconButton>
             )}
           </div>
 
@@ -201,7 +204,7 @@ export function PartnersCatalogClient() {
               onClick={() => {
                 handleSearchChange("");
               }}
-              variant="outline"
+              variant="outlined"
               className="text-xs cursor-pointer"
             >
               Đặt lại tìm kiếm
@@ -315,39 +318,46 @@ export function PartnersCatalogClient() {
                 </p>
 
                 <div className="flex items-center space-x-1.5">
-                  <Button
+                  <IconButton
+                    type="button"
+                    variant="outlined"
+                    size="xs"
                     onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    variant="outline"
-                    className="p-2 rounded-xl text-xs cursor-pointer disabled:opacity-40"
                     aria-label="Trang trước"
+                    className="rounded-xl disabled:opacity-40"
                   >
                     <ChevronLeft aria-hidden="true" className="w-4 h-4" />
-                  </Button>
+                  </IconButton>
 
                   {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((page) => (
-                    <button
+                    <Button
+                      type="button"
                       key={page}
+                      variant={currentPage === page ? "filled" : "outlined"}
+                      iconOnly
                       onClick={() => setCurrentPage(page)}
-                      className={`w-8 h-8 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
+                      className={`w-8 h-8 rounded-xl text-xs font-bold ${
                         currentPage === page
                           ? "bg-primary text-primary-foreground shadow-xs"
-                          : "bg-card border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                          : "bg-card border-border text-muted-foreground hover:text-foreground hover:bg-muted"
                       }`}
                     >
                       {page}
-                    </button>
+                    </Button>
                   ))}
 
-                  <Button
+                  <IconButton
+                    type="button"
+                    variant="outlined"
+                    size="xs"
                     onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    variant="outline"
-                    className="p-2 rounded-xl text-xs cursor-pointer disabled:opacity-40"
                     aria-label="Trang tiếp"
+                    className="rounded-xl disabled:opacity-40"
                   >
                     <ChevronRight aria-hidden="true" className="w-4 h-4" />
-                  </Button>
+                  </IconButton>
                 </div>
               </div>
             )}
@@ -425,46 +435,49 @@ export function PartnersCatalogClient() {
       </div>
 
       {/* Contact Partner Inquiry Modal */}
-      <Modal
-        isOpen={isContactModalOpen}
-        onClose={() => setIsContactModalOpen(false)}
-        title="Đăng ký Hợp tác Phát hành Khóa học"
-      >
-        <div className="space-y-4 text-sm text-foreground">
-          <p className="text-muted-foreground text-xs leading-relaxed">
-            Để đăng ký làm đối tác đào tạo hoặc tổ chức cấp chứng chỉ trên nền tảng, vui lòng gửi
-            thông tin đơn vị của bạn tới bộ phận Hợp tác chiến lược:
-          </p>
-
-          <div className="bg-muted p-4 rounded-2xl border border-border space-y-2">
-            <div className="flex items-center space-x-2 text-primary font-semibold text-xs">
-              <Mail aria-hidden="true" className="w-4 h-4" />
-              <span>Email liên hệ đối tác:</span>
-            </div>
-            <p className="font-mono text-xs text-foreground font-bold selection:bg-primary">
-              partners@lms-ai-study.edu.vn
+      <Dialog.Root open={isContactModalOpen} onOpenChange={(open) => setIsContactModalOpen(open)}>
+        <Dialog.Content size="md">
+          <Dialog.Header>
+            <Dialog.Title>{"Đăng ký Hợp tác Phát hành Khóa học"}</Dialog.Title>
+          </Dialog.Header>
+          <div className="space-y-4 text-sm text-foreground pt-2">
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              Để đăng ký làm đối tác đào tạo hoặc tổ chức cấp chứng chỉ trên nền tảng, vui lòng gửi
+              thông tin đơn vị của bạn tới bộ phận Hợp tác chiến lược:
             </p>
-          </div>
 
-          <div className="bg-muted/50 p-4 rounded-2xl border border-border space-y-1.5 text-xs text-muted-foreground">
-            <p className="font-semibold text-foreground">Thông tin cần chuẩn bị:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>Tên tổ chức / Trường Đại học / Doanh nghiệp</li>
-              <li>Lĩnh vực đào tạo & danh sách chương trình dự kiến</li>
-              <li>Thông tin người đại diện và vị trí công tác</li>
-            </ul>
-          </div>
+            <div className="bg-muted p-4 rounded-2xl border border-border space-y-2">
+              <div className="flex items-center space-x-2 text-primary font-semibold text-xs">
+                <Mail aria-hidden="true" className="w-4 h-4" />
+                <span>Email liên hệ đối tác:</span>
+              </div>
+              <p className="font-mono text-xs text-foreground font-bold selection:bg-primary">
+                partners@lms-ai-study.edu.vn
+              </p>
+            </div>
 
-          <div className="pt-2 flex justify-end">
-            <Button
-              onClick={() => setIsContactModalOpen(false)}
-              className="bg-primary text-primary-foreground text-xs font-semibold rounded-xl"
-            >
-              Đã hiểu
-            </Button>
+            <div className="bg-muted/50 p-4 rounded-2xl border border-border space-y-1.5 text-xs text-muted-foreground">
+              <p className="font-semibold text-foreground">Thông tin cần chuẩn bị:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Tên tổ chức / Trường Đại học / Doanh nghiệp</li>
+                <li>Lĩnh vực đào tạo & danh sách chương trình dự kiến</li>
+                <li>Thông tin người đại diện và vị trí công tác</li>
+              </ul>
+            </div>
+
+            <Dialog.Footer className="pt-2">
+              <Button
+                type="button"
+                variant="filled"
+                onClick={() => setIsContactModalOpen(false)}
+                className="text-xs font-semibold rounded-xl"
+              >
+                {"Đã hiểu"}
+              </Button>
+            </Dialog.Footer>
           </div>
-        </div>
-      </Modal>
+        </Dialog.Content>
+      </Dialog.Root>
     </div>
   );
 }

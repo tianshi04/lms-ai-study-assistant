@@ -55,8 +55,8 @@ jobs:
         run: pnpm run gen
         working-directory: frontend
 
-      - name: Run linter (Oxlint)
-        run: pnpm run lint
+      - name: Run quality check (Type check, Oxlint & Oxfmt)
+        run: pnpm run check
         working-directory: frontend
 
       - name: Cache Next.js Build Output

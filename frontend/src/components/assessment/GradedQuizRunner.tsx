@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { HonorCodeModal } from "./HonorCodeModal";
@@ -17,8 +18,11 @@ import {
   CircleDot,
   CheckSquare,
   HelpCircle,
+  Lock,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Badge } from "@/components/ui/Badge";
 
 interface QuizSessionQuestionOption {
@@ -49,7 +53,7 @@ export function GradedQuizRunner({
   isPreviewMode = false,
 }: GradedQuizRunnerProps) {
   const { userId: authUserId } = useAuth();
-  const effectiveUserId = userId || authUserId || "user-demo-1";
+  const _effectiveUserId = userId || authUserId || "user-demo-1";
   const [selectedAnswers, setSelectedAnswers] = useState<number[][]>([]);
   const [isHonorModalOpen, setIsHonorModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -256,15 +260,10 @@ export function GradedQuizRunner({
       selectedOptionIndexes: indices,
     }));
 
-    const legacySelectedOptionIndexes = selectedAnswers.map((indices) =>
-      indices.length > 0 ? indices[0] : -1,
-    );
-
     try {
       const client = getRpcClient(AssessmentService);
       const res = await client.submitGradedQuiz({
         itemId,
-        selectedOptionIndexes: legacySelectedOptionIndexes,
         questionAnswers: questionAnswersPayload,
         sessionSeed,
         startTimeIso,
@@ -324,6 +323,43 @@ export function GradedQuizRunner({
   }
 
   if (error) {
+    const isAuditModeErr =
+      error.includes("Audit Mode") ||
+      error.includes("Miễn phí") ||
+      error.includes("permission_denied");
+
+    if (isAuditModeErr) {
+      return (
+        <div className="max-w-4xl mx-auto p-8 rounded-2xl bg-surface-container-low text-on-surface text-center space-y-6 border border-border shadow-xs">
+          <div className="w-16 h-16 rounded-full bg-warning/15 text-warning flex items-center justify-center mx-auto shadow-inner">
+            <Lock className="w-8 h-8 stroke-[2.5]" aria-hidden="true" />
+          </div>
+          <div className="max-w-md mx-auto space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20">
+              CHẾ ĐỘ AUDIT (MIỄN PHÍ)
+            </div>
+            <h3 className="text-xl font-extrabold text-foreground">
+              Bài kiểm tra tính điểm đã bị khóa
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Tài khoản của bạn đang ở chế độ Audit Mode (Miễn phí). Vui lòng nâng cấp Coursera Plus
+              hoặc mua khóa học / nhập mã Enterprise Key / Hỗ trợ tài chính để làm bài kiểm tra tính
+              điểm này.
+            </p>
+          </div>
+          <div className="flex justify-center pt-2">
+            <Link
+              href="/my-purchases"
+              className="px-6 py-3 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-all shadow-xs flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 fill-current" aria-hidden="true" />
+              Nâng cấp Coursera Plus ngay
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
     const isBlocked =
       error.includes("vượt qua") ||
       error.includes("hết lượt") ||
@@ -465,12 +501,13 @@ export function GradedQuizRunner({
                 {q.options.map((opt, optIdx) => {
                   const isSelected = currentAnswers.includes(optIdx);
                   return (
-                    <button
+                    <Button
                       key={optIdx}
                       type="button"
+                      variant="outlined"
                       disabled={(cooldownCountdown > 0 && !isPreviewMode) || quizResult !== null}
                       onClick={() => handleOptionSelect(qIdx, optIdx, isMultipleChoice)}
-                      className={`p-3.5 rounded-xl text-xs text-left font-medium transition-colors border flex items-center gap-2.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      className={`h-auto justify-start text-left p-3.5 rounded-xl text-xs font-medium border flex items-center gap-2.5 cursor-pointer ${
                         isSelected
                           ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
                           : "bg-card border-border hover:border-primary/50 text-foreground"
@@ -492,7 +529,7 @@ export function GradedQuizRunner({
                         )}
                       </span>
                       <span className="flex-1">{opt.optionText}</span>
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -559,16 +596,16 @@ export function GradedQuizRunner({
       {submitError && (
         <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs font-semibold flex items-center justify-between shadow-xs">
           <span>{submitError}</span>
-          <Button
+          <IconButton
             type="button"
-            variant="ghost"
-            size="icon"
+            variant="standard"
+            size="xs"
             onClick={() => setSubmitError(null)}
-            className="text-destructive hover:text-destructive p-1 h-auto w-auto"
+            className="text-destructive hover:text-destructive p-1"
             aria-label="Đóng thông báo lỗi"
           >
             <X aria-hidden="true" className="w-4 h-4" />
-          </Button>
+          </IconButton>
         </div>
       )}
 
@@ -582,13 +619,13 @@ export function GradedQuizRunner({
 
         <div className="flex items-center gap-3">
           {isPreviewMode && quizResult && (
-            <Button type="button" variant="outline" size="sm" onClick={handleResetPreview}>
+            <Button type="button" variant="outlined" size="sm" onClick={handleResetPreview}>
               <RotateCcw aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
               Làm lại bài thi (Reset)
             </Button>
           )}
           {!isPreviewMode && quizResult && cooldownCountdown === 0 && attemptsLeft > 0 && (
-            <Button type="button" variant="outline" size="sm" onClick={handleRetryQuiz}>
+            <Button type="button" variant="outlined" size="sm" onClick={handleRetryQuiz}>
               <RotateCcw aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
               Làm lại bài thi (Cải thiện điểm)
             </Button>
@@ -597,8 +634,7 @@ export function GradedQuizRunner({
             <Button
               type="button"
               onClick={handleSubmitQuiz}
-              isLoading={isSubmitting}
-              disabled={cooldownCountdown > 0 && !isPreviewMode}
+              disabled={isSubmitting || (cooldownCountdown > 0 && !isPreviewMode)}
               size="sm"
             >
               {isSubmitting ? "Đang chấm điểm…" : "Nộp bài thi"}
@@ -610,7 +646,6 @@ export function GradedQuizRunner({
 
       <HonorCodeModal
         itemId={itemId}
-        userId={effectiveUserId}
         isOpen={isHonorModalOpen}
         isSubmitting={isSubmitting}
         onAgreedAndSubmit={async () => {

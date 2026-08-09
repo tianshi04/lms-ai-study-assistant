@@ -71,11 +71,11 @@ class Settings(BaseSettings):
 
     # 6. VNPay Sandbox Gateway Configuration
     VNPAY_TMN_CODE: str = Field(
-        default="PLM6WVVN",
+        default="",
         description="VNPay Merchant Terminal Code (vnp_TmnCode)",
     )
     VNPAY_HASH_SECRET: str = Field(
-        default="MLQIAARTMNPRIGVBPAFCRFVCASOBHRTS",
+        default="",
         description="VNPay Secret Key for HMAC-SHA512 checksum calculation",
     )
     VNPAY_PAYMENT_URL: str = Field(

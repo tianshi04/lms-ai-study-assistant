@@ -5,6 +5,7 @@ import { Bell, BookOpen, MessageSquare, Megaphone, CheckCircle2, Shield } from "
 import type { NotificationItem as NotificationItemType } from "@/gen/notification/v1/notification_pb";
 import { NotificationCategory } from "@/gen/notification/v1/notification_pb";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/Button";
 
 interface NotificationItemProps {
   item: NotificationItemType;
@@ -159,15 +160,17 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
           {/* Footer Action: Mark As Read button */}
           {!item.isRead && onMarkAsRead && (
             <div className="flex justify-end mt-2">
-              <button
+              <Button
                 type="button"
+                variant="text"
+                size="sm"
                 onClick={() => onMarkAsRead(item.id)}
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-on-surface-variant hover:text-primary transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm p-0.5"
+                className="text-[11px] font-bold text-on-surface-variant hover:text-primary p-1 h-auto"
                 title="Đánh dấu đã đọc"
               >
-                <CheckCircle2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-primary mr-1" aria-hidden="true" />
                 <span>Đánh dấu đã đọc</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>

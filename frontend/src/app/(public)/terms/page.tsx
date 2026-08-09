@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/Button";
 import {
   FileText,
   UserCheck,
@@ -136,11 +137,12 @@ export default function TermsOfServicePage() {
                 const IconComponent = sec.icon;
                 const isActive = activeSection === sec.id;
                 return (
-                  <button
+                  <Button
                     type="button"
                     key={sec.id}
+                    variant={isActive ? "filled" : "text"}
                     onClick={() => scrollToSection(sec.id)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl text-left transition-colors font-medium cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    className={`w-full justify-start gap-2.5 px-3 py-2.5 rounded-2xl text-left text-xs font-medium cursor-pointer ${
                       isActive
                         ? "bg-primary text-primary-foreground font-semibold shadow-xs"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -148,7 +150,7 @@ export default function TermsOfServicePage() {
                   >
                     <IconComponent className="w-4 h-4 shrink-0" aria-hidden="true" />
                     <span className="min-w-0 truncate">{sec.title}</span>
-                  </button>
+                  </Button>
                 );
               })}
             </nav>

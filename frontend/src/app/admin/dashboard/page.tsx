@@ -10,11 +10,13 @@ import {
 } from "@tanstack/react-table";
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
-import { Modal } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
+
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
 import { Plus, UserPlus, AlertTriangle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import {
   Table,
@@ -204,7 +206,7 @@ export default function AdminEnterpriseDashboardPage() {
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
               <Button
                 onClick={() => setShowCreateModal(true)}
-                variant="outline"
+                variant="outlined"
                 className="w-full sm:w-auto border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
               >
                 <Plus className="w-4 h-4 mr-1.5" aria-hidden="true" />
@@ -213,7 +215,7 @@ export default function AdminEnterpriseDashboardPage() {
 
               <Button
                 onClick={() => setShowAssignModal(true)}
-                variant="secondary"
+                variant="tonal"
                 className="w-full sm:w-auto"
               >
                 <UserPlus className="w-4 h-4 mr-1.5 text-primary" aria-hidden="true" />
@@ -251,15 +253,15 @@ export default function AdminEnterpriseDashboardPage() {
               )}
               <span>{message.text}</span>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
+            <IconButton
+              variant="standard"
+              size="xs"
               onClick={() => setMessage(null)}
               aria-label="Đóng thông báo"
-              className="h-6 w-6 opacity-60 hover:opacity-100"
+              className="opacity-60 hover:opacity-100"
             >
               <X className="w-4 h-4" aria-hidden="true" />
-            </Button>
+            </IconButton>
           </div>
         )}
 
@@ -357,7 +359,7 @@ export default function AdminEnterpriseDashboardPage() {
                     <TableCell className="text-right">
                       <Button
                         size="sm"
-                        variant="secondary"
+                        variant="outlined"
                         onClick={() => {
                           setSelectedSeatKey(seat.seatKey);
                           setShowAssignModal(true);
@@ -375,116 +377,116 @@ export default function AdminEnterpriseDashboardPage() {
       </main>
 
       {/* Modal: Gán Suất học cho Học viên */}
-      <Modal
-        isOpen={showAssignModal}
-        onClose={() => setShowAssignModal(false)}
-        title="Gán Suất học Enterprise"
-        size="md"
-      >
-        <form onSubmit={handleAssignSeat} className="space-y-4">
-          <Input
-            label="Mã Học viên (User ID)"
-            type="text"
-            value={targetUserId}
-            onChange={(e) => setTargetUserId(e.target.value)}
-            placeholder="Ví dụ: user-learner-demo"
-            className="font-mono"
-            required
-          />
+      <Dialog.Root open={showAssignModal} onOpenChange={(open) => setShowAssignModal(open)}>
+        <Dialog.Content size="md">
+          <Dialog.Header>
+            <Dialog.Title>{"Gán Suất học Enterprise"}</Dialog.Title>
+          </Dialog.Header>
+          <form onSubmit={handleAssignSeat} className="space-y-4 pt-2">
+            <Input
+              label="Mã Học viên (User ID)"
+              type="text"
+              value={targetUserId}
+              onChange={(e) => setTargetUserId(e.target.value)}
+              placeholder="Ví dụ: user-learner-demo"
+              className="font-mono"
+              required
+            />
 
-          <div>
-            <label
-              htmlFor="selectedSeatKey"
-              className="block text-xs font-semibold text-foreground mb-1.5"
-            >
-              Chọn Mã Enterprise Key
-            </label>
-            <Select
-              value={selectedSeatKey}
-              onValueChange={(val) => {
-                if (val) setSelectedSeatKey(val as string);
-              }}
-            >
-              <SelectTrigger
-                id="selectedSeatKey"
-                aria-label="Chọn Mã Enterprise Key"
-                className="w-full font-mono font-semibold"
+            <div>
+              <label
+                htmlFor="selectedSeatKey"
+                className="block text-xs font-semibold text-foreground mb-1.5"
               >
-                <SelectValue placeholder="Chọn Mã Enterprise Key">
-                  {(() => {
-                    const s = seats.find((seat) => seat.seatKey === selectedSeatKey);
-                    return s ? `${s.partnerName} (${s.seatKey})` : selectedSeatKey;
-                  })()}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {seats.map((s) => (
-                  <SelectItem key={s.id} value={s.seatKey}>
-                    {`${s.partnerName} (${s.seatKey})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                {"Chọn Mã Enterprise Key"}
+              </label>
+              <Select
+                value={selectedSeatKey}
+                onValueChange={(val) => {
+                  if (val) setSelectedSeatKey(val as string);
+                }}
+              >
+                <SelectTrigger
+                  id="selectedSeatKey"
+                  aria-label="Chọn Mã Enterprise Key"
+                  className="w-full font-mono font-semibold"
+                >
+                  <SelectValue placeholder="Chọn Mã Enterprise Key">
+                    {(() => {
+                      const s = seats.find((seat) => seat.seatKey === selectedSeatKey);
+                      return s ? `${s.partnerName} (${s.seatKey})` : selectedSeatKey;
+                    })()}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {seats.map((s) => (
+                    <SelectItem key={s.id} value={s.seatKey}>
+                      {`${s.partnerName} (${s.seatKey})`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => setShowAssignModal(false)}
-            >
-              Hủy
-            </Button>
-            <Button type="submit" isLoading={saving} size="sm">
-              Kích hoạt gán suất học
-            </Button>
-          </div>
-        </form>
-      </Modal>
+            <Dialog.Footer className="pt-2">
+              <Button
+                type="button"
+                variant="outlined"
+                size="sm"
+                onClick={() => setShowAssignModal(false)}
+              >
+                {"Hủy"}
+              </Button>
+              <Button type="submit" disabled={saving} size="sm">
+                {"Kích hoạt gán suất học"}
+              </Button>
+            </Dialog.Footer>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
 
       {/* Modal: Tạo Mã Enterprise Key Mới */}
-      <Modal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        title="Tạo Mã Enterprise Mới"
-        size="md"
-      >
-        <form onSubmit={handleCreateSeatKey} className="space-y-4">
-          <Input
-            label="Tên Trường học / Doanh nghiệp Đối tác"
-            type="text"
-            value={newPartnerName}
-            onChange={(e) => setNewPartnerName(e.target.value)}
-            placeholder="Ví dụ: Trường Đại học Bách Khoa TP.HCM"
-            required
-          />
+      <Dialog.Root open={showCreateModal} onOpenChange={(open) => setShowCreateModal(open)}>
+        <Dialog.Content size="md">
+          <Dialog.Header>
+            <Dialog.Title>{"Tạo Mã Enterprise Mới"}</Dialog.Title>
+          </Dialog.Header>
+          <form onSubmit={handleCreateSeatKey} className="space-y-4 pt-2">
+            <Input
+              label="Tên Trường học / Doanh nghiệp Đối tác"
+              type="text"
+              value={newPartnerName}
+              onChange={(e) => setNewPartnerName(e.target.value)}
+              placeholder="Ví dụ: Trường Đại học Bách Khoa TP.HCM"
+              required
+            />
 
-          <Input
-            label="Mã Enterprise Key"
-            type="text"
-            value={newSeatKey}
-            onChange={(e) => setNewSeatKey(e.target.value)}
-            placeholder="Ví dụ: BKTPHCM-ENTERPRISE-2026"
-            className="font-mono"
-            required
-          />
+            <Input
+              label="Mã Enterprise Key"
+              type="text"
+              value={newSeatKey}
+              onChange={(e) => setNewSeatKey(e.target.value)}
+              placeholder="Ví dụ: BKTPHCM-ENTERPRISE-2026"
+              className="font-mono"
+              required
+            />
 
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() => setShowCreateModal(false)}
-            >
-              Hủy
-            </Button>
-            <Button type="submit" isLoading={saving} size="sm">
-              Xác nhận tạo Giấy phép
-            </Button>
-          </div>
-        </form>
-      </Modal>
+            <Dialog.Footer className="pt-2">
+              <Button
+                type="button"
+                variant="outlined"
+                size="sm"
+                onClick={() => setShowCreateModal(false)}
+              >
+                {"Hủy"}
+              </Button>
+              <Button type="submit" disabled={saving} size="sm">
+                {"Xác nhận tạo Giấy phép"}
+              </Button>
+            </Dialog.Footer>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
     </>
   );
 }

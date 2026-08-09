@@ -58,7 +58,7 @@ export default function VerifyPortalPage() {
           <span>Demo Certificate Code:</span>
           <Button
             type="button"
-            variant="ghost"
+            variant="text"
             size="sm"
             onClick={() => router.push("/verify/CERT-DEMO12345")}
             className="font-mono text-primary font-bold"

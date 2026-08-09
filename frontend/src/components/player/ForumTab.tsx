@@ -14,7 +14,14 @@ import {
 import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
@@ -52,6 +59,9 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
 
   // Reply inputs: threadId -> content
   const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
+
+  // In-flight voting requests state
+  const [votingPostIds, setVotingPostIds] = useState<Set<string>>(new Set());
 
   // Reply Edit State
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
@@ -223,6 +233,9 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
   };
 
   const handleVote = async (postId: string, isUpvote: boolean) => {
+    if (votingPostIds.has(postId)) return;
+    setVotingPostIds((prev) => new Set(prev).add(postId));
+
     setThreads((prevThreads) =>
       prevThreads.map((t) => {
         if (t.id === postId) {
@@ -271,6 +284,12 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
     } catch (err) {
       console.error("Error voting:", err);
       fetchThreads();
+    } finally {
+      setVotingPostIds((prev) => {
+        const next = new Set(prev);
+        next.delete(postId);
+        return next;
+      });
     }
   };
 
@@ -305,12 +324,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
               rows={2}
               className="flex-1 min-h-[60px]"
             />
-            <Button
-              type="submit"
-              disabled={submitting || !newTitle.trim()}
-              isLoading={submitting}
-              size="sm"
-            >
+            <Button type="submit" disabled={submitting || !newTitle.trim() || submitting} size="sm">
               Đăng Thảo Luận
             </Button>
           </div>
@@ -364,22 +378,26 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                         </span>
                       )}
                       {isThreadAuthor && (
-                        <button
+                        <Button
                           type="button"
+                          variant="text"
+                          size="sm"
                           onClick={() => startEditThread(thread)}
-                          className="text-[10px] font-bold text-on-surface-variant hover:text-primary cursor-pointer ml-1 rounded-sm p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="text-[10px] font-bold text-on-surface-variant hover:text-primary h-auto p-0.5"
                         >
                           {"Sửa"}
-                        </button>
+                        </Button>
                       )}
                       {canDeleteThread && (
-                        <button
+                        <Button
                           type="button"
+                          variant="text"
+                          size="sm"
                           onClick={() => handleDeleteThread(thread.id)}
-                          className="text-[10px] font-bold text-on-surface-variant hover:text-destructive cursor-pointer ml-1 rounded-sm p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="text-[10px] font-bold text-on-surface-variant hover:text-destructive h-auto p-0.5"
                         >
                           {"Xóa"}
-                        </button>
+                        </Button>
                       )}
                     </div>
 
@@ -400,7 +418,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                         />
                         <div className="flex justify-end gap-1.5">
                           <Button
-                            variant="outline"
+                            variant="outlined"
                             size="sm"
                             type="button"
                             onClick={() => setEditingThreadId(null)}
@@ -411,30 +429,36 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                             size="sm"
                             type="button"
                             onClick={() => handleUpdateThread(thread.id)}
-                            disabled={submittingEditThread || !editThreadTitle.trim()}
-                            isLoading={submittingEditThread}
+                            disabled={
+                              submittingEditThread ||
+                              !editThreadTitle.trim() ||
+                              submittingEditThread
+                            }
                           >
                             {"Lưu thay đổi"}
                           </Button>
                         </div>
                       </div>
                     ) : (
-                      <button
+                      <Button
                         type="button"
+                        variant="text"
                         onClick={() => setSelectedModalThreadId(thread.id)}
-                        className="text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg cursor-pointer group/title"
+                        className="text-left w-full justify-start h-auto p-0 group/title hover:bg-transparent shadow-none"
                         title="Bấm để mở rộng bài viết"
                       >
-                        <h4 className="font-bold text-on-surface text-sm group-hover/title:text-primary transition-colors">
+                        <h4 className="font-bold text-on-surface text-sm group-hover/title:text-primary transition-colors text-left">
                           {thread.title}
                         </h4>
-                      </button>
+                      </Button>
                     )}
                   </div>
 
-                  <button
+                  <Button
+                    type="button"
+                    variant="outlined"
                     onClick={() => handleVote(thread.id, true)}
-                    className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    className={`rounded-full text-xs font-bold ${
                       thread.isUpvotedByMe
                         ? "bg-primary-container border-primary/30 text-on-primary-container"
                         : "bg-surface-container-lowest border-outline-variant text-on-surface hover:bg-surface-container-high"
@@ -444,10 +468,10 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                   >
                     <ChevronUp
                       aria-hidden="true"
-                      className={`w-3.5 h-3.5 ${thread.isUpvotedByMe ? "text-on-primary-container" : "text-primary"}`}
+                      className={`w-4 h-4 ${thread.isUpvotedByMe ? "text-primary font-extrabold" : ""}`}
                     />
                     <span>{thread.upvoteCount}</span>
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Replies */}
@@ -518,31 +542,63 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
         isNotificationTarget={targetThreadId === selectedModalThreadId}
       />
 
-      {/* Confirm Dialog Delete Thread */}
-      <ConfirmAlertDialog
-        isOpen={Boolean(deletingThreadId)}
-        onClose={() => setDeletingThreadId(null)}
-        onConfirm={executeDeleteThread}
-        title="Xác nhận xóa bài viết"
-        description="Bạn có chắc chắn muốn xóa bài viết này không? Thao tác này không thể hoàn tác."
-        confirmText="Xóa bài viết"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={isDeletingThread}
-      />
+      <AlertDialog
+        open={Boolean(deletingThreadId)}
+        onOpenChange={(open) => {
+          if (!open) setDeletingThreadId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa bài viết</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa bài viết này không? Thao tác này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outlined" onClick={() => setDeletingThreadId(null)}>
+              Hủy
+            </Button>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={executeDeleteThread}
+              disabled={isDeletingThread}
+            >
+              Xóa bài viết
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      {/* Confirm Dialog Delete Reply */}
-      <ConfirmAlertDialog
-        isOpen={Boolean(deletingReplyId)}
-        onClose={() => setDeletingReplyId(null)}
-        onConfirm={executeDeleteReply}
-        title="Xác nhận xóa phản hồi"
-        description="Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác."
-        confirmText="Xóa phản hồi"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={isDeletingReply}
-      />
+      <AlertDialog
+        open={Boolean(deletingReplyId)}
+        onOpenChange={(open) => {
+          if (!open) setDeletingReplyId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa phản hồi</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outlined" onClick={() => setDeletingReplyId(null)}>
+              Hủy
+            </Button>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={executeDeleteReply}
+              disabled={isDeletingReply}
+            >
+              Xóa phản hồi
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

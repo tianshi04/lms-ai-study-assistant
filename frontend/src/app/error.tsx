@@ -61,10 +61,11 @@ export default function ErrorPage({
         {/* Technical Diagnostics Box (M3 Expandable Container) */}
         {(error.digest || error.message) && (
           <div className="pt-2 max-w-xl mx-auto text-left">
-            <button
+            <Button
               type="button"
+              variant="text"
               onClick={() => setShowDetails((prev) => !prev)}
-              className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-xs font-medium text-muted-foreground transition-colors duration-m3-short-4 ease-m3-emphasized cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-full justify-between px-4 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-xs font-medium text-muted-foreground transition-colors cursor-pointer"
               aria-expanded={showDetails}
             >
               <span className="flex items-center gap-2">
@@ -75,7 +76,7 @@ export default function ErrorPage({
                 className={`w-4 h-4 transition-transform duration-m3-short-4 ease-m3-emphasized ${showDetails ? "rotate-180" : ""}`}
                 aria-hidden="true"
               />
-            </button>
+            </Button>
 
             {showDetails && (
               <div className="mt-2 p-4 rounded-xl bg-surface-container-lowest border border-outline-variant space-y-2 text-xs font-mono text-muted-foreground break-all animate-fade-in">
@@ -102,7 +103,7 @@ export default function ErrorPage({
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
           <Button
             type="button"
-            variant="primary"
+            variant="filled"
             size="lg"
             onClick={() => reset()}
             className="w-full sm:w-auto shadow-sm"
@@ -111,16 +112,19 @@ export default function ErrorPage({
             Thử lại trang
           </Button>
 
-          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
-            <Link href="/">
-              <Home className="w-4.5 h-4.5 mr-2" aria-hidden="true" />
-              Về Trang Chủ
-            </Link>
+          <Button
+            render={<Link href="/" />}
+            variant="outlined"
+            size="lg"
+            className="w-full sm:w-auto"
+          >
+            <Home className="w-4.5 h-4.5 mr-2" aria-hidden="true" />
+            Về Trang Chủ
           </Button>
 
           <Button
             type="button"
-            variant="ghost"
+            variant="text"
             size="lg"
             onClick={() => window.history.back()}
             className="w-full sm:w-auto"

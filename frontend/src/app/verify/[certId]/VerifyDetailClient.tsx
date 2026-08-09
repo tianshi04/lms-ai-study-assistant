@@ -236,7 +236,7 @@ export function VerifyDetailClient({
               </div>
 
               <div className="flex items-center gap-3">
-                <Button type="button" variant="outline" size="sm" onClick={handleCopyLink}>
+                <Button type="button" variant="outlined" size="sm" onClick={handleCopyLink}>
                   {copied ? (
                     <>
                       <Check aria-hidden="true" className="w-4 h-4 text-success mr-1" />

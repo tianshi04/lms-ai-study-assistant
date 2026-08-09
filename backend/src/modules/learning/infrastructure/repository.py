@@ -197,6 +197,20 @@ class SQLAlchemyLearningRepository(ILearningRepository):
         models = res.scalars().all()
         return [_model_to_domain_note(m) for m in models]
 
+    async def delete_personal_note(self, note_id: str, user_id: str) -> bool:
+        stmt = select(PersonalNoteModel).where(
+            PersonalNoteModel.id == note_id,
+            PersonalNoteModel.user_id == user_id,
+        )
+        res = await self.session.execute(stmt)
+        note = res.scalar_one_or_none()
+        if not note:
+            return False
+
+        await self.session.delete(note)
+        await self.session.commit()
+        return True
+
     async def mark_item_complete(
         self,
         user_id: str,

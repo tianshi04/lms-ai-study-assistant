@@ -2,6 +2,7 @@
 
 import { Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import Image from "next/image";
 import { usePartnersQuery, useCoursesQuery } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
@@ -50,8 +51,9 @@ function PartnerPublicContent() {
           Đối tác phát hành với đường dẫn &quot;{slug}&quot; không tồn tại hoặc đã dừng hoạt động.
         </p>
         <Button
+          variant="filled"
           onClick={() => router.push("/")}
-          className="bg-primary hover:bg-primary-hover text-primary-foreground font-medium rounded-xl cursor-pointer"
+          className="rounded-xl cursor-pointer"
         >
           Quay lại trang chủ
         </Button>
@@ -181,12 +183,11 @@ function PartnerPublicContent() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {partnerCourses.map((course) => (
-                    <button
-                      type="button"
+                    <Link
                       key={course.id}
+                      href={`/courses/${course.slug}`}
                       aria-label={`Khóa học ${course.title}`}
-                      onClick={() => router.push(`/courses/${course.slug}`)}
-                      className="text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring bg-card rounded-2xl border border-border p-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-colors cursor-pointer flex flex-col justify-between"
+                      className="text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring bg-card rounded-2xl border border-border p-5 shadow-sm hover:shadow-md hover:border-primary/50 transition-colors flex flex-col justify-between"
                     >
                       <div>
                         <div className="flex items-center space-x-2 mb-2">
@@ -200,13 +201,13 @@ function PartnerPublicContent() {
                         <h3 className="text-base font-bold text-foreground min-w-0 line-clamp-2 hover:text-primary transition-colors">
                           {course.title}
                         </h3>
-                        <p className="text-xs text-muted-foreground mt-2 min-w-0 line-clamp-2">
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                           {course.description}
                         </p>
                       </div>
 
-                      <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
-                        <div className="flex items-center space-x-1 text-warning text-xs font-semibold">
+                      <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
+                        <div className="flex items-center space-x-1 text-xs font-semibold text-amber-400">
                           <span>
                             ★ {course.averageRating ? course.averageRating.toFixed(1) : "5.0"}
                           </span>
@@ -218,7 +219,7 @@ function PartnerPublicContent() {
                           Xem khóa học &rarr;
                         </span>
                       </div>
-                    </button>
+                    </Link>
                   ))}
                 </div>
               )}

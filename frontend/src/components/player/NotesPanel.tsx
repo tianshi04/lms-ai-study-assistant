@@ -1,8 +1,10 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import type { PersonalNote } from "@/gen/learning/v1/learning_pb";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 
 interface NotesPanelProps {
   notes: PersonalNote[];
@@ -12,6 +14,7 @@ interface NotesPanelProps {
   onHighlightTextChange: (val: string) => void;
   onNoteCommentChange: (val: string) => void;
   onSaveNote: (e: React.FormEvent) => void;
+  onDeleteNote?: (noteId: string) => void;
 }
 
 export function NotesPanel({
@@ -22,9 +25,8 @@ export function NotesPanel({
   onHighlightTextChange,
   onNoteCommentChange,
   onSaveNote,
+  onDeleteNote,
 }: NotesPanelProps) {
-  const locale = "vi";
-
   return (
     <div className="max-w-4xl mx-auto space-y-5">
       {/* Create Note Form */}
@@ -51,9 +53,8 @@ export function NotesPanel({
         </div>
         <Button
           type="submit"
-          disabled={savingNote || !highlightText.trim()}
-          isLoading={savingNote}
-          variant="primary"
+          disabled={savingNote || !highlightText.trim() || savingNote}
+          variant="filled"
           className="w-full sm:w-auto"
         >
           Lưu ghi chú
@@ -70,19 +71,26 @@ export function NotesPanel({
           {notes.map((note) => (
             <div
               key={note.id}
-              className="bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-xs space-y-1.5 shadow-xs"
+              className="group bg-surface-container-low border border-outline-variant p-4 rounded-2xl text-xs space-y-1.5 shadow-xs relative"
             >
-              <div className="flex items-center justify-between text-on-surface-variant text-[11px]">
-                <span className="font-mono text-[10px] text-on-surface-variant/80">
-                  ID: {note.id}
-                </span>
-                <span>
-                  {new Date(note.createdAt).toLocaleDateString(locale === "vi" ? "vi-VN" : "en-US")}
-                </span>
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-primary font-medium italic bg-primary-container/40 p-2.5 rounded-xl border border-primary/10 leading-relaxed flex-1">
+                  &quot;{note.highlightedText}&quot;
+                </p>
+                {onDeleteNote && (
+                  <IconButton
+                    type="button"
+                    variant="standard"
+                    size="xs"
+                    onClick={() => onDeleteNote(note.id)}
+                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-7 w-7 rounded-lg shrink-0 transition-colors"
+                    title="Xóa ghi chú này"
+                    aria-label="Xóa ghi chú"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                  </IconButton>
+                )}
               </div>
-              <p className="text-primary font-medium italic bg-primary-container/40 p-2.5 rounded-xl border border-primary/10 leading-relaxed">
-                &quot;{note.highlightedText}&quot;
-              </p>
               {note.noteComment && (
                 <p className="text-on-surface text-xs pt-1 leading-relaxed">{note.noteComment}</p>
               )}

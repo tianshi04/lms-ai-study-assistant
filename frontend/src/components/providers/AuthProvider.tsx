@@ -3,15 +3,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from "react";
 import { logoutAction } from "@/app/auth/actions";
 
-// Static Sets computed once at module level for O(1) role lookups
-const INSTRUCTOR_ADMIN_ROLE_IDS = new Set(["2", "3", "USER_ROLE_INSTRUCTOR", "USER_ROLE_ADMIN"]);
-const INSTRUCTOR_ADMIN_ROLE_NAMES = new Set([
-  "instructor",
-  "admin",
-  "user_role_instructor",
-  "user_role_admin",
-]);
-
 export interface UserAuth {
   userId: string | null;
   userName: string | null;
@@ -100,16 +91,9 @@ export function AuthProvider({
 
   const isAuthenticated = Boolean(auth.userId || auth.userEmail);
   const isSuperAdmin = Boolean(
-    auth.userRole === "3" ||
-    auth.userRole === "USER_ROLE_ADMIN" ||
-    auth.userRole?.toUpperCase().includes("ADMIN"),
+    auth.userRole === "USER_ROLE_ADMIN" || auth.userRole === "USER_ROLE_SUPER_ADMIN",
   );
-  const roleId = String(auth.userRole ?? "");
-  const roleStr = roleId.toLowerCase();
-  const isInstructorOrAdmin =
-    isSuperAdmin ||
-    INSTRUCTOR_ADMIN_ROLE_IDS.has(roleId) ||
-    INSTRUCTOR_ADMIN_ROLE_NAMES.has(roleStr);
+  const isInstructorOrAdmin = isSuperAdmin || auth.userRole === "USER_ROLE_INSTRUCTOR";
   const isStaff = isInstructorOrAdmin;
 
   const contextValue = useMemo(

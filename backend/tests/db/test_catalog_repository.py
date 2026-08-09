@@ -31,7 +31,6 @@ def sample_course_model():
         description="Desc",
         partner_name="Partner",
         partner_logo_url="URL",
-        instructor_names=["Inst 1"],
     )
 
     transcript = InteractiveTranscriptModel(

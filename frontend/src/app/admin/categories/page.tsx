@@ -20,7 +20,20 @@ import {
   SelectItem,
 } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
+import {
+  PageHeader,
+  PageHeaderTitle,
+  PageHeaderDescription,
+  PageHeaderActions,
+} from "@/components/ui/LayoutPrimitives";
 
 const CategoryList = ({
   title,
@@ -55,7 +68,8 @@ const CategoryList = ({
               <p className="text-xs text-muted-foreground">Slug: {item.slug}</p>
             </div>
             <Button
-              variant="danger"
+              variant="outlined"
+              className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
               size="sm"
               onClick={() => handleDelete(item.id, type)}
               title={deleteText}
@@ -71,10 +85,12 @@ const CategoryList = ({
 
 export default function AdminCategoriesPage() {
   const router = useRouter();
+  const { isSuperAdmin } = useAuth();
   const toast = useToast();
 
-  const { isSuperAdmin } = useAuth();
-  const isAdmin = isSuperAdmin;
+  const [newName, setNewName] = useState("");
+  const [newType, setNewType] = useState<"SUBJECT" | "LEVEL">("SUBJECT");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: string } | null>(null);
 
   const { data: subjects = [], refetch: refetchSubjects } = useCategoriesQuery("SUBJECT");
   const { data: levels = [], refetch: refetchLevels } = useCategoriesQuery("LEVEL");
@@ -82,25 +98,22 @@ export default function AdminCategoriesPage() {
   const createCategoryMutation = useCreateCategoryMutation();
   const deleteCategoryMutation = useDeleteCategoryMutation();
 
-  const [newName, setNewName] = useState("");
-  const [newType, setNewType] = useState<"SUBJECT" | "LEVEL">("SUBJECT");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: string } | null>(null);
-
-  if (!isAdmin)
-    return <div className="p-8 text-center text-destructive font-bold">{"Từ chối truy cập"}</div>;
+  if (!isSuperAdmin) {
+    return <div className="p-12 text-center text-destructive font-bold">{"Từ chối truy cập"}</div>;
+  }
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
+
     try {
-      setErrorMsg("");
       await createCategoryMutation.mutateAsync({ name: newName, type: newType });
       setNewName("");
       if (newType === "SUBJECT") refetchSubjects();
       else refetchLevels();
+      toast.success("Tạo danh mục thành công!");
     } catch (err: unknown) {
-      setErrorMsg((err as Error).message || "Failed to create category");
+      toast.error((err as Error).message || "Không thể tạo danh mục");
     }
   };
 
@@ -110,6 +123,7 @@ export default function AdminCategoriesPage() {
 
   const executeDelete = async () => {
     if (!deleteTarget) return;
+
     try {
       await deleteCategoryMutation.mutateAsync({ id: deleteTarget.id });
       if (deleteTarget.type === "SUBJECT") refetchSubjects();
@@ -124,17 +138,17 @@ export default function AdminCategoriesPage() {
 
   return (
     <main className="max-w-5xl mx-auto px-6 py-12 flex-1">
-      <div className="mb-8 flex justify-between items-end">
+      <PageHeader>
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground text-balance">
-            {"Danh mục quản trị"}
-          </h1>
-          <p className="text-muted-foreground mt-2">{"Quản lý danh mục khóa học"}</p>
+          <PageHeaderTitle>Danh mục quản trị</PageHeaderTitle>
+          <PageHeaderDescription>Quản lý danh mục khóa học</PageHeaderDescription>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => router.push("/admin/dashboard")}>
-          &larr; {"Về trang quản trị"}
-        </Button>
-      </div>
+        <PageHeaderActions>
+          <Button variant="text" size="sm" onClick={() => router.push("/admin/dashboard")}>
+            &larr; {"Về trang quản trị"}
+          </Button>
+        </PageHeaderActions>
+      </PageHeader>
 
       <div className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-8">
         <h2 className="text-lg font-semibold mb-4 text-foreground">{"Thêm danh mục mới"}</h2>
@@ -172,13 +186,12 @@ export default function AdminCategoriesPage() {
           </div>
           <Button
             type="submit"
-            isLoading={createCategoryMutation.isPending}
+            disabled={createCategoryMutation.isPending}
             className="w-full md:w-auto"
           >
             Thêm danh mục
           </Button>
         </form>
-        {errorMsg && <p className="text-destructive text-sm mt-3">{errorMsg}</p>}
       </div>
 
       <div className="flex flex-col md:flex-row gap-6">
@@ -200,17 +213,34 @@ export default function AdminCategoriesPage() {
         />
       </div>
 
-      <ConfirmAlertDialog
-        isOpen={Boolean(deleteTarget)}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={executeDelete}
-        title="Xác nhận xóa danh mục"
-        description="Bạn có chắc chắn muốn xóa danh mục này? Thao tác này không thể hoàn tác."
-        confirmText="Xóa danh mục"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={deleteCategoryMutation.isPending}
-      />
+      <AlertDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận xóa danh mục</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn muốn xóa danh mục này? Thao tác này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outlined" onClick={() => setDeleteTarget(null)}>
+              Hủy
+            </Button>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={executeDelete}
+              disabled={deleteCategoryMutation.isPending}
+            >
+              Xóa danh mục
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

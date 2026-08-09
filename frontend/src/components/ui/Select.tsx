@@ -3,7 +3,7 @@ import { Select as BaseSelect } from "@base-ui/react/select";
 import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const Select = BaseSelect.Root;
+export const SelectRoot = BaseSelect.Root;
 export const SelectValue = BaseSelect.Value;
 export const SelectPortal = BaseSelect.Portal;
 
@@ -79,3 +79,17 @@ export function SelectItem({
     </BaseSelect.Item>
   );
 }
+
+export const Select = Object.assign(BaseSelect.Root, {
+  Root: BaseSelect.Root,
+  Trigger: SelectTrigger,
+  Value: BaseSelect.Value,
+  Portal: BaseSelect.Portal,
+  Positioner: BaseSelect.Positioner,
+  Popup: SelectContent,
+  Content: SelectContent,
+  Item: SelectItem,
+  ItemText: BaseSelect.ItemText,
+  ItemIndicator: BaseSelect.ItemIndicator,
+  Icon: BaseSelect.Icon,
+});

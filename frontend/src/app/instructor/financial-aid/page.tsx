@@ -10,6 +10,9 @@ import {
 } from "@/gen/certificate/v1/certificate_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ArrowLeft, Check, X, AlertTriangle, FileText } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
+import { Tabs } from "@/components/ui/Tabs";
 
 const emptySubscribe = () => () => {};
 
@@ -171,14 +174,16 @@ export default function InstructorFinancialAidPage() {
               )}
               <span>{toastMessage.text}</span>
             </div>
-            <button
+            <IconButton
               type="button"
+              variant="standard"
+              size="xs"
               onClick={() => setToastMessage(null)}
               aria-label="Đóng thông báo"
-              className="p-1 rounded-md opacity-60 hover:opacity-100 transition-opacity cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="opacity-60 hover:opacity-100"
             >
               <X aria-hidden="true" className="w-4 h-4" />
-            </button>
+            </IconButton>
           </div>
         )}
 
@@ -197,30 +202,18 @@ export default function InstructorFinancialAidPage() {
         )}
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-2 border-b border-border pb-3 overflow-x-auto">
-          {(["ALL", "PENDING", "APPROVED", "REJECTED"] as const).map((tab) => {
-            const labels = {
-              ALL: "Tất cả đơn",
-              PENDING: "Chờ xét duyệt (Pending)",
-              APPROVED: "Đã phê duyệt (Approved)",
-              REJECTED: "Đã từ chối (Rejected)",
-            };
-            return (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                  activeTab === tab
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                    : "bg-card text-muted-foreground hover:text-foreground border border-border"
-                }`}
-              >
-                {labels[tab]}
-              </button>
-            );
-          })}
-        </div>
+        <Tabs.Root
+          value={activeTab}
+          onValueChange={(val) => setActiveTab(val as "ALL" | "PENDING" | "APPROVED" | "REJECTED")}
+          className="mb-6"
+        >
+          <Tabs.List className="overflow-x-auto pb-1">
+            <Tabs.Tab value="ALL">Tất cả đơn</Tabs.Tab>
+            <Tabs.Tab value="PENDING">Chờ xét duyệt (Pending)</Tabs.Tab>
+            <Tabs.Tab value="APPROVED">Đã phê duyệt (Approved)</Tabs.Tab>
+            <Tabs.Tab value="REJECTED">Đã từ chối (Rejected)</Tabs.Tab>
+          </Tabs.List>
+        </Tabs.Root>
 
         {/* Application Cards List */}
         {loading ? (
@@ -299,24 +292,25 @@ export default function InstructorFinancialAidPage() {
                 {/* Action Buttons for Pending Applications */}
                 {app.status === "PENDING" && isInstructorOrAdmin && (
                   <div className="flex items-center justify-end gap-3 pt-2">
-                    <button
+                    <Button
                       type="button"
+                      variant="outlined"
                       onClick={() => handleReview(app.id, false)}
                       disabled={processingId === app.id}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-destructive bg-destructive/10 border border-destructive/30 hover:bg-destructive/20 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="text-xs font-bold text-destructive bg-destructive/10 border-destructive/30 hover:bg-destructive/20"
                     >
                       <X aria-hidden="true" className="w-4 h-4" />
-                      <span>{processingId === app.id ? "Đang xử lý…" : "Từ chối đơn"}</span>
-                    </button>
-                    <button
+                      <span>{"Từ chối đơn"}</span>
+                    </Button>
+                    <Button
                       type="button"
                       onClick={() => handleReview(app.id, true)}
                       disabled={processingId === app.id}
-                      className="px-5 py-2 rounded-xl text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover shadow-md shadow-primary/20 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover shadow-md shadow-primary/20"
                     >
                       <Check aria-hidden="true" className="w-4 h-4" />
-                      <span>{processingId === app.id ? "Đang xử lý…" : "Phê duyệt đơn"}</span>
-                    </button>
+                      <span>{"Phê duyệt đơn"}</span>
+                    </Button>
                   </div>
                 )}
               </div>

@@ -23,11 +23,28 @@ def _make_google_jwt(sub: str, email: str, name: str) -> str:
     return f"{header}.{payload}.signature"
 
 
+def _make_google_jwt(sub: str, email: str, name: str) -> str:
+    header = (
+        base64.urlsafe_b64encode(json.dumps({"alg": "RS256"}).encode())
+        .decode()
+        .rstrip("=")
+    )
+    payload = (
+        base64.urlsafe_b64encode(
+            json.dumps({"sub": sub, "email": email, "name": name}).encode()
+        )
+        .decode()
+        .rstrip("=")
+    )
+    return f"{header}.{payload}.signature"
+
+
 @pytest.mark.asyncio
 async def test_google_register_and_fallback_login_flow(monkeypatch):
     monkeypatch.setattr(settings, "ENV", "development")
     usecase = IdentityUseCase()
     unique_email = f"student_{uuid.uuid4().hex[:8]}@gmail.com"
+    sub_id = f"google_sub_{uuid.uuid4().hex[:12]}"
 
     # Step 1: Google Register Verification
     test_code = f"mock_google_{unique_email}_Student Name"

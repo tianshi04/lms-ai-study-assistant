@@ -136,13 +136,10 @@ export default function BecomeAnInstructorPage() {
               đăng tải các khóa học mới.
             </p>
             <div className="pt-2">
-              <Link
-                href="/instructor/courses"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold transition-colors"
-              >
+              <Button render={<Link href="/instructor/courses" />} variant="filled" size="md">
                 <span>Truy cập Cổng Giảng viên</span>
-                <ArrowRight className="w-4 h-4" aria-hidden="true" />
-              </Link>
+                <ArrowRight className="w-4 h-4 ml-2" aria-hidden="true" />
+              </Button>
             </div>
           </div>
         ) : !userName ? (
@@ -157,18 +154,16 @@ export default function BecomeAnInstructorPage() {
               dõi kết quả thẩm định.
             </p>
             <div className="flex items-center justify-center gap-4 pt-2">
-              <Link
-                href="/auth/login?redirect=/become-an-instructor"
-                className="px-6 py-3 rounded-2xl bg-primary hover:bg-primary-hover text-primary-foreground font-bold transition-colors"
+              <Button
+                render={<Link href="/auth/login?redirect=/become-an-instructor" />}
+                variant="filled"
+                size="md"
               >
                 Đăng nhập ngay
-              </Link>
-              <Link
-                href="/auth/register"
-                className="px-6 py-3 rounded-2xl bg-card text-foreground border border-border hover:bg-muted font-bold transition-colors"
-              >
+              </Button>
+              <Button render={<Link href="/auth/register" />} variant="outlined" size="md">
                 Đăng ký tài khoản
-              </Link>
+              </Button>
             </div>
           </div>
         ) : isPending ? (
@@ -297,7 +292,7 @@ export default function BecomeAnInstructorPage() {
             </p>
 
             <div className="pt-2 flex justify-start">
-              <Button type="button" onClick={handleStartReapply}>
+              <Button type="button" variant="filled" onClick={handleStartReapply}>
                 <FileEdit className="w-4 h-4 mr-2" aria-hidden="true" />
                 Chỉnh Sửa & Nộp Lại Đơn Mới
               </Button>
@@ -319,7 +314,7 @@ export default function BecomeAnInstructorPage() {
               {isReapplying && (
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="text"
                   size="sm"
                   onClick={() => setIsReapplying(false)}
                   className="underline"
@@ -409,7 +404,7 @@ export default function BecomeAnInstructorPage() {
 
             {/* Submit Button */}
             <div className="pt-4 flex justify-end">
-              <Button type="submit" isLoading={submitMutation.isPending} size="lg">
+              <Button type="submit" variant="filled" disabled={submitMutation.isPending} size="lg">
                 Gửi đơn xin cấp quyền Giảng viên
                 <ArrowRight className="w-4 h-4 ml-2" aria-hidden="true" />
               </Button>

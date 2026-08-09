@@ -7,6 +7,7 @@ import { useForm } from "@tanstack/react-form";
 import { loginAction, googleLoginAction } from "@/app/auth/actions";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
@@ -120,9 +121,9 @@ function LoginFormContent() {
         <div className="space-y-4 mb-6">
           <GoogleAuthButton
             onSuccess={handleGoogleLogin}
-            isLoading={googleSubmitting}
+            disabled={googleSubmitting}
             text="Đăng nhập với Google"
-            variant="outline"
+            variant="outlined"
           />
 
           <div className="relative flex items-center justify-center">
@@ -210,20 +211,20 @@ function LoginFormContent() {
                       error={hasError ? String(field.state.meta.errors[0]) : undefined}
                       required
                     />
-                    <Button
+                    <IconButton
                       type="button"
-                      variant="ghost"
-                      size="icon"
+                      variant="standard"
+                      size="xs"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
-                      className="absolute right-2 top-8 text-muted-foreground hover:text-foreground h-8 w-8"
+                      className="absolute right-2 top-8 text-muted-foreground hover:text-foreground"
                     >
                       {showPassword ? (
                         <EyeOff className="w-4 h-4" aria-hidden="true" />
                       ) : (
                         <Eye className="w-4 h-4" aria-hidden="true" />
                       )}
-                    </Button>
+                    </IconButton>
                   </div>
                   <div className="flex justify-end pt-1">
                     <Link
@@ -243,8 +244,7 @@ function LoginFormContent() {
             {([canSubmit]) => (
               <Button
                 type="submit"
-                isLoading={submitting}
-                disabled={!canSubmit}
+                disabled={submitting || !canSubmit}
                 size="lg"
                 className="w-full shadow-lg"
               >

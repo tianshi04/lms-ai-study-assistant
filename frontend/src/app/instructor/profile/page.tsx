@@ -6,6 +6,7 @@ import Image from "next/image";
 import { UserRole } from "@/gen/identity/v1/identity_pb";
 import { useUserProfileQuery, useUpdateInstructorProfileMutation } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Avatar } from "@/components/ui/Avatar";
 
@@ -64,7 +65,7 @@ export default function InstructorProfilePage() {
         <p className="text-muted-foreground text-sm">
           Trang này chỉ dành cho Giảng viên (Instructor) thiết lập hồ sơ và chữ ký tay điện tử.
         </p>
-        <Button onClick={() => router.push("/")} className="mt-4" variant="outline">
+        <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
         </Button>
       </div>
@@ -137,14 +138,16 @@ export default function InstructorProfilePage() {
             )}
             <span>{statusMessage.text}</span>
           </div>
-          <button
+          <IconButton
             type="button"
+            variant="standard"
+            size="xs"
             onClick={() => setStatusMessage(null)}
             aria-label="Đóng thông báo"
-            className="p-1 rounded-md opacity-70 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+            className="opacity-70 hover:opacity-100"
           >
             <X className="w-4 h-4" aria-hidden="true" />
-          </button>
+          </IconButton>
         </div>
       )}
 
@@ -240,7 +243,7 @@ export default function InstructorProfilePage() {
         <div className="flex items-center justify-end space-x-4 pt-2">
           <Button
             type="submit"
-            isLoading={updateMutation.isPending}
+            disabled={updateMutation.isPending}
             className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-xl px-6 py-3 text-sm shadow-md flex items-center gap-2"
           >
             <Check className="w-4 h-4" aria-hidden="true" />

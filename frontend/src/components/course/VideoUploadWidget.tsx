@@ -6,6 +6,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
 import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 
 interface VideoUploadWidgetProps {
   value: string;
@@ -149,28 +150,32 @@ export function VideoUploadWidget({
           {label}
         </label>
         <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg text-xs">
-          <button
+          <Button
             type="button"
+            variant="text"
+            size="sm"
             onClick={() => setActiveTab("upload")}
-            className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`px-2.5 py-1 text-xs font-semibold ${
               activeTab === "upload"
                 ? "bg-card text-primary shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Upload Tải lên
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="text"
+            size="sm"
             onClick={() => setActiveTab("url")}
-            className={`px-2.5 py-1 rounded-md font-semibold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`px-2.5 py-1 text-xs font-semibold ${
               activeTab === "url"
                 ? "bg-card text-primary shadow-2xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Nhập Đường dẫn URL
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -195,8 +200,10 @@ export function VideoUploadWidget({
             </div>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <button
+            <Button
               type="button"
+              variant="outlined"
+              size="sm"
               onClick={() => {
                 if (activeTab === "upload") {
                   fileInputRef.current?.click();
@@ -204,23 +211,26 @@ export function VideoUploadWidget({
                   onChange("");
                 }
               }}
-              className="px-2.5 py-1 rounded-lg text-xs font-bold bg-card text-foreground hover:bg-muted border border-border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="text-xs font-bold"
             >
               Thay đổi
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="text"
+              size="sm"
               onClick={() => onChange("")}
-              className="px-2.5 py-1 rounded-lg text-xs font-bold text-destructive hover:bg-destructive/10 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="text-xs font-bold text-destructive hover:bg-destructive/10"
             >
               Gỡ bỏ
-            </button>
+            </Button>
           </div>
         </div>
       ) : activeTab === "upload" ? (
         <div className="space-y-3">
-          <button
+          <Button
             type="button"
+            variant="text"
             onDragOver={(e) => {
               e.preventDefault();
               setDragOver(true);
@@ -233,7 +243,7 @@ export function VideoUploadWidget({
               if (file) handleFileSelect(file);
             }}
             onClick={() => fileInputRef.current?.click()}
-            className={`w-full border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`w-full h-auto border-2 border-dashed rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${
               compact ? "p-3 sm:p-4" : "p-6"
             } ${
               dragOver
@@ -256,7 +266,7 @@ export function VideoUploadWidget({
             <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">
               {fileTypesHint || defaultFileTypesHint}
             </p>
-          </button>
+          </Button>
 
           {isUploading && (
             <div className="space-y-1 bg-primary/10 p-3 rounded-xl border border-primary/20">

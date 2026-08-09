@@ -15,6 +15,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/Select";
+import { mapConnectError } from "@/lib/connect_error_mapper";
 
 interface AutoGradedLabRunnerProps {
   itemId: string;
@@ -85,20 +86,14 @@ export function AutoGradedLabRunner({
         }
       }
     } catch (err) {
-      console.warn("RPC submitAutoGradedLab failed, evaluating locally:", err);
-      // Fallback local evaluation
-      const hasReturn = sourceCode.includes("return") || sourceCode.includes("def");
+      const errorMsg = mapConnectError(err, "Chấm bài Lab tự động thất bại. Vui lòng thử lại.");
       setLabResult({
-        scorePercent: hasReturn ? 100.0 : 0.0,
-        passed: hasReturn,
+        scorePercent: 0.0,
+        passed: false,
         totalTestCases: 1,
-        passedTestCases: hasReturn ? 1 : 0,
-        testLogs: hasReturn
-          ? "[PASS] Test Case #1: Passed local syntax validation check."
-          : "[FAIL] Test Case #1: Failed - No return statement or function definition found in implementation.",
+        passedTestCases: 0,
+        testLogs: `[ERROR] ${errorMsg}`,
       });
-
-      if (hasReturn && onComplete) onComplete();
     } finally {
       setIsRunning(false);
     }
@@ -139,7 +134,7 @@ export function AutoGradedLabRunner({
               <SelectItem value="javascript">{"JavaScript (Node.js)"}</SelectItem>
             </SelectContent>
           </Select>
-          <Button onClick={handleRunCode} isLoading={isRunning} size="sm">
+          <Button onClick={handleRunCode} disabled={isRunning} size="sm">
             {isRunning ? "Executing in Sandbox…" : "Run & Submit Code"}
           </Button>
         </div>

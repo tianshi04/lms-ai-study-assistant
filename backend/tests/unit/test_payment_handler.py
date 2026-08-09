@@ -79,3 +79,55 @@ async def test_verify_vn_pay_payment_handler():
         user_id="user_123",
         query_params={"vnp_ResponseCode": "00", "vnp_TxnRef": "txn_456"},
     )
+
+
+@pytest.mark.asyncio
+async def test_cancel_vn_pay_order_handler():
+    usecase_mock = AsyncMock()
+    usecase_mock.cancel_vnpay_order.return_value = (True, "Hủy đơn hàng thành công!")
+
+    handler = PaymentHandler(usecase_mock)
+    req = pb.CancelVNPayOrderRequest(
+        vnp_txn_ref="VNP-123456",
+        order_id="order_789",
+    )
+    ctx_mock = MagicMock()
+
+    user = CurrentUser(id="user_123", email="user@example.com")
+    with patch(
+        "src.modules.payment.presentation.payment_handler.require_current_user",
+        return_value=user,
+    ):
+        res = await handler.cancel_vn_pay_order(req, ctx_mock)
+
+    assert res.success is True
+    assert res.message == "Hủy đơn hàng thành công!"
+    usecase_mock.cancel_vnpay_order.assert_called_once_with(
+        user_id="user_123",
+        vnp_txn_ref="VNP-123456",
+        order_id="order_789",
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_user_payment_access_handler():
+    usecase_mock = AsyncMock()
+    usecase_mock.get_user_payment_access.return_value = (True, "Quyền truy cập hợp lệ.")
+
+    handler = PaymentHandler(usecase_mock)
+    req = pb.GetUserPaymentAccessRequest(course_id="course_999")
+    ctx_mock = MagicMock()
+
+    user = CurrentUser(id="user_123", email="user@example.com")
+    with patch(
+        "src.modules.payment.presentation.payment_handler.require_current_user",
+        return_value=user,
+    ):
+        res = await handler.get_user_payment_access(req, ctx_mock)
+
+    assert res.has_paid_access is True
+    assert res.access_reason == "Quyền truy cập hợp lệ."
+    usecase_mock.get_user_payment_access.assert_called_once_with(
+        user_id="user_123",
+        course_id="course_999",
+    )

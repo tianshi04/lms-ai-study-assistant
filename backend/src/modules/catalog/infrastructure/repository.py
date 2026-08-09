@@ -112,7 +112,7 @@ def _model_to_domain_course(model: CourseModel) -> Course:
         description=model.description,
         partner_name=model.partner_name,
         partner_logo_url=model.partner_logo_url,
-        instructor_names=model.instructor_names,
+        instructor_names=[],
         week_modules=week_modules,
         average_rating=model.average_rating,
         review_count=model.review_count,
@@ -386,7 +386,6 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             description=description,
             partner_name=final_partner_name,
             partner_logo_url=final_partner_logo,
-            instructor_names=instructor_names or [],
             subject=subject,
             level=level,
             owner_id=owner_id,
@@ -448,8 +447,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
             model.partner_name = partner_name
         if partner_logo_url:
             model.partner_logo_url = partner_logo_url
-        if instructor_names:
-            model.instructor_names = instructor_names
+
         model.financial_aid_enabled = financial_aid_enabled
 
         if subject and subject != "UNSPECIFIED":
@@ -476,7 +474,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
     async def create_week_module(
         self, course_id: str, title: str, summary: str
     ) -> WeekModule:
-        real_id, _ = await self.get_course_id_by_slug_or_id(course_id)
+        real_id = await self.get_course_id_by_slug_or_id(course_id)
         stmt = select(func.max(WeekModuleModel.week_number)).where(
             WeekModuleModel.course_id == real_id
         )
@@ -781,18 +779,14 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         avg_rating, count = row
         return round(float(avg_rating), 1), int(count)
 
-    async def get_course_id_by_slug_or_id(
-        self, course_id_or_slug: str
-    ) -> tuple[str, list[str]]:
-        stmt = select(CourseModel.id, CourseModel.instructor_names).where(
+    async def get_course_id_by_slug_or_id(self, course_id_or_slug: str) -> str:
+        stmt = select(CourseModel.id).where(
             (CourseModel.id == course_id_or_slug)
             | (CourseModel.slug == course_id_or_slug)
         )
         res = await self.session.execute(stmt)
-        row = res.first()
-        if row:
-            return row[0], row[1] or []
-        return course_id_or_slug, []
+        row = res.scalar_one_or_none()
+        return row if row else course_id_or_slug
 
     async def list_categories(self, type_filter: str = "") -> list[Category]:
         stmt = select(CategoryModel)
@@ -834,7 +828,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         return True
 
     async def delete_course(self, course_id: str) -> bool:
-        real_id, _ = await self.get_course_id_by_slug_or_id(course_id)
+        real_id = await self.get_course_id_by_slug_or_id(course_id)
         stmt = select(CourseModel).where(CourseModel.id == real_id)
         res = await self.session.execute(stmt)
         course = res.scalar_one_or_none()
@@ -1023,7 +1017,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
     async def create_course_announcement(
         self, course_id: str, author_id: str, author_name: str, title: str, content: str
     ) -> CourseAnnouncement:
-        real_id, _ = await self.get_course_id_by_slug_or_id(course_id)
+        real_id = await self.get_course_id_by_slug_or_id(course_id)
         ann_id = f"ann_{uuid.uuid4().hex[:12]}"
         now_iso = datetime.now(timezone.utc).isoformat()
         ann = CourseAnnouncementModel(
@@ -1050,7 +1044,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
     async def list_course_announcements(
         self, course_id: str
     ) -> list[CourseAnnouncement]:
-        real_id, _ = await self.get_course_id_by_slug_or_id(course_id)
+        real_id = await self.get_course_id_by_slug_or_id(course_id)
         stmt = (
             select(CourseAnnouncementModel)
             .where(CourseAnnouncementModel.course_id == real_id)
@@ -1072,7 +1066,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         ]
 
     async def get_instructor_analytics(self, course_id: str) -> InstructorAnalytics:
-        real_id, _ = await self.get_course_id_by_slug_or_id(course_id)
+        real_id = await self.get_course_id_by_slug_or_id(course_id)
         avg_rating, total_reviews = await self.get_course_rating_stats(real_id)
 
         identity_repo_factory = __import__(
@@ -1133,7 +1127,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
     async def reorder_week_modules(
         self, course_id: str, ordered_week_module_ids: list[str]
     ) -> bool:
-        real_id, _ = await self.get_course_id_by_slug_or_id(course_id)
+        real_id = await self.get_course_id_by_slug_or_id(course_id)
         for idx, wm_id in enumerate(ordered_week_module_ids, start=1):
             stmt = (
                 select(WeekModuleModel)

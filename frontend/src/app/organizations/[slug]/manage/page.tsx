@@ -2,6 +2,7 @@
 
 import { use, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   useOrganizationMembersQuery,
@@ -134,7 +135,10 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
             <div className="space-y-1 min-w-0">
               <h3 className="font-bold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5 text-base">
                 Thành viên Tổ chức
-                <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                <ArrowRight
+                  aria-hidden="true"
+                  className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors"
+                />
               </h3>
               <p className="text-xs text-muted-foreground">
                 Xem danh sách giảng viên & đồng nghiệp thuộc Tổ chức.
@@ -154,7 +158,10 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
                 <div className="space-y-1 min-w-0">
                   <h3 className="font-bold text-foreground group-hover:text-warning transition-colors flex items-center gap-1.5 text-base">
                     Lời mời đã gửi ({pendingInvitations.length})
-                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-warning transition-colors" />
+                    <ArrowRight
+                      aria-hidden="true"
+                      className="w-4 h-4 text-muted-foreground group-hover:text-warning transition-colors"
+                    />
                   </h3>
                   <p className="text-xs text-muted-foreground">
                     Theo dõi các lời mời gia nhập đang chờ phản hồi và sao chép link token.
@@ -172,7 +179,7 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
                 <div className="space-y-1 min-w-0">
                   <h3 className="font-bold text-foreground group-hover:text-foreground transition-colors flex items-center gap-1.5 text-base">
                     Cài đặt Tổ chức
-                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                    <ArrowRight aria-hidden="true" className="w-4 h-4 text-muted-foreground" />
                   </h3>
                   <p className="text-xs text-muted-foreground">
                     Cập nhật Tên, Logo, Banner, Domain bảo chứng và thông tin thương hiệu.
@@ -211,9 +218,11 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
               >
                 <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
                   {m.avatarUrl ? (
-                    <img
+                    <Image
                       src={m.avatarUrl}
-                      alt={m.fullName}
+                      alt={m.fullName || "Avatar"}
+                      width={40}
+                      height={40}
                       className="w-full h-full object-cover rounded-full"
                     />
                   ) : (
@@ -240,7 +249,7 @@ export default function OrgManagePage({ params }: { params: Promise<{ slug: stri
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
           <span className="text-sm">Đang tải bảng điều khiển...</span>
         </div>
       }

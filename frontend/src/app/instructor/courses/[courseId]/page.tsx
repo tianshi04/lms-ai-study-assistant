@@ -26,7 +26,15 @@ import { LessonFormModal } from "./components/modals/LessonFormModal";
 import { LearningItemFormModal } from "./components/modals/LearningItemFormModal";
 import { ScormReviewModal } from "./components/modals/ScormReviewModal";
 import { CourseCollaboratorsModal } from "@/components/course/CourseCollaboratorsModal";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import { Button } from "@/components/ui/Button";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
 
 function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId: string }> }) {
   const resolvedParams = use(params);
@@ -296,27 +304,43 @@ function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId
       />
 
       {/* Confirm Delete Alert Dialog */}
-      <ConfirmAlertDialog
-        isOpen={Boolean(builder.confirmDeleteTarget)}
-        onClose={() => builder.setConfirmDeleteTarget(null)}
-        onConfirm={builder.executeConfirmDelete}
-        title={
-          builder.confirmDeleteTarget?.type === "week"
-            ? "Xác nhận xóa Tuần học"
-            : builder.confirmDeleteTarget?.type === "lesson"
-              ? "Xác nhận xóa Bài học"
-              : "Xác nhận xóa Học liệu"
-        }
-        description={
-          builder.confirmDeleteTarget
-            ? `Bạn có chắc chắn muốn xóa "${builder.confirmDeleteTarget.title}"? Thao tác này không thể hoàn tác.`
-            : ""
-        }
-        confirmText="Xóa"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={builder.saving}
-      />
+      <AlertDialog
+        open={Boolean(builder.confirmDeleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) builder.setConfirmDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {builder.confirmDeleteTarget?.type === "week"
+                ? "Xác nhận xóa Tuần học"
+                : builder.confirmDeleteTarget?.type === "lesson"
+                  ? "Xác nhận xóa Bài học"
+                  : "Xác nhận xóa Học liệu"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {builder.confirmDeleteTarget?.type === "week"
+                ? "Xóa tuần học này sẽ xóa toàn bộ bài học và học liệu bên trong. Bạn có chắc chắn?"
+                : builder.confirmDeleteTarget?.type === "lesson"
+                  ? "Xóa bài học này sẽ xóa toàn bộ học liệu thuộc bài học. Bạn có chắc chắn?"
+                  : "Hành động này sẽ xóa vĩnh viễn học liệu khỏi bài học. Bạn có chắc chắn?"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <Button variant="outlined" onClick={() => builder.setConfirmDeleteTarget(null)}>
+              Hủy
+            </Button>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={builder.executeConfirmDelete}
+            >
+              Xóa vĩnh viễn
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -3,9 +3,13 @@ import { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group";
 import { Radio as BaseRadio } from "@base-ui/react/radio";
 import { cn } from "@/lib/utils";
 
+import { FieldLabel, FieldDescription } from "./Field";
+
 export const RadioGroup = BaseRadioGroup;
 export const RadioItem = BaseRadio.Root;
 export const RadioIndicator = BaseRadio.Indicator;
+export const RadioLabel = FieldLabel;
+export const RadioDescription = FieldDescription;
 
 export interface RadioOptionProps extends React.ComponentProps<typeof BaseRadio.Root> {
   label?: string;
@@ -40,15 +44,8 @@ export function RadioOption({
       </BaseRadio.Root>
       {(label || description) && (
         <div className="grid gap-0.5 leading-none">
-          {label && (
-            <label
-              htmlFor={radioId}
-              className="text-sm font-medium text-foreground cursor-pointer select-none"
-            >
-              {label}
-            </label>
-          )}
-          {description && <p className="text-xs text-muted-foreground">{description}</p>}
+          {label && <RadioLabel htmlFor={radioId}>{label}</RadioLabel>}
+          {description && <RadioDescription>{description}</RadioDescription>}
         </div>
       )}
     </div>

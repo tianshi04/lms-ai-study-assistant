@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useGetInvitationByTokenQuery, useRespondToInvitationMutation } from "@/lib/query_hooks";
 import { InvitationAction, InvitationStatus, InvitationType } from "@/gen/identity/v1/identity_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Button } from "@/components/ui/Button";
 import {
   Mail,
   CheckCircle2,
@@ -67,10 +68,10 @@ function AcceptInvitationContent() {
 
   const getTargetIcon = (type: InvitationType) => {
     if (type === InvitationType.ORGANIZATION_MEMBER)
-      return <Building2 className="w-8 h-8 text-primary" />;
+      return <Building2 className="w-8 h-8 text-primary" aria-hidden="true" />;
     if (type === InvitationType.COURSE_CO_INSTRUCTOR)
-      return <BookOpen className="w-8 h-8 text-primary" />;
-    return <Award className="w-8 h-8 text-primary" />;
+      return <BookOpen className="w-8 h-8 text-primary" aria-hidden="true" />;
+    return <Award className="w-8 h-8 text-primary" aria-hidden="true" />;
   };
 
   const getVietnameseStatus = (status: InvitationStatus) => {
@@ -95,7 +96,7 @@ function AcceptInvitationContent() {
       <div className="max-w-md w-full bg-card border border-border rounded-xl shadow-lg p-6 text-foreground space-y-6">
         <div className="flex flex-col items-center text-center space-y-2">
           <div className="p-3 rounded-full bg-primary/10 mb-2">
-            <Mail className="w-8 h-8 text-primary" />
+            <Mail className="w-8 h-8 text-primary" aria-hidden="true" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Lời mời tham gia</h1>
           <p className="text-sm text-muted-foreground">Hệ thống đào tạo trực tuyến LMS</p>
@@ -103,14 +104,14 @@ function AcceptInvitationContent() {
 
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-8 space-y-3">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" aria-hidden="true" />
             <p className="text-sm text-muted-foreground">Đang tải thông tin lời mời...</p>
           </div>
         )}
 
         {isError && (
           <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center space-y-2">
-            <XCircle className="w-6 h-6 mx-auto" />
+            <XCircle className="w-6 h-6 mx-auto" aria-hidden="true" />
             <p>{error?.message || "Lời mời không hợp lệ hoặc đã hết hạn."}</p>
             <Link href="/" className="inline-block text-xs font-semibold underline mt-2">
               Trở về Trang chủ
@@ -151,7 +152,8 @@ function AcceptInvitationContent() {
               <div className="flex justify-between items-center">
                 <span>Trạng thái:</span>
                 <span className="inline-flex items-center gap-1 font-semibold text-primary">
-                  <Clock className="w-3.5 h-3.5" /> {getVietnameseStatus(invitation.status)}
+                  <Clock className="w-3.5 h-3.5" aria-hidden="true" />{" "}
+                  {getVietnameseStatus(invitation.status)}
                 </span>
               </div>
             </div>
@@ -165,9 +167,9 @@ function AcceptInvitationContent() {
                 }`}
               >
                 {feedback.type === "success" ? (
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                 ) : (
-                  <XCircle className="w-4 h-4" />
+                  <XCircle className="w-4 h-4" aria-hidden="true" />
                 )}
                 <span>{feedback.message}</span>
               </div>
@@ -181,18 +183,17 @@ function AcceptInvitationContent() {
                   mời này.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
-                  <Link
-                    href={`/login?redirect=/invitations/${token}`}
-                    className="flex items-center justify-center py-2.5 px-4 rounded-md border border-input bg-background hover:bg-muted text-sm font-semibold transition-colors"
-                  >
-                    Đăng nhập
-                  </Link>
-                  <Link
-                    href={`/register?email=${encodeURIComponent(invitation.inviteeEmail)}&invite_token=${token}`}
-                    className="flex items-center justify-center py-2.5 px-4 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold transition-colors gap-1"
-                  >
-                    Đăng ký <ArrowRight className="w-4 h-4" />
-                  </Link>
+                  <Button variant="outlined">
+                    <Link href={`/login?redirect=/invitations/${token}`}>Đăng nhập</Link>
+                  </Button>
+                  <Button variant="filled">
+                    <Link
+                      href={`/register?email=${encodeURIComponent(invitation.inviteeEmail)}&invite_token=${token}`}
+                    >
+                      <span>Đăng ký</span>{" "}
+                      <ArrowRight className="w-4 h-4 ml-1" aria-hidden="true" />
+                    </Link>
+                  </Button>
                 </div>
               </div>
             ) : userEmail?.toLowerCase() !== invitation.inviteeEmail.toLowerCase() ? (
@@ -207,27 +208,23 @@ function AcceptInvitationContent() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3 pt-2">
-                <button
+                <Button
                   type="button"
+                  variant="outlined"
                   disabled={respondMutation.isPending}
                   onClick={() => handleAction(InvitationAction.DECLINE)}
-                  className="w-full py-2.5 px-4 rounded-md border border-input bg-background hover:bg-muted text-sm font-semibold text-foreground transition-colors disabled:opacity-50"
+                  className="w-full"
                 >
                   Từ chối
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   disabled={respondMutation.isPending}
                   onClick={() => handleAction(InvitationAction.ACCEPT)}
-                  className="w-full py-2.5 px-4 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full"
                 >
-                  {respondMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="w-4 h-4" />
-                  )}
                   Chấp nhận
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -242,7 +239,7 @@ export default function AcceptInvitationPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 text-muted-foreground">
-          <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+          <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" aria-hidden="true" />
           <p className="text-sm">Đang tải thông tin lời mời...</p>
         </div>
       }

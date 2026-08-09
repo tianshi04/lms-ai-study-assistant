@@ -1,3 +1,4 @@
+/* oxlint-disable jsx-a11y/prefer-tag-over-role, jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-tabindex */
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
@@ -5,6 +6,8 @@ import { Search, X } from "lucide-react";
 import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { parseVTT, type VTTCue } from "@/lib/vtt_parser";
 import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 
 interface TranscriptPanelProps {
   activeItem: LearningItem | null;
@@ -209,14 +212,16 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
           className="w-4 h-4 text-on-surface-variant absolute left-3 top-3 pointer-events-none"
         />
         {searchQuery && (
-          <button
+          <IconButton
             type="button"
+            variant="standard"
+            size="xs"
             onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-2.5 text-on-surface-variant hover:text-on-surface text-xs font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded p-0.5"
+            className="absolute right-3 top-2.5 h-6 w-6 text-on-surface-variant hover:text-on-surface"
             aria-label="Xóa từ khóa tìm kiếm"
           >
             <X className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
+          </IconButton>
         )}
       </div>
 
@@ -234,35 +239,44 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
             <div key={blockIdx} className="space-y-1.5">
               {/* Aggregated Timestamp Header */}
               <div className="flex items-center gap-2 pt-2 pb-0.5">
-                <button
+                <Button
                   type="button"
+                  variant="outlined"
+                  size="sm"
                   onClick={() => onSeekVideo(block.startTime)}
-                  className="font-mono text-[11px] font-bold text-on-primary-container bg-primary-container hover:bg-primary-container/80 border border-primary/20 px-3 py-0.5 rounded-full cursor-pointer transition-colors shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="font-mono text-[11px] font-bold text-on-primary-container bg-primary-container hover:bg-primary-container/80 border-primary/20 px-2.5 py-0.5 rounded-lg h-auto"
                   title="Nhảy đến mốc thời gian này"
                 >
                   {formatTime(block.startTime)}
-                </button>
+                </Button>
               </div>
 
               {/* Continuous Flowing Paragraph Text */}
-              <p className="text-[13px] sm:text-sm text-on-surface/90 leading-relaxed sm:leading-7 font-sans">
+              <p className="text-[13px] sm:text-sm text-on-surface/90 leading-relaxed font-sans">
                 {block.cues.map((cue) => {
                   const isActive = cue.originalIndex === activeIndex;
 
                   return (
-                    <button
-                      type="button"
+                    <span
                       key={cue.originalIndex}
                       id={`transcript-cue-${cue.originalIndex}`}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => onSeekVideo(cue.startTime)}
-                      className={`transition-colors duration-m3-short-4 ease-m3-emphasized cursor-pointer inline box-decoration-clone rounded-md px-1 py-0.5 text-left border-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onSeekVideo(cue.startTime);
+                        }
+                      }}
+                      className={`inline cursor-pointer transition-colors duration-m3-short-2 rounded px-1 py-0.5 [box-decoration-break:clone] [-webkit-box-decoration-break:clone] ${
                         isActive
-                          ? "bg-primary-container text-on-primary-container font-bold shadow-xs ring-1 ring-primary/30"
-                          : "text-on-surface/80 hover:text-on-surface hover:bg-surface-container-high"
+                          ? "bg-primary/15 text-primary font-semibold"
+                          : "hover:bg-surface-container-highest/60 hover:text-primary"
                       }`}
                     >
                       {renderHighlightedText(cue.text, searchQuery)}{" "}
-                    </button>
+                    </span>
                   );
                 })}
               </p>

@@ -4,9 +4,20 @@ import React, { useState, use, Suspense } from "react";
 import Link from "next/link";
 import { Plus, HelpCircle, FolderOpen, Pencil, Trash2, Info } from "lucide-react";
 
-import { Modal, ConfirmDialog } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
+
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/AlertDialog";
+
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -276,7 +287,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
             </p>
           </div>
           <Button
-            variant="primary"
+            variant="filled"
             onClick={() => setShowCreateBankModal(true)}
             className="px-5 py-3 rounded-xl font-bold text-sm shadow-md gap-2"
           >
@@ -309,10 +320,12 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                   {banks.map((bank) => {
                     const isSelected = bank.id === selectedBankId;
                     return (
-                      <button
+                      <Button
+                        type="button"
                         key={bank.id}
+                        variant="outlined"
                         onClick={() => setSelectedBankId(bank.id)}
-                        className={`w-full text-left p-5 rounded-2xl border transition-colors flex flex-col gap-1 cursor-pointer ${
+                        className={`w-full justify-start h-auto flex-col items-start p-5 rounded-2xl border text-left gap-1 cursor-pointer ${
                           isSelected
                             ? "bg-primary/10 border-primary ring-1 ring-primary"
                             : "bg-card border-border hover:border-muted-foreground/30"
@@ -342,7 +355,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                           <HelpCircle aria-hidden="true" className="w-3.5 h-3.5" />
                           <span>{bank.questions?.length || 0} câu hỏi</span>
                         </div>
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -390,7 +403,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                     </div>
 
                     <Button
-                      variant="primary"
+                      variant="filled"
                       size="sm"
                       onClick={() => {
                         setEditingQuestionId(null);
@@ -461,24 +474,26 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                                 </Badge>
 
                                 <div className="flex items-center gap-1 border-l border-border pl-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
+                                  <IconButton
+                                    variant="standard"
+                                    size="xs"
                                     onClick={() => handleOpenEditQuestionModal(q)}
-                                    className="h-7 w-7 text-muted-foreground hover:text-primary"
+                                    className="text-muted-foreground hover:text-primary"
                                     title="Sửa"
+                                    aria-label="Chỉnh sửa câu hỏi"
                                   >
                                     <Pencil aria-hidden="true" className="w-3.5 h-3.5" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
+                                  </IconButton>
+                                  <IconButton
+                                    variant="standard"
+                                    size="xs"
                                     onClick={() => setDeletingQuestionId(q.id)}
-                                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                                    className="text-muted-foreground hover:text-destructive"
                                     title="Xoá"
+                                    aria-label="Xóa câu hỏi"
                                   >
                                     <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
-                                  </Button>
+                                  </IconButton>
                                 </div>
                               </div>
                             </div>
@@ -541,296 +556,327 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
       </main>
 
       {/* --- Modal Create Bank --- */}
-      <Modal
-        isOpen={showCreateBankModal}
-        onClose={() => setShowCreateBankModal(false)}
-        title={"Tạo Kho Ngân hàng Đề mới"}
-      >
-        <form onSubmit={handleCreateBank} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-              {"Tên Kho Ngân hàng Đề"} *
-            </label>
-            <Input
-              required
-              value={newBankTitle}
-              onChange={(e) => setNewBankTitle(e.target.value)}
-              placeholder="Ví dụ: Kho thi kết thúc Tuần 1: Khái niệm AI"
-              aria-label="Tên Kho Ngân hàng Đề"
-              spellCheck={false}
-              className="font-semibold"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-              {"Phân loại Kho"}
-            </label>
-            <Select
-              value={newBankCategory}
-              onValueChange={(val) => {
-                if (val) setNewBankCategory(val as string);
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Chọn phân loại Kho">
-                  {newBankCategory === "PRACTICE"
-                    ? "Luyện tập (PRACTICE)"
-                    : newBankCategory === "MODULE_EXAM"
-                      ? "Bài thi Tuần (MODULE_EXAM)"
-                      : newBankCategory === "FINAL_EXAM"
-                        ? "Bài thi Cuối khóa (FINAL_EXAM)"
-                        : newBankCategory}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="PRACTICE">{"Luyện tập (PRACTICE)"}</SelectItem>
-                <SelectItem value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</SelectItem>
-                <SelectItem value="FINAL_EXAM">{"Bài thi Cuối khóa (FINAL_EXAM)"}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-              {"Mô tả"}
-            </label>
-            <Textarea
-              rows={3}
-              value={newBankDesc}
-              onChange={(e) => setNewBankDesc(e.target.value)}
-              placeholder="Mô tả tóm tắt nội dung các câu hỏi trong kho này…"
-              className="p-2.5 rounded-xl bg-card text-sm"
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4 border-t border-border">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowCreateBankModal(false)}
-              className="rounded-xl text-xs font-bold"
-            >
-              {"Hủy"}
-            </Button>
-            <Button
-              type="submit"
-              variant="primary"
-              size="sm"
-              disabled={creatingBank}
-              isLoading={creatingBank}
-              className="rounded-xl text-xs font-bold"
-            >
-              {"Xác nhận tạo Kho"}
-            </Button>
-          </div>
-        </form>
-      </Modal>
-
-      {/* --- Modal Add Question --- */}
-      <Modal
-        isOpen={showAddQuestionModal}
-        onClose={() => setShowAddQuestionModal(false)}
-        title={editingQuestionId ? "Chỉnh sửa câu hỏi" : "Thêm Câu hỏi vào Kho"}
-        size="lg"
-      >
-        <form onSubmit={handleAddQuestion} className="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
-          <div>
-            <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-              {"Nội dung câu hỏi (hỗ trợ Markdown)"} *
-            </label>
-            <Textarea
-              required
-              rows={3}
-              value={qText}
-              onChange={(e) => setQText(e.target.value)}
-              placeholder="Nhập nội dung câu hỏi…"
-              className="p-2.5 rounded-xl bg-card text-sm font-semibold"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+      <Dialog.Root open={showCreateBankModal} onOpenChange={(open) => setShowCreateBankModal(open)}>
+        <Dialog.Content size="md">
+          <Dialog.Header>
+            <Dialog.Title>{"Tạo Kho Ngân hàng Đề mới"}</Dialog.Title>
+          </Dialog.Header>
+          <form onSubmit={handleCreateBank} className="space-y-4 pt-2">
             <div>
               <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                {"Dạng câu hỏi"}
+                {"Tên Kho Ngân hàng Đề"} *
+              </label>
+              <Input
+                required
+                value={newBankTitle}
+                onChange={(e) => setNewBankTitle(e.target.value)}
+                placeholder="Ví dụ: Kho thi kết thúc Tuần 1: Khái niệm AI"
+                aria-label="Tên Kho Ngân hàng Đề"
+                spellCheck={false}
+                className="font-semibold"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                {"Phân loại Kho"}
               </label>
               <Select
-                value={qType}
+                value={newBankCategory}
                 onValueChange={(val) => {
-                  if (!val) return;
-                  setQType(val);
-
-                  if (val === "TRUE_FALSE") {
-                    setQOptions([
-                      { optionText: "Đúng (True)", isCorrect: false },
-                      { optionText: "Sai (False)", isCorrect: false },
-                    ]);
-                  } else if (qType === "TRUE_FALSE") {
-                    setQOptions([
-                      { optionText: "", isCorrect: false },
-                      { optionText: "", isCorrect: false },
-                    ]);
-                  } else if (val === "SINGLE_CHOICE") {
-                    let hasOneCorrect = false;
-                    const normalized = qOptions.map((opt) => {
-                      if (opt.isCorrect && !hasOneCorrect) {
-                        hasOneCorrect = true;
-                        return opt;
-                      }
-                      return { ...opt, isCorrect: false };
-                    });
-                    setQOptions(normalized);
-                  }
+                  if (val) setNewBankCategory(val as string);
                 }}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn dạng câu hỏi">
-                    {qType === "SINGLE_CHOICE"
-                      ? "Trắc nghiệm 1 đáp án (Single Choice)"
-                      : qType === "MULTIPLE_CHOICE"
-                        ? "Trắc nghiệm nhiều đáp án (Multiple Choice)"
-                        : qType === "TRUE_FALSE"
-                          ? "Chọn Đúng/Sai (True/False)"
-                          : qType}
+                  <SelectValue placeholder="Chọn phân loại Kho">
+                    {newBankCategory === "PRACTICE"
+                      ? "Luyện tập (PRACTICE)"
+                      : newBankCategory === "MODULE_EXAM"
+                        ? "Bài thi Tuần (MODULE_EXAM)"
+                        : newBankCategory === "FINAL_EXAM"
+                          ? "Bài thi Cuối khóa (FINAL_EXAM)"
+                          : newBankCategory}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="SINGLE_CHOICE">
-                    {"Trắc nghiệm 1 đáp án (Single Choice)"}
-                  </SelectItem>
-                  <SelectItem value="MULTIPLE_CHOICE">
-                    {"Trắc nghiệm nhiều đáp án (Multiple Choice)"}
-                  </SelectItem>
-                  <SelectItem value="TRUE_FALSE">{"Chọn Đúng/Sai (True/False)"}</SelectItem>
+                  <SelectItem value="PRACTICE">{"Luyện tập (PRACTICE)"}</SelectItem>
+                  <SelectItem value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</SelectItem>
+                  <SelectItem value="FINAL_EXAM">{"Bài thi Cuối khóa (FINAL_EXAM)"}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          <div>
-            <label
-              htmlFor="qText"
-              className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1"
-            >
-              Nội dung Cốt lõi của Câu hỏi *
-            </label>
-            <Textarea
-              id="qText"
-              rows={3}
-              required
-              value={qText}
-              onChange={(e) => setQText(e.target.value)}
-              placeholder="Nhập nội dung đề bài câu hỏi…"
-              className="p-2 rounded-xl bg-card text-xs"
-            />
-          </div>
+            <div>
+              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                {"Mô tả"}
+              </label>
+              <Textarea
+                rows={3}
+                value={newBankDesc}
+                onChange={(e) => setNewBankDesc(e.target.value)}
+                placeholder="Mô tả tóm tắt nội dung các câu hỏi trong kho này…"
+                className="p-2.5 rounded-xl bg-card text-sm"
+              />
+            </div>
 
-          {/* Options */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Danh sách Phương án Trả lời *
-              </span>
+            <Dialog.Footer className="pt-4 border-t border-border">
               <Button
                 type="button"
-                variant="ghost"
+                variant="outlined"
                 size="sm"
-                onClick={handleAddOption}
-                className="text-xs font-bold text-primary hover:underline p-0 h-auto"
+                onClick={() => setShowCreateBankModal(false)}
+                className="rounded-xl text-xs font-bold"
               >
-                + Thêm Phương án
+                {"Hủy"}
               </Button>
-            </div>
-            <div className="space-y-2">
-              {qOptions.map((opt, idx) => (
-                <div key={idx} className="flex items-center gap-2">
-                  <Checkbox
-                    checked={opt.isCorrect}
-                    onCheckedChange={(checked) => handleOptionCorrectChange(idx, Boolean(checked))}
-                    aria-label={`Đánh dấu phương án ${idx + 1} là phương án đúng`}
-                    title="Đánh dấu phương án đúng"
-                  />
-                  <Input
-                    type="text"
-                    required
-                    value={opt.optionText}
-                    onChange={(e) => handleOptionChange(idx, e.target.value)}
-                    placeholder={`Phương án ${idx + 1}…`}
-                    aria-label={`Nội dung phương án ${idx + 1}`}
-                    spellCheck={false}
-                    className="flex-1 py-1.5 rounded-lg bg-card text-xs"
-                  />
-                  {qOptions.length > 2 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveOption(idx)}
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                    >
-                      ✕
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+              <Button
+                type="submit"
+                variant="filled"
+                size="sm"
+                disabled={creatingBank}
+                className="rounded-xl text-xs font-bold"
+              >
+                {"Xác nhận tạo Kho"}
+              </Button>
+            </Dialog.Footer>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
 
-          <div>
-            <label
-              htmlFor="qExplanation"
-              className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1"
-            >
-              Giải thích Đáp án (Explanation)
-            </label>
-            <Textarea
-              id="qExplanation"
-              rows={2}
-              value={qExplanation}
-              onChange={(e) => setQExplanation(e.target.value)}
-              placeholder="Giải thích lý do tại sao phương án đó đúng…"
-              className="p-2 rounded-xl bg-card text-xs"
-            />
-          </div>
+      {/* --- Modal Add Question --- */}
+      <Dialog.Root
+        open={showAddQuestionModal}
+        onOpenChange={(open) => setShowAddQuestionModal(open)}
+      >
+        <Dialog.Content size="lg">
+          <Dialog.Header>
+            <Dialog.Title>
+              {editingQuestionId ? "Chỉnh sửa câu hỏi" : "Thêm Câu hỏi vào Kho"}
+            </Dialog.Title>
+          </Dialog.Header>
+          <form
+            onSubmit={handleAddQuestion}
+            className="space-y-4 max-h-[75vh] overflow-y-auto pr-1 pt-2"
+          >
+            <div>
+              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                {"Nội dung câu hỏi (hỗ trợ Markdown)"} *
+              </label>
+              <Textarea
+                required
+                rows={3}
+                value={qText}
+                onChange={(e) => setQText(e.target.value)}
+                placeholder="Nhập nội dung câu hỏi…"
+                className="p-2.5 rounded-xl bg-card text-sm font-semibold"
+              />
+            </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                  {"Dạng câu hỏi"}
+                </label>
+                <Select
+                  value={qType}
+                  onValueChange={(val) => {
+                    if (!val) return;
+                    setQType(val);
+
+                    if (val === "TRUE_FALSE") {
+                      setQOptions([
+                        { optionText: "Đúng (True)", isCorrect: false },
+                        { optionText: "Sai (False)", isCorrect: false },
+                      ]);
+                    } else if (qType === "TRUE_FALSE") {
+                      setQOptions([
+                        { optionText: "", isCorrect: false },
+                        { optionText: "", isCorrect: false },
+                      ]);
+                    } else if (val === "SINGLE_CHOICE") {
+                      let hasOneCorrect = false;
+                      const normalized = qOptions.map((opt) => {
+                        if (opt.isCorrect && !hasOneCorrect) {
+                          hasOneCorrect = true;
+                          return opt;
+                        }
+                        return { ...opt, isCorrect: false };
+                      });
+                      setQOptions(normalized);
+                    }
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Chọn dạng câu hỏi">
+                      {qType === "SINGLE_CHOICE"
+                        ? "Trắc nghiệm 1 đáp án (Single Choice)"
+                        : qType === "MULTIPLE_CHOICE"
+                          ? "Trắc nghiệm nhiều đáp án (Multiple Choice)"
+                          : qType === "TRUE_FALSE"
+                            ? "Chọn Đúng/Sai (True/False)"
+                            : qType}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="SINGLE_CHOICE">
+                      {"Trắc nghiệm 1 đáp án (Single Choice)"}
+                    </SelectItem>
+                    <SelectItem value="MULTIPLE_CHOICE">
+                      {"Trắc nghiệm nhiều đáp án (Multiple Choice)"}
+                    </SelectItem>
+                    <SelectItem value="TRUE_FALSE">{"Chọn Đúng/Sai (True/False)"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="qText"
+                className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1"
+              >
+                {"Nội dung Cốt lõi của Câu hỏi *"}
+              </label>
+              <Textarea
+                id="qText"
+                rows={3}
+                required
+                value={qText}
+                onChange={(e) => setQText(e.target.value)}
+                placeholder="Nhập nội dung đề bài câu hỏi…"
+                className="p-2 rounded-xl bg-card text-xs"
+              />
+            </div>
+
+            {/* Options */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  {"Danh sách Phương án Trả lời *"}
+                </span>
+                <Button
+                  type="button"
+                  variant="text"
+                  size="sm"
+                  onClick={handleAddOption}
+                  className="text-xs font-bold text-primary hover:underline p-0 h-auto"
+                >
+                  {"+ Thêm Phương án"}
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {qOptions.map((opt, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Checkbox
+                      checked={opt.isCorrect}
+                      onCheckedChange={(checked) =>
+                        handleOptionCorrectChange(idx, Boolean(checked))
+                      }
+                      aria-label={`Đánh dấu phương án ${idx + 1} là phương án đúng`}
+                      title="Đánh dấu phương án đúng"
+                    />
+                    <Input
+                      type="text"
+                      required
+                      value={opt.optionText}
+                      onChange={(e) => handleOptionChange(idx, e.target.value)}
+                      placeholder={`Phương án ${idx + 1}…`}
+                      aria-label={`Nội dung phương án ${idx + 1}`}
+                      spellCheck={false}
+                      className="flex-1 py-1.5 rounded-lg bg-card text-xs"
+                    />
+                    {qOptions.length > 2 && (
+                      <IconButton
+                        type="button"
+                        variant="standard"
+                        size="xs"
+                        onClick={() => handleRemoveOption(idx)}
+                        className="text-muted-foreground hover:text-destructive"
+                        aria-label={`Xóa phương án ${idx + 1}`}
+                      >
+                        ✕
+                      </IconButton>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="qExplanation"
+                className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1"
+              >
+                {"Giải thích Đáp án (Explanation)"}
+              </label>
+              <Textarea
+                id="qExplanation"
+                rows={2}
+                value={qExplanation}
+                onChange={(e) => setQExplanation(e.target.value)}
+                placeholder="Giải thích lý do tại sao phương án đó đúng…"
+                className="p-2 rounded-xl bg-card text-xs"
+              />
+            </div>
+
+            <Dialog.Footer className="pt-2">
+              <Button
+                type="button"
+                variant="outlined"
+                size="sm"
+                onClick={() => setShowAddQuestionModal(false)}
+                className="rounded-xl text-xs font-bold"
+              >
+                {"Hủy"}
+              </Button>
+              <Button
+                type="submit"
+                variant="filled"
+                size="sm"
+                disabled={submittingQuestion}
+                className="rounded-xl text-xs font-bold"
+              >
+                {editingQuestionId ? "Lưu thay đổi" : "Lưu câu hỏi"}
+              </Button>
+            </Dialog.Footer>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
+
+      <AlertDialog
+        open={deletingQuestionId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeletingQuestionId(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{"Xác nhận xóa câu hỏi"}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {"Bạn có chắc chắn muốn xóa câu hỏi này không? Thao tác này không thể hoàn tác."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
             <Button
-              type="button"
-              variant="outline"
+              variant="outlined"
               size="sm"
-              onClick={() => setShowAddQuestionModal(false)}
-              className="rounded-xl text-xs font-bold"
+              onClick={() => setDeletingQuestionId(null)}
+              disabled={deleteQuestionMutation.isPending}
             >
               {"Hủy"}
             </Button>
             <Button
-              type="submit"
-              variant="primary"
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
               size="sm"
-              disabled={submittingQuestion}
-              isLoading={submittingQuestion}
-              className="rounded-xl text-xs font-bold"
+              onClick={handleDeleteQuestion}
+              disabled={deleteQuestionMutation.isPending}
             >
-              {editingQuestionId ? "Lưu thay đổi" : "Lưu câu hỏi"}
+              {"Xóa"}
             </Button>
-          </div>
-        </form>
-      </Modal>
-
-      <ConfirmDialog
-        isOpen={deletingQuestionId !== null}
-        onClose={() => setDeletingQuestionId(null)}
-        onConfirm={handleDeleteQuestion}
-        title={"Xác nhận xóa câu hỏi"}
-        description={
-          "Bạn có chắc chắn muốn xóa câu hỏi này không? Thao tác này không thể hoàn tác."
-        }
-        confirmText="Xoá"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={deleteQuestionMutation.isPending}
-      />
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

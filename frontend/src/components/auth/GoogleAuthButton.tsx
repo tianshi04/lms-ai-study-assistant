@@ -28,9 +28,9 @@ export function GoogleIcon({ className = "w-5 h-5 flex-shrink-0" }: { className?
 
 interface GoogleAuthButtonProps {
   onSuccess: (authCode: string, nonce: string) => void;
-  isLoading?: boolean;
+  disabled?: boolean;
   text?: string;
-  variant?: "outline" | "primary" | "secondary";
+  variant?: "outlined" | "filled" | "tonal";
   className?: string;
   children?: React.ReactNode;
 }
@@ -44,9 +44,9 @@ function generateNonce(length = 32): string {
 
 export function GoogleAuthButton({
   onSuccess,
-  isLoading = false,
+  disabled = false,
   text = "Tiếp tục với Google",
-  variant = "outline",
+  variant = "outlined",
   className = "",
   children,
 }: GoogleAuthButtonProps) {
@@ -107,9 +107,9 @@ export function GoogleAuthButton({
       type="button"
       variant={variant}
       onClick={handleClick}
-      disabled={isLoading || internalLoading}
-      isLoading={isLoading || internalLoading}
-      className={`w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-3 border border-border bg-card hover:bg-muted/80 text-foreground transition-colors shadow-sm ${className}`}
+      disabled={disabled || internalLoading}
+      leadingIcon={<GoogleIcon />}
+      className={`w-full py-3 font-semibold text-sm shadow-sm ${className}`}
     >
       <GoogleIcon />
       <span>{children ?? text}</span>
