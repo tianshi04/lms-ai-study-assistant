@@ -44,7 +44,6 @@ async def test_google_register_and_fallback_login_flow(monkeypatch):
     monkeypatch.setattr(settings, "ENV", "development")
     usecase = IdentityUseCase()
     unique_email = f"student_{uuid.uuid4().hex[:8]}@gmail.com"
-    sub_id = f"google_sub_{uuid.uuid4().hex[:12]}"
 
     # Step 1: Google Register Verification
     test_code = f"mock_google_{unique_email}_Student Name"
