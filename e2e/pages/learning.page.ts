@@ -41,8 +41,8 @@ export class LearningPage {
 
 
 
-    this.highlightInput = page.locator('form input').first();
-    this.commentInput = page.locator('form input').nth(1);
+    this.highlightInput = page.getByPlaceholder(/trích dẫn|ý chính/i).or(page.locator('form input').first());
+    this.commentInput = page.getByPlaceholder(/bình luận|suy nghĩ/i).or(page.locator('form input').nth(1));
     this.saveNoteButton = page.getByRole('button', { name: /Lưu ghi chú|Save Note/i }).or(page.locator('form button[type="submit"]').first());
 
     this.deadlinesHeading = page.locator('text=/Lịch Nộp Bài Hàng Tuần|Upcoming Course Deadlines|Các mốc Deadline/i');
