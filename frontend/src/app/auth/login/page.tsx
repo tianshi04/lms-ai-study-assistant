@@ -63,10 +63,10 @@ function LoginFormContent() {
     },
   });
 
-  const handleGoogleLogin = async (googleIdToken: string) => {
+  const handleGoogleLogin = async (authCode: string, nonce: string) => {
     setGoogleSubmitting(true);
     try {
-      const res = await googleLoginAction(googleIdToken);
+      const res = await googleLoginAction(authCode, nonce);
       if (res.success && res.user) {
         setAuth({
           userId: res.user.id,
@@ -287,14 +287,15 @@ function LoginFormContent() {
                   roleTag: "Super Admin",
                 },
               ].map((acc) => (
-                <button
+                <Button
                   key={acc.email}
                   type="button"
+                  variant="outline"
                   onClick={() => {
                     form.setFieldValue("email", acc.email);
                     form.setFieldValue("password", "123456");
                   }}
-                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-card border border-border hover:border-primary transition-colors text-xs font-medium flex items-center justify-between group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg bg-card border border-border hover:border-primary text-xs font-medium flex items-center justify-between group cursor-pointer"
                 >
                   <div className="min-w-0 truncate pr-1">
                     <div className="font-semibold text-foreground group-hover:text-primary min-w-0 truncate">
@@ -307,7 +308,7 @@ function LoginFormContent() {
                   <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground flex-shrink-0">
                     {acc.roleTag}
                   </span>
-                </button>
+                </Button>
               ))}
             </div>
           </div>

@@ -91,10 +91,10 @@ export async function refreshSessionAction() {
   }
 }
 
-export async function googleRegisterVerifyAction(googleIdToken: string) {
+export async function googleRegisterVerifyAction(authorizationCode: string, nonce: string) {
   try {
     const client = getUnauthenticatedBackendClient();
-    const res = await client.googleRegisterVerify({ googleIdToken });
+    const res = await client.googleRegisterVerify({ authorizationCode, nonce });
     return {
       success: true,
       tempToken: res.tempToken,
@@ -150,10 +150,10 @@ export async function completeGoogleRegistrationAction(
   }
 }
 
-export async function googleLoginAction(googleIdToken: string) {
+export async function googleLoginAction(authorizationCode: string, nonce: string) {
   try {
     const client = getUnauthenticatedBackendClient();
-    const res = await client.googleLogin({ googleIdToken });
+    const res = await client.googleLogin({ authorizationCode, nonce });
 
     if (!res.accessToken || !res.user) {
       return { success: false, error: "Đăng nhập bằng Google thất bại." };
@@ -181,10 +181,10 @@ export async function googleLoginAction(googleIdToken: string) {
   }
 }
 
-export async function googleResetPasswordVerifyAction(googleIdToken: string) {
+export async function googleResetPasswordVerifyAction(authorizationCode: string, nonce: string) {
   try {
     const client = getUnauthenticatedBackendClient();
-    const res = await client.googleResetPasswordVerify({ googleIdToken });
+    const res = await client.googleResetPasswordVerify({ authorizationCode, nonce });
     return {
       success: true,
       tempToken: res.tempToken,
@@ -235,9 +235,5 @@ export async function logoutAction() {
   const cookieStore = await cookies();
   cookieStore.delete("access_token");
   cookieStore.delete("refresh_token");
-  // Clear legacy cookies if present
-  cookieStore.delete("user_name");
-  cookieStore.delete("user_email");
-  cookieStore.delete("user_role");
   return { success: true };
 }

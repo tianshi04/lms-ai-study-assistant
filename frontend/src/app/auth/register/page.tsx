@@ -83,10 +83,10 @@ export default function RegisterPage() {
     },
   });
 
-  const handleGoogleVerify = async (googleIdToken: string) => {
+  const handleGoogleVerify = async (authCode: string, nonce: string) => {
     setGoogleVerifying(true);
     try {
-      const res = await googleRegisterVerifyAction(googleIdToken);
+      const res = await googleRegisterVerifyAction(authCode, nonce);
       if (res.isAlreadyRegistered) {
         toast.error("Email này đã được đăng ký tài khoản. Vui lòng Đăng nhập!");
         setTimeout(() => router.push("/auth/login"), 1500);
@@ -214,14 +214,16 @@ export default function RegisterPage() {
                     </span>
                   </div>
                 </div>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setStep(1)}
-                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium flex-shrink-0 rounded-lg p-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-medium shrink-0"
                 >
                   <ArrowLeft aria-hidden="true" className="w-3.5 h-3.5" />
                   Đổi
-                </button>
+                </Button>
               </div>
 
               {/* Full Name Field */}

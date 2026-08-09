@@ -1,0 +1,24 @@
+declare namespace google {
+  namespace accounts {
+    namespace oauth2 {
+      interface CodeClient {
+        requestCode(): void;
+      }
+      interface CodeClientConfig {
+        client_id: string;
+        scope: string;
+        ux_mode: "popup" | "redirect";
+        nonce?: string;
+        callback: (response: CodeResponse) => void;
+        login_hint?: string;
+      }
+      interface CodeResponse {
+        code: string;
+        scope: string;
+        error?: string;
+        error_description?: string;
+      }
+      function initCodeClient(config: CodeClientConfig): CodeClient;
+    }
+  }
+}
