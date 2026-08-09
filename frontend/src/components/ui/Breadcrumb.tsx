@@ -24,12 +24,12 @@ export function BreadcrumbItem({ className, ref, ...props }: React.ComponentProp
 }
 
 export interface BreadcrumbLinkProps extends React.ComponentProps<"a"> {
-  asChild?: boolean;
+  render?: React.ReactElement<any>;
 }
 
 export function BreadcrumbLink({
   className,
-  asChild = false,
+  render,
   children,
   ref,
   ...props
@@ -39,13 +39,14 @@ export function BreadcrumbLink({
     className,
   );
 
-  if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<any>;
-    return React.cloneElement(child, {
+  if (render && React.isValidElement(render)) {
+    const element = render as React.ReactElement<any>;
+    return React.cloneElement(element, {
       ...props,
-      ...child.props,
+      ...element.props,
       ref,
-      className: cn(compClasses, child.props.className),
+      className: cn(compClasses, element.props.className),
+      children: children ?? element.props.children,
     });
   }
 
