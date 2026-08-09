@@ -275,7 +275,7 @@
 
   --outline: oklch(0.55 0.016 250);
   --outline-variant: oklch(0.88 0.005 260);
-  --border: var(--outline);
+  --border: var(--outline-variant);
   --input: var(--outline);
   --ring: oklch(0.546 0.215 262.881);
 
@@ -382,7 +382,7 @@
 
   --outline: oklch(0.6 0.015 250);
   --outline-variant: oklch(0.28 0.008 260);
-  --border: var(--outline);
+  --border: var(--outline-variant);
   --input: var(--outline);
   --ring: oklch(0.55 0.214 259.815);
 

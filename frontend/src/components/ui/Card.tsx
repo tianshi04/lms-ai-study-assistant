@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { Divider } from "./Divider";
 
 // Material Design 3 Card Specs & Measurements:
 // - Shape: 12dp corner radius (rounded-xl / rounded-2xl)
@@ -146,20 +147,16 @@ function CardMedia({
   );
 }
 
-export interface CardDividerProps extends React.ComponentProps<"hr"> {
+export interface CardDividerProps extends React.ComponentProps<typeof Divider> {
   inset?: boolean;
 }
 
 function CardDivider({ className, inset = false, ref, ...props }: CardDividerProps) {
   return (
-    <hr
+    <Divider
       ref={ref}
-      aria-hidden="true"
-      className={cn(
-        "border-none h-px bg-outline-variant/50 my-4",
-        inset ? "mx-0" : "-mx-4 sm:-mx-6",
-        className,
-      )}
+      variant={inset ? "inset" : "full-width"}
+      className={cn("my-4 bg-outline-variant/50", !inset && "-mx-4 sm:-mx-6 w-auto", className)}
       {...props}
     />
   );
