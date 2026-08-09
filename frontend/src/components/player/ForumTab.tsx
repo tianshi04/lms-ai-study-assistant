@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
+import { Progress } from "@/components/ui/Progress";
 
 interface ForumTabProps {
   courseId: string;
@@ -291,7 +292,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
   if (loading) {
     return (
       <div className="p-4 text-xs text-muted-foreground flex items-center justify-center gap-2">
-        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <Progress.Circular size="sm" ariaLabel="Đang tải bài thảo luận" />
         <span aria-live="polite">Đang tải bài thảo luận…</span>
       </div>
     );

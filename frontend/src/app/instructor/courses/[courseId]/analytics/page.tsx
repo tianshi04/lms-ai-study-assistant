@@ -14,7 +14,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/Table";
-import { ProgressBar } from "@/components/ui/Progress";
+import { Progress } from "@/components/ui/Progress";
 
 import {
   Breadcrumb,
@@ -97,8 +97,8 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
         </div>
 
         {loading ? (
-          <div className="py-20 text-center text-muted-foreground">
-            <div className="w-8 h-8 border-4 border-success border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="py-20 text-center text-muted-foreground flex flex-col items-center justify-center">
+            <Progress.Circular color="success" size="md" className="mx-auto mb-3" />
             <span aria-live="polite">Đang tổng hợp dữ liệu học tập…</span>
           </div>
         ) : !analytics ? (
@@ -189,9 +189,9 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-3">
                             <div className="w-32">
-                              <ProgressBar
-                                progress={Math.min(100, student.progressPercent)}
-                                color="emerald"
+                              <Progress.Linear
+                                value={Math.min(100, student.progressPercent)}
+                                wavy={student.progressPercent > 0 && student.progressPercent < 100}
                               />
                             </div>
                             <span className="text-xs font-bold text-foreground font-mono">

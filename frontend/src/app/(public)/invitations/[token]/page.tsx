@@ -8,6 +8,7 @@ import { InvitationAction, InvitationStatus, InvitationType } from "@/gen/identi
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
+import { Progress } from "@/components/ui/Progress";
 import {
   Mail,
   CheckCircle2,
@@ -16,7 +17,6 @@ import {
   Building2,
   BookOpen,
   Award,
-  Loader2,
   ArrowRight,
 } from "lucide-react";
 
@@ -113,7 +113,7 @@ function AcceptInvitationContent() {
         <CardContent className="p-0 space-y-6">
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-8 space-y-3">
-              <Loader2 className="w-8 h-8 text-primary animate-spin" aria-hidden="true" />
+              <Progress.Circular size="md" />
               <p className="text-sm text-muted-foreground">Đang tải thông tin lời mời...</p>
             </div>
           )}
@@ -249,7 +249,7 @@ export default function AcceptInvitationPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 text-muted-foreground">
-          <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" aria-hidden="true" />
+          <Progress.Circular size="md" className="mb-2" />
           <p className="text-sm">Đang tải thông tin lời mời...</p>
         </div>
       }

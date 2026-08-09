@@ -12,7 +12,8 @@ import {
   useRemoveOrganizationMemberMutation,
 } from "@/lib/query_hooks";
 import { mapConnectError } from "@/lib/connect_error_mapper";
-import { UserPlus, Trash2, Shield, Loader2, UserCheck } from "lucide-react";
+import { UserPlus, Trash2, Shield, UserCheck } from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
 
 interface OrganizationMembersModalProps {
   isOpen: boolean;
@@ -182,9 +183,10 @@ export const OrganizationMembersModal: React.FC<OrganizationMembersModalProps> =
               <h3 className="text-sm font-semibold text-foreground flex items-center justify-between">
                 <span>Danh sách thành viên hiện tại ({members.length})</span>
                 {isLoading && (
-                  <Loader2
-                    className="w-4 h-4 animate-spin text-muted-foreground"
-                    aria-hidden="true"
+                  <Progress.Circular
+                    size="sm"
+                    className="w-4 h-4"
+                    ariaLabel="Đang tải danh sách thành viên"
                   />
                 )}
               </h3>

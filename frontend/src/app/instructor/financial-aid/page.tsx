@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
+import { Progress } from "@/components/ui/Progress";
 
 const emptySubscribe = () => () => {};
 
@@ -223,8 +224,8 @@ export default function InstructorFinancialAidPage() {
 
         {/* Application Cards List */}
         {loading ? (
-          <div className="py-16 text-center space-y-3">
-            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="py-16 text-center space-y-3 flex flex-col items-center justify-center">
+            <Progress.Circular size="lg" className="mx-auto" />
             <p aria-live="polite" className="text-sm font-medium text-muted-foreground">
               Đang tải danh sách đơn Hỗ trợ tài chính…
             </p>

@@ -25,6 +25,7 @@ import { Chip } from "@/components/ui/Chip";
 import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
+import { Progress } from "@/components/ui/Progress";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { PaymentCheckoutModal } from "@/components/course/PaymentCheckoutModal";
@@ -827,12 +828,11 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   className="p-4 rounded-2xl bg-card text-sm leading-relaxed"
                   required
                 />
-                <div className="w-full bg-muted h-2 rounded-full mt-3 overflow-hidden">
-                  <div
-                    className={`h-full transition-colors duration-m3-medium-2 ease-m3-emphasized ${isFinAidEnoughWords ? "bg-success" : "bg-primary"}`}
-                    style={{ width: `${Math.min(100, (finAidWordCount / 150) * 100)}%` }}
-                  />
-                </div>
+                <Progress.Linear
+                  value={(finAidWordCount / 150) * 100}
+                  wavy={isFinAidEnoughWords}
+                  className="mt-3"
+                />
               </div>
 
               <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 text-xs text-warning space-y-1">

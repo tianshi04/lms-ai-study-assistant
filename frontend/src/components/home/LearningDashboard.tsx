@@ -12,6 +12,7 @@ import {
   Zap,
   MessageSquare,
 } from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
 
 export function LearningDashboard({ userName }: { userName: string }) {
   const { data: courses = [], isLoading: loading, error: queryError } = useMyEnrolledCoursesQuery();
@@ -99,20 +100,12 @@ export function LearningDashboard({ userName }: { userName: string }) {
                     </div>
 
                     <div className="mt-8 space-y-5">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm font-bold text-on-surface">
-                          <span className="text-on-surface-variant">Tiến độ hiện tại</span>
-                          <span>{continueLearningCourse.progressPercent}%</span>
-                        </div>
-                        <div className="h-3 w-full bg-surface-variant rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary rounded-full transition-colors duration-m3-medium-2 ease-m3-emphasized"
-                            style={{
-                              width: `${Math.max(0, continueLearningCourse.progressPercent)}%`,
-                            }}
-                          />
-                        </div>
-                      </div>
+                      <Progress.Linear
+                        value={continueLearningCourse.progressPercent}
+                        showLabel
+                        label="Tiến độ hiện tại"
+                        thickness="thick"
+                      />
 
                       <Link
                         href={`/learn/${continueLearningCourse.courseId}`}
@@ -232,16 +225,13 @@ export function LearningDashboard({ userName }: { userName: string }) {
                           <h4 className="text-sm font-bold text-on-surface truncate min-w-0 mb-1.5 group-hover:text-primary">
                             {course.courseTitle}
                           </h4>
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 bg-surface-variant rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-primary rounded-full"
-                                style={{ width: `${Math.max(0, course.progressPercent)}%` }}
-                              />
-                            </div>
-                            <span className="text-xs font-bold text-on-surface-variant">
-                              {course.progressPercent}%
-                            </span>
+                          <div className="mt-1">
+                            <Progress.Linear
+                              value={course.progressPercent}
+                              showLabel
+                              label={`Tiến độ khóa học ${course.courseTitle}`}
+                              thickness="default"
+                            />
                           </div>
                         </div>
                       </Link>

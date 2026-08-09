@@ -13,7 +13,8 @@ import {
   useRemoveCourseCollaboratorMutation,
 } from "@/lib/query_hooks";
 import { mapConnectError } from "@/lib/connect_error_mapper";
-import { UserPlus, Trash2, Mail, Loader2, UserCheck, GraduationCap } from "lucide-react";
+import { UserPlus, Trash2, Mail, UserCheck, GraduationCap } from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
 
 interface CourseCollaboratorsModalProps {
   isOpen: boolean;
@@ -222,9 +223,9 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
               </h3>
 
               {isLoading ? (
-                <div className="flex items-center justify-center p-8 text-muted-foreground text-sm">
-                  <Loader2 aria-hidden="true" className="w-5 h-5 animate-spin mr-2" /> Đang tải danh
-                  sách…
+                <div className="flex items-center justify-center p-8 text-muted-foreground text-sm gap-2">
+                  <Progress.Circular size="sm" ariaLabel="Đang tải danh sách" />
+                  <span>Đang tải danh sách…</span>
                 </div>
               ) : isError ? (
                 <div className="p-4 text-center text-sm text-destructive bg-destructive/5 rounded-lg">

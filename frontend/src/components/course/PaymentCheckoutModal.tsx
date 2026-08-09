@@ -6,7 +6,8 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { useCreateVNPayPaymentUrlMutation } from "@/lib/query_hooks";
 import { PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
-import { CreditCard, Check, AlertCircle, Loader2 } from "lucide-react";
+import { CreditCard, Check, AlertCircle } from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
 
 interface PaymentCheckoutModalProps {
   isOpen: boolean;
@@ -229,10 +230,7 @@ export function PaymentCheckoutModal({
           >
             {isLoading ? (
               <span aria-live="polite" className="flex items-center gap-2">
-                <Loader2
-                  className="animate-spin h-4 w-4 text-primary-foreground"
-                  aria-hidden="true"
-                />
+                <Progress.Circular size="sm" className="w-4 h-4" ariaLabel="Đang kết nối VNPay" />
                 Đang kết nối VNPay…
               </span>
             ) : (

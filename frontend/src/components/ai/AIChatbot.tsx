@@ -16,6 +16,8 @@ import { Tooltip } from "@/components/ui/Tooltip";
 import { AssistantMessageItem } from "@/components/ai/AssistantMessageItem";
 import { getMessageText } from "@/components/ai/utils";
 
+import { Progress } from "@/components/ui/Progress";
+
 export function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -276,9 +278,10 @@ export function AIChatbot() {
                     aria-live="polite"
                     className="flex items-center gap-2 text-xs text-on-surface-variant italic py-1 animate-pulse"
                   >
-                    <Sparkles
-                      className="w-3.5 h-3.5 text-primary animate-spin"
-                      aria-hidden="true"
+                    <Progress.Circular
+                      size="sm"
+                      className="w-3.5 h-3.5"
+                      ariaLabel="Trợ lý AI đang suy nghĩ"
                     />
                     <span>Trợ lý AI đang suy nghĩ…</span>
                   </output>

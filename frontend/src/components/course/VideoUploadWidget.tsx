@@ -7,6 +7,7 @@ import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Progress } from "@/components/ui/Progress";
 
 interface VideoUploadWidgetProps {
   value: string;
@@ -269,17 +270,13 @@ export function VideoUploadWidget({
           </Button>
 
           {isUploading && (
-            <div className="space-y-1 bg-primary/10 p-3 rounded-xl border border-primary/20">
-              <div className="flex justify-between text-xs font-semibold text-primary">
-                <span aria-live="polite">Đang tải tệp lên Cloud Storage…</span>
-                <span>{uploadProgress}%</span>
-              </div>
-              <div className="w-full bg-secondary-container rounded-full h-2 overflow-hidden">
-                <div
-                  className="bg-primary h-full transition-colors duration-m3-medium-2 ease-m3-emphasized rounded-full"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
+            <div className="p-3 bg-primary/10 rounded-xl border border-primary/20">
+              <Progress.Linear
+                value={uploadProgress}
+                showLabel
+                label="Đang tải tệp lên Cloud Storage…"
+                wavy
+              />
             </div>
           )}
         </div>

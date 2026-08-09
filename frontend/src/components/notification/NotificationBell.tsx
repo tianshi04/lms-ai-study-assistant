@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bell, CheckCheck, Settings, ArrowRight, Loader2 } from "lucide-react";
+import { Bell, CheckCheck, Settings, ArrowRight } from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
 import {
   useNotificationsQuery,
   useUnreadCountQuery,
@@ -101,7 +102,7 @@ export function NotificationBell() {
           <div className="max-h-[380px] overflow-y-auto scrollbar-none p-3 space-y-2 bg-surface-container-lowest">
             {isLoading ? (
               <div className="py-10 flex justify-center items-center text-on-surface-variant">
-                <Loader2 className="w-6 h-6 animate-spin" aria-hidden="true" />
+                <Progress.Circular size="md" ariaLabel="Đang tải thông báo" />
               </div>
             ) : notifications.length === 0 ? (
               <div className="py-10 text-center px-4">

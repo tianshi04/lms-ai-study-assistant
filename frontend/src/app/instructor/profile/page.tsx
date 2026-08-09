@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Avatar } from "@/components/ui/Avatar";
+import { Progress } from "@/components/ui/Progress";
 
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Check, X } from "lucide-react";
@@ -52,7 +53,7 @@ export default function InstructorProfilePage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-muted-foreground">
-          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <Progress.Circular size="sm" />
           <span aria-live="polite">Đang tải thông tin hồ sơ…</span>
         </div>
       </div>

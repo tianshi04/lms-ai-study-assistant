@@ -12,6 +12,7 @@ import {
   useDeletePartnerMutation,
 } from "@/lib/query_hooks";
 import { Dialog } from "@/components/ui/Dialog";
+import { Progress } from "@/components/ui/Progress";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
@@ -96,7 +97,7 @@ export default function AdminPartnersPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-muted-foreground">
-          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <Progress.Circular size="sm" />
           <span aria-live="polite">Đang tải danh sách đối tác…</span>
         </div>
       </div>

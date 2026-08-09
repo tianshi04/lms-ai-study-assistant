@@ -14,6 +14,7 @@ import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { getRpcClient } from "@/lib/connect_client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
+import { Progress } from "@/components/ui/Progress";
 
 import { useCourseBuilder, type LearningItemPayload } from "./hooks/useCourseBuilder";
 import { usePointerDragOrder } from "./hooks/usePointerDragOrder";
@@ -130,7 +131,7 @@ function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId
       <div className="min-h-screen bg-background flex flex-col justify-center items-center py-24">
         <div className="flex-1 flex items-center justify-center py-24">
           <div className="flex items-center gap-3 text-muted-foreground">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <Progress.Circular size="md" />
             <span aria-live="polite" className="text-sm font-medium">
               {"Đang tải cấu trúc bài giảng khóa học…"}
             </span>

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
+import { Progress } from "@/components/ui/Progress";
 
 function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId: string }> }) {
   const { isInstructorOrAdmin } = useAuth();
@@ -200,8 +201,8 @@ function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId
           </h2>
 
           {loading ? (
-            <div className="py-12 text-center text-muted-foreground">
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+            <div className="py-12 text-center text-muted-foreground flex flex-col items-center justify-center">
+              <Progress.Circular size="sm" className="mx-auto mb-2" />
               <span aria-live="polite">Đang tải danh sách thông báo…</span>
             </div>
           ) : announcements.length === 0 ? (

@@ -15,16 +15,8 @@ import { InvitationType, InvitationStatus } from "@/gen/identity/v1/identity_pb"
 import { CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
 import { Card } from "@/components/ui/Card";
-import {
-  Users,
-  Mail,
-  BookOpen,
-  UserPlus,
-  Settings,
-  ArrowRight,
-  BadgeCheck,
-  Loader2,
-} from "lucide-react";
+import { Users, Mail, BookOpen, UserPlus, Settings, ArrowRight, BadgeCheck } from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
 
 function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -265,7 +257,7 @@ export default function OrgManagePage({ params }: { params: Promise<{ slug: stri
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
+          <Progress.Circular size="sm" />
           <span className="text-sm">Đang tải bảng điều khiển...</span>
         </div>
       }

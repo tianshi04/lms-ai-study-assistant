@@ -11,18 +11,10 @@ import {
   DrawerTitle,
   DrawerFooter,
 } from "@/components/ui/Drawer";
-import {
-  Mail,
-  CheckCircle2,
-  XCircle,
-  Building2,
-  BookOpen,
-  Award,
-  Loader2,
-  Inbox,
-} from "lucide-react";
+import { Mail, CheckCircle2, XCircle, Building2, BookOpen, Award, Inbox } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
+import { Progress } from "@/components/ui/Progress";
 
 interface MyInvitationsDrawerProps {
   isOpen: boolean;
@@ -101,8 +93,8 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {isLoading && (
-            <div className="flex justify-center py-12 text-muted-foreground gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" aria-hidden="true" />
+            <div className="flex justify-center py-12 text-muted-foreground gap-2 items-center">
+              <Progress.Circular size="sm" ariaLabel="Đang tải danh sách lời mời" />
               <span className="text-sm">Đang tải danh sách lời mời...</span>
             </div>
           )}

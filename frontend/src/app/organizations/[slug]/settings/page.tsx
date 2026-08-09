@@ -15,16 +15,8 @@ import { Chip } from "@/components/ui/Chip";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import {
-  Settings,
-  Building2,
-  Save,
-  Loader2,
-  Globe,
-  Shield,
-  ImageIcon,
-  ShieldAlert,
-} from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
+import { Settings, Building2, Save, Globe, Shield, ImageIcon, ShieldAlert } from "lucide-react";
 
 function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -177,7 +169,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
 
           {isLoading ? (
             <div className="py-12 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
-              <Loader2 className="w-7 h-7 text-primary animate-spin" aria-hidden="true" />
+              <Progress.Circular size="md" />
               <p className="text-sm">Đang tải thông tin cài đặt...</p>
             </div>
           ) : (
@@ -353,7 +345,7 @@ export default function OrgSettingsPage({ params }: { params: Promise<{ slug: st
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
+          <Progress.Circular size="sm" />
           <span className="text-sm">Đang tải cài đặt tổ chức...</span>
         </div>
       }

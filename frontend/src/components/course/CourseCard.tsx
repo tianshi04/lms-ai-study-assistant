@@ -11,8 +11,9 @@ import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
+import { Progress } from "@/components/ui/Progress";
 
-export function CourseCard({ course }: { course: Course }) {
+export function CourseCard({ course, progress }: { course: Course; progress?: number }) {
   const [imgError, setImgError] = useState(false);
 
   const queryClient = useQueryClient();
@@ -69,6 +70,12 @@ export function CourseCard({ course }: { course: Course }) {
         <p className="text-sm text-on-surface-variant mb-6 min-w-0 line-clamp-3 leading-relaxed">
           {course.description}
         </p>
+
+        {progress !== undefined && progress !== null && (
+          <div className="mb-4">
+            <Progress.Linear value={progress} showLabel label="Tiến độ học tập" wavy />
+          </div>
+        )}
       </div>
 
       <div>

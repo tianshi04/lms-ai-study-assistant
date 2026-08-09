@@ -22,13 +22,10 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import {
-  UniversalVideoPlayer,
-  type UniversalVideoRef,
-} from "@/components/player/UniversalVideoPlayer";
+import { LinearProgress } from "@/components/ui/Progress";
 
 interface VideoPlayerProps {
-  videoRef: RefObject<UniversalVideoRef | HTMLVideoElement | null | any>;
+  videoRef: RefObject<HTMLVideoElement | null>;
   activeItem: LearningItem | null;
   userId?: string;
   activeQuiz: InVideoQuiz | null;
@@ -81,6 +78,16 @@ export function VideoPlayer({
   }
 
   const isCompleted = completedItemIds.includes(activeItem.id);
+
+  function getYouTubeEmbedUrl(url: string, autoTranscribe: boolean = false): string | null {
+    if (!url) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    const ccParam = autoTranscribe ? "&cc_load_policy=1" : "";
+    return match && match[2].length === 11
+      ? `https://www.youtube.com/embed/${match[2]}?enablejsapi=1${ccParam}`
+      : null;
+  }
 
   function renderLessonContent() {
     if (!activeItem) return null;
@@ -209,19 +216,41 @@ export function VideoPlayer({
     }
 
     // 5. Video Item Default Fallback
+    const youtubeEmbedUrl = activeItem.videoUrl
+      ? getYouTubeEmbedUrl(activeItem.videoUrl, activeItem.autoTranscribe)
+      : null;
+
     return (
       <div className="w-full flex flex-col gap-3 min-h-0">
         <div className="w-full aspect-video max-h-[62vh] relative flex items-center justify-center bg-surface-container-high rounded-2xl overflow-hidden shadow-xs transition-colors duration-m3-short-4 ease-m3-emphasized">
-          <UniversalVideoPlayer
-            key={activeItem.id}
-            ref={videoRef}
-            videoUrl={activeItem.videoUrl || ""}
-            onTimeUpdate={onTimeUpdate}
-            onSeeking={onSeeking}
-            onEnded={() => onMarkComplete?.(activeItem.id)}
-            title={activeItem.title || "Video bài giảng"}
-            captionUrl={(activeItem as any).captionUrl || undefined}
-          />
+          {youtubeEmbedUrl ? (
+            <iframe
+              key={activeItem.id}
+              src={youtubeEmbedUrl}
+              title={activeItem.title || "Video bài giảng"}
+              className="w-full h-full border-0 rounded-2xl shadow-md"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : (
+            <video
+              key={activeItem.id}
+              ref={videoRef}
+              src={activeItem.videoUrl || undefined}
+              controls
+              onTimeUpdate={onTimeUpdate}
+              onSeeking={onSeeking}
+              onEnded={() => onMarkComplete?.(activeItem.id)}
+              aria-label={activeItem.title || "Video bài giảng"}
+              className="w-full h-full object-contain rounded-2xl"
+            >
+              <track
+                kind="captions"
+                src={(activeItem as any).captionUrl || undefined}
+                label="Phụ đề"
+              />
+            </video>
+          )}
 
           {/* Floating Top Left Control Overlay for Video Preview Mode */}
           {isPreviewMode && (
@@ -323,6 +352,21 @@ export function VideoPlayer({
           <h1 className="text-lg sm:text-xl font-bold text-foreground tracking-tight">
             {activeItem.title}
           </h1>
+          {(_currentTime !== undefined || isCompleted) && (
+            <LinearProgress
+              value={
+                videoRef.current?.duration && _currentTime !== undefined
+                  ? (_currentTime / videoRef.current.duration) * 100
+                  : isCompleted
+                    ? 100
+                    : 0
+              }
+              showLabel
+              label="Tiến độ bài học"
+              wavy
+              className="mt-2"
+            />
+          )}
         </div>
 
         {/* Coursera-style AI Learning Prompts Card ("Tìm hiểu sâu hơn về chủ đề này") - Only for Video Items */}

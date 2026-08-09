@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { Progress } from "@/components/ui/Progress";
 import {
   GraduationCap,
   CheckCircle2,
@@ -121,7 +122,7 @@ export default function BecomeAnInstructorPage() {
         {/* Loading Spinner */}
         {isLoadingApp ? (
           <Card variant="outlined" className="rounded-3xl p-12 text-center">
-            <div className="inline-block animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-3" />
+            <Progress.Circular size="md" className="mb-3 mx-auto" />
             <p aria-live="polite" className="text-muted-foreground text-sm font-medium">
               Đang kiểm tra hồ sơ đăng ký của bạn…
             </p>

@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
+import { Progress } from "@/components/ui/Progress";
 import { Badge } from "@/components/ui/Badge";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import {
@@ -1031,7 +1032,7 @@ export default function ForumPage() {
       fallback={
         <div className="min-h-[60vh] flex items-center justify-center text-muted-foreground">
           <div className="flex items-center gap-3">
-            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <Progress.Circular size="sm" />
             <span aria-live="polite">Đang tải diễn đàn…</span>
           </div>
         </div>

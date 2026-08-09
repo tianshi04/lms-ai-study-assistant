@@ -13,7 +13,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { getAvatarDataUri } from "@/lib/avatar";
 
 import { useAuth } from "@/components/providers/AuthProvider";
-import { Check, Loader2, ShieldCheck, KeyRound, UserCheck, AlertCircle } from "lucide-react";
+import { Check, ShieldCheck, KeyRound, UserCheck, AlertCircle } from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
 
 export default function AccountSettingsPage() {
   const { userId: authUserId } = useAuth();
@@ -82,7 +83,7 @@ export default function AccountSettingsPage() {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center">
         <div className="flex items-center gap-3 text-on-surface-variant">
-          <Loader2 className="animate-spin h-6 w-6 text-primary" aria-hidden="true" />
+          <Progress.Circular size="sm" />
           <span aria-live="polite" className="text-sm font-bold">
             {"Đang tải cài đặt tài khoản…"}
           </span>
