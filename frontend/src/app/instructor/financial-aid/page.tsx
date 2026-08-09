@@ -11,9 +11,9 @@ import {
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ArrowLeft, Check, X, AlertTriangle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
-import { Tabs } from "@/components/ui/Tabs";
 
 const emptySubscribe = () => () => {};
 
@@ -203,18 +203,23 @@ export default function InstructorFinancialAidPage() {
         )}
 
         {/* Filter Tabs */}
-        <Tabs.Root
-          value={activeTab}
-          onValueChange={(val) => setActiveTab(val as "ALL" | "PENDING" | "APPROVED" | "REJECTED")}
-          className="mb-6"
-        >
-          <Tabs.List className="overflow-x-auto pb-1">
-            <Tabs.Tab value="ALL">Tất cả đơn</Tabs.Tab>
-            <Tabs.Tab value="PENDING">Chờ xét duyệt (Pending)</Tabs.Tab>
-            <Tabs.Tab value="APPROVED">Đã phê duyệt (Approved)</Tabs.Tab>
-            <Tabs.Tab value="REJECTED">Đã từ chối (Rejected)</Tabs.Tab>
-          </Tabs.List>
-        </Tabs.Root>
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border mb-6">
+          {[
+            { label: "Tất cả đơn", value: "ALL" },
+            { label: "Chờ xét duyệt (Pending)", value: "PENDING" },
+            { label: "Đã phê duyệt (Approved)", value: "APPROVED" },
+            { label: "Đã từ chối (Rejected)", value: "REJECTED" },
+          ].map((tab) => (
+            <Chip
+              key={tab.value}
+              variant="filter"
+              selected={activeTab === tab.value}
+              onClick={() => setActiveTab(tab.value as any)}
+            >
+              {tab.label}
+            </Chip>
+          ))}
+        </div>
 
         {/* Application Cards List */}
         {loading ? (

@@ -11,6 +11,7 @@ import {
 import { mapConnectError } from "@/lib/connect_error_mapper";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -291,6 +292,28 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                     onChange={(e) => setAllowedDomainsStr(e.target.value)}
                     placeholder="hcmut.edu.vn, stanford.edu (phân cách bằng dấu phẩy)"
                   />
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {allowedDomainsStr
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                      .map((domain) => (
+                        <Chip
+                          key={domain}
+                          variant="input"
+                          onRemove={() => {
+                            const updated = allowedDomainsStr
+                              .split(",")
+                              .map((s) => s.trim())
+                              .filter((s) => s && s !== domain)
+                              .join(", ");
+                            setAllowedDomainsStr(updated);
+                          }}
+                        >
+                          {domain}
+                        </Chip>
+                      ))}
+                  </div>
                   <p className="text-[11px] text-muted-foreground">
                     Các tài khoản có email thuộc domain này sẽ được tự động kích hoạt quyền thành
                     viên của Tổ chức.

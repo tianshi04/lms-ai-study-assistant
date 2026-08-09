@@ -10,6 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 
 import { Card } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
 
 export function CourseCard({ course }: { course: Course }) {
   const [imgError, setImgError] = useState(false);
@@ -48,10 +49,13 @@ export function CourseCard({ course }: { course: Course }) {
             ) : null}
 
             {(imgError || !course.partnerLogoUrl) && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-on-primary-container bg-primary-container px-3 py-1 rounded-full border border-primary/20 shadow-xs">
-                <Building2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+              <Chip
+                variant="assist"
+                className="h-7 text-xs font-bold bg-primary-container text-on-primary-container border-primary/20 hover:bg-primary-container pointer-events-none cursor-default shadow-xs"
+                leadingIcon={<Building2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />}
+              >
                 {course.partnerName || "Coursera Partner"}
-              </span>
+              </Chip>
             )}
           </div>
         </div>

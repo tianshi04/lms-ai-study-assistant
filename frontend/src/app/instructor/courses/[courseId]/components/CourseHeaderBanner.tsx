@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 
 interface CourseHeaderBannerProps {
   course: Course;
@@ -167,29 +168,29 @@ export function CourseHeaderBanner({
             />
           </label>
 
-          <Link
-            href={`/instructor/courses/${courseId}/question-bank`}
-            className="px-4 py-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center justify-center gap-1.5"
+          <Chip
+            variant="assist"
+            leadingIcon={<FileText className="w-4 h-4" aria-hidden="true" />}
+            render={<Link href={`/instructor/courses/${courseId}/question-bank`} />}
           >
-            <FileText className="w-4 h-4" aria-hidden="true" />
-            <span>{"Ngân hàng Câu hỏi"}</span>
-          </Link>
+            Ngân hàng Câu hỏi
+          </Chip>
 
-          <Link
-            href={`/instructor/courses/${courseId}/analytics`}
-            className="px-4 py-2.5 rounded-xl bg-success/10 text-success border border-success/20 text-xs font-bold hover:bg-success/20 transition-colors flex items-center justify-center gap-1.5"
+          <Chip
+            variant="assist"
+            leadingIcon={<BarChart2 className="w-4 h-4" aria-hidden="true" />}
+            render={<Link href={`/instructor/courses/${courseId}/analytics`} />}
           >
-            <BarChart2 className="w-4 h-4" aria-hidden="true" />
-            <span>{"Thống kê lớp học"}</span>
-          </Link>
+            Thống kê lớp học
+          </Chip>
 
-          <Link
-            href={`/instructor/courses/${courseId}/announcements`}
-            className="px-4 py-2.5 rounded-xl bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center justify-center gap-1.5"
+          <Chip
+            variant="assist"
+            leadingIcon={<Megaphone className="w-4 h-4" aria-hidden="true" />}
+            render={<Link href={`/instructor/courses/${courseId}/announcements`} />}
           >
-            <Megaphone className="w-4 h-4" aria-hidden="true" />
-            <span>{"Đăng Thông báo"}</span>
-          </Link>
+            Đăng Thông báo
+          </Chip>
 
           {onOpenCollaboratorsModal && (
             <Button

@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
 
 interface NotificationItemProps {
   item: NotificationItemType;
@@ -95,9 +96,15 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
         <div className="flex-1 min-w-0 pr-2">
           {/* Header Row: Category Badge & Timestamp */}
           <div className="flex items-center justify-between gap-2 mb-1">
-            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", bgClass)}>
+            <Chip
+              variant="assist"
+              className={cn(
+                "h-5 text-[10px] py-0 px-2 cursor-default border pointer-events-none font-bold",
+                bgClass,
+              )}
+            >
               {label}
-            </span>
+            </Chip>
             <span className="text-[10px] text-on-surface-variant/80 font-medium">
               {formatTime(item.createdAt)}
             </span>

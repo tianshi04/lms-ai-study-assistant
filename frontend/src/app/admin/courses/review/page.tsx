@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { Card } from "@/components/ui/Card";
 import { Tabs } from "@/components/ui/Tabs";
 import { Textarea } from "@/components/ui/Textarea";
@@ -233,14 +234,13 @@ export default function CourseReviewerPortalPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-                  <Link
-                    href={`/courses/${course.id}`}
-                    target="_blank"
-                    className="px-3.5 py-2 rounded-xl bg-muted text-foreground text-xs font-bold hover:bg-muted/80 transition-colors flex items-center gap-1 border border-border"
+                  <Chip
+                    variant="assist"
+                    leadingIcon={<Eye className="w-4 h-4" aria-hidden="true" />}
+                    render={<Link href={`/courses/${course.id}`} target="_blank" />}
                   >
-                    <Eye className="w-4 h-4" aria-hidden="true" />
-                    <span>{"Xem trước (Student Mode)"}</span>
-                  </Link>
+                    Xem trước (Student Mode)
+                  </Chip>
 
                   {activeTab === CourseStatus.PENDING_REVIEW && (
                     <>

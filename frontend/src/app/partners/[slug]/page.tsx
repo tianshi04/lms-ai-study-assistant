@@ -7,6 +7,7 @@ import Image from "next/image";
 import { usePartnersQuery, useCoursesQuery } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
 import { AlertTriangle, ExternalLink, BookOpen, PenTool, Globe, GraduationCap } from "lucide-react";
 
 function PartnerPublicContent() {
@@ -286,13 +287,15 @@ function PartnerPublicContent() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {partner.allowedDomains.map((domain, i) => (
-                    <span
+                    <Chip
                       key={i}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 bg-muted text-foreground font-mono text-xs rounded-lg border border-border"
+                      variant="assist"
+                      leadingIcon={
+                        <Globe aria-hidden="true" className="w-3.5 h-3.5 text-primary" />
+                      }
                     >
-                      <Globe aria-hidden="true" className="w-3.5 h-3.5 text-primary" />
                       {domain}
-                    </span>
+                    </Chip>
                   ))}
                 </div>
               </Card>

@@ -12,6 +12,7 @@ import {
 } from "@/gen/identity/v1/identity_pb";
 import { FileText, ExternalLink, PlayCircle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
@@ -137,14 +138,14 @@ export default function AdminInstructorApplicationsPage() {
             { label: "Đã phê duyệt", value: "APPROVED" },
             { label: "Đã từ chối", value: "REJECTED" },
           ].map((tab) => (
-            <Button
+            <Chip
               key={tab.value}
-              variant={statusFilter === tab.value ? "filled" : "outlined"}
-              size="sm"
+              variant="filter"
+              selected={statusFilter === tab.value}
               onClick={() => setStatusFilter(tab.value)}
             >
               {tab.label}
-            </Button>
+            </Chip>
           ))}
         </div>
 
@@ -222,39 +223,60 @@ export default function AdminInstructorApplicationsPage() {
                     </div>
 
                     {/* External Links */}
-                    <div className="flex flex-wrap gap-4 pt-2">
+                    <div className="flex flex-wrap gap-3 pt-2">
                       {app.linkedinUrl && (
-                        <a
-                          href={app.linkedinUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-info/10 text-info border border-info/20 text-xs font-semibold hover:bg-info/20 transition-colors"
+                        <Chip
+                          variant="assist"
+                          leadingIcon={<ExternalLink className="w-4 h-4" aria-hidden="true" />}
+                          render={
+                            <a
+                              href={app.linkedinUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label="Xem LinkedIn/Portfolio"
+                            >
+                              Xem LinkedIn/Portfolio
+                            </a>
+                          }
                         >
-                          <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                          <span>Xem LinkedIn/Portfolio</span>
-                        </a>
+                          Xem LinkedIn/Portfolio
+                        </Chip>
                       )}
                       {app.cvUrl && (
-                        <a
-                          href={app.cvUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-muted text-foreground border border-border text-xs font-semibold hover:bg-muted/80 transition-colors"
+                        <Chip
+                          variant="assist"
+                          leadingIcon={<FileText className="w-4 h-4" aria-hidden="true" />}
+                          render={
+                            <a
+                              href={app.cvUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label="Xem Hồ sơ CV (.pdf)"
+                            >
+                              Xem Hồ sơ CV (.pdf)
+                            </a>
+                          }
                         >
-                          <FileText className="w-4 h-4 text-destructive" aria-hidden="true" />
-                          <span>Xem Hồ sơ CV (.pdf)</span>
-                        </a>
+                          Xem Hồ sơ CV (.pdf)
+                        </Chip>
                       )}
                       {app.demoVideoUrl && (
-                        <a
-                          href={app.demoVideoUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors"
+                        <Chip
+                          variant="assist"
+                          leadingIcon={<PlayCircle className="w-4 h-4" aria-hidden="true" />}
+                          render={
+                            <a
+                              href={app.demoVideoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label="Xem Video Giảng Thử Demo"
+                            >
+                              Xem Video Giảng Thử Demo
+                            </a>
+                          }
                         >
-                          <PlayCircle className="w-4 h-4 text-destructive" aria-hidden="true" />
-                          <span>Xem Video Giảng Thử Demo</span>
-                        </a>
+                          Xem Video Giảng Thử Demo
+                        </Chip>
                       )}
                     </div>
 

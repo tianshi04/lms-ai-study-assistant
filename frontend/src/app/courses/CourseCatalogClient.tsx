@@ -5,6 +5,7 @@ import { CourseCard } from "@/components/course/CourseCard";
 import { CourseGridSkeleton } from "@/components/course/CourseGridSkeleton";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import {
@@ -143,41 +144,25 @@ export function CourseCatalogClient() {
           </div>
         </div>
 
-        {/* Filter Chips Section (MD3 Filter Chips using Design System Button Primitive) */}
+        {/* Filter Chips Section (MD3 Filter Chips) */}
         <div className="space-y-3">
           {/* Subject Chips */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider w-16 shrink-0 hidden md:inline-block">
               {"Chủ đề"}
             </span>
-            <Button
-              type="button"
-              variant={subject === "" ? "tonal" : "outlined"}
-              size="sm"
-              onClick={() => setSubject("")}
-              className={`rounded-full text-xs font-bold ${
-                subject === ""
-                  ? "bg-secondary-container text-on-secondary-container border-secondary-container shadow-xs"
-                  : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-outline hover:text-on-surface"
-              }`}
-            >
+            <Chip variant="filter" selected={subject === ""} onClick={() => setSubject("")}>
               {"Tất cả chủ đề"}
-            </Button>
+            </Chip>
             {subjects.map((s) => (
-              <Button
+              <Chip
                 key={s.id}
-                type="button"
-                variant={subject === s.id ? "tonal" : "outlined"}
-                size="sm"
+                variant="filter"
+                selected={subject === s.id}
                 onClick={() => setSubject(s.id)}
-                className={`rounded-full text-xs font-bold ${
-                  subject === s.id
-                    ? "bg-secondary-container text-on-secondary-container border-secondary-container shadow-xs"
-                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-outline hover:text-on-surface"
-                }`}
               >
                 {getCategoryTranslation(s.slug, s.name)}
-              </Button>
+              </Chip>
             ))}
           </div>
 
@@ -186,34 +171,18 @@ export function CourseCatalogClient() {
             <span className="text-xs font-bold text-on-surface-variant uppercase tracking-wider w-16 shrink-0 hidden md:inline-block">
               {"Cấp độ"}
             </span>
-            <Button
-              type="button"
-              variant={level === "" ? "tonal" : "outlined"}
-              size="sm"
-              onClick={() => setLevel("")}
-              className={`rounded-full text-xs font-bold ${
-                level === ""
-                  ? "bg-secondary-container text-on-secondary-container border-secondary-container shadow-xs"
-                  : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-outline hover:text-on-surface"
-              }`}
-            >
+            <Chip variant="filter" selected={level === ""} onClick={() => setLevel("")}>
               {"Tất cả cấp độ"}
-            </Button>
+            </Chip>
             {levels.map((l) => (
-              <Button
+              <Chip
                 key={l.id}
-                type="button"
-                variant={level === l.id ? "tonal" : "outlined"}
-                size="sm"
+                variant="filter"
+                selected={level === l.id}
                 onClick={() => setLevel(l.id)}
-                className={`rounded-full text-xs font-bold ${
-                  level === l.id
-                    ? "bg-secondary-container text-on-secondary-container border-secondary-container shadow-xs"
-                    : "bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-outline hover:text-on-surface"
-                }`}
               >
                 {getCategoryTranslation(l.slug, l.name)}
-              </Button>
+              </Chip>
             ))}
           </div>
         </div>

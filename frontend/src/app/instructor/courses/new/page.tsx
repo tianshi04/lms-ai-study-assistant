@@ -12,6 +12,7 @@ import { useToast } from "@/components/ui/Toast";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
 import { Building2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
@@ -51,8 +52,19 @@ export default function NewCoursePage() {
   const [selectedOrgId, setSelectedOrgId] = useState("partner_community");
   const [subject, setSubject] = useState("Khoa học Máy tính");
   const [level, setLevel] = useState("Sơ cấp");
+  const [tags, setTags] = useState<string[]>(["Python", "Machine Learning"]);
+  const [tagInput, setTagInput] = useState("");
   const [financialAidEnabled, setFinancialAidEnabled] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  const handleAddTag = (e: React.KeyboardEvent | React.MouseEvent) => {
+    if ("key" in e && e.key !== "Enter") return;
+    e.preventDefault();
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput("");
+    }
+  };
 
   useEffect(() => {
     let ignore = false;
@@ -380,6 +392,41 @@ export default function NewCoursePage() {
                   <SelectItem value="Nâng cao">{"Nâng cao (Advanced)"}</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Course Skills & Tag Inputs */}
+            <div className="space-y-2 md:col-span-2">
+              <label
+                htmlFor="courseTagInput"
+                className="block text-xs font-bold text-foreground uppercase tracking-wider"
+              >
+                Kỹ Năng & Thẻ Khóa Học (Skills & Tags)
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  id="courseTagInput"
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleAddTag}
+                  placeholder="Nhập kỹ năng/thẻ (ví dụ: Python, React, Data Science) rồi nhấn Enter..."
+                  className="flex-1 font-medium bg-card"
+                />
+                <Button type="button" variant="outlined" onClick={handleAddTag}>
+                  Thêm thẻ
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {tags.map((tag) => (
+                  <Chip
+                    key={tag}
+                    variant="input"
+                    onRemove={() => setTags(tags.filter((t) => t !== tag))}
+                  >
+                    {tag}
+                  </Chip>
+                ))}
+              </div>
             </div>
 
             {/* Description */}

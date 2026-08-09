@@ -13,7 +13,7 @@ import type { PersonalNote } from "@/gen/learning/v1/learning_pb";
 import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { formatTime, getItemTypeName } from "./utils";
 import { getMessageText } from "@/components/ai/utils";
-import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { SaveNoteCard, TimestampSeekCard } from "./AIChatToolCards";
@@ -338,16 +338,14 @@ export function LearnPageAIChatbot({
             {suggestions.length > 0 && (
               <div className="flex flex-wrap items-center justify-center gap-2 max-w-md">
                 {suggestions.map((text) => (
-                  <Button
+                  <Chip
                     key={text}
-                    type="button"
-                    variant="outlined"
-                    size="sm"
+                    variant="suggestion"
+                    elevation="elevated"
                     onClick={() => sendMessage(text)}
-                    className="text-xs font-medium px-3.5 py-2 rounded-full bg-surface-container-high text-on-surface hover:bg-primary-container hover:text-primary border-outline-variant/40 text-center shadow-2xs h-auto"
                   >
                     {text}
-                  </Button>
+                  </Chip>
                 ))}
               </div>
             )}

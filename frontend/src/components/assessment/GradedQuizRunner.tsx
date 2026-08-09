@@ -26,6 +26,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { Chip } from "@/components/ui/Chip";
 
 interface QuizSessionQuestionOption {
   optionIndex: number;
@@ -337,9 +338,13 @@ export function GradedQuizRunner({
             <Lock className="w-8 h-8 stroke-[2.5]" aria-hidden="true" />
           </div>
           <div className="max-w-md mx-auto space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-warning/10 text-warning border border-warning/20">
+            <Chip
+              variant="assist"
+              className="h-6 bg-warning/10 text-warning border-warning/20 hover:bg-warning/15 cursor-default font-bold text-xs pointer-events-none"
+              leadingIcon={<Lock className="w-3.5 h-3.5 text-warning" aria-hidden="true" />}
+            >
               CHẾ ĐỘ AUDIT (MIỄN PHÍ)
-            </div>
+            </Chip>
             <h3 className="text-xl font-extrabold text-foreground">
               Bài kiểm tra tính điểm đã bị khóa
             </h3>
@@ -481,10 +486,15 @@ export function GradedQuizRunner({
                     Chọn nhiều đáp án
                   </Badge>
                 ) : q.questionType === "TRUE_FALSE" ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-info/15 text-info border border-info/30 shrink-0">
-                    <HelpCircle aria-hidden="true" className="w-3 h-3" />
+                  <Chip
+                    variant="assist"
+                    className="h-6 text-[10px] py-0 px-2.5 bg-info/15 text-info border-info/30 hover:bg-info/20 shrink-0 cursor-default pointer-events-none font-bold"
+                    leadingIcon={
+                      <HelpCircle aria-hidden="true" className="w-3.5 h-3.5 text-info" />
+                    }
+                  >
                     Đúng / Sai
-                  </span>
+                  </Chip>
                 ) : (
                   <Badge
                     variant="secondary"

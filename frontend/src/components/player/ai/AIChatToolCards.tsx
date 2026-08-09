@@ -5,8 +5,8 @@ import { BookmarkPlus, Check, Sparkles, Play } from "lucide-react";
 import { getRpcClient } from "@/lib/connect_client";
 import { LearningService, type PersonalNote } from "@/gen/learning/v1/learning_pb";
 import { formatTime } from "./utils";
-import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Chip } from "@/components/ui/Chip";
 
 export function SaveNoteCard({
   courseId,
@@ -58,29 +58,29 @@ export function SaveNoteCard({
       <blockquote className="text-xs text-on-surface italic bg-surface/50 p-2 rounded-lg border-l-2 border-primary">
         "{content}"
       </blockquote>
-      <Button
-        type="button"
-        variant="outlined"
+      <Chip
+        variant="assist"
         disabled={isSaved || isSaving}
         onClick={handleSave}
-        className={`w-fit font-semibold text-xs border ${
+        className={`w-fit text-xs font-semibold ${
           isSaved
             ? "bg-success/10 text-success border-success/30 cursor-default"
             : "bg-primary/10 hover:bg-primary/20 text-primary border-primary/20"
         }`}
-      >
-        {isSaved ? (
-          <>
+        leadingIcon={
+          isSaved ? (
             <Check className="w-3.5 h-3.5 text-success" aria-hidden="true" />
-            <span>Đã lưu vào Ghi chú của bạn</span>
-          </>
-        ) : (
-          <>
+          ) : (
             <BookmarkPlus className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
-            <span>{isSaving ? "Đang lưu…" : "Lưu vào Ghi chú cá nhân"}</span>
-          </>
-        )}
-      </Button>
+          )
+        }
+      >
+        {isSaved
+          ? "Đã lưu vào Ghi chú của bạn"
+          : isSaving
+            ? "Đang lưu…"
+            : "Lưu vào Ghi chú cá nhân"}
+      </Chip>
     </Card>
   );
 }
@@ -107,15 +107,16 @@ export function TimestampSeekCard({
         <span>{reason || "Gợi ý xem đoạn video liên quan:"}</span>
       </div>
       {onSeek && (
-        <Button
-          type="button"
-          variant="outlined"
+        <Chip
+          variant="assist"
           onClick={() => onSeek(seconds)}
           className="w-fit bg-primary/10 hover:bg-primary/20 text-primary text-xs font-semibold border-primary/20"
+          leadingIcon={
+            <Play className="w-3.5 h-3.5 fill-primary text-primary" aria-hidden="true" />
+          }
         >
-          <Play className="w-3.5 h-3.5 fill-primary text-primary" aria-hidden="true" />
-          <span>Chuyển đến đoạn [{displayLabel}]</span>
-        </Button>
+          Chuyển đến đoạn [{displayLabel}]
+        </Chip>
       )}
     </Card>
   );

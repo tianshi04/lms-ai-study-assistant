@@ -23,6 +23,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
@@ -570,6 +571,28 @@ export default function AdminPartnersPage() {
                 onChange={(e) => setAllowedDomainsStr(e.target.value)}
                 placeholder="hcmut.edu.vn, vnuhcm.edu.vn"
               />
+              <div className="flex flex-wrap gap-2 pt-2">
+                {allowedDomainsStr
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((domain) => (
+                    <Chip
+                      key={domain}
+                      variant="input"
+                      onRemove={() => {
+                        const updated = allowedDomainsStr
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter((s) => s && s !== domain)
+                          .join(", ");
+                        setAllowedDomainsStr(updated);
+                      }}
+                    >
+                      {domain}
+                    </Chip>
+                  ))}
+              </div>
             </div>
 
             {/* Section: Thông tin Người ký mặc định */}

@@ -21,6 +21,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { RatingStars } from "@/components/ui/RatingStars";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
 import { Card } from "@/components/ui/Card";
@@ -262,13 +263,15 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 {"Khóa học Chuyên sâu (Specialization)"}
               </div>
               {isInstructorOrAdmin && (
-                <Link
-                  href={`/instructor/courses/${course.id}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-extrabold shadow-md transition-colors cursor-pointer"
-                >
-                  <Pencil aria-hidden="true" className="w-3.5 h-3.5" />
-                  <span>{"Biên soạn Bài giảng (Instructor Builder)"}</span>
-                </Link>
+                <Chip
+                  variant="assist"
+                  leadingIcon={<Pencil aria-hidden="true" className="w-3.5 h-3.5" />}
+                  render={
+                    <Link href={`/instructor/courses/${course.id}`}>
+                      {"Biên soạn Bài giảng (Instructor Builder)"}
+                    </Link>
+                  }
+                />
               )}
               {hasCert && (
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-success/10 border border-success/20 text-success text-xs font-bold">

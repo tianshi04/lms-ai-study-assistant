@@ -16,6 +16,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -363,64 +364,66 @@ export default function InstructorCoursesPage() {
                   {course.description}
                 </p>
 
-                <div className="flex items-center gap-2 mb-4">
-                  <Link
-                    href={`/instructor/courses/${course.id}`}
-                    className="px-3 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center gap-1"
+                <div className="flex items-center gap-2 mb-4 flex-wrap">
+                  <Chip
+                    variant="assist"
+                    leadingIcon={<Pencil className="w-3.5 h-3.5" aria-hidden="true" />}
+                    render={<Link href={`/instructor/courses/${course.id}`} />}
                   >
-                    <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{"Biên soạn"}</span>
-                  </Link>
+                    Biên soạn
+                  </Chip>
 
-                  <Link
-                    href={`/instructor/courses/${course.id}/analytics`}
-                    className="px-2.5 py-1 rounded-lg bg-success/10 text-success border border-success/20 text-xs font-semibold hover:bg-success/20 transition-colors flex items-center gap-1"
+                  <Chip
+                    variant="assist"
+                    leadingIcon={<BarChart2 className="w-3.5 h-3.5" aria-hidden="true" />}
+                    render={<Link href={`/instructor/courses/${course.id}/analytics`} />}
                   >
-                    <BarChart2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{"Thống kê"}</span>
-                  </Link>
+                    Thống kê
+                  </Chip>
 
-                  <Link
-                    href={`/instructor/courses/${course.id}/announcements`}
-                    className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-semibold hover:bg-primary/20 transition-colors flex items-center gap-1"
+                  <Chip
+                    variant="assist"
+                    leadingIcon={<Megaphone className="w-3.5 h-3.5" aria-hidden="true" />}
+                    render={<Link href={`/instructor/courses/${course.id}/announcements`} />}
                   >
-                    <Megaphone className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{"Thông báo"}</span>
-                  </Link>
+                    Thông báo
+                  </Chip>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-border flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    size="sm"
-                    onClick={() => handleOpenEditModal(course)}
-                    className="bg-muted hover:bg-muted/80 text-xs font-semibold text-foreground"
-                  >
-                    <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{"Sửa thông tin"}</span>
-                  </Button>
+              <div className="pt-4 border-t border-border flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap w-full justify-between">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      size="sm"
+                      onClick={() => handleOpenEditModal(course)}
+                      className="bg-muted hover:bg-muted/80 text-xs font-semibold text-foreground"
+                    >
+                      <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>{"Sửa thông tin"}</span>
+                    </Button>
 
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    size="sm"
-                    onClick={() => handleDeleteCourse(course.id, course.title)}
-                    className="bg-destructive/10 text-destructive border-destructive/20 text-xs font-semibold hover:bg-destructive/20"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{"Xóa"}</span>
-                  </Button>
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      size="sm"
+                      onClick={() => handleDeleteCourse(course.id, course.title)}
+                      className="bg-destructive/10 text-destructive border-destructive/20 text-xs font-semibold hover:bg-destructive/20"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
+                      <span>{"Xóa"}</span>
+                    </Button>
+                  </div>
 
-                  <Link
-                    href={`/courses/${course.id}`}
-                    className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 ml-auto"
+                  <Chip
+                    variant="assist"
+                    trailingIcon={<ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />}
+                    render={<Link href={`/courses/${course.id}`} />}
                   >
-                    <span>{"Xem bài giảng"}</span>
-                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                  </Link>
+                    Xem bài giảng
+                  </Chip>
                 </div>
               </div>
             </Card>

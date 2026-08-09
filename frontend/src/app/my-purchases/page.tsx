@@ -23,6 +23,7 @@ import {
 } from "@/lib/query_hooks";
 import { PaymentOrderStatus, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { Card } from "@/components/ui/Card";
 import { IconButton } from "@/components/ui/IconButton";
 import {
@@ -33,7 +34,6 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
 } from "@/components/ui/AlertDialog";
-import { Tabs } from "@/components/ui/Tabs";
 
 type FilterTab = "ALL" | "COMPLETED" | "PENDING" | "EXPIRED";
 
@@ -441,32 +441,39 @@ function MyPurchasesContent() {
         </Card>
       </div>
 
-      {/* Tabs */}
-      <Tabs.Root
-        value={activeTab}
-        onValueChange={(val) => setActiveTab(val as FilterTab)}
-        className="mb-6"
-      >
-        <Tabs.List className="overflow-x-auto pb-1">
-          <Tabs.Tab value="ALL">{`Tất cả đơn hàng (${totalOrders})`}</Tabs.Tab>
-          <Tabs.Tab value="COMPLETED">{`Đã mở khóa (${completedCount})`}</Tabs.Tab>
-          <Tabs.Tab value="PENDING">
-            {`Đang chờ thanh toán (${
+      {/* Filter Chips */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border mb-6">
+        {[
+          { label: `Tất cả đơn hàng (${totalOrders})`, value: "ALL" },
+          { label: `Đã mở khóa (${completedCount})`, value: "COMPLETED" },
+          {
+            label: `Đang chờ thanh toán (${
               orders.filter((o: any) => o.status === PaymentOrderStatus.PENDING).length
-            })`}
-          </Tabs.Tab>
-          <Tabs.Tab value="EXPIRED">
-            {`Đã hết hạn / Hủy (${
+            })`,
+            value: "PENDING",
+          },
+          {
+            label: `Đã hết hạn / Hủy (${
               orders.filter(
                 (o: any) =>
                   o.status === PaymentOrderStatus.EXPIRED ||
                   o.status === PaymentOrderStatus.FAILED ||
                   o.status === PaymentOrderStatus.CANCELLED,
               ).length
-            })`}
-          </Tabs.Tab>
-        </Tabs.List>
-      </Tabs.Root>
+            })`,
+            value: "EXPIRED",
+          },
+        ].map((tab) => (
+          <Chip
+            key={tab.value}
+            variant="filter"
+            selected={activeTab === tab.value}
+            onClick={() => setActiveTab(tab.value as FilterTab)}
+          >
+            {tab.label}
+          </Chip>
+        ))}
+      </div>
 
       {/* Orders List */}
       {!isMounted || isLoading ? (
