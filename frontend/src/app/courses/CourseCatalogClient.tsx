@@ -10,7 +10,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { useCoursesQuery, useCategoriesQuery } from "@/lib/query_hooks";
-import { GraduationCap, Search, RotateCcw } from "lucide-react";
+import { Search, RotateCcw } from "lucide-react";
 
 export function CourseCatalogClient() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,22 +43,7 @@ export function CourseCatalogClient() {
   const getCategoryTranslation = (slug: string, fallback: string) => fallback;
 
   return (
-    <main className="w-full max-w-7xl mx-auto px-6 py-12 min-h-[65vh] bg-surface text-on-surface">
-      <div className="mb-10 text-center md:text-left max-w-5xl">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-container border border-primary/20 text-on-primary-container text-xs font-bold uppercase tracking-wider mb-4 shadow-xs">
-          <GraduationCap className="w-4 h-4 text-primary" aria-hidden="true" />
-          {"Coursera-Style Specializations & Courses"}
-        </div>
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-on-surface mb-4 text-balance">
-          {"Khám phá Khóa học & Lộ trình Học tập"}
-        </h1>
-        <p className="text-on-surface-variant text-lg leading-relaxed">
-          {
-            "Học tập với bài giảng video tương tác, phụ đề cuộn thông minh, bài tập thực hành nâng cao và thảo luận cộng đồng."
-          }
-        </p>
-      </div>
-
+    <>
       {/* Controls Section: Search & Filters (MD3 Surface Container) */}
       <Surface variant="container" shape="3xl" className="w-full mb-10 p-5 md:p-6 space-y-5">
         {/* Top Toolbar: Search Bar + Controls */}
@@ -231,6 +216,6 @@ export function CourseCatalogClient() {
           ))}
         </div>
       )}
-    </main>
+    </>
   );
 }

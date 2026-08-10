@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { getPublicRpcServerClient } from "@/lib/server_connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CourseDetailClient } from "./CourseDetailClient";
@@ -41,44 +40,13 @@ export async function generateMetadata({
   return getCourseMetadata(courseId);
 }
 
-/**
- * Initial course detail & reviews payload.
- */
-async function getInitialCourseDetailData(courseId: string) {
-  const queryClient = new QueryClient();
-  const client = getPublicRpcServerClient(CatalogService);
-
-  try {
-    await Promise.all([
-      queryClient.prefetchQuery({
-        queryKey: ["courseDetail", courseId],
-        queryFn: async () => (await client.getCourseDetail({ idOrSlug: courseId })).course ?? null,
-      }),
-      queryClient.prefetchQuery({
-        queryKey: ["courseReviews", courseId],
-        queryFn: async () => (await client.listCourseReviews({ courseId })).reviews || [],
-      }),
-    ]);
-  } catch {
-    // Graceful fallback for static build prerendering when backend server is offline
-  }
-
-  return dehydrate(queryClient);
-}
-
-async function CourseDetailContent({
+async function CourseDetailWrapper({
   paramsPromise,
 }: {
   paramsPromise: Promise<{ courseId: string }>;
 }) {
   const { courseId } = await paramsPromise;
-  const dehydratedState = await getInitialCourseDetailData(courseId);
-
-  return (
-    <HydrationBoundary state={dehydratedState}>
-      <CourseDetailClient courseId={courseId} />
-    </HydrationBoundary>
-  );
+  return <CourseDetailClient courseId={courseId} />;
 }
 
 export default function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
@@ -90,7 +58,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
         </div>
       }
     >
-      <CourseDetailContent paramsPromise={params} />
+      <CourseDetailWrapper paramsPromise={params} />
     </Suspense>
   );
 }

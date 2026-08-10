@@ -244,6 +244,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           </p>
           <Link
             href="/courses"
+            prefetch={true}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-colors"
           >
             ← {"Trở lại Catalog"}
@@ -356,6 +357,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </Link>
                 <Link
                   href={`/learn/${course.id}`}
+                  prefetch={true}
                   className="w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-full bg-muted hover:bg-muted/80 text-foreground text-sm font-semibold transition-colors cursor-pointer"
                 >
                   <span>{"Vào Học Lại"}</span>
@@ -365,6 +367,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <div className="space-y-3">
                 <Link
                   href={`/learn/${course.id}`}
+                  prefetch={true}
                   className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-colors shadow-lg cursor-pointer"
                 >
                   <span>{"Vào Học Ngay (Paid Mode)"}</span>
@@ -375,6 +378,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
               <div className="space-y-3">
                 <Link
                   href={`/learn/${course.id}`}
+                  prefetch={true}
                   className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-colors shadow-lg cursor-pointer"
                 >
                   <span>{"Vào Học Ngay (Audit Mode)"}</span>
