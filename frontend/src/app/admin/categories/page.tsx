@@ -11,7 +11,7 @@ import {
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
@@ -34,7 +34,7 @@ const CategoryList = ({
   noCategoriesText: string;
   deleteText: string;
 }) => (
-  <Card variant="outlined" className="p-6 flex-1">
+  <Surface variant="low" shape="2xl" className="p-6 flex-1">
     <h3 className="text-xl font-bold mb-4 text-foreground">
       {title} ({items.length})
     </h3>
@@ -64,7 +64,7 @@ const CategoryList = ({
         ))}
       </ul>
     )}
-  </Card>
+  </Surface>
 );
 
 export default function AdminCategoriesPage() {
@@ -134,7 +134,7 @@ export default function AdminCategoriesPage() {
         </PageHeader.Actions>
       </PageHeader>
 
-      <Card variant="filled" className="p-6 mb-8">
+      <Surface variant="container" shape="2xl" className="p-6 mb-8">
         <h2 className="text-lg font-semibold mb-4 text-foreground">{"Thêm danh mục mới"}</h2>
         <form onSubmit={handleCreate} className="flex flex-col md:flex-row gap-4 items-end">
           <div className="flex-1 w-full">
@@ -176,7 +176,7 @@ export default function AdminCategoriesPage() {
             Thêm danh mục
           </Button>
         </form>
-      </Card>
+      </Surface>
 
       <div className="flex flex-col md:flex-row gap-6">
         <CategoryList

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Progress } from "@/components/ui/Progress";
 import { mapConnectError } from "@/lib/connect_error_mapper";
 
@@ -96,7 +96,7 @@ export function AutoGradedLabRunner({
   };
 
   return (
-    <Card variant="outlined" className="space-y-4 max-w-5xl mx-auto p-4 sm:p-6 shadow-xl">
+    <Surface variant="low" shape="3xl" className="space-y-4 max-w-5xl mx-auto p-4 sm:p-6">
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-border pb-4">
         <div>
@@ -217,6 +217,6 @@ export function AutoGradedLabRunner({
           </div>
         </div>
       </div>
-    </Card>
+    </Surface>
   );
 }

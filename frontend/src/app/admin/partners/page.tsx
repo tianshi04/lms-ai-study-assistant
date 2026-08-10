@@ -16,7 +16,7 @@ import { Progress } from "@/components/ui/Progress";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -92,8 +92,9 @@ export default function AdminPartnersPage() {
 
   if (!isAdmin) {
     return (
-      <Card
-        variant="outlined"
+      <Surface
+        variant="low"
+        shape="2xl"
         className="max-w-md mx-auto my-16 p-8 text-center bg-destructive/10 border-destructive/30"
       >
         <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
@@ -103,7 +104,7 @@ export default function AdminPartnersPage() {
         <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
         </Button>
-      </Card>
+      </Surface>
     );
   }
 
@@ -303,7 +304,7 @@ export default function AdminPartnersPage() {
       </div>
 
       {/* Partners List Table */}
-      <Card variant="outlined" className="mt-8 p-0 overflow-hidden">
+      <Surface variant="low" shape="2xl" className="mt-8 p-0 overflow-hidden">
         {partners.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">
             <Building2
@@ -415,7 +416,7 @@ export default function AdminPartnersPage() {
             </Table.Body>
           </Table>
         )}
-      </Card>
+      </Surface>
 
       {/* Modal Thêm/Sửa Đối tác */}
       <Dialog open={isModalOpen} onOpenChange={(open) => setIsModalOpen(open)}>

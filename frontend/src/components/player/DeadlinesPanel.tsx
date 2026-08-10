@@ -4,7 +4,7 @@ import { RotateCcw, Calendar } from "lucide-react";
 import type { LearningProgress } from "@/gen/learning/v1/learning_pb";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 
 interface DeadlinesPanelProps {
   progress: LearningProgress | null;
@@ -24,9 +24,10 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
 
   return (
     <div className="w-full space-y-4">
-      <Card
-        variant="outlined"
-        className="w-full bg-surface-container-low/50 border border-outline-variant/60 p-4 rounded-2xl space-y-4"
+      <Surface
+        variant="low"
+        shape="2xl"
+        className="w-full bg-surface-container-low/50 border border-outline-variant/60 p-4 space-y-4"
       >
         <div className="flex items-center justify-between gap-2">
           <div>
@@ -72,7 +73,7 @@ export function DeadlinesPanel({ progress, onResetDeadlines }: DeadlinesPanelPro
             </div>
           ))}
         </div>
-      </Card>
+      </Surface>
     </div>
   );
 }

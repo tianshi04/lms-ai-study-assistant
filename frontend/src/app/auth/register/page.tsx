@@ -14,7 +14,7 @@ import { User, Lock, Eye, EyeOff, Users, CheckCircle2, ShieldCheck, ArrowLeft } 
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Select } from "@/components/ui/Select";
 
 export default function RegisterPage() {
@@ -116,8 +116,8 @@ export default function RegisterPage() {
   return (
     <main className="flex-1 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <Card variant="elevated" className="rounded-3xl p-8">
-          <Card.Header className="text-center p-0 mb-8 space-y-2">
+        <Surface variant="high" shape="3xl" padding="lg">
+          <Surface.Header className="text-center p-0 mb-8 space-y-2">
             <Link
               href="/"
               prefetch={true}
@@ -159,17 +159,17 @@ export default function RegisterPage() {
               </span>
             </div>
 
-            <Card.Title className="text-2xl font-bold text-on-surface text-balance">
+            <Surface.Title className="text-2xl font-bold text-on-surface text-balance">
               {step === 1 ? "Đăng ký tài khoản" : "Tạo Mật khẩu Dự phòng"}
-            </Card.Title>
-            <Card.Description className="text-sm text-on-surface-variant">
+            </Surface.Title>
+            <Surface.Description className="text-sm text-on-surface-variant">
               {step === 1
                 ? "Xác minh email qua Google để bắt đầu đăng ký"
                 : "Thiết lập mật khẩu để đảm bảo luôn đăng nhập được"}
-            </Card.Description>
-          </Card.Header>
+            </Surface.Description>
+          </Surface.Header>
 
-          <Card.Content className="p-0">
+          <Surface.Content className="p-0">
             {step === 1 ? (
               /* STEP 1: GOOGLE VERIFICATION */
               <div className="space-y-6">
@@ -444,8 +444,8 @@ export default function RegisterPage() {
                 </form.Subscribe>
               </form>
             )}
-          </Card.Content>
-        </Card>
+          </Surface.Content>
+        </Surface>
       </div>
     </main>
   );

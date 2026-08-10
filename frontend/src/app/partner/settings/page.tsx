@@ -11,7 +11,7 @@ import {
   useRotatePartnerKeyPairMutation,
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
@@ -667,8 +667,9 @@ export default function PartnerSettingsPage() {
 
   if (!isPartnerAdmin) {
     return (
-      <Card
-        variant="outlined"
+      <Surface
+        variant="low"
+        shape="2xl"
         className="max-w-md mx-auto my-16 p-8 text-center bg-destructive/10 border-destructive/20"
       >
         <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
@@ -678,20 +679,20 @@ export default function PartnerSettingsPage() {
         <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
         </Button>
-      </Card>
+      </Surface>
     );
   }
 
   if (partners.length === 0 || !activePartner) {
     return (
-      <Card variant="outlined" className="max-w-2xl mx-auto my-16 p-8 text-center">
+      <Surface variant="low" shape="2xl" className="max-w-2xl mx-auto my-16 p-8 text-center">
         <Building2 aria-hidden="true" className="w-16 h-16 mx-auto text-muted-foreground/60 mb-4" />
         <h2 className="text-xl font-bold text-foreground mb-2">Chưa tìm thấy hồ sơ Đối tác</h2>
         <p className="text-muted-foreground text-sm">
           Tài khoản của bạn chưa gắn liền với thông tin đối tác nào. Vui lòng liên hệ Super Admin để
           khởi tạo hồ sơ đối tác.
         </p>
-      </Card>
+      </Surface>
     );
   }
 

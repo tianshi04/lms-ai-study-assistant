@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
 import { Users } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Table } from "@/components/ui/Table";
 import { Progress } from "@/components/ui/Progress";
 
@@ -88,14 +88,18 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
             <span aria-live="polite">Đang tổng hợp dữ liệu học tập…</span>
           </div>
         ) : !analytics ? (
-          <Card variant="outlined" className="py-12 text-center text-muted-foreground">
+          <Surface
+            variant="low"
+            shape="2xl"
+            className="py-12 text-center text-muted-foreground p-6"
+          >
             Không tìm thấy dữ liệu thống kê cho khóa học này.
-          </Card>
+          </Surface>
         ) : (
           <div className="space-y-8">
             {/* Stat Cards Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card variant="elevated" className="space-y-2">
+              <Surface variant="low" shape="2xl" className="space-y-2 p-5">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Tổng Học Viên
                 </span>
@@ -103,9 +107,9 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                   {analytics.totalEnrolledStudents}
                 </div>
                 <p className="text-xs text-muted-foreground">Học viên đã ghi danh</p>
-              </Card>
+              </Surface>
 
-              <Card variant="elevated" className="space-y-2">
+              <Surface variant="low" shape="2xl" className="space-y-2 p-5">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Tỷ Lệ Hoàn Thành
                 </span>
@@ -113,9 +117,9 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                   {analytics.averageCompletionRate}%
                 </div>
                 <p className="text-xs text-muted-foreground">Tiến độ hoàn thành trung bình</p>
-              </Card>
+              </Surface>
 
-              <Card variant="elevated" className="space-y-2">
+              <Surface variant="low" shape="2xl" className="space-y-2 p-5">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Đánh Giá Trung Bình
                 </span>
@@ -126,19 +130,19 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                 <p className="text-xs text-muted-foreground">
                   Dựa trên {analytics.reviewCount} nhận xét
                 </p>
-              </Card>
+              </Surface>
 
-              <Card variant="elevated" className="space-y-2">
+              <Surface variant="low" shape="2xl" className="space-y-2 p-5">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Trạng Thái Khóa Học
                 </span>
                 <div className="text-xl font-bold text-primary pt-1">Đang hoạt động</div>
                 <p className="text-xs text-muted-foreground">Mở ghi danh công khai</p>
-              </Card>
+              </Surface>
             </div>
 
             {/* Enrolled Students Table */}
-            <Card variant="outlined" className="space-y-4">
+            <Surface variant="low" shape="2xl" className="space-y-4 p-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                   <Users className="w-5 h-5 text-success" aria-hidden="true" />
@@ -175,10 +179,7 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                         <Table.Cell className="text-center">
                           <div className="flex items-center justify-center gap-3">
                             <div className="w-32">
-                              <Progress.Linear
-                                value={Math.min(100, student.progressPercent)}
-                                wavy={student.progressPercent > 0 && student.progressPercent < 100}
-                              />
+                              <Progress.Linear value={Math.min(100, student.progressPercent)} />
                             </div>
                             <span className="text-xs font-bold text-foreground font-mono">
                               {student.progressPercent.toFixed(1)}%
@@ -205,7 +206,7 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                   </Table.Body>
                 </Table>
               )}
-            </Card>
+            </Surface>
           </div>
         )}
       </main>

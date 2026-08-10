@@ -19,7 +19,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Progress } from "@/components/ui/Progress";
 import { Badge } from "@/components/ui/Badge";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
@@ -432,9 +432,10 @@ function ForumPageContent() {
         </div>
 
         {/* Filter Bar */}
-        <Card
-          variant="filled"
-          className="rounded-2xl p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4"
+        <Surface
+          variant="container"
+          shape="2xl"
+          className="p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4"
         >
           <div className="flex items-center gap-3 w-full md:w-auto">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
@@ -443,18 +444,20 @@ function ForumPageContent() {
             <Select
               value={selectedCourseId}
               onValueChange={(val) => {
-                setSelectedCourseId((val as string) || "");
+                if (val) setSelectedCourseId(val as string);
               }}
             >
-              <Select.Trigger className="w-full md:w-80">
-                <Select.Value placeholder="-- All Courses --">
-                  {selectedCourseId
-                    ? courses.find((c) => c.id === selectedCourseId)?.title || "-- All Courses --"
-                    : "-- All Courses --"}
+              <Select.Trigger className="w-[200px] text-xs font-semibold">
+                <Select.Value placeholder="Tất cả khóa học">
+                  {(() => {
+                    if (selectedCourseId === "ALL") return "Tất cả khóa học";
+                    const c = courses.find((course) => course.id === selectedCourseId);
+                    return c ? c.title : selectedCourseId;
+                  })()}
                 </Select.Value>
               </Select.Trigger>
               <Select.Content>
-                <Select.Item value="">{"-- All Courses --"}</Select.Item>
+                <Select.Item value="ALL">{"Tất cả khóa học"}</Select.Item>
                 {courses.map((c) => (
                   <Select.Item key={c.id} value={c.id}>
                     {c.title}
@@ -467,7 +470,7 @@ function ForumPageContent() {
           <div className="text-xs text-muted-foreground">
             Total <span className="font-bold text-foreground">{threads.length}</span> threads
           </div>
-        </Card>
+        </Surface>
 
         {/* Content */}
         {loading ? (
@@ -505,11 +508,12 @@ function ForumPageContent() {
               const isTargetThread = urlThreadId === thread.id;
 
               return (
-                <Card
-                  variant="outlined"
+                <Surface
+                  variant="low"
+                  shape="2xl"
                   key={thread.id}
                   id={`thread-${thread.id}`}
-                  className={`rounded-2xl p-6 transition-colors ${
+                  className={`p-6 transition-colors ${
                     isTargetThread
                       ? "border-primary ring-2 ring-primary/50 bg-primary/5"
                       : "hover:border-accent-hover"
@@ -799,7 +803,7 @@ function ForumPageContent() {
                       </div>
                     </div>
                   )}
-                </Card>
+                </Surface>
               );
             })}
           </div>

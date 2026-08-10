@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
 import { Eye, EyeOff, Zap } from "lucide-react";
@@ -95,8 +95,8 @@ function LoginFormContent() {
 
   return (
     <div className="w-full max-w-md">
-      <Card variant="elevated" className="rounded-3xl p-8">
-        <Card.Header className="text-center p-0 mb-8 space-y-2">
+      <Surface variant="high" shape="3xl" padding="lg">
+        <Surface.Header className="text-center p-0 mb-8 space-y-2">
           <Link
             href="/"
             prefetch={true}
@@ -114,17 +114,17 @@ function LoginFormContent() {
               </span>
             </div>
           </Link>
-          <Card.Title className="text-2xl font-bold text-on-surface text-balance">
+          <Surface.Title className="text-2xl font-bold text-on-surface text-balance">
             {"Đăng nhập tài khoản"}
-          </Card.Title>
-          <Card.Description className="text-sm text-on-surface-variant">
+          </Surface.Title>
+          <Surface.Description className="text-sm text-on-surface-variant">
             {searchParams.get("redirect")
               ? "Vui lòng đăng nhập để bắt đầu học bài giảng này"
               : "Chào mừng bạn quay trở lại với hệ thống học tập Coursera LMS"}
-          </Card.Description>
-        </Card.Header>
+          </Surface.Description>
+        </Surface.Header>
 
-        <Card.Content className="p-0">
+        <Surface.Content className="p-0">
           {/* Google 1-Click Login Option */}
           <div className="space-y-4 mb-6">
             <GoogleAuthButton
@@ -330,8 +330,8 @@ function LoginFormContent() {
               </Link>
             </p>
           </div>
-        </Card.Content>
-      </Card>
+        </Surface.Content>
+      </Surface>
     </div>
   );
 }

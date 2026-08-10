@@ -73,7 +73,7 @@ export function CourseCard({ course, progress }: { course: Course; progress?: nu
 
         {progress !== undefined && progress !== null && (
           <div className="mb-4">
-            <Progress.Linear value={progress} showLabel label="Tiến độ học tập" wavy />
+            <Progress.Linear value={progress} showLabel label="Tiến độ học tập" />
           </div>
         )}
       </div>

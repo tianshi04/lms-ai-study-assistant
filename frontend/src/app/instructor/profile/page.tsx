@@ -6,7 +6,7 @@ import Image from "next/image";
 import { UserRole } from "@/gen/identity/v1/identity_pb";
 import { useUserProfileQuery, useUpdateInstructorProfileMutation } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Avatar } from "@/components/ui/Avatar";
@@ -55,8 +55,9 @@ export default function InstructorProfilePage() {
 
   if (!isInstructorOrTA) {
     return (
-      <Card
-        variant="outlined"
+      <Surface
+        variant="low"
+        shape="2xl"
         className="max-w-md mx-auto my-16 p-8 text-center bg-destructive/10 border-destructive/30"
       >
         <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
@@ -66,7 +67,7 @@ export default function InstructorProfilePage() {
         <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
         </Button>
-      </Card>
+      </Surface>
     );
   }
 
@@ -151,8 +152,8 @@ export default function InstructorProfilePage() {
 
       {/* Main Profile Form */}
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-        {/* User General Info Card (Read-only) */}
-        <Card variant="outlined" className="p-6 flex items-center space-x-5">
+        {/* User General Info Surface (Read-only) */}
+        <Surface variant="low" shape="2xl" className="p-6 flex items-center space-x-5">
           <Avatar
             name={userProfile?.fullName || "Giảng viên"}
             src={userProfile?.avatarUrl}
@@ -165,10 +166,10 @@ export default function InstructorProfilePage() {
               {userProfile?.role === UserRole.INSTRUCTOR ? "Giảng viên" : "Quản trị viên / Nhân sự"}
             </span>
           </div>
-        </Card>
+        </Surface>
 
         {/* Academic Title & Signature Form */}
-        <Card variant="filled" className="p-6 sm:p-8 space-y-6">
+        <Surface variant="container" shape="2xl" className="p-6 sm:p-8 space-y-6">
           <div>
             <label
               htmlFor="academicTitle"
@@ -211,7 +212,7 @@ export default function InstructorProfilePage() {
 
           {/* Signature Preview Card */}
           {signatureImageUrl && (
-            <Card variant="outlined" className="p-4 bg-muted space-y-3">
+            <Surface variant="low" shape="2xl" className="p-4 bg-muted space-y-3">
               <p className="text-xs font-semibold uppercase text-muted-foreground mb-3 tracking-wider">
                 Xem trước Chữ ký hiển thị trên Giấy chứng nhận:
               </p>
@@ -233,9 +234,9 @@ export default function InstructorProfilePage() {
                   <p className="text-xs text-muted-foreground">Giảng viên Xác nhận</p>
                 </div>
               </div>
-            </Card>
+            </Surface>
           )}
-        </Card>
+        </Surface>
 
         {/* Submit Actions */}
         <div className="flex items-center justify-end space-x-4 pt-2">

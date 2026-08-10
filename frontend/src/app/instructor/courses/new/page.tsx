@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Switch } from "@/components/ui/Switch";
 import { Field } from "@/components/ui/Field";
 import { Select } from "@/components/ui/Select";
@@ -179,7 +179,12 @@ export default function NewCoursePage() {
         </div>
 
         {/* Live Preview Card */}
-        <Card variant="elevated" className="p-6 sm:p-8 relative overflow-hidden space-y-4">
+        <Surface
+          variant="low"
+          shape="3xl"
+          padding="lg"
+          className="relative overflow-hidden space-y-4"
+        >
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center rounded-full bg-primary/10 text-primary border border-primary/20 px-3 py-1 text-xs font-bold uppercase tracking-wider">
@@ -223,10 +228,16 @@ export default function NewCoursePage() {
               </p>
             </div>
           </div>
-        </Card>
+        </Surface>
 
         {/* Main Form */}
-        <Card variant="filled" render={<form onSubmit={handleSubmit} />} className="space-y-6">
+        <Surface
+          variant="container"
+          shape="3xl"
+          padding="lg"
+          render={<form onSubmit={handleSubmit} />}
+          className="space-y-6"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Organization / Partner Scoping Selection */}
             {/* Organization / Partner Scoping Selection */}
@@ -487,7 +498,7 @@ export default function NewCoursePage() {
               <span>🚀 Bắt Đầu Tạo Khóa Học</span>
             </Button>
           </div>
-        </Card>
+        </Surface>
       </div>
     </div>
   );

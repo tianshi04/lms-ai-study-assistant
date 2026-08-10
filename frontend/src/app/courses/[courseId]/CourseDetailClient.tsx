@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Progress } from "@/components/ui/Progress";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
@@ -315,9 +315,10 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           </div>
 
           {/* Enrollment Card (M3 Elevated & Glassmorphism Container Item 1.3) */}
-          <Card
-            variant="elevated"
-            className="relative overflow-hidden border border-primary/20 backdrop-blur-xl p-6 rounded-3xl space-y-6 transition-colors hover:border-primary/30"
+          <Surface
+            variant="container"
+            shape="3xl"
+            className="relative overflow-hidden border border-primary/20 backdrop-blur-xl p-6 space-y-6"
           >
             {/* M3 Top Gradient Accent Bar */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-primary/80 to-accent" />
@@ -419,7 +420,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 </li>
               )}
             </ul>
-          </Card>
+          </Surface>
         </div>
       </div>
 
@@ -586,7 +587,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {reviews.map((rev) => (
-                <Card key={rev.id} variant="outlined" className="rounded-2xl space-y-3 p-6">
+                <Surface key={rev.id} variant="low" shape="2xl" className="space-y-3 p-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <Avatar name={rev.userName || "Học viên LMS"} size="md" />
@@ -623,7 +624,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                       &ldquo;{rev.commentText}&rdquo;
                     </p>
                   )}
-                </Card>
+                </Surface>
               ))}
             </div>
           )}
@@ -828,11 +829,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                   className="p-4 rounded-2xl bg-card text-sm leading-relaxed"
                   required
                 />
-                <Progress.Linear
-                  value={(finAidWordCount / 150) * 100}
-                  wavy={isFinAidEnoughWords}
-                  className="mt-3"
-                />
+                <Progress.Linear value={(finAidWordCount / 150) * 100} className="mt-3" />
               </div>
 
               <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 text-xs text-warning space-y-1">

@@ -14,7 +14,7 @@ import { InvitationType } from "@/gen/identity/v1/identity_pb";
 import { mapConnectError } from "@/lib/connect_error_mapper";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Table } from "@/components/ui/Table";
 import { Input } from "@/components/ui/Input";
@@ -127,8 +127,9 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
         />
 
         {/* Action Header */}
-        <Card
-          variant="outlined"
+        <Surface
+          variant="low"
+          shape="2xl"
           className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6"
         >
           <div className="relative flex-1 max-w-md">
@@ -157,10 +158,10 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               Gửi Lời mời Thành viên Mới
             </Button>
           )}
-        </Card>
+        </Surface>
 
         {/* Members Table */}
-        <Card variant="outlined" className="p-0 overflow-hidden">
+        <Surface variant="low" shape="2xl" className="p-0 overflow-hidden">
           <div className="p-6 border-b border-border flex items-center justify-between">
             <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" aria-hidden="true" />
@@ -255,7 +256,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               </Table>
             </div>
           )}
-        </Card>
+        </Surface>
 
         {/* Invite Member Modal */}
         <Dialog.Root open={isInviteModalOpen} onOpenChange={(open) => setIsInviteModalOpen(open)}>

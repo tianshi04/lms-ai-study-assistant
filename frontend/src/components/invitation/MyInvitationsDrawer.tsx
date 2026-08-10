@@ -6,7 +6,7 @@ import { InvitationAction, InvitationStatus, InvitationType } from "@/gen/identi
 import { Button } from "@/components/ui/Button";
 import { Drawer } from "@/components/ui/Drawer";
 import { Mail, CheckCircle2, XCircle, Building2, BookOpen, Award, Inbox } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Chip } from "@/components/ui/Chip";
 import { Progress } from "@/components/ui/Progress";
 
@@ -107,10 +107,11 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                 Đang chờ xử lý ({pendingList.length})
               </h3>
               {pendingList.map((inv) => (
-                <Card
+                <Surface
                   key={inv.id}
-                  variant="outlined"
-                  className="p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-3"
+                  variant="low"
+                  shape="2xl"
+                  className="p-4 border border-primary/20 bg-primary/5 space-y-3"
                 >
                   <div className="flex items-start gap-3">
                     <div className="p-2 rounded-lg bg-card border border-border shadow-xs shrink-0">
@@ -168,7 +169,7 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
                       Chấp nhận
                     </Button>
                   </div>
-                </Card>
+                </Surface>
               ))}
             </div>
           )}

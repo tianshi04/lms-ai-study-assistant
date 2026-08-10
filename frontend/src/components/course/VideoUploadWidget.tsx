@@ -260,7 +260,6 @@ export function VideoUploadWidget({
                 value={uploadProgress}
                 showLabel
                 label="Đang tải tệp lên Cloud Storage…"
-                wavy
               />
             </div>
           )}

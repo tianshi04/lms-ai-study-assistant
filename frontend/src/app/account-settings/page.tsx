@@ -7,7 +7,7 @@ import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { useUserProfileQuery } from "@/lib/query_hooks";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Input } from "@/components/ui/Input";
 import { Avatar } from "@/components/ui/Avatar";
 import { getAvatarDataUri } from "@/lib/avatar";
@@ -98,7 +98,7 @@ export default function AccountSettingsPage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12 w-full flex-1 bg-surface text-on-surface">
-      <Card variant="elevated" className="p-6 sm:p-8 space-y-8">
+      <Surface variant="low" shape="3xl" padding="lg" className="space-y-8">
         {/* User Banner */}
         <div className="flex flex-col sm:flex-row items-center gap-6 pb-8 border-b border-outline-variant">
           <Avatar
@@ -290,7 +290,7 @@ export default function AccountSettingsPage() {
             </div>
           </div>
         </div>
-      </Card>
+      </Surface>
     </main>
   );
 }

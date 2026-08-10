@@ -5,7 +5,7 @@ import type { PersonalNote } from "@/gen/learning/v1/learning_pb";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 
 interface NotesPanelProps {
   notes: PersonalNote[];
@@ -31,9 +31,10 @@ export function NotesPanel({
   return (
     <div className="w-full space-y-4">
       {/* Create Note Form */}
-      <Card
-        variant="outlined"
-        className="w-full bg-surface-container-low/50 border border-outline-variant/60 p-4 rounded-2xl space-y-3.5"
+      <Surface
+        variant="low"
+        shape="2xl"
+        className="w-full bg-surface-container-low/50 border border-outline-variant/60 p-4 space-y-3.5"
       >
         <form onSubmit={onSaveNote} className="space-y-3.5">
           <h4 className="text-xs font-bold text-on-surface uppercase tracking-wider flex items-center gap-2">
@@ -66,24 +67,26 @@ export function NotesPanel({
             Lưu ghi chú
           </Button>
         </form>
-      </Card>
+      </Surface>
 
       {/* List Saved Notes */}
       {notes.length === 0 ? (
-        <Card
-          variant="outlined"
-          className="w-full border border-dashed border-outline-variant/70 bg-surface-container-low/30 p-6 rounded-2xl text-center text-xs text-on-surface-variant flex flex-col items-center justify-center gap-2"
+        <Surface
+          variant="low"
+          shape="2xl"
+          className="w-full border border-dashed border-outline-variant/70 bg-surface-container-low/30 p-6 text-center text-xs text-on-surface-variant flex flex-col items-center justify-center gap-2"
         >
           <StickyNote className="w-6 h-6 text-on-surface-variant/50" aria-hidden="true" />
           <span>{"Chưa có ghi chú nào cho bài học này."}</span>
-        </Card>
+        </Surface>
       ) : (
         <div className="w-full space-y-3">
           {notes.map((note) => (
-            <Card
+            <Surface
               key={note.id}
-              variant="outlined"
-              className="w-full group border border-outline-variant/70 bg-surface-container-lowest p-4 rounded-2xl text-xs space-y-2 relative hover:border-primary/40 hover:shadow-2xs transition-all"
+              variant="low"
+              shape="2xl"
+              className="w-full group border border-outline-variant/70 bg-surface-container-lowest p-4 text-xs space-y-2 relative"
             >
               <div className="flex items-start justify-between gap-3">
                 <p className="text-on-primary-container font-medium italic bg-primary-container/30 p-3 rounded-xl border border-primary/10 leading-relaxed flex-1">
@@ -106,7 +109,7 @@ export function NotesPanel({
               {note.noteComment && (
                 <p className="text-on-surface text-xs pt-0.5 leading-relaxed">{note.noteComment}</p>
               )}
-            </Card>
+            </Surface>
           ))}
         </div>
       )}

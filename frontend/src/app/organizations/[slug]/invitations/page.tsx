@@ -13,7 +13,7 @@ import { InvitationType, InvitationStatus } from "@/gen/identity/v1/identity_pb"
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Table } from "@/components/ui/Table";
 import { Progress } from "@/components/ui/Progress";
@@ -70,7 +70,11 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
             activeTab="invitations"
             isOwnerOrAdmin={false}
           />
-          <Card variant="outlined" className="p-12 text-center space-y-4 max-w-xl mx-auto">
+          <Surface
+            variant="low"
+            shape="2xl"
+            className="p-12 text-center space-y-4 max-w-xl mx-auto"
+          >
             <div className="w-14 h-14 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
               <ShieldAlert className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -85,7 +89,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
             >
               Quay lại Tổng quan
             </Link>
-          </Card>
+          </Surface>
         </main>
       </div>
     );
@@ -162,7 +166,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
         />
 
         {/* Invitations Table */}
-        <Card variant="outlined" className="p-0 overflow-hidden">
+        <Surface variant="low" shape="2xl" className="p-0 overflow-hidden">
           <div className="p-6 border-b border-border flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -252,7 +256,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
               </Table>
             </div>
           )}
-        </Card>
+        </Surface>
 
         {/* Cancel Invitation Confirm Dialog */}
         <Dialog.Root

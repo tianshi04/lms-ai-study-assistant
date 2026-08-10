@@ -25,7 +25,7 @@ import {
 import { PaymentOrderStatus, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Dialog } from "@/components/ui/Dialog";
 
@@ -324,9 +324,10 @@ function MyPurchasesContent() {
         </div>
       )}
 
-      {/* Coursera Plus Hero Banner Card */}
-      <Card
-        variant="elevated"
+      {/* Coursera Plus Hero Banner Container */}
+      <Surface
+        variant="container"
+        shape="3xl"
         className="mb-8 p-6 relative overflow-hidden bg-primary-container/20 border-primary/20"
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
@@ -391,11 +392,11 @@ function MyPurchasesContent() {
             </Button>
           </div>
         </div>
-      </Card>
+      </Surface>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <Card variant="elevated" className="p-5 flex items-center gap-4">
+        <Surface variant="low" shape="2xl" className="p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <Receipt className="w-6 h-6" aria-hidden="true" />
           </div>
@@ -405,9 +406,9 @@ function MyPurchasesContent() {
             </p>
             <p className="text-2xl font-bold text-foreground mt-0.5">{totalOrders}</p>
           </div>
-        </Card>
+        </Surface>
 
-        <Card variant="elevated" className="p-5 flex items-center gap-4">
+        <Surface variant="low" shape="2xl" className="p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-success/15 text-success flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-6 h-6" aria-hidden="true" />
           </div>
@@ -420,9 +421,9 @@ function MyPurchasesContent() {
               <span className="text-xs font-normal text-muted-foreground">{"giao dịch"}</span>
             </p>
           </div>
-        </Card>
+        </Surface>
 
-        <Card variant="elevated" className="p-5 flex items-center gap-4">
+        <Surface variant="low" shape="2xl" className="p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
             <CreditCard className="w-6 h-6" aria-hidden="true" />
           </div>
@@ -432,7 +433,7 @@ function MyPurchasesContent() {
             </p>
             <p className="text-2xl font-bold text-primary mt-0.5">{formatVnd(totalSpent)}</p>
           </div>
-        </Card>
+        </Surface>
       </div>
 
       {/* Filter Chips */}
@@ -480,7 +481,7 @@ function MyPurchasesContent() {
           ))}
         </div>
       ) : filteredOrders.length === 0 ? (
-        <Card variant="outlined" className="p-12 text-center max-w-xl mx-auto my-8">
+        <Surface variant="low" shape="2xl" className="p-12 text-center max-w-xl mx-auto my-8">
           <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-5">
             <ShoppingBag className="w-8 h-8" aria-hidden="true" />
           </div>
@@ -505,7 +506,7 @@ function MyPurchasesContent() {
               <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </Link>
           </div>
-        </Card>
+        </Surface>
       ) : (
         <div className="space-y-4">
           {filteredOrders.map((order: any) => {
@@ -516,10 +517,11 @@ function MyPurchasesContent() {
             const isCancelled = order.status === PaymentOrderStatus.CANCELLED;
 
             return (
-              <Card
+              <Surface
                 key={order.id}
-                variant="outlined"
-                className="p-6 hover:border-primary/40 flex flex-col md:flex-row md:items-center justify-between gap-6"
+                variant="low"
+                shape="2xl"
+                className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6"
               >
                 <div className="space-y-2 flex-1">
                   <div className="flex flex-wrap items-center gap-3">
@@ -639,7 +641,7 @@ function MyPurchasesContent() {
                     </div>
                   )}
                 </div>
-              </Card>
+              </Surface>
             );
           })}
         </div>

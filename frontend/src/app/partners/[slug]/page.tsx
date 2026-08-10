@@ -7,6 +7,7 @@ import Image from "next/image";
 import { usePartnersQuery, useCoursesQuery } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Progress } from "@/components/ui/Progress";
 import { Chip } from "@/components/ui/Chip";
 import { AlertTriangle, ExternalLink, BookOpen, PenTool, Globe, GraduationCap } from "lucide-react";
@@ -42,7 +43,11 @@ function PartnerPublicContent() {
 
   if (!partner) {
     return (
-      <Card variant="elevated" className="max-w-md mx-auto my-20 p-8 text-center text-foreground">
+      <Surface
+        variant="low"
+        shape="2xl"
+        className="max-w-md mx-auto my-20 p-8 text-center text-foreground"
+      >
         <AlertTriangle
           aria-hidden="true"
           className="w-16 h-16 mx-auto text-muted-foreground mb-4"
@@ -60,7 +65,7 @@ function PartnerPublicContent() {
         >
           Quay lại trang chủ
         </Button>
-      </Card>
+      </Surface>
     );
   }
 
@@ -238,7 +243,7 @@ function PartnerPublicContent() {
           <div className="space-y-6">
             {/* Signer Info Box */}
             {(partner.signerName || partner.signerTitle) && (
-              <Card variant="outlined" className="rounded-2xl p-6">
+              <Surface variant="low" shape="2xl" className="p-6">
                 <h3 className="text-sm font-bold uppercase text-muted-foreground tracking-wider mb-4">
                   Đại diện Phát hành
                 </h3>
@@ -273,12 +278,12 @@ function PartnerPublicContent() {
                     </div>
                   </div>
                 )}
-              </Card>
+              </Surface>
             )}
 
             {/* Allowed Domains Box */}
             {partner.allowedDomains && partner.allowedDomains.length > 0 && (
-              <Card variant="outlined" className="rounded-2xl p-6">
+              <Surface variant="low" shape="2xl" className="p-6">
                 <h3 className="text-sm font-bold uppercase text-muted-foreground tracking-wider mb-3">
                   Tên miền Cấp Chứng chỉ
                 </h3>
@@ -299,7 +304,7 @@ function PartnerPublicContent() {
                     </Chip>
                   ))}
                 </div>
-              </Card>
+              </Surface>
             )}
 
             {/* OpenBadges Compliance Badge */}

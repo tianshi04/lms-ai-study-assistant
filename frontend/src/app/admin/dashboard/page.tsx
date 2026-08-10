@@ -17,7 +17,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
 import { Plus, UserPlus, AlertTriangle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Table } from "@/components/ui/Table";
@@ -256,15 +256,15 @@ export default function AdminEnterpriseDashboardPage() {
 
         {/* Dynamic KPI Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card variant="elevated" className="space-y-2">
+          <Surface variant="low" shape="2xl" className="space-y-2 p-5">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Tổng Mã Enterprise
             </span>
             <div className="text-3xl font-extrabold text-primary font-mono">{seats.length}</div>
             <p className="text-xs text-muted-foreground">Giấy phép tài trợ đang lưu hành</p>
-          </Card>
+          </Surface>
 
-          <Card variant="elevated" className="space-y-2">
+          <Surface variant="low" shape="2xl" className="space-y-2 p-5">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Trạng thái Hoạt động
             </span>
@@ -272,9 +272,9 @@ export default function AdminEnterpriseDashboardPage() {
               {seats.filter((s) => s.status === "ACTIVE").length} / {seats.length}
             </div>
             <p className="text-xs text-muted-foreground">Gói doanh nghiệp đang kích hoạt</p>
-          </Card>
+          </Surface>
 
-          <Card variant="elevated" className="space-y-2">
+          <Surface variant="low" shape="2xl" className="space-y-2 p-5">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Suất học Đã kích hoạt
             </span>
@@ -282,9 +282,9 @@ export default function AdminEnterpriseDashboardPage() {
               {totalUsedSeats} / {totalCapacitySeats}
             </div>
             <p className="text-xs text-muted-foreground">Số suất học viên đã nhận tài trợ</p>
-          </Card>
+          </Surface>
 
-          <Card variant="elevated" className="space-y-2">
+          <Surface variant="low" shape="2xl" className="space-y-2 p-5">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Tỷ lệ Kích hoạt Seats
             </span>
@@ -292,11 +292,11 @@ export default function AdminEnterpriseDashboardPage() {
               {activationRate}%
             </div>
             <p className="text-xs text-muted-foreground">Hiệu suất sử dụng suất học tài trợ</p>
-          </Card>
+          </Surface>
         </div>
 
         {/* Enterprise Seat Keys Table */}
-        <Card variant="outlined" className="space-y-4">
+        <Surface variant="low" shape="2xl" className="space-y-4 p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
             <div>
               <h2 className="text-lg font-extrabold text-foreground">
@@ -364,7 +364,7 @@ export default function AdminEnterpriseDashboardPage() {
               </Table.Body>
             </Table>
           )}
-        </Card>
+        </Surface>
       </main>
 
       {/* Modal: Gán Suất học cho Học viên */}
