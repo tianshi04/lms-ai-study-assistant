@@ -437,7 +437,11 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
         aria-label={title}
         className={className}
       >
-        {captionUrl && <track kind="captions" src={captionUrl} label="Phụ đề" />}
+        <track
+          kind="captions"
+          src={captionUrl || ""}
+          label={captionUrl ? "Phụ đề" : "Không có phụ đề"}
+        />
       </video>
     );
   },
