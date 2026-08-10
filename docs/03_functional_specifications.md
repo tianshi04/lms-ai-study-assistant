@@ -161,8 +161,11 @@ flowchart TD
    * **Phân quyền Quản lý:** Tất cả các thao tác tạo/sửa/xóa Ngân hàng câu hỏi và thiết lập Ma trận đề thi bắt buộc phải thông qua kiểm tra phân quyền Giảng viên (`INSTRUCTOR`), Trợ giảng (`TA`) hoặc Quản trị viên (`ADMIN`).
    * **Timed Quiz Server-side (`StartGradedQuizSession`):** Khởi tạo phiên thi đếm ngược đồng bộ từ Server (`BR_QUIZ_003`), tự động cấp `session_seed` để phục vụ lấy mẫu đề thi và chấm điểm chuẩn xác.
 2. **Auto-Graded Lab Builder (Dành cho bài tập lập trình):**
-   * Giảng viên tải lên bộ Test Cases và File mẫu (Starter Code).
-   * Cấu hình môi trường chạy (Python, Node.js...) và giới hạn tài nguyên (Timeout, Memory Limit).
+   * **Soạn thảo Đề bài Markdown (Markdown Description Editor & Live Preview):** Giảng viên soạn thảo Mô tả bài lab, công thức, ví dụ input/output và ràng buộc bài toán theo chuẩn Markdown với giao diện Live Preview 2 cột song song.
+   * **Bộ dựng Test Case trực quan (Visual Test Case Builder):** Thêm, chỉnh sửa, xóa và chuyển đổi trạng thái Công khai / Ẩn (`Visible / Hidden`) cho từng Test Case qua giao diện form trực quan. Hỗ trợ tùy chọn chỉnh sửa cấu hình JSON thô khi cần nâng cao.
+   * **Ràng buộc & Tự động Ẩn Test Case (`BR_AUTOGRADE_001`):** Yêu cầu tối thiểu 3 Test Cases cho mỗi bài lab. Tự động chuyển 1/3 Test Case cuối thành bài kiểm tra ẩn (Hidden) nếu Giảng viên không thiết lập thủ công.
+   * **Bảo mật Học viên & Masking Log:** Che hoàn toàn thông tin Input/Output của các Test Cases ẩn trong bảng log thi hành bài nộp của Học viên.
+   * **Cấu hình Môi trường & Starter Code:** Thiết lập file mẫu ban đầu (`Starter Code`), ngôn ngữ lập trình (Python, Node.js, C++...) và giới hạn tài nguyên (Timeout 30s, Memory 512MB).
 3. **Peer-Graded Assignment Builder:**
    * Giảng viên soạn đề bài nộp dự án (yêu cầu đính kèm file, văn bản hoặc link).
    * **Bộ tiêu chí Rubric:** Giảng viên chia các tiêu chí chấm điểm chi tiết (ví dụ: Tiêu chí 1: Cấu trúc code - Max 5 điểm; Tiêu chí 2: Giao diện - Max 5 điểm) kèm hướng dẫn chi tiết cho học viên chấm chéo.
