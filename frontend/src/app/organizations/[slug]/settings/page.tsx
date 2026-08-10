@@ -12,19 +12,11 @@ import { mapConnectError } from "@/lib/connect_error_mapper";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import {
-  Settings,
-  Building2,
-  Save,
-  Loader2,
-  Globe,
-  Shield,
-  ImageIcon,
-  ShieldAlert,
-} from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
+import { Settings, Building2, Save, Globe, Shield, ImageIcon, ShieldAlert } from "lucide-react";
 
 function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -69,7 +61,11 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
             activeTab="settings"
             isOwnerOrAdmin={false}
           />
-          <Card variant="outlined" className="p-12 text-center space-y-4 max-w-xl mx-auto">
+          <Surface
+            variant="low"
+            shape="2xl"
+            className="p-12 text-center space-y-4 max-w-xl mx-auto"
+          >
             <div className="w-14 h-14 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
               <ShieldAlert className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -84,7 +80,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
             >
               Quay lại Tổng quan
             </Link>
-          </Card>
+          </Surface>
         </main>
       </div>
     );
@@ -163,7 +159,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
         />
 
         {/* Settings Form Container */}
-        <Card variant="filled" className="p-6 sm:p-8 max-w-3xl">
+        <Surface variant="container" shape="2xl" className="p-6 sm:p-8 max-w-3xl">
           <div className="flex items-center space-x-3 pb-6 border-b border-border">
             <Settings className="w-6 h-6 text-primary" aria-hidden="true" />
             <div>
@@ -177,7 +173,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
 
           {isLoading ? (
             <div className="py-12 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
-              <Loader2 className="w-7 h-7 text-primary animate-spin" aria-hidden="true" />
+              <Progress.Circular size="md" />
               <p className="text-sm">Đang tải thông tin cài đặt...</p>
             </div>
           ) : (
@@ -342,7 +338,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
               </div>
             </form>
           )}
-        </Card>
+        </Surface>
       </main>
     </div>
   );
@@ -353,7 +349,7 @@ export default function OrgSettingsPage({ params }: { params: Promise<{ slug: st
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
+          <Progress.Circular size="sm" />
           <span className="text-sm">Đang tải cài đặt tổ chức...</span>
         </div>
       }

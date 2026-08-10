@@ -7,7 +7,8 @@ import { useGetInvitationByTokenQuery, useRespondToInvitationMutation } from "@/
 import { InvitationAction, InvitationStatus, InvitationType } from "@/gen/identity/v1/identity_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Button } from "@/components/ui/Button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
+import { Progress } from "@/components/ui/Progress";
 import {
   Mail,
   CheckCircle2,
@@ -16,7 +17,6 @@ import {
   Building2,
   BookOpen,
   Award,
-  Loader2,
   ArrowRight,
 } from "lucide-react";
 
@@ -94,26 +94,23 @@ function AcceptInvitationContent() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4">
-      <Card
-        variant="elevated"
-        className="max-w-md w-full rounded-2xl p-6 text-foreground space-y-6"
-      >
-        <CardHeader className="flex flex-col items-center text-center space-y-2 p-0">
+      <Surface variant="low" shape="2xl" className="max-w-md w-full p-6 text-foreground space-y-6">
+        <Surface.Header className="flex flex-col items-center text-center space-y-2 p-0">
           <div className="p-3 rounded-full bg-primary/10 mb-2">
             <Mail className="w-8 h-8 text-primary" aria-hidden="true" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight text-on-surface">
+          <Surface.Title className="text-2xl font-bold tracking-tight text-on-surface">
             Lời mời tham gia
-          </CardTitle>
-          <CardDescription className="text-sm text-on-surface-variant">
+          </Surface.Title>
+          <Surface.Description className="text-sm text-on-surface-variant">
             Hệ thống đào tạo trực tuyến LMS
-          </CardDescription>
-        </CardHeader>
+          </Surface.Description>
+        </Surface.Header>
 
-        <CardContent className="p-0 space-y-6">
+        <Surface.Content className="p-0 space-y-6">
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-8 space-y-3">
-              <Loader2 className="w-8 h-8 text-primary animate-spin" aria-hidden="true" />
+              <Progress.Circular size="md" />
               <p className="text-sm text-muted-foreground">Đang tải thông tin lời mời...</p>
             </div>
           )}
@@ -238,8 +235,8 @@ function AcceptInvitationContent() {
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </Surface.Content>
+      </Surface>
     </div>
   );
 }
@@ -249,7 +246,7 @@ export default function AcceptInvitationPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 text-muted-foreground">
-          <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" aria-hidden="true" />
+          <Progress.Circular size="md" className="mb-2" />
           <p className="text-sm">Đang tải thông tin lời mời...</p>
         </div>
       }

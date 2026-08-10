@@ -15,16 +15,9 @@ import { InvitationType, InvitationStatus } from "@/gen/identity/v1/identity_pb"
 import { CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
 import { Card } from "@/components/ui/Card";
-import {
-  Users,
-  Mail,
-  BookOpen,
-  UserPlus,
-  Settings,
-  ArrowRight,
-  BadgeCheck,
-  Loader2,
-} from "lucide-react";
+import { Surface } from "@/components/ui/Surface";
+import { Users, Mail, BookOpen, UserPlus, Settings, ArrowRight, BadgeCheck } from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
 
 function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -71,9 +64,10 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
 
         {/* Dynamic KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card
-            variant="elevated"
-            className="flex items-center gap-5 hover:border-primary/40 transition-colors"
+          <Surface
+            variant="low"
+            shape="2xl"
+            className="flex items-center gap-5 hover:border-primary/40 transition-colors p-5"
           >
             <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Users className="w-7 h-7" aria-hidden="true" />
@@ -84,11 +78,12 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
               </p>
               <p className="text-3xl font-black text-foreground font-mono">{members.length}</p>
             </div>
-          </Card>
+          </Surface>
 
-          <Card
-            variant="elevated"
-            className="flex items-center gap-5 hover:border-primary/40 transition-colors"
+          <Surface
+            variant="low"
+            shape="2xl"
+            className="flex items-center gap-5 hover:border-primary/40 transition-colors p-5"
           >
             <div className="w-14 h-14 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
               <Mail className="w-7 h-7" aria-hidden="true" />
@@ -101,11 +96,12 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
                 {pendingInvitations.length}
               </p>
             </div>
-          </Card>
+          </Surface>
 
-          <Card
-            variant="elevated"
-            className="flex items-center gap-5 hover:border-primary/40 transition-colors"
+          <Surface
+            variant="low"
+            shape="2xl"
+            className="flex items-center gap-5 hover:border-primary/40 transition-colors p-5"
           >
             <div className="w-14 h-14 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0">
               <BadgeCheck className="w-7 h-7" aria-hidden="true" />
@@ -118,11 +114,12 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
                 {publishedCourses.length}
               </p>
             </div>
-          </Card>
+          </Surface>
 
-          <Card
-            variant="elevated"
-            className="flex items-center gap-5 hover:border-primary/40 transition-colors"
+          <Surface
+            variant="low"
+            shape="2xl"
+            className="flex items-center gap-5 hover:border-primary/40 transition-colors p-5"
           >
             <div className="w-14 h-14 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
               <BookOpen className="w-7 h-7" aria-hidden="true" />
@@ -131,9 +128,9 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Tổng Khóa học Org
               </p>
-              <p className="text-3xl font-black text-foreground font-mono">{orgCourses.length}</p>
+              <p className="text-3xl font-black text-info font-mono">{orgCourses.length}</p>
             </div>
-          </Card>
+          </Surface>
         </div>
 
         {/* Quick Action Navigation Grid */}
@@ -207,7 +204,7 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
         </div>
 
         {/* Recent Members Preview */}
-        <Card variant="outlined" className="p-6 sm:p-8 space-y-6">
+        <Surface variant="low" shape="2xl" className="p-6 sm:p-8 space-y-6">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -254,7 +251,7 @@ function OrgManageContent({ params }: { params: Promise<{ slug: string }> }) {
               </div>
             ))}
           </div>
-        </Card>
+        </Surface>
       </main>
     </div>
   );
@@ -265,7 +262,7 @@ export default function OrgManagePage({ params }: { params: Promise<{ slug: stri
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
+          <Progress.Circular size="sm" />
           <span className="text-sm">Đang tải bảng điều khiển...</span>
         </div>
       }

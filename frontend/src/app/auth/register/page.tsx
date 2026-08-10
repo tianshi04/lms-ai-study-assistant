@@ -14,14 +14,8 @@ import { User, Lock, Eye, EyeOff, Users, CheckCircle2, ShieldCheck, ArrowLeft } 
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Surface } from "@/components/ui/Surface";
+import { Select } from "@/components/ui/Select";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -44,6 +38,15 @@ export default function RegisterPage() {
       role: UserRole.LEARNER,
     },
     onSubmit: async ({ value }) => {
+      if (
+        value.password.length < 6 ||
+        !/[A-Z]/.test(value.password) ||
+        !/[0-9]/.test(value.password)
+      ) {
+        toast.error("Mật khẩu chưa đạt yêu cầu bảo mật.");
+        return;
+      }
+
       if (value.password !== value.confirmPassword) {
         toast.error("Mật khẩu xác nhận không khớp.");
         return;
@@ -111,10 +114,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="flex-1 flex items-center justify-center px-4 py-12">
+    <main className="flex-1 flex items-center justify-center px-4 py-12 bg-surface text-on-surface">
       <div className="w-full max-w-md">
-        <Card variant="elevated" className="rounded-3xl p-8">
-          <CardHeader className="text-center p-0 mb-8 space-y-2">
+        <Surface variant="bright" shape="3xl" padding="lg" className="shadow-xl">
+          <Surface.Header className="text-center p-0 mb-8 space-y-2">
             <Link
               href="/"
               prefetch={true}
@@ -156,17 +159,17 @@ export default function RegisterPage() {
               </span>
             </div>
 
-            <CardTitle className="text-2xl font-bold text-on-surface text-balance">
+            <Surface.Title className="text-2xl font-bold text-on-surface text-balance">
               {step === 1 ? "Đăng ký tài khoản" : "Tạo Mật khẩu Dự phòng"}
-            </CardTitle>
-            <CardDescription className="text-sm text-on-surface-variant">
+            </Surface.Title>
+            <Surface.Description className="text-sm text-on-surface-variant">
               {step === 1
                 ? "Xác minh email qua Google để bắt đầu đăng ký"
                 : "Thiết lập mật khẩu để đảm bảo luôn đăng nhập được"}
-            </CardDescription>
-          </CardHeader>
+            </Surface.Description>
+          </Surface.Header>
 
-          <CardContent className="p-0">
+          <Surface.Content className="p-0">
             {step === 1 ? (
               /* STEP 1: GOOGLE VERIFICATION */
               <div className="space-y-6">
@@ -403,23 +406,23 @@ export default function RegisterPage() {
                             if (val) field.handleChange(Number(val) as UserRole);
                           }}
                         >
-                          <SelectTrigger className="pl-10">
-                            <SelectValue placeholder="Chọn vai trò">
+                          <Select.Trigger className="pl-10">
+                            <Select.Value placeholder="Chọn vai trò">
                               {field.state.value === UserRole.LEARNER
                                 ? "Học viên (Learner)"
                                 : field.state.value === UserRole.INSTRUCTOR
                                   ? "Giảng viên (Instructor)"
                                   : ""}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value={String(UserRole.LEARNER)}>
+                            </Select.Value>
+                          </Select.Trigger>
+                          <Select.Content>
+                            <Select.Item value={String(UserRole.LEARNER)}>
                               Học viên (Learner)
-                            </SelectItem>
-                            <SelectItem value={String(UserRole.INSTRUCTOR)}>
+                            </Select.Item>
+                            <Select.Item value={String(UserRole.INSTRUCTOR)}>
                               Giảng viên (Instructor)
-                            </SelectItem>
-                          </SelectContent>
+                            </Select.Item>
+                          </Select.Content>
                         </Select>
                       </div>
                     </div>
@@ -441,8 +444,8 @@ export default function RegisterPage() {
                 </form.Subscribe>
               </form>
             )}
-          </CardContent>
-        </Card>
+          </Surface.Content>
+        </Surface>
       </div>
     </main>
   );

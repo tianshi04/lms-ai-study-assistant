@@ -5,25 +5,11 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, type InstructorAnalytics } from "@/gen/catalog/v1/catalog_pb";
 import { Users } from "lucide-react";
-import { Card } from "@/components/ui/Card";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/Table";
-import { ProgressBar } from "@/components/ui/Progress";
+import { Surface } from "@/components/ui/Surface";
+import { Table } from "@/components/ui/Table";
+import { Progress } from "@/components/ui/Progress";
 
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/Breadcrumb";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: string }> }) {
   const resolvedParams = use(params);
@@ -55,21 +41,21 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
         {/* Breadcrumb */}
         <div className="flex items-center justify-between">
           <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/instructor/courses">Giảng viên</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbLink href={`/instructor/courses/${courseId}`}>
+            <Breadcrumb.List className="text-xs">
+              <Breadcrumb.Item>
+                <Breadcrumb.Link href="/instructor/courses">Giảng viên</Breadcrumb.Link>
+              </Breadcrumb.Item>
+              <Breadcrumb.Separator />
+              <Breadcrumb.Item>
+                <Breadcrumb.Link href={`/instructor/courses/${courseId}`}>
                   Chi tiết khóa học
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Thống kê lớp học</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
+                </Breadcrumb.Link>
+              </Breadcrumb.Item>
+              <Breadcrumb.Separator />
+              <Breadcrumb.Item>
+                <Breadcrumb.Page>Thống kê lớp học</Breadcrumb.Page>
+              </Breadcrumb.Item>
+            </Breadcrumb.List>
           </Breadcrumb>
 
           <Link
@@ -97,19 +83,23 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
         </div>
 
         {loading ? (
-          <div className="py-20 text-center text-muted-foreground">
-            <div className="w-8 h-8 border-4 border-success border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="py-20 text-center text-muted-foreground flex flex-col items-center justify-center">
+            <Progress.Circular color="success" size="md" className="mx-auto mb-3" />
             <span aria-live="polite">Đang tổng hợp dữ liệu học tập…</span>
           </div>
         ) : !analytics ? (
-          <Card variant="outlined" className="py-12 text-center text-muted-foreground">
+          <Surface
+            variant="low"
+            shape="2xl"
+            className="py-12 text-center text-muted-foreground p-6"
+          >
             Không tìm thấy dữ liệu thống kê cho khóa học này.
-          </Card>
+          </Surface>
         ) : (
           <div className="space-y-8">
             {/* Stat Cards Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card variant="elevated" className="space-y-2">
+              <Surface variant="low" shape="2xl" className="space-y-2 p-5">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Tổng Học Viên
                 </span>
@@ -117,9 +107,9 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                   {analytics.totalEnrolledStudents}
                 </div>
                 <p className="text-xs text-muted-foreground">Học viên đã ghi danh</p>
-              </Card>
+              </Surface>
 
-              <Card variant="elevated" className="space-y-2">
+              <Surface variant="low" shape="2xl" className="space-y-2 p-5">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Tỷ Lệ Hoàn Thành
                 </span>
@@ -127,9 +117,9 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                   {analytics.averageCompletionRate}%
                 </div>
                 <p className="text-xs text-muted-foreground">Tiến độ hoàn thành trung bình</p>
-              </Card>
+              </Surface>
 
-              <Card variant="elevated" className="space-y-2">
+              <Surface variant="low" shape="2xl" className="space-y-2 p-5">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Đánh Giá Trung Bình
                 </span>
@@ -140,19 +130,19 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                 <p className="text-xs text-muted-foreground">
                   Dựa trên {analytics.reviewCount} nhận xét
                 </p>
-              </Card>
+              </Surface>
 
-              <Card variant="elevated" className="space-y-2">
+              <Surface variant="low" shape="2xl" className="space-y-2 p-5">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Trạng Thái Khóa Học
                 </span>
                 <div className="text-xl font-bold text-primary pt-1">Đang hoạt động</div>
                 <p className="text-xs text-muted-foreground">Mở ghi danh công khai</p>
-              </Card>
+              </Surface>
             </div>
 
             {/* Enrolled Students Table */}
-            <Card variant="outlined" className="space-y-4">
+            <Surface variant="low" shape="2xl" className="space-y-4 p-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
                   <Users className="w-5 h-5 text-success" aria-hidden="true" />
@@ -166,40 +156,37 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                 </div>
               ) : (
                 <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Tên / Email</TableHead>
-                      <TableHead>Mã Học Viên</TableHead>
-                      <TableHead className="text-center">Tiến Độ Học Tập</TableHead>
-                      <TableHead className="text-right">Trạng Thái</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.Head>Tên / Email</Table.Head>
+                      <Table.Head>Mã Học Viên</Table.Head>
+                      <Table.Head className="text-center">Tiến Độ Học Tập</Table.Head>
+                      <Table.Head className="text-right">Trạng Thái</Table.Head>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
                     {analytics.students.map((student) => (
-                      <TableRow key={student.userId}>
-                        <TableCell className="font-semibold">
+                      <Table.Row key={student.userId}>
+                        <Table.Cell className="font-semibold">
                           <div>{student.userName}</div>
                           <div className="text-xs font-mono font-normal text-muted-foreground">
                             {student.userEmail || "Learner"}
                           </div>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs text-muted-foreground">
+                        </Table.Cell>
+                        <Table.Cell className="font-mono text-xs text-muted-foreground">
                           {student.userId}
-                        </TableCell>
-                        <TableCell className="text-center">
+                        </Table.Cell>
+                        <Table.Cell className="text-center">
                           <div className="flex items-center justify-center gap-3">
                             <div className="w-32">
-                              <ProgressBar
-                                progress={Math.min(100, student.progressPercent)}
-                                color="emerald"
-                              />
+                              <Progress.Linear value={Math.min(100, student.progressPercent)} />
                             </div>
                             <span className="text-xs font-bold text-foreground font-mono">
                               {student.progressPercent.toFixed(1)}%
                             </span>
                           </div>
-                        </TableCell>
-                        <TableCell className="text-right">
+                        </Table.Cell>
+                        <Table.Cell className="text-right">
                           {student.progressPercent >= 100 ? (
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-success/10 text-success">
                               HOÀN THÀNH
@@ -213,13 +200,13 @@ function InstructorAnalyticsContent({ params }: { params: Promise<{ courseId: st
                               MỚI GHI DANH
                             </span>
                           )}
-                        </TableCell>
-                      </TableRow>
+                        </Table.Cell>
+                      </Table.Row>
                     ))}
-                  </TableBody>
+                  </Table.Body>
                 </Table>
               )}
-            </Card>
+            </Surface>
           </div>
         )}
       </main>

@@ -79,7 +79,7 @@ export function WeekModuleCard({
       } p-6 shadow-sm space-y-4 transition-shadow`}
     >
       {/* Week Module Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             {isInstructorOrAdmin && (
@@ -150,10 +150,7 @@ export function WeekModuleCard({
           </p>
         </div>
       ) : (
-        <div
-          data-lessons-container
-          className="space-y-4 pl-2 sm:pl-4 border-l-2 border-border relative"
-        >
+        <div data-lessons-container className="space-y-4 relative">
           {week.lessons.map((lesson, lIdx) => (
             <LessonCard
               key={lesson.id}

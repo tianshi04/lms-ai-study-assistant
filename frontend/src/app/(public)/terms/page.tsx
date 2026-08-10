@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import {
   FileText,
   UserCheck,
@@ -16,14 +16,7 @@ import {
   Sparkles,
   FileCheck,
 } from "lucide-react";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/Breadcrumb";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 interface Section {
   id: string;
@@ -84,21 +77,23 @@ export default function TermsOfServicePage() {
       <div className="max-w-6xl mx-auto space-y-10">
         {/* Breadcrumb Navigation */}
         <Breadcrumb>
-          <BreadcrumbList className="text-xs">
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/">Trang chủ</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Điều khoản Dịch vụ</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
+          <Breadcrumb.List className="text-xs">
+            <Breadcrumb.Item>
+              <Breadcrumb.Link href="/">Trang chủ</Breadcrumb.Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Separator />
+            <Breadcrumb.Item>
+              <Breadcrumb.Page>Điều khoản Dịch vụ</Breadcrumb.Page>
+            </Breadcrumb.Item>
+          </Breadcrumb.List>
         </Breadcrumb>
 
         {/* Hero Section */}
-        <Card
-          variant="outlined"
-          className="rounded-3xl p-8 sm:p-12 relative overflow-hidden text-center sm:text-left"
+        <Surface
+          variant="low"
+          shape="3xl"
+          padding="lg"
+          className="relative overflow-hidden text-center sm:text-left"
         >
           <div className="absolute top-0 right-0 -mt-16 -mr-16 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 space-y-4 max-w-3xl">
@@ -127,16 +122,16 @@ export default function TermsOfServicePage() {
               </span>
             </div>
           </div>
-        </Card>
+        </Surface>
 
         {/* Main Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           {/* Sticky Table of Contents Sidebar */}
-          <Card
-            variant="outlined"
-            render={
-              <aside className="lg:col-span-1 rounded-3xl p-5 lg:sticky lg:top-24 space-y-3" />
-            }
+          <Surface
+            variant="low"
+            shape="3xl"
+            padding="sm"
+            className="lg:col-span-1 p-5 lg:sticky lg:top-24 space-y-3"
           >
             <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2">
               Mục lục điều khoản
@@ -163,7 +158,7 @@ export default function TermsOfServicePage() {
                 );
               })}
             </nav>
-          </Card>
+          </Surface>
 
           {/* Policy Content Sections */}
           <main className="lg:col-span-3 space-y-8">

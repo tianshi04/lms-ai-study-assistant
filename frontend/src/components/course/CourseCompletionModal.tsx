@@ -6,12 +6,26 @@ import { Dialog } from "@/components/ui/Dialog";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CertificateService } from "@/gen/certificate/v1/certificate_pb";
+import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useCourseDetailQuery } from "@/lib/query_hooks";
-import { Trophy, AlertTriangle, CheckCircle2, Check, Pencil, Star } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
+import Link from "next/link";
+import {
+  Trophy,
+  AlertTriangle,
+  CheckCircle2,
+  Check,
+  Pencil,
+  Star,
+  ShieldCheck,
+  ShieldAlert,
+  ExternalLink,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
+import { Progress } from "@/components/ui/Progress";
 
 export interface CourseCompletionModalProps {
   isOpen: boolean;
@@ -28,6 +42,7 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
   courseTitle,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const toast = useToast();
 
   const [rating, setRating] = useState<number>(5);
   const [hoverRating, setHoverRating] = useState<number>(0);
@@ -110,33 +125,72 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
   }, [isOpen]);
 
   // Fetch verified certificate dynamically
-  useEffect(() => {
-    if (!isOpen || !courseId) return;
-
-    async function fetchCert() {
-      setLoadingCert(true);
-      setCertError(null);
-      try {
-        const client = getRpcClient(CertificateService);
-        const res = await client.getVerifiedCertificate({ courseId });
-        if (res.certificate?.certificateId) {
-          setRealCertId(res.certificate.certificateId);
-        } else {
-          setCertError("Không thể tải thông tin chứng chỉ");
-        }
-      } catch (err: unknown) {
-        console.error("Failed to load certificate in modal:", err);
-        const msg = err instanceof Error ? err.message : "Không thể tải thông tin chứng chỉ";
-        setCertError(msg);
-      } finally {
-        setLoadingCert(false);
+  const fetchCert = React.useCallback(async () => {
+    if (!courseId) return;
+    setLoadingCert(true);
+    setCertError(null);
+    try {
+      const client = getRpcClient(CertificateService);
+      const res = await client.getVerifiedCertificate({ courseId });
+      if (res.certificate?.certificateId) {
+        setRealCertId(res.certificate.certificateId);
+      } else {
+        setCertError("Không thể tải thông tin chứng chỉ");
       }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Không thể tải thông tin chứng chỉ";
+      if (
+        !msg.includes("BR_CERT_003") &&
+        !msg.includes("KYC") &&
+        !msg.includes("Xác minh Danh tính")
+      ) {
+        console.error("Failed to load certificate in modal:", err);
+      }
+      setCertError(msg);
+    } finally {
+      setLoadingCert(false);
     }
-    fetchCert();
-  }, [isOpen, courseId]);
+  }, [courseId]);
+
+  useEffect(() => {
+    if (isOpen && courseId) {
+      fetchCert();
+    }
+  }, [isOpen, courseId, fetchCert]);
+
+  const isKycError = Boolean(
+    certError &&
+    (certError.includes("KYC") ||
+      certError.includes("Xác minh Danh tính") ||
+      certError.includes("BR_CERT_003")),
+  );
 
   const { userId: authUserId, userName } = useAuth();
   const { data: course } = useCourseDetailQuery(courseId);
+  const [verifyingKyc, setVerifyingKyc] = useState<boolean>(false);
+
+  const handleQuickKycVerify = async () => {
+    if (!authUserId) return;
+    setVerifyingKyc(true);
+    try {
+      const client = getRpcClient(IdentityService);
+      const res = await client.verifyIdentity({
+        userId: authUserId,
+        idCardNumber: "012345678999",
+      });
+      if (res.success) {
+        toast.success("Xác minh danh tính KYC thành công!");
+        await fetchCert();
+      } else {
+        toast.error(res.message || "Xác minh thất bại.");
+      }
+    } catch (err: unknown) {
+      console.error("Failed to verify KYC in modal:", err);
+      toast.error("Lỗi khi xác minh danh tính.");
+    } finally {
+      setVerifyingKyc(false);
+    }
+  };
 
   const isOwnCourse = !!(
     course &&
@@ -227,16 +281,66 @@ export const CourseCompletionModal: React.FC<CourseCompletionModalProps> = ({
 
           {loadingCert ? (
             <div className="relative z-20 mt-5 mx-auto inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary-foreground/15 text-primary-foreground text-xs font-semibold backdrop-blur-sm border border-primary-foreground/10">
-              <div className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+              <Progress.Circular
+                size="sm"
+                className="w-3.5 h-3.5"
+                color="warning"
+                ariaLabel="Đang tải chứng chỉ"
+              />
               <span aria-live="polite">{"Đang tải…"}</span>
             </div>
           ) : certError ? (
-            <div className="relative z-20 mt-5 mx-auto max-w-sm p-3.5 rounded-xl bg-destructive/20 border border-destructive/30 text-primary-foreground text-xs text-left backdrop-blur-sm">
-              <span className="font-bold flex items-center gap-1.5 mb-1 text-destructive-foreground">
-                <AlertTriangle className="w-4 h-4 text-destructive-foreground" aria-hidden="true" />
-                <span>{"Không thể Xác minh Chứng chỉ"}</span>
-              </span>
-              <span className="opacity-90 leading-relaxed block">{certError}</span>
+            <div className="relative z-20 mt-5 mx-auto max-w-sm p-4 rounded-xl bg-destructive/20 border border-destructive/30 text-primary-foreground text-xs text-left backdrop-blur-sm space-y-3">
+              <div className="flex items-start gap-2.5">
+                {isKycError ? (
+                  <ShieldAlert
+                    className="w-5 h-5 text-amber-300 shrink-0 mt-0.5"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <AlertTriangle
+                    className="w-4 h-4 text-destructive-foreground shrink-0 mt-0.5"
+                    aria-hidden="true"
+                  />
+                )}
+                <div>
+                  <span className="font-bold block mb-1 text-sm text-primary-foreground">
+                    {isKycError
+                      ? "Yêu cầu Xác minh Danh tính (KYC/CCCD)"
+                      : "Không thể Xác minh Chứng chỉ"}
+                  </span>
+                  <span className="opacity-90 leading-relaxed block text-xs">{certError}</span>
+                </div>
+              </div>
+
+              {isKycError && (
+                <div className="pt-2 flex flex-col gap-2">
+                  <Button
+                    type="button"
+                    onClick={handleQuickKycVerify}
+                    disabled={verifyingKyc}
+                    size="sm"
+                    className="w-full bg-warning hover:bg-warning-hover text-warning-foreground font-bold shadow-md flex items-center justify-center gap-1.5"
+                  >
+                    <ShieldCheck className="w-4 h-4" aria-hidden="true" />
+                    <span>
+                      {verifyingKyc ? "Đang xác minh KYC…" : "Xác minh KYC Nhanh (Giả lập CCCD)"}
+                    </span>
+                  </Button>
+
+                  <Link href="/account-settings" target="_blank" className="w-full">
+                    <Button
+                      type="button"
+                      variant="text"
+                      size="sm"
+                      className="w-full text-xs text-primary-foreground hover:bg-primary-foreground/10 flex items-center justify-center gap-1"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 opacity-80" aria-hidden="true" />
+                      <span>{"Mở trang Cài đặt tài khoản (/account-settings)"}</span>
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           ) : (
             <Button

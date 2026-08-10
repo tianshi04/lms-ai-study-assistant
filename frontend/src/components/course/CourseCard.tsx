@@ -4,34 +4,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { User, BookOpen, ArrowRight, Building2 } from "lucide-react";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
-import { getRpcClient } from "@/lib/connect_client";
-
-import { useQueryClient } from "@tanstack/react-query";
-import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 
 import { Card } from "@/components/ui/Card";
 import { Chip } from "@/components/ui/Chip";
+import { Progress } from "@/components/ui/Progress";
 
-export function CourseCard({ course }: { course: Course }) {
+export function CourseCard({ course, progress }: { course: Course; progress?: number }) {
   const [imgError, setImgError] = useState(false);
-
-  const queryClient = useQueryClient();
-
-  const handlePrefetch = () => {
-    queryClient.prefetchQuery({
-      queryKey: ["courseDetail", course.id],
-      queryFn: async () => {
-        const client = getRpcClient(CatalogService);
-        const res = await client.getCourseDetail({ idOrSlug: course.id });
-        return res.course ?? null;
-      },
-    });
-  };
 
   return (
     <Card
       variant="outlined"
-      onMouseEnter={handlePrefetch}
       className="group relative hover:z-10 rounded-3xl p-6 flex flex-col justify-between"
     >
       <div>
@@ -69,6 +52,12 @@ export function CourseCard({ course }: { course: Course }) {
         <p className="text-sm text-on-surface-variant mb-6 min-w-0 line-clamp-3 leading-relaxed">
           {course.description}
         </p>
+
+        {progress !== undefined && progress !== null && (
+          <div className="mb-4">
+            <Progress.Linear value={progress} showLabel label="Tiến độ học tập" />
+          </div>
+        )}
       </div>
 
       <div>
@@ -87,6 +76,7 @@ export function CourseCard({ course }: { course: Course }) {
         {/* Action Link */}
         <Link
           href={`/courses/${course.id}`}
+          prefetch={true}
           transitionTypes={["nav-forward"]}
           className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 rounded-full bg-primary hover:bg-primary-hover text-on-primary text-sm font-bold transition-colors shadow-xs hover:shadow-md"
         >

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Bell, CheckCheck, Settings, ArrowRight, Loader2 } from "lucide-react";
+import { Bell, CheckCheck, Settings, ArrowRight } from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
 import {
   useNotificationsQuery,
   useUnreadCountQuery,
@@ -11,7 +12,7 @@ import {
 } from "@/lib/query_hooks";
 import { NotificationItem } from "./NotificationItem";
 import { NotificationPreferencesModal } from "./NotificationPreferencesModal";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/Popover";
+import { Popover } from "@/components/ui/Popover";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Badge } from "@/components/ui/Badge";
@@ -22,6 +23,7 @@ export function NotificationBell() {
 
   const { data: unreadCount = 0 } = useUnreadCountQuery();
   const { data, isLoading } = useNotificationsQuery(undefined, false, 5);
+
   const markAsReadMutation = useMarkAsReadMutation();
   const markAllAsReadMutation = useMarkAllAsReadMutation();
 
@@ -38,7 +40,7 @@ export function NotificationBell() {
   return (
     <>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger
+        <Popover.Trigger
           type="button"
           className="relative p-2 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/60 transition-colors duration-m3-short-4 ease-m3-emphasized focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
           aria-label={`Thông báo (${unreadCount} chưa đọc)`}
@@ -52,9 +54,9 @@ export function NotificationBell() {
               {unreadCount > 99 ? "99+" : unreadCount}
             </Badge>
           )}
-        </PopoverTrigger>
+        </Popover.Trigger>
 
-        <PopoverContent align="end" sideOffset={12}>
+        <Popover.Content align="end" sideOffset={12}>
           {/* Crisp MD3 Popover Header */}
           <div className="p-4 border-b border-outline-variant/40 flex items-center justify-between bg-surface-container-lowest">
             <div className="flex items-center gap-2">
@@ -101,7 +103,7 @@ export function NotificationBell() {
           <div className="max-h-[380px] overflow-y-auto scrollbar-none p-3 space-y-2 bg-surface-container-lowest">
             {isLoading ? (
               <div className="py-10 flex justify-center items-center text-on-surface-variant">
-                <Loader2 className="w-6 h-6 animate-spin" aria-hidden="true" />
+                <Progress.Circular size="md" ariaLabel="Đang tải thông báo" />
               </div>
             ) : notifications.length === 0 ? (
               <div className="py-10 text-center px-4">
@@ -135,7 +137,7 @@ export function NotificationBell() {
               </Link>
             </Button>
           </div>
-        </PopoverContent>
+        </Popover.Content>
       </Popover>
 
       {/* Preferences Modal */}

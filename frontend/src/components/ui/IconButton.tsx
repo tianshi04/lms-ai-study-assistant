@@ -178,6 +178,7 @@ export function IconButton({
       ref={ref}
       className={compClasses}
       disabled={disabled}
+      nativeButton={props.render ? false : undefined}
       aria-pressed={isToggle ? selected : undefined}
       {...props}
     >

@@ -136,6 +136,7 @@ export function Button({
       ref={ref}
       className={compClasses}
       disabled={disabled}
+      nativeButton={props.render ? false : undefined}
       aria-pressed={isToggle ? selected : undefined}
       {...props}
     >

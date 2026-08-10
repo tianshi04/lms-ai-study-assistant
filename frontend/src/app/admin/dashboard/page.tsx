@@ -11,29 +11,17 @@ import {
 import { getRpcClient } from "@/lib/connect_client";
 import { IdentityService, type EnterpriseSeat } from "@/gen/identity/v1/identity_pb";
 import { Dialog } from "@/components/ui/Dialog";
+import { Progress } from "@/components/ui/Progress";
 
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useEnterpriseSeatsQuery } from "@/lib/query_hooks";
 import { Plus, UserPlus, AlertTriangle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/Table";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Table } from "@/components/ui/Table";
+import { Select } from "@/components/ui/Select";
 
 const columnHelper = createColumnHelper<EnterpriseSeat>();
 
@@ -169,7 +157,7 @@ export default function AdminEnterpriseDashboardPage() {
     return (
       <div className="flex-1 flex items-center justify-center py-24">
         <div className="flex items-center gap-3 text-muted-foreground">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <Progress.Circular size="md" />
           <span aria-live="polite" className="text-sm font-medium">
             Đang tải bảng điều khiển Enterprise Admin…
           </span>
@@ -268,15 +256,15 @@ export default function AdminEnterpriseDashboardPage() {
 
         {/* Dynamic KPI Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card variant="elevated" className="space-y-2">
+          <Surface variant="low" shape="2xl" className="space-y-2 p-5">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Tổng Mã Enterprise
             </span>
             <div className="text-3xl font-extrabold text-primary font-mono">{seats.length}</div>
             <p className="text-xs text-muted-foreground">Giấy phép tài trợ đang lưu hành</p>
-          </Card>
+          </Surface>
 
-          <Card variant="elevated" className="space-y-2">
+          <Surface variant="low" shape="2xl" className="space-y-2 p-5">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Trạng thái Hoạt động
             </span>
@@ -284,9 +272,9 @@ export default function AdminEnterpriseDashboardPage() {
               {seats.filter((s) => s.status === "ACTIVE").length} / {seats.length}
             </div>
             <p className="text-xs text-muted-foreground">Gói doanh nghiệp đang kích hoạt</p>
-          </Card>
+          </Surface>
 
-          <Card variant="elevated" className="space-y-2">
+          <Surface variant="low" shape="2xl" className="space-y-2 p-5">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Suất học Đã kích hoạt
             </span>
@@ -294,9 +282,9 @@ export default function AdminEnterpriseDashboardPage() {
               {totalUsedSeats} / {totalCapacitySeats}
             </div>
             <p className="text-xs text-muted-foreground">Số suất học viên đã nhận tài trợ</p>
-          </Card>
+          </Surface>
 
-          <Card variant="elevated" className="space-y-2">
+          <Surface variant="low" shape="2xl" className="space-y-2 p-5">
             <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Tỷ lệ Kích hoạt Seats
             </span>
@@ -304,11 +292,11 @@ export default function AdminEnterpriseDashboardPage() {
               {activationRate}%
             </div>
             <p className="text-xs text-muted-foreground">Hiệu suất sử dụng suất học tài trợ</p>
-          </Card>
+          </Surface>
         </div>
 
         {/* Enterprise Seat Keys Table */}
-        <Card variant="outlined" className="space-y-4">
+        <Surface variant="low" shape="2xl" className="space-y-4 p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
             <div>
               <h2 className="text-lg font-extrabold text-foreground">
@@ -330,34 +318,36 @@ export default function AdminEnterpriseDashboardPage() {
             </div>
           ) : (
             <Table>
-              <TableHeader>
+              <Table.Header>
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
+                  <Table.Row key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
+                      <Table.Head key={header.id}>
                         {header.isPlaceholder
                           ? null
                           : flexRender(header.column.columnDef.header, header.getContext())}
-                      </TableHead>
+                      </Table.Head>
                     ))}
-                    <TableHead className="text-right">Thao tác</TableHead>
-                  </TableRow>
+                    <Table.Head className="text-right">Thao tác</Table.Head>
+                  </Table.Row>
                 ))}
-              </TableHeader>
-              <TableBody>
+              </Table.Header>
+              <Table.Body>
                 {seats.map((seat) => (
-                  <TableRow key={seat.id}>
-                    <TableCell className="font-bold">{seat.partnerName}</TableCell>
-                    <TableCell className="font-mono font-bold text-primary">
+                  <Table.Row key={seat.id}>
+                    <Table.Cell className="font-bold">{seat.partnerName}</Table.Cell>
+                    <Table.Cell className="font-mono font-bold text-primary">
                       {seat.seatKey}
-                    </TableCell>
-                    <TableCell className="font-mono font-semibold">{seat.assignedUserId}</TableCell>
-                    <TableCell>
+                    </Table.Cell>
+                    <Table.Cell className="font-mono font-semibold">
+                      {seat.assignedUserId}
+                    </Table.Cell>
+                    <Table.Cell>
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-success/10 text-success border border-success/20">
                         {seat.status}
                       </span>
-                    </TableCell>
-                    <TableCell className="text-right">
+                    </Table.Cell>
+                    <Table.Cell className="text-right">
                       <Button
                         size="sm"
                         variant="outlined"
@@ -368,13 +358,13 @@ export default function AdminEnterpriseDashboardPage() {
                       >
                         Gán học viên
                       </Button>
-                    </TableCell>
-                  </TableRow>
+                    </Table.Cell>
+                  </Table.Row>
                 ))}
-              </TableBody>
+              </Table.Body>
             </Table>
           )}
-        </Card>
+        </Surface>
       </main>
 
       {/* Modal: Gán Suất học cho Học viên */}
@@ -407,25 +397,25 @@ export default function AdminEnterpriseDashboardPage() {
                   if (val) setSelectedSeatKey(val as string);
                 }}
               >
-                <SelectTrigger
+                <Select.Trigger
                   id="selectedSeatKey"
                   aria-label="Chọn Mã Enterprise Key"
                   className="w-full font-mono font-semibold"
                 >
-                  <SelectValue placeholder="Chọn Mã Enterprise Key">
+                  <Select.Value placeholder="Chọn Mã Enterprise Key">
                     {(() => {
                       const s = seats.find((seat) => seat.seatKey === selectedSeatKey);
                       return s ? `${s.partnerName} (${s.seatKey})` : selectedSeatKey;
                     })()}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content>
                   {seats.map((s) => (
-                    <SelectItem key={s.id} value={s.seatKey}>
+                    <Select.Item key={s.id} value={s.seatKey}>
                       {`${s.partnerName} (${s.seatKey})`}
-                    </SelectItem>
+                    </Select.Item>
                   ))}
-                </SelectContent>
+                </Select.Content>
               </Select>
             </div>
 

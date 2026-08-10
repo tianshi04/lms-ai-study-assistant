@@ -48,7 +48,7 @@ export const brandLogoTextVariants = cva("tracking-tight text-foreground", {
   },
 });
 
-export function BrandLogoIcon({
+function BrandLogoIcon({
   size = "md",
   className,
 }: {
@@ -62,7 +62,7 @@ export function BrandLogoIcon({
   );
 }
 
-export function BrandLogoText({
+function BrandLogoText({
   size = "md",
   className,
   children = "LMS AI Platform",
@@ -80,7 +80,7 @@ export interface BrandLogoProps
   href?: string;
 }
 
-export function BrandLogo({
+function BrandLogoComponent({
   size = "md",
   showText = true,
   className = "",
@@ -122,3 +122,8 @@ export function BrandLogo({
 
   return logoContent;
 }
+
+export const BrandLogo = Object.assign(BrandLogoComponent, {
+  Icon: BrandLogoIcon,
+  Text: BrandLogoText,
+});

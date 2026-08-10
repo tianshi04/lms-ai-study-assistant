@@ -3,7 +3,7 @@ import { Field as BaseField } from "@base-ui/react/field";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
-import { FieldRoot, FieldLabel, FieldError, FieldDescription } from "./Field";
+import { Field } from "./Field";
 
 export const inputVariants = cva(
   "w-full px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground transition-colors duration-m3-short-4 ease-m3-emphasized outline-none focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed data-[invalid]:border-destructive data-[invalid]:focus-visible:ring-destructive/50 data-[invalid]:focus-visible:border-destructive",
@@ -60,11 +60,11 @@ export function Input({
   }
 
   return (
-    <FieldRoot invalid={!!error} className="w-full space-y-1.5">
-      {label && <FieldLabel>{label}</FieldLabel>}
+    <Field.Root invalid={!!error} className="w-full space-y-1.5">
+      {label && <Field.Label>{label}</Field.Label>}
       {inputEl}
-      {error && <FieldError>{error}</FieldError>}
-      {helperText && !error && <FieldDescription>{helperText}</FieldDescription>}
-    </FieldRoot>
+      {error && <Field.Error>{error}</Field.Error>}
+      {helperText && !error && <Field.Description>{helperText}</Field.Description>}
+    </Field.Root>
   );
 }

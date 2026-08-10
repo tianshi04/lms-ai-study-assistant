@@ -7,7 +7,7 @@ import { Lock, ArrowLeft, CheckCircle2, ShieldCheck, KeyRound } from "lucide-rea
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { useToast } from "@/components/ui/Toast";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -58,8 +58,8 @@ function ForgotPasswordContent() {
     e.preventDefault();
     setErrorMsg("");
 
-    if (!newPassword || newPassword.length < 6) {
-      setErrorMsg("Mật khẩu mới phải chứa ít nhất 6 ký tự.");
+    if (newPassword.length < 6 || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      setErrorMsg("Mật khẩu chưa đạt yêu cầu bảo mật.");
       return;
     }
 
@@ -91,24 +91,29 @@ function ForgotPasswordContent() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-background via-muted/40 to-background">
-      <Card variant="elevated" className="w-full max-w-md rounded-3xl p-6 sm:p-8 space-y-6">
+    <main className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-surface text-on-surface">
+      <Surface
+        variant="bright"
+        shape="3xl"
+        padding="lg"
+        className="w-full max-w-md space-y-6 shadow-xl"
+      >
         {/* Header Section */}
-        <CardHeader className="text-center p-0 space-y-2">
+        <Surface.Header className="text-center p-0 space-y-2">
           <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3 shadow-inner">
             <KeyRound aria-hidden="true" className="w-6 h-6" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight text-on-surface">
+          <Surface.Title className="text-2xl font-bold tracking-tight text-on-surface">
             Quên mật khẩu?
-          </CardTitle>
-          <CardDescription className="text-sm text-on-surface-variant">
+          </Surface.Title>
+          <Surface.Description className="text-sm text-on-surface-variant">
             {step === 1
               ? "Xác minh qua Google để đặt lại mật khẩu mới cho tài khoản của bạn"
               : `Xác nhận danh tính cho ${userEmail}`}
-          </CardDescription>
-        </CardHeader>
+          </Surface.Description>
+        </Surface.Header>
 
-        <CardContent className="p-0 space-y-6">
+        <Surface.Content className="p-0 space-y-6">
           {/* Step Indicator */}
           <div className="flex items-center justify-center gap-3 text-xs font-semibold">
             <span
@@ -223,8 +228,8 @@ function ForgotPasswordContent() {
               <span>Quay lại Đăng nhập</span>
             </Link>
           </div>
-        </CardContent>
-      </Card>
+        </Surface.Content>
+      </Surface>
     </main>
   );
 }

@@ -12,8 +12,9 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { ArrowLeft, Check, X, AlertTriangle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
+import { Progress } from "@/components/ui/Progress";
 
 const emptySubscribe = () => () => {};
 
@@ -223,14 +224,14 @@ export default function InstructorFinancialAidPage() {
 
         {/* Application Cards List */}
         {loading ? (
-          <div className="py-16 text-center space-y-3">
-            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="py-16 text-center space-y-3 flex flex-col items-center justify-center">
+            <Progress.Circular size="lg" className="mx-auto" />
             <p aria-live="polite" className="text-sm font-medium text-muted-foreground">
               Đang tải danh sách đơn Hỗ trợ tài chính…
             </p>
           </div>
         ) : filteredApps.length === 0 ? (
-          <Card variant="outlined" className="py-16 text-center p-8">
+          <Surface variant="low" shape="2xl" className="py-16 text-center p-8">
             <FileText aria-hidden="true" className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
             <p className="text-base font-bold text-foreground">
               Không có đơn nộp nào trong danh mục này
@@ -238,11 +239,16 @@ export default function InstructorFinancialAidPage() {
             <p className="text-xs text-muted-foreground mt-1">
               Các đơn Hỗ trợ tài chính mới từ học viên sẽ xuất hiện ở đây.
             </p>
-          </Card>
+          </Surface>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {filteredApps.map((app) => (
-              <Card key={app.id} variant="outlined" className="p-6 space-y-4 text-foreground">
+              <Surface
+                key={app.id}
+                variant="low"
+                shape="2xl"
+                className="p-6 space-y-4 text-foreground"
+              >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -316,7 +322,7 @@ export default function InstructorFinancialAidPage() {
                     </Button>
                   </div>
                 )}
-              </Card>
+              </Surface>
             ))}
           </div>
         )}

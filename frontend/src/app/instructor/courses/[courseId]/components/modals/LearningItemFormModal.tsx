@@ -12,13 +12,8 @@ import { Textarea } from "@/components/ui/Textarea";
 import { VideoUploadWidget } from "@/components/course/VideoUploadWidget";
 import { InVideoQuizEditor, type InVideoQuizItem } from "@/components/course/InVideoQuizEditor";
 import type { LearningItemPayload } from "../../hooks/useCourseBuilder";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
+
 import {
   Code,
   FileText,
@@ -265,49 +260,49 @@ export function LearningItemFormModal({
                     if (val) setItemType(Number(val) as ItemType);
                   }}
                 >
-                  <SelectTrigger
+                  <Select.Trigger
                     id="itemTypeSelect"
                     aria-label="Loại nội dung"
                     className="w-full bg-card shadow-2xs"
                   >
-                    <SelectValue placeholder="Chọn loại nội dung">
+                    <Select.Value placeholder="Chọn loại nội dung">
                       <span className="inline-flex items-center gap-1.5 truncate">
-                      {itemType === ItemType.VIDEO
-                        ? <><VideoIcon className="w-3.5 h-3.5 shrink-0" /> Bài giảng Video</>
-                        : itemType === ItemType.READING
-                          ? <><BookOpen className="w-3.5 h-3.5 shrink-0" /> Bài đọc Markdown</>
-                          : itemType === ItemType.AUTO_GRADED_LAB
-                            ? <><Terminal className="w-3.5 h-3.5 shrink-0" /> Thực hành Code</>
-                            : itemType === ItemType.PEER_REVIEW
-                              ? <><Users className="w-3.5 h-3.5 shrink-0" /> Đánh giá chéo</>
-                              : itemType === ItemType.PRACTICE_QUIZ
-                                ? <><Pencil className="w-3.5 h-3.5 shrink-0" /> Quiz Luyện tập</>
-                                : itemType === ItemType.GRADED_QUIZ
-                                  ? <><Award className="w-3.5 h-3.5 shrink-0" /> Quiz Tính điểm</>
-                                  : ""}
+                        {itemType === ItemType.VIDEO
+                          ? <><VideoIcon className="w-3.5 h-3.5 shrink-0" /> Bài giảng Video</>
+                          : itemType === ItemType.READING
+                            ? <><BookOpen className="w-3.5 h-3.5 shrink-0" /> Bài đọc Markdown</>
+                            : itemType === ItemType.AUTO_GRADED_LAB
+                              ? <><Terminal className="w-3.5 h-3.5 shrink-0" /> Thực hành Code</>
+                              : itemType === ItemType.PEER_REVIEW
+                                ? <><Users className="w-3.5 h-3.5 shrink-0" /> Đánh giá chéo</>
+                                : itemType === ItemType.PRACTICE_QUIZ
+                                  ? <><Pencil className="w-3.5 h-3.5 shrink-0" /> Quiz Luyện tập</>
+                                  : itemType === ItemType.GRADED_QUIZ
+                                    ? <><Award className="w-3.5 h-3.5 shrink-0" /> Quiz Tính điểm</>
+                                    : ""}
                       </span>
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={String(ItemType.VIDEO)}>
+                    </Select.Value>
+                  </Select.Trigger>
+                  <Select.Content>
+                    <Select.Item value={String(ItemType.VIDEO)}>
                       <span className="inline-flex items-center gap-1.5"><VideoIcon className="w-3.5 h-3.5" /> Bài giảng Video</span>
-                    </SelectItem>
-                    <SelectItem value={String(ItemType.READING)}>
+                    </Select.Item>
+                    <Select.Item value={String(ItemType.READING)}>
                       <span className="inline-flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" /> Bài đọc Markdown</span>
-                    </SelectItem>
-                    <SelectItem value={String(ItemType.AUTO_GRADED_LAB)}>
+                    </Select.Item>
+                    <Select.Item value={String(ItemType.AUTO_GRADED_LAB)}>
                       <span className="inline-flex items-center gap-1.5"><Terminal className="w-3.5 h-3.5" /> Thực hành Code</span>
-                    </SelectItem>
-                    <SelectItem value={String(ItemType.PEER_REVIEW)}>
+                    </Select.Item>
+                    <Select.Item value={String(ItemType.PEER_REVIEW)}>
                       <span className="inline-flex items-center gap-1.5"><Users className="w-3.5 h-3.5" /> Đánh giá chéo</span>
-                    </SelectItem>
-                    <SelectItem value={String(ItemType.PRACTICE_QUIZ)}>
+                    </Select.Item>
+                    <Select.Item value={String(ItemType.PRACTICE_QUIZ)}>
                       <span className="inline-flex items-center gap-1.5"><Pencil className="w-3.5 h-3.5" /> Quiz Luyện tập</span>
-                    </SelectItem>
-                    <SelectItem value={String(ItemType.GRADED_QUIZ)}>
+                    </Select.Item>
+                    <Select.Item value={String(ItemType.GRADED_QUIZ)}>
                       <span className="inline-flex items-center gap-1.5"><Award className="w-3.5 h-3.5" /> Quiz Tính điểm</span>
-                    </SelectItem>
-                  </SelectContent>
+                    </Select.Item>
+                  </Select.Content>
                 </Select>
               </div>
 
@@ -460,6 +455,7 @@ Output: 0.0
                           : <span className="text-muted-foreground italic text-xs">Nhập mô tả bên trái để xem trước…</span>}
                       </div>
                     </div>
+                  </div>
                   </div>
                 </div>
 
@@ -659,28 +655,28 @@ Output: 0.0
                       setQuizBankId((val as string) || "");
                     }}
                   >
-                    <SelectTrigger
+                    <Select.Trigger
                       id="quizBankId"
                       aria-label="Ngân hàng Câu hỏi liên kết"
                       className="w-full bg-card"
                     >
-                      <SelectValue placeholder="-- Chọn Ngân hàng Câu hỏi --">
+                      <Select.Value placeholder="-- Chọn Ngân hàng Câu hỏi --">
                         {(() => {
                           const bank = questionBanks.find((b) => b.id === quizBankId);
                           return bank
                             ? `${bank.title} (${bank.questions?.length || 0} câu hỏi trong ngân hàng)`
                             : "-- Chọn Ngân hàng Câu hỏi --";
                         })()}
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">-- Chọn Ngân hàng Câu hỏi --</SelectItem>
+                      </Select.Value>
+                    </Select.Trigger>
+                    <Select.Content>
+                      <Select.Item value="">-- Chọn Ngân hàng Câu hỏi --</Select.Item>
                       {questionBanks.map((bank) => (
-                        <SelectItem key={bank.id} value={bank.id}>
+                        <Select.Item key={bank.id} value={bank.id}>
                           {`${bank.title} (${bank.questions?.length || 0} câu hỏi)`}
-                        </SelectItem>
+                        </Select.Item>
                       ))}
-                    </SelectContent>
+                    </Select.Content>
                   </Select>
                 </div>
 

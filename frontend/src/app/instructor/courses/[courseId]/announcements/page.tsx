@@ -7,9 +7,10 @@ import { CatalogService, type CourseAnnouncement } from "@/gen/catalog/v1/catalo
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Plus, User } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
+import { Progress } from "@/components/ui/Progress";
 
 function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId: string }> }) {
   const { isInstructorOrAdmin } = useAuth();
@@ -143,7 +144,7 @@ function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId
 
         {/* Post Announcement Form */}
         {isInstructorOrAdmin && (
-          <Card variant="filled" className="space-y-4">
+          <Surface variant="container" shape="2xl" className="space-y-4 p-6">
             <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
               <Plus className="w-5 h-5 text-primary" aria-hidden="true" />
               Tạo Thông báo Mới
@@ -190,28 +191,32 @@ function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId
                 </Button>
               </div>
             </form>
-          </Card>
+          </Surface>
         )}
 
         {/* Announcements List */}
-        <div className="space-y-4">
+        <div className="space-y-4 pt-4">
           <h2 className="text-lg font-bold text-foreground">
             Lịch sử Thông báo ({announcements.length})
           </h2>
 
           {loading ? (
-            <div className="py-12 text-center text-muted-foreground">
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+            <div className="py-12 text-center text-muted-foreground flex flex-col items-center justify-center">
+              <Progress.Circular size="sm" className="mx-auto mb-2" />
               <span aria-live="polite">Đang tải danh sách thông báo…</span>
             </div>
           ) : announcements.length === 0 ? (
-            <Card variant="outlined" className="py-12 text-center text-muted-foreground text-sm">
+            <Surface
+              variant="low"
+              shape="2xl"
+              className="py-12 text-center text-muted-foreground text-sm p-6"
+            >
               Chưa có thông báo nào được đăng cho khóa học này.
-            </Card>
+            </Surface>
           ) : (
             <div className="space-y-4">
               {announcements.map((ann) => (
-                <Card key={ann.id} variant="outlined" className="space-y-3">
+                <Surface key={ann.id} variant="low" shape="2xl" className="space-y-3 p-6">
                   <div className="flex justify-between items-start gap-4">
                     <h3 className="font-extrabold text-base text-foreground">{ann.title}</h3>
                     <span className="text-[11px] font-mono text-muted-foreground flex-shrink-0">
@@ -231,7 +236,7 @@ function InstructorAnnouncementsContent({ params }: { params: Promise<{ courseId
                       Người đăng: <strong>{ann.authorName}</strong>
                     </span>
                   </div>
-                </Card>
+                </Surface>
               ))}
             </div>
           )}

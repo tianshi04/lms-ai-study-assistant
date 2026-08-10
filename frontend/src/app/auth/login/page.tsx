@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
 import { Eye, EyeOff, Zap } from "lucide-react";
@@ -95,8 +95,8 @@ function LoginFormContent() {
 
   return (
     <div className="w-full max-w-md">
-      <Card variant="elevated" className="rounded-3xl p-8">
-        <CardHeader className="text-center p-0 mb-8 space-y-2">
+      <Surface variant="bright" shape="3xl" padding="lg" className="shadow-xl">
+        <Surface.Header className="text-center p-0 mb-8 space-y-2">
           <Link
             href="/"
             prefetch={true}
@@ -114,17 +114,17 @@ function LoginFormContent() {
               </span>
             </div>
           </Link>
-          <CardTitle className="text-2xl font-bold text-on-surface text-balance">
+          <Surface.Title className="text-2xl font-bold text-on-surface text-balance">
             {"Đăng nhập tài khoản"}
-          </CardTitle>
-          <CardDescription className="text-sm text-on-surface-variant">
+          </Surface.Title>
+          <Surface.Description className="text-sm text-on-surface-variant">
             {searchParams.get("redirect")
               ? "Vui lòng đăng nhập để bắt đầu học bài giảng này"
               : "Chào mừng bạn quay trở lại với hệ thống học tập Coursera LMS"}
-          </CardDescription>
-        </CardHeader>
+          </Surface.Description>
+        </Surface.Header>
 
-        <CardContent className="p-0">
+        <Surface.Content className="p-0">
           {/* Google 1-Click Login Option */}
           <div className="space-y-4 mb-6">
             <GoogleAuthButton
@@ -330,15 +330,15 @@ function LoginFormContent() {
               </Link>
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </Surface.Content>
+      </Surface>
     </div>
   );
 }
 
 export default function LoginPage() {
   return (
-    <main className="flex-1 flex items-center justify-center px-4 py-12">
+    <main className="flex-1 flex items-center justify-center px-4 py-12 bg-surface text-on-surface">
       <Suspense
         fallback={
           <div aria-live="polite" className="text-muted-foreground text-sm">

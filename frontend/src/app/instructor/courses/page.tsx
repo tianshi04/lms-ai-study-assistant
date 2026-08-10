@@ -8,19 +8,14 @@ import { useToast } from "@/components/ui/Toast";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { Progress } from "@/components/ui/Progress";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
-import {
-  PageHeader,
-  PageHeaderTitle,
-  PageHeaderDescription,
-  PageHeaderActions,
-  PageHeaderBadge,
-} from "@/components/ui/LayoutPrimitives";
+import { PageHeader } from "@/components/ui/LayoutPrimitives";
 import {
   FileText,
   Plus,
@@ -261,20 +256,20 @@ export default function InstructorCoursesPage() {
       {/* Top Header */}
       <PageHeader>
         <div>
-          <PageHeaderBadge>
+          <PageHeader.Badge>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-2">
               {"Instructor Portal"}
             </div>
-          </PageHeaderBadge>
-          <PageHeaderTitle>{"Quản lý Khóa học Giảng dạy"}</PageHeaderTitle>
-          <PageHeaderDescription>
+          </PageHeader.Badge>
+          <PageHeader.Title>{"Quản lý Khóa học Giảng dạy"}</PageHeader.Title>
+          <PageHeader.Description>
             {
               "Soạn thảo, quản lý bài giảng, xem thống kê và đăng thông báo cho các khóa học trên nền tảng Coursera AI."
             }
-          </PageHeaderDescription>
+          </PageHeader.Description>
         </div>
 
-        <PageHeaderActions>
+        <PageHeader.Actions>
           <Link
             href="/instructor/financial-aid"
             className="px-4 py-3 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-sm transition-colors flex items-center gap-2"
@@ -290,7 +285,7 @@ export default function InstructorCoursesPage() {
             <Plus className="w-5 h-5" aria-hidden="true" />
             <span>{"Soạn Khóa Học Mới"}</span>
           </Link>
-        </PageHeaderActions>
+        </PageHeader.Actions>
       </PageHeader>
 
       {/* Role Warning Banner if user is Learner */}
@@ -309,21 +304,22 @@ export default function InstructorCoursesPage() {
       {/* Courses Table / Cards */}
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-3" />
+          <Progress.Circular size="sm" className="mr-3" />
           <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
         </div>
       ) : courses.length === 0 ? (
-        <Card variant="outlined" className="text-center py-16">
+        <Surface variant="low" shape="2xl" className="text-center py-16">
           <p className="text-muted-foreground mb-4">{"Chưa có khóa học nào được tạo."}</p>
           <Button onClick={handleOpenCreateModal}>{"Tạo khóa học đầu tiên"}</Button>
-        </Card>
+        </Surface>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => (
-            <Card
+            <Surface
               key={course.id}
-              variant="outlined"
-              className="hover:border-primary/50 flex flex-col justify-between h-full"
+              variant="low"
+              shape="2xl"
+              className="p-6 flex flex-col justify-between h-full"
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
@@ -417,7 +413,7 @@ export default function InstructorCoursesPage() {
                   </Chip>
                 </div>
               </div>
-            </Card>
+            </Surface>
           ))}
         </div>
       )}

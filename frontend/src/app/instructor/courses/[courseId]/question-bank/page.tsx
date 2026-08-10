@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Plus, HelpCircle, FolderOpen, Pencil, Trash2, Info } from "lucide-react";
 
 import { Dialog } from "@/components/ui/Dialog";
+import { Progress } from "@/components/ui/Progress";
 
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
@@ -12,14 +13,8 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Checkbox } from "@/components/ui/Checkbox";
-import { Card } from "@/components/ui/Card";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Surface } from "@/components/ui/Surface";
+import { Select } from "@/components/ui/Select";
 
 import {
   useQuestionBanksQuery,
@@ -262,8 +257,9 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
         </div>
 
         {/* Page Header */}
-        <Card
-          variant="elevated"
+        <Surface
+          variant="low"
+          shape="2xl"
           className="p-6 sm:p-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
         >
           <div>
@@ -287,11 +283,11 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
             <Plus aria-hidden="true" className="w-4 h-4" />
             <span>{"Tạo Kho Ngân hàng Đề"}</span>
           </Button>
-        </Card>
+        </Surface>
 
         {isLoading ? (
-          <div className="py-20 text-center text-muted-foreground">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <div className="py-20 text-center text-muted-foreground flex flex-col items-center justify-center">
+            <Progress.Circular size="md" className="mx-auto mb-3" />
             <span aria-live="polite">{"Đang tải cấu trúc bài giảng khóa học…"}</span>
           </div>
         ) : (
@@ -376,8 +372,9 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
               ) : (
                 <div className="space-y-6">
                   {/* Selected Bank Banner */}
-                  <Card
-                    variant="outlined"
+                  <Surface
+                    variant="low"
+                    shape="2xl"
                     className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
                   >
                     <div className="space-y-1">
@@ -415,7 +412,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                       <Plus aria-hidden="true" className="w-4 h-4" />
                       <span>{"Thêm Câu hỏi vào Kho"}</span>
                     </Button>
-                  </Card>
+                  </Surface>
 
                   {/* Questions List */}
                   {!selectedBank.questions || selectedBank.questions.length === 0 ? (
@@ -432,11 +429,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                     <div className="space-y-4">
                       {selectedBank.questions.map((q, idx) => {
                         return (
-                          <Card
-                            key={q.id}
-                            variant="outlined"
-                            className="p-5 space-y-3 hover:border-muted-foreground/30 transition-colors"
-                          >
+                          <Surface key={q.id} variant="low" shape="2xl" className="p-5 space-y-3">
                             {/* Question Meta */}
                             <div className="flex items-center justify-between">
                               <span className="text-[10px] font-extrabold text-muted-foreground">
@@ -533,7 +526,7 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                                 </div>
                               </div>
                             )}
-                          </Card>
+                          </Surface>
                         );
                       })}
                     </div>
@@ -577,8 +570,8 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                   if (val) setNewBankCategory(val as string);
                 }}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn phân loại Kho">
+                <Select.Trigger className="w-full">
+                  <Select.Value placeholder="Chọn phân loại Kho">
                     {newBankCategory === "PRACTICE"
                       ? "Luyện tập (PRACTICE)"
                       : newBankCategory === "MODULE_EXAM"
@@ -586,13 +579,13 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                         : newBankCategory === "FINAL_EXAM"
                           ? "Bài thi Cuối khóa (FINAL_EXAM)"
                           : newBankCategory}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PRACTICE">{"Luyện tập (PRACTICE)"}</SelectItem>
-                  <SelectItem value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</SelectItem>
-                  <SelectItem value="FINAL_EXAM">{"Bài thi Cuối khóa (FINAL_EXAM)"}</SelectItem>
-                </SelectContent>
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="PRACTICE">{"Luyện tập (PRACTICE)"}</Select.Item>
+                  <Select.Item value="MODULE_EXAM">{"Bài thi Tuần (MODULE_EXAM)"}</Select.Item>
+                  <Select.Item value="FINAL_EXAM">{"Bài thi Cuối khóa (FINAL_EXAM)"}</Select.Item>
+                </Select.Content>
               </Select>
             </div>
 
@@ -693,8 +686,8 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                     }
                   }}
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Chọn dạng câu hỏi">
+                  <Select.Trigger className="w-full">
+                    <Select.Value placeholder="Chọn dạng câu hỏi">
                       {qType === "SINGLE_CHOICE"
                         ? "Trắc nghiệm 1 đáp án (Single Choice)"
                         : qType === "MULTIPLE_CHOICE"
@@ -702,17 +695,17 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                           : qType === "TRUE_FALSE"
                             ? "Chọn Đúng/Sai (True/False)"
                             : qType}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SINGLE_CHOICE">
+                    </Select.Value>
+                  </Select.Trigger>
+                  <Select.Content>
+                    <Select.Item value="SINGLE_CHOICE">
                       {"Trắc nghiệm 1 đáp án (Single Choice)"}
-                    </SelectItem>
-                    <SelectItem value="MULTIPLE_CHOICE">
+                    </Select.Item>
+                    <Select.Item value="MULTIPLE_CHOICE">
                       {"Trắc nghiệm nhiều đáp án (Multiple Choice)"}
-                    </SelectItem>
-                    <SelectItem value="TRUE_FALSE">{"Chọn Đúng/Sai (True/False)"}</SelectItem>
-                  </SelectContent>
+                    </Select.Item>
+                    <Select.Item value="TRUE_FALSE">{"Chọn Đúng/Sai (True/False)"}</Select.Item>
+                  </Select.Content>
                 </Select>
               </div>
             </div>

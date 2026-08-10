@@ -3,13 +3,7 @@ import { Checkbox as BaseCheckbox } from "@base-ui/react/checkbox";
 import { Check, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import { FieldRoot, FieldLabel, FieldError, FieldDescription } from "./Field";
-
-export const CheckboxRoot = BaseCheckbox.Root;
-export const CheckboxIndicator = BaseCheckbox.Indicator;
-export const CheckboxLabel = FieldLabel;
-export const CheckboxError = FieldError;
-export const CheckboxHelperText = FieldDescription;
+import { Field } from "./Field";
 
 export interface CheckboxProps extends React.ComponentProps<typeof BaseCheckbox.Root> {
   label?: string;
@@ -17,7 +11,7 @@ export interface CheckboxProps extends React.ComponentProps<typeof BaseCheckbox.
   helperText?: string;
 }
 
-export function Checkbox({
+function CheckboxComponent({
   label,
   error,
   helperText,
@@ -73,20 +67,29 @@ export function Checkbox({
   }
 
   return (
-    <FieldRoot invalid={!!error} className="space-y-1">
+    <Field.Root invalid={!!error} className="space-y-1">
       <div className="flex items-center gap-3">
         {checkboxElement}
         {label && (
-          <FieldLabel
+          <Field.Label
             htmlFor={checkboxId}
             className="mb-0 text-sm font-medium text-on-surface cursor-pointer select-none"
           >
             {label}
-          </FieldLabel>
+          </Field.Label>
         )}
       </div>
-      {error && <FieldError>{error}</FieldError>}
-      {helperText && !error && <FieldDescription>{helperText}</FieldDescription>}
-    </FieldRoot>
+      {error && <Field.Error>{error}</Field.Error>}
+      {helperText && !error && <Field.Description>{helperText}</Field.Description>}
+    </Field.Root>
   );
 }
+
+export const Checkbox = Object.assign(CheckboxComponent, {
+  Root: BaseCheckbox.Root,
+  Indicator: BaseCheckbox.Indicator,
+  Label: Field.Label,
+  Error: Field.Error,
+  Description: Field.Description,
+  HelperText: Field.Description,
+});

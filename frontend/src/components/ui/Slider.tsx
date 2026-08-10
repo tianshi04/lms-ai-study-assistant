@@ -2,19 +2,12 @@ import * as React from "react";
 import { Slider as BaseSlider } from "@base-ui/react/slider";
 import { cn } from "@/lib/utils";
 
-export const SliderRoot = BaseSlider.Root;
-export const SliderControl = BaseSlider.Control;
-export const SliderTrack = BaseSlider.Track;
-export const SliderIndicator = BaseSlider.Indicator;
-export const SliderThumb = BaseSlider.Thumb;
-export const SliderValue = BaseSlider.Value;
-
 export interface SliderProps extends React.ComponentProps<typeof BaseSlider.Root> {
   label?: string;
   showValue?: boolean;
 }
 
-export function Slider({ label, showValue = false, className, ref, ...props }: SliderProps) {
+function SliderComponent({ label, showValue = false, className, ref, ...props }: SliderProps) {
   return (
     <div className="space-y-1.5 w-full">
       {(label || showValue) && (
@@ -41,3 +34,12 @@ export function Slider({ label, showValue = false, className, ref, ...props }: S
     </div>
   );
 }
+
+export const Slider = Object.assign(SliderComponent, {
+  Root: BaseSlider.Root,
+  Control: BaseSlider.Control,
+  Track: BaseSlider.Track,
+  Indicator: BaseSlider.Indicator,
+  Thumb: BaseSlider.Thumb,
+  Value: BaseSlider.Value,
+});

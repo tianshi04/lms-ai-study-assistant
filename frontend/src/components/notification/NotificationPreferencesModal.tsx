@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, Mail, BookOpen, MessageSquare, Megaphone, Loader2 } from "lucide-react";
+import { Bell, Mail, BookOpen, MessageSquare, Megaphone, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
+import { Progress } from "@/components/ui/Progress";
 
 import { Switch } from "@/components/ui/Switch";
 import {
@@ -71,7 +72,7 @@ export function NotificationPreferencesModal({
 
         {isLoading ? (
           <div className="py-12 flex justify-center items-center text-muted-foreground">
-            <Loader2 className="w-6 h-6 animate-spin" aria-hidden="true" />
+            <Progress.Circular size="md" ariaLabel="Đang tải cài đặt" />
           </div>
         ) : (
           <div className="py-2 space-y-4 max-h-[60vh] overflow-y-auto pr-1 my-2">
@@ -95,6 +96,7 @@ export function NotificationPreferencesModal({
                 <Switch
                   checked={enableInApp}
                   onCheckedChange={(checked) => setEnableInApp(checked)}
+                  checkedIcon={<Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
                   aria-label="Thông báo Nội sàn"
                 />
               </div>
@@ -112,6 +114,7 @@ export function NotificationPreferencesModal({
                 <Switch
                   checked={enableEmail}
                   onCheckedChange={(checked) => setEnableEmail(checked)}
+                  checkedIcon={<Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
                   aria-label="Thông báo qua Email"
                 />
               </div>
@@ -135,6 +138,7 @@ export function NotificationPreferencesModal({
                 <Switch
                   checked={enableAcademicReminders}
                   onCheckedChange={(checked) => setEnableAcademicReminders(checked)}
+                  checkedIcon={<Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
                   aria-label="Học tập & Hạn nộp bài"
                 />
               </div>
@@ -152,6 +156,7 @@ export function NotificationPreferencesModal({
                 <Switch
                   checked={enableCommunityReplies}
                   onCheckedChange={(checked) => setEnableCommunityReplies(checked)}
+                  checkedIcon={<Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
                   aria-label="Diễn đàn & Tương tác"
                 />
               </div>
@@ -169,6 +174,7 @@ export function NotificationPreferencesModal({
                 <Switch
                   checked={enableAnnouncements}
                   onCheckedChange={(checked) => setEnableAnnouncements(checked)}
+                  checkedIcon={<Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
                   aria-label="Thông báo từ Khóa học"
                 />
               </div>
@@ -186,7 +192,7 @@ export function NotificationPreferencesModal({
             className="flex items-center gap-2"
           >
             {updateMutation.isPending && (
-              <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+              <Progress.Circular size="sm" className="w-4 h-4" ariaLabel="Đang lưu cài đặt" />
             )}
             <span>Lưu cài đặt</span>
           </Button>

@@ -24,7 +24,8 @@ import {
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Badge } from "@/components/ui/Badge";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
+import { Progress } from "@/components/ui/Progress";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Chip } from "@/components/ui/Chip";
 
@@ -317,7 +318,7 @@ export function GradedQuizRunner({
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <Progress.Circular size="md" ariaLabel="Đang tạo phiên làm bài và tải câu hỏi" />
         <p aria-live="polite" className="text-sm text-muted-foreground font-semibold">
           Đang tạo phiên làm bài và tải câu hỏi…
         </p>
@@ -417,7 +418,7 @@ export function GradedQuizRunner({
   }
 
   return (
-    <Card variant="outlined" className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 shadow-sm">
+    <Surface variant="low" shape="3xl" className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6">
       {/* Header Info */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
@@ -443,6 +444,16 @@ export function GradedQuizRunner({
           <h2 className="text-xl font-bold text-foreground mt-1">
             {title || "Bài thi trắc nghiệm"}
           </h2>
+          <Progress.Linear
+            value={
+              questions.length > 0
+                ? (Object.keys(selectedAnswers).length / questions.length) * 100
+                : 0
+            }
+            showLabel
+            label={`Tiến độ làm bài (${Object.keys(selectedAnswers).length}/${questions.length} câu)`}
+            className="mt-3"
+          />
         </div>
       </div>
 
@@ -472,7 +483,7 @@ export function GradedQuizRunner({
           const currentAnswers = selectedAnswers[qIdx] || [];
 
           return (
-            <Card key={q.questionId} variant="outlined" className="p-5 rounded-2xl space-y-3">
+            <Surface key={q.questionId} variant="low" shape="2xl" className="p-5 space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <h4 className="text-sm font-bold text-foreground">
                   Câu {qIdx + 1}. {q.text}
@@ -545,7 +556,7 @@ export function GradedQuizRunner({
                   );
                 })}
               </div>
-            </Card>
+            </Surface>
           );
         })}
       </div>
@@ -666,6 +677,6 @@ export function GradedQuizRunner({
         }}
         onClose={() => setIsHonorModalOpen(false)}
       />
-    </Card>
+    </Surface>
   );
 }

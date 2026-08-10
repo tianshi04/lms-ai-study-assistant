@@ -12,29 +12,16 @@ import {
   useDeletePartnerMutation,
 } from "@/lib/query_hooks";
 import { Dialog } from "@/components/ui/Dialog";
+import { Progress } from "@/components/ui/Progress";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/Table";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/Breadcrumb";
+import { Table } from "@/components/ui/Table";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 interface PartnerAdminUser {
   id: string;
@@ -96,7 +83,7 @@ export default function AdminPartnersPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-muted-foreground">
-          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <Progress.Circular size="sm" />
           <span aria-live="polite">Đang tải danh sách đối tác…</span>
         </div>
       </div>
@@ -105,8 +92,9 @@ export default function AdminPartnersPage() {
 
   if (!isAdmin) {
     return (
-      <Card
-        variant="outlined"
+      <Surface
+        variant="low"
+        shape="2xl"
         className="max-w-md mx-auto my-16 p-8 text-center bg-destructive/10 border-destructive/30"
       >
         <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
@@ -116,7 +104,7 @@ export default function AdminPartnersPage() {
         <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
         </Button>
-      </Card>
+      </Surface>
     );
   }
 
@@ -283,20 +271,20 @@ export default function AdminPartnersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-border gap-4">
         <div>
           <Breadcrumb className="mb-1">
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink
+            <Breadcrumb.List>
+              <Breadcrumb.Item>
+                <Breadcrumb.Link
                   className="cursor-pointer"
                   onClick={() => router.push("/admin/dashboard")}
                 >
                   Trang quản trị
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Đối tác phát hành</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
+                </Breadcrumb.Link>
+              </Breadcrumb.Item>
+              <Breadcrumb.Separator />
+              <Breadcrumb.Item>
+                <Breadcrumb.Page>Đối tác phát hành</Breadcrumb.Page>
+              </Breadcrumb.Item>
+            </Breadcrumb.List>
           </Breadcrumb>
           <h1 className="text-3xl font-extrabold text-foreground tracking-tight text-balance">
             Quản lý Đối tác Phát hành
@@ -316,7 +304,7 @@ export default function AdminPartnersPage() {
       </div>
 
       {/* Partners List Table */}
-      <Card variant="outlined" className="mt-8 p-0 overflow-hidden">
+      <Surface variant="low" shape="2xl" className="mt-8 p-0 overflow-hidden">
         {partners.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">
             <Building2
@@ -331,19 +319,19 @@ export default function AdminPartnersPage() {
           </div>
         ) : (
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Đối tác</TableHead>
-                <TableHead>Slug URL</TableHead>
-                <TableHead>Tên miền xác thực</TableHead>
-                <TableHead>Người ký đại diện</TableHead>
-                <TableHead className="text-right">Thao tác</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+            <Table.Header>
+              <Table.Row>
+                <Table.Head>Đối tác</Table.Head>
+                <Table.Head>Slug URL</Table.Head>
+                <Table.Head>Tên miền xác thực</Table.Head>
+                <Table.Head>Người ký đại diện</Table.Head>
+                <Table.Head className="text-right">Thao tác</Table.Head>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
               {partners.map((partner) => (
-                <TableRow key={partner.id}>
-                  <TableCell>
+                <Table.Row key={partner.id}>
+                  <Table.Cell>
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 rounded-xl bg-muted p-1 border border-border flex items-center justify-center overflow-hidden shrink-0">
                         {partner.logoUrl ? (
@@ -375,11 +363,11 @@ export default function AdminPartnersPage() {
                         )}
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground font-mono text-xs">
+                  </Table.Cell>
+                  <Table.Cell className="text-muted-foreground font-mono text-xs">
                     /partners/{partner.slug}
-                  </TableCell>
-                  <TableCell>
+                  </Table.Cell>
+                  <Table.Cell>
                     {partner.allowedDomains && partner.allowedDomains.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
                         {partner.allowedDomains.map((domain, i) => (
@@ -394,12 +382,12 @@ export default function AdminPartnersPage() {
                     ) : (
                       <span className="text-muted-foreground text-xs italic">Chưa giới hạn</span>
                     )}
-                  </TableCell>
-                  <TableCell>
+                  </Table.Cell>
+                  <Table.Cell>
                     <p className="font-medium text-foreground">{partner.signerName || "—"}</p>
                     <p className="text-xs text-muted-foreground">{partner.signerTitle}</p>
-                  </TableCell>
-                  <TableCell className="text-right space-x-2">
+                  </Table.Cell>
+                  <Table.Cell className="text-right space-x-2">
                     <Button
                       variant="outlined"
                       size="sm"
@@ -422,13 +410,13 @@ export default function AdminPartnersPage() {
                       <Trash2 className="w-3.5 h-3.5 mr-1" aria-hidden="true" />
                       Xoá
                     </Button>
-                  </TableCell>
-                </TableRow>
+                  </Table.Cell>
+                </Table.Row>
               ))}
-            </TableBody>
+            </Table.Body>
           </Table>
         )}
-      </Card>
+      </Surface>
 
       {/* Modal Thêm/Sửa Đối tác */}
       <Dialog open={isModalOpen} onOpenChange={(open) => setIsModalOpen(open)}>

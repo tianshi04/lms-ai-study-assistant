@@ -2,12 +2,7 @@ import * as React from "react";
 import { Popover as BasePopover } from "@base-ui/react/popover";
 import { cn } from "@/lib/utils";
 
-export const Popover = BasePopover.Root;
-export const PopoverTrigger = BasePopover.Trigger;
-export const PopoverPortal = BasePopover.Portal;
-export const PopoverClose = BasePopover.Close;
-
-export function PopoverContent({
+function PopoverContent({
   className,
   children,
   sideOffset = 8,
@@ -19,7 +14,7 @@ export function PopoverContent({
   align?: "start" | "center" | "end";
 }) {
   return (
-    <PopoverPortal>
+    <BasePopover.Portal>
       <BasePopover.Positioner
         sideOffset={sideOffset}
         align={align}
@@ -36,6 +31,19 @@ export function PopoverContent({
           {children}
         </BasePopover.Popup>
       </BasePopover.Positioner>
-    </PopoverPortal>
+    </BasePopover.Portal>
   );
 }
+
+export const Popover = Object.assign(BasePopover.Root, {
+  Root: BasePopover.Root,
+  Trigger: BasePopover.Trigger,
+  Portal: BasePopover.Portal,
+  Positioner: BasePopover.Positioner,
+  Popup: PopoverContent,
+  Content: PopoverContent,
+  Close: BasePopover.Close,
+  Arrow: BasePopover.Arrow,
+  Title: BasePopover.Title,
+  Description: BasePopover.Description,
+});

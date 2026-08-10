@@ -19,16 +19,11 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
+import { Progress } from "@/components/ui/Progress";
 import { Badge } from "@/components/ui/Badge";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 
 function formatRoleName(role: string): string {
   if (!role) return "Học viên";
@@ -437,9 +432,10 @@ function ForumPageContent() {
         </div>
 
         {/* Filter Bar */}
-        <Card
-          variant="filled"
-          className="rounded-2xl p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4"
+        <Surface
+          variant="container"
+          shape="2xl"
+          className="p-4 mb-8 flex flex-col md:flex-row items-center justify-between gap-4"
         >
           <div className="flex items-center gap-3 w-full md:w-auto">
             <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
@@ -448,31 +444,33 @@ function ForumPageContent() {
             <Select
               value={selectedCourseId}
               onValueChange={(val) => {
-                setSelectedCourseId((val as string) || "");
+                if (val) setSelectedCourseId(val as string);
               }}
             >
-              <SelectTrigger className="w-full md:w-80">
-                <SelectValue placeholder="-- All Courses --">
-                  {selectedCourseId
-                    ? courses.find((c) => c.id === selectedCourseId)?.title || "-- All Courses --"
-                    : "-- All Courses --"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">{"-- All Courses --"}</SelectItem>
+              <Select.Trigger className="w-[200px] text-xs font-semibold">
+                <Select.Value placeholder="Tất cả khóa học">
+                  {(() => {
+                    if (selectedCourseId === "ALL") return "Tất cả khóa học";
+                    const c = courses.find((course) => course.id === selectedCourseId);
+                    return c ? c.title : selectedCourseId;
+                  })()}
+                </Select.Value>
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="ALL">{"Tất cả khóa học"}</Select.Item>
                 {courses.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
+                  <Select.Item key={c.id} value={c.id}>
                     {c.title}
-                  </SelectItem>
+                  </Select.Item>
                 ))}
-              </SelectContent>
+              </Select.Content>
             </Select>
           </div>
 
           <div className="text-xs text-muted-foreground">
             Total <span className="font-bold text-foreground">{threads.length}</span> threads
           </div>
-        </Card>
+        </Surface>
 
         {/* Content */}
         {loading ? (
@@ -510,11 +508,12 @@ function ForumPageContent() {
               const isTargetThread = urlThreadId === thread.id;
 
               return (
-                <Card
-                  variant="outlined"
+                <Surface
+                  variant="low"
+                  shape="2xl"
                   key={thread.id}
                   id={`thread-${thread.id}`}
-                  className={`rounded-2xl p-6 transition-colors ${
+                  className={`p-6 transition-colors ${
                     isTargetThread
                       ? "border-primary ring-2 ring-primary/50 bg-primary/5"
                       : "hover:border-accent-hover"
@@ -804,7 +803,7 @@ function ForumPageContent() {
                       </div>
                     </div>
                   )}
-                </Card>
+                </Surface>
               );
             })}
           </div>
@@ -828,18 +827,18 @@ function ForumPageContent() {
                   if (val) setNewCourseId(val as string);
                 }}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Chọn khóa học">
+                <Select.Trigger className="w-full">
+                  <Select.Value placeholder="Chọn khóa học">
                     {courses.find((c) => c.id === newCourseId)?.title || newCourseId}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content>
                   {courses.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
+                    <Select.Item key={c.id} value={c.id}>
                       {c.title}
-                    </SelectItem>
+                    </Select.Item>
                   ))}
-                </SelectContent>
+                </Select.Content>
               </Select>
             </div>
 
@@ -1031,7 +1030,7 @@ export default function ForumPage() {
       fallback={
         <div className="min-h-[60vh] flex items-center justify-center text-muted-foreground">
           <div className="flex items-center gap-3">
-            <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <Progress.Circular size="sm" />
             <span aria-live="polite">Đang tải diễn đàn…</span>
           </div>
         </div>

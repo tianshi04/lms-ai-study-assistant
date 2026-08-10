@@ -1,20 +1,13 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { cacheLife, cacheTag } from "next/cache";
 import { getPublicRpcServerClient } from "@/lib/server_connect_client";
 import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { CourseDetailClient } from "./CourseDetailClient";
 
 /**
- * Best Practice Next.js 16 Cache Components:
- * Metadata is cached for days and invalidated on-demand via updateTag(`course-${courseId}`).
+ * Metadata retrieval for Course Detail page.
  */
 async function getCourseMetadata(courseId: string): Promise<Metadata> {
-  "use cache";
-  cacheLife("days");
-  cacheTag("courses", `course-${courseId}`);
-
   try {
     const client = getPublicRpcServerClient(CatalogService);
     const res = await client.getCourseDetail({ idOrSlug: courseId });
@@ -47,45 +40,13 @@ export async function generateMetadata({
   return getCourseMetadata(courseId);
 }
 
-/**
- * Initial course detail & reviews payload cached for hours.
- * Triggered on-demand via updateTag(`course-${courseId}`) when course content updates.
- */
-async function getInitialCourseDetailData(courseId: string) {
-  "use cache";
-  cacheLife("hours");
-  cacheTag("courses", `course-${courseId}`);
-
-  const queryClient = new QueryClient();
-  const client = getPublicRpcServerClient(CatalogService);
-
-  await Promise.all([
-    queryClient.prefetchQuery({
-      queryKey: ["courseDetail", courseId],
-      queryFn: async () => (await client.getCourseDetail({ idOrSlug: courseId })).course ?? null,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: ["courseReviews", courseId],
-      queryFn: async () => (await client.listCourseReviews({ courseId })).reviews || [],
-    }),
-  ]);
-
-  return dehydrate(queryClient);
-}
-
-async function CourseDetailContent({
+async function CourseDetailWrapper({
   paramsPromise,
 }: {
   paramsPromise: Promise<{ courseId: string }>;
 }) {
   const { courseId } = await paramsPromise;
-  const dehydratedState = await getInitialCourseDetailData(courseId);
-
-  return (
-    <HydrationBoundary state={dehydratedState}>
-      <CourseDetailClient courseId={courseId} />
-    </HydrationBoundary>
-  );
+  return <CourseDetailClient courseId={courseId} />;
 }
 
 export default function CourseDetailPage({ params }: { params: Promise<{ courseId: string }> }) {
@@ -97,7 +58,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
         </div>
       }
     >
-      <CourseDetailContent paramsPromise={params} />
+      <CourseDetailWrapper paramsPromise={params} />
     </Suspense>
   );
 }

@@ -13,19 +13,12 @@ import { InvitationType, InvitationStatus } from "@/gen/identity/v1/identity_pb"
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { IconButton } from "@/components/ui/IconButton";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/Table";
+import { Table } from "@/components/ui/Table";
+import { Progress } from "@/components/ui/Progress";
 import {
   Mail,
-  Loader2,
   Copy,
   Check,
   XCircle,
@@ -77,7 +70,11 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
             activeTab="invitations"
             isOwnerOrAdmin={false}
           />
-          <Card variant="outlined" className="p-12 text-center space-y-4 max-w-xl mx-auto">
+          <Surface
+            variant="low"
+            shape="2xl"
+            className="p-12 text-center space-y-4 max-w-xl mx-auto"
+          >
             <div className="w-14 h-14 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
               <ShieldAlert className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -92,7 +89,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
             >
               Quay lại Tổng quan
             </Link>
-          </Card>
+          </Surface>
         </main>
       </div>
     );
@@ -169,7 +166,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
         />
 
         {/* Invitations Table */}
-        <Card variant="outlined" className="p-0 overflow-hidden">
+        <Surface variant="low" shape="2xl" className="p-0 overflow-hidden">
           <div className="p-6 border-b border-border flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -184,7 +181,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
 
           {isLoading ? (
             <div className="p-12 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
-              <Loader2 className="w-7 h-7 text-primary animate-spin" aria-hidden="true" />
+              <Progress.Circular size="md" />
               <p className="text-sm">Đang tải danh sách lời mời...</p>
             </div>
           ) : invitations.length === 0 ? (
@@ -195,31 +192,31 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="px-6 py-3.5">Email Người nhận</TableHead>
-                    <TableHead className="px-6 py-3.5">Vai trò mời</TableHead>
-                    <TableHead className="px-6 py-3.5">Trạng thái</TableHead>
-                    <TableHead className="px-6 py-3.5">Ngày tạo</TableHead>
-                    <TableHead className="px-6 py-3.5 text-right">Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.Head className="px-6 py-3.5">Email Người nhận</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Vai trò mời</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Trạng thái</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Ngày tạo</Table.Head>
+                    <Table.Head className="px-6 py-3.5 text-right">Thao tác</Table.Head>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
                   {invitations.map((inv) => (
-                    <TableRow key={inv.id}>
-                      <TableCell className="px-6 py-4 font-bold text-foreground">
+                    <Table.Row key={inv.id}>
+                      <Table.Cell className="px-6 py-4 font-bold text-foreground">
                         {inv.inviteeEmail}
-                      </TableCell>
-                      <TableCell className="px-6 py-4 font-mono text-xs text-muted-foreground">
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 font-mono text-xs text-muted-foreground">
                         {inv.roleId || "INSTRUCTOR"}
-                      </TableCell>
-                      <TableCell className="px-6 py-4">{getStatusBadge(inv.status)}</TableCell>
-                      <TableCell className="px-6 py-4 text-xs text-muted-foreground">
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4">{getStatusBadge(inv.status)}</Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-xs text-muted-foreground">
                         {inv.createdAt
                           ? new Date(inv.createdAt).toLocaleDateString("vi-VN")
                           : "Gần đây"}
-                      </TableCell>
-                      <TableCell className="px-6 py-4 text-right">
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {inv.status === InvitationStatus.PENDING && inv.token && (
                             <Button
@@ -252,14 +249,14 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
                             </IconButton>
                           )}
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </Table.Cell>
+                    </Table.Row>
                   ))}
-                </TableBody>
+                </Table.Body>
               </Table>
             </div>
           )}
-        </Card>
+        </Surface>
 
         {/* Cancel Invitation Confirm Dialog */}
         <Dialog.Root
@@ -304,7 +301,7 @@ export default function OrgInvitationsPage({ params }: { params: Promise<{ slug:
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
+          <Progress.Circular size="sm" />
           <span className="text-sm">Đang tải danh sách lời mời...</span>
         </div>
       }

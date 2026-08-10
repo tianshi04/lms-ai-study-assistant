@@ -2,11 +2,21 @@ import * as React from "react";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function Breadcrumb({ className, ref, ...props }: React.ComponentProps<"nav">) {
+function BreadcrumbNav({ className, ref, ...props }: React.ComponentProps<"nav">) {
   return <nav ref={ref} aria-label="breadcrumb" className={cn("", className)} {...props} />;
 }
 
-export function BreadcrumbList({ className, ref, ...props }: React.ComponentProps<"ol">) {
+export const Breadcrumb = Object.assign(BreadcrumbNav, {
+  Root: BreadcrumbNav,
+  List: BreadcrumbList,
+  Item: BreadcrumbItem,
+  Link: BreadcrumbLink,
+  Page: BreadcrumbPage,
+  Separator: BreadcrumbSeparator,
+  Ellipsis: BreadcrumbEllipsis,
+});
+
+function BreadcrumbList({ className, ref, ...props }: React.ComponentProps<"ol">) {
   return (
     <ol
       ref={ref}
@@ -19,33 +29,28 @@ export function BreadcrumbList({ className, ref, ...props }: React.ComponentProp
   );
 }
 
-export function BreadcrumbItem({ className, ref, ...props }: React.ComponentProps<"li">) {
+function BreadcrumbItem({ className, ref, ...props }: React.ComponentProps<"li">) {
   return <li ref={ref} className={cn("inline-flex items-center gap-1.5", className)} {...props} />;
 }
 
 export interface BreadcrumbLinkProps extends React.ComponentProps<"a"> {
-  asChild?: boolean;
+  render?: React.ReactElement<any>;
 }
 
-export function BreadcrumbLink({
-  className,
-  asChild = false,
-  children,
-  ref,
-  ...props
-}: BreadcrumbLinkProps) {
+function BreadcrumbLink({ className, render, children, ref, ...props }: BreadcrumbLinkProps) {
   const compClasses = cn(
     "transition-colors hover:text-foreground text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-sm",
     className,
   );
 
-  if (asChild && React.isValidElement(children)) {
-    const child = children as React.ReactElement<any>;
-    return React.cloneElement(child, {
+  if (render && React.isValidElement(render)) {
+    const element = render as React.ReactElement<any>;
+    return React.cloneElement(element, {
       ...props,
-      ...child.props,
+      ...element.props,
       ref,
-      className: cn(compClasses, child.props.className),
+      className: cn(compClasses, element.props.className),
+      children: children ?? element.props.children,
     });
   }
 
@@ -56,7 +61,7 @@ export function BreadcrumbLink({
   );
 }
 
-export function BreadcrumbPage({ className, ref, ...props }: React.ComponentProps<"span">) {
+function BreadcrumbPage({ className, ref, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       ref={ref}
@@ -67,12 +72,7 @@ export function BreadcrumbPage({ className, ref, ...props }: React.ComponentProp
   );
 }
 
-export function BreadcrumbSeparator({
-  children,
-  className,
-  ref,
-  ...props
-}: React.ComponentProps<"li">) {
+function BreadcrumbSeparator({ children, className, ref, ...props }: React.ComponentProps<"li">) {
   return (
     <li
       ref={ref}
@@ -86,7 +86,7 @@ export function BreadcrumbSeparator({
   );
 }
 
-export function BreadcrumbEllipsis({ className, ref, ...props }: React.ComponentProps<"span">) {
+function BreadcrumbEllipsis({ className, ref, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       ref={ref}

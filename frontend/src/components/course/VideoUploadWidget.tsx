@@ -7,6 +7,8 @@ import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { ButtonGroup } from "@/components/ui/ButtonGroup";
+import { Progress } from "@/components/ui/Progress";
 
 interface VideoUploadWidgetProps {
   value: string;
@@ -149,34 +151,18 @@ export function VideoUploadWidget({
         <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {label}
         </label>
-        <div className="flex items-center gap-1 bg-muted p-0.5 rounded-lg text-xs">
-          <Button
-            type="button"
-            variant="text"
-            size="sm"
-            onClick={() => setActiveTab("upload")}
-            className={`px-2.5 py-1 text-xs font-semibold ${
-              activeTab === "upload"
-                ? "bg-card text-primary shadow-2xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Upload Tải lên
-          </Button>
-          <Button
-            type="button"
-            variant="text"
-            size="sm"
-            onClick={() => setActiveTab("url")}
-            className={`px-2.5 py-1 text-xs font-semibold ${
-              activeTab === "url"
-                ? "bg-card text-primary shadow-2xs"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Nhập Đường dẫn URL
-          </Button>
-        </div>
+        <ButtonGroup
+          variant="connected"
+          size="xs"
+          colorStyle="tonal"
+          value={activeTab}
+          onValueChange={(val) => {
+            if (val[0]) setActiveTab(val[0] as "upload" | "url");
+          }}
+        >
+          <ButtonGroup.Item value="upload">Upload Tải lên</ButtonGroup.Item>
+          <ButtonGroup.Item value="url">Nhập Đường dẫn URL</ButtonGroup.Item>
+        </ButtonGroup>
       </div>
 
       {value && !isUploading ? (
@@ -269,17 +255,12 @@ export function VideoUploadWidget({
           </Button>
 
           {isUploading && (
-            <div className="space-y-1 bg-primary/10 p-3 rounded-xl border border-primary/20">
-              <div className="flex justify-between text-xs font-semibold text-primary">
-                <span aria-live="polite">Đang tải tệp lên Cloud Storage…</span>
-                <span>{uploadProgress}%</span>
-              </div>
-              <div className="w-full bg-secondary-container rounded-full h-2 overflow-hidden">
-                <div
-                  className="bg-primary h-full transition-colors duration-m3-medium-2 ease-m3-emphasized rounded-full"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
+            <div className="p-3 bg-primary/10 rounded-xl border border-primary/20">
+              <Progress.Linear
+                value={uploadProgress}
+                showLabel
+                label="Đang tải tệp lên Cloud Storage…"
+              />
             </div>
           )}
         </div>

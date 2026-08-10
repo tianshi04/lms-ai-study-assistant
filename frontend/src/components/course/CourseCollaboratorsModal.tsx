@@ -5,7 +5,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
-import { Select, SelectItem } from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 import { Badge } from "@/components/ui/Badge";
 import {
   useCourseCollaboratorsQuery,
@@ -13,7 +13,8 @@ import {
   useRemoveCourseCollaboratorMutation,
 } from "@/lib/query_hooks";
 import { mapConnectError } from "@/lib/connect_error_mapper";
-import { UserPlus, Trash2, Mail, Loader2, UserCheck, GraduationCap } from "lucide-react";
+import { UserPlus, Trash2, Mail, UserCheck, GraduationCap } from "lucide-react";
+import { Progress } from "@/components/ui/Progress";
 
 interface CourseCollaboratorsModalProps {
   isOpen: boolean;
@@ -183,8 +184,8 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
                     Vai trò trong Khóa học
                   </label>
                   <Select value={role} onValueChange={(val) => setRole(val || "co_instructor")}>
-                    <SelectItem value="co_instructor">Đồng giảng viên (Co-Instructor)</SelectItem>
-                    <SelectItem value="ta">Trợ giảng (TA)</SelectItem>
+                    <Select.Item value="co_instructor">Đồng giảng viên (Co-Instructor)</Select.Item>
+                    <Select.Item value="ta">Trợ giảng (TA)</Select.Item>
                   </Select>
                 </div>
                 <div className="sm:col-span-2">
@@ -222,9 +223,9 @@ export const CourseCollaboratorsModal: React.FC<CourseCollaboratorsModalProps> =
               </h3>
 
               {isLoading ? (
-                <div className="flex items-center justify-center p-8 text-muted-foreground text-sm">
-                  <Loader2 aria-hidden="true" className="w-5 h-5 animate-spin mr-2" /> Đang tải danh
-                  sách…
+                <div className="flex items-center justify-center p-8 text-muted-foreground text-sm gap-2">
+                  <Progress.Circular size="sm" ariaLabel="Đang tải danh sách" />
+                  <span>Đang tải danh sách…</span>
                 </div>
               ) : isError ? (
                 <div className="p-4 text-center text-sm text-destructive bg-destructive/5 rounded-lg">

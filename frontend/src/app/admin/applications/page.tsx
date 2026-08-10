@@ -15,15 +15,11 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
-import { Card } from "@/components/ui/Card";
+import { Surface } from "@/components/ui/Surface";
 import { useToast } from "@/components/ui/Toast";
 import { Dialog } from "@/components/ui/Dialog";
-import {
-  PageHeader,
-  PageHeaderTitle,
-  PageHeaderBreadcrumbs,
-  PageHeaderActions,
-} from "@/components/ui/LayoutPrimitives";
+import { Progress } from "@/components/ui/Progress";
+import { PageHeader } from "@/components/ui/LayoutPrimitives";
 
 export default function AdminInstructorApplicationsPage() {
   const toast = useToast();
@@ -87,21 +83,21 @@ export default function AdminInstructorApplicationsPage() {
         {/* Header Breadcrumb & Title */}
         <PageHeader>
           <div>
-            <PageHeaderBreadcrumbs>
+            <PageHeader.Breadcrumbs>
               <Link href="/admin/dashboard" className="hover:underline">
                 Admin Portal
               </Link>
               <span>/</span>
               <span className="font-semibold text-foreground">Đơn Giảng viên</span>
-            </PageHeaderBreadcrumbs>
-            <PageHeaderTitle>Quản Lý Thẩm Định Đơn Giảng Viên</PageHeaderTitle>
+            </PageHeader.Breadcrumbs>
+            <PageHeader.Title>Quản Lý Thẩm Định Đơn Giảng Viên</PageHeader.Title>
           </div>
 
-          <PageHeaderActions>
+          <PageHeader.Actions>
             <Button variant="outlined" render={<Link href="/admin/dashboard" />}>
               Về Dashboard
             </Button>
-          </PageHeaderActions>
+          </PageHeader.Actions>
         </PageHeader>
 
         {actionSuccessMsg && (
@@ -144,14 +140,18 @@ export default function AdminInstructorApplicationsPage() {
 
         {/* Content List */}
         {isLoading ? (
-          <Card variant="outlined" className="p-12 text-center">
-            <div className="inline-block animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-3" />
+          <Surface
+            variant="low"
+            shape="2xl"
+            className="p-12 text-center flex flex-col items-center justify-center"
+          >
+            <Progress.Circular size="md" className="mb-3" />
             <p aria-live="polite" className="text-muted-foreground text-sm font-medium">
               Đang tải danh sách đơn thẩm định…
             </p>
-          </Card>
+          </Surface>
         ) : applications.length === 0 ? (
-          <Card variant="outlined" className="p-12 text-center space-y-3">
+          <Surface variant="low" shape="2xl" className="p-12 text-center space-y-3">
             <div className="w-12 h-12 bg-muted text-muted-foreground rounded-2xl flex items-center justify-center mx-auto">
               <FileText className="w-6 h-6" aria-hidden="true" />
             </div>
@@ -159,7 +159,7 @@ export default function AdminInstructorApplicationsPage() {
             <p className="text-muted-foreground text-sm max-w-sm mx-auto">
               Hiện tại chưa có đơn xin cấp quyền Giảng viên cá nhân nào phù hợp với bộ lọc đã chọn.
             </p>
-          </Card>
+          </Surface>
         ) : (
           <div className="space-y-6">
             {applications.map((app: InstructorApplication) => {
@@ -168,7 +168,7 @@ export default function AdminInstructorApplicationsPage() {
               const isRejected = app.status === InstructorApplicationStatus.REJECTED;
 
               return (
-                <Card key={app.id} variant="outlined" className="p-6 sm:p-8 space-y-6">
+                <Surface key={app.id} variant="low" shape="2xl" className="p-6 sm:p-8 space-y-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
                     <div>
                       <div className="flex items-center gap-3">
@@ -340,7 +340,7 @@ export default function AdminInstructorApplicationsPage() {
                       )}
                     </div>
                   )}
-                </Card>
+                </Surface>
               );
             })}
           </div>
