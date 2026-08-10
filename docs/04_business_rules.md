@@ -122,9 +122,12 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_QUIZ_003 (Quy tắc Quản lý Session Đếm ngược & Auto-submit):**
   * Mọi bài thi Graded Quiz có giới hạn thời gian (Timed Quiz) được quản lý thời gian đếm ngược trực tiếp từ phía Server (Server-side Session Timer) tính từ mốc bấm nút "Start Quiz".
   * Việc tải lại trang (F5) hoặc tạm đóng trình duyệt không làm dừng đồng hồ đếm ngược. Khi hết giờ đếm ngược, Server tự động đóng phiên và thực hiện chấm điểm (Auto-submit on timeout) với các câu trả lời hiện tại.
-* **BR_AUTOGRADE_001 (Quy định Sandbox Auto-Grader):**
-  * Mỗi bài nộp lập trình gửi tới Auto-Grader chạy trong môi trường Sandbox cách ly với Timeout mặc định 5.0 giây (hoặc tối đa 30 giây) và Memory Limit = 512MB.
-  * Điểm bài nộp = (Số lượng Test Cases Pass / Tổng số Test Cases) * 100%. Trả về log chi tiết stdout/stderr của từng testcase cho học viên.
+* **BR_AUTOGRADE_001 (Quy định Sandbox Auto-Grader & Bảo mật Test Case Ẩn):**
+  * **Môi trường Thực thi Cách ly (Sandbox Execution):** Mỗi bài nộp lập trình gửi tới Auto-Grader chạy trong môi trường Sandbox cách ly với Timeout mặc định 5.0 giây (tối đa 30.0 giây) và Memory Limit = 512MB.
+  * **Ràng buộc Tạo bài Lab (Lab Creation Validation):** Mỗi bài Auto-Graded Lab bắt buộc có **tối thiểu 3 Test Cases** mới được phép lưu. Trình Course Builder hỗ trợ giao diện tạo/sửa/xóa Test Cases trực quan (Visual Test Case Builder) kết hợp soạn thảo Mô tả đề bài dạng Markdown (hỗ trợ Live Preview 2 cột).
+  * **Quy tắc Tự động Ẩn (Auto-Hidden Test Cases Assignment):** Trường hợp Giảng viên không gắn cờ `is_hidden` thủ công cho bất kỳ Test Case nào, hệ thống tự động ẩn khoảng 1/3 số Test Cases cuối (tính từ chỉ số $\lceil N \times 2 / 3 \rceil$) khi bấm lưu để bảo đảm độ chính xác khi chấm bài.
+  * **Bảo mật Test Case Ẩn (Hidden Test Privacy & Log Masking):** Học viên xem được dữ liệu Input/Expected của các Test Cases công khai (`Visible`). Đối với các Test Cases ẩn (`Hidden`), thông tin Input, Expected Output và câu lệnh `assertion` bị **mask bảo mật hoàn toàn** trong Execution Logs (chỉ hiển thị trạng thái `[PASS]` hoặc `[FAIL] Test Case #X: [Hidden]`).
+  * **Tính điểm:** Điểm bài nộp = (Số lượng Test Cases Pass / Tổng số Test Cases) * 100%.
 * **BR_PEER_001 (Điều kiện Nộp & Chấm chéo Peer Review):**
   * Học viên bắt buộc phải nộp bài dự án cá nhân trước mới được phân bổ quyền chấm chéo bài của bạn học (hệ thống tự động loại trừ bài nộp của chính mình `exclude_user_id`).
   * Học viên bắt buộc phải **chấm đủ lượt bài làm theo phân bổ** $\min(3, N)$ (với $N$ là số bài nộp khả thi trong hàng chờ) thì hệ thống mới mở hiển thị điểm bài nộp của chính mình.

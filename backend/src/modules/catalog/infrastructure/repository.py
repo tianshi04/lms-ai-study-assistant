@@ -356,7 +356,16 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         financial_aid_enabled: bool = True,
         organization_id: str = "partner_community",
     ) -> Course:
-        course_id = f"course-{slug}" if slug else f"course-{uuid.uuid4().hex[:8]}"
+        import re
+
+        safe_slug = (
+            re.sub(r"[^a-z0-9-]", "", slug.lower().strip().replace(" ", "-"))
+            if slug
+            else ""
+        )
+        course_id = (
+            f"course-{safe_slug}" if safe_slug else f"course-{uuid.uuid4().hex[:8]}"
+        )
         clean_org_id = (
             organization_id.strip()
             if organization_id and organization_id.strip()
@@ -382,7 +391,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         model = CourseModel(
             id=course_id,
             title=title,
-            slug=slug or course_id,
+            slug=safe_slug or course_id,
             description=description,
             partner_name=final_partner_name,
             partner_logo_url=final_partner_logo,

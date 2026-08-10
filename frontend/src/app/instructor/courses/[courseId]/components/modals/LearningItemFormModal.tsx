@@ -23,7 +23,27 @@ import {
   CheckCircle2,
   Eye,
   Edit3,
+  Info,
+  AlertTriangle,
+  Lock,
+  FileCode,
+  BookOpen,
+  Terminal,
+  Award,
+  Pencil,
 } from "lucide-react";
+
+/** Decode double-encoded JSON strings (e.g. '"[...]"' → '[...]') */
+function normalizeJson(raw: string | undefined, fallback: string): string {
+  if (!raw) return fallback;
+  try {
+    let parsed = JSON.parse(raw);
+    if (typeof parsed === "string") parsed = JSON.parse(parsed);
+    return typeof parsed === "object" ? JSON.stringify(parsed, null, 2) : raw;
+  } catch {
+    return raw;
+  }
+}
 
 interface LearningItemFormModalProps {
   isOpen: boolean;
@@ -65,7 +85,7 @@ export function LearningItemFormModal({
     initialData?.starterCode || "# Starter code for lab\ndef solution(a, b):\n    return a + b\n",
   );
   const [labTestCasesJson, setLabTestCasesJson] = useState(
-    initialData?.testCasesJson || '[\n  {"input": "1, 2", "expected": "3"}\n]',
+    normalizeJson(initialData?.testCasesJson, '[\n  {"input": "1, 2", "expected": "3"}\n]'),
   );
 
   // Quiz Matrix fields
@@ -114,7 +134,7 @@ export function LearningItemFormModal({
           "# Starter code for lab\ndef solution(a, b):\n    return a + b\n",
       );
       setLabTestCasesJson(
-        initialData.testCasesJson || '[\n  {"input": "1, 2", "expected": "3"}\n]',
+        normalizeJson(initialData.testCasesJson, '[\n  {"input": "1, 2", "expected": "3"}\n]'),
       );
       setQuizBankId(initialData.quizBankId || "");
       setQuizTimeLimit(initialData.quizTimeLimit ?? 45);
@@ -131,8 +151,44 @@ export function LearningItemFormModal({
     }
   }, [initialData, isOpen]);
 
+  const [labError, setLabError] = useState("");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLabError("");
+
+    // ── Lab validation & auto-hidden ──
+    let finalTestCasesJson = labTestCasesJson;
+    if (itemType === ItemType.AUTO_GRADED_LAB) {
+      try {
+        let testCases = JSON.parse(labTestCasesJson);
+        if (!Array.isArray(testCases)) {
+          setLabError("Test cases phải là một mảng JSON hợp lệ.");
+          return;
+        }
+        if (testCases.length < 3) {
+          setLabError(
+            `Cần ít nhất 3 test cases (hiện có ${testCases.length}). Thêm test case để đảm bảo chất lượng chấm bài.`,
+          );
+          return;
+        }
+        // Auto-assign hidden: if GV didn't mark any as hidden, auto-hide the last ~1/3
+        const hasAnyHidden = testCases.some((tc: { is_hidden?: boolean }) => tc.is_hidden === true);
+        if (!hasAnyHidden) {
+          const hiddenStartIndex = Math.ceil((testCases.length * 2) / 3); // last ~1/3
+          testCases = testCases.map((tc: Record<string, unknown>, i: number) => ({
+            ...tc,
+            is_hidden: i >= hiddenStartIndex,
+          }));
+        }
+        finalTestCasesJson = JSON.stringify(testCases, null, 2);
+        setLabTestCasesJson(finalTestCasesJson);
+      } catch {
+        setLabError("Test cases JSON không hợp lệ. Vui lòng kiểm tra lại cú pháp.");
+        return;
+      }
+    }
+
     const payload: LearningItemPayload = {
       lessonId: initialData?.lessonId || "",
       title: itemTitle,
@@ -144,7 +200,7 @@ export function LearningItemFormModal({
       inVideoQuizzes,
       readingMarkdown,
       starterCode: labStarterCode,
-      testCasesJson: labTestCasesJson,
+      testCasesJson: finalTestCasesJson,
       language: labLanguage,
       rubricCriteriaJson: peerRubricJson,
       quizBankId,
@@ -180,7 +236,7 @@ export function LearningItemFormModal({
           {/* Pinned Top Basic Info Section (Always Visible) */}
           <div className="bg-muted/40 p-3.5 rounded-xl border border-border/80 mb-3 space-y-2 shrink-0">
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-              <div className="sm:col-span-6">
+              <div className="sm:col-span-5">
                 <Input
                   label="Tên Học liệu"
                   type="text"
@@ -192,7 +248,7 @@ export function LearningItemFormModal({
                 />
               </div>
 
-              <div className="sm:col-span-4">
+              <div className="sm:col-span-5">
                 <label
                   htmlFor="itemTypeSelect"
                   className="block text-xs font-bold uppercase tracking-wider text-foreground mb-1"
@@ -211,39 +267,67 @@ export function LearningItemFormModal({
                     className="w-full bg-card shadow-2xs"
                   >
                     <Select.Value placeholder="Chọn loại nội dung">
-                      {itemType === ItemType.VIDEO
-                        ? "🎬 VIDEO (Bài giảng Video)"
-                        : itemType === ItemType.READING
-                          ? "📖 READING (Bài đọc Markdown)"
-                          : itemType === ItemType.AUTO_GRADED_LAB
-                            ? "💻 AUTO_GRADED_LAB (Thực hành Code)"
-                            : itemType === ItemType.PEER_REVIEW
-                              ? "👥 PEER_REVIEW (Đánh giá chéo)"
-                              : itemType === ItemType.PRACTICE_QUIZ
-                                ? "✏️ PRACTICE_QUIZ (Trắc nghiệm Luyện tập)"
-                                : itemType === ItemType.GRADED_QUIZ
-                                  ? "🏆 GRADED_QUIZ (Trắc nghiệm Tính điểm)"
-                                  : ""}
+                      <span className="inline-flex items-center gap-1.5 truncate">
+                        {itemType === ItemType.VIDEO ? (
+                          <>
+                            <VideoIcon className="w-3.5 h-3.5 shrink-0" /> Bài giảng Video
+                          </>
+                        ) : itemType === ItemType.READING ? (
+                          <>
+                            <BookOpen className="w-3.5 h-3.5 shrink-0" /> Bài đọc Markdown
+                          </>
+                        ) : itemType === ItemType.AUTO_GRADED_LAB ? (
+                          <>
+                            <Terminal className="w-3.5 h-3.5 shrink-0" /> Thực hành Code
+                          </>
+                        ) : itemType === ItemType.PEER_REVIEW ? (
+                          <>
+                            <Users className="w-3.5 h-3.5 shrink-0" /> Đánh giá chéo
+                          </>
+                        ) : itemType === ItemType.PRACTICE_QUIZ ? (
+                          <>
+                            <Pencil className="w-3.5 h-3.5 shrink-0" /> Quiz Luyện tập
+                          </>
+                        ) : itemType === ItemType.GRADED_QUIZ ? (
+                          <>
+                            <Award className="w-3.5 h-3.5 shrink-0" /> Quiz Tính điểm
+                          </>
+                        ) : (
+                          ""
+                        )}
+                      </span>
                     </Select.Value>
                   </Select.Trigger>
                   <Select.Content>
                     <Select.Item value={String(ItemType.VIDEO)}>
-                      🎬 VIDEO (Bài giảng Video)
+                      <span className="inline-flex items-center gap-1.5">
+                        <VideoIcon className="w-3.5 h-3.5" /> Bài giảng Video
+                      </span>
                     </Select.Item>
                     <Select.Item value={String(ItemType.READING)}>
-                      📖 READING (Bài đọc Markdown)
+                      <span className="inline-flex items-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5" /> Bài đọc Markdown
+                      </span>
                     </Select.Item>
                     <Select.Item value={String(ItemType.AUTO_GRADED_LAB)}>
-                      💻 AUTO_GRADED_LAB (Thực hành Code)
+                      <span className="inline-flex items-center gap-1.5">
+                        <Terminal className="w-3.5 h-3.5" /> Thực hành Code
+                      </span>
                     </Select.Item>
                     <Select.Item value={String(ItemType.PEER_REVIEW)}>
-                      👥 PEER_REVIEW (Đánh giá chéo)
+                      <span className="inline-flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5" /> Đánh giá chéo
+                      </span>
                     </Select.Item>
                     <Select.Item value={String(ItemType.PRACTICE_QUIZ)}>
-                      ✏️ PRACTICE_QUIZ (Trắc nghiệm Luyện tập)
+                      <span className="inline-flex items-center gap-1.5">
+                        <Pencil className="w-3.5 h-3.5" /> Quiz Luyện tập
+                      </span>
                     </Select.Item>
                     <Select.Item value={String(ItemType.GRADED_QUIZ)}>
-                      🏆 GRADED_QUIZ (Trắc nghiệm Tính điểm)
+                      <span className="inline-flex items-center gap-1.5">
+                        <Award className="w-3.5 h-3.5" /> Quiz Tính điểm
+                      </span>
                     </Select.Item>
                   </Select.Content>
                 </Select>
@@ -353,67 +437,271 @@ export function LearningItemFormModal({
             )}
 
             {itemType === ItemType.AUTO_GRADED_LAB && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 bg-card p-3 rounded-xl border border-border">
-                  <Code className="w-4 h-4 text-primary" aria-hidden="true" />
-                  <label
-                    htmlFor="labLanguage"
-                    className="text-xs font-bold uppercase tracking-wider text-foreground shrink-0"
-                  >
-                    Ngôn ngữ lập trình:
+              <div className="space-y-5">
+                {/* ─── 1. Mô tả đề bài ─── */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-primary" />
+                    Mô tả đề bài (Markdown)
                   </label>
-                  <div className="w-48">
-                    <Select
-                      value={labLanguage}
-                      onValueChange={(val) => {
-                        if (val) setLabLanguage(val as string);
-                      }}
-                    >
-                      <Select.Trigger
-                        id="labLanguage"
-                        aria-label="Ngôn ngữ lập trình"
-                        className="w-full bg-card"
-                      >
-                        <Select.Value placeholder="Chọn ngôn ngữ">
-                          {labLanguage === "python"
-                            ? "Python 3"
-                            : labLanguage === "javascript"
-                              ? "JavaScript (Node.js)"
-                              : labLanguage === "cpp"
-                                ? "C++"
-                                : labLanguage}
-                        </Select.Value>
-                      </Select.Trigger>
-                      <Select.Content>
-                        <Select.Item value="python">Python 3</Select.Item>
-                        <Select.Item value="javascript">JavaScript (Node.js)</Select.Item>
-                        <Select.Item value="cpp">C++</Select.Item>
-                      </Select.Content>
-                    </Select>
+                  <p className="text-[11px] text-muted-foreground">
+                    Viết yêu cầu bài lab, công thức, ràng buộc, ví dụ input/output. Học viên sẽ thấy
+                    nội dung này.
+                  </p>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                        <Edit3 className="w-3 h-3" /> Soạn thảo
+                      </div>
+                      <Textarea
+                        rows={8}
+                        value={readingMarkdown}
+                        onChange={(e) => setReadingMarkdown(e.target.value)}
+                        placeholder={`## Mô tả
+Viết hàm tính Mean Squared Error (MSE).
+
+## Công thức
+MSE = (1/N) × Σ(y_true[i] - y_pred[i])²
+
+## Ví dụ
+Input:  y_true=[1,2,3], y_pred=[1,2,3]
+Output: 0.0
+
+## Ràng buộc
+- 1 ≤ len(y_true) ≤ 1000
+- Giá trị float trong khoảng [-1000, 1000]`}
+                        className="w-full flex-1 font-mono text-xs shadow-2xs"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                        <Eye className="w-3 h-3" /> Xem trước
+                      </div>
+                      <div className="flex-1 p-3 rounded-xl border border-border bg-card text-sm overflow-y-auto prose prose-sm dark:prose-invert">
+                        {readingMarkdown ? (
+                          renderMarkdown(readingMarkdown)
+                        ) : (
+                          <span className="text-muted-foreground italic text-xs">
+                            Nhập mô tả bên trái để xem trước…
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* 2 Columns: Starter Code & Test Cases */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                {/* ─── 2. Ngôn ngữ + Starter Code ─── */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 bg-card p-3 rounded-xl border border-border">
+                    <Code className="w-4 h-4 text-primary" aria-hidden="true" />
+                    <label
+                      htmlFor="labLanguage"
+                      className="text-xs font-bold uppercase tracking-wider text-foreground shrink-0"
+                    >
+                      Ngôn ngữ lập trình:
+                    </label>
+                    <div className="w-48">
+                      <Select
+                        value={labLanguage}
+                        onValueChange={(val) => {
+                          if (val) setLabLanguage(val as string);
+                        }}
+                      >
+                        <Select.Trigger
+                          id="labLanguage"
+                          aria-label="Ngôn ngữ lập trình"
+                          className="w-full bg-card"
+                        >
+                          <Select.Value placeholder="Chọn ngôn ngữ">
+                            {labLanguage === "python"
+                              ? "Python 3"
+                              : labLanguage === "javascript"
+                                ? "JavaScript (Node.js)"
+                                : labLanguage === "cpp"
+                                  ? "C++"
+                                  : labLanguage}
+                          </Select.Value>
+                        </Select.Trigger>
+                        <Select.Content>
+                          <Select.Item value="python">Python 3</Select.Item>
+                          <Select.Item value="javascript">JavaScript (Node.js)</Select.Item>
+                          <Select.Item value="cpp">C++</Select.Item>
+                        </Select.Content>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                      <Code className="w-3.5 h-3.5 text-primary" />
+                      Code mẫu ban đầu (Starter Code)
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">
+                      Code mà học viên sẽ thấy khi mở bài lab. Nên chứa tên hàm, docstring, và
+                      placeholder.
+                    </p>
                     <Textarea
-                      label="Code mẫu ban đầu (Starter Code)"
-                      rows={10}
+                      rows={8}
                       value={labStarterCode}
                       onChange={(e) => setLabStarterCode(e.target.value)}
                       className="w-full font-mono text-xs shadow-2xs"
                     />
                   </div>
+                </div>
 
+                {/* ─── 3. Test Cases Builder ─── */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                      Bộ Test Cases
+                    </label>
+                    <Button
+                      type="button"
+                      variant="outlined"
+                      size="sm"
+                      onClick={() => {
+                        try {
+                          const current = JSON.parse(labTestCasesJson);
+                          const updated = [
+                            ...current,
+                            { input: "", expected_output: "", is_hidden: false },
+                          ];
+                          setLabTestCasesJson(JSON.stringify(updated, null, 2));
+                        } catch {
+                          setLabTestCasesJson(
+                            '[{"input": "", "expected_output": "", "is_hidden": false}]',
+                          );
+                        }
+                      }}
+                    >
+                      + Thêm Test Case
+                    </Button>
+                  </div>
+
+                  <p className="text-[11px] text-muted-foreground">
+                    <strong>Visible</strong>: Học viên thấy input + expected trước khi submit.{" "}
+                    <strong>Hidden</strong>: Chỉ chạy khi chấm, học viên không biết nội dung.
+                  </p>
+
+                  {/* Visual Builder */}
                   <div className="space-y-2">
+                    {(() => {
+                      let testCases: Array<{
+                        input?: string;
+                        expected_output?: string;
+                        expected?: string;
+                        is_hidden?: boolean;
+                      }> = [];
+                      try {
+                        testCases = JSON.parse(labTestCasesJson);
+                      } catch {
+                        /* empty */
+                      }
+                      if (!Array.isArray(testCases)) testCases = [];
+
+                      const updateTC = (index: number, field: string, value: string | boolean) => {
+                        const updated = [...testCases];
+                        updated[index] = { ...updated[index], [field]: value };
+                        setLabTestCasesJson(JSON.stringify(updated, null, 2));
+                      };
+                      const removeTC = (index: number) => {
+                        const updated = testCases.filter((_, i) => i !== index);
+                        setLabTestCasesJson(JSON.stringify(updated.length ? updated : [], null, 2));
+                      };
+
+                      return testCases.map((tc, i) => (
+                        <div
+                          key={i}
+                          className="p-3 rounded-xl border border-border bg-card space-y-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-foreground">
+                              Test Case #{i + 1}
+                            </span>
+                            <div className="flex items-center gap-3">
+                              <label className="flex items-center gap-1.5 cursor-pointer text-[11px]">
+                                <input
+                                  type="checkbox"
+                                  checked={tc.is_hidden || false}
+                                  onChange={(e) => updateTC(i, "is_hidden", e.target.checked)}
+                                  className="rounded border-border"
+                                />
+                                <span
+                                  className={
+                                    tc.is_hidden
+                                      ? "text-warning font-medium"
+                                      : "text-muted-foreground"
+                                  }
+                                >
+                                  {tc.is_hidden ? (
+                                    <>
+                                      <Lock className="w-3 h-3" /> Hidden
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Eye className="w-3 h-3" /> Visible
+                                    </>
+                                  )}
+                                </span>
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => removeTC(i)}
+                                className="text-destructive hover:text-destructive/80 text-xs font-medium cursor-pointer"
+                              >
+                                ✕ Xóa
+                              </button>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <Input
+                              label="Input (đối số hàm)"
+                              value={tc.input || ""}
+                              onChange={(e) => updateTC(i, "input", e.target.value)}
+                              placeholder="Ví dụ: [1, 2, 3], [4, 5, 6]"
+                              className="font-mono text-xs"
+                            />
+                            <Input
+                              label="Expected Output"
+                              value={tc.expected_output || tc.expected || ""}
+                              onChange={(e) => updateTC(i, "expected_output", e.target.value)}
+                              placeholder="Ví dụ: 0.0"
+                              className="font-mono text-xs"
+                            />
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+
+                  {/* Raw JSON toggle */}
+                  <details className="text-xs">
+                    <summary className="text-muted-foreground cursor-pointer hover:text-foreground">
+                      <FileCode className="w-3 h-3 inline" /> Xem/sửa JSON thô
+                    </summary>
                     <Textarea
-                      label="Cấu hình Test Cases (Định dạng JSON)"
-                      rows={10}
+                      rows={6}
                       value={labTestCasesJson}
                       onChange={(e) => setLabTestCasesJson(e.target.value)}
-                      className="w-full font-mono text-xs shadow-2xs"
+                      className="w-full font-mono text-xs shadow-2xs mt-2"
                     />
-                  </div>
+                  </details>
+
+                  {/* Auto-hidden info */}
+                  <p className="text-[11px] text-muted-foreground bg-muted/50 p-2.5 rounded-lg">
+                    <Info className="w-3.5 h-3.5 inline shrink-0" /> <strong>Tự động ẩn:</strong>{" "}
+                    Nếu bạn không đánh dấu test case nào là Hidden, hệ thống sẽ tự động ẩn 1/3 cuối
+                    khi lưu để đảm bảo tính chính xác chấm bài. Tối thiểu{" "}
+                    <strong>3 test cases</strong>.
+                  </p>
+
+                  {/* Validation error */}
+                  {labError && (
+                    <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-xs font-medium">
+                      <AlertTriangle className="w-3.5 h-3.5 inline shrink-0" /> {labError}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
