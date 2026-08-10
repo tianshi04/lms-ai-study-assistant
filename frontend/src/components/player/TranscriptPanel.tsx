@@ -2,12 +2,9 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { Search, X } from "lucide-react";
 import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { parseVTT, type VTTCue } from "@/lib/vtt_parser";
-import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { IconButton } from "@/components/ui/IconButton";
 
 interface TranscriptPanelProps {
   activeItem: LearningItem | null;
@@ -26,15 +23,13 @@ interface ParagraphBlock {
 
 export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: TranscriptPanelProps) {
   const [cues, setCues] = useState<VTTCue[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const [prevActiveItemId, setPrevActiveItemId] = useState<string | null>(null);
 
-  // Reset cues and search query when item changes
+  // Reset cues when item changes
   if (activeItem?.id !== prevActiveItemId) {
     setPrevActiveItemId(activeItem?.id || null);
     setCues([]);
-    setSearchQuery("");
   }
 
   // Fetch VTT subtitle if available
@@ -86,13 +81,13 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
 
   // Auto-scroll the active cue into view
   useEffect(() => {
-    if (activeIndex !== -1 && !searchQuery) {
+    if (activeIndex !== -1) {
       const el = document.getElementById(`transcript-cue-${activeIndex}`);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
     }
-  }, [activeIndex, searchQuery]);
+  }, [activeIndex]);
 
   // Group cues into Coursera-style paragraph blocks (consolidating timestamps)
   const paragraphBlocks = useMemo<ParagraphBlock[]>(() => {
@@ -149,40 +144,11 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
     return blocks;
   }, [allTranscripts]);
 
-  // Filter paragraph blocks by search query
-  const filteredBlocks = useMemo(() => {
-    if (!searchQuery.trim()) return paragraphBlocks;
-    const query = searchQuery.toLowerCase();
-
-    return paragraphBlocks
-      .map((block) => ({
-        ...block,
-        cues: block.cues.filter((c) => c.text.toLowerCase().includes(query)),
-      }))
-      .filter((block) => block.cues.length > 0);
-  }, [paragraphBlocks, searchQuery]);
-
   // Helper function to format timestamp (e.g. 0:03, 1:45)
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  // Helper function to highlight matching search text
-  const renderHighlightedText = (text: string, highlight: string) => {
-    if (!highlight.trim()) return text;
-    const regex = new RegExp(`(${highlight.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")})`, "gi");
-    const parts = text.split(regex);
-    return parts.map((part, i) =>
-      regex.test(part) ? (
-        <mark key={i} className="bg-warning/30 text-foreground px-0.5 rounded font-semibold">
-          {part}
-        </mark>
-      ) : (
-        part
-      ),
-    );
   };
 
   if (allTranscripts.length === 0) {
@@ -195,47 +161,17 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
 
   return (
     <div className="flex flex-col h-full space-y-3 min-h-0">
-      {/* Search Input Bar */}
-      <div className="relative shrink-0">
-        <Input
-          type="text"
-          name="search"
-          autoComplete="off"
-          aria-label="Tìm kiếm nội dung bài giảng"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Tìm kiếm nội dung bài giảng…"
-          className="pl-9 pr-8"
-        />
-        <Search
-          aria-hidden="true"
-          className="w-4 h-4 text-on-surface-variant absolute left-3 top-3 pointer-events-none"
-        />
-        {searchQuery && (
-          <IconButton
-            type="button"
-            variant="standard"
-            size="xs"
-            onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-2.5 h-6 w-6 text-on-surface-variant hover:text-on-surface"
-            aria-label="Xóa từ khóa tìm kiếm"
-          >
-            <X className="w-3.5 h-3.5" aria-hidden="true" />
-          </IconButton>
-        )}
-      </div>
-
       {/* Coursera-style Paragraph-Based Transcript Container */}
       <div
         ref={containerRef}
         className="space-y-4 overflow-y-auto flex-1 pr-1 scrollbar-thin min-h-0"
       >
-        {filteredBlocks.length === 0 ? (
+        {paragraphBlocks.length === 0 ? (
           <p className="text-xs text-on-surface-variant text-center py-6">
-            {"Không tìm thấy dòng phụ đề khớp với từ khóa"}
+            {"Không có nội dung phụ đề cho học liệu này."}
           </p>
         ) : (
-          filteredBlocks.map((block, blockIdx) => (
+          paragraphBlocks.map((block, blockIdx) => (
             <div key={blockIdx} className="space-y-1.5">
               {/* Aggregated Timestamp Header */}
               <div className="flex items-center gap-2 pt-2 pb-0.5">
@@ -275,7 +211,7 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
                           : "hover:bg-surface-container-highest/60 hover:text-primary"
                       }`}
                     >
-                      {renderHighlightedText(cue.text, searchQuery)}{" "}
+                      {cue.text}{" "}
                     </span>
                   );
                 })}
