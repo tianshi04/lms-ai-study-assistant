@@ -210,7 +210,7 @@ export function AutoGradedLabRunner({
             ) : (
               <>
                 <Play className="w-3.5 h-3.5" />
-                Run & Submit
+                Run & Submit Code
               </>
             )}
           </Button>
