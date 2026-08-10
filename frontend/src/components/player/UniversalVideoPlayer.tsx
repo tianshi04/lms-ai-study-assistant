@@ -35,6 +35,7 @@ declare global {
       Player: new (
         elementId: string | HTMLElement,
         config: {
+          host?: string;
           videoId: string;
           playerVars?: Record<string, any>;
           events?: {
@@ -108,12 +109,13 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
   ) {
     const videoId = extractYouTubeVideoId(videoUrl);
     const isYouTube = !!videoId;
-
     const htmlVideoRef = useRef<HTMLVideoElement | null>(null);
     const ytPlayerRef = useRef<any>(null);
+    const mountPointRef = useRef<HTMLDivElement | null>(null);
     const containerIdRef = useRef<string>(
       `yt-player-${Math.random().toString(36).substring(2, 9)}`,
     );
+    const activeVideoIdRef = useRef<string | null>(null);
     const [isYtReady, setIsYtReady] = useState(false);
 
     const lastKnownTimeRef = useRef<number>(0);
@@ -127,86 +129,125 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
     const onEndedRef = useRef(onEnded);
     onEndedRef.current = onEnded;
 
-    // Initialize YouTube Iframe Player
+    // Cleanup YouTube player on unmount
+    useEffect(() => {
+      return () => {
+        if (ytPlayerRef.current && typeof ytPlayerRef.current.destroy === "function") {
+          try {
+            ytPlayerRef.current.destroy();
+          } catch {}
+          ytPlayerRef.current = null;
+        }
+      };
+    }, []);
+
+    // Initialize or update YouTube Iframe Player
     useEffect(() => {
       if (!isYouTube || !videoId) return;
 
       let intervalId: NodeJS.Timeout | null = null;
+      let isCancelled = false;
 
-      loadYouTubeIframeApi(() => {
-        if (!window.YT || !window.YT.Player) return;
-
-        const container = document.getElementById(containerIdRef.current);
-        if (!container) return;
-
-        ytPlayerRef.current = new window.YT.Player(containerIdRef.current, {
-          videoId: videoId,
-          playerVars: {
-            autoplay: 0,
-            controls: 1,
-            rel: 0,
-            enablejsapi: 1,
-            modestbranding: 1,
-            origin: typeof window !== "undefined" ? window.location.origin : undefined,
-            host: "https://www.youtube.com",
-          },
-          events: {
-            onReady: (event: any) => {
-              ytPlayerRef.current = event.target;
-              setIsYtReady(true);
-            },
-            onStateChange: (event: { data: number; target?: any }) => {
-              if (event.target && typeof event.target.getCurrentTime === "function") {
-                ytPlayerRef.current = event.target;
-                try {
-                  const t = event.target.getCurrentTime();
-                  const state = event.target.getPlayerState?.();
-                  const isPausedOrEnded = state === 2 || state === 0;
-                  if (typeof t === "number" && !isNaN(t)) {
-                    if (t === 0 && lastKnownTimeRef.current > 2 && !isPausedOrEnded) return;
-                    lastKnownTimeRef.current = t;
-                    onTimeUpdateRef.current?.(t);
-                  }
-                } catch {}
-              }
-              if (event.data === 0) {
-                onEndedRef.current?.();
-              }
-            },
-          },
-        });
-
-        // Poll current time when playing for YouTube
-        intervalId = setInterval(() => {
-          const player = ytPlayerRef.current;
-          if (player && typeof player.getCurrentTime === "function") {
-            try {
-              const currentTime = player.getCurrentTime();
-              const state = player.getPlayerState?.();
-              const isPausedOrEnded = state === 2 || state === 0;
-              if (typeof currentTime === "number" && !isNaN(currentTime)) {
-                if (currentTime === 0 && lastKnownTimeRef.current > 2 && !isPausedOrEnded) return;
-                lastKnownTimeRef.current = currentTime;
-                onTimeUpdateRef.current?.(currentTime);
-              }
-            } catch {
-              // Player may be unmounting or destroyed
-            }
-          }
-        }, 250);
-      });
-
-      return () => {
-        if (intervalId) clearInterval(intervalId);
-        if (ytPlayerRef.current && typeof ytPlayerRef.current.destroy === "function") {
+      // If player already exists and videoId changed, cue the new video dynamically
+      if (
+        ytPlayerRef.current &&
+        typeof ytPlayerRef.current.cueVideoById === "function" &&
+        activeVideoIdRef.current !== videoId
+      ) {
+        try {
+          activeVideoIdRef.current = videoId;
+          ytPlayerRef.current.cueVideoById(videoId);
+          lastKnownTimeRef.current = 0;
+          setIsYtReady(true);
+        } catch {
           try {
-            ytPlayerRef.current.destroy();
-          } catch {
-            // Ignore destruction error
-          }
+            ytPlayerRef.current?.destroy?.();
+          } catch {}
           ytPlayerRef.current = null;
         }
-        setIsYtReady(false);
+      }
+
+      // If player does not exist, initialize it inside mountPointRef
+      if (!ytPlayerRef.current) {
+        loadYouTubeIframeApi(() => {
+          if (isCancelled || !window.YT || !window.YT.Player) return;
+          if (!mountPointRef.current) return;
+
+          activeVideoIdRef.current = videoId;
+          try {
+            mountPointRef.current.innerHTML = "";
+            const dummyDiv = document.createElement("div");
+            dummyDiv.id = containerIdRef.current;
+            dummyDiv.className = "w-full h-full";
+            mountPointRef.current.appendChild(dummyDiv);
+
+            const playerInstance = new window.YT.Player(dummyDiv, {
+              host: "https://www.youtube.com",
+              videoId: videoId,
+              playerVars: {
+                autoplay: 0,
+                controls: 1,
+                rel: 0,
+                enablejsapi: 1,
+                modestbranding: 1,
+                origin: typeof window !== "undefined" ? window.location.origin : undefined,
+              },
+              events: {
+                onReady: (event: any) => {
+                  if (isCancelled) return;
+                  ytPlayerRef.current = event.target;
+                  setIsYtReady(true);
+                },
+                onStateChange: (event: { data: number; target?: any }) => {
+                  if (isCancelled) return;
+                  if (event.target && typeof event.target.getCurrentTime === "function") {
+                    ytPlayerRef.current = event.target;
+                    try {
+                      const t = event.target.getCurrentTime();
+                      const state = event.target.getPlayerState?.();
+                      const isPausedOrEnded = state === 2 || state === 0;
+                      if (typeof t === "number" && !isNaN(t)) {
+                        if (t === 0 && lastKnownTimeRef.current > 2 && !isPausedOrEnded) return;
+                        if (t > 0) lastKnownTimeRef.current = t;
+                        onTimeUpdateRef.current?.(t);
+                      }
+                    } catch {}
+                  }
+                  if (event.data === 0) {
+                    onEndedRef.current?.();
+                  }
+                },
+              },
+            });
+            ytPlayerRef.current = playerInstance;
+          } catch (err) {
+            console.error("Failed to create YT.Player instance:", err);
+          }
+        });
+      }
+
+      // Poll current time when playing for YouTube
+      intervalId = setInterval(() => {
+        const player = ytPlayerRef.current;
+        if (player && typeof player.getCurrentTime === "function") {
+          try {
+            const currentTime = player.getCurrentTime();
+            const state = player.getPlayerState?.();
+            const isPausedOrEnded = state === 2 || state === 0;
+            if (typeof currentTime === "number" && !isNaN(currentTime)) {
+              if (currentTime === 0 && lastKnownTimeRef.current > 2 && !isPausedOrEnded) return;
+              if (currentTime > 0) lastKnownTimeRef.current = currentTime;
+              onTimeUpdateRef.current?.(currentTime);
+            }
+          } catch {
+            // Player may be unmounting or destroyed
+          }
+        }
+      }, 250);
+
+      return () => {
+        isCancelled = true;
+        if (intervalId) clearInterval(intervalId);
       };
     }, [isYouTube, videoId]);
 
@@ -228,7 +269,7 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
               const state = player?.getPlayerState?.();
               const isPausedOrEnded = state === 2 || state === 0;
               if (t === 0 && lastKnownTimeRef.current > 2 && !isPausedOrEnded) return;
-              lastKnownTimeRef.current = t;
+              if (t > 0) lastKnownTimeRef.current = t;
               onTimeUpdateRef.current?.(t);
             }
           }
@@ -250,7 +291,7 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
             if (player && typeof player.getCurrentTime === "function") {
               try {
                 const t = player.getCurrentTime();
-                if (typeof t === "number" && !isNaN(t)) {
+                if (typeof t === "number" && !isNaN(t) && t > 0) {
                   lastKnownTimeRef.current = t;
                   return t;
                 }
@@ -324,7 +365,7 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
             if (player && typeof player.getCurrentTime === "function") {
               try {
                 const t = player.getCurrentTime();
-                if (typeof t === "number" && !isNaN(t)) {
+                if (typeof t === "number" && !isNaN(t) && t > 0) {
                   lastKnownTimeRef.current = t;
                   return t;
                 }
@@ -371,7 +412,7 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
     if (isYouTube) {
       return (
         <div className="w-full h-full relative rounded-2xl overflow-hidden bg-black">
-          <div id={containerIdRef.current} className="w-full h-full" />
+          <div ref={mountPointRef} className="w-full h-full" />
           {!isYtReady && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-white text-xs font-semibold">
               Đang tải trình phát YouTube...
