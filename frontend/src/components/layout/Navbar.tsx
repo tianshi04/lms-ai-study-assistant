@@ -183,6 +183,7 @@ export function Navbar() {
           {userName && (
             <Link
               href="/my-learning"
+              prefetch={true}
               onClick={() => setMobileMenuOpen(false)}
               className={getMobileLinkClasses("/my-learning")}
             >

@@ -440,10 +440,10 @@ export function LearningItemFormModal({
               <div className="space-y-5">
                 {/* ─── 1. Mô tả đề bài ─── */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                     <FileText className="w-3.5 h-3.5 text-primary" />
                     Mô tả đề bài (Markdown)
-                  </label>
+                  </span>
                   <p className="text-[11px] text-muted-foreground">
                     Viết yêu cầu bài lab, công thức, ràng buộc, ví dụ input/output. Học viên sẽ thấy
                     nội dung này.
@@ -532,10 +532,10 @@ Output: 0.0
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                       <Code className="w-3.5 h-3.5 text-primary" />
                       Code mẫu ban đầu (Starter Code)
-                    </label>
+                    </span>
                     <p className="text-[11px] text-muted-foreground">
                       Code mà học viên sẽ thấy khi mở bài lab. Nên chứa tên hàm, docstring, và
                       placeholder.
@@ -552,10 +552,10 @@ Output: 0.0
                 {/* ─── 3. Test Cases Builder ─── */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
                       Bộ Test Cases
-                    </label>
+                    </span>
                     <Button
                       type="button"
                       variant="outlined"
