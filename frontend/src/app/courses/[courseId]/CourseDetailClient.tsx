@@ -448,7 +448,7 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
                 <h3 className="text-xl font-bold text-foreground mb-2">{week.title}</h3>
                 <p className="text-sm text-muted-foreground mb-6 leading-relaxed">{week.summary}</p>
 
-                <div className="space-y-3 border-t border-border pt-4">
+                <div className="space-y-3">
                   {week.lessons.map((lesson) => (
                     <div
                       key={lesson.id}
