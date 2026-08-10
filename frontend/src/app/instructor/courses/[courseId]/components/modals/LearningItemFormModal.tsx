@@ -22,7 +22,6 @@ import {
   Users,
   CheckCircle2,
   Eye,
-  EyeOff,
   Edit3,
   Info,
   AlertTriangle,
@@ -39,8 +38,8 @@ function normalizeJson(raw: string | undefined, fallback: string): string {
   if (!raw) return fallback;
   try {
     let parsed = JSON.parse(raw);
-    if (typeof parsed === 'string') parsed = JSON.parse(parsed);
-    return typeof parsed === 'object' ? JSON.stringify(parsed, null, 2) : raw;
+    if (typeof parsed === "string") parsed = JSON.parse(parsed);
+    return typeof parsed === "object" ? JSON.stringify(parsed, null, 2) : raw;
   } catch {
     return raw;
   }
@@ -168,13 +167,15 @@ export function LearningItemFormModal({
           return;
         }
         if (testCases.length < 3) {
-          setLabError(`Cần ít nhất 3 test cases (hiện có ${testCases.length}). Thêm test case để đảm bảo chất lượng chấm bài.`);
+          setLabError(
+            `Cần ít nhất 3 test cases (hiện có ${testCases.length}). Thêm test case để đảm bảo chất lượng chấm bài.`,
+          );
           return;
         }
         // Auto-assign hidden: if GV didn't mark any as hidden, auto-hide the last ~1/3
         const hasAnyHidden = testCases.some((tc: { is_hidden?: boolean }) => tc.is_hidden === true);
         if (!hasAnyHidden) {
-          const hiddenStartIndex = Math.ceil(testCases.length * 2 / 3); // last ~1/3
+          const hiddenStartIndex = Math.ceil((testCases.length * 2) / 3); // last ~1/3
           testCases = testCases.map((tc: Record<string, unknown>, i: number) => ({
             ...tc,
             is_hidden: i >= hiddenStartIndex,
@@ -267,40 +268,66 @@ export function LearningItemFormModal({
                   >
                     <Select.Value placeholder="Chọn loại nội dung">
                       <span className="inline-flex items-center gap-1.5 truncate">
-                        {itemType === ItemType.VIDEO
-                          ? <><VideoIcon className="w-3.5 h-3.5 shrink-0" /> Bài giảng Video</>
-                          : itemType === ItemType.READING
-                            ? <><BookOpen className="w-3.5 h-3.5 shrink-0" /> Bài đọc Markdown</>
-                            : itemType === ItemType.AUTO_GRADED_LAB
-                              ? <><Terminal className="w-3.5 h-3.5 shrink-0" /> Thực hành Code</>
-                              : itemType === ItemType.PEER_REVIEW
-                                ? <><Users className="w-3.5 h-3.5 shrink-0" /> Đánh giá chéo</>
-                                : itemType === ItemType.PRACTICE_QUIZ
-                                  ? <><Pencil className="w-3.5 h-3.5 shrink-0" /> Quiz Luyện tập</>
-                                  : itemType === ItemType.GRADED_QUIZ
-                                    ? <><Award className="w-3.5 h-3.5 shrink-0" /> Quiz Tính điểm</>
-                                    : ""}
+                        {itemType === ItemType.VIDEO ? (
+                          <>
+                            <VideoIcon className="w-3.5 h-3.5 shrink-0" /> Bài giảng Video
+                          </>
+                        ) : itemType === ItemType.READING ? (
+                          <>
+                            <BookOpen className="w-3.5 h-3.5 shrink-0" /> Bài đọc Markdown
+                          </>
+                        ) : itemType === ItemType.AUTO_GRADED_LAB ? (
+                          <>
+                            <Terminal className="w-3.5 h-3.5 shrink-0" /> Thực hành Code
+                          </>
+                        ) : itemType === ItemType.PEER_REVIEW ? (
+                          <>
+                            <Users className="w-3.5 h-3.5 shrink-0" /> Đánh giá chéo
+                          </>
+                        ) : itemType === ItemType.PRACTICE_QUIZ ? (
+                          <>
+                            <Pencil className="w-3.5 h-3.5 shrink-0" /> Quiz Luyện tập
+                          </>
+                        ) : itemType === ItemType.GRADED_QUIZ ? (
+                          <>
+                            <Award className="w-3.5 h-3.5 shrink-0" /> Quiz Tính điểm
+                          </>
+                        ) : (
+                          ""
+                        )}
                       </span>
                     </Select.Value>
                   </Select.Trigger>
                   <Select.Content>
                     <Select.Item value={String(ItemType.VIDEO)}>
-                      <span className="inline-flex items-center gap-1.5"><VideoIcon className="w-3.5 h-3.5" /> Bài giảng Video</span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <VideoIcon className="w-3.5 h-3.5" /> Bài giảng Video
+                      </span>
                     </Select.Item>
                     <Select.Item value={String(ItemType.READING)}>
-                      <span className="inline-flex items-center gap-1.5"><BookOpen className="w-3.5 h-3.5" /> Bài đọc Markdown</span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5" /> Bài đọc Markdown
+                      </span>
                     </Select.Item>
                     <Select.Item value={String(ItemType.AUTO_GRADED_LAB)}>
-                      <span className="inline-flex items-center gap-1.5"><Terminal className="w-3.5 h-3.5" /> Thực hành Code</span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Terminal className="w-3.5 h-3.5" /> Thực hành Code
+                      </span>
                     </Select.Item>
                     <Select.Item value={String(ItemType.PEER_REVIEW)}>
-                      <span className="inline-flex items-center gap-1.5"><Users className="w-3.5 h-3.5" /> Đánh giá chéo</span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5" /> Đánh giá chéo
+                      </span>
                     </Select.Item>
                     <Select.Item value={String(ItemType.PRACTICE_QUIZ)}>
-                      <span className="inline-flex items-center gap-1.5"><Pencil className="w-3.5 h-3.5" /> Quiz Luyện tập</span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Pencil className="w-3.5 h-3.5" /> Quiz Luyện tập
+                      </span>
                     </Select.Item>
                     <Select.Item value={String(ItemType.GRADED_QUIZ)}>
-                      <span className="inline-flex items-center gap-1.5"><Award className="w-3.5 h-3.5" /> Quiz Tính điểm</span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Award className="w-3.5 h-3.5" /> Quiz Tính điểm
+                      </span>
                     </Select.Item>
                   </Select.Content>
                 </Select>
@@ -418,7 +445,8 @@ export function LearningItemFormModal({
                     Mô tả đề bài (Markdown)
                   </label>
                   <p className="text-[11px] text-muted-foreground">
-                    Viết yêu cầu bài lab, công thức, ràng buộc, ví dụ input/output. Học viên sẽ thấy nội dung này.
+                    Viết yêu cầu bài lab, công thức, ràng buộc, ví dụ input/output. Học viên sẽ thấy
+                    nội dung này.
                   </p>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                     <div className="flex flex-col gap-1">
@@ -450,12 +478,15 @@ Output: 0.0
                         <Eye className="w-3 h-3" /> Xem trước
                       </div>
                       <div className="flex-1 p-3 rounded-xl border border-border bg-card text-sm overflow-y-auto prose prose-sm dark:prose-invert">
-                        {readingMarkdown
-                          ? renderMarkdown(readingMarkdown)
-                          : <span className="text-muted-foreground italic text-xs">Nhập mô tả bên trái để xem trước…</span>}
+                        {readingMarkdown ? (
+                          renderMarkdown(readingMarkdown)
+                        ) : (
+                          <span className="text-muted-foreground italic text-xs">
+                            Nhập mô tả bên trái để xem trước…
+                          </span>
+                        )}
                       </div>
                     </div>
-                  </div>
                   </div>
                 </div>
 
@@ -476,12 +507,12 @@ Output: 0.0
                           if (val) setLabLanguage(val as string);
                         }}
                       >
-                        <SelectTrigger
+                        <Select.Trigger
                           id="labLanguage"
                           aria-label="Ngôn ngữ lập trình"
                           className="w-full bg-card"
                         >
-                          <SelectValue placeholder="Chọn ngôn ngữ">
+                          <Select.Value placeholder="Chọn ngôn ngữ">
                             {labLanguage === "python"
                               ? "Python 3"
                               : labLanguage === "javascript"
@@ -489,13 +520,13 @@ Output: 0.0
                                 : labLanguage === "cpp"
                                   ? "C++"
                                   : labLanguage}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="python">Python 3</SelectItem>
-                          <SelectItem value="javascript">JavaScript (Node.js)</SelectItem>
-                          <SelectItem value="cpp">C++</SelectItem>
-                        </SelectContent>
+                          </Select.Value>
+                        </Select.Trigger>
+                        <Select.Content>
+                          <Select.Item value="python">Python 3</Select.Item>
+                          <Select.Item value="javascript">JavaScript (Node.js)</Select.Item>
+                          <Select.Item value="cpp">C++</Select.Item>
+                        </Select.Content>
                       </Select>
                     </div>
                   </div>
@@ -506,7 +537,8 @@ Output: 0.0
                       Code mẫu ban đầu (Starter Code)
                     </label>
                     <p className="text-[11px] text-muted-foreground">
-                      Code mà học viên sẽ thấy khi mở bài lab. Nên chứa tên hàm, docstring, và placeholder.
+                      Code mà học viên sẽ thấy khi mở bài lab. Nên chứa tên hàm, docstring, và
+                      placeholder.
                     </p>
                     <Textarea
                       rows={8}
@@ -526,15 +558,20 @@ Output: 0.0
                     </label>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="outlined"
                       size="sm"
                       onClick={() => {
                         try {
                           const current = JSON.parse(labTestCasesJson);
-                          const updated = [...current, { input: "", expected_output: "", is_hidden: false }];
+                          const updated = [
+                            ...current,
+                            { input: "", expected_output: "", is_hidden: false },
+                          ];
                           setLabTestCasesJson(JSON.stringify(updated, null, 2));
                         } catch {
-                          setLabTestCasesJson('[{"input": "", "expected_output": "", "is_hidden": false}]');
+                          setLabTestCasesJson(
+                            '[{"input": "", "expected_output": "", "is_hidden": false}]',
+                          );
                         }
                       }}
                     >
@@ -543,14 +580,24 @@ Output: 0.0
                   </div>
 
                   <p className="text-[11px] text-muted-foreground">
-                    <strong>Visible</strong>: Học viên thấy input + expected trước khi submit. <strong>Hidden</strong>: Chỉ chạy khi chấm, học viên không biết nội dung.
+                    <strong>Visible</strong>: Học viên thấy input + expected trước khi submit.{" "}
+                    <strong>Hidden</strong>: Chỉ chạy khi chấm, học viên không biết nội dung.
                   </p>
 
                   {/* Visual Builder */}
                   <div className="space-y-2">
                     {(() => {
-                      let testCases: Array<{ input?: string; expected_output?: string; expected?: string; is_hidden?: boolean }> = [];
-                      try { testCases = JSON.parse(labTestCasesJson); } catch { /* empty */ }
+                      let testCases: Array<{
+                        input?: string;
+                        expected_output?: string;
+                        expected?: string;
+                        is_hidden?: boolean;
+                      }> = [];
+                      try {
+                        testCases = JSON.parse(labTestCasesJson);
+                      } catch {
+                        /* empty */
+                      }
                       if (!Array.isArray(testCases)) testCases = [];
 
                       const updateTC = (index: number, field: string, value: string | boolean) => {
@@ -564,7 +611,10 @@ Output: 0.0
                       };
 
                       return testCases.map((tc, i) => (
-                        <div key={i} className="p-3 rounded-xl border border-border bg-card space-y-2">
+                        <div
+                          key={i}
+                          className="p-3 rounded-xl border border-border bg-card space-y-2"
+                        >
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-semibold text-foreground">
                               Test Case #{i + 1}
@@ -577,8 +627,22 @@ Output: 0.0
                                   onChange={(e) => updateTC(i, "is_hidden", e.target.checked)}
                                   className="rounded border-border"
                                 />
-                                <span className={tc.is_hidden ? "text-warning font-medium" : "text-muted-foreground"}>
-                                  {tc.is_hidden ? <><Lock className="w-3 h-3" /> Hidden</> : <><Eye className="w-3 h-3" /> Visible</>}
+                                <span
+                                  className={
+                                    tc.is_hidden
+                                      ? "text-warning font-medium"
+                                      : "text-muted-foreground"
+                                  }
+                                >
+                                  {tc.is_hidden ? (
+                                    <>
+                                      <Lock className="w-3 h-3" /> Hidden
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Eye className="w-3 h-3" /> Visible
+                                    </>
+                                  )}
                                 </span>
                               </label>
                               <button
@@ -626,8 +690,10 @@ Output: 0.0
 
                   {/* Auto-hidden info */}
                   <p className="text-[11px] text-muted-foreground bg-muted/50 p-2.5 rounded-lg">
-                    <Info className="w-3.5 h-3.5 inline shrink-0" /> <strong>Tự động ẩn:</strong> Nếu bạn không đánh dấu test case nào là Hidden, hệ thống sẽ tự động ẩn 1/3 cuối khi lưu để đảm bảo tính chính xác chấm bài.
-                    Tối thiểu <strong>3 test cases</strong>.
+                    <Info className="w-3.5 h-3.5 inline shrink-0" /> <strong>Tự động ẩn:</strong>{" "}
+                    Nếu bạn không đánh dấu test case nào là Hidden, hệ thống sẽ tự động ẩn 1/3 cuối
+                    khi lưu để đảm bảo tính chính xác chấm bài. Tối thiểu{" "}
+                    <strong>3 test cases</strong>.
                   </p>
 
                   {/* Validation error */}

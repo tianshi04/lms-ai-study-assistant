@@ -11,7 +11,6 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { Surface } from "@/components/ui/Surface";
-import { Progress } from "@/components/ui/Progress";
 import { mapConnectError } from "@/lib/connect_error_mapper";
 
 /* ─── Types ─── */
@@ -147,7 +146,11 @@ export function AutoGradedLabRunner({
   }, [labResult]);
 
   return (
-    <Card variant="outlined" className="space-y-0 max-w-6xl mx-auto shadow-xl overflow-hidden">
+    <Surface
+      variant="low"
+      shape="3xl"
+      className="space-y-0 max-w-6xl mx-auto shadow-xl overflow-hidden font-sans"
+    >
       {/* ═══ Problem Description ═══ */}
       {description && (
         <details className="border-b border-border" open>
@@ -254,9 +257,7 @@ export function AutoGradedLabRunner({
               </>
             ) : (
               <>
-                <span className="flex items-center gap-1.5">
-                  📋 Test Cases
-                </span>
+                <span className="flex items-center gap-1.5">📋 Test Cases</span>
                 <span>
                   {visibleCases.length > 0 && (
                     <>
@@ -302,7 +303,9 @@ export function AutoGradedLabRunner({
                     )}
                   </span>
                   <div className="text-right">
-                    <span className={`text-2xl font-bold ${labResult.passed ? "text-success" : "text-destructive"}`}>
+                    <span
+                      className={`text-2xl font-bold ${labResult.passed ? "text-success" : "text-destructive"}`}
+                    >
                       {labResult.scorePercent}%
                     </span>
                     <p className="text-[11px] text-muted-foreground">
@@ -376,10 +379,7 @@ export function AutoGradedLabRunner({
 
                 {!isRunning &&
                   testCases.map((tc, i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg border border-border bg-card p-3 space-y-2"
-                    >
+                    <div key={i} className="rounded-lg border border-border bg-card p-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                           {tc.is_hidden ? (
@@ -399,7 +399,7 @@ export function AutoGradedLabRunner({
                             Hidden
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-[10px]">
+                          <Badge variant="outlined" className="text-[10px]">
                             Visible
                           </Badge>
                         )}
@@ -413,14 +413,18 @@ export function AutoGradedLabRunner({
                         <div className="space-y-1.5 pl-5">
                           {tc.input && (
                             <div className="flex gap-2 text-xs">
-                              <span className="text-muted-foreground font-medium min-w-[60px]">Input:</span>
+                              <span className="text-muted-foreground font-medium min-w-[60px]">
+                                Input:
+                              </span>
                               <code className="font-mono text-foreground bg-muted px-1.5 py-0.5 rounded">
                                 {tc.input}
                               </code>
                             </div>
                           )}
                           <div className="flex gap-2 text-xs">
-                            <span className="text-muted-foreground font-medium min-w-[60px]">Expected:</span>
+                            <span className="text-muted-foreground font-medium min-w-[60px]">
+                              Expected:
+                            </span>
                             <code className="font-mono text-success bg-success/10 px-1.5 py-0.5 rounded">
                               {tc.expected_output || tc.expected || "—"}
                             </code>
