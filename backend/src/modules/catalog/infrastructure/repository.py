@@ -357,8 +357,15 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         organization_id: str = "partner_community",
     ) -> Course:
         import re
-        safe_slug = re.sub(r'[^a-z0-9-]', '', slug.lower().strip().replace(' ', '-')) if slug else ''
-        course_id = f"course-{safe_slug}" if safe_slug else f"course-{uuid.uuid4().hex[:8]}"
+
+        safe_slug = (
+            re.sub(r"[^a-z0-9-]", "", slug.lower().strip().replace(" ", "-"))
+            if slug
+            else ""
+        )
+        course_id = (
+            f"course-{safe_slug}" if safe_slug else f"course-{uuid.uuid4().hex[:8]}"
+        )
         clean_org_id = (
             organization_id.strip()
             if organization_id and organization_id.strip()
