@@ -230,6 +230,8 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         parsed_status = _parse_status_filter(status_filter)
         if parsed_status:
             stmt = stmt.where(CourseModel.status == parsed_status)
+        elif str(status_filter).upper() not in ("ALL", "ANY"):
+            stmt = stmt.where(CourseModel.status == CourseStatus.PUBLISHED)
 
         if sort_by == "rating":
             stmt = stmt.order_by(CourseModel.average_rating.desc())
