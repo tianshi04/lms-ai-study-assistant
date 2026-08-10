@@ -316,9 +316,9 @@ export function CourseDetailClient({ courseId }: CourseDetailClientProps) {
 
           {/* Enrollment Card (M3 Elevated & Glassmorphism Container Item 1.3) */}
           <Surface
-            variant="container"
+            variant="bright"
             shape="3xl"
-            className="relative overflow-hidden border border-primary/20 backdrop-blur-xl p-6 space-y-6"
+            className="relative overflow-hidden border border-primary/20 p-6 space-y-6 shadow-lg"
           >
             {/* M3 Top Gradient Accent Bar */}
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-primary via-primary/80 to-accent" />

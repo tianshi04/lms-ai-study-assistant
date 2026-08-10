@@ -114,9 +114,9 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="flex-1 flex items-center justify-center px-4 py-12">
+    <main className="flex-1 flex items-center justify-center px-4 py-12 bg-surface text-on-surface">
       <div className="w-full max-w-md">
-        <Surface variant="high" shape="3xl" padding="lg">
+        <Surface variant="bright" shape="3xl" padding="lg" className="shadow-xl">
           <Surface.Header className="text-center p-0 mb-8 space-y-2">
             <Link
               href="/"

@@ -91,8 +91,13 @@ function ForgotPasswordContent() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-background via-muted/40 to-background">
-      <Surface variant="high" shape="3xl" padding="lg" className="w-full max-w-md space-y-6">
+    <main className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-surface text-on-surface">
+      <Surface
+        variant="bright"
+        shape="3xl"
+        padding="lg"
+        className="w-full max-w-md space-y-6 shadow-xl"
+      >
         {/* Header Section */}
         <Surface.Header className="text-center p-0 space-y-2">
           <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3 shadow-inner">
