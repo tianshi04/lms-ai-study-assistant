@@ -126,14 +126,17 @@ def _to_pb_week_module(week: WeekModule) -> pb.WeekModule:
 
 
 def _to_pb_course_status(status_enum: Any) -> pb.CourseStatus:
-    status_str = str(status_enum).upper()
+    val = getattr(status_enum, "value", str(status_enum))
+    status_str = (
+        str(val).replace("CourseStatus.", "").replace("COURSE_STATUS_", "").upper()
+    )
     mapping = {
         "DRAFT": pb.CourseStatus.DRAFT,
         "PENDING_REVIEW": pb.CourseStatus.PENDING_REVIEW,
         "PUBLISHED": pb.CourseStatus.PUBLISHED,
         "REJECTED": pb.CourseStatus.REJECTED,
     }
-    return mapping.get(status_str, pb.CourseStatus.PUBLISHED)
+    return mapping.get(status_str, pb.CourseStatus.DRAFT)
 
 
 def _to_pb_course(course: Course) -> pb.Course:
