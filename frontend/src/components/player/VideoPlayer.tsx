@@ -189,6 +189,8 @@ export function VideoPlayer({
             starterCode={activeItem.starterCode}
             language={activeItem.language}
             userId={userId}
+            testCasesJson={activeItem.testCasesJson}
+            description={activeItem.readingMarkdown}
             onComplete={() => onMarkComplete?.(activeItem.id)}
           />
         </div>

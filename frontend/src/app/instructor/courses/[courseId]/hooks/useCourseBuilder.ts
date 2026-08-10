@@ -75,7 +75,8 @@ export function useCourseBuilder(courseId: string) {
     } finally {
       setLoading(false);
     }
-  }, [courseId, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId]);
 
   useEffect(() => {
     let ignore = false;
@@ -108,7 +109,8 @@ export function useCourseBuilder(courseId: string) {
     return () => {
       ignore = true;
     };
-  }, [courseId, toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId]);
 
   const handleSubmitForLaunch = async () => {
     if (!course) return;

@@ -673,7 +673,11 @@ class AssessmentUseCase:
                     if test_cases_json:
                         import json
 
-                        test_cases = json.loads(test_cases_json)
+                        parsed = json.loads(test_cases_json)
+                        # Handle double-encoded JSON from database
+                        if isinstance(parsed, str):
+                            parsed = json.loads(parsed)
+                        test_cases = parsed
                 except Exception as e:
                     logger.warning(
                         "Could not load database test cases for lab %s: %s.",
