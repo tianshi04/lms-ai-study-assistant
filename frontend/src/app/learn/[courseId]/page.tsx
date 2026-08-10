@@ -321,8 +321,15 @@ function CoursePlayerContent() {
               } else {
                 setCertificateId("");
               }
-            } catch (err) {
-              console.error("Failed to load certificate on completion:", err);
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : "";
+              if (
+                !msg.includes("BR_CERT_003") &&
+                !msg.includes("KYC") &&
+                !msg.includes("Xác minh Danh tính")
+              ) {
+                console.error("Failed to load certificate on completion:", err);
+              }
               setCertificateId("");
             }
             setShowCompletionModal(true);
@@ -394,8 +401,15 @@ function CoursePlayerContent() {
                 if (certRes.certificate?.certificateId) {
                   setCertificateId(certRes.certificate.certificateId);
                 }
-              } catch (err) {
-                console.error("Failed to load certificate on load:", err);
+              } catch (err: unknown) {
+                const msg = err instanceof Error ? err.message : "";
+                if (
+                  !msg.includes("BR_CERT_003") &&
+                  !msg.includes("KYC") &&
+                  !msg.includes("Xác minh Danh tính")
+                ) {
+                  console.error("Failed to load certificate on load:", err);
+                }
               }
             }
 
