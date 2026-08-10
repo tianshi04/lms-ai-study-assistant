@@ -163,7 +163,7 @@ export function UserDropdown() {
         className="w-68 p-1.5 rounded-2xl bg-card border border-outline-variant shadow-xl"
       >
         {/* User Info Header with Avatar and Stacked Role Badge */}
-        <div className="flex items-center gap-3.5 px-3.5 py-3 border-b border-outline-variant mb-1.5">
+        <div className="flex items-center gap-3.5 px-3.5 py-3 mb-1.5">
           <Image
             src={avatarSrc}
             alt={displayUserName}
@@ -301,8 +301,6 @@ export function UserDropdown() {
             </Menu.Item>
           </>
         )}
-
-        <div className="border-t border-outline-variant my-1.5" />
 
         <Menu.Item
           onClick={handleLogout}
