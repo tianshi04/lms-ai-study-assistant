@@ -716,10 +716,15 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
               <div className="space-y-2">
                 {qType === "SINGLE_CHOICE" || qType === "TRUE_FALSE" ? (
                   <RadioGroup
-                    value={qOptions.findIndex((opt) => opt.isCorrect).toString()}
+                    value={(() => {
+                      const foundIdx = qOptions.findIndex((opt) => opt.isCorrect);
+                      return foundIdx >= 0 ? foundIdx.toString() : "";
+                    })()}
                     onValueChange={(val) => {
-                      const selectedIdx = Number(val);
-                      handleOptionCorrectChange(selectedIdx, true);
+                      if (val !== undefined && val !== null && val !== "") {
+                        const selectedIdx = Number(val);
+                        handleOptionCorrectChange(selectedIdx, true);
+                      }
                     }}
                     className="space-y-2"
                   >

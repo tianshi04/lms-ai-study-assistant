@@ -42,23 +42,20 @@ export function RadioItem({
         // Color Roles - Unselected
         "border-outline bg-transparent text-transparent hover:border-on-surface",
         // Color Roles - Selected
-        "data-[state=checked]:border-primary data-[state=checked]:bg-transparent",
+        "data-[checked]:border-primary data-[state=checked]:border-primary data-[checked]:bg-transparent data-[state=checked]:bg-transparent",
         // State layer (Fixed MD3 State Layer Size: 40dp -> 40px circular overlay)
-        "before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-[40px] before:h-[40px] before:rounded-full before:content-[''] before:transition-colors",
-        "hover:before:bg-on-surface-variant/10 data-[state=checked]:hover:before:bg-primary/10",
-        "active:scale-95 active:before:bg-on-surface-variant/15 data-[state=checked]:active:before:bg-primary/20",
+        "before:pointer-events-none before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-[40px] before:h-[40px] before:rounded-full before:content-[''] before:transition-colors",
+        "hover:before:bg-on-surface-variant/10 data-[checked]:hover:before:bg-primary/10 data-[state=checked]:hover:before:bg-primary/10",
+        "active:scale-95 active:before:bg-on-surface-variant/15 data-[checked]:active:before:bg-primary/20 data-[state=checked]:active:before:bg-primary/20",
         // Touch Target (Fixed MD3 Target Size: 48dp -> 48px touch target area for accessibility)
-        "after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:w-[48px] after:h-[48px] after:content-['']",
+        "after:pointer-events-none after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:w-[48px] after:h-[48px] after:content-['']",
         // Disabled state (0.38 opacity, no state layer)
         "disabled:cursor-not-allowed disabled:border-on-surface/38 disabled:opacity-38 data-disabled:opacity-38 disabled:before:hidden disabled:after:hidden",
         className,
       )}
       {...props}
     >
-      <BaseRadio.Indicator className="flex items-center justify-center">
-        {/* Fixed MD3 Inner Dot Size: 10dp -> h-[10px] w-[10px] */}
-        <span className="h-[10px] w-[10px] rounded-full bg-primary transition-transform duration-m3-short-4 ease-m3-emphasized data-[state=checked]:scale-100 data-[state=unchecked]:scale-0" />
-      </BaseRadio.Indicator>
+      <BaseRadio.Indicator className="h-[10px] w-[10px] rounded-full bg-primary transition-transform duration-m3-short-4 ease-m3-emphasized data-[checked]:scale-100 data-[state=checked]:scale-100 data-[unchecked]:scale-0 data-[state=unchecked]:scale-0 flex items-center justify-center shrink-0" />
     </BaseRadio.Root>
   );
 
