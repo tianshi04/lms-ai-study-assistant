@@ -12,7 +12,19 @@ import { Select } from "@/components/ui/Select";
 import { useCoursesQuery, useCategoriesQuery } from "@/lib/query_hooks";
 import { Search, RotateCcw } from "lucide-react";
 
-export function CourseCatalogClient() {
+import type { Course, Category } from "@/gen/catalog/v1/catalog_pb";
+
+interface CourseCatalogClientProps {
+  initialCourses?: Course[];
+  initialSubjects?: Category[];
+  initialLevels?: Category[];
+}
+
+export function CourseCatalogClient({
+  initialCourses,
+  initialSubjects,
+  initialLevels,
+}: CourseCatalogClientProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [subject, setSubject] = useState<string>("");
@@ -24,20 +36,33 @@ export function CourseCatalogClient() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const hasActiveFilters = Boolean(debouncedSearch || subject || level || sortBy);
+
   const {
     data: courses = [],
     isLoading: loading,
     isFetching,
     error: queryError,
-  } = useCoursesQuery({
-    searchQuery: debouncedSearch,
-    subject,
-    level,
-    sortBy,
-  });
+  } = useCoursesQuery(
+    {
+      searchQuery: debouncedSearch,
+      subject,
+      level,
+      sortBy,
+    },
+    !hasActiveFilters && initialCourses && initialCourses.length > 0
+      ? { initialData: initialCourses }
+      : undefined,
+  );
 
-  const { data: subjects = [] } = useCategoriesQuery("SUBJECT");
-  const { data: levels = [] } = useCategoriesQuery("LEVEL");
+  const { data: subjects = [] } = useCategoriesQuery(
+    "SUBJECT",
+    initialSubjects && initialSubjects.length > 0 ? { initialData: initialSubjects } : undefined,
+  );
+  const { data: levels = [] } = useCategoriesQuery(
+    "LEVEL",
+    initialLevels && initialLevels.length > 0 ? { initialData: initialLevels } : undefined,
+  );
   const error = queryError ? queryError.message : null;
 
   const getCategoryTranslation = (slug: string, fallback: string) => fallback;
