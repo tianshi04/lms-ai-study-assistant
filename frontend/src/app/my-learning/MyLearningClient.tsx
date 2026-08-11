@@ -254,7 +254,6 @@ export function MyLearningClient() {
                 <Link
                   href={`/courses/${course.courseId}`}
                   prefetch={true}
-                  transitionTypes={["nav-forward"]}
                   className="block group-hover:text-primary transition-colors"
                 >
                   <h3 className="text-lg font-bold text-foreground min-w-0 line-clamp-2 mb-3">
@@ -271,7 +270,6 @@ export function MyLearningClient() {
                 <Link
                   href={`/learn/${course.courseId}`}
                   prefetch={true}
-                  transitionTypes={["nav-forward"]}
                   className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
                 >
                   {course.status === "COMPLETED"

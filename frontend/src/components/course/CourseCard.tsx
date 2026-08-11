@@ -77,7 +77,6 @@ export function CourseCard({ course, progress }: { course: Course; progress?: nu
         <Link
           href={`/courses/${course.id}`}
           prefetch={true}
-          transitionTypes={["nav-forward"]}
           className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 rounded-full bg-primary hover:bg-primary-hover text-on-primary text-sm font-bold transition-colors shadow-xs hover:shadow-md"
         >
           {"Xem Chi Tiết Khóa Học"}
