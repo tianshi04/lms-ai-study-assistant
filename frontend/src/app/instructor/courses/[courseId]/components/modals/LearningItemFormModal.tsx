@@ -440,7 +440,10 @@ export function LearningItemFormModal({
               <div className="space-y-5">
                 {/* ─── 1. Mô tả đề bài ─── */}
                 <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                  <label
+                    htmlFor="lab-markdown-input"
+                    className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5"
+                  >
                     <FileText className="w-3.5 h-3.5 text-primary" />
                     Mô tả đề bài (Markdown)
                   </label>
@@ -454,6 +457,7 @@ export function LearningItemFormModal({
                         <Edit3 className="w-3 h-3" /> Soạn thảo
                       </div>
                       <Textarea
+                        id="lab-markdown-input"
                         rows={8}
                         value={readingMarkdown}
                         onChange={(e) => setReadingMarkdown(e.target.value)}
@@ -532,7 +536,10 @@ Output: 0.0
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <label
+                      htmlFor="lab-starter-code-input"
+                      className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5"
+                    >
                       <Code className="w-3.5 h-3.5 text-primary" />
                       Code mẫu ban đầu (Starter Code)
                     </label>
@@ -541,6 +548,7 @@ Output: 0.0
                       placeholder.
                     </p>
                     <Textarea
+                      id="lab-starter-code-input"
                       rows={8}
                       value={labStarterCode}
                       onChange={(e) => setLabStarterCode(e.target.value)}
@@ -552,10 +560,10 @@ Output: 0.0
                 {/* ─── 3. Test Cases Builder ─── */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
                       Bộ Test Cases
-                    </label>
+                    </span>
                     <Button
                       type="button"
                       variant="outlined"
