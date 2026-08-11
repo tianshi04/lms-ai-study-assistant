@@ -328,9 +328,6 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                                 ? "Cuối khóa"
                                 : "Luyện tập"}
                           </span>
-                          <span className="text-[11px] text-muted-foreground font-mono">
-                            ID: {bank.id}
-                          </span>
                         </div>
                         <h3 className="font-extrabold text-sm text-foreground mt-1">
                           {bank.title}
@@ -380,9 +377,6 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <h2 className="text-lg font-black text-foreground">{selectedBank.title}</h2>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono bg-surface-container-high text-on-surface-variant border border-outline-variant">
-                          ID: {selectedBank.id}
-                        </span>
                       </div>
                       {selectedBank.description && (
                         <p className="text-xs text-muted-foreground">{selectedBank.description}</p>
