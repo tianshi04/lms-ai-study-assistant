@@ -1,17 +1,12 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
-import { User, BookOpen, ArrowRight, Building2 } from "lucide-react";
+import { User, BookOpen, ArrowRight } from "lucide-react";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
 
 import { Card } from "@/components/ui/Card";
-import { Chip } from "@/components/ui/Chip";
 import { Progress } from "@/components/ui/Progress";
+import { PartnerLogo } from "./PartnerLogo";
 
 export function CourseCard({ course, progress }: { course: Course; progress?: number }) {
-  const [imgError, setImgError] = useState(false);
-
   return (
     <Card
       variant="outlined"
@@ -21,25 +16,7 @@ export function CourseCard({ course, progress }: { course: Course; progress?: nu
         {/* Partner Header */}
         <div className="flex items-center justify-between gap-3 mb-4 h-7">
           <div className="flex items-center gap-3 min-w-0">
-            {!imgError && course.partnerLogoUrl ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={course.partnerLogoUrl}
-                alt={course.partnerName}
-                onError={() => setImgError(true)}
-                className="h-6 max-w-[140px] w-auto object-contain dark:brightness-200 dark:contrast-200 transition-opacity"
-              />
-            ) : null}
-
-            {(imgError || !course.partnerLogoUrl) && (
-              <Chip
-                variant="assist"
-                className="h-7 text-xs font-bold bg-primary-container text-on-primary-container border-primary/20 hover:bg-primary-container pointer-events-none cursor-default shadow-xs"
-                leadingIcon={<Building2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />}
-              >
-                {course.partnerName || "Coursera Partner"}
-              </Chip>
-            )}
+            <PartnerLogo logoUrl={course.partnerLogoUrl} partnerName={course.partnerName} />
           </div>
         </div>
 
