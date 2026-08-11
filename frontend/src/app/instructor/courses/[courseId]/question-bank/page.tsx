@@ -696,24 +696,6 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
               </div>
             </div>
 
-            <div>
-              <label
-                htmlFor="qText"
-                className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1"
-              >
-                {"Nội dung Cốt lõi của Câu hỏi *"}
-              </label>
-              <Textarea
-                id="qText"
-                rows={3}
-                required
-                value={qText}
-                onChange={(e) => setQText(e.target.value)}
-                placeholder="Nhập nội dung đề bài câu hỏi…"
-                className="p-2 rounded-xl bg-card text-xs"
-              />
-            </div>
-
             {/* Options */}
             <div>
               <div className="flex items-center justify-between mb-2">
