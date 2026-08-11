@@ -113,6 +113,8 @@ function ButtonGroupItem({
   className,
   children,
   ref,
+  render,
+  nativeButton,
   ...props
 }: ButtonGroupItemProps) {
   const { variant, size, shape, colorStyle } = React.useContext(ButtonGroupContext);
@@ -207,10 +209,13 @@ function ButtonGroupItem({
     return cn("rounded-full", `data-[state=on]:${innerRadius} data-[pressed]:${innerRadius}`);
   }, [variant, shape, size]);
 
+  const isNativeButton = nativeButton ?? (render ? false : true);
+
   return (
     <BaseToggle
       ref={ref}
-      nativeButton={props.render ? false : undefined}
+      render={render}
+      nativeButton={isNativeButton}
       className={cn(
         "relative inline-flex items-center justify-center font-bold tracking-wide transition-all duration-m3-short-4 ease-m3-emphasized cursor-pointer select-none shrink-0",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2",

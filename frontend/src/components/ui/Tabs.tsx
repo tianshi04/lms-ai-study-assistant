@@ -12,11 +12,20 @@ function TabsList({ className, ref, ...props }: React.ComponentProps<typeof Base
   );
 }
 
-function TabsTrigger({ className, ref, ...props }: React.ComponentProps<typeof BaseTabs.Tab>) {
+function TabsTrigger({
+  className,
+  ref,
+  render,
+  nativeButton,
+  ...props
+}: React.ComponentProps<typeof BaseTabs.Tab>) {
+  const isNativeButton = nativeButton ?? (render ? false : true);
+
   return (
     <BaseTabs.Tab
       ref={ref}
-      nativeButton={props.render ? false : undefined}
+      render={render}
+      nativeButton={isNativeButton}
       className={cn(
         "relative pb-3 pt-2 px-3 text-sm font-medium transition-colors duration-m3-short-4 ease-m3-emphasized flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground -mb-px after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[3px] after:rounded-t-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
         "data-[selected]:text-primary data-[selected]:font-bold data-[selected]:after:bg-primary",
