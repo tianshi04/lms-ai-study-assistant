@@ -13,6 +13,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { RadioGroup } from "@/components/ui/RadioGroup";
 import { Surface } from "@/components/ui/Surface";
 import { Select } from "@/components/ui/Select";
 
@@ -713,41 +714,84 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                 </Button>
               </div>
               <div className="space-y-2">
-                {qOptions.map((opt, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <Checkbox
-                      id={`opt-correct-${idx}`}
-                      checked={opt.isCorrect}
-                      onCheckedChange={(checked) =>
-                        handleOptionCorrectChange(idx, Boolean(checked))
-                      }
-                      aria-label={`Đánh dấu phương án ${idx + 1} là phương án đúng`}
-                      title="Đánh dấu phương án đúng"
-                    />
-                    <Input
-                      type="text"
-                      required
-                      value={opt.optionText}
-                      onChange={(e) => handleOptionChange(idx, e.target.value)}
-                      placeholder={`Phương án ${idx + 1}…`}
-                      aria-label={`Nội dung phương án ${idx + 1}`}
-                      spellCheck={false}
-                      className="flex-1 py-1.5 rounded-lg bg-card text-xs"
-                    />
-                    {qOptions.length > 2 && (
-                      <IconButton
-                        type="button"
-                        variant="standard"
-                        size="xs"
-                        onClick={() => handleRemoveOption(idx)}
-                        className="text-muted-foreground hover:text-destructive"
-                        aria-label={`Xóa phương án ${idx + 1}`}
-                      >
-                        ✕
-                      </IconButton>
-                    )}
-                  </div>
-                ))}
+                {qType === "SINGLE_CHOICE" || qType === "TRUE_FALSE" ? (
+                  <RadioGroup
+                    value={qOptions.findIndex((opt) => opt.isCorrect).toString()}
+                    onValueChange={(val) => {
+                      const selectedIdx = Number(val);
+                      handleOptionCorrectChange(selectedIdx, true);
+                    }}
+                    className="space-y-2"
+                  >
+                    {qOptions.map((opt, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <RadioGroup.Item
+                          value={idx.toString()}
+                          aria-label={`Đánh dấu phương án ${idx + 1} là phương án đúng`}
+                          title="Đánh dấu phương án đúng"
+                        />
+                        <Input
+                          type="text"
+                          required
+                          value={opt.optionText}
+                          onChange={(e) => handleOptionChange(idx, e.target.value)}
+                          placeholder={`Phương án ${idx + 1}…`}
+                          aria-label={`Nội dung phương án ${idx + 1}`}
+                          spellCheck={false}
+                          className="flex-1 py-1.5 rounded-lg bg-card text-xs"
+                        />
+                        {qOptions.length > 2 && (
+                          <IconButton
+                            type="button"
+                            variant="standard"
+                            size="xs"
+                            onClick={() => handleRemoveOption(idx)}
+                            className="text-muted-foreground hover:text-destructive"
+                            aria-label={`Xóa phương án ${idx + 1}`}
+                          >
+                            <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
+                          </IconButton>
+                        )}
+                      </div>
+                    ))}
+                  </RadioGroup>
+                ) : (
+                  qOptions.map((opt, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`opt-correct-${idx}`}
+                        checked={opt.isCorrect}
+                        onCheckedChange={(checked) =>
+                          handleOptionCorrectChange(idx, Boolean(checked))
+                        }
+                        aria-label={`Đánh dấu phương án ${idx + 1} là phương án đúng`}
+                        title="Đánh dấu phương án đúng"
+                      />
+                      <Input
+                        type="text"
+                        required
+                        value={opt.optionText}
+                        onChange={(e) => handleOptionChange(idx, e.target.value)}
+                        placeholder={`Phương án ${idx + 1}…`}
+                        aria-label={`Nội dung phương án ${idx + 1}`}
+                        spellCheck={false}
+                        className="flex-1 py-1.5 rounded-lg bg-card text-xs"
+                      />
+                      {qOptions.length > 2 && (
+                        <IconButton
+                          type="button"
+                          variant="standard"
+                          size="xs"
+                          onClick={() => handleRemoveOption(idx)}
+                          className="text-muted-foreground hover:text-destructive"
+                          aria-label={`Xóa phương án ${idx + 1}`}
+                        >
+                          <Trash2 aria-hidden="true" className="w-3.5 h-3.5" />
+                        </IconButton>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 

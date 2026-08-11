@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Surface } from "@/components/ui/Surface";
 import { Progress } from "@/components/ui/Progress";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { RadioGroup } from "@/components/ui/RadioGroup";
 import { Chip } from "@/components/ui/Chip";
 
 interface QuizSessionQuestionOption {
@@ -517,45 +518,51 @@ export function GradedQuizRunner({
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {q.options.map((opt, optIdx) => {
-                  const isSelected = currentAnswers.includes(optIdx);
-                  return (
-                    <Button
-                      key={optIdx}
-                      type="button"
-                      variant="outlined"
-                      disabled={(cooldownCountdown > 0 && !isPreviewMode) || quizResult !== null}
-                      onClick={() => handleOptionSelect(qIdx, optIdx, isMultipleChoice)}
-                      className={`h-auto justify-start text-left p-3.5 rounded-xl text-xs font-medium border flex items-center gap-2.5 cursor-pointer ${
-                        isSelected
-                          ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
-                          : "bg-card border-border hover:border-primary/50 text-foreground"
-                      }`}
-                    >
-                      {isMultipleChoice ? (
+              {isMultipleChoice ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {q.options.map((opt, optIdx) => {
+                    const isSelected = currentAnswers.includes(optIdx);
+                    return (
+                      <Button
+                        key={optIdx}
+                        type="button"
+                        variant="outlined"
+                        disabled={(cooldownCountdown > 0 && !isPreviewMode) || quizResult !== null}
+                        onClick={() => handleOptionSelect(qIdx, optIdx, true)}
+                        className={`h-auto justify-start text-left p-3.5 rounded-xl text-xs font-medium border flex items-center gap-2.5 cursor-pointer ${
+                          isSelected
+                            ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
+                            : "bg-card border-border hover:border-primary/50 text-foreground"
+                        }`}
+                      >
                         <Checkbox
                           checked={isSelected}
                           readOnly
                           className="pointer-events-none"
                           aria-hidden="true"
                         />
-                      ) : (
-                        <span
-                          className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${
-                            isSelected
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {String.fromCharCode(65 + optIdx)}
-                        </span>
-                      )}
-                      <span className="flex-1">{opt.optionText}</span>
-                    </Button>
-                  );
-                })}
-              </div>
+                        <span className="flex-1">{opt.optionText}</span>
+                      </Button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <RadioGroup
+                  value={currentAnswers[0]?.toString()}
+                  onValueChange={(val) => handleOptionSelect(qIdx, Number(val), false)}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-2.5"
+                >
+                  {q.options.map((opt, optIdx) => (
+                    <RadioGroup.Item
+                      key={optIdx}
+                      value={optIdx.toString()}
+                      disabled={(cooldownCountdown > 0 && !isPreviewMode) || quizResult !== null}
+                      label={opt.optionText}
+                      containerClassName="p-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest hover:border-outline hover:bg-surface-container-low transition-all"
+                    />
+                  ))}
+                </RadioGroup>
+              )}
             </Surface>
           );
         })}
