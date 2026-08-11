@@ -102,6 +102,8 @@ export function Button({
   disabled,
   children,
   ref,
+  render,
+  nativeButton,
   ...props
 }: ButtonProps) {
   const activeVariant = variant ?? "filled";
@@ -131,12 +133,15 @@ export function Button({
     className,
   );
 
+  const isNativeButton = nativeButton ?? (render ? false : true);
+
   return (
     <BaseButton
       ref={ref}
+      render={render}
+      nativeButton={isNativeButton}
       className={compClasses}
       disabled={disabled}
-      nativeButton={props.render ? false : undefined}
       aria-pressed={isToggle ? selected : undefined}
       {...props}
     >
