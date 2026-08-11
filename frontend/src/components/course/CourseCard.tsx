@@ -21,7 +21,11 @@ export function CourseCard({ course, progress }: { course: Course; progress?: nu
         </div>
 
         {/* Title & Description */}
-        <Link href={`/courses/${course.id}`} prefetch={true} className="block">
+        <Link
+          href={`/courses/${course.id}`}
+          prefetch={true}
+          className="block focus-visible:outline-none after:absolute after:inset-0 after:content-['']"
+        >
           <h3 className="text-xl font-bold text-on-surface group-hover:text-primary transition-colors mb-3 min-w-0 line-clamp-2">
             {course.title}
           </h3>
@@ -50,18 +54,17 @@ export function CourseCard({ course, progress }: { course: Course; progress?: nu
           </span>
         </div>
 
-        {/* Action Link */}
-        <Link
-          href={`/courses/${course.id}`}
-          prefetch={true}
-          className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 rounded-full bg-primary hover:bg-primary-hover text-on-primary text-sm font-bold transition-colors shadow-xs hover:shadow-md"
+        {/* Visual Action Indicator (Card is clickably accessible via primary Link overlay) */}
+        <div
+          aria-hidden="true"
+          className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 rounded-full bg-primary group-hover:bg-primary-hover text-on-primary text-sm font-bold transition-colors shadow-xs group-hover:shadow-md pointer-events-none"
         >
           {"Xem Chi Tiết Khóa Học"}
           <ArrowRight
             className="w-4 h-4 transition-transform group-hover:translate-x-1"
             aria-hidden="true"
           />
-        </Link>
+        </div>
       </div>
     </Card>
   );
