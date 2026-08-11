@@ -118,11 +118,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <Surface variant="bright" shape="3xl" padding="lg" className="shadow-xl">
           <Surface.Header className="text-center p-0 mb-8 space-y-2">
-            <Link
-              href="/"
-              prefetch={true}
-              className="inline-flex items-center gap-3 group mb-4 self-center"
-            >
+            <Link href="/" className="inline-flex items-center gap-3 group mb-4 self-center">
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl">
                 C
               </div>

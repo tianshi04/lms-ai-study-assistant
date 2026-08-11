@@ -127,7 +127,6 @@ export function MyLearningClient() {
             </p>
             <Link
               href="/courses"
-              prefetch={true}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
             >
               {"Khám phá khóa học"}
@@ -219,7 +218,6 @@ export function MyLearningClient() {
           </p>
           <Link
             href="/courses"
-            prefetch={true}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-semibold transition-colors cursor-pointer"
           >
             {"Khám phá danh mục"}

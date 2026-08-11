@@ -111,7 +111,6 @@ function BrandLogoComponent({
     return (
       <Link
         href={href}
-        prefetch={true}
         aria-label="LMS AI Platform - Trang chủ"
         className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-xl inline-block"
       >

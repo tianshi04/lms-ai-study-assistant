@@ -74,17 +74,13 @@ export function Navbar() {
           <NavigationMenu.Root className="hidden md:flex items-center">
             <NavigationMenu.List className="gap-2">
               <NavigationMenu.Item>
-                <Link href="/courses" prefetch={true} className={getLinkClasses("/courses")}>
+                <Link href="/courses" className={getLinkClasses("/courses")}>
                   {"Khóa học"}
                 </Link>
               </NavigationMenu.Item>
               {userName && (
                 <NavigationMenu.Item>
-                  <Link
-                    href="/my-learning"
-                    prefetch={true}
-                    className={getLinkClasses("/my-learning")}
-                  >
+                  <Link href="/my-learning" className={getLinkClasses("/my-learning")}>
                     {"Việc học của tôi"}
                   </Link>
                 </NavigationMenu.Item>
@@ -183,7 +179,6 @@ export function Navbar() {
           {userName && (
             <Link
               href="/my-learning"
-              prefetch={true}
               onClick={() => setMobileMenuOpen(false)}
               className={getMobileLinkClasses("/my-learning")}
             >
