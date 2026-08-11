@@ -545,20 +545,16 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
             <Dialog.Title>{"Tạo Kho Ngân hàng Đề mới"}</Dialog.Title>
           </Dialog.Header>
           <form onSubmit={handleCreateBank} className="space-y-4 pt-2">
-            <div>
-              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                {"Tên Kho Ngân hàng Đề"} *
-              </label>
-              <Input
-                required
-                value={newBankTitle}
-                onChange={(e) => setNewBankTitle(e.target.value)}
-                placeholder="Ví dụ: Kho thi kết thúc Tuần 1: Khái niệm AI"
-                aria-label="Tên Kho Ngân hàng Đề"
-                spellCheck={false}
-                className="font-semibold"
-              />
-            </div>
+            <Input
+              label="Tên Kho Ngân hàng Đề *"
+              required
+              value={newBankTitle}
+              onChange={(e) => setNewBankTitle(e.target.value)}
+              placeholder="Ví dụ: Kho thi kết thúc Tuần 1: Khái niệm AI"
+              aria-label="Tên Kho Ngân hàng Đề"
+              spellCheck={false}
+              className="font-semibold"
+            />
 
             <div>
               <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
@@ -589,18 +585,14 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
               </Select>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                {"Mô tả"}
-              </label>
-              <Textarea
-                rows={3}
-                value={newBankDesc}
-                onChange={(e) => setNewBankDesc(e.target.value)}
-                placeholder="Mô tả tóm tắt nội dung các câu hỏi trong kho này…"
-                className="p-2.5 rounded-xl bg-card text-sm"
-              />
-            </div>
+            <Textarea
+              label="Mô tả"
+              rows={3}
+              value={newBankDesc}
+              onChange={(e) => setNewBankDesc(e.target.value)}
+              placeholder="Mô tả tóm tắt nội dung các câu hỏi trong kho này…"
+              className="p-2.5 rounded-xl bg-card text-sm"
+            />
 
             <Dialog.Footer className="pt-4 border-t border-border">
               <Button

@@ -247,13 +247,16 @@ export function AutoGradedLabRunner({
                 <span className="flex items-center gap-1.5 font-semibold text-foreground">
                   📊 Kết quả chấm
                 </span>
-                <button
+                <Button
+                  type="button"
+                  variant="text"
+                  size="xs"
                   onClick={() => setShowResults(false)}
-                  className="flex items-center gap-1 text-primary hover:underline cursor-pointer"
+                  className="px-2 text-xs text-primary hover:underline gap-1"
                 >
                   <RotateCcw className="w-3 h-3" />
                   Xem Test Cases
-                </button>
+                </Button>
               </>
             ) : (
               <>
