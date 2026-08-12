@@ -51,10 +51,21 @@ export function GoogleOneTapPrompt() {
           cancel_on_tap_outside: false,
         });
 
-        google.accounts.id.prompt();
+        google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed()) {
+            const reason = notification.getNotDisplayedReason();
+            if (reason === "origin_not_allowed") {
+              console.warn(
+                "[Google One Tap] Origin '" +
+                  (typeof window !== "undefined" ? window.location.origin : "") +
+                  "' chưa được thêm vào Authorized JavaScript origins trên Google Cloud Console.",
+              );
+            }
+          }
+        });
         initializedRef.current = true;
       } catch (error) {
-        console.error("Google One Tap init error:", error);
+        console.warn("[Google One Tap] Init error:", error);
       }
     };
 
