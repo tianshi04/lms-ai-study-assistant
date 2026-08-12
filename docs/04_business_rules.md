@@ -165,6 +165,14 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * *Quyết định Phê duyệt hoặc Từ chối (Approve / Reject):*
     * **Phê duyệt (`Approve`):** Khóa học chuyển sang trạng thái **`PUBLISHED`** và chính thức xuất hiện trên Trang Tìm kiếm Công khai toàn cầu (`/courses`).
     * **Từ chối (`Reject`):** Reviewer nhập lý do/gợi ý chỉnh sửa (Feedback Log). Khóa học tự động chuyển về trạng thái **`DRAFT`** kèm nhật ký góp ý để Giảng viên hoàn thiện và nộp lại.
+* **BR_CATALOG_004 (Bảo vệ Khóa học Đã xuất bản & Ràng buộc Cấm Xóa - Published Course Safeguards & Deletion Restrictions):**
+  * **Ràng buộc Cấm Xóa đối với Giảng viên (Deletion Protection Guard):** Ngay khi khóa học ở trạng thái **`PUBLISHED` (Đã xuất bản)**, Giảng viên sở hữu (`owner_id`) và Giảng viên đồng hành (`co_instructor_ids`) **TUYỆT ĐỐI KHÔNG CÓ QUYỀN XÓA** khóa học, xóa tuần học (`WeekModule`), xóa bài học (`Lesson`) hoặc xóa học liệu (`LearningItem`).
+  * **Lý do Bảo vệ Dữ liệu & Tiến độ Học tập:** Tránh làm gián đoạn hoặc hỏng tiến độ học tập, điểm số bài thi, lịch sử nộp bài và chứng chỉ đã cấp cho các học viên đang học hoặc đã hoàn thành khóa học.
+  * **Phản hồi Hệ thống & Thông báo (FE & BE Notification Guard):**
+    * Phía Frontend chủ động chặn thao tác xóa và hiển thị thông báo Toast cảnh báo: *"Không thể xóa [Khóa học / Tuần học / Bài học / Học liệu] vì khóa học đã được xuất bản (PUBLISHED). Vui lòng liên hệ Quản trị viên."*
+    * Phía Backend kiểm tra đa tầng tại `CatalogUseCase._verify_ownership` và Repository DB Level. Mọi cố gắng xóa khóa học `PUBLISHED` từ phía Giảng viên đều bị từ chối và trả về ngoại lệ `PermissionError` / `ConnectError(Code.PERMISSION_DENIED)`.
+  * **Quyền Chỉnh sửa Nối tiếp (Live Content Maintenance):** Giảng viên vẫn giữ quyền chỉnh sửa nội dung mô tả, cập nhật bài đọc (Reading), sửa lỗi phụ đề VTT, video bài giảng hoặc cập nhật ngân hàng câu hỏi/ma trận đề thi để cập nhật kiến thức mới mà không ảnh hưởng tới các học viên đã tốt nghiệp.
+  * **Quy trình Gỡ/Hủy Xuất bản Khóa học (Unpublish / Archive Workflow):** Khi cần dừng nhận học viên mới hoặc gỡ khóa học khỏi danh mục công khai, Quản trị viên hệ thống (Super Admin) thực hiện chuyển trạng thái khóa học sang `UNPUBLISHED` hoặc `ARCHIVED`. Khóa học bị ẩn khỏi trang tìm kiếm công khai nhưng học viên cũ đã đăng ký vẫn giữ nguyên 100% quyền truy cập và chứng chỉ đã cấp.
 
 
 ---
