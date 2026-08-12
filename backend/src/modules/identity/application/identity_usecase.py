@@ -111,9 +111,7 @@ async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
         }
 
     if not client_secret:
-        raise ValueError(
-            "GOOGLE_CLIENT_SECRET chưa được cấu hình trên server"
-        )
+        raise ValueError("GOOGLE_CLIENT_SECRET chưa được cấu hình trên server")
 
     # Exchange code via server-to-server HTTPS
     async with httpx.AsyncClient(timeout=10.0) as http_client:

@@ -1,9 +1,19 @@
-from src.shared.config import get_settings, settings
+from src.shared.config import Settings, settings
 
 
-def test_settings_load_defaults():
+def test_settings_load_defaults(monkeypatch):
     """Verify essential default configuration settings are loaded properly."""
-    config = get_settings()
+    for key in [
+        "ENV",
+        "BACKEND_PORT",
+        "MINIO_ENDPOINT",
+        "MINIO_ACCESS_KEY",
+        "MINIO_SECRET_KEY",
+        "MINIO_BUCKET_NAME",
+    ]:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setitem(Settings.model_config, "env_file", None)
+    config = Settings()
     assert config.ENV == "development"
     assert config.BACKEND_PORT == 8000
     assert config.MINIO_ENDPOINT == "http://localhost:9090"
