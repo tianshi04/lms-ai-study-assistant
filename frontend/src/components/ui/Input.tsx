@@ -39,30 +39,22 @@ export function Input({
   ref,
   ...props
 }: InputProps) {
-  const inputEl = (
-    <BaseField.Control
-      ref={ref}
-      id={id}
-      render={(controlProps) => (
-        <input
-          spellCheck={props.spellCheck ?? false}
-          {...controlProps}
-          {...props}
-          id={id || controlProps.id}
-          className={cn(inputVariants({ variant, className }))}
-        />
-      )}
-    />
-  );
-
-  if (!label && !error && !helperText) {
-    return inputEl;
-  }
-
   return (
     <Field.Root invalid={!!error} className="w-full space-y-1.5">
       {label && <Field.Label>{label}</Field.Label>}
-      {inputEl}
+      <BaseField.Control
+        ref={ref}
+        id={id}
+        render={(controlProps) => (
+          <input
+            spellCheck={props.spellCheck ?? false}
+            {...controlProps}
+            {...props}
+            id={id || controlProps.id}
+            className={cn(inputVariants({ variant, className }))}
+          />
+        )}
+      />
       {error && <Field.Error>{error}</Field.Error>}
       {helperText && !error && <Field.Description>{helperText}</Field.Description>}
     </Field.Root>
