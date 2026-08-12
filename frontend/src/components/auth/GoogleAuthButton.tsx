@@ -75,48 +75,6 @@ export function GoogleAuthButton({
     setInternalLoading(true);
 
     try {
-      // 1. Try Google Identity Services (GIS) ID Token Flow (1-click direct login without consent popup)
-      if (typeof google !== "undefined" && google.accounts?.id) {
-        google.accounts.id.initialize({
-          client_id: googleClientId,
-          callback: (response) => {
-            setInternalLoading(false);
-            if (response.credential) {
-              onSuccess(response.credential, "");
-            }
-          },
-          auto_select: true,
-        });
-
-        google.accounts.id.prompt((notification) => {
-          // If One-Tap prompt is skipped/dismissed or not displayed, fallback to OAuth Code Popup
-          if (
-            notification.isNotDisplayed() ||
-            notification.isSkippedMoment() ||
-            notification.isDismissedMoment()
-          ) {
-            if (google.accounts?.oauth2) {
-              const client = google.accounts.oauth2.initCodeClient({
-                client_id: googleClientId,
-                scope: "openid email profile",
-                ux_mode: "popup",
-                callback: (resp) => {
-                  setInternalLoading(false);
-                  if (resp.code) {
-                    onSuccess(resp.code, "");
-                  }
-                },
-              });
-              client.requestCode();
-            } else {
-              setInternalLoading(false);
-            }
-          }
-        });
-        return;
-      }
-
-      // 2. Fallback to OAuth Code Client
       if (typeof google !== "undefined" && google.accounts?.oauth2) {
         const client = google.accounts.oauth2.initCodeClient({
           client_id: googleClientId,
@@ -134,6 +92,7 @@ export function GoogleAuthButton({
           },
         });
 
+        // Must be called synchronously within the click event loop to prevent browser popup blocking
         client.requestCode();
       } else {
         setInternalLoading(false);
