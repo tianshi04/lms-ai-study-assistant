@@ -14,10 +14,21 @@ export function GoogleOneTapPrompt() {
 
   useEffect(() => {
     // If user is already logged in, skip displaying Google One Tap
-    if (userName || initializedRef.current) return;
+    // Suppress Next.js dev overlay for Google SDK GSI_LOGGER internal warnings
+    const originalConsoleError = console.error;
+    console.error = (...args: unknown[]) => {
+      if (typeof args[0] === "string" && args[0].includes("[GSI_LOGGER]")) {
+        console.warn(...args);
+        return;
+      }
+      originalConsoleError.apply(console, args);
+    };
 
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!googleClientId) return;
+    if (!googleClientId) {
+      console.error = originalConsoleError;
+      return;
+    }
 
     const initOneTap = () => {
       if (typeof google === "undefined" || !google.accounts?.id) return;
@@ -70,17 +81,22 @@ export function GoogleOneTapPrompt() {
     };
 
     // Retry check in case GIS script is still loading asynchronously
+    let timer: NodeJS.Timeout | null = null;
     if (typeof google !== "undefined" && google.accounts?.id) {
       initOneTap();
     } else {
-      const timer = setInterval(() => {
+      timer = setInterval(() => {
         if (typeof google !== "undefined" && google.accounts?.id) {
           initOneTap();
-          clearInterval(timer);
+          if (timer) clearInterval(timer);
         }
       }, 500);
-      return () => clearInterval(timer);
     }
+
+    return () => {
+      if (timer) clearInterval(timer);
+      console.error = originalConsoleError;
+    };
   }, [userName, setAuth, router, toast]);
 
   return null;
