@@ -843,6 +843,10 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         course = res.scalar_one_or_none()
         if not course:
             return False
+        if course.status == CourseStatus.PUBLISHED:
+            raise ValueError(
+                "Không thể xóa khóa học ở trạng thái Đã xuất bản (PUBLISHED)."
+            )
         await self.session.delete(course)
         await self.session.commit()
         return True

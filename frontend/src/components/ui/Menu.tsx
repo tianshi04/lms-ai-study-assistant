@@ -51,7 +51,7 @@ function DropdownMenuItem({
   nativeButton,
   ...props
 }: React.ComponentProps<typeof BaseMenu.Item>) {
-  const isNativeButton = nativeButton ?? (render ? false : true);
+  const isNativeButton = nativeButton ?? false;
 
   return (
     <BaseMenu.Item
