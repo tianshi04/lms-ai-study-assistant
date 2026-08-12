@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { CheckCircle2, Clock, List, Building2 } from "lucide-react";
-import AdminEnterpriseDashboardPage from "@/app/admin/dashboard/page";
+import { AdminEnterpriseDashboard } from "./AdminEnterpriseDashboard";
 
 export function AdminDashboard({ userName: _userName }: { userName: string }) {
   return (
@@ -79,7 +79,7 @@ export function AdminDashboard({ userName: _userName }: { userName: string }) {
         </div>
 
         {/* Embedded Core Admin Enterprise Seat Management View */}
-        <AdminEnterpriseDashboardPage />
+        <AdminEnterpriseDashboard />
       </main>
     </div>
   );
