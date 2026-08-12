@@ -348,7 +348,7 @@ export function LearningItemFormModal({
           </div>
 
           {/* Scrollable Main Body Content Area */}
-          <div className="max-h-[62vh] overflow-y-auto pr-1 space-y-4">
+          <div className="max-h-[62vh] overflow-y-auto px-3 space-y-4">
             {/* Dynamic Form Sections based on Item Type */}
             {itemType === ItemType.VIDEO && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
