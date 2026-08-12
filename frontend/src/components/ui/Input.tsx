@@ -27,34 +27,62 @@ export interface InputProps
   label?: string;
   error?: string;
   helperText?: string;
+  startAdornment?: React.ReactNode;
+  endAdornment?: React.ReactNode;
 }
 
 export function Input({
   label,
   error,
   helperText,
+  startAdornment,
+  endAdornment,
   variant,
   className = "",
   id,
   ref,
   ...props
 }: InputProps) {
+  const hasAdornments = Boolean(startAdornment || endAdornment);
+
+  const inputControl = (
+    <BaseField.Control
+      ref={ref}
+      id={id}
+      render={(controlProps) => (
+        <input
+          spellCheck={props.spellCheck ?? false}
+          {...controlProps}
+          {...props}
+          id={id || controlProps.id}
+          className={cn(
+            inputVariants({ variant, className }),
+            startAdornment && "pl-10",
+            endAdornment && "pr-11",
+          )}
+        />
+      )}
+    />
+  );
+
   return (
     <Field.Root invalid={!!error} className="w-full space-y-1.5">
       {label && <Field.Label>{label}</Field.Label>}
-      <BaseField.Control
-        ref={ref}
-        id={id}
-        render={(controlProps) => (
-          <input
-            spellCheck={props.spellCheck ?? false}
-            {...controlProps}
-            {...props}
-            id={id || controlProps.id}
-            className={cn(inputVariants({ variant, className }))}
-          />
-        )}
-      />
+      {hasAdornments ? (
+        <div className="relative w-full">
+          {startAdornment && (
+            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground z-10">
+              {startAdornment}
+            </div>
+          )}
+          {inputControl}
+          {endAdornment && (
+            <div className="absolute inset-y-0 right-1 flex items-center z-10">{endAdornment}</div>
+          )}
+        </div>
+      ) : (
+        inputControl
+      )}
       {error && <Field.Error>{error}</Field.Error>}
       {helperText && !error && <Field.Description>{helperText}</Field.Description>}
     </Field.Root>

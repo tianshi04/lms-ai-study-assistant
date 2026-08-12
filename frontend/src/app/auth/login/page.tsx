@@ -201,35 +201,35 @@ function LoginFormContent() {
                 const hasError = field.state.meta.isTouched && field.state.meta.errors.length > 0;
                 return (
                   <div className="space-y-1.5">
-                    <div className="relative">
-                      <Input
-                        label="Mật khẩu"
-                        id={field.name}
-                        name={field.name}
-                        type={showPassword ? "text" : "password"}
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        placeholder="Nhập mật khẩu của bạn"
-                        autoComplete="current-password"
-                        error={hasError ? String(field.state.meta.errors[0]) : undefined}
-                        required
-                      />
-                      <IconButton
-                        type="button"
-                        variant="standard"
-                        size="xs"
-                        onClick={() => setShowPassword(!showPassword)}
-                        aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
-                        className="absolute right-2 top-8 text-muted-foreground hover:text-foreground"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="w-4 h-4" aria-hidden="true" />
-                        ) : (
-                          <Eye className="w-4 h-4" aria-hidden="true" />
-                        )}
-                      </IconButton>
-                    </div>
+                    <Input
+                      label="Mật khẩu"
+                      id={field.name}
+                      name={field.name}
+                      type={showPassword ? "text" : "password"}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="Nhập mật khẩu của bạn"
+                      autoComplete="current-password"
+                      error={hasError ? String(field.state.meta.errors[0]) : undefined}
+                      required
+                      endAdornment={
+                        <IconButton
+                          type="button"
+                          variant="standard"
+                          size="xs"
+                          onClick={() => setShowPassword(!showPassword)}
+                          aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
+                          className="text-muted-foreground hover:text-foreground mr-1"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-4 h-4" aria-hidden="true" />
+                          ) : (
+                            <Eye className="w-4 h-4" aria-hidden="true" />
+                          )}
+                        </IconButton>
+                      }
+                    />
                     <div className="flex justify-end pt-1">
                       <Link
                         href="/auth/forgot-password"

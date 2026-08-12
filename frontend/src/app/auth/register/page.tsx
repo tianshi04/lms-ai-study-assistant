@@ -250,31 +250,20 @@ export default function RegisterPage() {
                     const hasError =
                       field.state.meta.isTouched && field.state.meta.errors.length > 0;
                     return (
-                      <div className="space-y-1.5">
-                        <label
-                          htmlFor={field.name}
-                          className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                        >
-                          Họ và tên
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground z-10">
-                            <User aria-hidden="true" className="w-5 h-5" />
-                          </div>
-                          <Input
-                            id={field.name}
-                            name={field.name}
-                            type="text"
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            placeholder="Nguyễn Văn A"
-                            error={hasError ? String(field.state.meta.errors[0]) : undefined}
-                            className="pl-10 py-3 rounded-xl bg-muted"
-                            required
-                          />
-                        </div>
-                      </div>
+                      <Input
+                        label="Họ và tên"
+                        id={field.name}
+                        name={field.name}
+                        type="text"
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        placeholder="Nguyễn Văn A"
+                        error={hasError ? String(field.state.meta.errors[0]) : undefined}
+                        className="py-3 rounded-xl bg-muted"
+                        required
+                        startAdornment={<User aria-hidden="true" className="w-5 h-5" />}
+                      />
                     );
                   }}
                 </form.Field>
@@ -294,37 +283,28 @@ export default function RegisterPage() {
                     const hasError =
                       field.state.meta.isTouched && field.state.meta.errors.length > 0;
                     return (
-                      <div className="space-y-1.5">
-                        <label
-                          htmlFor={field.name}
-                          className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                        >
-                          Mật khẩu dự phòng
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground z-10">
-                            <Lock aria-hidden="true" className="w-5 h-5" />
-                          </div>
-                          <Input
-                            id={field.name}
-                            name={field.name}
-                            type={showPassword ? "text" : "password"}
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
-                            autoComplete="new-password"
-                            error={hasError ? String(field.state.meta.errors[0]) : undefined}
-                            className="pl-10 pr-11 py-3 rounded-xl bg-muted"
-                            required
-                          />
+                      <Input
+                        label="Mật khẩu dự phòng"
+                        id={field.name}
+                        name={field.name}
+                        type={showPassword ? "text" : "password"}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
+                        autoComplete="new-password"
+                        error={hasError ? String(field.state.meta.errors[0]) : undefined}
+                        className="py-3 rounded-xl bg-muted"
+                        required
+                        startAdornment={<Lock aria-hidden="true" className="w-5 h-5" />}
+                        endAdornment={
                           <IconButton
                             type="button"
                             variant="standard"
                             size="xs"
                             onClick={() => setShowPassword(!showPassword)}
                             aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
-                            className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            className="text-muted-foreground hover:text-foreground mr-1"
                           >
                             {showPassword ? (
                               <EyeOff aria-hidden="true" className="w-5 h-5" />
@@ -332,8 +312,8 @@ export default function RegisterPage() {
                               <Eye aria-hidden="true" className="w-5 h-5" />
                             )}
                           </IconButton>
-                        </div>
-                      </div>
+                        }
+                      />
                     );
                   }}
                 </form.Field>
@@ -352,32 +332,21 @@ export default function RegisterPage() {
                     const hasError =
                       field.state.meta.isTouched && field.state.meta.errors.length > 0;
                     return (
-                      <div className="space-y-1.5">
-                        <label
-                          htmlFor={field.name}
-                          className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                        >
-                          Xác nhận mật khẩu
-                        </label>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground z-10">
-                            <Lock aria-hidden="true" className="w-5 h-5" />
-                          </div>
-                          <Input
-                            id={field.name}
-                            name={field.name}
-                            type={showPassword ? "text" : "password"}
-                            value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            placeholder="Nhập lại mật khẩu để xác nhận"
-                            autoComplete="new-password"
-                            error={hasError ? String(field.state.meta.errors[0]) : undefined}
-                            className="pl-10 py-3 rounded-xl bg-muted"
-                            required
-                          />
-                        </div>
-                      </div>
+                      <Input
+                        label="Xác nhận mật khẩu"
+                        id={field.name}
+                        name={field.name}
+                        type={showPassword ? "text" : "password"}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        placeholder="Nhập lại mật khẩu để xác nhận"
+                        autoComplete="new-password"
+                        error={hasError ? String(field.state.meta.errors[0]) : undefined}
+                        className="py-3 rounded-xl bg-muted"
+                        required
+                        startAdornment={<Lock aria-hidden="true" className="w-5 h-5" />}
+                      />
                     );
                   }}
                 </form.Field>
