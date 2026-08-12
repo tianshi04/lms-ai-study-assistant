@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Surface } from "@/components/ui/Surface";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
 import { Eye, EyeOff, Zap } from "lucide-react";
@@ -97,26 +98,16 @@ function LoginFormContent() {
     <div className="w-full max-w-md">
       <Surface variant="bright" shape="3xl" padding="lg" className="shadow-xl">
         <Surface.Header className="text-center p-0 mb-8 space-y-2">
-          <Link href="/" className="inline-flex items-center gap-3 group mb-4 self-center">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl">
-              C
-            </div>
-            <div className="text-left">
-              <span className="font-bold text-lg tracking-tight text-on-surface block">
-                Coursera AI
-              </span>
-              <span className="text-xs block text-on-surface-variant font-medium">
-                LMS Platform
-              </span>
-            </div>
-          </Link>
+          <div className="flex justify-center mb-4">
+            <BrandLogo size="md" />
+          </div>
           <Surface.Title className="text-2xl font-bold text-on-surface text-balance">
             {"Đăng nhập tài khoản"}
           </Surface.Title>
           <Surface.Description className="text-sm text-on-surface-variant">
             {searchParams.get("redirect")
               ? "Vui lòng đăng nhập để bắt đầu học bài giảng này"
-              : "Chào mừng bạn quay trở lại với hệ thống học tập Coursera LMS"}
+              : "Chào mừng bạn quay trở lại với hệ thống học tập LMS AI"}
           </Surface.Description>
         </Surface.Header>
 

@@ -10,12 +10,12 @@ import { useToast } from "@/components/ui/Toast";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { UserRole } from "@/gen/identity/v1/identity_pb";
 
-import { User, Lock, Eye, EyeOff, Users, CheckCircle2, ShieldCheck, ArrowLeft } from "lucide-react";
+import { User, Lock, Eye, EyeOff, CheckCircle2, ShieldCheck, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Surface } from "@/components/ui/Surface";
-import { Select } from "@/components/ui/Select";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -35,7 +35,6 @@ export default function RegisterPage() {
       fullName: "",
       password: "",
       confirmPassword: "",
-      role: UserRole.LEARNER,
     },
     onSubmit: async ({ value }) => {
       if (
@@ -58,7 +57,7 @@ export default function RegisterPage() {
           tempToken,
           value.password,
           value.fullName.trim(),
-          value.role,
+          UserRole.LEARNER,
         );
 
         if (res.success && res.user) {
@@ -118,19 +117,9 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <Surface variant="bright" shape="3xl" padding="lg" className="shadow-xl">
           <Surface.Header className="text-center p-0 mb-8 space-y-2">
-            <Link href="/" className="inline-flex items-center gap-3 group mb-4 self-center">
-              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl">
-                C
-              </div>
-              <div className="text-left">
-                <span className="font-bold text-lg tracking-tight text-on-surface block">
-                  Coursera AI
-                </span>
-                <span className="text-xs block text-on-surface-variant font-medium">
-                  LMS Platform
-                </span>
-              </div>
-            </Link>
+            <div className="flex justify-center mb-4">
+              <BrandLogo size="md" />
+            </div>
 
             {/* Stepper Progress */}
             <div className="flex items-center justify-center gap-2 mb-2">
@@ -349,49 +338,6 @@ export default function RegisterPage() {
                       />
                     );
                   }}
-                </form.Field>
-
-                {/* User Role Select */}
-                <form.Field name="role">
-                  {(field) => (
-                    <div className="space-y-1.5">
-                      <label
-                        htmlFor={field.name}
-                        className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                      >
-                        Vai trò người dùng
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none z-10 text-muted-foreground">
-                          <Users aria-hidden="true" className="w-5 h-5" />
-                        </div>
-                        <Select
-                          value={String(field.state.value)}
-                          onValueChange={(val) => {
-                            if (val) field.handleChange(Number(val) as UserRole);
-                          }}
-                        >
-                          <Select.Trigger className="pl-10">
-                            <Select.Value placeholder="Chọn vai trò">
-                              {field.state.value === UserRole.LEARNER
-                                ? "Học viên (Learner)"
-                                : field.state.value === UserRole.INSTRUCTOR
-                                  ? "Giảng viên (Instructor)"
-                                  : ""}
-                            </Select.Value>
-                          </Select.Trigger>
-                          <Select.Content>
-                            <Select.Item value={String(UserRole.LEARNER)}>
-                              Học viên (Learner)
-                            </Select.Item>
-                            <Select.Item value={String(UserRole.INSTRUCTOR)}>
-                              Giảng viên (Instructor)
-                            </Select.Item>
-                          </Select.Content>
-                        </Select>
-                      </div>
-                    </div>
-                  )}
                 </form.Field>
 
                 {/* Submit Button */}
