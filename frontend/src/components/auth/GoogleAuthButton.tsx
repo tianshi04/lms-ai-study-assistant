@@ -75,27 +75,69 @@ export function GoogleAuthButton({
     setInternalLoading(true);
 
     try {
-      // Fix #1: Don't pass nonce to initCodeClient — Authorization Code Flow
-      // doesn't forward nonce to the ID Token. Nonce validation is removed
-      // on the backend side as well. Anti-replay is handled by the one-time
-      // nature of the authorization code itself.
-      const client = google.accounts.oauth2.initCodeClient({
-        client_id: googleClientId,
-        scope: "openid email profile",
-        ux_mode: "popup",
-        callback: (response) => {
-          setInternalLoading(false);
-          if (response.error) {
-            console.error("Google Auth Error:", response.error, response.error_description);
-            return;
-          }
-          if (response.code) {
-            onSuccess(response.code, "");
-          }
-        },
-      });
+      // 1. Try Google Identity Services (GIS) ID Token Flow (1-click direct login without consent popup)
+      if (typeof google !== "undefined" && google.accounts?.id) {
+        google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: (response) => {
+            setInternalLoading(false);
+            if (response.credential) {
+              onSuccess(response.credential, "");
+            }
+          },
+          auto_select: true,
+        });
 
-      client.requestCode();
+        google.accounts.id.prompt((notification) => {
+          // If One-Tap prompt is skipped/dismissed or not displayed, fallback to OAuth Code Popup
+          if (
+            notification.isNotDisplayed() ||
+            notification.isSkippedMoment() ||
+            notification.isDismissedMoment()
+          ) {
+            if (google.accounts?.oauth2) {
+              const client = google.accounts.oauth2.initCodeClient({
+                client_id: googleClientId,
+                scope: "openid email profile",
+                ux_mode: "popup",
+                callback: (resp) => {
+                  setInternalLoading(false);
+                  if (resp.code) {
+                    onSuccess(resp.code, "");
+                  }
+                },
+              });
+              client.requestCode();
+            } else {
+              setInternalLoading(false);
+            }
+          }
+        });
+        return;
+      }
+
+      // 2. Fallback to OAuth Code Client
+      if (typeof google !== "undefined" && google.accounts?.oauth2) {
+        const client = google.accounts.oauth2.initCodeClient({
+          client_id: googleClientId,
+          scope: "openid email profile",
+          ux_mode: "popup",
+          callback: (response) => {
+            setInternalLoading(false);
+            if (response.error) {
+              console.error("Google Auth Error:", response.error, response.error_description);
+              return;
+            }
+            if (response.code) {
+              onSuccess(response.code, "");
+            }
+          },
+        });
+
+        client.requestCode();
+      } else {
+        setInternalLoading(false);
+      }
     } catch (error) {
       console.error(error);
       setInternalLoading(false);
