@@ -5,6 +5,7 @@ import { getRpcClient } from "@/lib/connect_client";
 import { revalidateCourseCacheAction } from "@/app/actions/cache";
 import {
   CatalogService,
+  CourseStatus,
   ItemType,
   type Course,
   type LearningItem,
@@ -179,6 +180,12 @@ export function useCourseBuilder(courseId: string) {
   };
 
   const handleDeleteWeek = (weekId: string, weekTitle: string) => {
+    if (course?.status === CourseStatus.PUBLISHED) {
+      toast.error(
+        `Không thể xóa Tuần học "${weekTitle}" vì khóa học đã được xuất bản (PUBLISHED).`,
+      );
+      return;
+    }
     setConfirmDeleteTarget({ type: "week", id: weekId, title: weekTitle });
   };
 
@@ -233,6 +240,12 @@ export function useCourseBuilder(courseId: string) {
   };
 
   const handleDeleteLesson = (lessonId: string, lessonTitle: string) => {
+    if (course?.status === CourseStatus.PUBLISHED) {
+      toast.error(
+        `Không thể xóa Bài học "${lessonTitle}" vì khóa học đã được xuất bản (PUBLISHED).`,
+      );
+      return;
+    }
     setConfirmDeleteTarget({ type: "lesson", id: lessonId, title: lessonTitle });
   };
 
@@ -382,6 +395,12 @@ export function useCourseBuilder(courseId: string) {
   };
 
   const handleDeleteItem = (itemId: string, itemTitle: string) => {
+    if (course?.status === CourseStatus.PUBLISHED) {
+      toast.error(
+        `Không thể xóa Học liệu "${itemTitle}" vì khóa học đã được xuất bản (PUBLISHED).`,
+      );
+      return;
+    }
     setConfirmDeleteTarget({ type: "item", id: itemId, title: itemTitle });
   };
 

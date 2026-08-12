@@ -67,6 +67,7 @@ class CatalogUseCase:
         action_name: str = "quản lý khóa học",
         allow_read_only_pending: bool = False,
         required_permission: CoursePermission | None = None,
+        disallow_published_mutation: bool = False,
     ) -> None:
         if user and course_id:
             course = await repo.get_course_detail(course_id)
@@ -78,6 +79,14 @@ class CatalogUseCase:
                     action_name=action_name,
                     allow_read_only_pending=allow_read_only_pending,
                 )
+                if (
+                    disallow_published_mutation
+                    and course.status == CourseStatus.PUBLISHED
+                    and not getattr(user, "is_admin", False)
+                ):
+                    raise PermissionError(
+                        f"Không thể {action_name} này vì khóa học đã được xuất bản (PUBLISHED)."
+                    )
 
     async def submit_course_for_launch(
         self, course_id: str, current_user: CurrentUser | None = None
@@ -461,7 +470,13 @@ class CatalogUseCase:
     ) -> bool:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            await self._verify_ownership(repo, course_id, current_user, "xóa khóa học")
+            await self._verify_ownership(
+                repo,
+                course_id,
+                current_user,
+                "xóa khóa học",
+                disallow_published_mutation=True,
+            )
             return await repo.delete_course(course_id)
 
     async def update_week_module(
@@ -489,7 +504,13 @@ class CatalogUseCase:
     ) -> bool:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            await self._verify_ownership(repo, course_id, current_user, "xóa tuần học")
+            await self._verify_ownership(
+                repo,
+                course_id,
+                current_user,
+                "xóa tuần học",
+                disallow_published_mutation=True,
+            )
             return await repo.delete_week_module(id=id, course_id=course_id)
 
     async def update_lesson(
@@ -519,7 +540,13 @@ class CatalogUseCase:
     ) -> bool:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            await self._verify_ownership(repo, course_id, current_user, "xóa bài học")
+            await self._verify_ownership(
+                repo,
+                course_id,
+                current_user,
+                "xóa bài học",
+                disallow_published_mutation=True,
+            )
             return await repo.delete_lesson(id=id, course_id=course_id)
 
     async def update_learning_item(
@@ -571,7 +598,13 @@ class CatalogUseCase:
     ) -> bool:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            await self._verify_ownership(repo, course_id, current_user, "xóa học liệu")
+            await self._verify_ownership(
+                repo,
+                course_id,
+                current_user,
+                "xóa học liệu",
+                disallow_published_mutation=True,
+            )
             return await repo.delete_learning_item(id=id, course_id=course_id)
 
     async def create_course_announcement(

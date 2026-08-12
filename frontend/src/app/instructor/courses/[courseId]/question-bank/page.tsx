@@ -695,6 +695,35 @@ function QuestionBankContent({ params }: { params: Promise<{ courseId: string }>
                   </Select.Content>
                 </Select>
               </div>
+
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
+                  {"Độ khó câu hỏi"}
+                </label>
+                <Select
+                  value={qDifficulty}
+                  onValueChange={(val) => {
+                    if (val) setQDifficulty(val);
+                  }}
+                >
+                  <Select.Trigger className="w-full">
+                    <Select.Value placeholder="Chọn độ khó">
+                      {qDifficulty === "EASY"
+                        ? "Dễ (Easy)"
+                        : qDifficulty === "MEDIUM"
+                          ? "Trung bình (Medium)"
+                          : qDifficulty === "HARD"
+                            ? "Khó (Hard)"
+                            : qDifficulty}
+                    </Select.Value>
+                  </Select.Trigger>
+                  <Select.Content>
+                    <Select.Item value="EASY">{"Dễ (Easy)"}</Select.Item>
+                    <Select.Item value="MEDIUM">{"Trung bình (Medium)"}</Select.Item>
+                    <Select.Item value="HARD">{"Khó (Hard)"}</Select.Item>
+                  </Select.Content>
+                </Select>
+              </div>
             </div>
 
             {/* Options */}
