@@ -39,8 +39,19 @@ declare namespace google {
         getSkippedReason(): string;
         getDismissedReason(): string;
       }
+      interface GsiButtonConfiguration {
+        type?: "standard" | "icon";
+        theme?: "outline" | "filled_blue" | "filled_black";
+        size?: "small" | "medium" | "large";
+        text?: "signin_with" | "signup_with" | "continue_with" | "signin";
+        shape?: "rectangular" | "pill" | "circle" | "square";
+        logo_alignment?: "left" | "center";
+        width?: string | number;
+        locale?: string;
+      }
       function initialize(config: IdConfiguration): void;
       function prompt(momentListener?: (notification: PromptNotification) => void): void;
+      function renderButton(parent: HTMLElement, options: GsiButtonConfiguration): void;
       function cancel(): void;
     }
   }
