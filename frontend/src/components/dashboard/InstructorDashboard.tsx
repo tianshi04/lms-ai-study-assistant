@@ -40,10 +40,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
   }, []);
 
   return (
-    <div className="w-full flex-1 bg-background min-h-screen">
-      {/* Decorative background glow */}
-      <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
-
+    <div className="w-full flex-1 bg-background text-foreground min-h-screen">
       <main className="relative max-w-7xl mx-auto px-6 py-12 space-y-10">
         {/* Header Banner */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-primary text-primary-foreground rounded-3xl p-8 shadow-xl">
@@ -66,25 +63,25 @@ export function InstructorDashboard({ userName }: { userName: string }) {
               type="button"
               variant="outlined"
               onClick={() => setIsOrgModalOpen(true)}
-              className="px-5 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg"
+              className="px-5 py-3 rounded-2xl bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-bold text-sm shadow-md border-0"
             >
               <UserPlus className="w-5 h-5 text-primary" aria-hidden="true" />
               Thành viên Organization
             </Button>
             <Link
               href="/instructor/courses/new"
-              className="px-6 py-3 rounded-2xl bg-card text-foreground hover:bg-muted font-bold text-sm shadow-lg transition-colors flex items-center gap-2 cursor-pointer border border-border"
+              className="px-6 py-3 rounded-2xl bg-primary-foreground/15 text-primary-foreground hover:bg-primary-foreground/25 font-bold text-sm shadow-md transition-colors flex items-center gap-2 cursor-pointer border border-primary-foreground/30"
             >
-              <Plus className="w-5 h-5 text-primary" aria-hidden="true" />
+              <Plus className="w-5 h-5 text-primary-foreground" aria-hidden="true" />
               Tạo Khóa Học Mới
             </Link>
           </div>
         </header>
 
-        {/* Dynamic KPI Metric Cards */}
+        {/* Dynamic KPI Metric Displays (Static Surfaces, non-clickable) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized">
-            <div className="w-14 h-14 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
+          <div className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/50 flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
               <Users className="w-7 h-7" aria-hidden="true" />
             </div>
             <div>
@@ -95,7 +92,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized">
+          <div className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/50 flex items-center gap-5">
             <div className="w-14 h-14 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0">
               <BadgeCheck className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -109,7 +106,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized">
+          <div className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/50 flex items-center gap-5">
             <div className="w-14 h-14 rounded-2xl bg-warning/10 text-warning flex items-center justify-center shrink-0">
               <Clock className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -123,7 +120,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
             </div>
           </div>
 
-          <div className="bg-card p-6 rounded-3xl border border-border shadow-sm flex items-center gap-5 hover:shadow-md hover:border-primary/40 transition-colors duration-m3-short-4 ease-m3-emphasized">
+          <div className="bg-surface-container-low p-6 rounded-3xl border border-outline-variant/50 flex items-center gap-5">
             <div className="w-14 h-14 rounded-2xl bg-muted text-muted-foreground flex items-center justify-center shrink-0">
               <FileEdit className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -136,13 +133,13 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           </div>
         </div>
 
-        {/* Quick Management Navigation Grid */}
+        {/* Quick Management Navigation Grid (Interactive Clickable Cards) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link
             href="/instructor/courses"
-            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-colors group flex items-start gap-4"
+            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 hover:shadow-md shadow-xs transition-all duration-m3-short-4 ease-m3-emphasized group flex items-start gap-4 cursor-pointer"
           >
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
               <Layers className="w-6 h-6" aria-hidden="true" />
             </div>
             <div className="space-y-1">
@@ -157,9 +154,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
           <Link
             href="/instructor/profile"
-            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-colors group flex items-start gap-4"
+            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 hover:shadow-md shadow-xs transition-all duration-m3-short-4 ease-m3-emphasized group flex items-start gap-4 cursor-pointer"
           >
-            <div className="w-12 h-12 rounded-2xl bg-info/10 text-info flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
               <UserCheck className="w-6 h-6" aria-hidden="true" />
             </div>
             <div className="space-y-1">
@@ -174,9 +171,9 @@ export function InstructorDashboard({ userName }: { userName: string }) {
 
           <Link
             href="/instructor/financial-aid"
-            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 shadow-sm transition-colors group flex items-start gap-4"
+            className="p-6 rounded-3xl bg-card border border-border hover:border-primary/50 hover:shadow-md shadow-xs transition-all duration-m3-short-4 ease-m3-emphasized group flex items-start gap-4 cursor-pointer"
           >
-            <div className="w-12 h-12 rounded-2xl bg-success/10 text-success flex items-center justify-center shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center shrink-0">
               <CircleDollarSign className="w-6 h-6" aria-hidden="true" />
             </div>
             <div className="space-y-1">
@@ -190,8 +187,8 @@ export function InstructorDashboard({ userName }: { userName: string }) {
           </Link>
         </div>
 
-        {/* Teaching Courses Overview List */}
-        <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-4">
+        {/* Teaching Courses Overview Section (Section Container holding Clickable Course Cards) */}
+        <section className="bg-surface-container-low rounded-3xl border border-outline-variant/50 p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-extrabold text-foreground">Khóa Học Đang Quản Lý</h2>
@@ -230,7 +227,7 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                 <Link
                   key={c.id}
                   href={`/instructor/courses/${c.id}`}
-                  className="p-5 rounded-2xl border border-border hover:border-primary/40 hover:bg-muted transition-colors flex flex-col justify-between space-y-3"
+                  className="p-5 rounded-2xl border border-border bg-card hover:border-primary/50 hover:shadow-md transition-all duration-m3-short-4 ease-m3-emphasized flex flex-col justify-between space-y-3 cursor-pointer group"
                 >
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -249,20 +246,22 @@ export function InstructorDashboard({ userName }: { userName: string }) {
                         {CourseStatus[c.status] || "DRAFT"}
                       </span>
                     </div>
-                    <h3 className="font-bold text-foreground text-sm min-w-0 line-clamp-2">
+                    <h3 className="font-bold text-foreground text-sm min-w-0 line-clamp-2 group-hover:text-primary transition-colors">
                       {c.title}
                     </h3>
                   </div>
 
                   <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border">
                     <span>{c.level || "Tất cả cấp độ"}</span>
-                    <span className="text-primary font-semibold">Chỉnh sửa →</span>
+                    <span className="text-primary font-semibold group-hover:translate-x-0.5 transition-transform">
+                      Chỉnh sửa →
+                    </span>
                   </div>
                 </Link>
               ))}
             </div>
           )}
-        </div>
+        </section>
       </main>
 
       <OrganizationMembersModal isOpen={isOrgModalOpen} onClose={() => setIsOrgModalOpen(false)} />
