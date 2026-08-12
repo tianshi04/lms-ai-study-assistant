@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { BrandLogo } from "@/components/ui/BrandLogo";
 import { NavigationMenu } from "@/components/ui/NavigationMenu";
+import { GoogleOneTapPrompt } from "@/components/auth/GoogleOneTapPrompt";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -65,6 +66,7 @@ export function Navbar() {
           : "bg-surface border-b border-transparent shadow-none",
       )}
     >
+      <GoogleOneTapPrompt />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Left Section: Brand Logo & Navigation Links */}
         <div className="flex items-center gap-6">

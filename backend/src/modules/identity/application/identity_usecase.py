@@ -91,9 +91,28 @@ async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
     client_id = settings.GOOGLE_CLIENT_ID
     client_secret = settings.GOOGLE_CLIENT_SECRET
 
-    if not client_id or not client_secret:
+    if not client_id:
+        raise ValueError("GOOGLE_CLIENT_ID chưa được cấu hình trên server")
+
+    # If code is a direct JWT ID Token (from Google One Tap credential response)
+    if code.count(".") == 2:
+        try:
+            payload = await asyncio.to_thread(
+                id_token.verify_oauth2_token, code, requests.Request(), client_id
+            )
+        except ValueError as e:
+            logger.error("Google ID Token verification failed: %s", e)
+            raise ValueError("Token Google không hợp lệ hoặc đã hết hạn.")
+        return {
+            "google_id": payload.get("sub", ""),
+            "email": payload.get("email", ""),
+            "name": payload.get("name", payload.get("email", "").split("@")[0]),
+            "picture": payload.get("picture", ""),
+        }
+
+    if not client_secret:
         raise ValueError(
-            "GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET chưa được cấu hình trên server"
+            "GOOGLE_CLIENT_SECRET chưa được cấu hình trên server"
         )
 
     # Exchange code via server-to-server HTTPS
