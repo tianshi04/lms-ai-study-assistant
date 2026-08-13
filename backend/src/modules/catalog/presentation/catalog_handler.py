@@ -1,4 +1,5 @@
 from typing import Any
+
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
@@ -7,16 +8,16 @@ from src.gen.catalog.v1 import catalog_pb as pb
 from src.gen.catalog.v1.catalog_connect import CatalogService
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 from src.modules.catalog.domain.entities import (
+    Category,
     Course,
     CourseReview,
-    InVideoQuiz,
     InteractiveTranscript,
+    InVideoQuiz,
     ItemType,
     LearningItem,
     Lesson,
     Specialization,
     WeekModule,
-    Category,
 )
 from src.shared.auth import CurrentUser, require_current_user
 
@@ -447,8 +448,8 @@ class CatalogHandler(CatalogService):
             raise
         except ValueError as e:
             raise ConnectError(Code.INVALID_ARGUMENT, str(e))
-        except Exception as e:
-            raise ConnectError(Code.INTERNAL, f"Không thể tạo học liệu: {str(e)}")
+        except Exception as e:  # noqa: BLE001
+            raise ConnectError(Code.INTERNAL, f"Không thể tạo học liệu: {e!s}")
 
     async def submit_course_review(
         self,
@@ -481,8 +482,8 @@ class CatalogHandler(CatalogService):
             return pb.SubmitCourseReviewResponse(review=_to_pb_review(review))
         except ValueError as e:
             raise ConnectError(Code.INVALID_ARGUMENT, str(e))
-        except Exception as e:
-            raise ConnectError(Code.INTERNAL, f"Không thể lưu đánh giá: {str(e)}")
+        except Exception as e:  # noqa: BLE001
+            raise ConnectError(Code.INTERNAL, f"Không thể lưu đánh giá: {e!s}")
 
     async def list_course_reviews(
         self,

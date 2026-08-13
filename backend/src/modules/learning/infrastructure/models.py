@@ -1,12 +1,14 @@
 from sqlalchemy import (
     ARRAY,
-    Enum as SQLEnum,
     Float,
     ForeignKey,
     Integer,
     String,
     Text,
     UniqueConstraint,
+)
+from sqlalchemy import (
+    Enum as SQLEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

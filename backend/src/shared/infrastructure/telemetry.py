@@ -1,6 +1,5 @@
 import logging
 import sys
-from typing import Optional
 
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
@@ -20,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def setup_telemetry(
     service_name: str = "lms-ai-study-assistant",
-    otlp_endpoint: Optional[str] = None,
+    otlp_endpoint: str | None = None,
 ) -> None:
     """Configures OpenTelemetry TracerProvider, MeterProvider, OTLP Exporters, and Auto-Instrumentations."""
     resource = Resource.create(
@@ -43,7 +42,7 @@ def setup_telemetry(
                 "OpenTelemetry OTLP Trace Exporter configured for endpoint: %s",
                 endpoint,
             )
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
             logger.warning("Could not initialize OTLPSpanExporter: %s", err)
 
     trace.set_tracer_provider(tracer_provider)
@@ -65,7 +64,7 @@ def setup_telemetry(
                 "OpenTelemetry OTLP Metric Exporter configured for endpoint: %s",
                 endpoint,
             )
-        except Exception as err:
+        except Exception as err:  # noqa: BLE001
             logger.warning("Could not initialize OTLPMetricExporter: %s", err)
     else:
         meter_provider = MeterProvider(resource=resource)
@@ -78,5 +77,5 @@ def setup_telemetry(
     try:
         SQLAlchemyInstrumentor().instrument()
         logger.info("SQLAlchemy OpenTelemetry Auto-Instrumentation enabled.")
-    except Exception as err:
+    except Exception as err:  # noqa: BLE001
         logger.warning("SQLAlchemy Auto-Instrumentation skipped or failed: %s", err)

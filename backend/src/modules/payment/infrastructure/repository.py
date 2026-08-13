@@ -1,10 +1,9 @@
 """Repository implementation for Payment module using SQLAlchemy Async Engine."""
 
-from typing import Optional
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from datetime import datetime, timedelta, timezone
 
 from src.modules.payment.domain.entities import (
     CoursePurchase,
@@ -12,10 +11,10 @@ from src.modules.payment.domain.entities import (
     PaymentOrderStatus,
     PaymentTargetType,
     PaymentTransaction,
-    UserSubscription,
+    PlanType,
     PurchaseStatus,
     SubscriptionStatus,
-    PlanType,
+    UserSubscription,
     safe_enum_parse,
 )
 from src.modules.payment.domain.repositories import IPaymentRepository
@@ -77,7 +76,7 @@ class PaymentRepository(IPaymentRepository):
         await self.session.flush()
         return subscription
 
-    async def get_active_subscription(self, user_id: str) -> Optional[UserSubscription]:
+    async def get_active_subscription(self, user_id: str) -> UserSubscription | None:
         stmt = (
             select(UserSubscriptionModel)
             .where(
@@ -106,7 +105,7 @@ class PaymentRepository(IPaymentRepository):
                 return sub
         return None
 
-    async def get_user_subscription(self, user_id: str) -> Optional[UserSubscription]:
+    async def get_user_subscription(self, user_id: str) -> UserSubscription | None:
         stmt = (
             select(UserSubscriptionModel)
             .where(UserSubscriptionModel.user_id == user_id)
@@ -173,7 +172,7 @@ class PaymentRepository(IPaymentRepository):
         await self.session.flush()
         return order
 
-    async def get_order_by_txn_ref(self, vnp_txn_ref: str) -> Optional[PaymentOrder]:
+    async def get_order_by_txn_ref(self, vnp_txn_ref: str) -> PaymentOrder | None:
         stmt = select(PaymentOrderModel).where(
             PaymentOrderModel.vnp_txn_ref == vnp_txn_ref
         )
@@ -201,7 +200,7 @@ class PaymentRepository(IPaymentRepository):
 
     async def get_order_by_txn_ref_for_update(
         self, vnp_txn_ref: str
-    ) -> Optional[PaymentOrder]:
+    ) -> PaymentOrder | None:
         stmt = (
             select(PaymentOrderModel)
             .where(PaymentOrderModel.vnp_txn_ref == vnp_txn_ref)
@@ -236,7 +235,7 @@ class PaymentRepository(IPaymentRepository):
         target_id: str,
         plan_type: PlanType = PlanType.UNSPECIFIED,
         reuse_ttl_minutes: int = 15,
-    ) -> Optional[PaymentOrder]:
+    ) -> PaymentOrder | None:
         t_type = (
             target_type.value if hasattr(target_type, "value") else str(target_type)
         )
@@ -258,7 +257,7 @@ class PaymentRepository(IPaymentRepository):
         if not models:
             return None
 
-        now_dt = datetime.now(timezone.utc)
+        now_dt = datetime.now(UTC)
         cutoff_dt = now_dt - timedelta(minutes=reuse_ttl_minutes)
 
         for m in models:
@@ -286,15 +285,15 @@ class PaymentRepository(IPaymentRepository):
                         created_at=m.created_at,
                         updated_at=m.updated_at,
                     )
-            except Exception:
-                continue
+            except (ValueError, TypeError, KeyError, AttributeError):
+                pass
 
         return None
 
     async def list_pending_orders_older_than(
         self, window_minutes: int = 15, limit: int = 50
     ) -> list[PaymentOrder]:
-        now_dt = datetime.now(timezone.utc)
+        now_dt = datetime.now(UTC)
         cutoff_dt = now_dt - timedelta(minutes=window_minutes)
         cutoff_str = cutoff_dt.isoformat()
 
@@ -330,7 +329,7 @@ class PaymentRepository(IPaymentRepository):
             for m in models
         ]
 
-    async def get_order_by_id(self, order_id: str) -> Optional[PaymentOrder]:
+    async def get_order_by_id(self, order_id: str) -> PaymentOrder | None:
         stmt = select(PaymentOrderModel).where(PaymentOrderModel.id == order_id)
         res = await self.session.execute(stmt)
         m = res.scalar_one_or_none()
@@ -356,14 +355,14 @@ class PaymentRepository(IPaymentRepository):
 
     async def update_order_status(
         self, order_id: str, status: PaymentOrderStatus
-    ) -> Optional[PaymentOrder]:
+    ) -> PaymentOrder | None:
         stmt = select(PaymentOrderModel).where(PaymentOrderModel.id == order_id)
         res = await self.session.execute(stmt)
         m = res.scalar_one_or_none()
         if not m:
             return None
 
-        now_str = datetime.now(timezone.utc).isoformat()
+        now_str = datetime.now(UTC).isoformat()
         m.status = status.value if hasattr(status, "value") else str(status)
         m.updated_at = now_str
         await self.session.flush()

@@ -1,19 +1,19 @@
 import asyncio
 
-from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-import src.modules.assessment.infrastructure.models  # noqa: F401
-import src.modules.catalog.infrastructure.models  # noqa: F401
-import src.modules.certificate.infrastructure.models  # noqa: F401
-import src.modules.forum.infrastructure.models  # noqa: F401
-import src.modules.identity.infrastructure.models  # noqa: F401
-import src.modules.learning.infrastructure.models  # noqa: F401
-import src.modules.notification.infrastructure.models  # noqa: F401
-import src.modules.partner.infrastructure.models  # noqa: F401
+import src.modules.assessment.infrastructure.models
+import src.modules.catalog.infrastructure.models
+import src.modules.certificate.infrastructure.models
+import src.modules.forum.infrastructure.models
+import src.modules.identity.infrastructure.models
+import src.modules.learning.infrastructure.models
+import src.modules.notification.infrastructure.models
+import src.modules.partner.infrastructure.models
 import src.modules.payment.infrastructure.models  # noqa: F401
+from alembic import context
 from src.shared.config import settings
 from src.shared.infrastructure.database import Base
 from src.shared.infrastructure.logging import setup_logging

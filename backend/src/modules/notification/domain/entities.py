@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from src.modules.notification.domain.constants import NotificationCategory
 from src.shared.domain.base import Entity, ValueObject
@@ -16,12 +15,12 @@ class Notification(Entity):
     action_url: str = ""
     actor_avatar_url: str = ""
     is_read: bool = False
-    read_at: Optional[datetime] = None
-    created_at: Optional[datetime] = None
+    read_at: datetime | None = None
+    created_at: datetime | None = None
 
-    def mark_as_read(self, now: Optional[datetime] = None) -> None:
+    def mark_as_read(self, now: datetime | None = None) -> None:
         self.is_read = True
-        self.read_at = now or datetime.now(timezone.utc)
+        self.read_at = now or datetime.now(UTC)
 
 
 @dataclass
@@ -32,4 +31,4 @@ class NotificationPreferences(ValueObject):
     enable_academic_reminders: bool = True
     enable_community_replies: bool = True
     enable_announcements: bool = True
-    updated_at: Optional[datetime] = None
+    updated_at: datetime | None = None

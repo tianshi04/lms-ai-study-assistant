@@ -40,12 +40,13 @@ class AccessPolicyService:
         if user_entity.enterprise_seat_key and user_entity.enterprise_seat_key.strip():
             clean_key = user_entity.enterprise_seat_key.strip().upper()
             from sqlalchemy import select
-            from src.modules.identity.infrastructure.models import (
-                EnterpriseLicenseModel,
-            )
+
             from src.modules.identity.domain.entities import (
                 EnterpriseLicense,
                 ScopeType,
+            )
+            from src.modules.identity.infrastructure.models import (
+                EnterpriseLicenseModel,
             )
 
             stmt = select(EnterpriseLicenseModel).where(

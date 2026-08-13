@@ -1,17 +1,13 @@
 """Domain entities and value objects for Payment module (BR_ACCESS_004)."""
 
-from dataclasses import dataclass
-from datetime import datetime, timezone
-from enum import Enum
 import uuid
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from enum import Enum
+from typing import Any
 
 
-from typing import Any, Type, TypeVar
-
-E = TypeVar("E", bound=Enum)
-
-
-def safe_enum_parse(enum_cls: Type[E], value: Any, default: E) -> E:
+def safe_enum_parse[E: Enum](enum_cls: type[E], value: Any, default: E) -> E:
     """Safely parse arbitrary DB string/int/enum representation into domain Enum without raising ValueError."""
     if value is None:
         return default
@@ -99,7 +95,7 @@ class CoursePurchase:
         currency: str = "VND",
         payment_method: str = "MOCK",
     ) -> "CoursePurchase":
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         return cls(
             id=str(uuid.uuid4()),
             user_id=user_id,
@@ -129,10 +125,10 @@ class UserSubscription:
             exp_str = str(self.expires_at).replace("Z", "+00:00")
             exp_time = datetime.fromisoformat(exp_str)
             if exp_time.tzinfo is None:
-                exp_time = exp_time.replace(tzinfo=timezone.utc)
-            now = datetime.now(timezone.utc)
+                exp_time = exp_time.replace(tzinfo=UTC)
+            now = datetime.now(UTC)
             return exp_time > now
-        except Exception:
+        except (ValueError, TypeError, AttributeError):
             return False
 
 

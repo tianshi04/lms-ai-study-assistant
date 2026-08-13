@@ -1,4 +1,5 @@
 import pytest
+
 from src.modules.forum.application.forum_usecase import ForumUseCase
 from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
 

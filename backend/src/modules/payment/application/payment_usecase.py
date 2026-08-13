@@ -1,13 +1,11 @@
 """Application Use Cases for Payment module."""
 
-from datetime import datetime, timedelta, timezone
 import json
 import logging
-from typing import Optional
 import uuid
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
-
 from sqlalchemy.exc import IntegrityError
 
 from src.modules.catalog.infrastructure.models import CourseModel
@@ -41,7 +39,7 @@ logger = logging.getLogger(__name__)
 
 
 class PaymentUseCase:
-    def __init__(self, repo: Optional[IPaymentRepository] = None):
+    def __init__(self, repo: IPaymentRepository | None = None):
         self.repository = repo
 
     async def get_user_payment_access(
@@ -63,7 +61,7 @@ class PaymentUseCase:
 
     async def purchase_course(
         self, user_id: str, course_id: str, payment_method: str = "MOCK"
-    ) -> tuple[bool, str, Optional[CoursePurchase]]:
+    ) -> tuple[bool, str, CoursePurchase | None]:
         if not user_id:
             return False, "Yêu cầu đăng nhập để mua khóa học.", None
         if not course_id:
@@ -113,7 +111,7 @@ class PaymentUseCase:
 
     async def subscribe_coursera_plus(
         self, user_id: str, plan_type: PlanType, payment_method: str = "MOCK"
-    ) -> tuple[bool, str, Optional[UserSubscription]]:
+    ) -> tuple[bool, str, UserSubscription | None]:
         if not user_id:
             return False, "Yêu cầu đăng nhập để đăng ký gói thuê bao.", None
 
@@ -127,7 +125,7 @@ class PaymentUseCase:
             if plan_type == PlanType.YEARLY
             else DEFAULT_SYSTEM_SUBSCRIPTION_MONTHLY_PRICE_VND
         )
-        now_dt = datetime.now(timezone.utc)
+        now_dt = datetime.now(UTC)
         expires_dt = now_dt + timedelta(days=days)
 
         async with async_session_scope() as session:
@@ -144,10 +142,10 @@ class PaymentUseCase:
                     cur_exp_str = str(existing_sub.expires_at).replace("Z", "+00:00")
                     cur_exp = datetime.fromisoformat(cur_exp_str)
                     if cur_exp.tzinfo is None:
-                        cur_exp = cur_exp.replace(tzinfo=timezone.utc)
+                        cur_exp = cur_exp.replace(tzinfo=UTC)
                     if cur_exp > now_dt:
                         expires_dt = cur_exp + timedelta(days=days)
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001
                     logger.warning(
                         "Failed to parse existing subscription expiration date %s: %s",
                         existing_sub.expires_at,
@@ -278,7 +276,7 @@ class PaymentUseCase:
                 )
 
             vnp_txn_ref = f"VNP-{uuid.uuid4().hex[:12].upper()}"
-            now_str = datetime.now(timezone.utc).isoformat()
+            now_str = datetime.now(UTC).isoformat()
             order_id = str(uuid.uuid4())
 
             order = PaymentOrder(
@@ -372,8 +370,8 @@ class PaymentUseCase:
         PaymentTargetType,
         str,
         PlanType,
-        Optional[CoursePurchase],
-        Optional[UserSubscription],
+        CoursePurchase | None,
+        UserSubscription | None,
     ]:
         valid_sig, sig_err = VNPayService.verify_response_signature(query_params)
         if not valid_sig:
@@ -463,7 +461,7 @@ class PaymentUseCase:
                 vnp_bank_code=vnp_bank_code,
                 vnp_pay_date=vnp_pay_date,
                 raw_payload=json.dumps(query_params, ensure_ascii=False),
-                created_at=datetime.now(timezone.utc).isoformat(),
+                created_at=datetime.now(UTC).isoformat(),
             )
             await repo.save_transaction(tx)
 
@@ -575,7 +573,7 @@ class PaymentUseCase:
                 vnp_bank_code=vnp_bank_code,
                 vnp_pay_date=vnp_pay_date,
                 raw_payload=json.dumps(query_params, ensure_ascii=False),
-                created_at=datetime.now(timezone.utc).isoformat(),
+                created_at=datetime.now(UTC).isoformat(),
             )
             await repo.save_transaction(tx)
 
@@ -610,10 +608,10 @@ class PaymentUseCase:
         plan_type: PlanType,
         amount: float,
     ) -> tuple[
-        Optional[CoursePurchase],
-        Optional[UserSubscription],
+        CoursePurchase | None,
+        UserSubscription | None,
     ]:
-        now_dt = datetime.now(timezone.utc)
+        now_dt = datetime.now(UTC)
         now_str = now_dt.isoformat()
 
         if target_type == PaymentTargetType.COURSE:
@@ -649,7 +647,7 @@ class PaymentUseCase:
 
     async def _sync_user_subscription(
         self, repo: IPaymentRepository, user_id: str
-    ) -> Optional[UserSubscription]:
+    ) -> UserSubscription | None:
         """Deterministically calculate and sync active UserSubscription from all COMPLETED SYSTEM_SUBSCRIPTION orders."""
         orders = await repo.list_user_orders(user_id)
         completed_sub_orders = [
@@ -663,8 +661,8 @@ class PaymentUseCase:
 
         completed_sub_orders.sort(key=lambda x: x.created_at)
 
-        now_dt = datetime.now(timezone.utc)
-        current_exp_dt: Optional[datetime] = None
+        now_dt = datetime.now(UTC)
+        current_exp_dt: datetime | None = None
         first_start_str = completed_sub_orders[0].created_at
         latest_plan_type = completed_sub_orders[-1].plan_type
 
@@ -677,8 +675,8 @@ class PaymentUseCase:
             try:
                 order_dt = datetime.fromisoformat(o.created_at)
                 if order_dt.tzinfo is None:
-                    order_dt = order_dt.replace(tzinfo=timezone.utc)
-            except Exception as exc:
+                    order_dt = order_dt.replace(tzinfo=UTC)
+            except Exception as exc:  # noqa: BLE001
                 logger.warning(
                     "Failed to parse order creation timestamp %s: %s", o.created_at, exc
                 )
@@ -721,13 +719,13 @@ class PaymentUseCase:
         list[CoursePurchase],
         list[PaymentOrder],
         dict[str, str],
-        Optional[UserSubscription],
+        UserSubscription | None,
     ]:
         async with async_session_scope() as session:
             repo = self.repository or PaymentRepository(session)
             orders = await repo.list_user_orders(user_id)
 
-            now_dt = datetime.now(timezone.utc)
+            now_dt = datetime.now(UTC)
             reconciled_any = False
 
             for o in orders:
@@ -736,9 +734,9 @@ class PaymentUseCase:
                         c_dt_str = str(o.created_at).replace("Z", "+00:00")
                         c_dt = datetime.fromisoformat(c_dt_str)
                         if c_dt.tzinfo is None:
-                            c_dt = c_dt.replace(tzinfo=timezone.utc)
+                            c_dt = c_dt.replace(tzinfo=UTC)
                         age_minutes = (now_dt - c_dt).total_seconds() / 60.0
-                    except Exception as exc:
+                    except Exception as exc:  # noqa: BLE001
                         logger.warning(
                             "Failed to parse order created_at timestamp %s for age calculation: %s",
                             o.created_at,
@@ -796,7 +794,7 @@ class PaymentUseCase:
                                     await repo.update_order_status(
                                         o.id, PaymentOrderStatus.EXPIRED
                                     )
-                        except Exception as ex:
+                        except Exception as ex:  # noqa: BLE001
                             logger.warning(
                                 "[LAZY RECONCILE] Error reconciling order %s: %s",
                                 o.id,

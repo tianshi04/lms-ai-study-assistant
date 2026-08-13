@@ -1,21 +1,22 @@
 from sqlalchemy import (
     ARRAY,
-    Enum as SQLEnum,
+    JSON,
+    Boolean,
+    Float,
     ForeignKey,
     Integer,
-    JSON,
     Numeric,
     String,
     Text,
     UniqueConstraint,
-    Float,
-    Boolean,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from sqlalchemy.dialects.postgresql import JSONB
-
-from src.modules.catalog.domain.entities import ItemType, CourseStatus
+from src.modules.catalog.domain.entities import CourseStatus, ItemType
 from src.modules.identity.domain.constants import INTERNAL_SYSTEM_ORG_ID
 from src.shared.infrastructure.database import Base
 

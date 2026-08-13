@@ -1,5 +1,7 @@
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
+
 from src.modules.identity.application.identity_usecase import IdentityUseCase
 from src.modules.identity.domain.entities import User, UserRole
 from src.shared.auth import CurrentUserContext
@@ -78,14 +80,14 @@ async def test_add_organization_member_permission_denied():
             new_callable=AsyncMock,
             return_value=None,
         ),
+        pytest.raises(PermissionError, match="chưa thuộc"),
     ):
-        with pytest.raises(PermissionError, match="chưa thuộc"):
-            await use_case.add_organization_member(
-                email="test@example.com",
-                role_id="role_org_instructor",
-                organization_id="org_default",
-                current_user=learner_user,
-            )
+        await use_case.add_organization_member(
+            email="test@example.com",
+            role_id="role_org_instructor",
+            organization_id="org_default",
+            current_user=learner_user,
+        )
 
 
 @pytest.mark.asyncio
@@ -93,18 +95,20 @@ async def test_add_organization_member_user_not_found():
     use_case = IdentityUseCase()
     admin_user = CurrentUserContext(id="admin_1", role="ADMIN")
 
-    with patch(
-        "src.modules.identity.infrastructure.repository.IdentityRepository.get_by_email",
-        new_callable=AsyncMock,
-        return_value=None,
+    with (
+        patch(
+            "src.modules.identity.infrastructure.repository.IdentityRepository.get_by_email",
+            new_callable=AsyncMock,
+            return_value=None,
+        ),
+        pytest.raises(ValueError, match="Không tìm thấy người dùng với email"),
     ):
-        with pytest.raises(ValueError, match="Không tìm thấy người dùng với email"):
-            await use_case.add_organization_member(
-                email="nonexistent@example.com",
-                role_id="role_org_instructor",
-                organization_id="org_default",
-                current_user=admin_user,
-            )
+        await use_case.add_organization_member(
+            email="nonexistent@example.com",
+            role_id="role_org_instructor",
+            organization_id="org_default",
+            current_user=admin_user,
+        )
 
 
 @pytest.mark.asyncio

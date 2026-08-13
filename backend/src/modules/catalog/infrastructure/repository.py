@@ -1,30 +1,31 @@
 import uuid
+from datetime import UTC, datetime
 from typing import Any
-from datetime import datetime, timezone
+
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.modules.identity.infrastructure.models import UserModel
 from src.modules.catalog.domain.entities import (
+    Category,
     Course,
     CourseAnnouncement,
     CourseReview,
     CourseStatus,
     EnrolledStudent,
-    InVideoQuiz,
     InstructorAnalytics,
     InteractiveTranscript,
+    InVideoQuiz,
     ItemType,
     LearningItem,
     Lesson,
     Specialization,
     WeekModule,
-    Category,
 )
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.models import (
+    CategoryModel,
     CourseAnnouncementModel,
     CourseAuditLogModel,
     CourseCollaboratorModel,
@@ -35,8 +36,8 @@ from src.modules.catalog.infrastructure.models import (
     LessonModel,
     SpecializationModel,
     WeekModuleModel,
-    CategoryModel,
 )
+from src.modules.identity.infrastructure.models import UserModel
 from src.shared.auth import get_current_user
 from src.shared.infrastructure.scopes import apply_organization_scope
 
@@ -411,7 +412,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 course_id=course_id,
                 user_id=owner_id,
                 role="PRIMARY_INSTRUCTOR",
-                created_at=datetime.now(timezone.utc).isoformat(),
+                created_at=datetime.now(UTC).isoformat(),
             )
             self.session.add(owner_collab)
 
@@ -423,7 +424,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                         course_id=course_id,
                         user_id=co_id,
                         role="CO_INSTRUCTOR",
-                        created_at=datetime.now(timezone.utc).isoformat(),
+                        created_at=datetime.now(UTC).isoformat(),
                     )
                     self.session.add(co_collab)
 
@@ -687,7 +688,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         res = await self.session.execute(stmt)
         existing = res.scalar_one_or_none()
 
-        now_str = datetime.now(timezone.utc).isoformat()
+        now_str = datetime.now(UTC).isoformat()
         if existing:
             existing.rating_stars = rating_stars
             existing.comment_text = comment_text
@@ -815,7 +816,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
         cat_id = f"cat-{uuid.uuid4().hex[:8]}"
-        now_str = datetime.now(timezone.utc).isoformat()
+        now_str = datetime.now(UTC).isoformat()
 
         model = CategoryModel(
             id=cat_id, name=name, slug=slug, type=category_type, created_at=now_str
@@ -1032,7 +1033,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
     ) -> CourseAnnouncement:
         real_id = await self.get_course_id_by_slug_or_id(course_id)
         ann_id = f"ann_{uuid.uuid4().hex[:12]}"
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
         ann = CourseAnnouncementModel(
             id=ann_id,
             course_id=real_id,
@@ -1203,7 +1204,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 course_id=course_id,
                 user_id=user_id,
                 role=role,
-                created_at=datetime.now(timezone.utc).isoformat(),
+                created_at=datetime.now(UTC).isoformat(),
             )
             self.session.add(collab)
         await self.session.commit()
@@ -1257,7 +1258,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         action: str,
         details: str = "",
     ) -> CourseAuditLogModel:
-        now_str = datetime.now(timezone.utc).isoformat()
+        now_str = datetime.now(UTC).isoformat()
         log_model = CourseAuditLogModel(
             id=f"calog_{uuid.uuid4().hex[:12]}",
             course_id=course_id,

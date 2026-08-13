@@ -1,5 +1,4 @@
 from functools import lru_cache
-from typing import Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -64,7 +63,7 @@ class Settings(BaseSettings):
     )
 
     # 5. OpenTelemetry & Jaeger Observability
-    OTEL_EXPORTER_OTLP_ENDPOINT: Optional[str] = Field(
+    OTEL_EXPORTER_OTLP_ENDPOINT: str | None = Field(
         default=None,
         description="OpenTelemetry OTLP Collector Endpoint (e.g. http://localhost:4317)",
     )

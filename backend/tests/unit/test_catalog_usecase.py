@@ -1,9 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.shared.auth import CurrentUser
+import pytest
+
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 from src.modules.catalog.domain.entities import Course, Lesson, Specialization
+from src.shared.auth import CurrentUser
 
 
 @pytest.fixture
@@ -151,7 +152,7 @@ async def test_without_repo_factory(mock_scope, mock_session):
 
         mock_repo_class.return_value = mock_repo_instance
 
-        courses, token = await usecase.list_courses()
+        courses, _token = await usecase.list_courses()
 
         mock_repo_class.assert_called_once_with(mock_session)
         mock_repo_instance.list_courses.assert_awaited_once()
@@ -209,16 +210,16 @@ async def test_create_and_update_course_financial_aid_toggle(
 async def test_export_course_to_scorm(
     mock_s3_service, mock_scope, catalog_usecase, mock_repo, mock_session
 ):
-    from src.modules.catalog.domain.entities import (
-        Course,
-        WeekModule,
-        Lesson,
-        LearningItem,
-        ItemType,
-    )
-
     # 1. Setup mock storage service
     from unittest.mock import MagicMock
+
+    from src.modules.catalog.domain.entities import (
+        Course,
+        ItemType,
+        LearningItem,
+        Lesson,
+        WeekModule,
+    )
 
     mock_s3 = MagicMock()
     mock_s3.endpoint_url = "http://localhost:9000"
@@ -278,9 +279,9 @@ async def test_export_course_to_scorm(
 @pytest.mark.asyncio
 @patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
 async def test_parse_scorm_package_native(mock_s3_service, catalog_usecase):
-    import zipfile
     import io
     import json
+    import zipfile
 
     # Create mock zip with openlms-course.json
     zip_buffer = io.BytesIO()
@@ -308,8 +309,8 @@ async def test_parse_scorm_package_native(mock_s3_service, catalog_usecase):
 @pytest.mark.asyncio
 @patch("src.modules.catalog.application.catalog_usecase.get_s3_storage_service")
 async def test_parse_scorm_package_standard(mock_s3_service, catalog_usecase):
-    import zipfile
     import io
+    import zipfile
 
     # Create mock zip with imsmanifest.xml
     zip_buffer = io.BytesIO()
@@ -344,9 +345,9 @@ async def test_parse_scorm_package_standard(mock_s3_service, catalog_usecase):
 async def test_import_course_from_scorm_native(
     mock_s3_service, mock_scope, catalog_usecase, mock_repo, mock_session
 ):
-    import zipfile
     import io
     import json
+    import zipfile
 
     # Create mock zip with openlms-course.json
     zip_buffer = io.BytesIO()
@@ -423,8 +424,8 @@ async def test_import_course_from_scorm_native(
 async def test_import_course_from_scorm_standard(
     mock_s3_service, mock_scope, catalog_usecase, mock_repo, mock_session
 ):
-    import zipfile
     import io
+    import zipfile
 
     # Create mock zip with imsmanifest.xml
     zip_buffer = io.BytesIO()

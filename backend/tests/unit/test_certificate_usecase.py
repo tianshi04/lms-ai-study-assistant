@@ -1,5 +1,7 @@
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
+
 from src.modules.certificate.application.certificate_usecase import (
     CertificateUseCase,
     count_words,
@@ -273,12 +275,12 @@ async def test_verify_certificate_public(mock_session_scope, mock_repo_class, us
     )
     mock_repo.get_certificate_by_id = AsyncMock(return_value=existing_cert)
 
-    valid, cert, msg = await usecase.verify_certificate_public("cert_1")
+    valid, cert, _msg = await usecase.verify_certificate_public("cert_1")
     assert valid is True
     assert cert == existing_cert
 
     mock_repo.get_certificate_by_id = AsyncMock(return_value=None)
-    valid, cert, msg = await usecase.verify_certificate_public("cert_2")
+    valid, cert, _msg = await usecase.verify_certificate_public("cert_2")
     assert valid is False
     assert cert is None
 
@@ -428,7 +430,7 @@ async def test_issue_specialization_certificate(
     )
     mock_repo.save_certificate = AsyncMock(side_effect=lambda c: c)
 
-    spec_cert, msg = await usecase.issue_specialization_certificate("u1", "spec_1")
+    spec_cert, _msg = await usecase.issue_specialization_certificate("u1", "spec_1")
     assert spec_cert is not None
     assert spec_cert.specialization_id == "spec_1"
     assert spec_cert.learner_name == "Alice"

@@ -1,4 +1,5 @@
 import pytest
+
 from src.shared.infrastructure.s3_storage import get_s3_storage_service
 
 

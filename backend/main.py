@@ -1,4 +1,5 @@
 import uvicorn
+
 from src.main import app  # noqa: F401
 
 if __name__ == "__main__":

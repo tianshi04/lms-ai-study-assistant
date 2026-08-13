@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -27,7 +27,7 @@ def test_notification_entity_mark_as_read():
     assert not notif.is_read
     assert notif.read_at is None
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     notif.mark_as_read(now)
     assert notif.is_read
     assert notif.read_at == now

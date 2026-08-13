@@ -1,9 +1,8 @@
-from typing import Any, Optional
+from typing import Any
 
-from sqlalchemy import Boolean, Integer, JSON, String, Text, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
-
+from sqlalchemy import JSON, Boolean, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Mapped, mapped_column
 
 from src.modules.certificate.domain.constants import (
     DEFAULT_FINANCIAL_AID_REVIEW_DEADLINE_DAYS,
@@ -50,7 +49,7 @@ class CertificateModel(Base):
     )
     is_revoked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     revoked_reason: Mapped[str] = mapped_column(Text, nullable=False, default="")
-    specialization_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    specialization_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     signer_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     signer_title: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     signature_image_url: Mapped[str] = mapped_column(

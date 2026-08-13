@@ -1,7 +1,9 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from src.modules.catalog.presentation.catalog_handler import CatalogHandler
+
+import pytest
+
 from src.gen.catalog.v1 import catalog_pb as pb
+from src.modules.catalog.presentation.catalog_handler import CatalogHandler
 
 
 @pytest.mark.asyncio

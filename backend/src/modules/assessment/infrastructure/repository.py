@@ -1,6 +1,6 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
+
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -61,7 +61,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
     async def get_honor_code(
         self, user_id: str, item_id: str
-    ) -> Optional[HonorCodeAgreement]:
+    ) -> HonorCodeAgreement | None:
         stmt = select(HonorCodeModel).where(
             HonorCodeModel.user_id == user_id, HonorCodeModel.item_id == item_id
         )
@@ -119,7 +119,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
     async def get_quiz_cooldown(
         self, user_id: str, item_id: str
-    ) -> Optional[QuizCooldown]:
+    ) -> QuizCooldown | None:
         stmt = select(QuizCooldownModel).where(
             QuizCooldownModel.user_id == user_id, QuizCooldownModel.item_id == item_id
         )
@@ -157,7 +157,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
     async def get_quiz_active_session(
         self, user_id: str, item_id: str
-    ) -> Optional[QuizActiveSession]:
+    ) -> QuizActiveSession | None:
         stmt = select(QuizActiveSessionModel).where(
             QuizActiveSessionModel.user_id == user_id,
             QuizActiveSessionModel.item_id == item_id,
@@ -267,7 +267,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
     async def get_peer_submission(
         self, submission_id: str
-    ) -> Optional[PeerAssignmentSubmission]:
+    ) -> PeerAssignmentSubmission | None:
         model = await self.session.get(PeerAssignmentSubmissionModel, submission_id)
         if not model:
             return None
@@ -284,7 +284,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
 
     async def get_user_peer_submission(
         self, user_id: str, item_id: str
-    ) -> Optional[PeerAssignmentSubmission]:
+    ) -> PeerAssignmentSubmission | None:
         stmt = select(PeerAssignmentSubmissionModel).where(
             PeerAssignmentSubmissionModel.user_id == user_id,
             PeerAssignmentSubmissionModel.item_id == item_id,
@@ -454,7 +454,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             self.session.add(model)
         await self.session.commit()
 
-    async def get_grade_appeal(self, submission_id: str) -> Optional[GradeAppeal]:
+    async def get_grade_appeal(self, submission_id: str) -> GradeAppeal | None:
         stmt = select(GradeAppealModel).where(
             GradeAppealModel.submission_id == submission_id
         )
@@ -474,7 +474,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
     async def create_question_bank(
         self, course_id: str, title: str, category: str, description: str
     ) -> QuestionBank:
-        now_str = datetime.now(timezone.utc).isoformat()
+        now_str = datetime.now(UTC).isoformat()
         bank_id = f"qbank-{uuid.uuid4().hex[:8]}"
         model = QuestionBankModel(
             id=bank_id,
@@ -555,7 +555,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         explanation: str,
         options_data: list[dict],
     ) -> Question:
-        now_str = datetime.now(timezone.utc).isoformat()
+        now_str = datetime.now(UTC).isoformat()
         q_id = f"q-{uuid.uuid4().hex[:8]}"
         q_model = QuestionModel(
             id=q_id,
@@ -668,7 +668,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             difficulty=q_model.difficulty,
             explanation=q_model.explanation,
             options=domain_options,
-            created_at=q_model.created_at or datetime.now(timezone.utc).isoformat(),
+            created_at=q_model.created_at or datetime.now(UTC).isoformat(),
         )
 
     async def configure_quiz_matrix(
@@ -727,7 +727,7 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
             cooldown_hours=existing.cooldown_hours,
         )
 
-    async def get_quiz_matrix(self, item_id: str) -> Optional[QuizMatrix]:
+    async def get_quiz_matrix(self, item_id: str) -> QuizMatrix | None:
         stmt = select(QuizMatrixModel).where(QuizMatrixModel.item_id == item_id)
         res = await self.session.execute(stmt)
         m = res.scalar_one_or_none()

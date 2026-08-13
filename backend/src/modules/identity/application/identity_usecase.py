@@ -4,57 +4,45 @@ import hmac
 import logging
 import os
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import httpx
-from google.oauth2 import id_token
 from google.auth.transport import requests
-
+from google.oauth2 import id_token
 from sqlalchemy import select, update
 
-from src.modules.identity.domain.entities import (
-    User,
-    UserRole,
-    InstructorApplication,
-    Invitation,
-    InvitationType,
-    InvitationStatus,
-    hash_invitation_token,
+from src.modules.identity.application.review_application_usecase import (
+    ReviewInstructorApplicationUseCase,
 )
-from src.shared.permissions import OrgRole
+from src.modules.identity.application.submit_application_usecase import (
+    SubmitInstructorApplicationUseCase,
+)
 from src.modules.identity.domain.constants import (
     DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS,
+    DEFAULT_INVITATION_EXPIRATION_DAYS,
     DEFAULT_PBKDF2_ITERATIONS,
     ENTERPRISE_REVOCATION_GRACE_PERIOD_DAYS,
     ENTERPRISE_REVOCATION_MAX_PROGRESS_PERCENT,
-    DEFAULT_INVITATION_EXPIRATION_DAYS,
     PASSWORD_MIN_LENGTH,
 )
-from src.shared.infrastructure.rate_limiter import (
-    check_login_rate_limit,
-    record_failed_login,
-    clear_login_attempts,
+from src.modules.identity.domain.entities import (
+    InstructorApplication,
+    Invitation,
+    InvitationStatus,
+    InvitationType,
+    User,
+    UserRole,
+    hash_invitation_token,
 )
 from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
 from src.modules.identity.infrastructure.repository import (
     IdentityRepository,
     InstructorApplicationRepository,
-    OrganizationRepository,
     InvitationRepository,
+    OrganizationRepository,
 )
-from src.shared.permissions import (
-    OrgPermission,
-    enforce_organization_permission,
-)
-from src.modules.identity.application.submit_application_usecase import (
-    SubmitInstructorApplicationUseCase,
-)
-from src.modules.identity.application.review_application_usecase import (
-    ReviewInstructorApplicationUseCase,
-)
-
-
 from src.modules.learning.domain.repository import ILearningRepository
 from src.shared.auth import (
     CurrentUser,
@@ -64,6 +52,16 @@ from src.shared.auth import (
     decode_token,
 )
 from src.shared.infrastructure.database import async_session_scope
+from src.shared.infrastructure.rate_limiter import (
+    check_login_rate_limit,
+    clear_login_attempts,
+    record_failed_login,
+)
+from src.shared.permissions import (
+    OrgPermission,
+    OrgRole,
+    enforce_organization_permission,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +142,7 @@ async def _exchange_google_code(code: str, nonce: str = "") -> dict[str, str]:
     }
 
 
-def hash_password(password: str, salt: Optional[bytes] = None) -> str:
+def hash_password(password: str, salt: bytes | None = None) -> str:
     if salt is None:
         salt = os.urandom(16)
     hashed = hashlib.pbkdf2_hmac(
@@ -164,7 +162,7 @@ def verify_password(password: str, password_hash: str) -> bool:
     return hmac.compare_digest(new_hash, hash_hex)
 
 
-def validate_password(password: str) -> Optional[str]:
+def validate_password(password: str) -> str | None:
     """Validate password strength against policy.
 
     Returns error message string if invalid, None if valid.
@@ -199,7 +197,7 @@ class IdentityUseCase:
             learning_repo_factory or _default_learning_repo_factory
         )
 
-    def _verify_admin(self, current_user: Optional[CurrentUser]) -> None:
+    def _verify_admin(self, current_user: CurrentUser | None) -> None:
         if current_user is not None and not current_user.is_admin:
             raise PermissionError(
                 "Yêu cầu quyền Quản trị viên (Admin) để thực hiện thao tác này."
@@ -207,7 +205,7 @@ class IdentityUseCase:
 
     async def login(
         self, email: str, password: str
-    ) -> tuple[Optional[User], str, str, str]:
+    ) -> tuple[User | None, str, str, str]:
         """Returns (user, access_token, refresh_token, error_message)."""
         is_allowed, remaining = await check_login_rate_limit(email)
         if not is_allowed:
@@ -312,7 +310,7 @@ class IdentityUseCase:
 
     async def complete_google_registration(
         self, temp_token: str, password: str, full_name: str, role_str: str
-    ) -> tuple[Optional[User], str, str, str]:
+    ) -> tuple[User | None, str, str, str]:
         """Returns (user, access_token, refresh_token, error_message)."""
         payload = decode_token(temp_token)
         if not payload or payload.get("type") != "google_temp_registration":
@@ -373,7 +371,7 @@ class IdentityUseCase:
 
     async def google_login(
         self, authorization_code: str, nonce: str = ""
-    ) -> tuple[Optional[User], str, str, str]:
+    ) -> tuple[User | None, str, str, str]:
         """Returns (user, access_token, refresh_token, error_message)."""
         if not authorization_code:
             return None, "", "", "Mã Google Authorization Code không hợp lệ"
@@ -445,7 +443,7 @@ class IdentityUseCase:
 
     async def complete_reset_password(
         self, temp_token: str, new_password: str
-    ) -> tuple[Optional[User], str, str, str]:
+    ) -> tuple[User | None, str, str, str]:
         """Returns (user, access_token, refresh_token, error_message)."""
         payload = decode_token(temp_token)
         if not payload:
@@ -488,7 +486,7 @@ class IdentityUseCase:
 
     async def register(
         self, email: str, password: str, full_name: str, role_str: str
-    ) -> tuple[Optional[User], str]:
+    ) -> tuple[User | None, str]:
         val_err = validate_password(password)
         if val_err:
             return None, val_err
@@ -541,7 +539,7 @@ class IdentityUseCase:
                     content="Tài khoản của bạn đã được đăng ký thành công. Hãy khám phá danh mục khóa học ngay!",
                     action_url="",
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning(
                     "Failed to send welcome notification to user %s: %s", new_id, e
                 )
@@ -549,8 +547,8 @@ class IdentityUseCase:
             return saved_user, ""
 
     async def get_user_profile(
-        self, user_id: str, current_user: Optional[CurrentUser] = None
-    ) -> Optional[User]:
+        self, user_id: str, current_user: CurrentUser | None = None
+    ) -> User | None:
         if current_user and user_id != current_user.id and not current_user.is_admin:
             raise PermissionError(
                 "Bạn không có quyền xem hồ sơ cá nhân của người dùng khác."
@@ -563,7 +561,7 @@ class IdentityUseCase:
         self,
         user_id: str,
         enterprise_seat_key: str,
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> tuple[bool, str]:
         if current_user and user_id != current_user.id and not current_user.is_admin:
             raise PermissionError(
@@ -641,7 +639,7 @@ class IdentityUseCase:
                 )
 
             user.enterprise_seat_key = clean_key
-            user.seat_assigned_at = datetime.now(timezone.utc).isoformat()
+            user.seat_assigned_at = datetime.now(UTC).isoformat()
             await repo.save(user)
             logger.info(
                 "User %s successfully assigned enterprise seat %s", user_id, clean_key
@@ -664,7 +662,7 @@ class IdentityUseCase:
                     content=f"Tài khoản của bạn đã được liên kết với suất học đối tác {license_model.partner_name}.",
                     action_url="/courses",
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning("Failed to send enterprise seat notification: %s", e)
 
             return (
@@ -675,7 +673,7 @@ class IdentityUseCase:
     async def list_enterprise_seats(
         self,
         partner_name: str = "",
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> list[dict]:
         self._verify_admin(current_user)
         async with async_session_scope() as session:
@@ -699,7 +697,7 @@ class IdentityUseCase:
                         if lic.is_active
                         else "Vô hiệu",
                         "status": "ACTIVE" if lic.is_active else "INACTIVE",
-                        "created_at": datetime.now(timezone.utc).isoformat(),
+                        "created_at": datetime.now(UTC).isoformat(),
                         "scope_type": getattr(lic, "scope_type", "ALL_COURSES"),
                         "allowed_course_ids": getattr(lic, "allowed_course_ids", []),
                     }
@@ -711,8 +709,8 @@ class IdentityUseCase:
         partner_name: str,
         seat_key: str,
         scope_type: str = "ALL_COURSES",
-        allowed_course_ids: Optional[list[str]] = None,
-        current_user: Optional[CurrentUser] = None,
+        allowed_course_ids: list[str] | None = None,
+        current_user: CurrentUser | None = None,
     ) -> dict:
         self._verify_admin(current_user)
         async with async_session_scope() as session:
@@ -741,7 +739,7 @@ class IdentityUseCase:
                 "assigned_user_id": f"0/{DEFAULT_ENTERPRISE_KEY_TOTAL_SEATS} seats",
                 "assigned_user_email": "Hoạt động",
                 "status": "ACTIVE",
-                "created_at": datetime.now(timezone.utc).isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
                 "scope_type": clean_scope,
                 "allowed_course_ids": courses_list,
             }
@@ -765,7 +763,7 @@ class IdentityUseCase:
         self,
         user_id: str,
         course_id: str = "",
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> tuple[bool, str]:
         self._verify_admin(current_user)
         """Revokes enterprise seat from user if BR_ACCESS_003 conditions are met.
@@ -782,7 +780,7 @@ class IdentityUseCase:
                 return False, "Người dùng chưa được gán mã Enterprise Seat"
 
             # BR_ACCESS_003: enforce 30-day + <20% progress guard
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             if user.seat_assigned_at:
                 try:
                     assigned_dt = datetime.fromisoformat(user.seat_assigned_at)
@@ -833,7 +831,7 @@ class IdentityUseCase:
 
     async def update_instructor_profile(
         self, user_id: str, title: str, signature_image_url: str
-    ) -> tuple[Optional[User], str]:
+    ) -> tuple[User | None, str]:
         """Updates instructor title and signature_image_url. Returns (user, error_message)."""
         async with async_session_scope() as session:
             repo = IdentityRepository(session)
@@ -870,7 +868,7 @@ class IdentityUseCase:
 
     async def get_my_instructor_application(
         self, user_id: str
-    ) -> Optional[InstructorApplication]:
+    ) -> InstructorApplication | None:
         async with async_session_scope() as session:
             repo = InstructorApplicationRepository(session)
             return await repo.get_latest_by_user_id(user_id)
@@ -878,7 +876,7 @@ class IdentityUseCase:
     async def list_instructor_applications(
         self,
         status_filter: str = "",
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> list[InstructorApplication]:
         self._verify_admin(current_user)
         async with async_session_scope() as session:
@@ -890,7 +888,7 @@ class IdentityUseCase:
         application_id: str,
         approve: bool,
         rejection_reason: str = "",
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> InstructorApplication:
         self._verify_admin(current_user)
         async with async_session_scope() as session:
@@ -909,7 +907,7 @@ class IdentityUseCase:
     async def _resolve_target_org_id(
         self,
         org_repo: OrganizationRepository,
-        user: Optional[CurrentUser],
+        user: CurrentUser | None,
         organization_id: str,
     ) -> str:
         clean_org_id = (organization_id or "").strip()
@@ -927,7 +925,7 @@ class IdentityUseCase:
     async def _verify_org_admin_permission(
         self,
         session: Any,
-        user: Optional[CurrentUser],
+        user: CurrentUser | None,
         organization_id: str,
     ) -> None:
         await enforce_organization_permission(
@@ -942,7 +940,7 @@ class IdentityUseCase:
         email: str,
         role_id: str,
         organization_id: str,
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> dict:
         async with async_session_scope() as session:
             identity_repo = IdentityRepository(session)
@@ -987,7 +985,7 @@ class IdentityUseCase:
             }
 
     async def list_organization_members(
-        self, organization_id: str, current_user: Optional[CurrentUser] = None
+        self, organization_id: str, current_user: CurrentUser | None = None
     ) -> list[dict]:
         async with async_session_scope() as session:
             org_repo = OrganizationRepository(session)
@@ -1006,7 +1004,7 @@ class IdentityUseCase:
         self,
         user_id: str,
         organization_id: str,
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> bool:
         if not current_user:
             raise PermissionError("Yêu cầu đăng nhập.")
@@ -1088,7 +1086,7 @@ class IdentityUseCase:
         target_name: str = "",
         role_id: str = "",
         message: str = "",
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> dict:
         if not current_user:
             raise PermissionError("Yêu cầu đăng nhập để gửi lời mời.")
@@ -1146,18 +1144,21 @@ class IdentityUseCase:
 
                 cat_repo = SQLAlchemyCatalogRepository(session)
                 course = await cat_repo.get_course_detail(target_id)
-                if not course or (
-                    course.owner_id != current_user.id
-                    and current_user.id not in getattr(course, "co_instructor_ids", [])
-                ):
-                    if current_user.role not in [
-                        UserRole.ADMIN.value,
-                        UserRole.ADMIN,
-                        "ADMIN",
-                    ]:
-                        raise PermissionError(
-                            "Bạn không có quyền mời giảng viên cho khóa học này."
-                        )
+                if (
+                    not course
+                    or (
+                        course.owner_id != current_user.id
+                        and current_user.id
+                        not in getattr(course, "co_instructor_ids", [])
+                    )
+                ) and current_user.role not in [
+                    UserRole.ADMIN.value,
+                    UserRole.ADMIN,
+                    "ADMIN",
+                ]:
+                    raise PermissionError(
+                        "Bạn không có quyền mời giảng viên cho khóa học này."
+                    )
                 if not target_name:
                     target_name = course.title if course else f"Khóa học {target_id}"
             elif "ENTERPRISE" in type_str or "SEAT" in type_str or type_str == "3":
@@ -1197,7 +1198,7 @@ class IdentityUseCase:
 
             raw_token = f"inv_tok_{uuid.uuid4().hex}"
             token_hash = hash_invitation_token(raw_token)
-            now_dt = datetime.now(timezone.utc)
+            now_dt = datetime.now(UTC)
             expires_dt = now_dt + timedelta(days=DEFAULT_INVITATION_EXPIRATION_DAYS)
 
             inv = Invitation(
@@ -1238,7 +1239,7 @@ class IdentityUseCase:
                         action_url=f"/invitations/{raw_token}",
                         actor_avatar_url=getattr(current_user, "avatar_url", "") or "",
                     )
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001
                     logger.warning(
                         "Failed to dispatch workspace invitation notification: %s", exc
                     )
@@ -1251,7 +1252,7 @@ class IdentityUseCase:
         self,
         type: str = "",
         target_id: str = "",
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> list[dict]:
         if not current_user:
             return []
@@ -1274,7 +1275,7 @@ class IdentityUseCase:
     async def list_my_invitations(
         self,
         status_filter: str = "",
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> list[dict]:
         if not current_user or not current_user.email:
             return []
@@ -1299,13 +1300,11 @@ class IdentityUseCase:
 
             if inv.status == InvitationStatus.PENDING and inv.expires_at:
                 try:
-                    exp_dt = datetime.fromisoformat(
-                        inv.expires_at.replace("Z", "+00:00")
-                    )
-                    if datetime.now(timezone.utc) > exp_dt:
+                    exp_dt = datetime.fromisoformat(inv.expires_at)
+                    if datetime.now(UTC) > exp_dt:
                         inv.status = InvitationStatus.EXPIRED
                         await inv_repo.save(inv)
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
 
             return self._invitation_to_dict(inv)
@@ -1315,13 +1314,13 @@ class IdentityUseCase:
         invitation_id: str,
         action: str,
         token: str = "",
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> tuple[dict, bool, str]:
         if not current_user:
             raise PermissionError("Yêu cầu đăng nhập để phản hồi lời mời.")
         async with async_session_scope() as session:
             inv_repo = InvitationRepository(session)
-            inv: Optional[Invitation] = None
+            inv: Invitation | None = None
             if invitation_id:
                 inv = await inv_repo.get_by_id(invitation_id)
             if not inv and token:
@@ -1347,10 +1346,8 @@ class IdentityUseCase:
 
             if inv.expires_at:
                 try:
-                    exp_dt = datetime.fromisoformat(
-                        inv.expires_at.replace("Z", "+00:00")
-                    )
-                    if datetime.now(timezone.utc) > exp_dt:
+                    exp_dt = datetime.fromisoformat(inv.expires_at)
+                    if datetime.now(UTC) > exp_dt:
                         inv.status = InvitationStatus.EXPIRED
                         await inv_repo.save(inv)
                         return (
@@ -1358,14 +1355,14 @@ class IdentityUseCase:
                             False,
                             "Lời mời đã hết hạn.",
                         )
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001
                     logger.warning(
                         "Failed to parse invitation expiration date %s: %s",
                         inv.expires_at,
                         exc,
                     )
 
-            now_str = datetime.now(timezone.utc).isoformat()
+            now_str = datetime.now(UTC).isoformat()
             act_str = str(action).upper()
 
             if "DECLINE" in act_str:
@@ -1439,12 +1436,11 @@ class IdentityUseCase:
 
                 user_repo = IdentityRepository(session)
                 user = await user_repo.get_by_id(current_user.id)
-                if user:
-                    if user.enterprise_seat_key != lic_key:
-                        license_model.used_seats += 1
-                        user.enterprise_seat_key = lic_key
-                        user.seat_assigned_at = now_str
-                        await user_repo.save(user)
+                if user and user.enterprise_seat_key != lic_key:
+                    license_model.used_seats += 1
+                    user.enterprise_seat_key = lic_key
+                    user.seat_assigned_at = now_str
+                    await user_repo.save(user)
 
             saved = await inv_repo.save(inv)
             return (
@@ -1456,7 +1452,7 @@ class IdentityUseCase:
     async def cancel_invitation(
         self,
         invitation_id: str,
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> bool:
         if not current_user:
             raise PermissionError("Yêu cầu đăng nhập.")

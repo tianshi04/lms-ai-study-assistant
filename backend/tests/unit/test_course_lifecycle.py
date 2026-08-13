@@ -1,4 +1,5 @@
 import pytest
+
 from src.modules.catalog.domain.entities import (
     Course,
     CourseStatus,

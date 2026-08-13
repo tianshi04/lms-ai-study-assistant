@@ -108,10 +108,8 @@ def main():
     try:
         asyncio.run(reconcile_pending_orders())
         sys.exit(0)
-    except Exception as e:
-        logger.exception(
-            "[RECONCILE WORKER] Unexpected error during reconciliation: %s", e
-        )
+    except Exception:
+        logger.exception("[RECONCILE WORKER] Unexpected error during reconciliation")
         sys.exit(1)
 
 

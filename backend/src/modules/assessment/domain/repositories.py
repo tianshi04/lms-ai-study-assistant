@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+
 from src.modules.assessment.domain.entities import (
     GradeAppeal,
     HonorCodeAgreement,
@@ -23,7 +23,7 @@ class AssessmentRepositoryInterface(ABC):
     @abstractmethod
     async def get_honor_code(
         self, user_id: str, item_id: str
-    ) -> Optional[HonorCodeAgreement]:
+    ) -> HonorCodeAgreement | None:
         pass
 
     @abstractmethod
@@ -39,7 +39,7 @@ class AssessmentRepositoryInterface(ABC):
     @abstractmethod
     async def get_quiz_cooldown(
         self, user_id: str, item_id: str
-    ) -> Optional[QuizCooldown]:
+    ) -> QuizCooldown | None:
         pass
 
     @abstractmethod
@@ -49,7 +49,7 @@ class AssessmentRepositoryInterface(ABC):
     @abstractmethod
     async def get_quiz_active_session(
         self, user_id: str, item_id: str
-    ) -> Optional[QuizActiveSession]:
+    ) -> QuizActiveSession | None:
         pass
 
     @abstractmethod
@@ -73,13 +73,13 @@ class AssessmentRepositoryInterface(ABC):
     @abstractmethod
     async def get_peer_submission(
         self, submission_id: str
-    ) -> Optional[PeerAssignmentSubmission]:
+    ) -> PeerAssignmentSubmission | None:
         pass
 
     @abstractmethod
     async def get_user_peer_submission(
         self, user_id: str, item_id: str
-    ) -> Optional[PeerAssignmentSubmission]:
+    ) -> PeerAssignmentSubmission | None:
         pass
 
     @abstractmethod
@@ -109,7 +109,7 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_grade_appeal(self, submission_id: str) -> Optional[GradeAppeal]:
+    async def get_grade_appeal(self, submission_id: str) -> GradeAppeal | None:
         pass
 
     @abstractmethod
@@ -167,7 +167,7 @@ class AssessmentRepositoryInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_quiz_matrix(self, item_id: str) -> Optional[QuizMatrix]:
+    async def get_quiz_matrix(self, item_id: str) -> QuizMatrix | None:
         pass
 
     @abstractmethod

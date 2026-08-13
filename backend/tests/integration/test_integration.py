@@ -13,7 +13,7 @@ async def test_catalog_usecase():
         courses, _ = await use_case.list_courses()
         assert len(courses) >= 2
         assert courses[0].id == "course-python-ai"
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(
             f"Skipping catalog usecase test: Database tables/seed not available ({e})"
         )
@@ -26,7 +26,7 @@ async def test_catalog_api_integration():
     try:
         res = await client.list_courses(ListCoursesRequest())
         assert len(res.courses) >= 1
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(
             f"Skipping server integration test: Server is not running on port 8000 ({e})"
         )

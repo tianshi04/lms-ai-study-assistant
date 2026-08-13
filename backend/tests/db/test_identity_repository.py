@@ -1,8 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from src.modules.identity.infrastructure.repository import IdentityRepository
+
+import pytest
+
 from src.modules.identity.domain.entities import User, UserRole
 from src.modules.identity.infrastructure.models import UserModel
+from src.modules.identity.infrastructure.repository import IdentityRepository
 
 
 @pytest.mark.asyncio

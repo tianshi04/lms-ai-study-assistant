@@ -1,5 +1,7 @@
-import pytest
 import uuid
+
+import pytest
+
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 from src.modules.learning.application.learning_usecase import LearningUseCase
 
@@ -35,12 +37,13 @@ async def test_list_enrolled_courses():
     assert courses[0].progress_percent == 0.0
     assert courses[0].status == "NOT_STARTED"
 
-    from unittest.mock import patch, AsyncMock
+    from unittest.mock import AsyncMock, patch
+
     from src.modules.catalog.domain.entities import (
-        WeekModule,
-        Lesson,
-        LearningItem,
         ItemType,
+        LearningItem,
+        Lesson,
+        WeekModule,
     )
 
     mock_course_with_items = course
@@ -92,9 +95,10 @@ async def test_list_enrolled_courses():
 
 @pytest.mark.asyncio
 async def test_learning_handler_list_enrolled_courses():
-    from src.modules.learning.presentation.learning_handler import LearningHandler
-    from src.gen.learning.v1 import learning_pb as pb
     from unittest.mock import AsyncMock, patch
+
+    from src.gen.learning.v1 import learning_pb as pb
+    from src.modules.learning.presentation.learning_handler import LearningHandler
 
     learning_uc = LearningUseCase()
     # Mock list_enrolled_courses
