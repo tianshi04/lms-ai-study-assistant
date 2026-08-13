@@ -148,9 +148,11 @@ function MyOrganizationsContent() {
                           <h3 className="font-bold text-foreground text-base truncate group-hover:text-primary transition-colors">
                             {org.name}
                           </h3>
-                          <p className="text-xs text-muted-foreground font-mono truncate">
-                            Slug / ID: {org.slug || org.id}
-                          </p>
+                          {org.slug && (
+                            <p className="text-xs text-muted-foreground font-mono truncate">
+                              Slug: {org.slug}
+                            </p>
+                          )}
                         </div>
                       </div>
                       {getRoleBadge(org.roleInOrg)}

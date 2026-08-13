@@ -1,5 +1,6 @@
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -14,8 +15,6 @@ from src.shared.config import settings
 
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy ORM models."""
-
-    pass
 
 
 def get_database_url() -> str:
@@ -62,7 +61,7 @@ async def dispose_engine() -> None:
         _session_factory = None
 
 
-async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
+async def get_db_session() -> AsyncGenerator[AsyncSession]:
     """Yield async database session for dependency injection or use case execution."""
     session_factory = get_session_factory()
     async with session_factory() as session:
@@ -70,7 +69,7 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 @asynccontextmanager
-async def async_session_scope() -> AsyncGenerator[AsyncSession, None]:
+async def async_session_scope() -> AsyncGenerator[AsyncSession]:
     """Provide a transactional scope around a series of operations with auto-commit/rollback."""
     session_factory = get_session_factory()
     async with session_factory() as session:
@@ -80,7 +79,7 @@ async def async_session_scope() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             try:
                 await session.rollback()
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
             raise
 

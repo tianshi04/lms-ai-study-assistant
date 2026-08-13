@@ -1,9 +1,9 @@
 import ast
 import asyncio
-from dataclasses import dataclass
 import os
 import sys
 import tempfile
+from dataclasses import dataclass
 from typing import Any
 
 from src.modules.assessment.domain.constants import (
@@ -55,12 +55,15 @@ def validate_code_security(source_code: str) -> tuple[bool, str]:
                         False,
                         f"Security Violation: Forbidden module import '{node.module}'",
                     )
-        elif isinstance(node, ast.Call):
-            if isinstance(node.func, ast.Name) and node.func.id in FORBIDDEN_BUILTINS:
-                return (
-                    False,
-                    f"Security Violation: Forbidden function call '{node.func.id}()'",
-                )
+        elif (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id in FORBIDDEN_BUILTINS
+        ):
+            return (
+                False,
+                f"Security Violation: Forbidden function call '{node.func.id}()'",
+            )
 
     return True, ""
 
@@ -190,16 +193,16 @@ except Exception as e:
                         log_lines.append(
                             f"[FAIL] Test Case #{idx}: Failed ({assertion}) - {out_text}"
                         )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     proc.kill()
                     try:
                         await proc.wait()
-                    except Exception:
+                    except Exception:  # noqa: BLE001, S110
                         pass
                     log_lines.append(
                         f"[TIMEOUT] Test Case #{idx}: Timed out (> {self.timeout_seconds}s)"
                     )
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 log_lines.append(f"[FAIL] Test Case #{idx}: System error: {exc}")
             finally:
                 if os.path.exists(tmp_path):

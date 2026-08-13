@@ -1,5 +1,8 @@
-import pytest
+from datetime import UTC
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 from src.modules.identity.application.identity_usecase import (
     IdentityUseCase,
     hash_password,
@@ -133,7 +136,7 @@ async def test_login_wrong_email(mock_session_scope, mock_identity_repo):
     mock_repo_instance.get_by_email.return_value = None
 
     usecase = IdentityUseCase()
-    res_user, acc_token, ref_token, err = await usecase.login(
+    res_user, _acc_token, _ref_token, err = await usecase.login(
         "wrong@test.com", "password123"
     )
 
@@ -161,7 +164,7 @@ async def test_login_wrong_password(mock_session_scope, mock_identity_repo):
     mock_repo_instance.get_by_email.return_value = user
 
     usecase = IdentityUseCase()
-    res_user, acc_token, ref_token, err = await usecase.login(
+    res_user, _acc_token, _ref_token, err = await usecase.login(
         "test@test.com", "wrongpass"
     )
 
@@ -223,7 +226,7 @@ async def test_register_existing_email(mock_session_scope, mock_identity_repo):
 async def test_refresh_token_success(
     mock_session_scope, mock_identity_repo, mock_tokens
 ):
-    mock_acc, mock_ref, mock_dec = mock_tokens
+    _mock_acc, _mock_ref, mock_dec = mock_tokens
     mock_dec.return_value = {"type": "refresh", "sub": "u1"}
 
     mock_session = AsyncMock()
@@ -251,22 +254,22 @@ async def test_refresh_token_success(
 
 @pytest.mark.asyncio
 async def test_refresh_token_invalid_token(mock_tokens):
-    mock_acc, mock_ref, mock_dec = mock_tokens
+    _mock_acc, _mock_ref, mock_dec = mock_tokens
     mock_dec.return_value = None
 
     usecase = IdentityUseCase()
-    acc, ref, err = await usecase.refresh_token("invalid")
+    _acc, _ref, err = await usecase.refresh_token("invalid")
 
     assert err == "Refresh Token không hợp lệ hoặc đã hết hạn"
 
 
 @pytest.mark.asyncio
 async def test_refresh_token_no_sub(mock_tokens):
-    mock_acc, mock_ref, mock_dec = mock_tokens
+    _mock_acc, _mock_ref, mock_dec = mock_tokens
     mock_dec.return_value = {"type": "refresh"}
 
     usecase = IdentityUseCase()
-    acc, ref, err = await usecase.refresh_token("invalid")
+    _acc, _ref, err = await usecase.refresh_token("invalid")
 
     assert err == "Refresh Token chứa thông tin không hợp lệ"
 
@@ -275,7 +278,7 @@ async def test_refresh_token_no_sub(mock_tokens):
 async def test_refresh_token_user_not_found(
     mock_session_scope, mock_identity_repo, mock_tokens
 ):
-    mock_acc, mock_ref, mock_dec = mock_tokens
+    _mock_acc, _mock_ref, mock_dec = mock_tokens
     mock_dec.return_value = {"type": "refresh", "sub": "u1"}
 
     mock_session = AsyncMock()
@@ -286,7 +289,7 @@ async def test_refresh_token_user_not_found(
     mock_repo_instance.get_by_id.return_value = None
 
     usecase = IdentityUseCase()
-    acc, ref, err = await usecase.refresh_token("valid_refresh_token")
+    _acc, _ref, err = await usecase.refresh_token("valid_refresh_token")
 
     assert err == "Không tìm thấy người dùng sở hữu token"
 
@@ -600,9 +603,9 @@ async def test_revoke_enterprise_seat_progress_guard(
     mock_repo_instance = AsyncMock()
     mock_identity_repo.return_value = mock_repo_instance
 
-    from datetime import datetime, timezone
+    from datetime import datetime
 
-    now_iso = datetime.now(timezone.utc).isoformat()
+    now_iso = datetime.now(UTC).isoformat()
     user = User(
         id="u1",
         email="test@test.com",
@@ -768,8 +771,8 @@ async def test_respond_to_invitation(mock_session_scope):
 
         from src.modules.identity.domain.entities import (
             Invitation,
-            InvitationType,
             InvitationStatus,
+            InvitationType,
         )
 
         inv = Invitation(
@@ -788,7 +791,7 @@ async def test_respond_to_invitation(mock_session_scope):
         mock_inv_repo_instance.get_by_id.return_value = inv
 
         uc = IdentityUseCase()
-        resp, success, msg = await uc.respond_to_invitation(
+        resp, success, _msg = await uc.respond_to_invitation(
             invitation_id="inv_123",
             action="INVITATION_ACTION_ACCEPT",
             current_user=invitee,
@@ -825,8 +828,8 @@ async def test_cancel_invitation(mock_session_scope):
 
         from src.modules.identity.domain.entities import (
             Invitation,
-            InvitationType,
             InvitationStatus,
+            InvitationType,
         )
 
         inv = Invitation(

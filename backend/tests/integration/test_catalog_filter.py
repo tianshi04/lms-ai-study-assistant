@@ -1,5 +1,6 @@
 import pytest
 import pytest_asyncio
+
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 
 
@@ -47,9 +48,10 @@ async def setup_test_courses(catalog_usecase):
         subject="WEB_DEVELOPMENT",
         level="BEGINNER",
     )
-    from src.shared.infrastructure.database import async_session_scope
-    from src.modules.catalog.infrastructure.models import CourseModel
     from sqlalchemy import select
+
+    from src.modules.catalog.infrastructure.models import CourseModel
+    from src.shared.infrastructure.database import async_session_scope
 
     async with async_session_scope() as session:
         stmt = select(CourseModel).where(CourseModel.id.in_([c1.id, c2.id, c3.id]))

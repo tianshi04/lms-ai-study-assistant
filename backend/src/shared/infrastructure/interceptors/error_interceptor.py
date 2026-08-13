@@ -1,5 +1,6 @@
 import logging
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
@@ -30,7 +31,7 @@ class ErrorInterceptor(UnaryInterceptor):
         except (KeyError, FileNotFoundError) as err:
             raise ConnectError(Code.NOT_FOUND, str(err)) from err
         except Exception as err:
-            logger.exception("Unhandled server error in ConnectRPC handler: %s", err)
+            logger.exception("Unhandled server error in ConnectRPC handler")
             is_dev = settings.ENV.lower() in ("development", "dev", "local")
             detail = (
                 f"Lỗi hệ thống nội bộ [{type(err).__name__}]: {err}"

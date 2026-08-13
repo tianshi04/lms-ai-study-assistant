@@ -7,6 +7,7 @@ import { type QuestionBank } from "@/gen/assessment/v1/assessment_pb";
 import { Dialog } from "@/components/ui/Dialog";
 
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { VideoUploadWidget } from "@/components/course/VideoUploadWidget";
@@ -25,7 +26,6 @@ import {
   Edit3,
   Info,
   AlertTriangle,
-  Lock,
   FileCode,
   BookOpen,
   Terminal,
@@ -348,7 +348,7 @@ export function LearningItemFormModal({
           </div>
 
           {/* Scrollable Main Body Content Area */}
-          <div className="max-h-[62vh] overflow-y-auto pr-1 space-y-4">
+          <div className="max-h-[62vh] overflow-y-auto px-3 space-y-4">
             {/* Dynamic Form Sections based on Item Type */}
             {itemType === ItemType.VIDEO && (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -440,10 +440,13 @@ export function LearningItemFormModal({
               <div className="space-y-5">
                 {/* ─── 1. Mô tả đề bài ─── */}
                 <div className="space-y-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                  <label
+                    htmlFor="lab-markdown-input"
+                    className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5"
+                  >
                     <FileText className="w-3.5 h-3.5 text-primary" />
                     Mô tả đề bài (Markdown)
-                  </span>
+                  </label>
                   <p className="text-[11px] text-muted-foreground">
                     Viết yêu cầu bài lab, công thức, ràng buộc, ví dụ input/output. Học viên sẽ thấy
                     nội dung này.
@@ -454,6 +457,7 @@ export function LearningItemFormModal({
                         <Edit3 className="w-3 h-3" /> Soạn thảo
                       </div>
                       <Textarea
+                        id="lab-markdown-input"
                         rows={8}
                         value={readingMarkdown}
                         onChange={(e) => setReadingMarkdown(e.target.value)}
@@ -532,15 +536,19 @@ Output: 0.0
                   </div>
 
                   <div className="space-y-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <label
+                      htmlFor="lab-starter-code-input"
+                      className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5"
+                    >
                       <Code className="w-3.5 h-3.5 text-primary" />
                       Code mẫu ban đầu (Starter Code)
-                    </span>
+                    </label>
                     <p className="text-[11px] text-muted-foreground">
                       Code mà học viên sẽ thấy khi mở bài lab. Nên chứa tên hàm, docstring, và
                       placeholder.
                     </p>
                     <Textarea
+                      id="lab-starter-code-input"
                       rows={8}
                       value={labStarterCode}
                       onChange={(e) => setLabStarterCode(e.target.value)}
@@ -620,38 +628,20 @@ Output: 0.0
                               Test Case #{i + 1}
                             </span>
                             <div className="flex items-center gap-3">
-                              <label className="flex items-center gap-1.5 cursor-pointer text-[11px]">
-                                <input
-                                  type="checkbox"
-                                  checked={tc.is_hidden || false}
-                                  onChange={(e) => updateTC(i, "is_hidden", e.target.checked)}
-                                  className="rounded border-border"
-                                />
-                                <span
-                                  className={
-                                    tc.is_hidden
-                                      ? "text-warning font-medium"
-                                      : "text-muted-foreground"
-                                  }
-                                >
-                                  {tc.is_hidden ? (
-                                    <>
-                                      <Lock className="w-3 h-3" /> Hidden
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Eye className="w-3 h-3" /> Visible
-                                    </>
-                                  )}
-                                </span>
-                              </label>
-                              <button
+                              <Checkbox
+                                checked={tc.is_hidden || false}
+                                onCheckedChange={(checked) => updateTC(i, "is_hidden", !!checked)}
+                                label={tc.is_hidden ? "Hidden" : "Visible"}
+                              />
+                              <Button
                                 type="button"
+                                variant="text"
+                                size="xs"
                                 onClick={() => removeTC(i)}
-                                className="text-destructive hover:text-destructive/80 text-xs font-medium cursor-pointer"
+                                className="text-destructive hover:text-destructive/80 text-xs font-medium px-2"
                               >
                                 ✕ Xóa
-                              </button>
+                              </Button>
                             </div>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

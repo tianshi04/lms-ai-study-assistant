@@ -1,7 +1,6 @@
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
+
 from src.modules.identity.domain.constants import INTERNAL_SYSTEM_ORG_ID
-from src.shared.permissions import OrgRole
 from src.modules.identity.domain.entities import (
     ApplicationStatus,
     InstructorApplication,
@@ -12,6 +11,7 @@ from src.modules.identity.infrastructure.repository import (
     InstructorApplicationRepository,
     OrganizationRepository,
 )
+from src.shared.permissions import OrgRole
 
 
 class ReviewInstructorApplicationUseCase:
@@ -19,7 +19,7 @@ class ReviewInstructorApplicationUseCase:
         self,
         application_repo: InstructorApplicationRepository,
         identity_repo: IdentityRepository,
-        org_repo: Optional[OrganizationRepository] = None,
+        org_repo: OrganizationRepository | None = None,
     ) -> None:
         self._application_repo = application_repo
         self._identity_repo = identity_repo
@@ -38,7 +38,7 @@ class ReviewInstructorApplicationUseCase:
         if application.status != ApplicationStatus.PENDING_REVIEW:
             raise ValueError("Đơn đăng ký này đã được xử lý trước đó.")
 
-        now_str = datetime.now(timezone.utc).isoformat()
+        now_str = datetime.now(UTC).isoformat()
         application.reviewed_at = now_str
 
         if approve:
@@ -94,7 +94,7 @@ class ReviewInstructorApplicationUseCase:
                     content=f"Lý do: {application.rejection_reason}",
                     action_url="/become-an-instructor",
                 )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             import logging
 
             logging.getLogger(__name__).warning("Failed to send notification: %s", e)

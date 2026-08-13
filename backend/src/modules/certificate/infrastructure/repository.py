@@ -1,4 +1,3 @@
-from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,7 +25,7 @@ class CertificateRepository(ICertificateRepository):
 
     async def get_financial_aid(
         self, user_id: str, course_id: str
-    ) -> Optional[FinancialAidApplication]:
+    ) -> FinancialAidApplication | None:
         stmt = select(FinancialAidModel).where(
             FinancialAidModel.user_id == user_id,
         )
@@ -66,7 +65,7 @@ class CertificateRepository(ICertificateRepository):
         ]
 
     async def list_financial_aids(
-        self, course_id: Optional[str] = None, status: Optional[str] = None
+        self, course_id: str | None = None, status: str | None = None
     ) -> list[FinancialAidApplication]:
         stmt = select(FinancialAidModel)
         if course_id:
@@ -91,7 +90,7 @@ class CertificateRepository(ICertificateRepository):
 
     async def get_financial_aid_by_id(
         self, application_id: str
-    ) -> Optional[FinancialAidApplication]:
+    ) -> FinancialAidApplication | None:
         stmt = select(FinancialAidModel).where(FinancialAidModel.id == application_id)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -133,7 +132,7 @@ class CertificateRepository(ICertificateRepository):
 
     async def get_certificate(
         self, user_id: str, course_id: str
-    ) -> Optional[VerifiedCertificate]:
+    ) -> VerifiedCertificate | None:
         stmt = select(CertificateModel).where(
             CertificateModel.user_id == user_id,
             CertificateModel.course_id == course_id,
@@ -144,7 +143,7 @@ class CertificateRepository(ICertificateRepository):
 
     async def get_certificate_by_id(
         self, certificate_id: str
-    ) -> Optional[VerifiedCertificate]:
+    ) -> VerifiedCertificate | None:
         stmt = select(CertificateModel).where(
             CertificateModel.certificate_id == certificate_id
         )
@@ -392,7 +391,7 @@ class CertificateRepository(ICertificateRepository):
 
     async def get_specialization_details(
         self, specialization_id: str
-    ) -> tuple[Optional[str], Optional[str], Optional[str], list[str]]:
+    ) -> tuple[str | None, str | None, str | None, list[str]]:
         catalog_repo_factory = __import__(
             "src.modules.catalog.infrastructure.repository",
             fromlist=["SQLAlchemyCatalogRepository"],

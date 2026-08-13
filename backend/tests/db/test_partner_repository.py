@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.modules.partner.domain.entities import Partner
 from src.modules.partner.infrastructure.models import PartnerModel

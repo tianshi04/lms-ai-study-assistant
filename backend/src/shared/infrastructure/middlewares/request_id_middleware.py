@@ -1,5 +1,6 @@
 import uuid
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from src.shared.infrastructure.logging import reset_request_id, set_request_id
 

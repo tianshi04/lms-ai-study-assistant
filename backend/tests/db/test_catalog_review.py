@@ -1,4 +1,5 @@
 import pytest
+
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 from src.modules.learning.application.learning_usecase import LearningUseCase
 
@@ -105,7 +106,7 @@ async def test_submit_and_list_course_review():
         assert detail.average_rating == 4.5
         assert detail.review_count >= 2
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping course review test: DB not reachable ({e})")
 
 
@@ -170,5 +171,5 @@ async def test_list_course_reviews_with_slug():
         assert len(reviews) >= 1
         assert total_count >= 1
         assert avg_rating == 5.0
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping slug review test: DB not reachable ({e})")

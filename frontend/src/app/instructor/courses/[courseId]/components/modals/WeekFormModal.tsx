@@ -56,32 +56,22 @@ export function WeekFormModal({
           </Dialog.Title>
         </Dialog.Header>
         <form onSubmit={handleSubmit} className="space-y-4 my-2">
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-              {"Tiêu đề Tuần học"}
-            </label>
-            <Input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={"Ví dụ: Week 1: Giới thiệu về Neural Networks"}
-              className="py-2.5 rounded-xl bg-card text-sm"
-              required
-            />
-          </div>
+          <Input
+            label="Tiêu đề Tuần học"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Ví dụ: Week 1: Giới thiệu về Neural Networks"
+            required
+          />
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-              {"Mô tả tóm tắt"}
-            </label>
-            <Textarea
-              rows={3}
-              value={summary}
-              onChange={(e) => setSummary(e.target.value)}
-              placeholder={"Tóm tắt nội dung chính học viên sẽ thu hoạch được…"}
-              className="p-2.5 rounded-xl bg-card text-sm"
-            />
-          </div>
+          <Textarea
+            label="Mô tả tóm tắt"
+            rows={3}
+            value={summary}
+            onChange={(e) => setSummary(e.target.value)}
+            placeholder="Tóm tắt nội dung chính học viên sẽ thu hoạch được…"
+          />
 
           <Dialog.Footer>
             <Button

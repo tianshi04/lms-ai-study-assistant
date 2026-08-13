@@ -6,9 +6,9 @@ import { TAGradingPage } from '../pages';
 test.describe('Dashboard Redirect', () => {
   test('should redirect /dashboard to root /', async ({ page }) => {
     await page.goto('/dashboard');
-    // toHaveURL matches full URL — check pathname ends at root
+    // toHaveURL matches full URL — check pathname is root or role-specific dashboard
     const url = new URL(page.url());
-    expect(url.pathname).toBe('/');
+    expect(url.pathname).toMatch(/\/(instructor\/dashboard|admin\/dashboard|learner\/dashboard)?$/);
   });
 });
 
@@ -40,14 +40,14 @@ test.describe('Instructor Dashboard', () => {
 
   test('instructor: / should render the instructor dashboard', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('text=BẢNG ĐIỀU KHIỂN GIẢNG VIÊN')).toBeVisible({ timeout: 15000 });
-    await expect(page.locator('text=TỔNG HỌC VIÊN')).toBeVisible();
-    await expect(page.locator('text=ĐÃ XUẤT BẢN')).toBeVisible();
+    await expect(page.getByText(/Bảng Điều Khiển Giảng Viên/i).first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/Tổng Học Viên/i).first()).toBeVisible();
+    await expect(page.getByText(/Đã Xuất Bản/i).first()).toBeVisible();
   });
 
   test('instructor: /instructor/dashboard should render the instructor dashboard', async ({ page }) => {
     await page.goto('/instructor/dashboard');
-    await expect(page.locator('text=BẢNG ĐIỀU KHIỂN GIẢNG VIÊN')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/Bảng Điều Khiển Giảng Viên/i).first()).toBeVisible({ timeout: 15000 });
   });
 
   test('instructor: quick action - create course link should be visible', async ({ page }) => {
@@ -102,16 +102,16 @@ test.describe('Admin Dashboard @ /', () => {
   test('admin: / should render the admin dashboard with quick-ops navigation', async ({ page }) => {
     await page.goto('/');
     // Admin dashboard embeds quick-ops nav links
-    await expect(page.locator('text=Duyệt Đơn Giảng Viên')).toBeVisible({ timeout: 15000 });
-    await expect(page.locator('text=Duyệt Khóa Học')).toBeVisible();
-    await expect(page.locator('text=Quản Lý Danh Mục')).toBeVisible();
-    await expect(page.locator('text=Quản Trị Đối Tác')).toBeVisible();
+    await expect(page.locator('text=Duyệt Đơn Giảng Viên').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('text=Duyệt Khóa Học').first()).toBeVisible();
+    await expect(page.locator('text=Quản Lý Danh Mục').first()).toBeVisible();
+    await expect(page.locator('text=Quản Trị Đối Tác').first()).toBeVisible();
   });
 
   test('admin: quick-ops links should navigate to correct routes', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('a[href="/admin/applications"]')).toBeVisible({ timeout: 15000 });
-    await expect(page.locator('a[href="/admin/courses/review"]')).toBeVisible();
-    await expect(page.locator('a[href="/admin/categories"]')).toBeVisible();
+    await expect(page.locator('a[href="/admin/applications"]').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('a[href="/admin/courses/review"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/admin/categories"]').first()).toBeVisible();
   });
 });

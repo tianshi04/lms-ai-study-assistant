@@ -440,7 +440,9 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
         <track
           kind="captions"
           src={captionUrl || ""}
+          srcLang="vi"
           label={captionUrl ? "Phụ đề" : "Không có phụ đề"}
+          default={Boolean(captionUrl)}
         />
       </video>
     );

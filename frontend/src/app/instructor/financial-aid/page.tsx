@@ -252,9 +252,6 @@ export default function InstructorFinancialAidPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
-                        ID: {app.id}
-                      </span>
                       <span className="text-xs font-semibold text-muted-foreground">
                         Khóa học: <span className="font-bold text-foreground">{app.courseId}</span>
                       </span>

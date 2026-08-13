@@ -1,4 +1,3 @@
-from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -75,13 +74,13 @@ class SQLAlchemyPartnerRepository(IPartnerRepository):
         await self.session.flush()
         return partner
 
-    async def get_by_id(self, partner_id: str) -> Optional[Partner]:
+    async def get_by_id(self, partner_id: str) -> Partner | None:
         stmt = select(PartnerModel).where(PartnerModel.id == partner_id)
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
-    async def get_by_slug(self, slug: str) -> Optional[Partner]:
+    async def get_by_slug(self, slug: str) -> Partner | None:
         stmt = select(PartnerModel).where(PartnerModel.slug == slug)
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()

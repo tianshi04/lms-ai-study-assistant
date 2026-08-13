@@ -1,8 +1,9 @@
 """Unit tests for PaymentUseCase and payment access rules (BR_ACCESS_004)."""
 
-import pytest
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from src.modules.payment.application.payment_usecase import PaymentUseCase
 from src.modules.payment.domain.entities import (
@@ -11,12 +12,11 @@ from src.modules.payment.domain.entities import (
     PaymentOrderStatus,
     PaymentTargetType,
     PaymentTransaction,
-    UserSubscription,
     PlanType,
     PurchaseStatus,
     SubscriptionStatus,
+    UserSubscription,
 )
-
 from src.modules.payment.domain.repositories import IPaymentRepository
 from src.shared.config import settings
 
@@ -99,7 +99,7 @@ class InMemoryPaymentRepository(IPaymentRepository):
         plan_type: PlanType = PlanType.UNSPECIFIED,
         reuse_ttl_minutes: int = 15,
     ) -> PaymentOrder | None:
-        now_dt = datetime.now(timezone.utc)
+        now_dt = datetime.now(UTC)
         cutoff_dt = now_dt - timedelta(minutes=reuse_ttl_minutes)
 
         for o in reversed(self.orders):
@@ -114,14 +114,14 @@ class InMemoryPaymentRepository(IPaymentRepository):
                     c_dt = datetime.fromisoformat(o.created_at)
                     if c_dt >= cutoff_dt:
                         return o
-                except Exception:
-                    continue
+                except (ValueError, TypeError):
+                    pass
         return None
 
     async def list_pending_orders_older_than(
         self, window_minutes: int = 15, limit: int = 50
     ) -> list[PaymentOrder]:
-        now_dt = datetime.now(timezone.utc)
+        now_dt = datetime.now(UTC)
         cutoff_dt = now_dt - timedelta(minutes=window_minutes)
 
         res = []
@@ -131,8 +131,8 @@ class InMemoryPaymentRepository(IPaymentRepository):
                     c_dt = datetime.fromisoformat(o.created_at)
                     if c_dt <= cutoff_dt:
                         res.append(o)
-                except Exception:
-                    continue
+                except (ValueError, TypeError):
+                    pass
         return res[:limit]
 
     async def get_order_by_id(self, order_id: str) -> PaymentOrder | None:
@@ -147,7 +147,7 @@ class InMemoryPaymentRepository(IPaymentRepository):
         for o in self.orders:
             if o.id == order_id:
                 o.status = status
-                o.updated_at = datetime.now(timezone.utc).isoformat()
+                o.updated_at = datetime.now(UTC).isoformat()
                 return o
         return None
 
@@ -179,7 +179,7 @@ async def test_purchase_course_success(mock_scope):
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 
-    success, msg, purchase = await use_case.purchase_course(
+    success, _msg, purchase = await use_case.purchase_course(
         user_id="user_123",
         course_id="course_python",
         payment_method="MOCK",
@@ -210,7 +210,13 @@ async def test_create_vnpay_payment_url_success(mock_scope):
 
     from src.modules.payment.domain.entities import PaymentTargetType
 
-    success, msg, pay_url, order_id, txn_ref = await use_case.create_vnpay_payment_url(
+    (
+        success,
+        _msg,
+        pay_url,
+        _order_id,
+        txn_ref,
+    ) = await use_case.create_vnpay_payment_url(
         user_id="user_vnp_1",
         target_type=PaymentTargetType.COURSE,
         target_id="course_101",
@@ -242,7 +248,13 @@ async def test_verify_vnpay_payment_success(mock_scope):
     from src.modules.payment.domain.entities import PaymentTargetType
     from src.modules.payment.infrastructure.vnpay_service import VNPayService
 
-    success, msg, pay_url, order_id, txn_ref = await use_case.create_vnpay_payment_url(
+    (
+        _success,
+        _msg,
+        _pay_url,
+        _order_id,
+        txn_ref,
+    ) = await use_case.create_vnpay_payment_url(
         user_id="user_vnp_2",
         target_type=PaymentTargetType.COURSE,
         target_id="course_202",
@@ -278,20 +290,20 @@ async def test_verify_vnpay_payment_success(mock_scope):
 
     (
         v_success,
-        v_msg,
+        _v_msg,
         v_order_id,
-        v_type,
-        v_target_id,
-        v_plan_type,
+        _v_type,
+        _v_target_id,
+        _v_plan_type,
         purchase,
-        sub,
+        _sub,
     ) = await use_case.verify_vnpay_payment(
         user_id="user_vnp_2",
         query_params=raw_params,
     )
 
     assert v_success is True
-    assert v_order_id == order_id
+    assert v_order_id == _order_id
     assert purchase is not None
     assert purchase.course_id == "course_202"
     assert repo.orders[0].status == PaymentOrderStatus.COMPLETED
@@ -358,15 +370,15 @@ async def test_process_vnpay_ipn_success(mock_scope):
 
 @pytest.mark.asyncio
 async def test_user_subscription_expired():
-    past_exp = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+    past_exp = (datetime.now(UTC) - timedelta(days=1)).isoformat()
     sub = UserSubscription(
         id="sub_old",
         user_id="user_old",
         plan_type=PlanType.MONTHLY,
         status=SubscriptionStatus.ACTIVE,
-        starts_at=(datetime.now(timezone.utc) - timedelta(days=31)).isoformat(),
+        starts_at=(datetime.now(UTC) - timedelta(days=31)).isoformat(),
         expires_at=past_exp,
-        created_at=(datetime.now(timezone.utc) - timedelta(days=31)).isoformat(),
+        created_at=(datetime.now(UTC) - timedelta(days=31)).isoformat(),
     )
 
     assert sub.is_currently_active() is False
@@ -389,8 +401,8 @@ async def test_pending_order_reuse(mock_scope):
     # First call: creates new order
     (
         success1,
-        msg1,
-        pay_url1,
+        _msg1,
+        _pay_url1,
         order_id1,
         txn_ref1,
     ) = await use_case.create_vnpay_payment_url(
@@ -405,7 +417,7 @@ async def test_pending_order_reuse(mock_scope):
     (
         success2,
         msg2,
-        pay_url2,
+        _pay_url2,
         order_id2,
         txn_ref2,
     ) = await use_case.create_vnpay_payment_url(
@@ -485,19 +497,19 @@ async def test_list_user_purchases_returns_active_sub(mock_scope):
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 
-    future_exp = (datetime.now(timezone.utc) + timedelta(days=20)).isoformat()
+    future_exp = (datetime.now(UTC) + timedelta(days=20)).isoformat()
     sub = UserSubscription(
         id="sub_active",
         user_id="user_sub_test",
         plan_type=PlanType.MONTHLY,
         status=SubscriptionStatus.ACTIVE,
-        starts_at=datetime.now(timezone.utc).isoformat(),
+        starts_at=datetime.now(UTC).isoformat(),
         expires_at=future_exp,
-        created_at=datetime.now(timezone.utc).isoformat(),
+        created_at=datetime.now(UTC).isoformat(),
     )
     await repo.save_subscription(sub)
 
-    purchases, orders, titles, active_sub = await use_case.list_user_purchases(
+    _purchases, _orders, _titles, active_sub = await use_case.list_user_purchases(
         "user_sub_test"
     )
     assert active_sub is not None
@@ -516,7 +528,7 @@ async def test_list_user_purchases_auto_reconciles_missing_subscription(mock_sco
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 
-    now_iso = datetime.now(timezone.utc).isoformat()
+    now_iso = datetime.now(UTC).isoformat()
     for i in range(4):
         o = PaymentOrder(
             id=f"order_sub_{i}",
@@ -536,7 +548,7 @@ async def test_list_user_purchases_auto_reconciles_missing_subscription(mock_sco
     # Verify no subscription exists prior to call
     assert await repo.get_active_subscription("user_stacked_1") is None
 
-    purchases, orders, titles, active_sub = await use_case.list_user_purchases(
+    _purchases, _orders, _titles, active_sub = await use_case.list_user_purchases(
         "user_stacked_1"
     )
 
@@ -547,7 +559,7 @@ async def test_list_user_purchases_auto_reconciles_missing_subscription(mock_sco
 
     # Verify accumulated duration (4 * 30 days = ~120 days from order creation)
     exp_dt = datetime.fromisoformat(active_sub.expires_at)
-    now_dt = datetime.now(timezone.utc)
+    now_dt = datetime.now(UTC)
     diff_days = (exp_dt - now_dt).days
     assert 118 <= diff_days <= 121
 
@@ -555,9 +567,9 @@ async def test_list_user_purchases_auto_reconciles_missing_subscription(mock_sco
 @pytest.mark.asyncio
 async def test_safe_enum_parse_handles_none_and_legacy_strings():
     from src.modules.payment.domain.entities import (
-        safe_enum_parse,
         PlanType,
         SubscriptionStatus,
+        safe_enum_parse,
     )
 
     assert (
@@ -590,7 +602,7 @@ async def test_subscribe_coursera_plus_creates_completed_order(mock_scope):
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 
-    success, msg, sub = await use_case.subscribe_coursera_plus(
+    success, _msg, sub = await use_case.subscribe_coursera_plus(
         user_id="user_direct_sub",
         plan_type=PlanType.MONTHLY,
         payment_method="MOCK_DIRECT",
@@ -619,12 +631,18 @@ async def test_cancel_vnpay_order_success(mock_scope):
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 
-    success, msg, pay_url, order_id, txn_ref = await use_case.create_vnpay_payment_url(
+    (
+        _success,
+        _msg,
+        _pay_url,
+        _order_id,
+        txn_ref,
+    ) = await use_case.create_vnpay_payment_url(
         user_id="user_cancel_1",
         target_type=PaymentTargetType.COURSE,
         target_id="course_to_cancel",
     )
-    assert success is True
+    assert _success is True
     assert repo.orders[0].status == PaymentOrderStatus.PENDING
 
     cancel_ok, cancel_msg = await use_case.cancel_vnpay_order(
@@ -650,7 +668,13 @@ async def test_cancel_vnpay_order_wrong_user(mock_scope):
     repo = InMemoryPaymentRepository()
     use_case = PaymentUseCase(repo=repo)
 
-    success, msg, pay_url, order_id, txn_ref = await use_case.create_vnpay_payment_url(
+    (
+        _success,
+        _msg,
+        _pay_url,
+        _order_id,
+        txn_ref,
+    ) = await use_case.create_vnpay_payment_url(
         user_id="user_owner",
         target_type=PaymentTargetType.COURSE,
         target_id="course_ownership",

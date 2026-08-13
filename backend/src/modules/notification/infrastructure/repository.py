@@ -1,5 +1,5 @@
-from datetime import datetime, timezone
-from typing import Optional, Sequence
+from collections.abc import Sequence
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -54,7 +54,7 @@ class PostgresNotificationRepository(NotificationRepository):
             actor_avatar_url=notification.actor_avatar_url,
             is_read=notification.is_read,
             read_at=notification.read_at,
-            created_at=notification.created_at or datetime.now(timezone.utc),
+            created_at=notification.created_at or datetime.now(UTC),
         )
         self._session.add(model)
         await self._session.flush()
@@ -63,7 +63,7 @@ class PostgresNotificationRepository(NotificationRepository):
     async def create_batch(self, notifications: Sequence[Notification]) -> int:
         if not notifications:
             return 0
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         models = [
             NotificationModel(
                 id=n.id,
@@ -83,7 +83,7 @@ class PostgresNotificationRepository(NotificationRepository):
         await self._session.flush()
         return len(models)
 
-    async def get_by_id(self, notification_id: str) -> Optional[Notification]:
+    async def get_by_id(self, notification_id: str) -> Notification | None:
         stmt = select(NotificationModel).where(NotificationModel.id == notification_id)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -92,7 +92,7 @@ class PostgresNotificationRepository(NotificationRepository):
     async def list_by_recipient(
         self,
         recipient_id: str,
-        category_filter: Optional[NotificationCategory] = None,
+        category_filter: NotificationCategory | None = None,
         unread_only: bool = False,
         limit: int = 20,
         offset: int = 0,
@@ -131,7 +131,7 @@ class PostgresNotificationRepository(NotificationRepository):
     ) -> int:
         if not notification_ids:
             return 0
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         stmt = (
             update(NotificationModel)
             .where(
@@ -147,9 +147,9 @@ class PostgresNotificationRepository(NotificationRepository):
     async def mark_all_as_read(
         self,
         recipient_id: str,
-        category_filter: Optional[NotificationCategory] = None,
+        category_filter: NotificationCategory | None = None,
     ) -> int:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         stmt = (
             update(NotificationModel)
             .where(
@@ -182,7 +182,7 @@ class PostgresNotificationPreferenceRepository(NotificationPreferenceRepository)
             updated_at=model.updated_at,
         )
 
-    async def get_by_user_id(self, user_id: str) -> Optional[NotificationPreferences]:
+    async def get_by_user_id(self, user_id: str) -> NotificationPreferences | None:
         stmt = select(UserNotificationPreferenceModel).where(
             UserNotificationPreferenceModel.user_id == user_id
         )
@@ -198,7 +198,7 @@ class PostgresNotificationPreferenceRepository(NotificationPreferenceRepository)
         )
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         if model is None:
             model = UserNotificationPreferenceModel(

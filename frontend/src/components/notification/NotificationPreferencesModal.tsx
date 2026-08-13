@@ -75,7 +75,7 @@ export function NotificationPreferencesModal({
             <Progress.Circular size="md" ariaLabel="Đang tải cài đặt" />
           </div>
         ) : (
-          <div className="py-2 space-y-4 max-h-[60vh] overflow-y-auto pr-1 my-2">
+          <div className="py-2 space-y-4 max-h-[60vh] overflow-y-auto px-3 my-2">
             <div className="space-y-3">
               <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Kênh nhận thông báo

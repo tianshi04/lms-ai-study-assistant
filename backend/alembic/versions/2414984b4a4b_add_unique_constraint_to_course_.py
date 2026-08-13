@@ -6,10 +6,9 @@ Create Date: 2026-08-04 19:07:16.709615
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
-
 
 # revision identifiers, used by Alembic.
 """add_unique_constraint_to_course_purchases
@@ -23,9 +22,9 @@ Create Date: 2026-08-04 19:07:16.709615
 
 # revision identifiers, used by Alembic.
 revision: str = "2414984b4a4b"
-down_revision: Union[str, Sequence[str], None] = "e2ad17d24d70"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = "e2ad17d24d70"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

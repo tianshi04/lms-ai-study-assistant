@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Surface } from "@/components/ui/Surface";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 
 import { Eye, EyeOff, Zap } from "lucide-react";
@@ -97,30 +98,16 @@ function LoginFormContent() {
     <div className="w-full max-w-md">
       <Surface variant="bright" shape="3xl" padding="lg" className="shadow-xl">
         <Surface.Header className="text-center p-0 mb-8 space-y-2">
-          <Link
-            href="/"
-            prefetch={true}
-            className="inline-flex items-center gap-3 group mb-4 self-center"
-          >
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl">
-              C
-            </div>
-            <div className="text-left">
-              <span className="font-bold text-lg tracking-tight text-on-surface block">
-                Coursera AI
-              </span>
-              <span className="text-xs block text-on-surface-variant font-medium">
-                LMS Platform
-              </span>
-            </div>
-          </Link>
+          <div className="flex justify-center mb-4">
+            <BrandLogo size="md" />
+          </div>
           <Surface.Title className="text-2xl font-bold text-on-surface text-balance">
             {"Đăng nhập tài khoản"}
           </Surface.Title>
           <Surface.Description className="text-sm text-on-surface-variant">
             {searchParams.get("redirect")
               ? "Vui lòng đăng nhập để bắt đầu học bài giảng này"
-              : "Chào mừng bạn quay trở lại với hệ thống học tập Coursera LMS"}
+              : "Chào mừng bạn quay trở lại với hệ thống học tập LMS AI"}
           </Surface.Description>
         </Surface.Header>
 
@@ -205,35 +192,35 @@ function LoginFormContent() {
                 const hasError = field.state.meta.isTouched && field.state.meta.errors.length > 0;
                 return (
                   <div className="space-y-1.5">
-                    <div className="relative">
-                      <Input
-                        label="Mật khẩu"
-                        id={field.name}
-                        name={field.name}
-                        type={showPassword ? "text" : "password"}
-                        value={field.state.value}
-                        onBlur={field.handleBlur}
-                        onChange={(e) => field.handleChange(e.target.value)}
-                        placeholder="Nhập mật khẩu của bạn"
-                        autoComplete="current-password"
-                        error={hasError ? String(field.state.meta.errors[0]) : undefined}
-                        required
-                      />
-                      <IconButton
-                        type="button"
-                        variant="standard"
-                        size="xs"
-                        onClick={() => setShowPassword(!showPassword)}
-                        aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
-                        className="absolute right-2 top-8 text-muted-foreground hover:text-foreground"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="w-4 h-4" aria-hidden="true" />
-                        ) : (
-                          <Eye className="w-4 h-4" aria-hidden="true" />
-                        )}
-                      </IconButton>
-                    </div>
+                    <Input
+                      label="Mật khẩu"
+                      id={field.name}
+                      name={field.name}
+                      type={showPassword ? "text" : "password"}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      placeholder="Nhập mật khẩu của bạn"
+                      autoComplete="current-password"
+                      error={hasError ? String(field.state.meta.errors[0]) : undefined}
+                      required
+                      endAdornment={
+                        <IconButton
+                          type="button"
+                          variant="standard"
+                          size="xs"
+                          onClick={() => setShowPassword(!showPassword)}
+                          aria-label={showPassword ? "Ẩn mật khẩu" : "Hiển thị mật khẩu"}
+                          className="text-muted-foreground hover:text-foreground mr-1"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="w-4 h-4" aria-hidden="true" />
+                          ) : (
+                            <Eye className="w-4 h-4" aria-hidden="true" />
+                          )}
+                        </IconButton>
+                      }
+                    />
                     <div className="flex justify-end pt-1">
                       <Link
                         href="/auth/forgot-password"

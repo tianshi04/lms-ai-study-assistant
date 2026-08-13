@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+
 from src.modules.assessment.domain.constants import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
     DEFAULT_QUIZ_EASY_COUNT,
@@ -27,7 +27,7 @@ class HonorCodeAgreement(Entity):
         user_id: str,
         item_id: str,
         is_agreed: bool = True,
-        agreed_at: Optional[str] = None,
+        agreed_at: str | None = None,
     ) -> None:
         super().__init__(id=f"{user_id}:{item_id}")
         self.user_id = user_id
@@ -64,8 +64,8 @@ class QuizCooldown(Entity):
         user_id: str,
         item_id: str,
         failed_attempts_count: int = 0,
-        last_attempt_at: Optional[str] = None,
-        cooldown_until: Optional[str] = None,
+        last_attempt_at: str | None = None,
+        cooldown_until: str | None = None,
     ) -> None:
         super().__init__(id=f"{user_id}:{item_id}")
         self.user_id = user_id
@@ -131,7 +131,7 @@ class PeerAssignmentSubmission(Entity):
         submission_url: str,
         text_content: str,
         created_at: str,
-        final_score: Optional[float] = None,
+        final_score: float | None = None,
         graded_by_staff: bool = False,
     ) -> None:
         super().__init__(id=id)
@@ -154,7 +154,7 @@ class PeerReview(Entity):
         rubric_criteria: list[RubricCriteria],
         total_score: float,
         is_outlier: bool = False,
-        created_at: Optional[str] = None,
+        created_at: str | None = None,
     ) -> None:
         super().__init__(id=id)
         self.submission_id = submission_id
@@ -174,7 +174,7 @@ class GradeAppeal(Entity):
         submission_id: str,
         appeal_reason: str,
         status: str = "PENDING",
-        created_at: Optional[str] = None,
+        created_at: str | None = None,
     ) -> None:
         super().__init__(id=id)
         self.user_id = user_id
@@ -202,8 +202,8 @@ class Question(Entity):
         question_type: str = "SINGLE_CHOICE",
         difficulty: str = "EASY",
         explanation: str = "",
-        options: Optional[list[QuestionOption]] = None,
-        created_at: Optional[str] = None,
+        options: list[QuestionOption] | None = None,
+        created_at: str | None = None,
     ) -> None:
         super().__init__(id=id)
         self.bank_id = bank_id
@@ -223,8 +223,8 @@ class QuestionBank(Entity):
         title: str,
         category: str = "PRACTICE",
         description: str = "",
-        questions: Optional[list[Question]] = None,
-        created_at: Optional[str] = None,
+        questions: list[Question] | None = None,
+        created_at: str | None = None,
     ) -> None:
         super().__init__(id=id)
         self.course_id = course_id

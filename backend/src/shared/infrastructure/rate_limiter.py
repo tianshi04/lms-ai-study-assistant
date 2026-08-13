@@ -2,11 +2,11 @@
 
 import logging
 
-from src.shared.infrastructure.redis import get_redis_client
 from src.modules.identity.domain.constants import (
-    LOGIN_MAX_ATTEMPTS,
     LOGIN_LOCKOUT_SECONDS,
+    LOGIN_MAX_ATTEMPTS,
 )
+from src.shared.infrastructure.redis import get_redis_client
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ async def check_login_rate_limit(identifier: str) -> tuple[bool, int]:
                 ttl,
             )
             return False, max(ttl, 0)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         logger.warning(
             "[RATE_LIMIT] Redis error in check_login_rate_limit, failing open: %s", exc
         )
@@ -52,7 +52,7 @@ async def record_failed_login(identifier: str) -> None:
         await pipe.execute()
 
         logger.info("[RATE_LIMIT] Recorded failed login for identifier=%s", identifier)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         logger.warning("[RATE_LIMIT] Redis error in record_failed_login: %s", exc)
 
 
@@ -62,5 +62,5 @@ async def clear_login_attempts(identifier: str) -> None:
         redis = await get_redis_client()
         key = f"login_attempts:{identifier}"
         await redis.delete(key)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         logger.warning("[RATE_LIMIT] Redis error in clear_login_attempts: %s", exc)

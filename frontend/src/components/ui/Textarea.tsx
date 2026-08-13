@@ -39,30 +39,22 @@ export function Textarea({
   ref,
   ...props
 }: TextareaProps) {
-  const textareaEl = (
-    <BaseField.Control
-      ref={ref}
-      id={id}
-      render={(controlProps) => (
-        <textarea
-          spellCheck={props.spellCheck ?? false}
-          {...controlProps}
-          {...props}
-          id={id || controlProps.id}
-          className={cn(textareaVariants({ variant, className }))}
-        />
-      )}
-    />
-  );
-
-  if (!label && !error && !helperText) {
-    return textareaEl;
-  }
-
   return (
     <Field.Root invalid={!!error} className="w-full space-y-1.5">
       {label && <Field.Label>{label}</Field.Label>}
-      {textareaEl}
+      <BaseField.Control
+        ref={ref}
+        id={id}
+        render={(controlProps) => (
+          <textarea
+            spellCheck={props.spellCheck ?? false}
+            {...controlProps}
+            {...props}
+            id={id || controlProps.id}
+            className={cn(textareaVariants({ variant, className }))}
+          />
+        )}
+      />
       {error && <Field.Error>{error}</Field.Error>}
       {helperText && !error && <Field.Description>{helperText}</Field.Description>}
     </Field.Root>

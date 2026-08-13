@@ -1,5 +1,7 @@
-import pytest
+from datetime import UTC
 from unittest.mock import AsyncMock
+
+import pytest
 
 from src.modules.identity.application.submit_application_usecase import (
     SubmitInstructorApplicationUseCase,
@@ -87,10 +89,10 @@ async def test_submit_instructor_application_duplicate_pending_raises():
 
 @pytest.mark.asyncio
 async def test_submit_instructor_application_rejected_cooldown_raises():
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     repo = AsyncMock()
-    now_str = datetime.now(timezone.utc).isoformat()
+    now_str = datetime.now(UTC).isoformat()
     repo.get_latest_by_user_id.return_value = InstructorApplication(
         id="app_rejected",
         user_id="user_123",

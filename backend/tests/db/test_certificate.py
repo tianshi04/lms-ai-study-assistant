@@ -1,4 +1,5 @@
 import pytest
+
 from src.modules.certificate.application.certificate_usecase import (
     CertificateUseCase,
     count_words,
@@ -65,13 +66,13 @@ async def test_get_verified_certificate():
         assert cert.certificate_id.startswith("CERT-")
         assert cert.open_badges_json_ld != ""
 
-        is_valid, verified_cert, status_msg = await usecase.verify_certificate_public(
+        is_valid, verified_cert, _status_msg = await usecase.verify_certificate_public(
             cert.certificate_id
         )
         assert is_valid
         assert verified_cert is not None
         assert verified_cert.certificate_id == cert.certificate_id
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping certificate db test: DB not reachable ({e})")
 
 
@@ -98,7 +99,7 @@ async def test_financial_aid_review_flow():
         assert r_err == ""
         assert reviewed is not None
         assert reviewed.status == "APPROVED"
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping financial aid review db test: DB not reachable ({e})")
 
 
@@ -131,7 +132,7 @@ async def test_financial_aid_auto_approve_when_overdue():
         assert status_app is not None
         assert status_app.status == "APPROVED"
         assert status_app.review_deadline_days_left == 0
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(
             f"Skipping financial aid auto-approve db test: DB not reachable ({e})"
         )
@@ -180,7 +181,7 @@ async def test_get_verified_certificate_failed_quiz_rejection():
         cert, err = await usecase.get_verified_certificate(user_id, course_id)
         assert cert is None
         assert "chưa đạt điểm tối thiểu >= 80%" in err
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping cert failed quiz db test: DB not reachable ({e})")
 
 
@@ -242,7 +243,7 @@ async def test_get_verified_certificate_custom_quiz_threshold_pass():
         cert, err = await usecase.get_verified_certificate(user_id, course_id)
         assert err == ""
         assert cert is not None
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping cert custom threshold db test: DB not reachable ({e})")
 
 
@@ -285,5 +286,5 @@ async def test_get_verified_certificate_with_slug():
         user_certs = await cert_uc.list_my_certificates("user_slug_cert")
         assert len(user_certs) >= 1
         assert any(c.certificate_id == cert.certificate_id for c in user_certs)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping cert slug & list test: DB not reachable ({e})")

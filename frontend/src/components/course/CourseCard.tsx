@@ -1,17 +1,12 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
-import { User, BookOpen, ArrowRight, Building2 } from "lucide-react";
+import { User, BookOpen, ArrowRight } from "lucide-react";
 import type { Course } from "@/gen/catalog/v1/catalog_pb";
 
 import { Card } from "@/components/ui/Card";
-import { Chip } from "@/components/ui/Chip";
 import { Progress } from "@/components/ui/Progress";
+import { PartnerLogo } from "./PartnerLogo";
 
 export function CourseCard({ course, progress }: { course: Course; progress?: number }) {
-  const [imgError, setImgError] = useState(false);
-
   return (
     <Card
       variant="outlined"
@@ -21,30 +16,16 @@ export function CourseCard({ course, progress }: { course: Course; progress?: nu
         {/* Partner Header */}
         <div className="flex items-center justify-between gap-3 mb-4 h-7">
           <div className="flex items-center gap-3 min-w-0">
-            {!imgError && course.partnerLogoUrl ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={course.partnerLogoUrl}
-                alt={course.partnerName}
-                onError={() => setImgError(true)}
-                className="h-6 max-w-[140px] w-auto object-contain dark:brightness-200 dark:contrast-200 transition-opacity"
-              />
-            ) : null}
-
-            {(imgError || !course.partnerLogoUrl) && (
-              <Chip
-                variant="assist"
-                className="h-7 text-xs font-bold bg-primary-container text-on-primary-container border-primary/20 hover:bg-primary-container pointer-events-none cursor-default shadow-xs"
-                leadingIcon={<Building2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />}
-              >
-                {course.partnerName || "Coursera Partner"}
-              </Chip>
-            )}
+            <PartnerLogo logoUrl={course.partnerLogoUrl} partnerName={course.partnerName} />
           </div>
         </div>
 
         {/* Title & Description */}
-        <Link href={`/courses/${course.id}`} prefetch={true} className="block">
+        <Link
+          href={`/courses/${course.id}`}
+          prefetch={true}
+          className="block focus-visible:outline-none after:absolute after:inset-0 after:content-['']"
+        >
           <h3 className="text-xl font-bold text-on-surface group-hover:text-primary transition-colors mb-3 min-w-0 line-clamp-2">
             {course.title}
           </h3>
@@ -73,19 +54,17 @@ export function CourseCard({ course, progress }: { course: Course; progress?: nu
           </span>
         </div>
 
-        {/* Action Link */}
-        <Link
-          href={`/courses/${course.id}`}
-          prefetch={true}
-          transitionTypes={["nav-forward"]}
-          className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 rounded-full bg-primary hover:bg-primary-hover text-on-primary text-sm font-bold transition-colors shadow-xs hover:shadow-md"
+        {/* Visual Action Indicator (Card is clickably accessible via primary Link overlay) */}
+        <div
+          aria-hidden="true"
+          className="w-full inline-flex items-center justify-center gap-2 py-3.5 px-5 rounded-full bg-primary group-hover:bg-primary-hover text-on-primary text-sm font-bold transition-colors shadow-xs group-hover:shadow-md pointer-events-none"
         >
           {"Xem Chi Tiết Khóa Học"}
           <ArrowRight
             className="w-4 h-4 transition-transform group-hover:translate-x-1"
             aria-hidden="true"
           />
-        </Link>
+        </div>
       </div>
     </Card>
   );

@@ -1,4 +1,5 @@
 import pytest
+
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 
 
@@ -40,7 +41,7 @@ async def test_instructor_create_and_update_course():
             updated_course.title == "Deep Learning & LLM Fine-Tuning with PyTorch 2.0"
         )
         assert updated_course.partner_name == "Meta AI & Coursera Partner"
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping instructor course test: DB not reachable ({e})")
 
 
@@ -177,5 +178,5 @@ async def test_instructor_create_lesson_structure():
         del_course_ok = await usecase.delete_course(course_id=course.id)
         assert del_course_ok is True
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping lesson structure test: DB not reachable ({e})")

@@ -1,13 +1,14 @@
-from typing import Optional
 from sqlalchemy import (
     ARRAY,
     Boolean,
-    Enum as SQLEnum,
     ForeignKey,
     Integer,
     String,
     Text,
     UniqueConstraint,
+)
+from sqlalchemy import (
+    Enum as SQLEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -36,10 +37,10 @@ class UserModel(Base):
         default=UserRole.LEARNER,
     )
     avatar_url: Mapped[str] = mapped_column(String(512), nullable=False, default="")
-    enterprise_seat_key: Mapped[Optional[str]] = mapped_column(
+    enterprise_seat_key: Mapped[str | None] = mapped_column(
         String(128), nullable=True, index=True
     )
-    seat_assigned_at: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    seat_assigned_at: Mapped[str | None] = mapped_column(Text, nullable=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     is_identity_verified: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
@@ -48,7 +49,7 @@ class UserModel(Base):
         String(512), nullable=False, default=""
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False, default="")
-    google_id: Mapped[Optional[str]] = mapped_column(
+    google_id: Mapped[str | None] = mapped_column(
         String(255), nullable=True, unique=True, index=True
     )
 
@@ -174,7 +175,7 @@ class InvitationModel(Base):
     inviter_name: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     inviter_email: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     invitee_email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
-    invitee_id: Mapped[Optional[str]] = mapped_column(
+    invitee_id: Mapped[str | None] = mapped_column(
         String(64),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,

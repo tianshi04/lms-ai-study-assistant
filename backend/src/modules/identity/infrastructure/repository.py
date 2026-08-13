@@ -1,21 +1,22 @@
-from datetime import datetime, timezone
 import inspect
-from unittest.mock import MagicMock
-from typing import Optional, Any
 import uuid
-from sqlalchemy import select, or_
+from datetime import UTC, datetime
+from typing import Any
+from unittest.mock import MagicMock
+
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.identity.domain.entities import (
-    User,
-    UserRole,
+    ApplicationStatus,
+    InstructorApplication,
+    Invitation,
+    InvitationStatus,
+    InvitationType,
     Organization,
     OrganizationMember,
-    InstructorApplication,
-    ApplicationStatus,
-    Invitation,
-    InvitationType,
-    InvitationStatus,
+    User,
+    UserRole,
 )
 from src.modules.identity.infrastructure.models import (
     InstructorApplicationModel,
@@ -31,19 +32,19 @@ class IdentityRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get_by_id(self, user_id: str) -> Optional[User]:
+    async def get_by_id(self, user_id: str) -> User | None:
         stmt = select(UserModel).where(UserModel.id == user_id)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
-    async def get_by_email(self, email: str) -> Optional[User]:
+    async def get_by_email(self, email: str) -> User | None:
         stmt = select(UserModel).where(UserModel.email == email)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
-    async def get_by_google_id(self, google_id: str) -> Optional[User]:
+    async def get_by_google_id(self, google_id: str) -> User | None:
         stmt = select(UserModel).where(UserModel.google_id == google_id)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -90,6 +91,7 @@ class IdentityRepository:
         if not seat_key:
             return
         from sqlalchemy import update
+
         from src.modules.identity.infrastructure.models import EnterpriseLicenseModel
 
         await self._session.execute(
@@ -150,7 +152,7 @@ class OrganizationRepository:
             created_at=model.created_at,
         )
 
-    async def get_organization_by_id(self, org_id: str) -> Optional[Organization]:
+    async def get_organization_by_id(self, org_id: str) -> Organization | None:
         stmt = select(OrganizationModel).where(
             or_(OrganizationModel.id == org_id, OrganizationModel.slug == org_id)
         )
@@ -224,7 +226,7 @@ class OrganizationRepository:
 
     async def get_effective_permissions(
         self, user_id: str, org_id: str
-    ) -> tuple[Optional[str], set[str]]:
+    ) -> tuple[str | None, set[str]]:
         """Resolves member's role and calculates effective permission set from code-hardcoded matrix."""
         stmt = select(OrganizationMemberModel).where(
             OrganizationMemberModel.user_id == user_id,
@@ -249,9 +251,7 @@ class OrganizationRepository:
 
         return member.role_id, perms
 
-    async def get_member(
-        self, user_id: str, org_id: str
-    ) -> Optional[OrganizationMember]:
+    async def get_member(self, user_id: str, org_id: str) -> OrganizationMember | None:
         stmt = select(OrganizationMemberModel).where(
             OrganizationMemberModel.user_id == user_id,
             OrganizationMemberModel.organization_id == org_id,
@@ -366,7 +366,7 @@ class OrganizationRepository:
         details: str = "",
     ) -> dict:
         log_id = f"audit_{uuid.uuid4().hex[:12]}"
-        now_str = datetime.now(timezone.utc).isoformat()
+        now_str = datetime.now(UTC).isoformat()
         log_model = OrganizationAuditLogModel(
             id=log_id,
             organization_id=org_id,
@@ -435,7 +435,7 @@ class InstructorApplicationRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def get_by_id(self, application_id: str) -> Optional[InstructorApplication]:
+    async def get_by_id(self, application_id: str) -> InstructorApplication | None:
         stmt = select(InstructorApplicationModel).where(
             InstructorApplicationModel.id == application_id
         )
@@ -443,9 +443,7 @@ class InstructorApplicationRepository:
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
-    async def get_latest_by_user_id(
-        self, user_id: str
-    ) -> Optional[InstructorApplication]:
+    async def get_latest_by_user_id(self, user_id: str) -> InstructorApplication | None:
         stmt = (
             select(InstructorApplicationModel)
             .where(InstructorApplicationModel.user_id == user_id)
@@ -565,13 +563,13 @@ class InvitationRepository:
         await self._session.flush()
         return self._to_entity(model)
 
-    async def get_by_id(self, invitation_id: str) -> Optional[Invitation]:
+    async def get_by_id(self, invitation_id: str) -> Invitation | None:
         stmt = select(InvitationModel).where(InvitationModel.id == invitation_id)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
-    async def get_by_token_hash(self, token_hash: str) -> Optional[Invitation]:
+    async def get_by_token_hash(self, token_hash: str) -> Invitation | None:
         stmt = select(InvitationModel).where(InvitationModel.token_hash == token_hash)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -580,8 +578,8 @@ class InvitationRepository:
     async def list_sent_invitations(
         self,
         inviter_id: str,
-        inv_type: Optional[str] = None,
-        target_id: Optional[str] = None,
+        inv_type: str | None = None,
+        target_id: str | None = None,
     ) -> list[Invitation]:
         stmt = select(InvitationModel).where(InvitationModel.inviter_id == inviter_id)
         if inv_type and inv_type != "INVITATION_TYPE_UNSPECIFIED":
@@ -596,8 +594,8 @@ class InvitationRepository:
     async def list_my_invitations(
         self,
         email: str,
-        user_id: Optional[str] = None,
-        status_filter: Optional[str] = None,
+        user_id: str | None = None,
+        status_filter: str | None = None,
     ) -> list[Invitation]:
         from sqlalchemy import or_
 
@@ -625,7 +623,7 @@ class InvitationRepository:
 
     async def find_pending_invitation(
         self, email: str, target_id: str, inv_type: str
-    ) -> Optional[Invitation]:
+    ) -> Invitation | None:
         stmt = select(InvitationModel).where(
             InvitationModel.invitee_email == email,
             InvitationModel.target_id == target_id,

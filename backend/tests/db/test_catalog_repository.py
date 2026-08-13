@@ -1,15 +1,17 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
+
+import pytest
+
 from src.modules.catalog.infrastructure.models import (
     CourseModel,
-    WeekModuleModel,
-    LessonModel,
-    LearningItemModel,
     InteractiveTranscriptModel,
     InVideoQuizModel,
+    LearningItemModel,
+    LessonModel,
     SpecializationModel,
+    WeekModuleModel,
 )
+from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 
 
 @pytest.fixture
@@ -89,7 +91,7 @@ async def test_list_courses(repo, mock_session, sample_course_model):
     mock_result.scalars.return_value = mock_scalars
     mock_session.execute.return_value = mock_result
 
-    courses, token = await repo.list_courses()
+    courses, _token = await repo.list_courses()
 
     mock_session.execute.assert_awaited_once()
     assert len(courses) == 1

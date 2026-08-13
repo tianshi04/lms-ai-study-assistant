@@ -9,6 +9,7 @@ def test_ruff_lint():
         capture_output=True,
         text=True,
         encoding="utf-8",
+        check=False,
     )
     assert result.returncode == 0, (
         f"Ruff linter failed:\n{result.stdout}\n{result.stderr}"
@@ -22,6 +23,7 @@ def test_ruff_format():
         capture_output=True,
         text=True,
         encoding="utf-8",
+        check=False,
     )
     assert result.returncode == 0, (
         f"Ruff format check failed:\n{result.stdout}\n{result.stderr}"
@@ -35,6 +37,7 @@ def test_ty_typecheck():
         capture_output=True,
         text=True,
         encoding="utf-8",
+        check=False,
     )
     assert result.returncode == 0, (
         f"Ty type check failed:\n{result.stdout}\n{result.stderr}"

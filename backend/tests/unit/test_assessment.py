@@ -1,5 +1,8 @@
+from datetime import UTC
 from typing import Any
+
 import pytest
+
 from src.modules.assessment.application.assessment_usecase import AssessmentUseCase
 from src.modules.assessment.domain.entities import (
     GradeAppeal,
@@ -409,7 +412,7 @@ async def test_peer_review_and_outlier_detection():
     usecase = AssessmentUseCase(repository=repo)
 
     # 1. Submit Peer Assignment
-    sub_id, msg = await usecase.submit_peer_assignment(
+    sub_id, _msg = await usecase.submit_peer_assignment(
         "author-1",
         "item-peer-1",
         "https://github.com/test/repo",
@@ -474,7 +477,7 @@ name = input()
 
 @pytest.mark.asyncio
 async def test_quiz_session_timer_and_timeout():
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     repo = InMemoryAssessmentRepository()
     usecase = AssessmentUseCase(repository=repo)
@@ -490,7 +493,7 @@ async def test_quiz_session_timer_and_timeout():
     await usecase.submit_honor_code(user_id, item_id, True)
 
     # Expired start_time (60 minutes ago)
-    expired_start = (datetime.now(timezone.utc) - timedelta(minutes=60)).isoformat()
+    expired_start = (datetime.now(UTC) - timedelta(minutes=60)).isoformat()
     res_timeout = await usecase.submit_graded_quiz(
         user_id,
         item_id,
@@ -503,12 +506,12 @@ async def test_quiz_session_timer_and_timeout():
 
 @pytest.mark.asyncio
 async def test_peer_regrade_fallback_queue():
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     repo = InMemoryAssessmentRepository()
     usecase = AssessmentUseCase(repository=repo)
 
-    old_time = (datetime.now(timezone.utc) - timedelta(days=6)).isoformat()
+    old_time = (datetime.now(UTC) - timedelta(days=6)).isoformat()
     sub_old = PeerAssignmentSubmission(
         id="peer-old-1",
         user_id="user-old",
@@ -564,7 +567,7 @@ async def test_audit_mode_access_blocking():
         )
         assert sub_id == ""
         assert "Audit Mode" in msg
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         pytest.skip(f"Skipping audit mode db test: DB not reachable ({e})")
 
 

@@ -181,7 +181,7 @@ export default function BecomeAnInstructorPage() {
                   Đơn Đăng Ký Đang Được Thẩm Định
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Mã đơn: <span className="font-mono">{existingApp?.id || "PENDING"}</span>
+                  Hồ sơ đã được gửi và đang chờ Ban quản trị duyệt.
                 </p>
               </div>
               <Badge variant="warning" className="uppercase tracking-wider">

@@ -7,12 +7,13 @@ import { CatalogService, CourseStatus, type Course } from "@/gen/catalog/v1/cata
 import { useToast } from "@/components/ui/Toast";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
-import { Chip } from "@/components/ui/Chip";
 import { Surface } from "@/components/ui/Surface";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Progress } from "@/components/ui/Progress";
+import { DropdownMenu } from "@/components/ui/Menu";
+import { IconButton } from "@/components/ui/IconButton";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
 import { PageHeader } from "@/components/ui/LayoutPrimitives";
@@ -25,6 +26,11 @@ import {
   Megaphone,
   Trash2,
   ArrowRight,
+  MoreVertical,
+  Clock,
+  Award,
+  ExternalLink,
+  Settings,
 } from "lucide-react";
 
 const emptySubscribe = () => () => {};
@@ -228,9 +234,15 @@ export default function InstructorCoursesPage() {
     }
   };
 
-  const handleDeleteCourse = (courseId: string, courseTitle: string) => {
+  const handleDeleteCourse = (courseId: string, courseTitle: string, status?: CourseStatus) => {
     if (!isInstructorOrAdmin) {
       toast.error("Tài khoản Học viên (Learner) không có quyền xóa khóa học.");
+      return;
+    }
+    if (status === CourseStatus.PUBLISHED) {
+      toast.error(
+        `Không thể xóa khóa học "${courseTitle}" vì khóa học đã được xuất bản (PUBLISHED). Vui lòng liên hệ Quản trị viên hệ thống để được hỗ trợ.`,
+      );
       return;
     }
     setDeletingCourseTarget({ id: courseId, title: courseTitle });
@@ -319,99 +331,127 @@ export default function InstructorCoursesPage() {
               key={course.id}
               variant="low"
               shape="2xl"
-              className="p-6 flex flex-col justify-between h-full"
+              className="p-5 flex flex-col justify-between h-full group hover:shadow-md transition-all border border-border/60 hover:border-primary/30"
             >
               <div>
+                {/* Header: Partner Name + Status + Context Menu Dropdown */}
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
-                    {course.partnerName}
-                  </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 truncate">
+                      {course.partnerName}
+                    </span>
                     {getStatusBadge(course.status)}
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                        course.financialAidEnabled
-                          ? "bg-success/10 text-success border border-success/20"
-                          : "bg-muted text-muted-foreground border border-input"
-                      }`}
-                    >
-                      {course.financialAidEnabled ? "FinAid: ON" : "FinAid: OFF"}
-                    </span>
-                    <span className="text-xs text-muted-foreground font-mono">
-                      {course.weekModules.length} {"Tuần học"}
-                    </span>
                   </div>
+
+                  {/* Options Menu (...) */}
+                  <DropdownMenu.Root>
+                    <DropdownMenu.Trigger
+                      render={
+                        <IconButton
+                          variant="standard"
+                          size="xs"
+                          aria-label="Thao tác khóa học"
+                          className="text-muted-foreground hover:text-foreground -mr-1"
+                        >
+                          <MoreVertical className="w-4 h-4" aria-hidden="true" />
+                        </IconButton>
+                      }
+                    />
+                    <DropdownMenu.Content align="end">
+                      <DropdownMenu.Item
+                        render={<Link href={`/instructor/courses/${course.id}`} />}
+                      >
+                        <Pencil className="w-4 h-4 text-primary" aria-hidden="true" />
+                        <span>Biên soạn bài giảng</span>
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Item onClick={() => handleOpenEditModal(course)}>
+                        <Settings className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                        <span>Sửa thông tin khóa học</span>
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Item
+                        render={<Link href={`/instructor/courses/${course.id}/analytics`} />}
+                      >
+                        <BarChart2 className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                        <span>Thống kê & Phân tích</span>
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Item
+                        render={<Link href={`/instructor/courses/${course.id}/announcements`} />}
+                      >
+                        <Megaphone className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                        <span>Thông báo khóa học</span>
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Item
+                        render={<Link href={`/courses/${course.id}`} target="_blank" />}
+                      >
+                        <ExternalLink
+                          className="w-4 h-4 text-muted-foreground"
+                          aria-hidden="true"
+                        />
+                        <span>Xem trang học viên</span>
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Separator className="my-1 h-px bg-border/60" />
+
+                      <DropdownMenu.Item
+                        onClick={() => handleDeleteCourse(course.id, course.title, course.status)}
+                        className="text-destructive hover:bg-destructive/10 data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
+                        <span>Xóa khóa học</span>
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Root>
                 </div>
-                <Link href={`/instructor/courses/${course.id}`} className="block">
-                  <h3 className="font-bold text-lg text-foreground mb-2 min-w-0 line-clamp-2 hover:text-primary transition-colors">
+
+                {/* Course Title & Description */}
+                <Link href={`/instructor/courses/${course.id}`} className="block group/title">
+                  <h3 className="font-bold text-base sm:text-lg text-foreground mb-1.5 min-w-0 line-clamp-2 leading-snug group-hover/title:text-primary transition-colors">
                     {course.title}
                   </h3>
                 </Link>
-                <p className="text-xs text-muted-foreground min-w-0 line-clamp-3 mb-4 leading-relaxed">
-                  {course.description}
+                <p className="text-xs text-muted-foreground min-w-0 line-clamp-2 mb-4 leading-relaxed">
+                  {course.description || "Chưa có mô tả khóa học."}
                 </p>
 
-                <div className="flex items-center gap-2 mb-4 flex-wrap">
-                  <Chip
-                    variant="assist"
-                    leadingIcon={<Pencil className="w-3.5 h-3.5" aria-hidden="true" />}
-                    render={<Link href={`/instructor/courses/${course.id}`} />}
-                  >
-                    Biên soạn
-                  </Chip>
-
-                  <Chip
-                    variant="assist"
-                    leadingIcon={<BarChart2 className="w-3.5 h-3.5" aria-hidden="true" />}
-                    render={<Link href={`/instructor/courses/${course.id}/analytics`} />}
-                  >
-                    Thống kê
-                  </Chip>
-
-                  <Chip
-                    variant="assist"
-                    leadingIcon={<Megaphone className="w-3.5 h-3.5" aria-hidden="true" />}
-                    render={<Link href={`/instructor/courses/${course.id}/announcements`} />}
-                  >
-                    Thông báo
-                  </Chip>
+                {/* Metadata Row */}
+                <div className="flex items-center gap-4 text-xs text-muted-foreground pt-3 border-t border-border/40 mb-4">
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <Clock className="w-3.5 h-3.5 text-muted-foreground/70" aria-hidden="true" />
+                    <span>{course.weekModules.length} tuần học</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <Award className="w-3.5 h-3.5 text-muted-foreground/70" aria-hidden="true" />
+                    <span>
+                      FinAid:{" "}
+                      <strong
+                        className={
+                          course.financialAidEnabled
+                            ? "text-success font-semibold"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        {course.financialAidEnabled ? "Bật" : "Tắt"}
+                      </strong>
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-border flex items-center justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-2 flex-wrap w-full justify-between">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      size="sm"
-                      onClick={() => handleOpenEditModal(course)}
-                      className="bg-muted hover:bg-muted/80 text-xs font-semibold text-foreground"
-                    >
-                      <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>{"Sửa thông tin"}</span>
-                    </Button>
-
-                    <Button
-                      type="button"
-                      variant="outlined"
-                      size="sm"
-                      onClick={() => handleDeleteCourse(course.id, course.title)}
-                      className="bg-destructive/10 text-destructive border-destructive/20 text-xs font-semibold hover:bg-destructive/20"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                      <span>{"Xóa"}</span>
-                    </Button>
-                  </div>
-
-                  <Chip
-                    variant="assist"
-                    trailingIcon={<ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />}
-                    render={<Link href={`/courses/${course.id}`} />}
-                  >
-                    Xem bài giảng
-                  </Chip>
-                </div>
+              {/* Card Footer: Primary CTA Button */}
+              <div className="pt-3 border-t border-border/60 flex items-center justify-end">
+                <Button
+                  variant="filled"
+                  size="sm"
+                  render={<Link href={`/instructor/courses/${course.id}`} />}
+                  className="w-full sm:w-auto font-semibold gap-2 shadow-xs group-hover:shadow-sm"
+                >
+                  <span>Biên soạn bài giảng</span>
+                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                </Button>
               </div>
             </Surface>
           ))}

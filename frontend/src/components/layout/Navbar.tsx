@@ -76,17 +76,13 @@ export function Navbar() {
           <NavigationMenu.Root className="hidden md:flex items-center">
             <NavigationMenu.List className="gap-2">
               <NavigationMenu.Item>
-                <Link href="/courses" prefetch={true} className={getLinkClasses("/courses")}>
+                <Link href="/courses" className={getLinkClasses("/courses")}>
                   {"Khóa học"}
                 </Link>
               </NavigationMenu.Item>
               {userName && (
                 <NavigationMenu.Item>
-                  <Link
-                    href="/my-learning"
-                    prefetch={true}
-                    className={getLinkClasses("/my-learning")}
-                  >
+                  <Link href="/my-learning" className={getLinkClasses("/my-learning")}>
                     {"Việc học của tôi"}
                   </Link>
                 </NavigationMenu.Item>
@@ -97,7 +93,7 @@ export function Navbar() {
                 <NavigationMenu.Item>
                   <Link
                     href="/instructor/courses"
-                    className={`${getLinkClasses("/instructor")} flex items-center gap-1.5`}
+                    className={`${getLinkClasses("/instructor/courses")} flex items-center gap-1.5`}
                   >
                     <span>{"Giảng Viên"}</span>
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
@@ -112,7 +108,7 @@ export function Navbar() {
                 <NavigationMenu.Item>
                   <Link
                     href="/admin/dashboard"
-                    className={`${getLinkClasses("/admin")} flex items-center gap-1.5`}
+                    className={`${getLinkClasses("/admin/dashboard")} flex items-center gap-1.5`}
                   >
                     <span>Admin</span>
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
@@ -185,7 +181,6 @@ export function Navbar() {
           {userName && (
             <Link
               href="/my-learning"
-              prefetch={true}
               onClick={() => setMobileMenuOpen(false)}
               className={getMobileLinkClasses("/my-learning")}
             >
@@ -197,7 +192,7 @@ export function Navbar() {
               href="/instructor/courses"
               onClick={() => setMobileMenuOpen(false)}
               className={cn(
-                getMobileLinkClasses("/instructor"),
+                getMobileLinkClasses("/instructor/courses"),
                 "flex items-center justify-between",
               )}
             >
@@ -211,7 +206,10 @@ export function Navbar() {
             <Link
               href="/admin/dashboard"
               onClick={() => setMobileMenuOpen(false)}
-              className={cn(getMobileLinkClasses("/admin"), "flex items-center justify-between")}
+              className={cn(
+                getMobileLinkClasses("/admin/dashboard"),
+                "flex items-center justify-between",
+              )}
             >
               <span>Admin</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">

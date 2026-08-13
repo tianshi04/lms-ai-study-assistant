@@ -2,7 +2,7 @@ import json
 import logging
 import logging.config
 import sys
-from typing import Any, Dict
+from typing import Any, ClassVar
 
 from src.shared.config import settings
 from src.shared.infrastructure.logging.context import get_request_id, get_user_id
@@ -13,10 +13,13 @@ class ContextAwareFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         req_id = get_request_id() or "-"
-        user_id = get_user_id()
-        ctx_str = f"req_id={req_id}"
-        if user_id:
-            ctx_str += f" user_id={user_id}"
+        user_id = get_user_id() or "-"
+        ctx_parts = []
+        if req_id != "-":
+            ctx_parts.append(f"req_id={req_id}")
+        if user_id != "-":
+            ctx_parts.append(f"user_id={user_id}")
+        ctx_str = f" [{', '.join(ctx_parts)}]" if ctx_parts else " [req_id=-]"
 
         record.ctx = ctx_str
         return super().format(record)
@@ -25,7 +28,7 @@ class ContextAwareFormatter(logging.Formatter):
 class JSONContextAwareFormatter(logging.Formatter):
     """Dynamic JSON Formatter for Production & OTel Readiness."""
 
-    RESERVED_ATTRS = {
+    RESERVED_ATTRS: ClassVar[set[str]] = {
         "args",
         "asctime",
         "created",
@@ -52,7 +55,7 @@ class JSONContextAwareFormatter(logging.Formatter):
     }
 
     def format(self, record: logging.LogRecord) -> str:
-        log_obj: Dict[str, Any] = {
+        log_obj: dict[str, Any] = {
             "timestamp": self.formatTime(record, self.datefmt),
             "level": record.levelname,
             "logger": record.name,
@@ -78,7 +81,7 @@ def setup_logging() -> None:
     formatter_name = "console" if is_dev else "json"
     log_level = "DEBUG" if is_dev else "INFO"
 
-    logging_config: Dict[str, Any] = {
+    logging_config: dict[str, Any] = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {

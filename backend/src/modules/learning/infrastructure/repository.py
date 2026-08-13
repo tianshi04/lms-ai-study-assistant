@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -95,12 +95,9 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             model = res.scalar_one()
 
             if not model.weekly_deadlines:
-                past_date = (datetime.now(timezone.utc) - timedelta(days=3)).strftime(
-                    "%Y-%m-%d"
-                )
+                past_date = (datetime.now(UTC) - timedelta(days=3)).strftime("%Y-%m-%d")
                 future_date = (
-                    datetime.now(timezone.utc)
-                    + timedelta(days=DEFAULT_COHORT_EXTENSION_DAYS)
+                    datetime.now(UTC) + timedelta(days=DEFAULT_COHORT_EXTENSION_DAYS)
                 ).strftime("%Y-%m-%d")
                 d1 = WeeklyDeadlineModel(
                     week_number=1, due_date=past_date, status=DeadlineStatus.OVERDUE
@@ -111,7 +108,7 @@ class SQLAlchemyLearningRepository(ILearningRepository):
                 model.weekly_deadlines.extend([d1, d2])
                 try:
                     await self.session.commit()
-                except Exception:
+                except Exception:  # noqa: BLE001
                     await self.session.rollback()
                     res = await self.session.execute(stmt)
                     model = res.scalar_one()
@@ -136,7 +133,7 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             res = await self.session.execute(stmt)
             model = res.scalar_one()
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         # BR_DEADLINE_001: 24h Cooldown check
         if model.last_reset_at:
@@ -176,7 +173,7 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             item_id=item_id,
             highlighted_text=highlighted_text,
             note_comment=note_comment,
-            created_at=datetime.now(timezone.utc).isoformat(),
+            created_at=datetime.now(UTC).isoformat(),
         )
         self.session.add(note_model)
         await self.session.commit()

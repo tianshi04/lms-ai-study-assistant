@@ -1,6 +1,7 @@
 import asyncio
 import logging
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.learning.domain.entities import (

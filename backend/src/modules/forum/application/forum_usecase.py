@@ -1,7 +1,7 @@
 import logging
 import uuid
-from datetime import datetime, timezone
-from typing import Sequence
+from collections.abc import Sequence
+from datetime import UTC, datetime
 
 from src.modules.forum.domain.constants import DEFAULT_FORUM_AUTHOR_ROLE
 from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
@@ -12,7 +12,7 @@ from src.shared.infrastructure.database import async_session_scope
 
 
 def utc_now_str() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 logger = logging.getLogger(__name__)
@@ -161,7 +161,7 @@ class ForumUseCase:
                             content=f'"{content[:100]}..."',
                             action_url=action_url,
                         )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 logger.warning("Failed to send forum reply notification: %s", e)
 
             return reply
@@ -308,8 +308,6 @@ class ForumUseCase:
 async def _verify_staff_course_moderation(
     session, course_id: str, user: CurrentUser
 ) -> None:
-    if not user:
-        return
     if user.is_admin:
         return
     if course_id:
@@ -320,8 +318,7 @@ async def _verify_staff_course_moderation(
 
         catalog_repo: ICatalogRepository = SQLAlchemyCatalogRepository(session)
         course = await catalog_repo.get_course_detail(course_id)
-        if course:
-            if not course.can_edit(user, allow_read_only_pending=True):
-                raise PermissionError(
-                    "Bạn không có quyền kiểm duyệt diễn đàn khóa học này."
-                )
+        if course and not course.can_edit(user, allow_read_only_pending=True):
+            raise PermissionError(
+                "Bạn không có quyền kiểm duyệt diễn đàn khóa học này."
+            )

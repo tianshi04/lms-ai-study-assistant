@@ -10,7 +10,7 @@ Usage:
   - Full Clean Reset:  uv run python src/seed.py --reset
 """
 
-# ruff: noqa: E402, F401
+# ruff: noqa: F401
 
 import argparse
 import asyncio
@@ -25,7 +25,7 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 from sqlalchemy import delete, select, text
-from src.shared.infrastructure.database import Base, async_session_scope
+
 from src.modules.assessment.infrastructure.models import (
     GradeAppealModel,
     HonorCodeModel,
@@ -40,16 +40,16 @@ from src.modules.assessment.infrastructure.models import (
     QuizSubmissionModel,
 )
 from src.modules.catalog.infrastructure.models import (
+    CategoryModel,
     CourseModel,
     CourseReviewModel,
-    InVideoQuizModel,
     InteractiveTranscriptModel,
+    InVideoQuizModel,
     ItemType,
     LearningItemModel,
     LessonModel,
     SpecializationModel,
     WeekModuleModel,
-    CategoryModel,
 )
 from src.modules.certificate.infrastructure.models import (
     CertificateModel,
@@ -75,7 +75,7 @@ from src.modules.learning.infrastructure.models import (
     WeeklyDeadlineModel,
 )
 from src.modules.partner.infrastructure.models import PartnerModel
-
+from src.shared.infrastructure.database import Base, async_session_scope
 from src.shared.infrastructure.logging import setup_logging
 
 setup_logging()

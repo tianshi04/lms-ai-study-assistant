@@ -96,7 +96,12 @@ export function GoogleAuthButton({
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     const isProduction = process.env.NEXT_PUBLIC_ENV === "production";
 
-    if (!googleClientId && !isProduction) {
+    if (
+      !googleClientId ||
+      !isProduction ||
+      typeof google === "undefined" ||
+      !google.accounts?.oauth2
+    ) {
       const inputEmail = window.prompt(
         "Dev Mode: Nhập địa chỉ Gmail để giả lập xác minh Google",
         "user.test@gmail.com",

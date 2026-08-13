@@ -1,6 +1,6 @@
 import uuid
-from datetime import datetime, timezone
-from typing import Optional, Sequence, Tuple
+from collections.abc import Sequence
+from datetime import UTC, datetime
 
 from src.modules.notification.domain.constants import (
     DEFAULT_PAGE_SIZE,
@@ -25,8 +25,8 @@ from src.shared.infrastructure.database import async_session_scope
 class NotificationUseCase:
     def __init__(
         self,
-        notif_repo: Optional[NotificationRepository] = None,
-        pref_repo: Optional[NotificationPreferenceRepository] = None,
+        notif_repo: NotificationRepository | None = None,
+        pref_repo: NotificationPreferenceRepository | None = None,
     ) -> None:
         self._notif_repo = notif_repo
         self._pref_repo = pref_repo
@@ -91,7 +91,7 @@ class NotificationUseCase:
             action_url=action_url,
             actor_avatar_url=actor_avatar_url,
             is_read=False,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         return await notif_repo.create(notif)
 
@@ -139,7 +139,7 @@ class NotificationUseCase:
         action_url: str,
         actor_avatar_url: str,
     ) -> int:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         notifs = [
             Notification(
                 id=f"notif_{uuid.uuid4().hex[:12]}",
@@ -159,11 +159,11 @@ class NotificationUseCase:
     async def list_notifications(
         self,
         recipient_id: str,
-        category_filter: Optional[NotificationCategory] = None,
+        category_filter: NotificationCategory | None = None,
         unread_only: bool = False,
         page_size: int = DEFAULT_PAGE_SIZE,
         page_token: str = "",
-    ) -> Tuple[Sequence[Notification], int, str]:
+    ) -> tuple[Sequence[Notification], int, str]:
         if not recipient_id:
             raise ValueError("recipient_id is required")
 
@@ -192,11 +192,11 @@ class NotificationUseCase:
         self,
         notif_repo: NotificationRepository,
         recipient_id: str,
-        category_filter: Optional[NotificationCategory],
+        category_filter: NotificationCategory | None,
         unread_only: bool,
         page_size: int,
         page_token: str,
-    ) -> Tuple[Sequence[Notification], int, str]:
+    ) -> tuple[Sequence[Notification], int, str]:
         limit = min(max(page_size, 1), MAX_PAGE_SIZE)
         offset = 0
         if page_token and page_token.startswith("offset_"):
@@ -250,7 +250,7 @@ class NotificationUseCase:
     async def mark_all_as_read(
         self,
         recipient_id: str,
-        category_filter: Optional[NotificationCategory] = None,
+        category_filter: NotificationCategory | None = None,
     ) -> int:
         if not recipient_id:
             raise ValueError("recipient_id is required")
@@ -294,7 +294,7 @@ class NotificationUseCase:
             enable_academic_reminders=enable_academic_reminders,
             enable_community_replies=enable_community_replies,
             enable_announcements=enable_announcements,
-            updated_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(UTC),
         )
 
         if self._pref_repo:

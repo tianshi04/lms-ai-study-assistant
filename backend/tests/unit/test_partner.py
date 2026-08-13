@@ -1,6 +1,7 @@
 import uuid
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from src.gen.partner.v1 import partner_pb as pb
 from src.modules.partner.application.partner_usecase import PartnerUseCase
@@ -9,7 +10,7 @@ from src.modules.partner.presentation.partner_handler import (
     PartnerHandler,
     _to_pb_partner,
 )
-from src.shared.auth import CurrentUser, set_current_user, clear_current_user
+from src.shared.auth import CurrentUser, clear_current_user, set_current_user
 
 
 def test_partner_entity_validation():
@@ -223,9 +224,7 @@ async def test_usecase_rotate_key_pair_success():
 
     new_pem = await usecase.rotate_key_pair("p1", current_user=admin)
     assert new_pem.startswith("-----BEGIN PUBLIC KEY-----")
-    assert new_pem.endswith("-----END PUBLIC KEY-----\n") or new_pem.endswith(
-        "-----END PUBLIC KEY-----"
-    )
+    assert new_pem.endswith(("-----END PUBLIC KEY-----\n", "-----END PUBLIC KEY-----"))
     mock_repo.update.assert_called_once()
 
 

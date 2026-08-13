@@ -54,7 +54,7 @@ gen:
 	buf generate ../proto
 
 dev:
-	uv run uvicorn src.main:app --port 8000 --reload --reload-dir src
+	uv run uvicorn src.main:app --port 8000 --reload --reload-dir src --reload-dir . --reload-include ".env"
 
 migrate:
 	uv run alembic upgrade head

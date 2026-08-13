@@ -1,13 +1,59 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { cacheLife, cacheTag } from "next/cache";
 import { GraduationCap } from "lucide-react";
 import { CourseGridSkeleton } from "@/components/course/CourseGridSkeleton";
+import { getPublicRpcServerClient } from "@/lib/server_connect_client";
+import { CatalogService, type Course, type Category } from "@/gen/catalog/v1/catalog_pb";
 import { CourseCatalogClient } from "./CourseCatalogClient";
 
 export const metadata: Metadata = {
   title: "Danh Sách Khóa Học | LMS AI Platform",
   description: "Khám phá danh sách các khóa học chất lượng cao về AI và Công nghệ thông tin.",
 };
+
+async function getCachedInitialCatalog() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("catalog", "courses-initial");
+
+  let initialCourses: Course[] = [];
+  let initialSubjects: Category[] = [];
+  let initialLevels: Category[] = [];
+
+  try {
+    const client = getPublicRpcServerClient(CatalogService);
+    const [coursesRes, subjectsRes, levelsRes] = await Promise.all([
+      client.listCourses({ pageSize: 10 }),
+      client.listCategories({ type: "SUBJECT" }),
+      client.listCategories({ type: "LEVEL" }),
+    ]);
+    initialCourses = coursesRes.courses;
+    initialSubjects = subjectsRes.categories;
+    initialLevels = levelsRes.categories;
+  } catch (err: unknown) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        "Server catalog fetch fallback to client:",
+        err instanceof Error ? err.message : err,
+      );
+    }
+  }
+
+  return { initialCourses, initialSubjects, initialLevels };
+}
+
+async function CourseCatalogWrapper() {
+  const { initialCourses, initialSubjects, initialLevels } = await getCachedInitialCatalog();
+
+  return (
+    <CourseCatalogClient
+      initialCourses={initialCourses}
+      initialSubjects={initialSubjects}
+      initialLevels={initialLevels}
+    />
+  );
+}
 
 export default function CoursesPage() {
   return (
@@ -30,7 +76,7 @@ export default function CoursesPage() {
 
       {/* 🔵 SUSPENSE BỌC KHU VỰC BỘ LỌC VÀ LƯỚI KHÓA HỌC DỘNG */}
       <Suspense fallback={<CourseGridSkeleton />}>
-        <CourseCatalogClient />
+        <CourseCatalogWrapper />
       </Suspense>
     </main>
   );

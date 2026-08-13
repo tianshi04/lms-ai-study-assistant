@@ -175,37 +175,29 @@ function ForgotPasswordContent() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label htmlFor="newPassword" className="text-xs font-semibold text-foreground">
-                  Mật khẩu mới
-                </label>
-                <Input
-                  id="newPassword"
-                  type="password"
-                  placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  disabled={isPending}
-                  className="rounded-xl"
-                />
-              </div>
+              <Input
+                id="newPassword"
+                label="Mật khẩu mới"
+                type="password"
+                placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                disabled={isPending}
+                className="rounded-xl"
+              />
 
-              <div className="space-y-1.5">
-                <label htmlFor="confirmPassword" className="text-xs font-semibold text-foreground">
-                  Xác nhận mật khẩu mới
-                </label>
-                <Input
-                  id="confirmPassword"
-                  type="password"
-                  placeholder="Nhập lại mật khẩu mới để xác nhận"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  disabled={isPending}
-                  className="rounded-xl"
-                />
-              </div>
+              <Input
+                id="confirmPassword"
+                label="Xác nhận mật khẩu mới"
+                type="password"
+                placeholder="Nhập lại mật khẩu mới để xác nhận"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                disabled={isPending}
+                className="rounded-xl"
+              />
 
               <Button
                 type="submit"
