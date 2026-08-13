@@ -141,7 +141,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm kiếm thành viên theo tên hoặc email..."
+              placeholder="Tìm kiếm thành viên theo tên hoặc email…"
               className="pl-10"
             />
           </div>
@@ -172,7 +172,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
           {isLoading ? (
             <div className="p-12 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
               <Progress.Circular size="md" />
-              <p className="text-sm">Đang tải danh sách thành viên...</p>
+              <p className="text-sm">Đang tải danh sách thành viên…</p>
             </div>
           ) : filteredMembers.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground space-y-2">
@@ -347,7 +347,7 @@ function OrgMembersContent({ params }: { params: Promise<{ slug: string }> }) {
                   rows={2}
                   value={inviteMsg}
                   onChange={(e) => setInviteMsg(e.target.value)}
-                  placeholder="Chào mừng bạn đến với tổ chức của chúng tôi..."
+                  placeholder="Chào mừng bạn đến với tổ chức của chúng tôi…"
                 />
               </div>
 
@@ -413,7 +413,7 @@ export default function OrgMembersPage({ params }: { params: Promise<{ slug: str
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
           <Progress.Circular size="sm" />
-          <span className="text-sm">Đang tải danh sách thành viên...</span>
+          <span className="text-sm">Đang tải danh sách thành viên…</span>
         </div>
       }
     >

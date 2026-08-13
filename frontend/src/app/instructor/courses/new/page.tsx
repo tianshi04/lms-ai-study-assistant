@@ -416,7 +416,7 @@ export default function NewCoursePage() {
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={handleAddTag}
-                  placeholder="Nhập kỹ năng/thẻ (ví dụ: Python, React, Data Science) rồi nhấn Enter..."
+                  placeholder="Nhập kỹ năng/thẻ (ví dụ: Python, React, Data Science) rồi nhấn Enter…"
                   className="flex-1 font-medium bg-card"
                 />
                 <Button type="button" variant="outlined" onClick={handleAddTag}>

@@ -174,7 +174,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
           {isLoading ? (
             <div className="py-12 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
               <Progress.Circular size="md" />
-              <p className="text-sm">Đang tải thông tin cài đặt...</p>
+              <p className="text-sm">Đang tải thông tin cài đặt…</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6 pt-6">
@@ -325,7 +325,7 @@ function OrgSettingsContent({ params }: { params: Promise<{ slug: string }> }) {
                     rows={3}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Giới thiệu về trường đại học hoặc tổ chức đối tác..."
+                    placeholder="Giới thiệu về trường đại học hoặc tổ chức đối tác…"
                   />
                 </div>
               </div>
@@ -350,7 +350,7 @@ export default function OrgSettingsPage({ params }: { params: Promise<{ slug: st
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
           <Progress.Circular size="sm" />
-          <span className="text-sm">Đang tải cài đặt tổ chức...</span>
+          <span className="text-sm">Đang tải cài đặt tổ chức…</span>
         </div>
       }
     >

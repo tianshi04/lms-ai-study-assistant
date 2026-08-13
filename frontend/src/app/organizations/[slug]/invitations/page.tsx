@@ -182,7 +182,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
           {isLoading ? (
             <div className="p-12 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
               <Progress.Circular size="md" />
-              <p className="text-sm">Đang tải danh sách lời mời...</p>
+              <p className="text-sm">Đang tải danh sách lời mời…</p>
             </div>
           ) : invitations.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground space-y-2">
@@ -302,7 +302,7 @@ export default function OrgInvitationsPage({ params }: { params: Promise<{ slug:
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
           <Progress.Circular size="sm" />
-          <span className="text-sm">Đang tải danh sách lời mời...</span>
+          <span className="text-sm">Đang tải danh sách lời mời…</span>
         </div>
       }
     >

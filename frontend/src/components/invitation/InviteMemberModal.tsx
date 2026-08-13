@@ -177,7 +177,7 @@ export function InviteMemberModal({
                   <Textarea
                     id="invitee-message"
                     rows={2}
-                    placeholder="Ví dụ: Rất mong bạn tham gia đội ngũ giảng dạy khóa học này..."
+                    placeholder="Ví dụ: Rất mong bạn tham gia đội ngũ giảng dạy khóa học này…"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                   />
@@ -245,7 +245,7 @@ export function InviteMemberModal({
                 {isLoadingPending && (
                   <div className="flex justify-center py-8 text-muted-foreground gap-2 items-center">
                     <Progress.Circular size="sm" ariaLabel="Đang tải danh sách lời mời" />
-                    <span className="text-sm">Đang danh sách lời mời...</span>
+                    <span className="text-sm">Đang tải danh sách lời mời…</span>
                   </div>
                 )}
 

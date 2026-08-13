@@ -223,7 +223,7 @@ export default function InstructorAnalyticsPage({
     <Suspense
       fallback={
         <div className="py-20 text-center text-muted-foreground animate-pulse">
-          Đang tải dữ liệu thống kê...
+          Đang tải dữ liệu thống kê…
         </div>
       }
     >

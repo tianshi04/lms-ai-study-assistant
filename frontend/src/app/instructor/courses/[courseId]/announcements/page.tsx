@@ -255,7 +255,7 @@ export default function InstructorAnnouncementsPage({
     <Suspense
       fallback={
         <div className="py-12 text-center text-muted-foreground animate-pulse">
-          Đang tải thông báo khóa học...
+          Đang tải thông báo khóa học…
         </div>
       }
     >

@@ -694,7 +694,7 @@ function MyPurchasesContent() {
               onClick={confirmCancelOrder}
               disabled={cancelVNPayMutation.isPending}
             >
-              {cancelVNPayMutation.isPending ? "Đang xử lý..." : "Đồng ý hủy đơn"}
+              {cancelVNPayMutation.isPending ? "Đang xử lý…" : "Đồng ý hủy đơn"}
             </Button>
           </Dialog.Footer>
         </Dialog.Content>

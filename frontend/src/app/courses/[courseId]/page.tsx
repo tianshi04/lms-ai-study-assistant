@@ -54,7 +54,7 @@ export default function CourseDetailPage({ params }: { params: Promise<{ courseI
     <Suspense
       fallback={
         <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground animate-pulse">
-          Đang tải thông tin khóa học...
+          Đang tải thông tin khóa học…
         </div>
       }
     >

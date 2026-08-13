@@ -80,7 +80,7 @@ export function LinearProgress({
       {showLabel && (
         <div className="flex justify-between items-center text-xs font-medium text-on-surface-variant">
           <span>{label}</span>
-          <span>{isIndeterminate ? "Đang xử lý..." : `${Math.round(normalizedValue)}%`}</span>
+          <span>{isIndeterminate ? "Đang xử lý…" : `${Math.round(normalizedValue)}%`}</span>
         </div>
       )}
       <BaseProgress.Track className={cn(linearTrackVariants({ thickness: variantKey }))}>

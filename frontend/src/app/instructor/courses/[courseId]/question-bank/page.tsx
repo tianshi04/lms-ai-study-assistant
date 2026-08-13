@@ -916,7 +916,7 @@ export default function QuestionBankPage({ params }: { params: Promise<{ courseI
     <Suspense
       fallback={
         <div className="p-8 text-center text-muted-foreground animate-pulse">
-          Đang tải ngân hàng câu hỏi...
+          Đang tải ngân hàng câu hỏi…
         </div>
       }
     >

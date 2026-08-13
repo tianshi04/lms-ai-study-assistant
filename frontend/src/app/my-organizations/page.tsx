@@ -103,7 +103,7 @@ function MyOrganizationsContent() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center p-12 bg-card border border-border rounded-3xl space-y-4">
               <Loader2 className="w-8 h-8 text-primary animate-spin" aria-hidden="true" />
-              <p className="text-sm text-muted-foreground">Đang tải danh sách tổ chức...</p>
+              <p className="text-sm text-muted-foreground">Đang tải danh sách tổ chức…</p>
             </div>
           ) : error ? (
             <div className="p-6 bg-destructive/10 text-destructive border border-destructive/20 rounded-3xl text-sm font-medium">
@@ -204,7 +204,7 @@ export default function MyOrganizationsPage() {
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
           <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
-          <span className="text-sm">Đang tải tổ chức...</span>
+          <span className="text-sm">Đang tải tổ chức…</span>
         </div>
       }
     >

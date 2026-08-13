@@ -263,7 +263,7 @@ export default function OrgManagePage({ params }: { params: Promise<{ slug: stri
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
           <Progress.Circular size="sm" />
-          <span className="text-sm">Đang tải bảng điều khiển...</span>
+          <span className="text-sm">Đang tải bảng điều khiển…</span>
         </div>
       }
     >

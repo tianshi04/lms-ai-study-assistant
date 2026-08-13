@@ -111,7 +111,7 @@ function AcceptInvitationContent() {
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-8 space-y-3">
               <Progress.Circular size="md" />
-              <p className="text-sm text-muted-foreground">Đang tải thông tin lời mời...</p>
+              <p className="text-sm text-muted-foreground">Đang tải thông tin lời mời…</p>
             </div>
           )}
 
@@ -247,7 +247,7 @@ export default function AcceptInvitationPage() {
       fallback={
         <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 text-muted-foreground">
           <Progress.Circular size="md" className="mb-2" />
-          <p className="text-sm">Đang tải thông tin lời mời...</p>
+          <p className="text-sm">Đang tải thông tin lời mời…</p>
         </div>
       }
     >

@@ -415,7 +415,7 @@ export const UniversalVideoPlayer = forwardRef<UniversalVideoRef, UniversalVideo
           <div ref={mountPointRef} className="w-full h-full" />
           {!isYtReady && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/60 text-white text-xs font-semibold">
-              Đang tải trình phát YouTube...
+              Đang tải trình phát YouTube…
             </div>
           )}
         </div>

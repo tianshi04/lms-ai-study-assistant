@@ -89,7 +89,7 @@ export function MyInvitationsDrawer({ isOpen, onClose }: MyInvitationsDrawerProp
           {isLoading && (
             <div className="flex justify-center py-12 text-muted-foreground gap-2 items-center">
               <Progress.Circular size="sm" ariaLabel="Đang tải danh sách lời mời" />
-              <span className="text-sm">Đang tải danh sách lời mời...</span>
+              <span className="text-sm">Đang tải danh sách lời mời…</span>
             </div>
           )}
 

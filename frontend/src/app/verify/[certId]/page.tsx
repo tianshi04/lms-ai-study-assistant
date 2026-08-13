@@ -66,7 +66,7 @@ export default function VerifyPage({ params }: { params: Promise<{ certId: strin
     <Suspense
       fallback={
         <div className="min-h-screen bg-background flex items-center justify-center text-muted-foreground animate-pulse">
-          Đang tra cứu chứng chỉ...
+          Đang tra cứu chứng chỉ…
         </div>
       }
     >
