@@ -1,13 +1,14 @@
 """Database Seeding Script for Development & Demo Environment.
 
-Best-Practice DDD Infrastructure Seeding Script:
+Consolidated DDD Infrastructure Seeding Script:
+- Single Source of Truth: All demo data (Users, Partners, Courses, Modules, Lessons, Items, Quizzes, Auto-Graded Labs, Forum Threads, Financial Aid, Certificates) are 100% consolidated into Python ORM models in this single file.
 - Default Execution (Upsert Mode): Uses session.merge() to safely insert missing seed records or update existing ones without destructive data wipes.
-- Reset Execution (--reset Flag): Dynamically truncates all database tables when explicitly requested for a pristine environment reset.
+- Reset Execution (--reset Flag / make seed-reset): Dynamically truncates all database tables for a pristine environment reset before live demonstrations.
 - Dev Startup Integration: Auto-seeds initial catalog if the database contains no courses.
 
 Usage:
-  - Default / Upsert:  uv run python src/seed.py
-  - Full Clean Reset:  uv run python src/seed.py --reset
+  - Default / Upsert:  uv run python src/seed.py  (or make seed)
+  - Full Clean Reset:  uv run python src/seed.py --reset  (or make seed-reset)
 """
 
 # ruff: noqa: F401
