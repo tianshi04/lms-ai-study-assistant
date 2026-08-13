@@ -130,11 +130,14 @@ export function NotificationBell() {
 
           {/* Full Primary Capsule Button Footer */}
           <div className="p-3 border-t border-outline-variant/40 bg-surface-container-lowest text-center">
-            <Button variant="filled" size="sm" className="w-full shadow-sm">
-              <Link href="/notifications" onClick={() => setIsOpen(false)}>
-                <span>Xem tất cả thông báo</span>
-                <ArrowRight className="w-4 h-4" aria-hidden="true" />
-              </Link>
+            <Button
+              render={<Link href="/notifications" onClick={() => setIsOpen(false)} />}
+              variant="filled"
+              size="sm"
+              className="w-full shadow-sm"
+            >
+              <span>Xem tất cả thông báo</span>
+              <ArrowRight className="w-4 h-4" aria-hidden="true" />
             </Button>
           </div>
         </Popover.Content>
