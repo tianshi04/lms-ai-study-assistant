@@ -1,11 +1,11 @@
 """VNPay Gateway Helper Service (HMAC-SHA512 Checksum & URL Generator)."""
 
-from datetime import datetime, timezone
 import hashlib
 import hmac
 import logging
-from typing import Any
 import urllib.parse
+from datetime import UTC, datetime
+from typing import Any
 
 from src.shared.config import settings
 
@@ -55,6 +55,14 @@ class VNPayService:
         """Generates VNPay payment URL with signed vnp_SecureHash."""
         tmn_code = settings.VNPAY_TMN_CODE
         secret_key = settings.VNPAY_HASH_SECRET
+        if not tmn_code or not tmn_code.strip():
+            raise ValueError(
+                "VNPAY_TMN_CODE chưa được cấu hình hoặc bị trống trong file .env."
+            )
+        if not secret_key or not secret_key.strip():
+            raise ValueError(
+                "VNPAY_HASH_SECRET chưa được cấu hình hoặc bị trống trong file .env."
+            )
         payment_endpoint = settings.VNPAY_PAYMENT_URL
         actual_return_url = return_url or settings.VNPAY_RETURN_URL
 
@@ -62,7 +70,7 @@ class VNPayService:
         safe_order_info = cls.sanitize_order_info(order_info)
 
         # VNPay requires amount in VND * 100 (e.g. 500,000 VND = 50000000)
-        vnp_amount = int(round(amount * 100))
+        vnp_amount = round(amount * 100)
 
         from datetime import timedelta
 
@@ -70,20 +78,20 @@ class VNPayService:
         if created_at:
             if isinstance(created_at, str):
                 try:
-                    now_dt = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                    now_dt = datetime.fromisoformat(created_at)
                 except ValueError:
-                    now_dt = datetime.now(timezone.utc)
+                    now_dt = datetime.now(UTC)
             else:
                 now_dt = created_at
         else:
-            now_dt = datetime.now(timezone.utc)
+            now_dt = datetime.now(UTC)
 
         # Ensure datetime is timezone-aware
         if now_dt.tzinfo is None:
-            now_dt = now_dt.replace(tzinfo=timezone.utc)
+            now_dt = now_dt.replace(tzinfo=UTC)
 
         # Offset to GMT+7 (Asia/Ho_Chi_Minh)
-        vn_time = now_dt.astimezone(timezone.utc) + timedelta(hours=7)
+        vn_time = now_dt.astimezone(UTC) + timedelta(hours=7)
         vnp_create_date = vn_time.strftime("%Y%m%d%H%M%S")
         vnp_expire_date = (vn_time + timedelta(minutes=15)).strftime("%Y%m%d%H%M%S")
 
@@ -135,6 +143,15 @@ class VNPayService:
     ) -> tuple[bool, str]:
         """Verifies VNPay return/IPN callback signature (vnp_SecureHash)."""
         secret_key = settings.VNPAY_HASH_SECRET
+        if not secret_key or not secret_key.strip():
+            logger.error(
+                "[VNPAY] Signature verification failed: VNPAY_HASH_SECRET is empty!"
+            )
+            return (
+                False,
+                "Cấu hình cổng thanh toán chưa có Secret Key (VNPAY_HASH_SECRET).",
+            )
+
         received_hash = query_params.get("vnp_SecureHash", "")
         if not received_hash:
             return False, "Thiếu tham số vnp_SecureHash trong phản hồi từ VNPay."
@@ -177,22 +194,29 @@ class VNPayService:
         ip_addr: str = "127.0.0.1",
     ) -> dict[str, Any]:
         """Queries transaction status via VNPay QueryDR API."""
-        import httpx
         from datetime import timedelta
+
+        import httpx
 
         tmn_code = settings.VNPAY_TMN_CODE
         secret_key = settings.VNPAY_HASH_SECRET
+        if not secret_key or not secret_key.strip():
+            logger.error("[VNPAY QueryDR] API call failed: VNPAY_HASH_SECRET is empty!")
+            return {
+                "vnp_ResponseCode": "99",
+                "vnp_Message": "Cấu hình cổng thanh toán chưa có Secret Key (VNPAY_HASH_SECRET).",
+            }
         api_url = settings.VNPAY_API_URL
 
         # Format dates to GMT+7 (YYYYMMDDHHmmss)
-        now_dt = datetime.now(timezone.utc) + timedelta(hours=7)
+        now_dt = datetime.now(UTC) + timedelta(hours=7)
         create_date_str = now_dt.strftime("%Y%m%d%H%M%S")
 
         try:
             order_dt = datetime.fromisoformat(order_created_at_iso)
             order_dt_gmt7 = order_dt + timedelta(hours=7)
             txn_date_str = order_dt_gmt7.strftime("%Y%m%d%H%M%S")
-        except Exception:
+        except (ValueError, TypeError, AttributeError):
             txn_date_str = create_date_str
 
         request_id = f"REQ-{now_dt.strftime('%Y%m%d%H%M%S')}-{vnp_txn_ref[:8]}"
@@ -230,6 +254,6 @@ class VNPayService:
                     "vnp_ResponseCode": "99",
                     "vnp_Message": f"HTTP {res.status_code}",
                 }
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("[VNPAY QueryDR] Exception during API call: %s", e)
             return {"vnp_ResponseCode": "99", "vnp_Message": str(e)}

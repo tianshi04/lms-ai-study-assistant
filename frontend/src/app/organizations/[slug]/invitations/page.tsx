@@ -11,10 +11,14 @@ import {
 } from "@/lib/query_hooks";
 import { InvitationType, InvitationStatus } from "@/gen/identity/v1/identity_pb";
 import { OrgHeaderNav } from "../components/OrgHeaderNav";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import { Dialog } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
+import { Surface } from "@/components/ui/Surface";
+import { IconButton } from "@/components/ui/IconButton";
+import { Table } from "@/components/ui/Table";
+import { Progress } from "@/components/ui/Progress";
 import {
   Mail,
-  Loader2,
   Copy,
   Check,
   XCircle,
@@ -66,7 +70,11 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
             activeTab="invitations"
             isOwnerOrAdmin={false}
           />
-          <div className="p-12 text-center bg-card border border-border rounded-3xl space-y-4 max-w-xl mx-auto">
+          <Surface
+            variant="low"
+            shape="2xl"
+            className="p-12 text-center space-y-4 max-w-xl mx-auto"
+          >
             <div className="w-14 h-14 rounded-full bg-destructive/10 text-destructive flex items-center justify-center mx-auto">
               <ShieldAlert className="w-7 h-7" aria-hidden="true" />
             </div>
@@ -81,7 +89,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
             >
               Quay lại Tổng quan
             </Link>
-          </div>
+          </Surface>
         </main>
       </div>
     );
@@ -158,7 +166,7 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
         />
 
         {/* Invitations Table */}
-        <section className="bg-card border border-border rounded-3xl overflow-hidden shadow-xs">
+        <Surface variant="low" shape="2xl" className="p-0 overflow-hidden">
           <div className="p-6 border-b border-border flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -173,87 +181,116 @@ function OrgInvitationsContent({ params }: { params: Promise<{ slug: string }> }
 
           {isLoading ? (
             <div className="p-12 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
-              <Loader2 className="w-7 h-7 text-primary animate-spin" aria-hidden="true" />
+              <Progress.Circular size="md" />
               <p className="text-sm">Đang tải danh sách lời mời...</p>
             </div>
           ) : invitations.length === 0 ? (
             <div className="p-12 text-center text-muted-foreground space-y-2">
-              <Inbox className="w-10 h-10 mx-auto opacity-40" />
+              <Inbox className="w-10 h-10 mx-auto opacity-40" aria-hidden="true" />
               <p className="text-sm font-medium">Chưa có lời mời nào được gửi.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-muted/40 border-b border-border text-xs text-muted-foreground uppercase font-bold">
-                  <tr>
-                    <th className="px-6 py-3.5">Email Người nhận</th>
-                    <th className="px-6 py-3.5">Vai trò mời</th>
-                    <th className="px-6 py-3.5">Trạng thái</th>
-                    <th className="px-6 py-3.5">Ngày tạo</th>
-                    <th className="px-6 py-3.5 text-right">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
+              <Table>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.Head className="px-6 py-3.5">Email Người nhận</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Vai trò mời</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Trạng thái</Table.Head>
+                    <Table.Head className="px-6 py-3.5">Ngày tạo</Table.Head>
+                    <Table.Head className="px-6 py-3.5 text-right">Thao tác</Table.Head>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
                   {invitations.map((inv) => (
-                    <tr key={inv.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="px-6 py-4 font-bold text-foreground">{inv.inviteeEmail}</td>
-                      <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
+                    <Table.Row key={inv.id}>
+                      <Table.Cell className="px-6 py-4 font-bold text-foreground">
+                        {inv.inviteeEmail}
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 font-mono text-xs text-muted-foreground">
                         {inv.roleId || "INSTRUCTOR"}
-                      </td>
-                      <td className="px-6 py-4">{getStatusBadge(inv.status)}</td>
-                      <td className="px-6 py-4 text-xs text-muted-foreground">
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4">{getStatusBadge(inv.status)}</Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-xs text-muted-foreground">
                         {inv.createdAt
                           ? new Date(inv.createdAt).toLocaleDateString("vi-VN")
                           : "Gần đây"}
-                      </td>
-                      <td className="px-6 py-4 text-right">
+                      </Table.Cell>
+                      <Table.Cell className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {inv.status === InvitationStatus.PENDING && inv.token && (
-                            <button
+                            <Button
                               type="button"
+                              variant="outlined"
+                              size="sm"
                               onClick={() => handleCopyInviteLink(inv.id, inv.token)}
-                              className="px-3 py-1.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                              className="text-xs shrink-0"
                             >
                               {copiedTokenId === inv.id ? (
-                                <Check className="w-3.5 h-3.5 text-success" />
+                                <Check className="w-3.5 h-3.5 text-success" aria-hidden="true" />
                               ) : (
-                                <Copy className="w-3.5 h-3.5" />
+                                <Copy className="w-3.5 h-3.5" aria-hidden="true" />
                               )}
                               {copiedTokenId === inv.id ? "Đã chép link!" : "Copy Link"}
-                            </button>
+                            </Button>
                           )}
 
                           {inv.status === InvitationStatus.PENDING && (
-                            <button
+                            <IconButton
                               type="button"
+                              variant="standard"
+                              size="xs"
                               onClick={() => setCancelingInvId(inv.id)}
-                              className="p-1.5 rounded-xl text-destructive hover:bg-destructive/10 transition-colors cursor-pointer"
+                              className="text-destructive hover:bg-destructive/10"
                               title="Hủy lời mời"
+                              aria-label="Hủy lời mời gia nhập"
                             >
                               <Trash2 className="w-4 h-4" aria-hidden="true" />
-                            </button>
+                            </IconButton>
                           )}
                         </div>
-                      </td>
-                    </tr>
+                      </Table.Cell>
+                    </Table.Row>
                   ))}
-                </tbody>
-              </table>
+                </Table.Body>
+              </Table>
             </div>
           )}
-        </section>
+        </Surface>
 
         {/* Cancel Invitation Confirm Dialog */}
-        {cancelingInvId && (
-          <ConfirmAlertDialog
-            isOpen={Boolean(cancelingInvId)}
-            onClose={() => setCancelingInvId(null)}
-            onConfirm={() => cancelMutation.mutate({ invitationId: cancelingInvId })}
-            title="Hủy Lời mời Gia nhập"
-            description="Bạn có chắc chắn muốn hủy lời mời này không? Người được mời sẽ không thể dùng link token này nữa."
-            confirmText="Hủy Lời Mời"
-          />
-        )}
+        <Dialog.Root
+          open={Boolean(cancelingInvId)}
+          onOpenChange={(open: boolean) => {
+            if (!open) setCancelingInvId(null);
+          }}
+        >
+          <Dialog.Content>
+            <Dialog.Header>
+              <Dialog.Icon icon={<XCircle className="w-6 h-6 text-error" aria-hidden="true" />} />
+              <Dialog.Title>Hủy Lời mời Gia nhập</Dialog.Title>
+              <Dialog.Description>
+                Bạn có chắc chắn muốn hủy lời mời này không? Người được mời sẽ không thể dùng link
+                token này nữa.
+              </Dialog.Description>
+            </Dialog.Header>
+            <Dialog.Footer>
+              <Button variant="text" onClick={() => setCancelingInvId(null)}>
+                Hủy
+              </Button>
+              <Button
+                variant="filled"
+                className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+                onClick={() => {
+                  if (cancelingInvId) cancelMutation.mutate({ invitationId: cancelingInvId });
+                }}
+                disabled={cancelMutation.isPending}
+              >
+                Hủy Lời Mời
+              </Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Root>
       </main>
     </div>
   );
@@ -264,7 +301,7 @@ export default function OrgInvitationsPage({ params }: { params: Promise<{ slug:
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <Progress.Circular size="sm" />
           <span className="text-sm">Đang tải danh sách lời mời...</span>
         </div>
       }

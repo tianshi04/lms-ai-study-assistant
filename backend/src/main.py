@@ -1,8 +1,10 @@
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 from typing import Any, cast
 
-
+from connectrpc_otel import OpenTelemetryInterceptor
+from opentelemetry.instrumentation.starlette import StarletteInstrumentor
 from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.middleware.cors import CORSMiddleware
@@ -40,11 +42,6 @@ from src.modules.partner.application.partner_usecase import PartnerUseCase
 from src.modules.partner.presentation.partner_handler import PartnerHandler
 from src.modules.payment.application.payment_usecase import PaymentUseCase
 from src.modules.payment.presentation.payment_handler import PaymentHandler
-import logging
-
-from connectrpc_otel import OpenTelemetryInterceptor
-from opentelemetry.instrumentation.starlette import StarletteInstrumentor
-
 from src.shared.config import settings
 from src.shared.infrastructure.interceptors import AuthInterceptor, ErrorInterceptor
 from src.shared.infrastructure.logging import setup_logging
@@ -66,8 +63,9 @@ async def run_auto_migrations() -> None:
         return
 
     try:
-        from alembic import command
         from alembic.config import Config
+
+        from alembic import command
 
         alembic_cfg = Config("alembic.ini")
 
@@ -78,7 +76,7 @@ async def run_auto_migrations() -> None:
         logger.info(
             "[AUTO MIGRATION] Alembic migrations upgraded to head successfully (Dev mode)."
         )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("[AUTO MIGRATION] Warning during auto-migration: %s", e)
 
 
@@ -95,7 +93,7 @@ async def lifespan(app: Starlette):
         from src.seed import seed_database
 
         await seed_database(auto_mode=True)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("[STARTUP] Warning during startup: %s", e)
 
     yield
@@ -116,7 +114,7 @@ async def lifespan(app: Starlette):
             logger.info("[SHUTDOWN] Redis connection pool closed.")
 
         await asyncio.gather(_shutdown_db(), _shutdown_redis(), return_exceptions=True)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning(
             "[SHUTDOWN] Error disposing database engine or redis client: %s", e
         )
@@ -127,7 +125,7 @@ async def lifespan(app: Starlette):
         trace.get_tracer_provider().shutdown()  # type: ignore
         metrics.get_meter_provider().shutdown()  # type: ignore
         logger.info("[SHUTDOWN] OpenTelemetry providers flushed and shut down.")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("[SHUTDOWN] Error shutting down OpenTelemetry providers: %s", e)
 
     logger.info("[SHUTDOWN] Graceful shutdown complete.")
@@ -214,7 +212,7 @@ async def proxy_media(request):
 
     try:
         s3_resp = await s3_client.get_object(**params)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         await s3_client_ctx.__aexit__(None, None, None)
         return Response(status_code=404, content=str(e))
 

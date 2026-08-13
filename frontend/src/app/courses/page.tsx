@@ -1,9 +1,10 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { QueryClient, dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { cacheLife, cacheTag } from "next/cache";
+import { GraduationCap } from "lucide-react";
+import { CourseGridSkeleton } from "@/components/course/CourseGridSkeleton";
 import { getPublicRpcServerClient } from "@/lib/server_connect_client";
-import { CatalogService } from "@/gen/catalog/v1/catalog_pb";
+import { CatalogService, type Course, type Category } from "@/gen/catalog/v1/catalog_pb";
 import { CourseCatalogClient } from "./CourseCatalogClient";
 
 export const metadata: Metadata = {
@@ -11,65 +12,72 @@ export const metadata: Metadata = {
   description: "Khám phá danh sách các khóa học chất lượng cao về AI và Công nghệ thông tin.",
 };
 
-/**
- * Best Practice Next.js 16 Cache Components:
- * High read-to-write catalog data cached for hours with explicit tag invalidation.
- * Immediate cache invalidation is triggered via updateTag("courses") / updateTag("categories").
- */
-async function getInitialCatalogData() {
+async function getCachedInitialCatalog() {
   "use cache";
   cacheLife("hours");
-  cacheTag("courses", "categories");
+  cacheTag("catalog", "courses-initial");
 
-  const queryClient = new QueryClient();
-  const client = getPublicRpcServerClient(CatalogService);
+  let initialCourses: Course[] = [];
+  let initialSubjects: Category[] = [];
+  let initialLevels: Category[] = [];
 
-  const defaultFilters = {
-    searchQuery: "",
-    subject: "",
-    level: "",
-    sortBy: "",
-    pageSize: 10,
-  };
+  try {
+    const client = getPublicRpcServerClient(CatalogService);
+    const [coursesRes, subjectsRes, levelsRes] = await Promise.all([
+      client.listCourses({ pageSize: 10 }),
+      client.listCategories({ type: "SUBJECT" }),
+      client.listCategories({ type: "LEVEL" }),
+    ]);
+    initialCourses = coursesRes.courses;
+    initialSubjects = subjectsRes.categories;
+    initialLevels = levelsRes.categories;
+  } catch (err: unknown) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        "Server catalog fetch fallback to client:",
+        err instanceof Error ? err.message : err,
+      );
+    }
+  }
 
-  await Promise.all([
-    queryClient.prefetchQuery({
-      queryKey: ["courses", defaultFilters],
-      queryFn: async () => (await client.listCourses(defaultFilters)).courses,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: ["categories", "SUBJECT"],
-      queryFn: async () => (await client.listCategories({ type: "SUBJECT" })).categories,
-    }),
-    queryClient.prefetchQuery({
-      queryKey: ["categories", "LEVEL"],
-      queryFn: async () => (await client.listCategories({ type: "LEVEL" })).categories,
-    }),
-  ]);
-
-  return dehydrate(queryClient);
+  return { initialCourses, initialSubjects, initialLevels };
 }
 
-async function CatalogContent() {
-  const dehydratedState = await getInitialCatalogData();
+async function CourseCatalogWrapper() {
+  const { initialCourses, initialSubjects, initialLevels } = await getCachedInitialCatalog();
 
   return (
-    <HydrationBoundary state={dehydratedState}>
-      <CourseCatalogClient />
-    </HydrationBoundary>
+    <CourseCatalogClient
+      initialCourses={initialCourses}
+      initialSubjects={initialSubjects}
+      initialLevels={initialLevels}
+    />
   );
 }
 
 export default function CoursesPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="w-full max-w-7xl mx-auto px-6 py-12 min-h-[65vh] text-center text-muted-foreground animate-pulse">
-          Đang tải danh sách khóa học...
+    <main className="w-full max-w-7xl mx-auto px-6 py-12 min-h-[65vh] bg-surface text-on-surface">
+      {/* 🟢 KHUNG TĨNH TẦNG 1: Render ngay lập tức 0ms */}
+      <div className="mb-10 text-center md:text-left max-w-5xl">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-container border border-primary/20 text-on-primary-container text-xs font-bold uppercase tracking-wider mb-4 shadow-xs">
+          <GraduationCap className="w-4 h-4 text-primary" aria-hidden="true" />
+          {"Coursera-Style Specializations & Courses"}
         </div>
-      }
-    >
-      <CatalogContent />
-    </Suspense>
+        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-on-surface mb-4 text-balance">
+          {"Khám phá Khóa học & Lộ trình Học tập"}
+        </h1>
+        <p className="text-on-surface-variant text-lg leading-relaxed">
+          {
+            "Học tập với bài giảng video tương tác, phụ đề cuộn thông minh, bài tập thực hành nâng cao và thảo luận cộng đồng."
+          }
+        </p>
+      </div>
+
+      {/* 🔵 SUSPENSE BỌC KHU VỰC BỘ LỌC VÀ LƯỚI KHÓA HỌC DỘNG */}
+      <Suspense fallback={<CourseGridSkeleton />}>
+        <CourseCatalogWrapper />
+      </Suspense>
+    </main>
   );
 }

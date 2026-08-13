@@ -11,16 +11,13 @@ import {
 } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Surface } from "@/components/ui/Surface";
 import { useAuth } from "@/components/providers/AuthProvider";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import { Trash2 } from "lucide-react";
+import { Dialog } from "@/components/ui/Dialog";
+import { PageHeader } from "@/components/ui/LayoutPrimitives";
 
 const CategoryList = ({
   title,
@@ -37,7 +34,7 @@ const CategoryList = ({
   noCategoriesText: string;
   deleteText: string;
 }) => (
-  <div className="bg-card rounded-2xl shadow-sm border border-border p-6 flex-1">
+  <Surface variant="low" shape="2xl" className="p-6 flex-1">
     <h3 className="text-xl font-bold mb-4 text-foreground">
       {title} ({items.length})
     </h3>
@@ -55,7 +52,8 @@ const CategoryList = ({
               <p className="text-xs text-muted-foreground">Slug: {item.slug}</p>
             </div>
             <Button
-              variant="danger"
+              variant="outlined"
+              className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
               size="sm"
               onClick={() => handleDelete(item.id, type)}
               title={deleteText}
@@ -66,15 +64,17 @@ const CategoryList = ({
         ))}
       </ul>
     )}
-  </div>
+  </Surface>
 );
 
 export default function AdminCategoriesPage() {
   const router = useRouter();
+  const { isSuperAdmin } = useAuth();
   const toast = useToast();
 
-  const { isSuperAdmin } = useAuth();
-  const isAdmin = isSuperAdmin;
+  const [newName, setNewName] = useState("");
+  const [newType, setNewType] = useState<"SUBJECT" | "LEVEL">("SUBJECT");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: string } | null>(null);
 
   const { data: subjects = [], refetch: refetchSubjects } = useCategoriesQuery("SUBJECT");
   const { data: levels = [], refetch: refetchLevels } = useCategoriesQuery("LEVEL");
@@ -82,25 +82,22 @@ export default function AdminCategoriesPage() {
   const createCategoryMutation = useCreateCategoryMutation();
   const deleteCategoryMutation = useDeleteCategoryMutation();
 
-  const [newName, setNewName] = useState("");
-  const [newType, setNewType] = useState<"SUBJECT" | "LEVEL">("SUBJECT");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: string } | null>(null);
-
-  if (!isAdmin)
-    return <div className="p-8 text-center text-destructive font-bold">{"Từ chối truy cập"}</div>;
+  if (!isSuperAdmin) {
+    return <div className="p-12 text-center text-destructive font-bold">{"Từ chối truy cập"}</div>;
+  }
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) return;
+
     try {
-      setErrorMsg("");
       await createCategoryMutation.mutateAsync({ name: newName, type: newType });
       setNewName("");
       if (newType === "SUBJECT") refetchSubjects();
       else refetchLevels();
+      toast.success("Tạo danh mục thành công!");
     } catch (err: unknown) {
-      setErrorMsg((err as Error).message || "Failed to create category");
+      toast.error((err as Error).message || "Không thể tạo danh mục");
     }
   };
 
@@ -110,6 +107,7 @@ export default function AdminCategoriesPage() {
 
   const executeDelete = async () => {
     if (!deleteTarget) return;
+
     try {
       await deleteCategoryMutation.mutateAsync({ id: deleteTarget.id });
       if (deleteTarget.type === "SUBJECT") refetchSubjects();
@@ -124,19 +122,19 @@ export default function AdminCategoriesPage() {
 
   return (
     <main className="max-w-5xl mx-auto px-6 py-12 flex-1">
-      <div className="mb-8 flex justify-between items-end">
+      <PageHeader>
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground text-balance">
-            {"Danh mục quản trị"}
-          </h1>
-          <p className="text-muted-foreground mt-2">{"Quản lý danh mục khóa học"}</p>
+          <PageHeader.Title>Danh mục quản trị</PageHeader.Title>
+          <PageHeader.Description>Quản lý danh mục khóa học</PageHeader.Description>
         </div>
-        <Button variant="ghost" size="sm" onClick={() => router.push("/admin/dashboard")}>
-          &larr; {"Về trang quản trị"}
-        </Button>
-      </div>
+        <PageHeader.Actions>
+          <Button variant="text" size="sm" onClick={() => router.push("/admin/dashboard")}>
+            &larr; {"Về trang quản trị"}
+          </Button>
+        </PageHeader.Actions>
+      </PageHeader>
 
-      <div className="bg-card rounded-2xl shadow-sm border border-border p-6 mb-8">
+      <Surface variant="container" shape="2xl" className="p-6 mb-8">
         <h2 className="text-lg font-semibold mb-4 text-foreground">{"Thêm danh mục mới"}</h2>
         <form onSubmit={handleCreate} className="flex flex-col md:flex-row gap-4 items-end">
           <div className="flex-1 w-full">
@@ -159,27 +157,26 @@ export default function AdminCategoriesPage() {
                 if (val) setNewType(val as "SUBJECT" | "LEVEL");
               }}
             >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Loại danh mục">
+              <Select.Trigger className="w-full">
+                <Select.Value placeholder="Loại danh mục">
                   {newType === "SUBJECT" ? "Chủ đề" : "Cấp độ"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="SUBJECT">{"Chủ đề"}</SelectItem>
-                <SelectItem value="LEVEL">{"Cấp độ"}</SelectItem>
-              </SelectContent>
+                </Select.Value>
+              </Select.Trigger>
+              <Select.Content>
+                <Select.Item value="SUBJECT">{"Chủ đề"}</Select.Item>
+                <Select.Item value="LEVEL">{"Cấp độ"}</Select.Item>
+              </Select.Content>
             </Select>
           </div>
           <Button
             type="submit"
-            isLoading={createCategoryMutation.isPending}
+            disabled={createCategoryMutation.isPending}
             className="w-full md:w-auto"
           >
             Thêm danh mục
           </Button>
         </form>
-        {errorMsg && <p className="text-destructive text-sm mt-3">{errorMsg}</p>}
-      </div>
+      </Surface>
 
       <div className="flex flex-col md:flex-row gap-6">
         <CategoryList
@@ -200,17 +197,35 @@ export default function AdminCategoriesPage() {
         />
       </div>
 
-      <ConfirmAlertDialog
-        isOpen={Boolean(deleteTarget)}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={executeDelete}
-        title="Xác nhận xóa danh mục"
-        description="Bạn có chắc chắn muốn xóa danh mục này? Thao tác này không thể hoàn tác."
-        confirmText="Xóa danh mục"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={deleteCategoryMutation.isPending}
-      />
+      <Dialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon icon={<Trash2 className="w-6 h-6 text-error" aria-hidden="true" />} />
+            <Dialog.Title>Xác nhận xóa danh mục</Dialog.Title>
+            <Dialog.Description>
+              Bạn có chắc chắn muốn xóa danh mục này? Thao tác này không thể hoàn tác.
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Button variant="text" onClick={() => setDeleteTarget(null)}>
+              Hủy
+            </Button>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={executeDelete}
+              disabled={deleteCategoryMutation.isPending}
+            >
+              Xóa danh mục
+            </Button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog>
     </main>
   );
 }

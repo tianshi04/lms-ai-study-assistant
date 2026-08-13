@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { HonorCodeModal } from "./HonorCodeModal";
@@ -17,9 +18,17 @@ import {
   CircleDot,
   CheckSquare,
   HelpCircle,
+  Lock,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { Badge } from "@/components/ui/Badge";
+import { Surface } from "@/components/ui/Surface";
+import { Progress } from "@/components/ui/Progress";
+import { Checkbox } from "@/components/ui/Checkbox";
+import { RadioGroup } from "@/components/ui/RadioGroup";
+import { Chip } from "@/components/ui/Chip";
 
 interface QuizSessionQuestionOption {
   optionIndex: number;
@@ -49,7 +58,7 @@ export function GradedQuizRunner({
   isPreviewMode = false,
 }: GradedQuizRunnerProps) {
   const { userId: authUserId } = useAuth();
-  const effectiveUserId = userId || authUserId || "user-demo-1";
+  const _effectiveUserId = userId || authUserId || "user-demo-1";
   const [selectedAnswers, setSelectedAnswers] = useState<number[][]>([]);
   const [isHonorModalOpen, setIsHonorModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -256,15 +265,10 @@ export function GradedQuizRunner({
       selectedOptionIndexes: indices,
     }));
 
-    const legacySelectedOptionIndexes = selectedAnswers.map((indices) =>
-      indices.length > 0 ? indices[0] : -1,
-    );
-
     try {
       const client = getRpcClient(AssessmentService);
       const res = await client.submitGradedQuiz({
         itemId,
-        selectedOptionIndexes: legacySelectedOptionIndexes,
         questionAnswers: questionAnswersPayload,
         sessionSeed,
         startTimeIso,
@@ -315,7 +319,7 @@ export function GradedQuizRunner({
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <Progress.Circular size="md" ariaLabel="Đang tạo phiên làm bài và tải câu hỏi" />
         <p aria-live="polite" className="text-sm text-muted-foreground font-semibold">
           Đang tạo phiên làm bài và tải câu hỏi…
         </p>
@@ -324,6 +328,47 @@ export function GradedQuizRunner({
   }
 
   if (error) {
+    const isAuditModeErr =
+      error.includes("Audit Mode") ||
+      error.includes("Miễn phí") ||
+      error.includes("permission_denied");
+
+    if (isAuditModeErr) {
+      return (
+        <div className="max-w-4xl mx-auto p-8 rounded-2xl bg-surface-container-low text-on-surface text-center space-y-6 border border-border shadow-xs">
+          <div className="w-16 h-16 rounded-full bg-warning/15 text-warning flex items-center justify-center mx-auto shadow-inner">
+            <Lock className="w-8 h-8 stroke-[2.5]" aria-hidden="true" />
+          </div>
+          <div className="max-w-md mx-auto space-y-2">
+            <Chip
+              variant="assist"
+              className="h-6 bg-warning/10 text-warning border-warning/20 hover:bg-warning/15 cursor-default font-bold text-xs pointer-events-none"
+              leadingIcon={<Lock className="w-3.5 h-3.5 text-warning" aria-hidden="true" />}
+            >
+              CHẾ ĐỘ AUDIT (MIỄN PHÍ)
+            </Chip>
+            <h3 className="text-xl font-extrabold text-foreground">
+              Bài kiểm tra tính điểm đã bị khóa
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Tài khoản của bạn đang ở chế độ Audit Mode (Miễn phí). Vui lòng nâng cấp Coursera Plus
+              hoặc mua khóa học / nhập mã Enterprise Key / Hỗ trợ tài chính để làm bài kiểm tra tính
+              điểm này.
+            </p>
+          </div>
+          <div className="flex justify-center pt-2">
+            <Link
+              href="/my-purchases"
+              className="px-6 py-3 rounded-full bg-primary hover:bg-primary-hover text-primary-foreground font-bold text-sm transition-all shadow-xs flex items-center gap-2"
+            >
+              <Sparkles className="w-4 h-4 fill-current" aria-hidden="true" />
+              Nâng cấp Coursera Plus ngay
+            </Link>
+          </div>
+        </div>
+      );
+    }
+
     const isBlocked =
       error.includes("vượt qua") ||
       error.includes("hết lượt") ||
@@ -374,19 +419,19 @@ export function GradedQuizRunner({
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6 bg-card border border-border rounded-2xl shadow-sm">
+    <Surface variant="low" shape="3xl" className="space-y-6 max-w-4xl mx-auto p-4 sm:p-6">
       {/* Header Info */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             {isPreviewMode ? (
-              <Badge variant="verified">CHẾ ĐỘ XEM TRƯỚC (PREVIEW)</Badge>
+              <Badge variant="primary">CHẾ ĐỘ XEM TRƯỚC (PREVIEW)</Badge>
             ) : (
               <Badge variant="warning">BÀI THI CÓ TÍNH ĐIỂM</Badge>
             )}
             {!isPreviewMode && (
               <Badge
-                variant={attemptsLeft <= 1 ? "danger" : "outline"}
+                variant={attemptsLeft <= 1 ? "error" : "outlined"}
                 className="text-xs font-semibold"
               >
                 Lượt làm còn lại: {attemptsLeft}/{maxAttempts}
@@ -400,6 +445,16 @@ export function GradedQuizRunner({
           <h2 className="text-xl font-bold text-foreground mt-1">
             {title || "Bài thi trắc nghiệm"}
           </h2>
+          <Progress.Linear
+            value={
+              questions.length > 0
+                ? (Object.keys(selectedAnswers).length / questions.length) * 100
+                : 0
+            }
+            showLabel
+            label={`Tiến độ làm bài (${Object.keys(selectedAnswers).length}/${questions.length} câu)`}
+            className="mt-3"
+          />
         </div>
       </div>
 
@@ -429,10 +484,7 @@ export function GradedQuizRunner({
           const currentAnswers = selectedAnswers[qIdx] || [];
 
           return (
-            <div
-              key={q.questionId}
-              className="p-5 rounded-2xl border border-border bg-card space-y-3"
-            >
+            <Surface key={q.questionId} variant="low" shape="2xl" className="p-5 space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <h4 className="text-sm font-bold text-foreground">
                   Câu {qIdx + 1}. {q.text}
@@ -446,13 +498,18 @@ export function GradedQuizRunner({
                     Chọn nhiều đáp án
                   </Badge>
                 ) : q.questionType === "TRUE_FALSE" ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-info/15 text-info border border-info/30 shrink-0">
-                    <HelpCircle aria-hidden="true" className="w-3 h-3" />
+                  <Chip
+                    variant="assist"
+                    className="h-6 text-[10px] py-0 px-2.5 bg-info/15 text-info border-info/30 hover:bg-info/20 shrink-0 cursor-default pointer-events-none font-bold"
+                    leadingIcon={
+                      <HelpCircle aria-hidden="true" className="w-3.5 h-3.5 text-info" />
+                    }
+                  >
                     Đúng / Sai
-                  </span>
+                  </Chip>
                 ) : (
                   <Badge
-                    variant="default"
+                    variant="secondary"
                     className="text-[10px] py-0.5 px-2.5 font-medium text-muted-foreground shrink-0 flex items-center gap-1"
                   >
                     <CircleDot aria-hidden="true" className="w-3 h-3" />
@@ -461,42 +518,52 @@ export function GradedQuizRunner({
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {q.options.map((opt, optIdx) => {
-                  const isSelected = currentAnswers.includes(optIdx);
-                  return (
-                    <button
-                      key={optIdx}
-                      type="button"
-                      disabled={(cooldownCountdown > 0 && !isPreviewMode) || quizResult !== null}
-                      onClick={() => handleOptionSelect(qIdx, optIdx, isMultipleChoice)}
-                      className={`p-3.5 rounded-xl text-xs text-left font-medium transition-colors border flex items-center gap-2.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                        isSelected
-                          ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
-                          : "bg-card border-border hover:border-primary/50 text-foreground"
-                      }`}
-                    >
-                      <span
-                        className={`w-5 h-5 ${
-                          isMultipleChoice ? "rounded-md" : "rounded-full"
-                        } flex items-center justify-center text-[10px] font-bold transition-colors ${
+              {isMultipleChoice ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {q.options.map((opt, optIdx) => {
+                    const isSelected = currentAnswers.includes(optIdx);
+                    return (
+                      <Button
+                        key={optIdx}
+                        type="button"
+                        variant="outlined"
+                        disabled={(cooldownCountdown > 0 && !isPreviewMode) || quizResult !== null}
+                        onClick={() => handleOptionSelect(qIdx, optIdx, true)}
+                        className={`h-auto justify-start text-left p-3.5 rounded-xl text-xs font-medium border flex items-center gap-2.5 cursor-pointer ${
                           isSelected
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground"
+                            ? "bg-primary/10 border-primary text-primary font-bold shadow-xs"
+                            : "bg-card border-border hover:border-primary/50 text-foreground"
                         }`}
                       >
-                        {isMultipleChoice && isSelected ? (
-                          <Check aria-hidden="true" className="w-3 h-3 text-primary-foreground" />
-                        ) : (
-                          String.fromCharCode(65 + optIdx)
-                        )}
-                      </span>
-                      <span className="flex-1">{opt.optionText}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+                        <Checkbox
+                          checked={isSelected}
+                          readOnly
+                          className="pointer-events-none"
+                          aria-hidden="true"
+                        />
+                        <span className="flex-1">{opt.optionText}</span>
+                      </Button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <RadioGroup
+                  value={currentAnswers[0]?.toString()}
+                  onValueChange={(val) => handleOptionSelect(qIdx, Number(val), false)}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-2.5"
+                >
+                  {q.options.map((opt, optIdx) => (
+                    <RadioGroup.Item
+                      key={optIdx}
+                      value={optIdx.toString()}
+                      disabled={(cooldownCountdown > 0 && !isPreviewMode) || quizResult !== null}
+                      label={opt.optionText}
+                      containerClassName="p-3.5 rounded-xl border border-outline-variant bg-surface-container-lowest hover:border-outline hover:bg-surface-container-low transition-all"
+                    />
+                  ))}
+                </RadioGroup>
+              )}
+            </Surface>
           );
         })}
       </div>
@@ -559,16 +626,16 @@ export function GradedQuizRunner({
       {submitError && (
         <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-xs font-semibold flex items-center justify-between shadow-xs">
           <span>{submitError}</span>
-          <Button
+          <IconButton
             type="button"
-            variant="ghost"
-            size="icon"
+            variant="standard"
+            size="xs"
             onClick={() => setSubmitError(null)}
-            className="text-destructive hover:text-destructive p-1 h-auto w-auto"
+            className="text-destructive hover:text-destructive p-1"
             aria-label="Đóng thông báo lỗi"
           >
             <X aria-hidden="true" className="w-4 h-4" />
-          </Button>
+          </IconButton>
         </div>
       )}
 
@@ -582,13 +649,13 @@ export function GradedQuizRunner({
 
         <div className="flex items-center gap-3">
           {isPreviewMode && quizResult && (
-            <Button type="button" variant="outline" size="sm" onClick={handleResetPreview}>
+            <Button type="button" variant="outlined" size="sm" onClick={handleResetPreview}>
               <RotateCcw aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
               Làm lại bài thi (Reset)
             </Button>
           )}
           {!isPreviewMode && quizResult && cooldownCountdown === 0 && attemptsLeft > 0 && (
-            <Button type="button" variant="outline" size="sm" onClick={handleRetryQuiz}>
+            <Button type="button" variant="outlined" size="sm" onClick={handleRetryQuiz}>
               <RotateCcw aria-hidden="true" className="w-3.5 h-3.5 mr-1.5" />
               Làm lại bài thi (Cải thiện điểm)
             </Button>
@@ -597,8 +664,7 @@ export function GradedQuizRunner({
             <Button
               type="button"
               onClick={handleSubmitQuiz}
-              isLoading={isSubmitting}
-              disabled={cooldownCountdown > 0 && !isPreviewMode}
+              disabled={isSubmitting || (cooldownCountdown > 0 && !isPreviewMode)}
               size="sm"
             >
               {isSubmitting ? "Đang chấm điểm…" : "Nộp bài thi"}
@@ -610,7 +676,6 @@ export function GradedQuizRunner({
 
       <HonorCodeModal
         itemId={itemId}
-        userId={effectiveUserId}
         isOpen={isHonorModalOpen}
         isSubmitting={isSubmitting}
         onAgreedAndSubmit={async () => {
@@ -619,6 +684,6 @@ export function GradedQuizRunner({
         }}
         onClose={() => setIsHonorModalOpen(false)}
       />
-    </div>
+    </Surface>
   );
 }

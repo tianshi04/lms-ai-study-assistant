@@ -1,5 +1,7 @@
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
+
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 from src.modules.catalog.domain.entities import Course, CourseStatus
 from src.modules.identity.domain.entities import User, UserRole
@@ -95,18 +97,20 @@ async def test_add_course_collaborator_permission_denied():
         status=CourseStatus.DRAFT,
     )
 
-    with patch(
-        "src.modules.catalog.infrastructure.repository.SQLAlchemyCatalogRepository.get_course_detail",
-        new_callable=AsyncMock,
-        return_value=mock_course,
+    with (
+        patch(
+            "src.modules.catalog.infrastructure.repository.SQLAlchemyCatalogRepository.get_course_detail",
+            new_callable=AsyncMock,
+            return_value=mock_course,
+        ),
+        pytest.raises(PermissionError, match="không phải là Chủ sở hữu"),
     ):
-        with pytest.raises(PermissionError, match="không phải là Chủ sở hữu"):
-            await use_case.add_course_collaborator(
-                course_id="course_101",
-                email="ta@example.com",
-                role="ta",
-                current_user=other_user,
-            )
+        await use_case.add_course_collaborator(
+            course_id="course_101",
+            email="ta@example.com",
+            role="ta",
+            current_user=other_user,
+        )
 
 
 @pytest.mark.asyncio

@@ -12,9 +12,14 @@ import {
 } from "@/gen/identity/v1/identity_pb";
 import { FileText, ExternalLink, PlayCircle, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
+import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/Textarea";
+import { Surface } from "@/components/ui/Surface";
 import { useToast } from "@/components/ui/Toast";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import { Dialog } from "@/components/ui/Dialog";
+import { Progress } from "@/components/ui/Progress";
+import { PageHeader } from "@/components/ui/LayoutPrimitives";
 
 export default function AdminInstructorApplicationsPage() {
   const toast = useToast();
@@ -30,66 +35,70 @@ export default function AdminInstructorApplicationsPage() {
     refetch,
   } = useListInstructorApplicationsQuery(statusFilter);
 
-  const reviewMutation = useReviewInstructorApplicationMutation({
-    onSuccess: (updatedApp, variables) => {
-      setRejectingAppId(null);
-      setApprovingAppId(null);
-      setRejectionReason("");
-      setActionSuccessMsg(
-        variables.approve
-          ? "Đã phê duyệt đơn và nâng tài khoản thành Giảng viên thành công!"
-          : "Đã từ chối đơn đăng ký thành công.",
-      );
-      refetch();
-    },
-  });
+  const reviewMutation = useReviewInstructorApplicationMutation();
 
   const handleApprove = (appId: string) => {
     setApprovingAppId(appId);
   };
 
-  const executeApprove = () => {
-    if (approvingAppId) {
-      reviewMutation.mutate({ applicationId: approvingAppId, approve: true });
+  const executeApprove = async () => {
+    if (!approvingAppId) return;
+
+    try {
+      await reviewMutation.mutateAsync({
+        applicationId: approvingAppId,
+        approve: true,
+      });
+      setActionSuccessMsg("Đã phê duyệt đơn đăng ký giảng viên thành công!");
+      toast.success("Phê duyệt đơn đăng ký thành công!");
+      setApprovingAppId(null);
+      refetch();
+    } catch (err: unknown) {
+      toast.error((err as Error).message || "Phê duyệt thất bại.");
     }
   };
 
-  const handleConfirmReject = (appId: string) => {
-    if (!rejectionReason.trim()) {
-      toast.error("Vui lòng nhập lý do từ chối.");
-      return;
+  const handleConfirmReject = async () => {
+    if (!rejectingAppId || !rejectionReason.trim()) return;
+
+    try {
+      await reviewMutation.mutateAsync({
+        applicationId: rejectingAppId,
+        approve: false,
+        rejectionReason: rejectionReason.trim(),
+      });
+      setActionSuccessMsg("Đã từ chối đơn đăng ký.");
+      toast.info("Đã từ chối đơn đăng ký.");
+      setRejectingAppId(null);
+      setRejectionReason("");
+      refetch();
+    } catch (err: unknown) {
+      toast.error((err as Error).message || "Từ chối thất bại.");
     }
-    reviewMutation.mutate({
-      applicationId: appId,
-      approve: false,
-      rejectionReason: rejectionReason.trim(),
-    });
   };
 
   return (
     <div className="min-h-screen bg-background py-10 px-4 sm:px-6 lg:px-8 transition-colors">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header Breadcrumb & Title */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <PageHeader>
           <div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+            <PageHeader.Breadcrumbs>
               <Link href="/admin/dashboard" className="hover:underline">
                 Admin Portal
               </Link>
               <span>/</span>
               <span className="font-semibold text-foreground">Đơn Giảng viên</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight text-balance">
-              Quản Lý Thẩm Định Đơn Giảng Viên
-            </h1>
+            </PageHeader.Breadcrumbs>
+            <PageHeader.Title>Quản Lý Thẩm Định Đơn Giảng Viên</PageHeader.Title>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="outline" asChild>
-              <Link href="/admin/dashboard">Về Dashboard</Link>
+          <PageHeader.Actions>
+            <Button variant="outlined" render={<Link href="/admin/dashboard" />}>
+              Về Dashboard
             </Button>
-          </div>
-        </div>
+          </PageHeader.Actions>
+        </PageHeader>
 
         {actionSuccessMsg && (
           <div
@@ -97,16 +106,16 @@ export default function AdminInstructorApplicationsPage() {
             className="p-4 rounded-2xl bg-success/10 border border-success/30 text-success text-sm font-bold flex items-center justify-between"
           >
             <span>{actionSuccessMsg}</span>
-            <Button
-              variant="ghost"
-              size="icon"
+            <IconButton
+              variant="standard"
+              size="xs"
               type="button"
               onClick={() => setActionSuccessMsg("")}
               aria-label="Đóng thông báo"
-              className="text-success hover:text-success h-6 w-6"
+              className="text-success hover:text-success"
             >
               <X className="w-4 h-4" aria-hidden="true" />
-            </Button>
+            </IconButton>
           </div>
         )}
 
@@ -118,27 +127,31 @@ export default function AdminInstructorApplicationsPage() {
             { label: "Đã phê duyệt", value: "APPROVED" },
             { label: "Đã từ chối", value: "REJECTED" },
           ].map((tab) => (
-            <Button
+            <Chip
               key={tab.value}
-              variant={statusFilter === tab.value ? "primary" : "outline"}
-              size="sm"
+              variant="filter"
+              selected={statusFilter === tab.value}
               onClick={() => setStatusFilter(tab.value)}
             >
               {tab.label}
-            </Button>
+            </Chip>
           ))}
         </div>
 
         {/* Content List */}
         {isLoading ? (
-          <div className="bg-card rounded-3xl p-12 text-center border border-border shadow-sm">
-            <div className="inline-block animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mb-3" />
+          <Surface
+            variant="low"
+            shape="2xl"
+            className="p-12 text-center flex flex-col items-center justify-center"
+          >
+            <Progress.Circular size="md" className="mb-3" />
             <p aria-live="polite" className="text-muted-foreground text-sm font-medium">
               Đang tải danh sách đơn thẩm định…
             </p>
-          </div>
+          </Surface>
         ) : applications.length === 0 ? (
-          <div className="bg-card rounded-3xl p-12 text-center border border-border shadow-sm space-y-3">
+          <Surface variant="low" shape="2xl" className="p-12 text-center space-y-3">
             <div className="w-12 h-12 bg-muted text-muted-foreground rounded-2xl flex items-center justify-center mx-auto">
               <FileText className="w-6 h-6" aria-hidden="true" />
             </div>
@@ -146,7 +159,7 @@ export default function AdminInstructorApplicationsPage() {
             <p className="text-muted-foreground text-sm max-w-sm mx-auto">
               Hiện tại chưa có đơn xin cấp quyền Giảng viên cá nhân nào phù hợp với bộ lọc đã chọn.
             </p>
-          </div>
+          </Surface>
         ) : (
           <div className="space-y-6">
             {applications.map((app: InstructorApplication) => {
@@ -155,10 +168,7 @@ export default function AdminInstructorApplicationsPage() {
               const isRejected = app.status === InstructorApplicationStatus.REJECTED;
 
               return (
-                <div
-                  key={app.id}
-                  className="bg-card rounded-3xl p-6 sm:p-8 border border-border space-y-6"
-                >
+                <Surface key={app.id} variant="low" shape="2xl" className="p-6 sm:p-8 space-y-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
                     <div>
                       <div className="flex items-center gap-3">
@@ -206,39 +216,60 @@ export default function AdminInstructorApplicationsPage() {
                     </div>
 
                     {/* External Links */}
-                    <div className="flex flex-wrap gap-4 pt-2">
+                    <div className="flex flex-wrap gap-3 pt-2">
                       {app.linkedinUrl && (
-                        <a
-                          href={app.linkedinUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-info/10 text-info border border-info/20 text-xs font-semibold hover:bg-info/20 transition-colors"
+                        <Chip
+                          variant="assist"
+                          leadingIcon={<ExternalLink className="w-4 h-4" aria-hidden="true" />}
+                          render={
+                            <a
+                              href={app.linkedinUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label="Xem LinkedIn/Portfolio"
+                            >
+                              Xem LinkedIn/Portfolio
+                            </a>
+                          }
                         >
-                          <ExternalLink className="w-4 h-4" aria-hidden="true" />
-                          <span>Xem LinkedIn/Portfolio</span>
-                        </a>
+                          Xem LinkedIn/Portfolio
+                        </Chip>
                       )}
                       {app.cvUrl && (
-                        <a
-                          href={app.cvUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-muted text-foreground border border-border text-xs font-semibold hover:bg-muted/80 transition-colors"
+                        <Chip
+                          variant="assist"
+                          leadingIcon={<FileText className="w-4 h-4" aria-hidden="true" />}
+                          render={
+                            <a
+                              href={app.cvUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label="Xem Hồ sơ CV (.pdf)"
+                            >
+                              Xem Hồ sơ CV (.pdf)
+                            </a>
+                          }
                         >
-                          <FileText className="w-4 h-4 text-destructive" aria-hidden="true" />
-                          <span>Xem Hồ sơ CV (.pdf)</span>
-                        </a>
+                          Xem Hồ sơ CV (.pdf)
+                        </Chip>
                       )}
                       {app.demoVideoUrl && (
-                        <a
-                          href={app.demoVideoUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors"
+                        <Chip
+                          variant="assist"
+                          leadingIcon={<PlayCircle className="w-4 h-4" aria-hidden="true" />}
+                          render={
+                            <a
+                              href={app.demoVideoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label="Xem Video Giảng Thử Demo"
+                            >
+                              Xem Video Giảng Thử Demo
+                            </a>
+                          }
                         >
-                          <PlayCircle className="w-4 h-4 text-destructive" aria-hidden="true" />
-                          <span>Xem Video Giảng Thử Demo</span>
-                        </a>
+                          Xem Video Giảng Thử Demo
+                        </Chip>
                       )}
                     </div>
 
@@ -265,7 +296,7 @@ export default function AdminInstructorApplicationsPage() {
                           <div className="flex items-center justify-end gap-2">
                             <Button
                               type="button"
-                              variant="secondary"
+                              variant="outlined"
                               size="sm"
                               onClick={() => setRejectingAppId(null)}
                             >
@@ -273,10 +304,11 @@ export default function AdminInstructorApplicationsPage() {
                             </Button>
                             <Button
                               type="button"
-                              variant="danger"
+                              variant="outlined"
+                              className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
                               size="sm"
-                              onClick={() => handleConfirmReject(app.id)}
-                              isLoading={reviewMutation.isPending}
+                              onClick={handleConfirmReject}
+                              disabled={reviewMutation.isPending}
                             >
                               Xác nhận Từ chối
                             </Button>
@@ -286,7 +318,8 @@ export default function AdminInstructorApplicationsPage() {
                         <>
                           <Button
                             type="button"
-                            variant="danger"
+                            variant="outlined"
+                            className="bg-error/10 text-destructive border-destructive/30 hover:bg-destructive/20"
                             size="sm"
                             onClick={() => setRejectingAppId(app.id)}
                             disabled={reviewMutation.isPending}
@@ -295,10 +328,10 @@ export default function AdminInstructorApplicationsPage() {
                           </Button>
                           <Button
                             type="button"
-                            variant="primary"
+                            variant="filled"
                             size="sm"
                             onClick={() => handleApprove(app.id)}
-                            isLoading={reviewMutation.isPending}
+                            disabled={reviewMutation.isPending}
                           >
                             <Check className="w-4 h-4 mr-1.5" aria-hidden="true" />
                             <span>Phê Duyệt & Nâng Role Giảng Viên</span>
@@ -307,24 +340,38 @@ export default function AdminInstructorApplicationsPage() {
                       )}
                     </div>
                   )}
-                </div>
+                </Surface>
               );
             })}
           </div>
         )}
       </div>
 
-      <ConfirmAlertDialog
-        isOpen={Boolean(approvingAppId)}
-        onClose={() => setApprovingAppId(null)}
-        onConfirm={executeApprove}
-        title="Xác nhận phê duyệt đơn Giảng viên"
-        description="Bạn có chắc chắn muốn phê duyệt đơn này và nâng quyền tài khoản tương ứng thành Giảng viên?"
-        confirmText="Phê Duyệt"
-        cancelText="Hủy"
-        variant="primary"
-        isLoading={reviewMutation.isPending}
-      />
+      <Dialog
+        open={Boolean(approvingAppId)}
+        onOpenChange={(open) => {
+          if (!open) setApprovingAppId(null);
+        }}
+      >
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon icon={<Check className="w-6 h-6 text-primary" aria-hidden="true" />} />
+            <Dialog.Title>Xác nhận phê duyệt đơn Giảng viên</Dialog.Title>
+            <Dialog.Description>
+              Bạn có chắc chắn muốn phê duyệt đơn này và nâng quyền tài khoản tương ứng thành Giảng
+              viên?
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Button variant="text" onClick={() => setApprovingAppId(null)}>
+              Hủy
+            </Button>
+            <Button variant="filled" onClick={executeApprove} disabled={reviewMutation.isPending}>
+              Phê Duyệt
+            </Button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog>
     </div>
   );
 }

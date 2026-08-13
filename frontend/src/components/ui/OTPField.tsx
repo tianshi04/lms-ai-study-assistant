@@ -2,16 +2,13 @@ import * as React from "react";
 import { OTPField as BaseOTPField } from "@base-ui/react/otp-field";
 import { cn } from "@/lib/utils";
 
-export const OTPFieldRoot = BaseOTPField.Root;
-export const OTPFieldInput = BaseOTPField.Input;
-
 export interface OTPFieldProps extends React.ComponentProps<typeof BaseOTPField.Root> {
   label?: string;
   error?: string;
   helperText?: string;
 }
 
-export function OTPField({ label, error, helperText, className, ref, ...props }: OTPFieldProps) {
+function OTPFieldComponent({ label, error, helperText, className, ref, ...props }: OTPFieldProps) {
   return (
     <div className="space-y-1.5">
       {label && (
@@ -27,3 +24,8 @@ export function OTPField({ label, error, helperText, className, ref, ...props }:
     </div>
   );
 }
+
+export const OTPField = Object.assign(OTPFieldComponent, {
+  Root: BaseOTPField.Root,
+  Input: BaseOTPField.Input,
+});

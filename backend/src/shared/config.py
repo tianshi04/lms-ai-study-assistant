@@ -1,5 +1,4 @@
 from functools import lru_cache
-from typing import Optional
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -64,18 +63,18 @@ class Settings(BaseSettings):
     )
 
     # 5. OpenTelemetry & Jaeger Observability
-    OTEL_EXPORTER_OTLP_ENDPOINT: Optional[str] = Field(
+    OTEL_EXPORTER_OTLP_ENDPOINT: str | None = Field(
         default=None,
         description="OpenTelemetry OTLP Collector Endpoint (e.g. http://localhost:4317)",
     )
 
     # 6. VNPay Sandbox Gateway Configuration
     VNPAY_TMN_CODE: str = Field(
-        default="PLM6WVVN",
+        default="",
         description="VNPay Merchant Terminal Code (vnp_TmnCode)",
     )
     VNPAY_HASH_SECRET: str = Field(
-        default="MLQIAARTMNPRIGVBPAFCRFVCASOBHRTS",
+        default="",
         description="VNPay Secret Key for HMAC-SHA512 checksum calculation",
     )
     VNPAY_PAYMENT_URL: str = Field(

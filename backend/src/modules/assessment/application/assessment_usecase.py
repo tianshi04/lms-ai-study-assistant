@@ -2,9 +2,9 @@ import logging
 import random
 import re
 import uuid
-from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Optional
-
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from src.modules.assessment.domain.constants import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
@@ -37,14 +37,13 @@ from src.modules.assessment.infrastructure.sandbox_service import (
     PythonCodeSandboxExecutor,
 )
 from src.shared.access_policy import require_paid_access
-from src.shared.infrastructure.database import async_session_scope
-
 from src.shared.auth import CurrentUser
+from src.shared.infrastructure.database import async_session_scope
 
 logger = logging.getLogger(__name__)
 
 
-def _clean_explanation(raw_exp: Optional[str]) -> str:
+def _clean_explanation(raw_exp: str | None) -> str:
     if not raw_exp:
         return ""
     cleaned = raw_exp.strip()
@@ -72,7 +71,7 @@ def _clean_explanation(raw_exp: Optional[str]) -> str:
 
 
 class AssessmentUseCase:
-    def _verify_staff(self, current_user: Optional[CurrentUser]) -> None:
+    def _verify_staff(self, current_user: CurrentUser | None) -> None:
         if current_user is not None and not current_user.is_staff:
             raise PermissionError(
                 "Chỉ Trợ giảng (TA) hoặc Giảng viên mới có quyền quản lý đánh giá."
@@ -80,9 +79,9 @@ class AssessmentUseCase:
 
     def __init__(
         self,
-        repository: Optional[AssessmentRepositoryInterface] = None,
-        repo_factory: Optional[Callable[[Any], AssessmentRepositoryInterface]] = None,
-        sandbox_executor: Optional[PythonCodeSandboxExecutor] = None,
+        repository: AssessmentRepositoryInterface | None = None,
+        repo_factory: Callable[[Any], AssessmentRepositoryInterface] | None = None,
+        sandbox_executor: PythonCodeSandboxExecutor | None = None,
     ) -> None:
         self.repository = repository
         self.repo_factory = repo_factory or (
@@ -102,7 +101,7 @@ class AssessmentUseCase:
     async def submit_honor_code(
         self, user_id: str, item_id: str, is_agreed: bool
     ) -> tuple[bool, str]:
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
         agreement = HonorCodeAgreement(
             user_id=user_id, item_id=item_id, is_agreed=is_agreed, agreed_at=now_iso
         )
@@ -124,7 +123,7 @@ class AssessmentUseCase:
 
     async def _get_quiz_matrix(
         self, repo: AssessmentRepositoryInterface, item_id: str
-    ) -> Optional[QuizMatrix]:
+    ) -> QuizMatrix | None:
         return await repo.get_quiz_matrix(item_id)
 
     async def generate_quiz_session_questions(
@@ -181,14 +180,12 @@ class AssessmentUseCase:
             correct_indices = [
                 idx for idx, opt in enumerate(opts_data) if opt["is_correct"]
             ]
-            correct_idx = correct_indices[0] if correct_indices else 0
 
             result.append(
                 {
                     "question_id": q.id,
                     "text": q.text,
                     "options": options_text,
-                    "shuffled_correct_index": correct_idx,
                     "shuffled_correct_indices": correct_indices,
                     "explanation": q.explanation or "",
                     "question_type": q.question_type,
@@ -217,7 +214,7 @@ class AssessmentUseCase:
                 else DEFAULT_PASSING_THRESHOLD_PERCENT
             )
 
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             expires_at = now + timedelta(minutes=duration_minutes)
 
             max_attempts = (
@@ -229,24 +226,23 @@ class AssessmentUseCase:
             cooldown_seconds_left = 0
             attempts_count = cooldown.failed_attempts_count if cooldown else 0
 
-            if cooldown and not preview:
-                if cooldown.cooldown_until:
-                    until_dt = datetime.fromisoformat(cooldown.cooldown_until)
-                    if now < until_dt:
-                        cooldown_seconds_left = int((until_dt - now).total_seconds())
-                        attempts_left = 0
-                        hours = cooldown_seconds_left // 3600
-                        minutes = (cooldown_seconds_left % 3600) // 60
-                        time_str = (
-                            f"{hours} giờ {minutes} phút"
-                            if hours > 0
-                            else f"{minutes} phút"
-                        )
-                        raise ValueError(
-                            f"Bạn đã dùng hết số lượt làm bài. Vui lòng quay lại sau {time_str}."
-                        )
-                    else:
-                        attempts_count = 0
+            if cooldown and not preview and cooldown.cooldown_until:
+                until_dt = datetime.fromisoformat(cooldown.cooldown_until)
+                if now < until_dt:
+                    cooldown_seconds_left = int((until_dt - now).total_seconds())
+                    attempts_left = 0
+                    hours = cooldown_seconds_left // 3600
+                    minutes = (cooldown_seconds_left % 3600) // 60
+                    time_str = (
+                        f"{hours} giờ {minutes} phút"
+                        if hours > 0
+                        else f"{minutes} phút"
+                    )
+                    raise ValueError(
+                        f"Bạn đã dùng hết số lượt làm bài. Vui lòng quay lại sau {time_str}."
+                    )
+                else:
+                    attempts_count = 0
 
             attempts_left = max(0, max_attempts - attempts_count)
 
@@ -267,12 +263,7 @@ class AssessmentUseCase:
                 )
                 explanations = []
                 for idx, q in enumerate(questions):
-                    corr_indices = set(
-                        q.get(
-                            "shuffled_correct_indices",
-                            [q.get("shuffled_correct_index", 0)],
-                        )
-                    )
+                    corr_indices = set(q.get("shuffled_correct_indices", []))
                     user_ans_idx = (
                         target_sub.selected_option_indexes[idx]
                         if target_sub
@@ -396,12 +387,11 @@ class AssessmentUseCase:
         self,
         user_id: str,
         item_id: str,
-        selected_option_indexes: Optional[list[int]] = None,
-        start_time_iso: Optional[str] = None,
+        start_time_iso: str | None = None,
         duration_minutes: int = DEFAULT_QUIZ_TIME_LIMIT_MINUTES,
-        session_seed: Optional[int] = None,
+        session_seed: int | None = None,
         preview: bool = False,
-        question_answers: Optional[list[list[int]]] = None,
+        question_answers: list[list[int]] | None = None,
     ) -> dict[str, Any]:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
@@ -442,7 +432,7 @@ class AssessmentUseCase:
                 }
 
             # 2. Check Cooldown timer
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             cooldown = await repo.get_quiz_cooldown(user_id, item_id)
             if cooldown and cooldown.cooldown_until and not preview:
                 until_dt = datetime.fromisoformat(cooldown.cooldown_until)
@@ -476,19 +466,10 @@ class AssessmentUseCase:
             total_questions = len(generated_qs)
             correct_count = 0
 
+            answers = question_answers or []
             for idx, q in enumerate(generated_qs):
-                corr_indices = set(
-                    q.get(
-                        "shuffled_correct_indices", [q.get("shuffled_correct_index", 0)]
-                    )
-                )
-                if question_answers and idx < len(question_answers):
-                    user_ans_set = set(question_answers[idx])
-                elif selected_option_indexes and idx < len(selected_option_indexes):
-                    val = selected_option_indexes[idx]
-                    user_ans_set = {val} if val >= 0 else set()
-                else:
-                    user_ans_set = set()
+                corr_indices = set(q.get("shuffled_correct_indices", []))
+                user_ans_set = set(answers[idx]) if idx < len(answers) else set()
 
                 if user_ans_set and user_ans_set == corr_indices:
                     correct_count += 1
@@ -511,20 +492,10 @@ class AssessmentUseCase:
                     "Kho câu hỏi rỗng hoặc chưa được cấu hình câu hỏi cho bài thi này."
                 )
             else:
+                answers = question_answers or []
                 for idx, q in enumerate(generated_qs):
-                    corr_indices = set(
-                        q.get(
-                            "shuffled_correct_indices",
-                            [q.get("shuffled_correct_index", 0)],
-                        )
-                    )
-                    if question_answers and idx < len(question_answers):
-                        user_ans_set = set(question_answers[idx])
-                    elif selected_option_indexes and idx < len(selected_option_indexes):
-                        val = selected_option_indexes[idx]
-                        user_ans_set = {val} if val >= 0 else set()
-                    else:
-                        user_ans_set = set()
+                    corr_indices = set(q.get("shuffled_correct_indices", []))
+                    user_ans_set = set(answers[idx]) if idx < len(answers) else set()
 
                     is_corr = bool(user_ans_set and user_ans_set == corr_indices)
                     clean_exp = _clean_explanation(q.get("explanation"))
@@ -578,11 +549,12 @@ class AssessmentUseCase:
                 submission_id = f"sub-{uuid.uuid4().hex[:8]}"
                 attempt_number = len(prev_submissions) + 1
 
+                first_selected = [ans[0] if ans else -1 for ans in answers]
                 submission = QuizSubmission(
                     id=submission_id,
                     user_id=user_id,
                     item_id=item_id,
-                    selected_option_indexes=selected_option_indexes or [],
+                    selected_option_indexes=first_selected,
                     score_percent=score_percent,
                     passed=score_percent >= passing_threshold,
                     attempt_number=attempt_number,
@@ -607,6 +579,7 @@ class AssessmentUseCase:
                     target_course_id = ""
                     try:
                         from sqlalchemy import select
+
                         from src.modules.catalog.infrastructure.models import (
                             LearningItemModel,
                             LessonModel,
@@ -629,7 +602,7 @@ class AssessmentUseCase:
                         found_cid = cid_res.scalar_one_or_none()
                         if found_cid:
                             target_course_id = found_cid
-                    except Exception:
+                    except Exception:  # noqa: BLE001, S110
                         pass
 
                     notif_uc = NotificationUseCase()
@@ -640,7 +613,7 @@ class AssessmentUseCase:
                         content=f"Bạn đã hoàn thành bài thi lần {attempt_number} với số điểm {score_percent}%.",
                         action_url=f"/learn/{target_course_id}?itemId={item_id}",
                     )
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.warning("Failed to send quiz result notification: %s", e)
 
                 # Update Cooldown entity
@@ -699,8 +672,12 @@ class AssessmentUseCase:
                     if test_cases_json:
                         import json
 
-                        test_cases = json.loads(test_cases_json)
-                except Exception as e:
+                        parsed = json.loads(test_cases_json)
+                        # Handle double-encoded JSON from database
+                        if isinstance(parsed, str):
+                            parsed = json.loads(parsed)
+                        test_cases = parsed
+                except Exception as e:  # noqa: BLE001
                     logger.warning(
                         "Could not load database test cases for lab %s: %s.",
                         item_id,
@@ -721,7 +698,7 @@ class AssessmentUseCase:
                 if isinstance(node, ast.FunctionDef):
                     func_name = node.name
                     break
-        except Exception:
+        except Exception:  # noqa: BLE001, S110
             pass
 
         for tc in test_cases:
@@ -734,7 +711,7 @@ class AssessmentUseCase:
                     try:
                         ast.literal_eval(expected_val)
                         valid_expr = expected_val
-                    except Exception:
+                    except Exception:  # noqa: BLE001
                         valid_expr = repr(expected_val)
                 else:
                     valid_expr = repr(expected_val)
@@ -747,7 +724,7 @@ class AssessmentUseCase:
                     )
 
         result = await self.sandbox_executor.execute_python(source_code, test_cases)
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
         sub_id = f"lab-{uuid.uuid4().hex[:8]}"
 
         submission = LabSubmission(
@@ -788,7 +765,7 @@ class AssessmentUseCase:
         self, user_id: str, item_id: str, submission_url: str, text_content: str
     ) -> tuple[str, str]:
         sub_id = f"peer-{uuid.uuid4().hex[:8]}"
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
         submission = PeerAssignmentSubmission(
             id=sub_id,
             user_id=user_id,
@@ -847,7 +824,7 @@ class AssessmentUseCase:
         review_id: str,
         reviewer_user_id: str,
         graded_criteria: list[RubricCriteria],
-        item_id: Optional[str] = None,
+        item_id: str | None = None,
     ) -> tuple[bool, str]:
         total_given = sum(c.score_given for c in graded_criteria)
         max_possible = sum(c.max_score for c in graded_criteria) or 1.0
@@ -876,7 +853,7 @@ class AssessmentUseCase:
                 if max_delta > OUTLIER_SCORE_DELTA_THRESHOLD:
                     is_outlier = True
 
-            now_iso = datetime.now(timezone.utc).isoformat()
+            now_iso = datetime.now(UTC).isoformat()
             review = PeerReview(
                 id=review_id,
                 submission_id=submission_id,
@@ -917,7 +894,7 @@ class AssessmentUseCase:
         submission_id: str,
         staff_user_id: str,
         ta_score: float,
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> tuple[bool, str]:
         self._verify_staff(current_user)
         """TA / Staff Regrade Override (BR_PEER_002, BR_PEER_003).
@@ -947,7 +924,7 @@ class AssessmentUseCase:
         self, user_id: str, submission_id: str, appeal_reason: str
     ) -> tuple[bool, str]:
         appeal_id = f"appeal-{uuid.uuid4().hex[:8]}"
-        now_iso = datetime.now(timezone.utc).isoformat()
+        now_iso = datetime.now(UTC).isoformat()
         appeal = GradeAppeal(
             id=appeal_id,
             user_id=user_id,
@@ -977,7 +954,7 @@ class AssessmentUseCase:
         self, item_id: str
     ) -> list[dict[str, Any]]:
         """Returns list of peer assignment submissions older than 48 hours (2 days) with fewer than 3 reviews and not yet graded by staff (BR_PEER_004 & BR_PEER_006)."""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         cold_start_threshold = now - timedelta(hours=PEER_REVIEW_COLD_START_HOURS)
 
         async with async_session_scope() as session:
@@ -1023,7 +1000,7 @@ class AssessmentUseCase:
                 else review_id
             )
             appeal_id = f"report-{uuid.uuid4().hex[:8]}"
-            now_iso = datetime.now(timezone.utc).isoformat()
+            now_iso = datetime.now(UTC).isoformat()
             appeal = GradeAppeal(
                 id=appeal_id,
                 user_id=user_id,
@@ -1044,7 +1021,7 @@ class AssessmentUseCase:
         title: str,
         category: str,
         description: str,
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> QuestionBank:
         self._verify_staff(current_user)
         async with async_session_scope() as session:
@@ -1069,7 +1046,7 @@ class AssessmentUseCase:
         difficulty: str,
         explanation: str,
         options_data: list[dict],
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> Question:
         self._verify_staff(current_user)
         async with async_session_scope() as session:
@@ -1095,7 +1072,7 @@ class AssessmentUseCase:
         shuffle_options: bool,
         max_attempts: int,
         cooldown_hours: int,
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> QuizMatrix:
         self._verify_staff(current_user)
         async with async_session_scope() as session:
@@ -1113,13 +1090,13 @@ class AssessmentUseCase:
                 cooldown_hours=cooldown_hours,
             )
 
-    async def get_quiz_matrix(self, item_id: str) -> Optional[QuizMatrix]:
+    async def get_quiz_matrix(self, item_id: str) -> QuizMatrix | None:
         async with async_session_scope() as session:
             repo = await self._get_repo(session)
             return await repo.get_quiz_matrix(item_id=item_id)
 
     async def delete_question(
-        self, question_id: str, current_user: Optional[CurrentUser] = None
+        self, question_id: str, current_user: CurrentUser | None = None
     ) -> bool:
         self._verify_staff(current_user)
         async with async_session_scope() as session:
@@ -1134,7 +1111,7 @@ class AssessmentUseCase:
         difficulty: str,
         explanation: str,
         options_data: list[dict],
-        current_user: Optional[CurrentUser] = None,
+        current_user: CurrentUser | None = None,
     ) -> Question:
         self._verify_staff(current_user)
         async with async_session_scope() as session:

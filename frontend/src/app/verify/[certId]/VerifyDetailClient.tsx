@@ -126,7 +126,7 @@ export function VerifyDetailClient({
             <div className="flex items-center justify-between border-b border-border pb-8 mb-8">
               <div>
                 <Badge
-                  variant="verified"
+                  variant="primary"
                   className="font-mono text-primary uppercase tracking-widest block mb-1"
                 >
                   COURSERA VERIFIED SPECIALIZATION CERTIFICATE
@@ -236,7 +236,7 @@ export function VerifyDetailClient({
               </div>
 
               <div className="flex items-center gap-3">
-                <Button type="button" variant="outline" size="sm" onClick={handleCopyLink}>
+                <Button type="button" variant="outlined" size="sm" onClick={handleCopyLink}>
                   {copied ? (
                     <>
                       <Check aria-hidden="true" className="w-4 h-4 text-success mr-1" />

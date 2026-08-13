@@ -8,10 +8,10 @@ from src.gen.identity.v1 import identity_pb as pb
 from src.gen.identity.v1.identity_connect import IdentityService
 from src.modules.identity.application.identity_usecase import IdentityUseCase
 from src.modules.identity.domain.entities import (
+    ApplicationStatus,
+    InstructorApplication,
     User,
     UserRole,
-    InstructorApplication,
-    ApplicationStatus,
 )
 from src.shared.auth import require_current_user
 
@@ -152,7 +152,9 @@ class IdentityHandler(IdentityService):
             avatar_url,
             is_already_registered,
             err,
-        ) = await self._use_case.google_register_verify(request.google_id_token)
+        ) = await self._use_case.google_register_verify(
+            request.authorization_code, request.nonce
+        )
         if err and not is_already_registered:
             raise ConnectError(Code.INVALID_ARGUMENT, err)
 
@@ -200,7 +202,7 @@ class IdentityHandler(IdentityService):
         ctx: RequestContext[pb.GoogleLoginRequest, pb.GoogleLoginResponse],
     ) -> pb.GoogleLoginResponse:
         user, access_token, refresh_token, err = await self._use_case.google_login(
-            request.google_id_token
+            request.authorization_code, request.nonce
         )
         if err or not user:
             raise ConnectError(Code.UNAUTHENTICATED, err or "Đăng nhập Google thất bại")
@@ -223,7 +225,9 @@ class IdentityHandler(IdentityService):
             email,
             full_name,
             err,
-        ) = await self._use_case.google_reset_password_verify(request.google_id_token)
+        ) = await self._use_case.google_reset_password_verify(
+            request.authorization_code, request.nonce
+        )
         if err:
             raise ConnectError(Code.INVALID_ARGUMENT, err)
 
@@ -266,12 +270,11 @@ class IdentityHandler(IdentityService):
     ) -> pb.GetUserProfileResponse:
         current_user = require_current_user()
         target_user_id = request.user_id or current_user.id
-        if target_user_id != current_user.id:
-            if not current_user.is_admin:
-                raise ConnectError(
-                    Code.PERMISSION_DENIED,
-                    "Bạn không có quyền xem hồ sơ cá nhân của người dùng khác.",
-                )
+        if target_user_id != current_user.id and not current_user.is_admin:
+            raise ConnectError(
+                Code.PERMISSION_DENIED,
+                "Bạn không có quyền xem hồ sơ cá nhân của người dùng khác.",
+            )
         user = await self._use_case.get_user_profile(
             target_user_id, current_user=current_user
         )
@@ -288,12 +291,11 @@ class IdentityHandler(IdentityService):
     ) -> pb.AssignEnterpriseSeatResponse:
         current_user = require_current_user()
         target_user_id = request.user_id or current_user.id
-        if target_user_id != current_user.id:
-            if not current_user.is_admin:
-                raise ConnectError(
-                    Code.PERMISSION_DENIED,
-                    "Bạn không có quyền gán suất Enterprise Seat cho người dùng khác.",
-                )
+        if target_user_id != current_user.id and not current_user.is_admin:
+            raise ConnectError(
+                Code.PERMISSION_DENIED,
+                "Bạn không có quyền gán suất Enterprise Seat cho người dùng khác.",
+            )
         success, msg = await self._use_case.assign_enterprise_seat(
             target_user_id, request.enterprise_seat_key, current_user=current_user
         )

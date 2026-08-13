@@ -79,23 +79,27 @@ export class RegisterPage {
     await this.passwordInput.fill(pass);
     await this.confirmPasswordInput.fill(pass);
 
-    // Handle role selection
-    const hasNativeSelect = (await this.page.locator('select').count()) > 0;
-    if (hasNativeSelect) {
-      await this.page.locator('select').first().selectOption(roleValue);
-    } else {
-      const trigger = this.roleSelect;
-      if (await trigger.isVisible()) {
-        await trigger.click();
-        const optionPattern =
-          roleValue === '2' || roleValue === 'INSTRUCTOR'
-            ? /Giảng viên/i
-            : roleValue === '3' || roleValue === 'TA'
-              ? /Trợ giảng/i
-              : /Học viên/i;
-        const option = this.page.locator('[role="option"], [data-value]').filter({ hasText: optionPattern }).first();
-        if (await option.isVisible({ timeout: 2000 }).catch(() => false)) {
-          await option.click();
+    // Handle role selection (default is LEARNER / '1')
+    if (roleValue && roleValue !== '1' && roleValue !== 'LEARNER') {
+      const hasNativeSelect = (await this.page.locator('select').count()) > 0;
+      if (hasNativeSelect) {
+        await this.page.locator('select').first().selectOption(roleValue);
+      } else {
+        const trigger = this.roleSelect;
+        if (await trigger.isVisible()) {
+          await trigger.click();
+          const optionPattern =
+            roleValue === '2' || roleValue === 'INSTRUCTOR'
+              ? /Giảng viên/i
+              : roleValue === '3' || roleValue === 'TA'
+                ? /Trợ giảng/i
+                : /Học viên/i;
+          const option = this.page.locator('[role="option"], [data-value]').filter({ hasText: optionPattern }).first();
+          if (await option.isVisible({ timeout: 2000 }).catch(() => false)) {
+            await option.click();
+          } else {
+            await this.page.keyboard.press('Escape').catch(() => null);
+          }
         }
       }
     }

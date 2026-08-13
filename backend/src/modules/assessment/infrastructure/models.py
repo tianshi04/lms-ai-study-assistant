@@ -1,11 +1,12 @@
 from typing import Any
+
 from sqlalchemy import (
     ARRAY,
+    JSON,
     Boolean,
     Float,
     ForeignKey,
     Integer,
-    JSON,
     String,
     Text,
     UniqueConstraint,

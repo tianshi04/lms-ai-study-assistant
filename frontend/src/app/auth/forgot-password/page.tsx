@@ -7,6 +7,7 @@ import { Lock, ArrowLeft, CheckCircle2, ShieldCheck, KeyRound } from "lucide-rea
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Surface } from "@/components/ui/Surface";
 import { useToast } from "@/components/ui/Toast";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -34,10 +35,10 @@ function ForgotPasswordContent() {
   const [errorMsg, setErrorMsg] = useState("");
 
   // Handle Step 1: Google verification success
-  const handleGoogleSuccess = async (googleIdToken: string) => {
+  const handleGoogleSuccess = async (authCode: string, nonce: string) => {
     setErrorMsg("");
     startTransition(async () => {
-      const res = await googleResetPasswordVerifyAction(googleIdToken);
+      const res = await googleResetPasswordVerifyAction(authCode, nonce);
       if (res.success && res.tempToken) {
         setTempToken(res.tempToken);
         setUserEmail(res.email || "");
@@ -57,8 +58,8 @@ function ForgotPasswordContent() {
     e.preventDefault();
     setErrorMsg("");
 
-    if (!newPassword || newPassword.length < 6) {
-      setErrorMsg("Mật khẩu mới phải chứa ít nhất 6 ký tự.");
+    if (newPassword.length < 6 || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      setErrorMsg("Mật khẩu chưa đạt yêu cầu bảo mật.");
       return;
     }
 
@@ -90,88 +91,93 @@ function ForgotPasswordContent() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-background via-muted/40 to-background">
-      <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-xl p-6 sm:p-8 space-y-6">
+    <main className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-surface text-on-surface">
+      <Surface
+        variant="bright"
+        shape="3xl"
+        padding="lg"
+        className="w-full max-w-md space-y-6 shadow-xl"
+      >
         {/* Header Section */}
-        <div className="text-center space-y-2">
+        <Surface.Header className="text-center p-0 space-y-2">
           <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-3 shadow-inner">
             <KeyRound aria-hidden="true" className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Quên mật khẩu?</h1>
-          <p className="text-sm text-muted-foreground">
+          <Surface.Title className="text-2xl font-bold tracking-tight text-on-surface">
+            Quên mật khẩu?
+          </Surface.Title>
+          <Surface.Description className="text-sm text-on-surface-variant">
             {step === 1
               ? "Xác minh qua Google để đặt lại mật khẩu mới cho tài khoản của bạn"
               : `Xác nhận danh tính cho ${userEmail}`}
-          </p>
-        </div>
+          </Surface.Description>
+        </Surface.Header>
 
-        {/* Step Indicator */}
-        <div className="flex items-center justify-center gap-3 text-xs font-semibold">
-          <span
-            className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors ${
-              step === 1
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            <ShieldCheck aria-hidden="true" className="w-3.5 h-3.5" /> 1. Xác minh Google
-          </span>
-          <span className="text-muted-foreground">→</span>
-          <span
-            className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors ${
-              step === 2
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            <Lock aria-hidden="true" className="w-3.5 h-3.5" /> 2. Mật khẩu mới
-          </span>
-        </div>
-
-        {/* Error Alert */}
-        {errorMsg && (
-          <div className="p-3.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium animate-in fade-in">
-            {errorMsg}
+        <Surface.Content className="p-0 space-y-6">
+          {/* Step Indicator */}
+          <div className="flex items-center justify-center gap-3 text-xs font-semibold">
+            <span
+              className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors ${
+                step === 1
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              <ShieldCheck aria-hidden="true" className="w-3.5 h-3.5" /> 1. Xác minh Google
+            </span>
+            <span className="text-muted-foreground">→</span>
+            <span
+              className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-colors ${
+                step === 2
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              <Lock aria-hidden="true" className="w-3.5 h-3.5" /> 2. Mật khẩu mới
+            </span>
           </div>
-        )}
 
-        {/* STEP 1: Google Verification */}
-        {step === 1 && (
-          <div className="space-y-4 pt-2">
-            <div className="p-4 rounded-xl bg-muted/50 border border-border/80 text-xs text-muted-foreground leading-relaxed space-y-1">
-              <p className="font-semibold text-foreground flex items-center gap-1.5">
-                <ShieldCheck aria-hidden="true" className="w-4 h-4 text-primary" /> Bảo mật & Tốc độ
-                cao:
-              </p>
-              <p>Xác thực danh tính trực tiếp qua Google chính chủ mà không cần chờ Email OTP.</p>
+          {/* Error Alert */}
+          {errorMsg && (
+            <div className="p-3.5 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium animate-in fade-in">
+              {errorMsg}
             </div>
+          )}
 
-            <GoogleAuthButton
-              onSuccess={handleGoogleSuccess}
-              isLoading={isPending}
-              text="Xác minh bằng Google để đổi MK"
-              variant="outline"
-            />
-          </div>
-        )}
-
-        {/* STEP 2: Password Reset Form */}
-        {step === 2 && (
-          <form onSubmit={handleSubmitReset} className="space-y-4 pt-2">
-            <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/15 text-xs text-foreground flex items-center gap-2.5">
-              <CheckCircle2 aria-hidden="true" className="w-4 h-4 text-primary shrink-0" />
-              <div>
-                <span className="font-semibold block">{userName}</span>
-                <span className="text-muted-foreground">{userEmail}</span>
+          {/* STEP 1: Google Verification */}
+          {step === 1 && (
+            <div className="space-y-4 pt-2">
+              <div className="p-4 rounded-xl bg-muted/50 border border-border/80 text-xs text-muted-foreground leading-relaxed space-y-1">
+                <p className="font-semibold text-foreground flex items-center gap-1.5">
+                  <ShieldCheck aria-hidden="true" className="w-4 h-4 text-primary" /> Bảo mật & Tốc
+                  độ cao:
+                </p>
+                <p>Xác thực danh tính trực tiếp qua Google chính chủ mà không cần chờ Email OTP.</p>
               </div>
-            </div>
 
-            <div className="space-y-1.5">
-              <label htmlFor="newPassword" className="text-xs font-semibold text-foreground">
-                Mật khẩu mới
-              </label>
+              <GoogleAuthButton
+                onSuccess={handleGoogleSuccess}
+                disabled={isPending}
+                text="Xác minh bằng Google để đổi MK"
+                variant="outlined"
+              />
+            </div>
+          )}
+
+          {/* STEP 2: Password Reset Form */}
+          {step === 2 && (
+            <form onSubmit={handleSubmitReset} className="space-y-4 pt-2">
+              <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/15 text-xs text-foreground flex items-center gap-2.5">
+                <CheckCircle2 aria-hidden="true" className="w-4 h-4 text-primary shrink-0" />
+                <div>
+                  <span className="font-semibold block">{userName}</span>
+                  <span className="text-muted-foreground">{userEmail}</span>
+                </div>
+              </div>
+
               <Input
                 id="newPassword"
+                label="Mật khẩu mới"
                 type="password"
                 placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
                 value={newPassword}
@@ -180,14 +186,10 @@ function ForgotPasswordContent() {
                 disabled={isPending}
                 className="rounded-xl"
               />
-            </div>
 
-            <div className="space-y-1.5">
-              <label htmlFor="confirmPassword" className="text-xs font-semibold text-foreground">
-                Xác nhận mật khẩu mới
-              </label>
               <Input
                 id="confirmPassword"
+                label="Xác nhận mật khẩu mới"
                 type="password"
                 placeholder="Nhập lại mật khẩu mới để xác nhận"
                 value={confirmPassword}
@@ -196,31 +198,30 @@ function ForgotPasswordContent() {
                 disabled={isPending}
                 className="rounded-xl"
               />
-            </div>
 
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={isPending}
-              disabled={isPending}
-              className="w-full py-3 rounded-xl font-bold text-sm shadow-md"
+              <Button
+                type="submit"
+                variant="filled"
+                disabled={isPending}
+                className="w-full py-3 rounded-xl font-bold text-sm shadow-md"
+              >
+                Cập nhật mật khẩu & Đăng nhập
+              </Button>
+            </form>
+          )}
+
+          {/* Footer Navigation */}
+          <div className="pt-4 border-t border-border text-center">
+            <Link
+              href="/auth/login"
+              className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
             >
-              Cập nhật mật khẩu & Đăng nhập
-            </Button>
-          </form>
-        )}
-
-        {/* Footer Navigation */}
-        <div className="pt-4 border-t border-border text-center">
-          <Link
-            href="/auth/login"
-            className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft aria-hidden="true" className="w-3.5 h-3.5" />
-            <span>Quay lại Đăng nhập</span>
-          </Link>
-        </div>
-      </div>
+              <ArrowLeft aria-hidden="true" className="w-3.5 h-3.5" />
+              <span>Quay lại Đăng nhập</span>
+            </Link>
+          </div>
+        </Surface.Content>
+      </Surface>
     </main>
   );
 }

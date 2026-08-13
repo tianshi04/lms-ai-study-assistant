@@ -10,7 +10,7 @@ Usage:
   - Full Clean Reset:  uv run python src/seed.py --reset
 """
 
-# ruff: noqa: E402, F401
+# ruff: noqa: F401
 
 import argparse
 import asyncio
@@ -25,7 +25,7 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 from sqlalchemy import delete, select, text
-from src.shared.infrastructure.database import Base, async_session_scope
+
 from src.modules.assessment.infrastructure.models import (
     GradeAppealModel,
     HonorCodeModel,
@@ -40,16 +40,16 @@ from src.modules.assessment.infrastructure.models import (
     QuizSubmissionModel,
 )
 from src.modules.catalog.infrastructure.models import (
+    CategoryModel,
     CourseModel,
     CourseReviewModel,
-    InVideoQuizModel,
     InteractiveTranscriptModel,
+    InVideoQuizModel,
     ItemType,
     LearningItemModel,
     LessonModel,
     SpecializationModel,
     WeekModuleModel,
-    CategoryModel,
 )
 from src.modules.certificate.infrastructure.models import (
     CertificateModel,
@@ -75,7 +75,7 @@ from src.modules.learning.infrastructure.models import (
     WeeklyDeadlineModel,
 )
 from src.modules.partner.infrastructure.models import PartnerModel
-
+from src.shared.infrastructure.database import Base, async_session_scope
 from src.shared.infrastructure.logging import setup_logging
 
 setup_logging()
@@ -161,7 +161,6 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         description="Build machine learning models in Python using NumPy and scikit-learn, train supervised models for prediction and binary classification.",
         partner_name="DeepLearning.AI",
         partner_logo_url=deeplearning_logo,
-        instructor_names=["Andrew Ng", "Eddy Shyu"],
         owner_id="user_instructor_01",
         subject="cat-subj-ds",
         level="cat-lvl-int",
@@ -373,7 +372,6 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         description="Master modern Web Development using Next.js 15 App Router, TypeScript, ConnectRPC gRPC web, and Tailwind CSS v4.",
         partner_name="Meta",
         partner_logo_url=meta_logo,
-        instructor_names=["Rav Ahuja"],
         owner_id="user_instructor_02",
         subject="cat-subj-it",
         level="cat-lvl-beg",
@@ -459,7 +457,6 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         description="Master deep learning fundamentals, build deep neural networks using Python and Vectorization, and understand forward and backward propagation.",
         partner_name="DeepLearning.AI",
         partner_logo_url=deeplearning_logo,
-        instructor_names=["Andrew Ng", "Kian Katanforoosh"],
         owner_id="user_instructor_01",
         subject="cat-subj-cs",
         level="cat-lvl-adv",

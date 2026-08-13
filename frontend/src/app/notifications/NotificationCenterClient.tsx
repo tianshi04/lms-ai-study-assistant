@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { NotificationItem } from "@/components/notification/NotificationItem";
 import { NotificationPreferencesModal } from "@/components/notification/NotificationPreferencesModal";
+import { Button } from "@/components/ui/Button";
 import {
   useNotificationsQuery,
   useUnreadCountQuery,
@@ -104,11 +105,12 @@ export function NotificationCenterClient() {
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
             {unreadCount > 0 && (
-              <button
+              <Button
                 type="button"
+                variant="outlined"
                 onClick={handleMarkAllAsRead}
                 disabled={markAllAsReadMutation.isPending}
-                className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-high text-primary hover:bg-primary-container/40 border border-outline-variant/40 transition-colors flex items-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="rounded-full text-xs font-bold bg-surface-container-high text-primary hover:bg-primary-container/40 border border-outline-variant/40"
               >
                 {markAllAsReadMutation.isPending ? (
                   <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
@@ -116,17 +118,18 @@ export function NotificationCenterClient() {
                   <CheckCheck className="w-4 h-4 text-primary" aria-hidden="true" />
                 )}
                 <span>Đánh dấu tất cả đã đọc</span>
-              </button>
+              </Button>
             )}
 
-            <button
+            <Button
               type="button"
+              variant="outlined"
               onClick={() => setIsPrefModalOpen(true)}
-              className="px-4 py-2 rounded-full text-xs font-bold bg-surface-container-high text-on-surface hover:bg-surface-container-highest border border-outline-variant/40 transition-colors flex items-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="rounded-full text-xs font-bold bg-surface-container-high text-on-surface hover:bg-surface-container-highest border border-outline-variant/40"
             >
               <Settings className="w-4 h-4" aria-hidden="true" />
               <span>Cài đặt</span>
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -138,11 +141,12 @@ export function NotificationCenterClient() {
               const IconComp = cat.icon;
               const isSelected = selectedCategory === cat.id;
               return (
-                <button
+                <Button
                   key={cat.id}
                   type="button"
+                  variant={isSelected ? "filled" : "text"}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  className={`rounded-full text-xs font-bold whitespace-nowrap ${
                     isSelected
                       ? "bg-primary text-on-primary shadow-xs"
                       : "bg-surface-container-low text-on-surface-variant border border-outline-variant/40 hover:text-on-surface hover:bg-surface-container-high"
@@ -150,16 +154,17 @@ export function NotificationCenterClient() {
                 >
                   <IconComp className="w-4 h-4" aria-hidden="true" />
                   <span>{cat.label}</span>
-                </button>
+                </Button>
               );
             })}
           </div>
 
           {/* Unread Only MD3 Filter Chip */}
-          <button
+          <Button
             type="button"
+            variant="outlined"
             onClick={() => setUnreadOnly(!unreadOnly)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors cursor-pointer border select-none self-end md:self-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+            className={`rounded-full text-xs font-bold whitespace-nowrap select-none self-end md:self-auto ${
               unreadOnly
                 ? "bg-primary-container text-on-primary-container border-primary/40 shadow-2xs"
                 : "bg-surface-container-low text-on-surface-variant border-outline-variant/40 hover:bg-surface-container-high hover:text-on-surface"
@@ -181,7 +186,7 @@ export function NotificationCenterClient() {
                 {unreadCount}
               </span>
             )}
-          </button>
+          </Button>
         </div>
 
         {/* Notifications Grid List */}

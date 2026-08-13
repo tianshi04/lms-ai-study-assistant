@@ -3,6 +3,7 @@
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { type WeekModule, type Lesson, type LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { LessonCard } from "./LessonCard";
+import { Button } from "@/components/ui/Button";
 
 interface WeekModuleCardProps {
   week: WeekModule;
@@ -78,7 +79,7 @@ export function WeekModuleCard({
       } p-6 shadow-sm space-y-4 transition-shadow`}
     >
       {/* Week Module Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             {isInstructorOrAdmin && (
@@ -105,32 +106,38 @@ export function WeekModuleCard({
 
         {isInstructorOrAdmin && (
           <div className="flex items-center gap-2">
-            <button
+            <Button
               type="button"
+              variant="outlined"
+              size="sm"
               onClick={() => onEditWeek(week)}
-              className="px-2.5 py-1.5 rounded-xl bg-muted text-foreground border border-border text-xs font-semibold hover:bg-muted/80 transition-colors flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="bg-muted text-foreground border-border text-xs font-semibold hover:bg-muted/80"
             >
               <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{"Sửa Tuần"}</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
+              variant="outlined"
+              size="sm"
               onClick={() => onDeleteWeek(week.id, week.title)}
-              className="px-2.5 py-1.5 rounded-xl bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="bg-destructive/10 text-destructive border-destructive/20 text-xs font-semibold hover:bg-destructive/20"
             >
               <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{"Xóa Tuần"}</span>
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
+              variant="outlined"
+              size="sm"
               onClick={() => onAddLesson(week.id)}
-              className="px-3.5 py-1.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="bg-muted hover:bg-muted/80 text-foreground text-xs font-bold"
             >
               <Plus className="w-4 h-4 text-primary" aria-hidden="true" />
               <span>{"Thêm Bài học"}</span>
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -143,10 +150,7 @@ export function WeekModuleCard({
           </p>
         </div>
       ) : (
-        <div
-          data-lessons-container
-          className="space-y-4 pl-2 sm:pl-4 border-l-2 border-border relative"
-        >
+        <div data-lessons-container className="space-y-4 relative">
           {week.lessons.map((lesson, lIdx) => (
             <LessonCard
               key={lesson.id}

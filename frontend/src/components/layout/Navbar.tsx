@@ -10,12 +10,13 @@ import { UserDropdown } from "@/components/layout/UserDropdown";
 import { ThemeToggle } from "@/components/providers/ThemeToggle";
 import { NotificationBell } from "@/components/notification/NotificationBell";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
 import { BrandLogo } from "@/components/ui/BrandLogo";
+import { NavigationMenu } from "@/components/ui/NavigationMenu";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
   const { userName, isInstructorOrAdmin, isSuperAdmin } = useAuth();
-
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -30,8 +31,9 @@ export function Navbar() {
   }, []);
 
   const isActive = (path: string) => {
+    if (!pathname) return false;
     if (path === "/") return pathname === "/";
-    return pathname?.startsWith(path);
+    return pathname.startsWith(path);
   };
 
   const getLinkClasses = (path: string) => {
@@ -69,42 +71,52 @@ export function Navbar() {
           <BrandLogo size="md" />
 
           {/* Navigation Links (Desktop) */}
-          <nav className="hidden md:flex items-center gap-2 text-sm font-semibold">
-            <Link href="/courses" prefetch={true} className={getLinkClasses("/courses")}>
-              {"Khóa học"}
-            </Link>
-            {userName && (
-              <Link href="/my-learning" prefetch={true} className={getLinkClasses("/my-learning")}>
-                {"Việc học của tôi"}
-              </Link>
-            )}
+          <NavigationMenu.Root className="hidden md:flex items-center">
+            <NavigationMenu.List className="gap-2">
+              <NavigationMenu.Item>
+                <Link href="/courses" className={getLinkClasses("/courses")}>
+                  {"Khóa học"}
+                </Link>
+              </NavigationMenu.Item>
+              {userName && (
+                <NavigationMenu.Item>
+                  <Link href="/my-learning" className={getLinkClasses("/my-learning")}>
+                    {"Việc học của tôi"}
+                  </Link>
+                </NavigationMenu.Item>
+              )}
 
-            {/* Render Instructor Portal for authorized roles */}
-            {isInstructorOrAdmin && (
-              <Link
-                href="/instructor/courses"
-                className={`${getLinkClasses("/instructor")} flex items-center gap-1.5`}
-              >
-                <span>{"Giảng Viên"}</span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                  Portal
-                </span>
-              </Link>
-            )}
+              {/* Render Instructor Portal for authorized roles */}
+              {isInstructorOrAdmin && (
+                <NavigationMenu.Item>
+                  <Link
+                    href="/instructor/courses"
+                    className={`${getLinkClasses("/instructor/courses")} flex items-center gap-1.5`}
+                  >
+                    <span>{"Giảng Viên"}</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                      Portal
+                    </span>
+                  </Link>
+                </NavigationMenu.Item>
+              )}
 
-            {/* Render Admin Enterprise Dashboard Link */}
-            {isSuperAdmin && (
-              <Link
-                href="/admin/dashboard"
-                className={`${getLinkClasses("/admin")} flex items-center gap-1.5`}
-              >
-                <span>Admin</span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                  Enterprise
-                </span>
-              </Link>
-            )}
-          </nav>
+              {/* Render Admin Enterprise Dashboard Link */}
+              {isSuperAdmin && (
+                <NavigationMenu.Item>
+                  <Link
+                    href="/admin/dashboard"
+                    className={`${getLinkClasses("/admin/dashboard")} flex items-center gap-1.5`}
+                  >
+                    <span>Admin</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                      Enterprise
+                    </span>
+                  </Link>
+                </NavigationMenu.Item>
+              )}
+            </NavigationMenu.List>
+          </NavigationMenu.Root>
         </div>
 
         {/* User Auth & Actions Section */}
@@ -119,29 +131,28 @@ export function Navbar() {
           ) : (
             <div className="flex items-center gap-2">
               <Button
-                variant="outline"
+                variant="outlined"
                 size="sm"
-                asChild
+                render={<Link href="/auth/login" />}
                 className="rounded-xl text-xs font-semibold bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
               >
-                <Link href="/auth/login">{"Đăng nhập"}</Link>
+                {"Đăng nhập"}
               </Button>
               <Button
-                variant="primary"
+                variant="filled"
                 size="sm"
-                asChild
+                render={<Link href="/auth/register" />}
                 className="rounded-xl text-xs font-semibold shadow-md shadow-primary/20"
               >
-                <Link href="/auth/register">{"Đăng ký"}</Link>
+                {"Đăng ký"}
               </Button>
             </div>
           )}
 
           {/* Mobile Hamburger Toggle Button */}
-          <Button
+          <IconButton
             type="button"
-            variant="ghost"
-            size="icon"
+            variant="standard"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="md:hidden rounded-xl text-muted-foreground hover:bg-muted"
             aria-label="Bật/tắt menu điều hướng"
@@ -151,7 +162,7 @@ export function Navbar() {
             ) : (
               <Menu className="w-6 h-6" aria-hidden="true" />
             )}
-          </Button>
+          </IconButton>
         </div>
       </div>
 
@@ -179,7 +190,7 @@ export function Navbar() {
               href="/instructor/courses"
               onClick={() => setMobileMenuOpen(false)}
               className={cn(
-                getMobileLinkClasses("/instructor"),
+                getMobileLinkClasses("/instructor/courses"),
                 "flex items-center justify-between",
               )}
             >
@@ -193,7 +204,10 @@ export function Navbar() {
             <Link
               href="/admin/dashboard"
               onClick={() => setMobileMenuOpen(false)}
-              className={cn(getMobileLinkClasses("/admin"), "flex items-center justify-between")}
+              className={cn(
+                getMobileLinkClasses("/admin/dashboard"),
+                "flex items-center justify-between",
+              )}
             >
               <span>Admin</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">

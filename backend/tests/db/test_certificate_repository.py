@@ -1,7 +1,8 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.modules.certificate.infrastructure.repository import CertificateRepository
+
 from src.modules.certificate.domain.entities import (
     FinancialAidApplication,
     FinancialAidStatus,
@@ -11,6 +12,7 @@ from src.modules.certificate.infrastructure.models import (
     CertificateModel,
     FinancialAidModel,
 )
+from src.modules.certificate.infrastructure.repository import CertificateRepository
 
 
 @pytest.fixture

@@ -1,5 +1,6 @@
 import aioboto3
 from botocore.config import Config
+
 from src.shared.config import settings
 
 
@@ -63,7 +64,7 @@ class S3StorageService:
         async with self._get_client() as s3_client:
             try:
                 await s3_client.head_bucket(Bucket=target_bucket)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 await s3_client.create_bucket(Bucket=target_bucket)
                 # Set public read policy for media assets
                 import json
@@ -100,7 +101,7 @@ class S3StorageService:
                     Bucket=target_bucket,
                     CORSConfiguration=cors_configuration,
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001, S110
                 pass
 
     async def upload_file(

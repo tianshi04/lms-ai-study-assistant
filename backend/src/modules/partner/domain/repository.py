@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from src.modules.partner.domain.entities import Partner
 
@@ -14,11 +13,11 @@ class IPartnerRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, partner_id: str) -> Optional[Partner]:
+    async def get_by_id(self, partner_id: str) -> Partner | None:
         pass
 
     @abstractmethod
-    async def get_by_slug(self, slug: str) -> Optional[Partner]:
+    async def get_by_slug(self, slug: str) -> Partner | None:
         pass
 
     @abstractmethod

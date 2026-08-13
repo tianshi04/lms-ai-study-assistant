@@ -1,7 +1,6 @@
 """Shared Async Redis infrastructure module for caching and message broker connections."""
 
 import logging
-from typing import Optional
 
 from redis.asyncio import Redis, from_url
 
@@ -9,7 +8,7 @@ from src.shared.config import settings
 
 logger = logging.getLogger(__name__)
 
-_redis_client: Optional[Redis] = None
+_redis_client: Redis | None = None
 
 
 async def get_redis_client() -> Redis:
@@ -32,6 +31,9 @@ async def close_redis_client() -> None:
     global _redis_client
     if _redis_client is not None:
         logger.info("[REDIS] Closing async Redis connection pool...")
-        await _redis_client.aclose()
+        try:
+            await _redis_client.aclose()
+        except Exception:  # noqa: BLE001, S110
+            pass
         _redis_client = None
         logger.info("[REDIS] Async Redis connection pool closed.")

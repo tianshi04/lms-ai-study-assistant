@@ -2,8 +2,10 @@
 
 import { useState, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useMyOrganizationsQuery } from "@/lib/query_hooks";
 import { MyInvitationsDrawer } from "@/components/invitation/MyInvitationsDrawer";
+import { Button } from "@/components/ui/Button";
 import {
   Building2,
   Users,
@@ -77,14 +79,15 @@ function MyOrganizationsContent() {
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
-            <button
+            <Button
               type="button"
+              variant="outlined"
               onClick={() => setIsInvitationsOpen(true)}
-              className="px-4 py-2.5 rounded-2xl bg-muted text-foreground hover:bg-muted/80 font-bold text-sm transition-colors flex items-center gap-2 cursor-pointer border border-border"
+              className="px-4 py-2.5 rounded-2xl bg-muted text-foreground hover:bg-muted/80 font-bold text-sm"
             >
               <Mail className="w-4 h-4 text-primary" aria-hidden="true" />
               Lời mời của tôi
-            </button>
+            </Button>
           </div>
         </header>
 
@@ -130,9 +133,11 @@ function MyOrganizationsContent() {
                       <div className="flex items-center space-x-3.5 min-w-0">
                         <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 font-black text-lg">
                           {org.avatarUrl ? (
-                            <img
+                            <Image
                               src={org.avatarUrl}
-                              alt={org.name}
+                              alt={org.name || "Org"}
+                              width={48}
+                              height={48}
                               className="w-full h-full object-cover rounded-2xl"
                             />
                           ) : (
@@ -143,9 +148,11 @@ function MyOrganizationsContent() {
                           <h3 className="font-bold text-foreground text-base truncate group-hover:text-primary transition-colors">
                             {org.name}
                           </h3>
-                          <p className="text-xs text-muted-foreground font-mono truncate">
-                            Slug / ID: {org.slug || org.id}
-                          </p>
+                          {org.slug && (
+                            <p className="text-xs text-muted-foreground font-mono truncate">
+                              Slug: {org.slug}
+                            </p>
+                          )}
                         </div>
                       </div>
                       {getRoleBadge(org.roleInOrg)}
@@ -196,7 +203,7 @@ export default function MyOrganizationsPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[50vh] text-muted-foreground gap-2">
-          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          <Loader2 className="w-6 h-6 animate-spin text-primary" aria-hidden="true" />
           <span className="text-sm">Đang tải tổ chức...</span>
         </div>
       }

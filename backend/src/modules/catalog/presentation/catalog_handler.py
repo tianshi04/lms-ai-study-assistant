@@ -1,4 +1,5 @@
 from typing import Any
+
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
@@ -7,16 +8,16 @@ from src.gen.catalog.v1 import catalog_pb as pb
 from src.gen.catalog.v1.catalog_connect import CatalogService
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 from src.modules.catalog.domain.entities import (
+    Category,
     Course,
     CourseReview,
-    InVideoQuiz,
     InteractiveTranscript,
+    InVideoQuiz,
     ItemType,
     LearningItem,
     Lesson,
     Specialization,
     WeekModule,
-    Category,
 )
 from src.shared.auth import CurrentUser, require_current_user
 
@@ -126,14 +127,17 @@ def _to_pb_week_module(week: WeekModule) -> pb.WeekModule:
 
 
 def _to_pb_course_status(status_enum: Any) -> pb.CourseStatus:
-    status_str = str(status_enum).upper()
+    val = getattr(status_enum, "value", str(status_enum))
+    status_str = (
+        str(val).replace("CourseStatus.", "").replace("COURSE_STATUS_", "").upper()
+    )
     mapping = {
         "DRAFT": pb.CourseStatus.DRAFT,
         "PENDING_REVIEW": pb.CourseStatus.PENDING_REVIEW,
         "PUBLISHED": pb.CourseStatus.PUBLISHED,
         "REJECTED": pb.CourseStatus.REJECTED,
     }
-    return mapping.get(status_str, pb.CourseStatus.PUBLISHED)
+    return mapping.get(status_str, pb.CourseStatus.DRAFT)
 
 
 def _to_pb_course(course: Course) -> pb.Course:
@@ -444,8 +448,8 @@ class CatalogHandler(CatalogService):
             raise
         except ValueError as e:
             raise ConnectError(Code.INVALID_ARGUMENT, str(e))
-        except Exception as e:
-            raise ConnectError(Code.INTERNAL, f"Không thể tạo học liệu: {str(e)}")
+        except Exception as e:  # noqa: BLE001
+            raise ConnectError(Code.INTERNAL, f"Không thể tạo học liệu: {e!s}")
 
     async def submit_course_review(
         self,
@@ -478,8 +482,8 @@ class CatalogHandler(CatalogService):
             return pb.SubmitCourseReviewResponse(review=_to_pb_review(review))
         except ValueError as e:
             raise ConnectError(Code.INVALID_ARGUMENT, str(e))
-        except Exception as e:
-            raise ConnectError(Code.INTERNAL, f"Không thể lưu đánh giá: {str(e)}")
+        except Exception as e:  # noqa: BLE001
+            raise ConnectError(Code.INTERNAL, f"Không thể lưu đánh giá: {e!s}")
 
     async def list_course_reviews(
         self,

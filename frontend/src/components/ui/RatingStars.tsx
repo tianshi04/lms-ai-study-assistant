@@ -1,35 +1,53 @@
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const starSizeClasses = {
-  sm: "w-3.5 h-3.5",
-  md: "w-4 h-4",
-  lg: "w-6 h-6",
-} as const;
+export const ratingStarVariants = cva("", {
+  variants: {
+    size: {
+      sm: "w-3.5 h-3.5",
+      md: "w-4 h-4",
+      lg: "w-6 h-6",
+    },
+  },
+  defaultVariants: {
+    size: "md",
+  },
+});
 
-interface RatingStarsProps {
+export function RatingScore({ rating, className }: { rating: number; className?: string }) {
+  return (
+    <span className={cn("text-xs font-bold text-foreground ml-1", className)}>
+      {rating.toFixed(1)}
+    </span>
+  );
+}
+
+export interface RatingStarsProps
+  extends React.ComponentProps<"span">, VariantProps<typeof ratingStarVariants> {
   rating: number;
   maxStars?: number;
-  size?: keyof typeof starSizeClasses;
-  className?: string;
   showScore?: boolean;
+  render?: React.ReactElement<any>;
 }
 
 export function RatingStars({
   rating,
   maxStars = 5,
   size = "md",
-  className,
   showScore = false,
+  className,
+  render,
+  children,
+  ref,
+  ...props
 }: RatingStarsProps) {
   const roundedRating = Math.round(rating);
+  const compClasses = cn("inline-flex items-center gap-1", className);
 
-  return (
-    <span
-      aria-label={`Đánh giá ${rating.toFixed(1)} trên ${maxStars} sao`}
-      className={cn("inline-flex items-center gap-1", className)}
-    >
+  const innerContent = (
+    <>
       <div className="flex items-center gap-0.5 text-amber-400">
         {Array.from({ length: maxStars }, (_, i) => {
           const starIndex = i + 1;
@@ -39,16 +57,37 @@ export function RatingStars({
               key={starIndex}
               aria-hidden="true"
               className={cn(
-                starSizeClasses[size],
+                ratingStarVariants({ size }),
                 isFilled ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30 fill-none",
               )}
             />
           );
         })}
       </div>
-      {showScore ? (
-        <span className="text-xs font-bold text-foreground ml-1">{rating.toFixed(1)}</span>
-      ) : null}
+      {showScore && <RatingScore rating={rating} />}
+      {children}
+    </>
+  );
+
+  if (render && React.isValidElement(render)) {
+    const element = render as React.ReactElement<any>;
+    return React.cloneElement(element, {
+      ...props,
+      ...element.props,
+      ref,
+      className: cn(compClasses, element.props.className),
+      children: innerContent,
+    });
+  }
+
+  return (
+    <span
+      ref={ref}
+      aria-label={`Đánh giá ${rating.toFixed(1)} trên ${maxStars} sao`}
+      className={compClasses}
+      {...props}
+    >
+      {innerContent}
     </span>
   );
 }

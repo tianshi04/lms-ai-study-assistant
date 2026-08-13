@@ -1,10 +1,9 @@
 """Repository implementation for Payment module using SQLAlchemy Async Engine."""
 
-from typing import Optional
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from datetime import datetime, timedelta, timezone
 
 from src.modules.payment.domain.entities import (
     CoursePurchase,
@@ -12,10 +11,11 @@ from src.modules.payment.domain.entities import (
     PaymentOrderStatus,
     PaymentTargetType,
     PaymentTransaction,
-    UserSubscription,
+    PlanType,
     PurchaseStatus,
     SubscriptionStatus,
-    PlanType,
+    UserSubscription,
+    safe_enum_parse,
 )
 from src.modules.payment.domain.repositories import IPaymentRepository
 from src.modules.payment.infrastructure.models import (
@@ -76,7 +76,7 @@ class PaymentRepository(IPaymentRepository):
         await self.session.flush()
         return subscription
 
-    async def get_active_subscription(self, user_id: str) -> Optional[UserSubscription]:
+    async def get_active_subscription(self, user_id: str) -> UserSubscription | None:
         stmt = (
             select(UserSubscriptionModel)
             .where(
@@ -86,20 +86,47 @@ class PaymentRepository(IPaymentRepository):
             .order_by(UserSubscriptionModel.expires_at.desc())
         )
         res = await self.session.execute(stmt)
+        models = res.scalars().all()
+        for model in models:
+            sub = UserSubscription(
+                id=model.id,
+                user_id=model.user_id,
+                plan_type=safe_enum_parse(
+                    PlanType, model.plan_type, PlanType.UNSPECIFIED
+                ),
+                status=safe_enum_parse(
+                    SubscriptionStatus, model.status, SubscriptionStatus.UNSPECIFIED
+                ),
+                starts_at=model.starts_at,
+                expires_at=model.expires_at,
+                created_at=model.created_at,
+            )
+            if sub.is_currently_active():
+                return sub
+        return None
+
+    async def get_user_subscription(self, user_id: str) -> UserSubscription | None:
+        stmt = (
+            select(UserSubscriptionModel)
+            .where(UserSubscriptionModel.user_id == user_id)
+            .order_by(UserSubscriptionModel.expires_at.desc())
+        )
+        res = await self.session.execute(stmt)
         model = res.scalars().first()
         if not model:
             return None
 
-        sub = UserSubscription(
+        return UserSubscription(
             id=model.id,
             user_id=model.user_id,
-            plan_type=PlanType(model.plan_type),
-            status=SubscriptionStatus(model.status),
+            plan_type=safe_enum_parse(PlanType, model.plan_type, PlanType.UNSPECIFIED),
+            status=safe_enum_parse(
+                SubscriptionStatus, model.status, SubscriptionStatus.UNSPECIFIED
+            ),
             starts_at=model.starts_at,
             expires_at=model.expires_at,
             created_at=model.created_at,
         )
-        return sub if sub.is_currently_active() else None
 
     async def list_user_purchases(self, user_id: str) -> list[CoursePurchase]:
         stmt = select(CoursePurchaseModel).where(CoursePurchaseModel.user_id == user_id)
@@ -112,7 +139,9 @@ class PaymentRepository(IPaymentRepository):
                 course_id=m.course_id,
                 amount=m.amount,
                 currency=m.currency,
-                status=PurchaseStatus(m.status),
+                status=safe_enum_parse(
+                    PurchaseStatus, m.status, PurchaseStatus.UNSPECIFIED
+                ),
                 payment_method=m.payment_method,
                 created_at=m.created_at,
             )
@@ -143,7 +172,7 @@ class PaymentRepository(IPaymentRepository):
         await self.session.flush()
         return order
 
-    async def get_order_by_txn_ref(self, vnp_txn_ref: str) -> Optional[PaymentOrder]:
+    async def get_order_by_txn_ref(self, vnp_txn_ref: str) -> PaymentOrder | None:
         stmt = select(PaymentOrderModel).where(
             PaymentOrderModel.vnp_txn_ref == vnp_txn_ref
         )
@@ -154,12 +183,16 @@ class PaymentRepository(IPaymentRepository):
         return PaymentOrder(
             id=m.id,
             user_id=m.user_id,
-            target_type=PaymentTargetType(m.target_type),
+            target_type=safe_enum_parse(
+                PaymentTargetType, m.target_type, PaymentTargetType.UNSPECIFIED
+            ),
             target_id=m.target_id,
-            plan_type=PlanType(m.plan_type),
+            plan_type=safe_enum_parse(PlanType, m.plan_type, PlanType.UNSPECIFIED),
             amount=m.amount,
             currency=m.currency,
-            status=PaymentOrderStatus(m.status),
+            status=safe_enum_parse(
+                PaymentOrderStatus, m.status, PaymentOrderStatus.UNSPECIFIED
+            ),
             vnp_txn_ref=m.vnp_txn_ref,
             created_at=m.created_at,
             updated_at=m.updated_at,
@@ -167,7 +200,7 @@ class PaymentRepository(IPaymentRepository):
 
     async def get_order_by_txn_ref_for_update(
         self, vnp_txn_ref: str
-    ) -> Optional[PaymentOrder]:
+    ) -> PaymentOrder | None:
         stmt = (
             select(PaymentOrderModel)
             .where(PaymentOrderModel.vnp_txn_ref == vnp_txn_ref)
@@ -180,12 +213,16 @@ class PaymentRepository(IPaymentRepository):
         return PaymentOrder(
             id=m.id,
             user_id=m.user_id,
-            target_type=PaymentTargetType(m.target_type),
+            target_type=safe_enum_parse(
+                PaymentTargetType, m.target_type, PaymentTargetType.UNSPECIFIED
+            ),
             target_id=m.target_id,
-            plan_type=PlanType(m.plan_type),
+            plan_type=safe_enum_parse(PlanType, m.plan_type, PlanType.UNSPECIFIED),
             amount=m.amount,
             currency=m.currency,
-            status=PaymentOrderStatus(m.status),
+            status=safe_enum_parse(
+                PaymentOrderStatus, m.status, PaymentOrderStatus.UNSPECIFIED
+            ),
             vnp_txn_ref=m.vnp_txn_ref,
             created_at=m.created_at,
             updated_at=m.updated_at,
@@ -198,7 +235,7 @@ class PaymentRepository(IPaymentRepository):
         target_id: str,
         plan_type: PlanType = PlanType.UNSPECIFIED,
         reuse_ttl_minutes: int = 15,
-    ) -> Optional[PaymentOrder]:
+    ) -> PaymentOrder | None:
         t_type = (
             target_type.value if hasattr(target_type, "value") else str(target_type)
         )
@@ -220,7 +257,7 @@ class PaymentRepository(IPaymentRepository):
         if not models:
             return None
 
-        now_dt = datetime.now(timezone.utc)
+        now_dt = datetime.now(UTC)
         cutoff_dt = now_dt - timedelta(minutes=reuse_ttl_minutes)
 
         for m in models:
@@ -230,25 +267,33 @@ class PaymentRepository(IPaymentRepository):
                     return PaymentOrder(
                         id=m.id,
                         user_id=m.user_id,
-                        target_type=PaymentTargetType(m.target_type),
+                        target_type=safe_enum_parse(
+                            PaymentTargetType,
+                            m.target_type,
+                            PaymentTargetType.UNSPECIFIED,
+                        ),
                         target_id=m.target_id,
-                        plan_type=PlanType(m.plan_type),
+                        plan_type=safe_enum_parse(
+                            PlanType, m.plan_type, PlanType.UNSPECIFIED
+                        ),
                         amount=m.amount,
                         currency=m.currency,
-                        status=PaymentOrderStatus(m.status),
+                        status=safe_enum_parse(
+                            PaymentOrderStatus, m.status, PaymentOrderStatus.UNSPECIFIED
+                        ),
                         vnp_txn_ref=m.vnp_txn_ref,
                         created_at=m.created_at,
                         updated_at=m.updated_at,
                     )
-            except Exception:
-                continue
+            except (ValueError, TypeError, KeyError, AttributeError):
+                pass
 
         return None
 
     async def list_pending_orders_older_than(
         self, window_minutes: int = 15, limit: int = 50
     ) -> list[PaymentOrder]:
-        now_dt = datetime.now(timezone.utc)
+        now_dt = datetime.now(UTC)
         cutoff_dt = now_dt - timedelta(minutes=window_minutes)
         cutoff_str = cutoff_dt.isoformat()
 
@@ -267,12 +312,16 @@ class PaymentRepository(IPaymentRepository):
             PaymentOrder(
                 id=m.id,
                 user_id=m.user_id,
-                target_type=PaymentTargetType(m.target_type),
+                target_type=safe_enum_parse(
+                    PaymentTargetType, m.target_type, PaymentTargetType.UNSPECIFIED
+                ),
                 target_id=m.target_id,
-                plan_type=PlanType(m.plan_type),
+                plan_type=safe_enum_parse(PlanType, m.plan_type, PlanType.UNSPECIFIED),
                 amount=m.amount,
                 currency=m.currency,
-                status=PaymentOrderStatus(m.status),
+                status=safe_enum_parse(
+                    PaymentOrderStatus, m.status, PaymentOrderStatus.UNSPECIFIED
+                ),
                 vnp_txn_ref=m.vnp_txn_ref,
                 created_at=m.created_at,
                 updated_at=m.updated_at,
@@ -280,7 +329,7 @@ class PaymentRepository(IPaymentRepository):
             for m in models
         ]
 
-    async def get_order_by_id(self, order_id: str) -> Optional[PaymentOrder]:
+    async def get_order_by_id(self, order_id: str) -> PaymentOrder | None:
         stmt = select(PaymentOrderModel).where(PaymentOrderModel.id == order_id)
         res = await self.session.execute(stmt)
         m = res.scalar_one_or_none()
@@ -289,12 +338,16 @@ class PaymentRepository(IPaymentRepository):
         return PaymentOrder(
             id=m.id,
             user_id=m.user_id,
-            target_type=PaymentTargetType(m.target_type),
+            target_type=safe_enum_parse(
+                PaymentTargetType, m.target_type, PaymentTargetType.UNSPECIFIED
+            ),
             target_id=m.target_id,
-            plan_type=PlanType(m.plan_type),
+            plan_type=safe_enum_parse(PlanType, m.plan_type, PlanType.UNSPECIFIED),
             amount=m.amount,
             currency=m.currency,
-            status=PaymentOrderStatus(m.status),
+            status=safe_enum_parse(
+                PaymentOrderStatus, m.status, PaymentOrderStatus.UNSPECIFIED
+            ),
             vnp_txn_ref=m.vnp_txn_ref,
             created_at=m.created_at,
             updated_at=m.updated_at,
@@ -302,14 +355,14 @@ class PaymentRepository(IPaymentRepository):
 
     async def update_order_status(
         self, order_id: str, status: PaymentOrderStatus
-    ) -> Optional[PaymentOrder]:
+    ) -> PaymentOrder | None:
         stmt = select(PaymentOrderModel).where(PaymentOrderModel.id == order_id)
         res = await self.session.execute(stmt)
         m = res.scalar_one_or_none()
         if not m:
             return None
 
-        now_str = datetime.now(timezone.utc).isoformat()
+        now_str = datetime.now(UTC).isoformat()
         m.status = status.value if hasattr(status, "value") else str(status)
         m.updated_at = now_str
         await self.session.flush()
@@ -317,12 +370,16 @@ class PaymentRepository(IPaymentRepository):
         return PaymentOrder(
             id=m.id,
             user_id=m.user_id,
-            target_type=PaymentTargetType(m.target_type),
+            target_type=safe_enum_parse(
+                PaymentTargetType, m.target_type, PaymentTargetType.UNSPECIFIED
+            ),
             target_id=m.target_id,
-            plan_type=PlanType(m.plan_type),
+            plan_type=safe_enum_parse(PlanType, m.plan_type, PlanType.UNSPECIFIED),
             amount=m.amount,
             currency=m.currency,
-            status=PaymentOrderStatus(m.status),
+            status=safe_enum_parse(
+                PaymentOrderStatus, m.status, PaymentOrderStatus.UNSPECIFIED
+            ),
             vnp_txn_ref=m.vnp_txn_ref,
             created_at=m.created_at,
             updated_at=now_str,
@@ -357,12 +414,16 @@ class PaymentRepository(IPaymentRepository):
             PaymentOrder(
                 id=m.id,
                 user_id=m.user_id,
-                target_type=PaymentTargetType(m.target_type),
+                target_type=safe_enum_parse(
+                    PaymentTargetType, m.target_type, PaymentTargetType.UNSPECIFIED
+                ),
                 target_id=m.target_id,
-                plan_type=PlanType(m.plan_type),
+                plan_type=safe_enum_parse(PlanType, m.plan_type, PlanType.UNSPECIFIED),
                 amount=m.amount,
                 currency=m.currency,
-                status=PaymentOrderStatus(m.status),
+                status=safe_enum_parse(
+                    PaymentOrderStatus, m.status, PaymentOrderStatus.UNSPECIFIED
+                ),
                 vnp_txn_ref=m.vnp_txn_ref,
                 created_at=m.created_at,
                 updated_at=m.updated_at,

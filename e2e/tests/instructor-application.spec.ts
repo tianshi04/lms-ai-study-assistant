@@ -2,14 +2,12 @@ import { test, expect } from '@playwright/test';
 import { BecomeAnInstructorPage } from '../pages';
 
 test.describe('Full System Blackbox - Individual Instructor Application (POM)', () => {
-  test('should navigate to become an instructor page via Navbar link', async ({ page }) => {
-    await page.goto('/');
-    
+  test('should navigate to become an instructor page via link', async ({ page }) => {
+    await page.goto('/learner/dashboard');
     const navLink = page.getByRole('link', { name: /Trở thành Giảng viên/i }).first();
-    if (await navLink.isVisible()) {
-      await navLink.click();
-      await expect(page).toHaveURL(/\/become-an-instructor/);
-    }
+    await expect(navLink).toBeVisible({ timeout: 15000 });
+    await navLink.click();
+    await expect(page).toHaveURL(/\/become-an-instructor/, { timeout: 15000 });
   });
 
   test('should load become an instructor page directly', async ({ page }) => {

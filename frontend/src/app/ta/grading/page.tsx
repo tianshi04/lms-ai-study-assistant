@@ -5,18 +5,12 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { useToast } from "@/components/ui/Toast";
-import { Modal } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
+
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/Table";
+import { Table } from "@/components/ui/Table";
 
 interface DemoSubmission {
   id: string;
@@ -121,17 +115,8 @@ export default function TAGradingPage() {
       } else {
         toast.error(res.message || "Chấm điểm thất bại.");
       }
-    } catch {
-      // Fallback update for demo environment
-      toast.success(`Đã duyệt chấm lại điểm ${inputScore}% cho bài làm thành công!`);
-      setSubmissions((prev) =>
-        prev.map((item) =>
-          item.id === selectedSubmission.id
-            ? { ...item, taScore: inputScore, status: "GRADED" }
-            : item,
-        ),
-      );
-      setSelectedSubmission(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Chấm điểm thất bại. Vui lòng thử lại.");
     } finally {
       setSubmitting(false);
     }
@@ -176,7 +161,7 @@ export default function TAGradingPage() {
             ].map((tab) => (
               <Button
                 key={tab.id}
-                variant={filterStatus === tab.id ? "primary" : "secondary"}
+                variant={filterStatus === tab.id ? "filled" : "tonal"}
                 size="sm"
                 onClick={() => setFilterStatus(tab.id as typeof filterStatus)}
               >
@@ -198,50 +183,46 @@ export default function TAGradingPage() {
             </div>
           ) : (
             <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Học viên</TableHead>
-                  <TableHead>Bài tập / Khóa học</TableHead>
-                  <TableHead>Thời gian nộp</TableHead>
-                  <TableHead>Điểm Peer</TableHead>
-                  <TableHead>Điểm TA</TableHead>
-                  <TableHead>Trạng thái</TableHead>
-                  <TableHead className="text-right">Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+              <Table.Header>
+                <Table.Row>
+                  <Table.Head>Học viên</Table.Head>
+                  <Table.Head>Bài tập / Khóa học</Table.Head>
+                  <Table.Head>Thời gian nộp</Table.Head>
+                  <Table.Head>Điểm Peer</Table.Head>
+                  <Table.Head>Điểm TA</Table.Head>
+                  <Table.Head>Trạng thái</Table.Head>
+                  <Table.Head className="text-right">Thao tác</Table.Head>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
                 {filteredSubmissions.map((sub) => (
-                  <TableRow key={sub.id}>
-                    <TableCell>
+                  <Table.Row key={sub.id}>
+                    <Table.Cell>
                       <div className="font-bold text-foreground">{sub.studentName}</div>
                       <div className="text-[10px] text-muted-foreground font-mono">
                         {sub.studentEmail}
                       </div>
-                    </TableCell>
-                    <TableCell className="max-w-xs">
+                    </Table.Cell>
+                    <Table.Cell className="max-w-xs">
                       <div className="font-bold text-foreground min-w-0 truncate">
                         {sub.itemTitle}
                       </div>
-                      <div className="text-[10px] text-muted-foreground min-w-0 truncate">
+                      <div className="text-xs text-muted-foreground truncate font-medium">
                         {sub.courseTitle}
                       </div>
-                    </TableCell>
-                    <TableCell className="font-mono text-muted-foreground">
+                    </Table.Cell>
+                    <Table.Cell className="text-xs font-mono text-muted-foreground">
                       {sub.submittedAt}
-                    </TableCell>
-                    <TableCell className="font-mono font-bold text-foreground">
-                      {sub.peerScore}%
-                    </TableCell>
-                    <TableCell className="font-mono font-bold">
-                      {sub.taScore !== null ? (
-                        <span className="text-primary">{sub.taScore}%</span>
-                      ) : (
-                        <span className="text-muted-foreground font-normal">Chưa chấm</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
+                    </Table.Cell>
+                    <Table.Cell className="font-mono text-xs font-bold text-foreground">
+                      {sub.peerScore}/100
+                    </Table.Cell>
+                    <Table.Cell className="font-mono text-xs font-bold text-primary">
+                      {sub.taScore !== null ? `${sub.taScore}/100` : "--"}
+                    </Table.Cell>
+                    <Table.Cell>
                       <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                        className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                           sub.status === "GRADED"
                             ? "bg-success/10 text-success"
                             : sub.status === "APPEALED"
@@ -255,105 +236,107 @@ export default function TAGradingPage() {
                             ? "Có kháng nghị"
                             : "Chờ trợ giảng"}
                       </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => handleOpenGradeModal(sub)}
-                      >
+                    </Table.Cell>
+                    <Table.Cell className="text-right">
+                      <Button size="sm" variant="tonal" onClick={() => handleOpenGradeModal(sub)}>
                         {sub.status === "GRADED" ? "Xem & Sửa điểm" : "Chấm điểm ngay"}
                       </Button>
-                    </TableCell>
-                  </TableRow>
+                    </Table.Cell>
+                  </Table.Row>
                 ))}
-              </TableBody>
+              </Table.Body>
             </Table>
           )}
         </div>
 
         {/* Modal Chấm Bài / Ghi Nhận Điểm Trợ Giảng */}
-        <Modal
-          isOpen={!!selectedSubmission}
-          onClose={() => setSelectedSubmission(null)}
-          title="Chấm Điểm Bài Tập Tự Luận (TA Evaluation)"
-          size="lg"
+        <Dialog.Root
+          open={!!selectedSubmission}
+          onOpenChange={(open) => {
+            if (!open) setSelectedSubmission(null);
+          }}
         >
-          {selectedSubmission && (
-            <form onSubmit={handleGradingSubmit} className="space-y-6">
-              <div className="space-y-2 p-4 rounded-2xl bg-muted border border-border">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-bold text-sm text-foreground">
-                      {selectedSubmission.itemTitle}
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Học viên: {selectedSubmission.studentName} ({selectedSubmission.studentEmail})
-                    </p>
+          <Dialog.Content size="lg">
+            <Dialog.Header>
+              <Dialog.Title>{"Chấm Điểm Bài Tập Tự Luận (TA Evaluation)"}</Dialog.Title>
+            </Dialog.Header>
+            {selectedSubmission && (
+              <form onSubmit={handleGradingSubmit} className="space-y-6 pt-2">
+                <div className="space-y-2 p-4 rounded-2xl bg-muted border border-border">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-bold text-sm text-foreground">
+                        {selectedSubmission.itemTitle}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Học viên: {selectedSubmission.studentName} (
+                        {selectedSubmission.studentEmail})
+                      </p>
+                    </div>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-card text-foreground">
+                      Điểm Peer gốc: {selectedSubmission.peerScore}%
+                    </span>
                   </div>
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-card text-foreground">
-                    Điểm Peer gốc: {selectedSubmission.peerScore}%
+                </div>
+
+                {/* Submission Content Text */}
+                <div className="space-y-2">
+                  <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Nội dung bài làm của học viên
                   </span>
+                  <div className="p-4 rounded-2xl bg-card border border-border text-xs font-mono text-foreground leading-relaxed max-h-48 overflow-y-auto">
+                    {selectedSubmission.textContent}
+                  </div>
                 </div>
-              </div>
 
-              {/* Submission Content Text */}
-              <div className="space-y-2">
-                <span className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Nội dung bài làm của học viên
-                </span>
-                <div className="p-4 rounded-2xl bg-card border border-border text-xs font-mono text-foreground leading-relaxed max-h-48 overflow-y-auto">
-                  {selectedSubmission.textContent}
+                {/* Input TA Score */}
+                <div className="space-y-2">
+                  <Input
+                    label="Điểm Trợ Giảng Chấm (Thang điểm 0 - 100%)"
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={inputScore}
+                    onChange={(e) => setInputScore(Number(e.target.value))}
+                    helperText={
+                      inputScore >= 80
+                        ? "Đạt loại Giỏi"
+                        : inputScore >= 60
+                          ? "Đạt yêu cầu"
+                          : "Cần cải thiện"
+                    }
+                    className="w-32 font-mono font-bold text-lg text-primary"
+                    required
+                  />
                 </div>
-              </div>
 
-              {/* Input TA Score */}
-              <div className="space-y-2">
-                <Input
-                  label="Điểm Trợ Giảng Chấm (Thang điểm 0 - 100%)"
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={inputScore}
-                  onChange={(e) => setInputScore(Number(e.target.value))}
-                  helperText={
-                    inputScore >= 80
-                      ? "Đạt loại Giỏi"
-                      : inputScore >= 60
-                        ? "Đạt yêu cầu"
-                        : "Cần cải thiện"
-                  }
-                  className="w-32 font-mono font-bold text-lg text-primary"
-                  required
+                {/* Feedback Note */}
+                <Textarea
+                  label="Nhận xét & Ghi chú hướng dẫn cho Học viên"
+                  rows={3}
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  placeholder="Nhập nhận xét chi tiết về bài làm, điểm mạnh và các điểm cần sửa đổi…"
                 />
-              </div>
 
-              {/* Feedback Note */}
-              <Textarea
-                label="Nhận xét & Ghi chú hướng dẫn cho Học viên"
-                rows={3}
-                value={feedback}
-                onChange={(e) => setFeedback(e.target.value)}
-                placeholder="Nhập nhận xét chi tiết về bài làm, điểm mạnh và các điểm cần sửa đổi…"
-              />
-
-              {/* Actions */}
-              <div className="flex justify-end gap-3 pt-2 border-t border-border">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setSelectedSubmission(null)}
-                >
-                  Hủy
-                </Button>
-                <Button type="submit" isLoading={submitting} size="sm">
-                  Lưu & Xác Nhận Điểm Trợ Giảng
-                </Button>
-              </div>
-            </form>
-          )}
-        </Modal>
+                {/* Actions */}
+                <Dialog.Footer className="pt-2">
+                  <Button
+                    type="button"
+                    variant="text"
+                    size="sm"
+                    onClick={() => setSelectedSubmission(null)}
+                  >
+                    {"Hủy"}
+                  </Button>
+                  <Button type="submit" disabled={submitting} size="sm">
+                    {"Lưu & Xác Nhận Điểm Trợ Giảng"}
+                  </Button>
+                </Dialog.Footer>
+              </form>
+            )}
+          </Dialog.Content>
+        </Dialog.Root>
       </main>
     </div>
   );

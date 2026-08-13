@@ -18,13 +18,12 @@ import {
   CheckCircle2,
   Building2,
   LogOut,
+  Sparkles,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/DropdownMenu";
+import { useListUserPurchasesQuery } from "@/lib/query_hooks";
+import { PaymentOrderStatus, PaymentTargetType, PlanType } from "@/gen/payment/v1/payment_pb";
+import { Menu } from "@/components/ui/Menu";
+import { Chip } from "@/components/ui/Chip";
 
 const itemClasses =
   "text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low/70 font-medium justify-start gap-3 w-full rounded-xl px-3.5 py-2.5 my-0.5 transition-colors cursor-pointer";
@@ -42,6 +41,63 @@ export function UserDropdown() {
     isSuperAdmin,
     logout: handleLogout,
   } = useAuth();
+
+  const { data: purchasesData } = useListUserPurchasesQuery({ enabled: !!userId });
+
+  const { daysRemaining, isPlusActive, formattedExpDate } = useMemo(() => {
+    const rawSub = purchasesData?.activeSubscription;
+    let expStr = rawSub?.expiresAt || "";
+
+    if (!expStr && purchasesData?.orders?.length) {
+      const completedSubOrders = purchasesData.orders.filter(
+        (o) =>
+          o.status === PaymentOrderStatus.COMPLETED &&
+          o.targetType === PaymentTargetType.SYSTEM_SUBSCRIPTION,
+      );
+      if (completedSubOrders.length > 0) {
+        let accumulatedExp: Date | null = null;
+        const sorted = [...completedSubOrders].sort(
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+        );
+        for (const o of sorted) {
+          const addDays = o.planType === PlanType.YEARLY ? 365 : 30;
+          const orderDate = new Date(o.createdAt);
+          if (!accumulatedExp || accumulatedExp.getTime() < orderDate.getTime()) {
+            accumulatedExp = new Date(orderDate.getTime() + addDays * 24 * 60 * 60 * 1000);
+          } else {
+            accumulatedExp = new Date(accumulatedExp.getTime() + addDays * 24 * 60 * 60 * 1000);
+          }
+        }
+        if (accumulatedExp) {
+          expStr = accumulatedExp.toISOString();
+        }
+      }
+    }
+
+    if (!expStr) {
+      return { daysRemaining: 0, isPlusActive: false, formattedExpDate: "" };
+    }
+
+    const expTime = new Date(expStr.trim().replace(" ", "T")).getTime();
+    const nowTime = Date.now();
+    const diffDays = Math.ceil((expTime - nowTime) / (1000 * 60 * 60 * 24));
+    const active = !isNaN(expTime) && diffDays > 0;
+    let formattedDate = "";
+    try {
+      formattedDate = new Date(expTime).toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    } catch {
+      formattedDate = expStr;
+    }
+    return {
+      daysRemaining: active ? diffDays : 0,
+      isPlusActive: active,
+      formattedExpDate: formattedDate,
+    };
+  }, [purchasesData]);
 
   useEffect(() => {
     if (userName && !userAvatar) {
@@ -86,8 +142,8 @@ export function UserDropdown() {
   }, [userRole, isSuperAdmin]);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
+    <Menu>
+      <Menu.Trigger
         className="relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer group p-0.5 border border-outline-variant hover:border-primary shrink-0"
         aria-label={displayUserName || "Tài khoản người dùng"}
       >
@@ -99,15 +155,15 @@ export function UserDropdown() {
           unoptimized
           className="w-9 h-9 rounded-full bg-primary-container object-cover pointer-events-none"
         />
-      </DropdownMenuTrigger>
+      </Menu.Trigger>
 
-      <DropdownMenuContent
+      <Menu.Content
         sideOffset={14}
         align="end"
-        className="w-64 p-1.5 rounded-2xl bg-card border border-outline-variant shadow-xl"
+        className="w-68 p-1.5 rounded-2xl bg-card border border-outline-variant shadow-xl"
       >
         {/* User Info Header with Avatar and Stacked Role Badge */}
-        <div className="flex items-center gap-3.5 px-3.5 py-3 border-b border-outline-variant mb-1.5">
+        <div className="flex items-center gap-3.5 px-3.5 py-3 mb-1.5">
           <Image
             src={avatarSrc}
             alt={displayUserName}
@@ -121,82 +177,139 @@ export function UserDropdown() {
               {displayUserName}
             </p>
             <p className="text-xs text-on-surface-variant truncate min-w-0">{userEmail}</p>
-            <div>
-              <span className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-primary-container text-on-primary-container border border-primary/20 uppercase tracking-wider">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <Chip
+                variant="assist"
+                className="h-5 text-[10px] py-0 px-2.5 bg-primary-container text-on-primary-container border-primary/20 hover:bg-primary-container uppercase tracking-wider pointer-events-none cursor-default font-bold"
+              >
                 {roleLabel}
-              </span>
+              </Chip>
+              {isPlusActive && (
+                <Chip
+                  variant="assist"
+                  className="h-5 text-[10px] py-0 px-2 bg-primary-container text-primary border-primary/20 hover:bg-primary-container uppercase tracking-wider pointer-events-none cursor-default font-bold"
+                  leadingIcon={<Sparkles className="w-2.5 h-2.5 text-primary" aria-hidden="true" />}
+                >
+                  PLUS
+                </Chip>
+              )}
             </div>
           </div>
         </div>
 
+        {/* Plus Banner Section */}
+        {isPlusActive ? (
+          <div className="mx-1 my-1.5 p-3 rounded-xl bg-primary-container/20 border border-primary/20 flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
+                <Sparkles className="w-4 h-4 text-primary animate-pulse" aria-hidden="true" />
+                <span>{"Coursera Plus"}</span>
+              </div>
+              <Chip
+                variant="assist"
+                className="h-5 text-[10px] py-0 px-2 bg-success/10 text-success border-success/20 hover:bg-success/15 pointer-events-none cursor-default font-bold"
+              >
+                Đang hoạt động
+              </Chip>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {"Còn "}
+              <strong className="text-foreground font-semibold">{daysRemaining}</strong>
+              {" ngày sử dụng (Đến "}
+              {formattedExpDate}
+              {")"}
+            </p>
+            <Link
+              href="/my-purchases"
+              className="mt-0.5 text-center text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover px-3 py-1.5 rounded-lg transition-all shadow-2xs"
+            >
+              {"Gia hạn Plus"}
+            </Link>
+          </div>
+        ) : (
+          <div className="mx-1 my-1.5 p-3 rounded-xl bg-surface-container-high border border-outline-variant/40 flex flex-col gap-2">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
+              <Sparkles className="w-4 h-4 text-primary" aria-hidden="true" />
+              <span>{"Coursera Plus"}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {"Học không giới hạn 500+ khóa học & nhận chứng chỉ."}
+            </p>
+            <Link
+              href="/my-purchases"
+              className="mt-0.5 text-center text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover px-3 py-1.5 rounded-lg transition-all shadow-2xs"
+            >
+              {"Nâng cấp Plus ngay"}
+            </Link>
+          </div>
+        )}
+
         {/* Menu Items */}
-        <DropdownMenuItem render={<Link href="/my-learning" />} className={itemClasses}>
+        <Menu.Item render={<Link href="/my-learning" />} className={itemClasses}>
           <BookOpen aria-hidden="true" className={iconClasses} />
           <span>{"Việc học của tôi"}</span>
-        </DropdownMenuItem>
+        </Menu.Item>
 
-        <DropdownMenuItem render={<Link href="/my-purchases" />} className={itemClasses}>
+        <Menu.Item render={<Link href="/my-purchases" />} className={itemClasses}>
           <ShoppingBag aria-hidden="true" className={iconClasses} />
           <span>{"Mua hàng của tôi"}</span>
-        </DropdownMenuItem>
+        </Menu.Item>
 
-        <DropdownMenuItem render={<Link href="/my-organizations" />} className={itemClasses}>
+        <Menu.Item render={<Link href="/my-organizations" />} className={itemClasses}>
           <Building2 aria-hidden="true" className={iconClasses} />
           <span>{"Tổ chức của tôi"}</span>
-        </DropdownMenuItem>
+        </Menu.Item>
 
-        <DropdownMenuItem render={<Link href="/account-settings" />} className={itemClasses}>
+        <Menu.Item render={<Link href="/account-settings" />} className={itemClasses}>
           <Settings aria-hidden="true" className={iconClasses} />
           <span>{"Cài đặt"}</span>
-        </DropdownMenuItem>
+        </Menu.Item>
 
         {isInstructorOrAdmin && (
           <>
-            <DropdownMenuItem render={<Link href="/instructor/courses" />} className={itemClasses}>
+            <Menu.Item render={<Link href="/instructor/courses" />} className={itemClasses}>
               <Layers aria-hidden="true" className={iconClasses} />
               <span>{"Giảng Viên"}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem render={<Link href="/instructor/profile" />} className={itemClasses}>
+            </Menu.Item>
+            <Menu.Item render={<Link href="/instructor/profile" />} className={itemClasses}>
               <Edit aria-hidden="true" className={iconClasses} />
               <span>{"Hồ sơ & Chữ ký Giảng viên"}</span>
-            </DropdownMenuItem>
+            </Menu.Item>
           </>
         )}
 
         {isSuperAdmin && (
-          <DropdownMenuItem render={<Link href="/partner/settings" />} className={itemClasses}>
+          <Menu.Item render={<Link href="/partner/settings" />} className={itemClasses}>
             <Settings aria-hidden="true" className={iconClasses} />
             <span>{"Cấu hình Đối tác"}</span>
-          </DropdownMenuItem>
+          </Menu.Item>
         )}
 
         {isSuperAdmin && (
           <>
-            <DropdownMenuItem render={<Link href="/admin/dashboard" />} className={itemClasses}>
+            <Menu.Item render={<Link href="/admin/dashboard" />} className={itemClasses}>
               <LayoutDashboard aria-hidden="true" className={iconClasses} />
               <span>{"Trang quản trị"}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem render={<Link href="/admin/applications" />} className={itemClasses}>
+            </Menu.Item>
+            <Menu.Item render={<Link href="/admin/applications" />} className={itemClasses}>
               <CheckCircle2 aria-hidden="true" className={iconClasses} />
               <span>{"Duyệt đơn Giảng viên"}</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem render={<Link href="/admin/partners" />} className={itemClasses}>
+            </Menu.Item>
+            <Menu.Item render={<Link href="/admin/partners" />} className={itemClasses}>
               <Building2 aria-hidden="true" className={iconClasses} />
               <span>{"Quản trị Đối tác"}</span>
-            </DropdownMenuItem>
+            </Menu.Item>
           </>
         )}
 
-        <div className="border-t border-outline-variant my-1.5" />
-
-        <DropdownMenuItem
+        <Menu.Item
           onClick={handleLogout}
           className="text-error hover:bg-error-container/40 cursor-pointer px-3.5 py-2.5 text-sm font-medium justify-start gap-3 w-full rounded-xl my-0.5 transition-colors"
         >
           <LogOut aria-hidden="true" className="w-4.5 h-4.5 text-error" />
           <span>{"Thoát"}</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </Menu.Item>
+      </Menu.Content>
+    </Menu>
   );
 }

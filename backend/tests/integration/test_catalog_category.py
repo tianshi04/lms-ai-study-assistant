@@ -1,4 +1,5 @@
 import pytest
+
 from src.modules.catalog.application.catalog_usecase import CatalogUseCase
 
 

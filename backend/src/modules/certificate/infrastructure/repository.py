@@ -1,8 +1,8 @@
-from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.catalog.domain.entities import ItemType
+from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
 from src.modules.certificate.domain.constants import (
     DEFAULT_CERTIFICATE_PASSING_THRESHOLD_PERCENT,
 )
@@ -16,6 +16,7 @@ from src.modules.certificate.infrastructure.models import (
     CertificateModel,
     FinancialAidModel,
 )
+from src.modules.identity.infrastructure.repository import IdentityRepository
 
 
 class CertificateRepository(ICertificateRepository):
@@ -24,7 +25,7 @@ class CertificateRepository(ICertificateRepository):
 
     async def get_financial_aid(
         self, user_id: str, course_id: str
-    ) -> Optional[FinancialAidApplication]:
+    ) -> FinancialAidApplication | None:
         stmt = select(FinancialAidModel).where(
             FinancialAidModel.user_id == user_id,
         )
@@ -64,7 +65,7 @@ class CertificateRepository(ICertificateRepository):
         ]
 
     async def list_financial_aids(
-        self, course_id: Optional[str] = None, status: Optional[str] = None
+        self, course_id: str | None = None, status: str | None = None
     ) -> list[FinancialAidApplication]:
         stmt = select(FinancialAidModel)
         if course_id:
@@ -89,7 +90,7 @@ class CertificateRepository(ICertificateRepository):
 
     async def get_financial_aid_by_id(
         self, application_id: str
-    ) -> Optional[FinancialAidApplication]:
+    ) -> FinancialAidApplication | None:
         stmt = select(FinancialAidModel).where(FinancialAidModel.id == application_id)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -131,7 +132,7 @@ class CertificateRepository(ICertificateRepository):
 
     async def get_certificate(
         self, user_id: str, course_id: str
-    ) -> Optional[VerifiedCertificate]:
+    ) -> VerifiedCertificate | None:
         stmt = select(CertificateModel).where(
             CertificateModel.user_id == user_id,
             CertificateModel.course_id == course_id,
@@ -142,7 +143,7 @@ class CertificateRepository(ICertificateRepository):
 
     async def get_certificate_by_id(
         self, certificate_id: str
-    ) -> Optional[VerifiedCertificate]:
+    ) -> VerifiedCertificate | None:
         stmt = select(CertificateModel).where(
             CertificateModel.certificate_id == certificate_id
         )
@@ -390,7 +391,7 @@ class CertificateRepository(ICertificateRepository):
 
     async def get_specialization_details(
         self, specialization_id: str
-    ) -> tuple[Optional[str], Optional[str], Optional[str], list[str]]:
+    ) -> tuple[str | None, str | None, str | None, list[str]]:
         catalog_repo_factory = __import__(
             "src.modules.catalog.infrastructure.repository",
             fromlist=["SQLAlchemyCatalogRepository"],
@@ -409,36 +410,27 @@ class CertificateRepository(ICertificateRepository):
     async def get_course_signer_info(
         self, course_id_or_slug: str
     ) -> tuple[str, str, str]:
-        catalog_repo_factory = __import__(
-            "src.modules.catalog.infrastructure.repository",
-            fromlist=["SQLAlchemyCatalogRepository"],
-        ).SQLAlchemyCatalogRepository
-        catalog_repo = catalog_repo_factory(self._session)
+        catalog_repo = SQLAlchemyCatalogRepository(self._session)
         course = await catalog_repo.get_course_detail(course_id_or_slug)
 
-        partner_name = course.partner_name if (course and course.partner_name) else ""
-        fallback_signer_name = partner_name
-        fallback_signer_title = partner_name
-        fallback_signature_url = (
-            course.partner_logo_url if (course and course.partner_logo_url) else ""
-        )
-
         if not course or not course.owner_id:
-            return fallback_signer_name, fallback_signer_title, fallback_signature_url
+            partner = course.partner_name if course else ""
+            logo = course.partner_logo_url if course else ""
+            return partner, partner, logo
 
-        identity_repo_factory = __import__(
-            "src.modules.identity.infrastructure.repository",
-            fromlist=["IdentityRepository"],
-        ).IdentityRepository
-        identity_repo = identity_repo_factory(self._session)
+        identity_repo = IdentityRepository(self._session)
         owner_user = await identity_repo.get_by_id(course.owner_id)
 
         if not owner_user:
-            return fallback_signer_name, fallback_signer_title, fallback_signature_url
+            partner = course.partner_name or ""
+            logo = course.partner_logo_url or ""
+            return partner, partner, logo
 
-        signer_name = owner_user.full_name or fallback_signer_name
-        signer_title = owner_user.title or fallback_signer_title
-        signature_image_url = owner_user.signature_image_url or fallback_signature_url
+        signer_name = owner_user.full_name or course.partner_name or "Giảng viên"
+        signer_title = owner_user.title or "Giảng viên chính"
+        signature_image_url = (
+            owner_user.signature_image_url or course.partner_logo_url or ""
+        )
 
         return signer_name, signer_title, signature_image_url
 

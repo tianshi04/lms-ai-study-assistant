@@ -1,5 +1,6 @@
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
 import src.shared.infrastructure.database as db_module
 
 

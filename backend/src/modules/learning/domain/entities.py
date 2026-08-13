@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+
 from src.shared.domain.base import Entity, ValueObject
 
 

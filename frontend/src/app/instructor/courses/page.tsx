@@ -5,14 +5,18 @@ import Link from "next/link";
 import { getRpcClient } from "@/lib/connect_client";
 import { CatalogService, CourseStatus, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
-import { Modal } from "@/components/ui/Modal";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
+import { Surface } from "@/components/ui/Surface";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { Progress } from "@/components/ui/Progress";
+import { DropdownMenu } from "@/components/ui/Menu";
+import { IconButton } from "@/components/ui/IconButton";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
+import { PageHeader } from "@/components/ui/LayoutPrimitives";
 import {
   FileText,
   Plus,
@@ -22,6 +26,11 @@ import {
   Megaphone,
   Trash2,
   ArrowRight,
+  MoreVertical,
+  Clock,
+  Award,
+  ExternalLink,
+  Settings,
 } from "lucide-react";
 
 const emptySubscribe = () => () => {};
@@ -225,9 +234,15 @@ export default function InstructorCoursesPage() {
     }
   };
 
-  const handleDeleteCourse = (courseId: string, courseTitle: string) => {
+  const handleDeleteCourse = (courseId: string, courseTitle: string, status?: CourseStatus) => {
     if (!isInstructorOrAdmin) {
       toast.error("Tài khoản Học viên (Learner) không có quyền xóa khóa học.");
+      return;
+    }
+    if (status === CourseStatus.PUBLISHED) {
+      toast.error(
+        `Không thể xóa khóa học "${courseTitle}" vì khóa học đã được xuất bản (PUBLISHED). Vui lòng liên hệ Quản trị viên hệ thống để được hỗ trợ.`,
+      );
       return;
     }
     setDeletingCourseTarget({ id: courseId, title: courseTitle });
@@ -251,22 +266,22 @@ export default function InstructorCoursesPage() {
   return (
     <div className="w-full max-w-7xl mx-auto px-6 py-12 flex-1">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 pb-6 border-b border-border">
+      <PageHeader>
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-2">
-            {"Instructor Portal"}
-          </div>
-          <h1 className="text-3xl font-extrabold text-foreground text-balance">
-            {"Quản lý Khóa học Giảng dạy"}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <PageHeader.Badge>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-2">
+              {"Instructor Portal"}
+            </div>
+          </PageHeader.Badge>
+          <PageHeader.Title>{"Quản lý Khóa học Giảng dạy"}</PageHeader.Title>
+          <PageHeader.Description>
             {
               "Soạn thảo, quản lý bài giảng, xem thống kê và đăng thông báo cho các khóa học trên nền tảng Coursera AI."
             }
-          </p>
+          </PageHeader.Description>
         </div>
 
-        <div className="flex items-center gap-3">
+        <PageHeader.Actions>
           <Link
             href="/instructor/financial-aid"
             className="px-4 py-3 rounded-xl bg-muted hover:bg-muted/80 text-foreground font-semibold text-sm transition-colors flex items-center gap-2"
@@ -282,8 +297,8 @@ export default function InstructorCoursesPage() {
             <Plus className="w-5 h-5" aria-hidden="true" />
             <span>{"Soạn Khóa Học Mới"}</span>
           </Link>
-        </div>
-      </div>
+        </PageHeader.Actions>
+      </PageHeader>
 
       {/* Role Warning Banner if user is Learner */}
       {isMounted && userRole && !isInstructorOrAdmin && (
@@ -301,229 +316,286 @@ export default function InstructorCoursesPage() {
       {/* Courses Table / Cards */}
       {loading ? (
         <div className="flex items-center justify-center py-20 text-muted-foreground">
-          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mr-3" />
+          <Progress.Circular size="sm" className="mr-3" />
           <span aria-live="polite">{"Đang tải danh sách khóa học…"}</span>
         </div>
       ) : courses.length === 0 ? (
-        <div className="text-center py-16 bg-card rounded-3xl border border-border">
+        <Surface variant="low" shape="2xl" className="text-center py-16">
           <p className="text-muted-foreground mb-4">{"Chưa có khóa học nào được tạo."}</p>
           <Button onClick={handleOpenCreateModal}>{"Tạo khóa học đầu tiên"}</Button>
-        </div>
+        </Surface>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => (
-            <div
+            <Surface
               key={course.id}
-              className="bg-card border border-border hover:border-primary/50 rounded-3xl p-6 transition-colors flex flex-col justify-between h-full"
+              variant="low"
+              shape="2xl"
+              className="p-5 flex flex-col justify-between h-full group hover:shadow-md transition-all border border-border/60 hover:border-primary/30"
             >
               <div>
+                {/* Header: Partner Name + Status + Context Menu Dropdown */}
                 <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
-                    {course.partnerName}
-                  </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                    <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 truncate">
+                      {course.partnerName}
+                    </span>
                     {getStatusBadge(course.status)}
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                        course.financialAidEnabled
-                          ? "bg-success/10 text-success border border-success/20"
-                          : "bg-muted text-muted-foreground border border-input"
-                      }`}
-                    >
-                      {course.financialAidEnabled ? "FinAid: ON" : "FinAid: OFF"}
-                    </span>
-                    <span className="text-xs text-muted-foreground font-mono">
-                      {course.weekModules.length} {"Tuần học"}
-                    </span>
                   </div>
+
+                  {/* Options Menu (...) */}
+                  <DropdownMenu.Root>
+                    <DropdownMenu.Trigger
+                      render={
+                        <IconButton
+                          variant="standard"
+                          size="xs"
+                          aria-label="Thao tác khóa học"
+                          className="text-muted-foreground hover:text-foreground -mr-1"
+                        >
+                          <MoreVertical className="w-4 h-4" aria-hidden="true" />
+                        </IconButton>
+                      }
+                    />
+                    <DropdownMenu.Content align="end">
+                      <DropdownMenu.Item
+                        render={<Link href={`/instructor/courses/${course.id}`} />}
+                      >
+                        <Pencil className="w-4 h-4 text-primary" aria-hidden="true" />
+                        <span>Biên soạn bài giảng</span>
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Item onClick={() => handleOpenEditModal(course)}>
+                        <Settings className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                        <span>Sửa thông tin khóa học</span>
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Item
+                        render={<Link href={`/instructor/courses/${course.id}/analytics`} />}
+                      >
+                        <BarChart2 className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                        <span>Thống kê & Phân tích</span>
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Item
+                        render={<Link href={`/instructor/courses/${course.id}/announcements`} />}
+                      >
+                        <Megaphone className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
+                        <span>Thông báo khóa học</span>
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Item
+                        render={<Link href={`/courses/${course.id}`} target="_blank" />}
+                      >
+                        <ExternalLink
+                          className="w-4 h-4 text-muted-foreground"
+                          aria-hidden="true"
+                        />
+                        <span>Xem trang học viên</span>
+                      </DropdownMenu.Item>
+
+                      <DropdownMenu.Separator className="my-1 h-px bg-border/60" />
+
+                      <DropdownMenu.Item
+                        onClick={() => handleDeleteCourse(course.id, course.title, course.status)}
+                        className="text-destructive hover:bg-destructive/10 data-[highlighted]:bg-destructive/10 data-[highlighted]:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" aria-hidden="true" />
+                        <span>Xóa khóa học</span>
+                      </DropdownMenu.Item>
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Root>
                 </div>
-                <Link href={`/instructor/courses/${course.id}`} className="block">
-                  <h3 className="font-bold text-lg text-foreground mb-2 min-w-0 line-clamp-2 hover:text-primary transition-colors">
+
+                {/* Course Title & Description */}
+                <Link href={`/instructor/courses/${course.id}`} className="block group/title">
+                  <h3 className="font-bold text-base sm:text-lg text-foreground mb-1.5 min-w-0 line-clamp-2 leading-snug group-hover/title:text-primary transition-colors">
                     {course.title}
                   </h3>
                 </Link>
-                <p className="text-xs text-muted-foreground min-w-0 line-clamp-3 mb-4 leading-relaxed">
-                  {course.description}
+                <p className="text-xs text-muted-foreground min-w-0 line-clamp-2 mb-4 leading-relaxed">
+                  {course.description || "Chưa có mô tả khóa học."}
                 </p>
 
-                <div className="flex items-center gap-2 mb-4">
-                  <Link
-                    href={`/instructor/courses/${course.id}`}
-                    className="px-3 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-bold hover:bg-primary/20 transition-colors flex items-center gap-1"
-                  >
-                    <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{"Biên soạn"}</span>
-                  </Link>
-
-                  <Link
-                    href={`/instructor/courses/${course.id}/analytics`}
-                    className="px-2.5 py-1 rounded-lg bg-success/10 text-success border border-success/20 text-xs font-semibold hover:bg-success/20 transition-colors flex items-center gap-1"
-                  >
-                    <BarChart2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{"Thống kê"}</span>
-                  </Link>
-
-                  <Link
-                    href={`/instructor/courses/${course.id}/announcements`}
-                    className="px-2.5 py-1 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-semibold hover:bg-primary/20 transition-colors flex items-center gap-1"
-                  >
-                    <Megaphone className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{"Thông báo"}</span>
-                  </Link>
+                {/* Metadata Row */}
+                <div className="flex items-center gap-4 text-xs text-muted-foreground pt-3 border-t border-border/40 mb-4">
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <Clock className="w-3.5 h-3.5 text-muted-foreground/70" aria-hidden="true" />
+                    <span>{course.weekModules.length} tuần học</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <Award className="w-3.5 h-3.5 text-muted-foreground/70" aria-hidden="true" />
+                    <span>
+                      FinAid:{" "}
+                      <strong
+                        className={
+                          course.financialAidEnabled
+                            ? "text-success font-semibold"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        {course.financialAidEnabled ? "Bật" : "Tắt"}
+                      </strong>
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-border flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleOpenEditModal(course)}
-                    className="px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/80 text-xs font-semibold text-foreground transition-colors flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{"Sửa thông tin"}</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleDeleteCourse(course.id, course.title)}
-                    className="px-3 py-1.5 rounded-lg bg-destructive/10 text-destructive border border-destructive/20 text-xs font-semibold hover:bg-destructive/20 transition-colors flex items-center gap-1 cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{"Xóa"}</span>
-                  </button>
-
-                  <Link
-                    href={`/courses/${course.id}`}
-                    className="text-xs font-semibold text-muted-foreground hover:text-primary transition-colors flex items-center gap-1 ml-auto"
-                  >
-                    <span>{"Xem bài giảng"}</span>
-                    <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
-                  </Link>
-                </div>
+              {/* Card Footer: Primary CTA Button */}
+              <div className="pt-3 border-t border-border/60 flex items-center justify-end">
+                <Button
+                  variant="filled"
+                  size="sm"
+                  render={<Link href={`/instructor/courses/${course.id}`} />}
+                  className="w-full sm:w-auto font-semibold gap-2 shadow-xs group-hover:shadow-sm"
+                >
+                  <span>Biên soạn bài giảng</span>
+                  <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                </Button>
               </div>
-            </div>
+            </Surface>
           ))}
         </div>
       )}
 
       {/* Modal Soạn / Chỉnh Sửa Khóa Học */}
-      <Modal
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        title={editingCourseId ? "Chỉnh Sửa Khóa Học" : "Soạn Thảo Khóa Học Mới"}
-      >
-        <form onSubmit={handleSaveCourse} className="space-y-4 pt-2">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-              {"Tên Khóa Học *"}
-            </label>
+      <Dialog.Root open={showModal} onOpenChange={(open) => setShowModal(open)}>
+        <Dialog.Content size="lg">
+          <Dialog.Header>
+            <Dialog.Title>
+              {editingCourseId ? "Chỉnh Sửa Khóa Học" : "Soạn Thảo Khóa Học Mới"}
+            </Dialog.Title>
+          </Dialog.Header>
+          <form onSubmit={handleSaveCourse} className="space-y-4 pt-2">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                {"Tên Khóa Học *"}
+              </label>
+              <Input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={"Ví dụ: Natural Language Processing with Transformers"}
+                required
+              />
+            </div>
+
+            {!editingCourseId && (
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                  {"Slug URL"}
+                </label>
+                <Input
+                  type="text"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  placeholder={"course-nlp-transformers (Tự tạo nếu để trống)"}
+                  className="font-mono"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                {"Mô Tả Nội Dung *"}
+              </label>
+              <Textarea
+                rows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={"Tóm tắt tổng quan kiến thức và kỹ năng đạt được sau khóa học…"}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                  {"Đối Tác Phát Hành"}
+                </label>
+                <Input
+                  type="text"
+                  value={partnerName}
+                  onChange={(e) => setPartnerName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                  {"Logo URL Đối Tác"}
+                </label>
+                <Input
+                  type="text"
+                  value={partnerLogoUrl}
+                  onChange={(e) => setPartnerLogoUrl(e.target.value)}
+                  className="font-mono text-xs"
+                />
+              </div>
+            </div>
+
             <Input
+              label="Giảng Viên (cách nhau bởi dấu phẩy)"
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={"Ví dụ: Natural Language Processing with Transformers"}
-              required
+              value={instructorNames}
+              onChange={(e) => setInstructorNames(e.target.value)}
             />
-          </div>
 
-          {!editingCourseId && (
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                {"Slug URL"}
-              </label>
-              <Input
-                type="text"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                placeholder={"course-nlp-transformers (Tự tạo nếu để trống)"}
-                className="font-mono"
+            <div className="p-3.5 rounded-2xl bg-muted border border-border">
+              <Checkbox
+                id="financialAidToggle"
+                checked={financialAidEnabled}
+                onCheckedChange={(checked) => setFinancialAidEnabled(Boolean(checked))}
+                label="Cho phép xin Hỗ trợ Tài chính (Financial Aid available)"
               />
             </div>
-          )}
 
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-              {"Mô Tả Nội Dung *"}
-            </label>
-            <Textarea
-              rows={3}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={"Tóm tắt tổng quan kiến thức và kỹ năng đạt được sau khóa học…"}
-              required
-            />
-          </div>
+            <Dialog.Footer className="pt-4 border-t border-border">
+              <Button type="button" variant="text" onClick={() => setShowModal(false)}>
+                {"Hủy"}
+              </Button>
+              <Button type="submit" variant="filled" disabled={saving}>
+                <span aria-live="polite">
+                  {saving
+                    ? "Đang lưu…"
+                    : editingCourseId
+                      ? "Cập Nhật Khóa Học"
+                      : "Lưu & Đăng Khóa Học"}
+                </span>
+              </Button>
+            </Dialog.Footer>
+          </form>
+        </Dialog.Content>
+      </Dialog.Root>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                {"Đối Tác Phát Hành"}
-              </label>
-              <Input
-                type="text"
-                value={partnerName}
-                onChange={(e) => setPartnerName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                {"Logo URL Đối Tác"}
-              </label>
-              <Input
-                type="text"
-                value={partnerLogoUrl}
-                onChange={(e) => setPartnerLogoUrl(e.target.value)}
-                className="font-mono text-xs"
-              />
-            </div>
-          </div>
-
-          <Input
-            label="Giảng Viên (cách nhau bởi dấu phẩy)"
-            type="text"
-            value={instructorNames}
-            onChange={(e) => setInstructorNames(e.target.value)}
-          />
-
-          <div className="p-3.5 rounded-2xl bg-muted border border-border">
-            <Checkbox
-              id="financialAidToggle"
-              checked={financialAidEnabled}
-              onCheckedChange={(checked) => setFinancialAidEnabled(Boolean(checked))}
-              label="Cho phép xin Hỗ trợ Tài chính (Financial Aid available)"
-            />
-          </div>
-
-          <div className="pt-4 flex justify-end gap-3 border-t border-border">
-            <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
-              {"Hủy"}
+      <Dialog
+        open={Boolean(deletingCourseTarget)}
+        onOpenChange={(open: boolean) => {
+          if (!open) setDeletingCourseTarget(null);
+        }}
+      >
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon icon={<Trash2 className="w-6 h-6 text-error" aria-hidden="true" />} />
+            <Dialog.Title>Xác nhận xóa khóa học</Dialog.Title>
+            <Dialog.Description>
+              {deletingCourseTarget
+                ? `Bạn có chắc chắn muốn xóa khóa học "${deletingCourseTarget.title}"? Thao tác này không thể hoàn tác.`
+                : ""}
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Button variant="text" onClick={() => setDeletingCourseTarget(null)}>
+              Hủy
             </Button>
-            <Button type="submit" variant="primary" disabled={saving}>
-              <span aria-live="polite">
-                {saving
-                  ? "Đang lưu…"
-                  : editingCourseId
-                    ? "Cập Nhật Khóa Học"
-                    : "Lưu & Đăng Khóa Học"}
-              </span>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={executeDeleteCourse}
+            >
+              Xóa khóa học
             </Button>
-          </div>
-        </form>
-      </Modal>
-
-      <ConfirmAlertDialog
-        isOpen={Boolean(deletingCourseTarget)}
-        onClose={() => setDeletingCourseTarget(null)}
-        onConfirm={executeDeleteCourse}
-        title="Xác nhận xóa khóa học"
-        description={
-          deletingCourseTarget
-            ? `Bạn có chắc chắn muốn xóa khóa học "${deletingCourseTarget.title}"? Thao tác này không thể hoàn tác.`
-            : ""
-        }
-        confirmText="Xóa khóa học"
-        cancelText="Hủy"
-        variant="danger"
-      />
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Pin, ChevronUp } from "lucide-react";
+import { Pin, ChevronUp, MessageSquare, MessageSquarePlus } from "lucide-react";
 import { create } from "@bufbuild/protobuf";
 import { getRpcClient } from "@/lib/connect_client";
 import {
@@ -14,10 +14,13 @@ import {
 import { ForumReplyItem } from "@/components/forum/ForumReplyItem";
 import { ThreadDetailModal } from "@/components/forum/ThreadDetailModal";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import { Dialog } from "@/components/ui/Dialog";
+import { Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/Input";
+import { Badge } from "@/components/ui/Badge";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
+import { Progress } from "@/components/ui/Progress";
 
 interface ForumTabProps {
   courseId: string;
@@ -52,6 +55,9 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
 
   // Reply inputs: threadId -> content
   const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
+
+  // In-flight voting requests state
+  const [votingPostIds, setVotingPostIds] = useState<Set<string>>(new Set());
 
   // Reply Edit State
   const [editingReplyId, setEditingReplyId] = useState<string | null>(null);
@@ -223,6 +229,9 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
   };
 
   const handleVote = async (postId: string, isUpvote: boolean) => {
+    if (votingPostIds.has(postId)) return;
+    setVotingPostIds((prev) => new Set(prev).add(postId));
+
     setThreads((prevThreads) =>
       prevThreads.map((t) => {
         if (t.id === postId) {
@@ -271,30 +280,41 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
     } catch (err) {
       console.error("Error voting:", err);
       fetchThreads();
+    } finally {
+      setVotingPostIds((prev) => {
+        const next = new Set(prev);
+        next.delete(postId);
+        return next;
+      });
     }
   };
 
   if (loading) {
     return (
       <div className="p-4 text-xs text-muted-foreground flex items-center justify-center gap-2">
-        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <Progress.Circular size="sm" ariaLabel="Đang tải bài thảo luận" />
         <span aria-live="polite">Đang tải bài thảo luận…</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="w-full space-y-4">
       {/* Create New Quick Question Form */}
       <form
         onSubmit={handleCreateThread}
-        className="bg-surface-container-low border border-outline-variant rounded-2xl p-3.5 space-y-2.5 shadow-xs"
+        className="w-full bg-surface-container-low/50 border border-outline-variant/60 rounded-2xl p-4 space-y-3"
       >
+        <h4 className="text-xs font-bold text-on-surface uppercase tracking-wider flex items-center gap-2">
+          <MessageSquarePlus className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+          <span>{"Thảo luận bài học"}</span>
+        </h4>
         <Input
           type="text"
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
           placeholder="Đặt câu hỏi thảo luận cho bài học này…"
+          className="bg-surface-container-lowest"
         />
         {newTitle.trim() && (
           <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
@@ -303,13 +323,13 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
               onChange={(e) => setNewContent(e.target.value)}
               placeholder="Chi tiết câu hỏi (nếu có)…"
               rows={2}
-              className="flex-1 min-h-[60px]"
+              className="bg-surface-container-lowest flex-1 min-h-[60px]"
             />
             <Button
               type="submit"
               disabled={submitting || !newTitle.trim()}
-              isLoading={submitting}
               size="sm"
+              className="font-bold shadow-xs"
             >
               Đăng Thảo Luận
             </Button>
@@ -319,11 +339,14 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
 
       {/* Threads List */}
       {threads.length === 0 ? (
-        <div className="text-center py-6 text-xs text-on-surface-variant bg-surface-container-low border border-outline-variant p-6 rounded-2xl">
-          Chưa có câu hỏi thảo luận nào cho bài học này. Hãy gửi thắc mắc đầu tiên của bạn!
+        <div className="w-full border border-dashed border-outline-variant/70 bg-surface-container-low/30 p-6 rounded-2xl text-center text-xs text-on-surface-variant flex flex-col items-center justify-center gap-2">
+          <MessageSquare className="w-6 h-6 text-on-surface-variant/50" aria-hidden="true" />
+          <span>
+            {"Chưa có câu hỏi thảo luận nào cho bài học này. Hãy gửi thắc mắc đầu tiên của bạn!"}
+          </span>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="w-full space-y-3">
           {threads.map((thread) => {
             const isThreadAuthor = Boolean(currentUserId && thread.authorUserId === currentUserId);
             const canDeleteThread = isThreadAuthor || isStaffOrAdmin;
@@ -334,25 +357,25 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
               <div
                 key={thread.id}
                 id={`thread-${thread.id}`}
-                className={`bg-surface-container-low border ${
+                className={`w-full bg-surface-container-lowest border ${
                   isTarget
-                    ? "border-primary ring-2 ring-primary/50 shadow-md bg-primary-container/20"
-                    : "border-outline-variant"
-                } rounded-2xl p-4 text-xs space-y-2.5 transition-colors duration-m3-medium-2 ease-m3-emphasized shadow-xs`}
+                    ? "border-primary ring-2 ring-primary/40 bg-primary-container/20"
+                    : "border-outline-variant/70 hover:border-primary/40 shadow-2xs"
+                } rounded-2xl p-4 text-xs space-y-2.5 transition-all`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
                     <div className="flex items-center gap-1.5 flex-wrap mb-1">
                       {isTarget && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-primary bg-primary-container px-2 py-0.5 rounded-full border border-primary/20">
+                        <Badge variant="primary" className="text-[10px]">
                           📌 Thảo luận từ thông báo
-                        </span>
+                        </Badge>
                       )}
                       {thread.isStaffPinned && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-warning bg-warning/10 px-2 py-0.5 rounded-full border border-warning/20">
+                        <Badge variant="warning" className="gap-1 text-[10px]">
                           <Pin aria-hidden="true" className="w-3 h-3 text-warning" />
                           Staff Pinned
-                        </span>
+                        </Badge>
                       )}
                       <span className="font-bold text-on-surface">{thread.authorName}</span>
                       <span className="text-[10px] text-on-surface-variant">
@@ -364,22 +387,26 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                         </span>
                       )}
                       {isThreadAuthor && (
-                        <button
+                        <Button
                           type="button"
+                          variant="text"
+                          size="sm"
                           onClick={() => startEditThread(thread)}
-                          className="text-[10px] font-bold text-on-surface-variant hover:text-primary cursor-pointer ml-1 rounded-sm p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="text-[10px] font-bold text-on-surface-variant hover:text-primary h-auto p-0.5"
                         >
                           {"Sửa"}
-                        </button>
+                        </Button>
                       )}
                       {canDeleteThread && (
-                        <button
+                        <Button
                           type="button"
+                          variant="text"
+                          size="sm"
                           onClick={() => handleDeleteThread(thread.id)}
-                          className="text-[10px] font-bold text-on-surface-variant hover:text-destructive cursor-pointer ml-1 rounded-sm p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          className="text-[10px] font-bold text-on-surface-variant hover:text-destructive h-auto p-0.5"
                         >
                           {"Xóa"}
-                        </button>
+                        </Button>
                       )}
                     </div>
 
@@ -400,7 +427,7 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                         />
                         <div className="flex justify-end gap-1.5">
                           <Button
-                            variant="outline"
+                            variant="outlined"
                             size="sm"
                             type="button"
                             onClick={() => setEditingThreadId(null)}
@@ -411,30 +438,36 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                             size="sm"
                             type="button"
                             onClick={() => handleUpdateThread(thread.id)}
-                            disabled={submittingEditThread || !editThreadTitle.trim()}
-                            isLoading={submittingEditThread}
+                            disabled={
+                              submittingEditThread ||
+                              !editThreadTitle.trim() ||
+                              submittingEditThread
+                            }
                           >
                             {"Lưu thay đổi"}
                           </Button>
                         </div>
                       </div>
                     ) : (
-                      <button
+                      <Button
                         type="button"
+                        variant="text"
                         onClick={() => setSelectedModalThreadId(thread.id)}
-                        className="text-left w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg cursor-pointer group/title"
+                        className="text-left w-full justify-start h-auto p-0 group/title hover:bg-transparent shadow-none"
                         title="Bấm để mở rộng bài viết"
                       >
-                        <h4 className="font-bold text-on-surface text-sm group-hover/title:text-primary transition-colors">
+                        <h4 className="font-bold text-on-surface text-sm group-hover/title:text-primary transition-colors text-left">
                           {thread.title}
                         </h4>
-                      </button>
+                      </Button>
                     )}
                   </div>
 
-                  <button
+                  <Button
+                    type="button"
+                    variant="outlined"
                     onClick={() => handleVote(thread.id, true)}
-                    className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    className={`rounded-full text-xs font-bold ${
                       thread.isUpvotedByMe
                         ? "bg-primary-container border-primary/30 text-on-primary-container"
                         : "bg-surface-container-lowest border-outline-variant text-on-surface hover:bg-surface-container-high"
@@ -444,10 +477,10 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
                   >
                     <ChevronUp
                       aria-hidden="true"
-                      className={`w-3.5 h-3.5 ${thread.isUpvotedByMe ? "text-on-primary-container" : "text-primary"}`}
+                      className={`w-4 h-4 ${thread.isUpvotedByMe ? "text-primary font-extrabold" : ""}`}
                     />
                     <span>{thread.upvoteCount}</span>
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Replies */}
@@ -518,31 +551,71 @@ export function ForumTab({ courseId, itemId, targetThreadId }: ForumTabProps) {
         isNotificationTarget={targetThreadId === selectedModalThreadId}
       />
 
-      {/* Confirm Dialog Delete Thread */}
-      <ConfirmAlertDialog
-        isOpen={Boolean(deletingThreadId)}
-        onClose={() => setDeletingThreadId(null)}
-        onConfirm={executeDeleteThread}
-        title="Xác nhận xóa bài viết"
-        description="Bạn có chắc chắn muốn xóa bài viết này không? Thao tác này không thể hoàn tác."
-        confirmText="Xóa bài viết"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={isDeletingThread}
-      />
+      <Dialog.Root
+        open={Boolean(deletingThreadId)}
+        onOpenChange={(open) => {
+          if (!open) setDeletingThreadId(null);
+        }}
+      >
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon
+              className="bg-destructive/10 text-destructive"
+              icon={<Trash2 className="w-6 h-6 text-destructive" aria-hidden="true" />}
+            />
+            <Dialog.Title>Xác nhận xóa bài viết</Dialog.Title>
+            <Dialog.Description>
+              Bạn có chắc chắn muốn xóa bài viết này không? Thao tác này không thể hoàn tác.
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Button variant="text" onClick={() => setDeletingThreadId(null)}>
+              Hủy
+            </Button>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={executeDeleteThread}
+              disabled={isDeletingThread}
+            >
+              Xóa bài viết
+            </Button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
 
-      {/* Confirm Dialog Delete Reply */}
-      <ConfirmAlertDialog
-        isOpen={Boolean(deletingReplyId)}
-        onClose={() => setDeletingReplyId(null)}
-        onConfirm={executeDeleteReply}
-        title="Xác nhận xóa phản hồi"
-        description="Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác."
-        confirmText="Xóa phản hồi"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={isDeletingReply}
-      />
+      <Dialog.Root
+        open={Boolean(deletingReplyId)}
+        onOpenChange={(open) => {
+          if (!open) setDeletingReplyId(null);
+        }}
+      >
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon
+              className="bg-destructive/10 text-destructive"
+              icon={<Trash2 className="w-6 h-6 text-destructive" aria-hidden="true" />}
+            />
+            <Dialog.Title>Xác nhận xóa phản hồi</Dialog.Title>
+            <Dialog.Description>
+              Bạn có chắc chắn muốn xóa phản hồi này không? Thao tác này không thể hoàn tác.
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Button variant="text" onClick={() => setDeletingReplyId(null)}>
+              Hủy
+            </Button>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={executeDeleteReply}
+              disabled={isDeletingReply}
+            >
+              Xóa phản hồi
+            </Button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Root>
     </div>
   );
 }

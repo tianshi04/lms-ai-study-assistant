@@ -14,6 +14,7 @@ import { AssessmentService } from "@/gen/assessment/v1/assessment_pb";
 import { getRpcClient } from "@/lib/connect_client";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useToast } from "@/components/ui/Toast";
+import { Progress } from "@/components/ui/Progress";
 
 import { useCourseBuilder, type LearningItemPayload } from "./hooks/useCourseBuilder";
 import { usePointerDragOrder } from "./hooks/usePointerDragOrder";
@@ -26,7 +27,9 @@ import { LessonFormModal } from "./components/modals/LessonFormModal";
 import { LearningItemFormModal } from "./components/modals/LearningItemFormModal";
 import { ScormReviewModal } from "./components/modals/ScormReviewModal";
 import { CourseCollaboratorsModal } from "@/components/course/CourseCollaboratorsModal";
-import { ConfirmAlertDialog } from "@/components/ui/AlertDialog";
+import { Button } from "@/components/ui/Button";
+import { Trash2 } from "lucide-react";
+import { Dialog } from "@/components/ui/Dialog";
 
 function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId: string }> }) {
   const resolvedParams = use(params);
@@ -128,7 +131,7 @@ function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId
       <div className="min-h-screen bg-background flex flex-col justify-center items-center py-24">
         <div className="flex-1 flex items-center justify-center py-24">
           <div className="flex items-center gap-3 text-muted-foreground">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+            <Progress.Circular size="md" />
             <span aria-live="polite" className="text-sm font-medium">
               {"Đang tải cấu trúc bài giảng khóa học…"}
             </span>
@@ -296,27 +299,44 @@ function InstructorCourseBuilderContent({ params }: { params: Promise<{ courseId
       />
 
       {/* Confirm Delete Alert Dialog */}
-      <ConfirmAlertDialog
-        isOpen={Boolean(builder.confirmDeleteTarget)}
-        onClose={() => builder.setConfirmDeleteTarget(null)}
-        onConfirm={builder.executeConfirmDelete}
-        title={
-          builder.confirmDeleteTarget?.type === "week"
-            ? "Xác nhận xóa Tuần học"
-            : builder.confirmDeleteTarget?.type === "lesson"
-              ? "Xác nhận xóa Bài học"
-              : "Xác nhận xóa Học liệu"
-        }
-        description={
-          builder.confirmDeleteTarget
-            ? `Bạn có chắc chắn muốn xóa "${builder.confirmDeleteTarget.title}"? Thao tác này không thể hoàn tác.`
-            : ""
-        }
-        confirmText="Xóa"
-        cancelText="Hủy"
-        variant="danger"
-        isLoading={builder.saving}
-      />
+      <Dialog
+        open={Boolean(builder.confirmDeleteTarget)}
+        onOpenChange={(open) => {
+          if (!open) builder.setConfirmDeleteTarget(null);
+        }}
+      >
+        <Dialog.Content>
+          <Dialog.Header>
+            <Dialog.Icon icon={<Trash2 className="w-6 h-6 text-error" aria-hidden="true" />} />
+            <Dialog.Title>
+              {builder.confirmDeleteTarget?.type === "week"
+                ? "Xác nhận xóa Tuần học"
+                : builder.confirmDeleteTarget?.type === "lesson"
+                  ? "Xác nhận xóa Bài học"
+                  : "Xác nhận xóa Học liệu"}
+            </Dialog.Title>
+            <Dialog.Description>
+              {builder.confirmDeleteTarget?.type === "week"
+                ? "Xóa tuần học này sẽ xóa toàn bộ bài học và học liệu bên trong. Bạn có chắc chắn?"
+                : builder.confirmDeleteTarget?.type === "lesson"
+                  ? "Xóa bài học này sẽ xóa toàn bộ học liệu thuộc bài học. Bạn có chắc chắn?"
+                  : "Hành động này sẽ xóa vĩnh viễn học liệu khỏi bài học. Bạn có chắc chắn?"}
+            </Dialog.Description>
+          </Dialog.Header>
+          <Dialog.Footer>
+            <Button variant="text" onClick={() => builder.setConfirmDeleteTarget(null)}>
+              Hủy
+            </Button>
+            <Button
+              variant="filled"
+              className="bg-error text-on-error hover:bg-destructive-hover active:bg-destructive-active"
+              onClick={builder.executeConfirmDelete}
+            >
+              Xóa vĩnh viễn
+            </Button>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog>
     </div>
   );
 }

@@ -1,7 +1,9 @@
 import html
 import logging
 import uuid
-from typing import Any, Callable
+from collections.abc import Callable
+from datetime import UTC
+from typing import Any
 
 from src.modules.catalog.domain.constants import (
     MAX_RATING_STARS,
@@ -15,9 +17,9 @@ from src.modules.catalog.domain.entities import (
     Course,
     CourseStatus,
     ItemType,
+    LearningItem,
     Lesson,
     Specialization,
-    LearningItem,
 )
 from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.catalog.infrastructure.repository import SQLAlchemyCatalogRepository
@@ -67,6 +69,7 @@ class CatalogUseCase:
         action_name: str = "quản lý khóa học",
         allow_read_only_pending: bool = False,
         required_permission: CoursePermission | None = None,
+        disallow_published_mutation: bool = False,
     ) -> None:
         if user and course_id:
             course = await repo.get_course_detail(course_id)
@@ -78,6 +81,14 @@ class CatalogUseCase:
                     action_name=action_name,
                     allow_read_only_pending=allow_read_only_pending,
                 )
+                if (
+                    disallow_published_mutation
+                    and course.status == CourseStatus.PUBLISHED
+                    and not getattr(user, "is_admin", False)
+                ):
+                    raise PermissionError(
+                        f"Không thể {action_name} này vì khóa học đã được xuất bản (PUBLISHED)."
+                    )
 
     async def submit_course_for_launch(
         self, course_id: str, current_user: CurrentUser | None = None
@@ -374,22 +385,19 @@ class CatalogUseCase:
 
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            real_course_id, instructor_names = await repo.get_course_id_by_slug_or_id(
-                course_id
-            )
+            real_course_id = await repo.get_course_id_by_slug_or_id(course_id)
 
             # BR_REVIEW_004: Check if user is owner or instructor of THIS SPECIFIC course
             course_detail = await repo.get_course_detail(real_course_id)
             is_own_course = False
-            if course_detail:
-                if user_id and (
+            if (
+                course_detail
+                and user_id
+                and (
                     user_id == course_detail.owner_id
                     or user_id in (course_detail.co_instructor_ids or [])
-                ):
-                    is_own_course = True
-                elif instructor_names and user_name in instructor_names:
-                    is_own_course = True
-            elif instructor_names and user_name in instructor_names:
+                )
+            ):
                 is_own_course = True
 
             if is_own_course:
@@ -441,7 +449,7 @@ class CatalogUseCase:
     ):
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            real_course_id, _ = await repo.get_course_id_by_slug_or_id(course_id)
+            real_course_id = await repo.get_course_id_by_slug_or_id(course_id)
 
             return await repo.list_course_reviews(
                 course_id=real_course_id, page_size=page_size, page_token=page_token
@@ -467,7 +475,13 @@ class CatalogUseCase:
     ) -> bool:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            await self._verify_ownership(repo, course_id, current_user, "xóa khóa học")
+            await self._verify_ownership(
+                repo,
+                course_id,
+                current_user,
+                "xóa khóa học",
+                disallow_published_mutation=True,
+            )
             return await repo.delete_course(course_id)
 
     async def update_week_module(
@@ -495,7 +509,13 @@ class CatalogUseCase:
     ) -> bool:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            await self._verify_ownership(repo, course_id, current_user, "xóa tuần học")
+            await self._verify_ownership(
+                repo,
+                course_id,
+                current_user,
+                "xóa tuần học",
+                disallow_published_mutation=True,
+            )
             return await repo.delete_week_module(id=id, course_id=course_id)
 
     async def update_lesson(
@@ -525,7 +545,13 @@ class CatalogUseCase:
     ) -> bool:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            await self._verify_ownership(repo, course_id, current_user, "xóa bài học")
+            await self._verify_ownership(
+                repo,
+                course_id,
+                current_user,
+                "xóa bài học",
+                disallow_published_mutation=True,
+            )
             return await repo.delete_lesson(id=id, course_id=course_id)
 
     async def update_learning_item(
@@ -577,7 +603,13 @@ class CatalogUseCase:
     ) -> bool:
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            await self._verify_ownership(repo, course_id, current_user, "xóa học liệu")
+            await self._verify_ownership(
+                repo,
+                course_id,
+                current_user,
+                "xóa học liệu",
+                disallow_published_mutation=True,
+            )
             return await repo.delete_learning_item(id=id, course_id=course_id)
 
     async def create_course_announcement(
@@ -605,6 +637,7 @@ class CatalogUseCase:
             # Trigger batch notification to enrolled learners
             try:
                 from sqlalchemy import select
+
                 from src.modules.learning.infrastructure.models import (
                     LearningProgressModel,
                 )
@@ -615,7 +648,7 @@ class CatalogUseCase:
                     NotificationCategory,
                 )
 
-                real_id, _ = await repo.get_course_id_by_slug_or_id(course_id)
+                real_id = await repo.get_course_id_by_slug_or_id(course_id)
                 target_ids = list({course_id, real_id})
 
                 enrolled_stmt = select(LearningProgressModel.user_id).where(
@@ -633,7 +666,7 @@ class CatalogUseCase:
                         content=f"{title}: {content[:100]}...",
                         action_url=f"/learn/{course_id}",
                     )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 import logging
 
                 logging.getLogger(__name__).warning(
@@ -756,6 +789,7 @@ class CatalogUseCase:
         import json
         import os
         import zipfile
+
         from sqlalchemy import text
 
         async with async_session_scope() as session:
@@ -857,7 +891,7 @@ class CatalogUseCase:
                                             "explanation": row[4],
                                         }
                                     )
-                            except Exception as e:
+                            except Exception as e:  # noqa: BLE001
                                 logger.warning(
                                     "Failed to fetch quizzes for item %s: %s",
                                     item.id,
@@ -924,8 +958,8 @@ class CatalogUseCase:
         s3 = get_s3_storage_service()
         try:
             file_bytes = await s3.download_file(scorm_object_key)
-        except Exception as e:
-            raise ValueError(f"Không thể tải tệp tin SCORM từ storage: {str(e)}")
+        except Exception as e:  # noqa: BLE001
+            raise ValueError(f"Không thể tải tệp tin SCORM từ storage: {e!s}")
 
         zip_buffer = io.BytesIO(file_bytes)
         try:
@@ -955,9 +989,9 @@ class CatalogUseCase:
 
                         preview_course = self._map_dict_to_course_entity(course_dict)
                         return preview_course, False, None
-                    except Exception as err:
+                    except Exception as err:  # noqa: BLE001
                         raise ValueError(
-                            f"Không thể phục hồi cấu trúc khóa học Native: {str(err)}"
+                            f"Không thể phục hồi cấu trúc khóa học Native: {err!s}"
                         )
 
                 # Level 2 check (standard SCORM): reject it
@@ -979,12 +1013,12 @@ class CatalogUseCase:
     def _map_dict_to_course_entity(self, d: dict) -> Course:
         from src.modules.catalog.domain.entities import (
             Course,
-            WeekModule,
-            Lesson,
-            LearningItem,
             InteractiveTranscript,
             InVideoQuiz,
             ItemType,
+            LearningItem,
+            Lesson,
+            WeekModule,
         )
 
         week_modules = []
@@ -1083,13 +1117,14 @@ class CatalogUseCase:
         import io
         import json
         import zipfile
+
         from sqlalchemy import text
 
         s3 = get_s3_storage_service()
         try:
             file_bytes = await s3.download_file(scorm_object_key)
-        except Exception as e:
-            raise ValueError(f"Không thể tải tệp tin SCORM từ storage: {str(e)}")
+        except Exception as e:  # noqa: BLE001
+            raise ValueError(f"Không thể tải tệp tin SCORM từ storage: {e!s}")
 
         zip_buffer = io.BytesIO(file_bytes)
 
@@ -1218,8 +1253,9 @@ class CatalogUseCase:
         role: str,
         current_user: CurrentUser | None = None,
     ) -> dict:
+        from datetime import datetime
+
         from src.modules.identity.infrastructure.repository import IdentityRepository
-        from datetime import datetime, timezone
 
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
@@ -1268,7 +1304,7 @@ class CatalogUseCase:
                     "full_name": target_user.full_name,
                     "avatar_url": target_user.avatar_url or "",
                     "role": clean_role,
-                    "added_at": datetime.now(timezone.utc).isoformat(),
+                    "added_at": datetime.now(UTC).isoformat(),
                 },
                 "co_instructor_ids": co_instructor_ids,
             }

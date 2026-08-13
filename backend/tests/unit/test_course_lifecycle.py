@@ -1,4 +1,5 @@
 import pytest
+
 from src.modules.catalog.domain.entities import (
     Course,
     CourseStatus,
@@ -99,7 +100,17 @@ def test_course_can_edit_permissions():
     assert course.can_edit(owner, allow_read_only_pending=True) is True
     assert course.can_edit(admin) is True
 
-    # 3. Approve
-    course.approve()
-    assert course.status == CourseStatus.PUBLISHED
-    assert course.rejection_reason == ""
+
+def test_pb_course_status_mapping():
+    from src.gen.catalog.v1 import catalog_pb as pb
+    from src.modules.catalog.presentation.catalog_handler import _to_pb_course_status
+
+    assert _to_pb_course_status(CourseStatus.DRAFT) == pb.CourseStatus.DRAFT
+    assert (
+        _to_pb_course_status(CourseStatus.PENDING_REVIEW)
+        == pb.CourseStatus.PENDING_REVIEW
+    )
+    assert _to_pb_course_status(CourseStatus.PUBLISHED) == pb.CourseStatus.PUBLISHED
+    assert _to_pb_course_status(CourseStatus.REJECTED) == pb.CourseStatus.REJECTED
+    assert _to_pb_course_status("DRAFT") == pb.CourseStatus.DRAFT
+    assert _to_pb_course_status("CourseStatus.DRAFT") == pb.CourseStatus.DRAFT

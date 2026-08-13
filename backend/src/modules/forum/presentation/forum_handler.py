@@ -1,4 +1,5 @@
 from typing import Any
+
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
 from connectrpc.request import RequestContext
@@ -8,7 +9,6 @@ from src.gen.forum.v1.forum_connect import ForumService
 from src.modules.forum.application.forum_usecase import ForumUseCase
 from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
 from src.shared.auth import require_current_user
-
 
 ROLE_MAP = {
     "USER_ROLE_LEARNER": "Learner",

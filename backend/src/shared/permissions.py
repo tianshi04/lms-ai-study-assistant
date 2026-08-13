@@ -1,7 +1,8 @@
 """Centralized Resource Authorization Guards for Organization and Course resources (BR_AUTH_001, BR_AUTH_002)."""
 
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -48,9 +49,9 @@ ROLE_PERMISSIONS: dict[OrgRole, set[OrgPermission]] = {
 
 async def enforce_organization_permission(
     session: AsyncSession,
-    user: Optional[CurrentUserContext],
+    user: CurrentUserContext | None,
     organization_id: str,
-    required_permission: Optional[OrgPermission] = None,
+    required_permission: OrgPermission | None = None,
 ) -> None:
     """Enforces Organization membership and code-hardcoded role permissions (ReBAC).
 
@@ -70,11 +71,12 @@ async def enforce_organization_permission(
     if user.is_admin:
         return
 
+    from sqlalchemy import or_
+
     from src.modules.identity.infrastructure.models import (
         OrganizationMemberModel,
         OrganizationModel,
     )
-    from sqlalchemy import or_
 
     stmt = (
         select(OrganizationMemberModel)
@@ -161,8 +163,8 @@ COURSE_ROLE_PERMISSIONS: dict[CourseRole, set[CoursePermission]] = {
 
 def enforce_course_ownership(
     course: Any,
-    user: Optional[CurrentUserContext],
-    required_permission: Optional[CoursePermission] = None,
+    user: CurrentUserContext | None,
+    required_permission: CoursePermission | None = None,
     action_name: str = "quản lý khóa học",
     allow_read_only_pending: bool = False,
 ) -> None:
@@ -184,11 +186,12 @@ def enforce_course_ownership(
     if course is None:
         raise ValueError("Khóa học không tồn tại")
 
-    if hasattr(course, "can_edit"):
-        if not course.can_edit(user, allow_read_only_pending=allow_read_only_pending):
-            raise PermissionError(
-                f"Bạn không có quyền {action_name} này vì khóa học đang ở trạng thái không cho phép chỉnh sửa"
-            )
+    if hasattr(course, "can_edit") and not course.can_edit(
+        user, allow_read_only_pending=allow_read_only_pending
+    ):
+        raise PermissionError(
+            f"Bạn không có quyền {action_name} này vì khóa học đang ở trạng thái không cho phép chỉnh sửa"
+        )
 
     owner_id = getattr(course, "owner_id", "")
     co_instructors = getattr(course, "co_instructor_ids", []) or []
@@ -204,7 +207,7 @@ def enforce_course_ownership(
         )
 
     if required_permission is not None:
-        user_course_role: Optional[CourseRole] = None
+        user_course_role: CourseRole | None = None
         if is_owner:
             user_course_role = CourseRole.OWNER
         elif is_co_instructor:

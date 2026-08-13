@@ -13,9 +13,12 @@ import type { PersonalNote } from "@/gen/learning/v1/learning_pb";
 import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { formatTime, getItemTypeName } from "./utils";
 import { getMessageText } from "@/components/ai/utils";
-import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
+import { IconButton } from "@/components/ui/IconButton";
+import { Input } from "@/components/ui/Input";
 import { SaveNoteCard, TimestampSeekCard } from "./AIChatToolCards";
 import { renderMessageItem } from "./AIChatMessageItem";
+import { Progress } from "@/components/ui/Progress";
 
 interface LearnPageAIChatbotProps {
   courseId: string;
@@ -264,25 +267,29 @@ export function LearnPageAIChatbot({
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <button
+          <IconButton
             type="button"
+            variant="standard"
+            size="xs"
             onClick={handleNewChat}
-            className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="w-7 h-7 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
             title="Tạo cuộc trò chuyện mới"
             aria-label="Tạo cuộc trò chuyện mới"
           >
             <MessageSquarePlus className="w-4 h-4" aria-hidden="true" />
-          </button>
+          </IconButton>
           {onClose && (
-            <button
+            <IconButton
               type="button"
+              variant="standard"
+              size="xs"
               onClick={onClose}
-              className="w-7 h-7 inline-flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high rounded-full transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-7 h-7 text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high"
               title="Đóng Trợ lý AI"
               aria-label="Đóng Trợ lý AI"
             >
               <X className="w-4 h-4" aria-hidden="true" />
-            </button>
+            </IconButton>
           )}
         </div>
       </div>
@@ -307,7 +314,11 @@ export function LearnPageAIChatbot({
                 aria-live="polite"
                 className="flex items-center gap-2 text-xs text-on-surface-variant italic py-1 animate-pulse"
               >
-                <Sparkles className="w-3.5 h-3.5 text-primary animate-spin" aria-hidden="true" />
+                <Progress.Circular
+                  size="sm"
+                  className="w-3.5 h-3.5"
+                  ariaLabel="Trợ lý AI đang suy nghĩ"
+                />
                 <span>Trợ lý AI đang suy nghĩ…</span>
               </output>
             )}
@@ -332,14 +343,14 @@ export function LearnPageAIChatbot({
             {suggestions.length > 0 && (
               <div className="flex flex-wrap items-center justify-center gap-2 max-w-md">
                 {suggestions.map((text) => (
-                  <button
+                  <Chip
                     key={text}
-                    type="button"
+                    variant="suggestion"
+                    elevation="elevated"
                     onClick={() => sendMessage(text)}
-                    className="text-xs font-medium px-3.5 py-2 rounded-full bg-surface-container-high text-on-surface hover:bg-primary-container hover:text-primary border border-outline-variant/40 transition-colors cursor-pointer text-center shadow-2xs"
                   >
                     {text}
-                  </button>
+                  </Chip>
                 ))}
               </div>
             )}
@@ -356,19 +367,20 @@ export function LearnPageAIChatbot({
         aria-label="Khung gửi tin nhắn cho Trợ lý AI"
         className="p-3 bg-surface-container-lowest flex flex-col gap-2 shrink-0"
       >
-        <div className="flex items-center gap-2 bg-surface-container-low border border-outline-variant/30 rounded-full pl-4 pr-1.5 py-1.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors">
-          <input
+        <div className="flex items-center gap-2 bg-surface-container-low border border-outline-variant/30 rounded-full pl-2 pr-1.5 py-1 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-colors">
+          <Input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Hỏi tôi bất cứ điều gì…"
             aria-label="Nhập câu hỏi cho Trợ lý AI"
             spellCheck={false}
-            className="flex-1 bg-transparent text-xs text-on-surface placeholder:text-on-surface-variant/70 border-none focus-visible:outline-none py-1"
+            className="flex-1 bg-transparent border-none outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 shadow-none text-xs text-on-surface placeholder:text-on-surface-variant/70 py-1"
           />
-          <Button
+          <IconButton
             type="submit"
-            size="icon"
+            variant="filled"
+            size="xs"
             disabled={!inputValue.trim() || agent?.isRunning}
             className={`w-8 h-8 rounded-full shrink-0 ${
               !inputValue.trim() || agent?.isRunning
@@ -379,7 +391,7 @@ export function LearnPageAIChatbot({
             aria-label="Gửi tin nhắn"
           >
             <ArrowUp className="w-4 h-4" aria-hidden="true" />
-          </Button>
+          </IconButton>
         </div>
 
         <p className="text-xs text-center text-on-surface-variant/70">

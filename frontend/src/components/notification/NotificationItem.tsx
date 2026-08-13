@@ -5,6 +5,10 @@ import { Bell, BookOpen, MessageSquare, Megaphone, CheckCircle2, Shield } from "
 import type { NotificationItem as NotificationItemType } from "@/gen/notification/v1/notification_pb";
 import { NotificationCategory } from "@/gen/notification/v1/notification_pb";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Surface } from "@/components/ui/Surface";
+import { Chip } from "@/components/ui/Chip";
 
 interface NotificationItemProps {
   item: NotificationItemType;
@@ -66,18 +70,18 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
   };
 
   return (
-    <div
+    <Surface
+      variant="container"
+      shape="2xl"
       className={cn(
-        "relative p-3.5 rounded-2xl transition-colors duration-m3-short-4 ease-m3-emphasized",
+        "relative p-3.5 transition-colors duration-m3-short-4 ease-m3-emphasized",
         item.isRead
           ? "bg-surface-container-low/60 hover:bg-surface-container-low border border-transparent"
           : "bg-primary-container/25 hover:bg-primary-container/40 border border-primary/20 shadow-2xs",
       )}
     >
       {/* Unread Indicator Pulse Dot */}
-      {!item.isRead && (
-        <span className="absolute top-3.5 right-3.5 w-2 h-2 rounded-full bg-primary animate-pulse" />
-      )}
+      {!item.isRead && <Badge dot variant="error" className="absolute top-3.5 right-3.5" />}
 
       <div className="flex items-start gap-3">
         {/* Tonal Category Icon Container */}
@@ -93,9 +97,15 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
         <div className="flex-1 min-w-0 pr-2">
           {/* Header Row: Category Badge & Timestamp */}
           <div className="flex items-center justify-between gap-2 mb-1">
-            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", bgClass)}>
+            <Chip
+              variant="assist"
+              className={cn(
+                "h-5 text-[10px] py-0 px-2 cursor-default border pointer-events-none font-bold",
+                bgClass,
+              )}
+            >
               {label}
-            </span>
+            </Chip>
             <span className="text-[10px] text-on-surface-variant/80 font-medium">
               {formatTime(item.createdAt)}
             </span>
@@ -159,19 +169,21 @@ export function NotificationItem({ item, onMarkAsRead, compact = false }: Notifi
           {/* Footer Action: Mark As Read button */}
           {!item.isRead && onMarkAsRead && (
             <div className="flex justify-end mt-2">
-              <button
+              <Button
                 type="button"
+                variant="text"
+                size="sm"
                 onClick={() => onMarkAsRead(item.id)}
-                className="inline-flex items-center gap-1 text-[11px] font-bold text-on-surface-variant hover:text-primary transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm p-0.5"
+                className="text-[11px] font-bold text-on-surface-variant hover:text-primary p-1 h-auto"
                 title="Đánh dấu đã đọc"
               >
-                <CheckCircle2 className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-primary mr-1" aria-hidden="true" />
                 <span>Đánh dấu đã đọc</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>
       </div>
-    </div>
+    </Surface>
   );
 }

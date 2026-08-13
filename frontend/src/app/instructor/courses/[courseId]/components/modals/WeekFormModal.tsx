@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Modal } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
+
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
@@ -42,62 +43,58 @@ export function WeekFormModal({
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={isEdit ? "Chỉnh sửa Tuần học" : "Thêm Tuần học Mới (Week Module)"}
-      size="md"
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-            {"Tiêu đề Tuần học"}
-          </label>
+      <Dialog.Content size="md">
+        <Dialog.Header>
+          <Dialog.Title>
+            {isEdit ? "Chỉnh sửa Tuần học" : "Thêm Tuần học Mới (Week Module)"}
+          </Dialog.Title>
+        </Dialog.Header>
+        <form onSubmit={handleSubmit} className="space-y-4 my-2">
           <Input
+            label="Tiêu đề Tuần học"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={"Ví dụ: Week 1: Giới thiệu về Neural Networks"}
-            className="py-2.5 rounded-xl bg-card text-sm"
+            placeholder="Ví dụ: Week 1: Giới thiệu về Neural Networks"
             required
           />
-        </div>
 
-        <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-            {"Mô tả tóm tắt"}
-          </label>
           <Textarea
+            label="Mô tả tóm tắt"
             rows={3}
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
-            placeholder={"Tóm tắt nội dung chính học viên sẽ thu hoạch được…"}
-            className="p-2.5 rounded-xl bg-card text-sm"
+            placeholder="Tóm tắt nội dung chính học viên sẽ thu hoạch được…"
           />
-        </div>
 
-        <div className="flex justify-end gap-3 pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={onClose}
-            className="rounded-xl text-xs font-bold"
-          >
-            {"Hủy"}
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            size="sm"
-            disabled={saving}
-            isLoading={saving}
-            className="rounded-xl text-xs font-bold shadow-md"
-          >
-            {isEdit ? "Cập nhật Tuần học" : "Xác nhận tạo Tuần học"}
-          </Button>
-        </div>
-      </form>
-    </Modal>
+          <Dialog.Footer>
+            <Button
+              type="button"
+              variant="text"
+              size="sm"
+              onClick={onClose}
+              className="rounded-xl text-xs font-bold"
+            >
+              {"Hủy"}
+            </Button>
+            <Button
+              type="submit"
+              variant="filled"
+              size="sm"
+              disabled={saving}
+              className="rounded-xl text-xs font-bold shadow-md"
+            >
+              {isEdit ? "Cập nhật Tuần học" : "Xác nhận tạo Tuần học"}
+            </Button>
+          </Dialog.Footer>
+        </form>
+      </Dialog.Content>
+    </Dialog>
   );
 }

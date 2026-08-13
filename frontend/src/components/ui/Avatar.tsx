@@ -18,34 +18,54 @@ export const avatarVariants = cva("rounded-full object-cover shrink-0 select-non
 
 export interface AvatarProps
   extends React.ComponentProps<typeof BaseAvatar.Root>, VariantProps<typeof avatarVariants> {
-  name: string;
+  name?: string;
   src?: string;
 }
 
-export function Avatar({ name, src, size = "md", className = "", ref, ...props }: AvatarProps) {
+function AvatarComponent({
+  name = "",
+  src,
+  size = "md",
+  className = "",
+  children,
+  ref,
+  ...props
+}: AvatarProps) {
   const initials = name
-    .split(" ")
-    .map((part) => part[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
-  const selectedSize = size || "md";
+    ? name
+        .split(" ")
+        .map((part) => part[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : "?";
 
   return (
     <BaseAvatar.Root
       ref={ref}
       className={cn(
-        avatarVariants({ size: selectedSize }),
+        avatarVariants({ size }),
         "inline-flex items-center justify-center overflow-hidden border border-border bg-primary text-primary-foreground font-bold shadow-sm",
         className,
       )}
       {...props}
     >
-      {src && <BaseAvatar.Image src={src} alt={name} className="h-full w-full object-cover" />}
-      <BaseAvatar.Fallback className="flex h-full w-full items-center justify-center font-bold">
-        {initials}
-      </BaseAvatar.Fallback>
+      {children ? (
+        children
+      ) : (
+        <>
+          {src && <BaseAvatar.Image src={src} alt={name} className="h-full w-full object-cover" />}
+          <BaseAvatar.Fallback className="flex h-full w-full items-center justify-center font-bold">
+            {initials}
+          </BaseAvatar.Fallback>
+        </>
+      )}
     </BaseAvatar.Root>
   );
 }
+
+export const Avatar = Object.assign(AvatarComponent, {
+  Root: BaseAvatar.Root,
+  Image: BaseAvatar.Image,
+  Fallback: BaseAvatar.Fallback,
+});

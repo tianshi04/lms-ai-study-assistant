@@ -1,10 +1,10 @@
+/* oxlint-disable jsx-a11y/prefer-tag-over-role, jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-tabindex */
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { Search, X } from "lucide-react";
 import type { LearningItem } from "@/gen/catalog/v1/catalog_pb";
 import { parseVTT, type VTTCue } from "@/lib/vtt_parser";
-import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 
 interface TranscriptPanelProps {
   activeItem: LearningItem | null;
@@ -23,15 +23,13 @@ interface ParagraphBlock {
 
 export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: TranscriptPanelProps) {
   const [cues, setCues] = useState<VTTCue[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const [prevActiveItemId, setPrevActiveItemId] = useState<string | null>(null);
 
-  // Reset cues and search query when item changes
+  // Reset cues when item changes
   if (activeItem?.id !== prevActiveItemId) {
     setPrevActiveItemId(activeItem?.id || null);
     setCues([]);
-    setSearchQuery("");
   }
 
   // Fetch VTT subtitle if available
@@ -74,22 +72,22 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
     });
   }, [cues, activeItem]);
 
-  // Find index of the currently active transcript cue based on currentTime
+  // Find index of the currently active transcript cue based on currentTime (with 0.25s float tolerance)
   const activeIndex = useMemo(() => {
     return allTranscripts.findIndex(
-      (cue) => currentTime >= cue.startTime && currentTime <= cue.endTime,
+      (cue) => currentTime >= cue.startTime - 0.25 && currentTime <= cue.endTime + 0.25,
     );
   }, [allTranscripts, currentTime]);
 
   // Auto-scroll the active cue into view
   useEffect(() => {
-    if (activeIndex !== -1 && !searchQuery) {
+    if (activeIndex !== -1) {
       const el = document.getElementById(`transcript-cue-${activeIndex}`);
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
     }
-  }, [activeIndex, searchQuery]);
+  }, [activeIndex]);
 
   // Group cues into Coursera-style paragraph blocks (consolidating timestamps)
   const paragraphBlocks = useMemo<ParagraphBlock[]>(() => {
@@ -146,40 +144,11 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
     return blocks;
   }, [allTranscripts]);
 
-  // Filter paragraph blocks by search query
-  const filteredBlocks = useMemo(() => {
-    if (!searchQuery.trim()) return paragraphBlocks;
-    const query = searchQuery.toLowerCase();
-
-    return paragraphBlocks
-      .map((block) => ({
-        ...block,
-        cues: block.cues.filter((c) => c.text.toLowerCase().includes(query)),
-      }))
-      .filter((block) => block.cues.length > 0);
-  }, [paragraphBlocks, searchQuery]);
-
   // Helper function to format timestamp (e.g. 0:03, 1:45)
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  // Helper function to highlight matching search text
-  const renderHighlightedText = (text: string, highlight: string) => {
-    if (!highlight.trim()) return text;
-    const regex = new RegExp(`(${highlight.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")})`, "gi");
-    const parts = text.split(regex);
-    return parts.map((part, i) =>
-      regex.test(part) ? (
-        <mark key={i} className="bg-warning/30 text-foreground px-0.5 rounded font-semibold">
-          {part}
-        </mark>
-      ) : (
-        part
-      ),
-    );
   };
 
   if (allTranscripts.length === 0) {
@@ -192,77 +161,58 @@ export function TranscriptPanel({ activeItem, currentTime, onSeekVideo }: Transc
 
   return (
     <div className="flex flex-col h-full space-y-3 min-h-0">
-      {/* Search Input Bar */}
-      <div className="relative shrink-0">
-        <Input
-          type="text"
-          name="search"
-          autoComplete="off"
-          aria-label="Tìm kiếm nội dung bài giảng"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Tìm kiếm nội dung bài giảng…"
-          className="pl-9 pr-8"
-        />
-        <Search
-          aria-hidden="true"
-          className="w-4 h-4 text-on-surface-variant absolute left-3 top-3 pointer-events-none"
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery("")}
-            className="absolute right-3 top-2.5 text-on-surface-variant hover:text-on-surface text-xs font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded p-0.5"
-            aria-label="Xóa từ khóa tìm kiếm"
-          >
-            <X className="w-3.5 h-3.5" aria-hidden="true" />
-          </button>
-        )}
-      </div>
-
       {/* Coursera-style Paragraph-Based Transcript Container */}
       <div
         ref={containerRef}
         className="space-y-4 overflow-y-auto flex-1 pr-1 scrollbar-thin min-h-0"
       >
-        {filteredBlocks.length === 0 ? (
+        {paragraphBlocks.length === 0 ? (
           <p className="text-xs text-on-surface-variant text-center py-6">
-            {"Không tìm thấy dòng phụ đề khớp với từ khóa"}
+            {"Không có nội dung phụ đề cho học liệu này."}
           </p>
         ) : (
-          filteredBlocks.map((block, blockIdx) => (
+          paragraphBlocks.map((block, blockIdx) => (
             <div key={blockIdx} className="space-y-1.5">
               {/* Aggregated Timestamp Header */}
               <div className="flex items-center gap-2 pt-2 pb-0.5">
-                <button
+                <Button
                   type="button"
+                  variant="outlined"
+                  size="sm"
                   onClick={() => onSeekVideo(block.startTime)}
-                  className="font-mono text-[11px] font-bold text-on-primary-container bg-primary-container hover:bg-primary-container/80 border border-primary/20 px-3 py-0.5 rounded-full cursor-pointer transition-colors shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="font-mono text-[11px] font-bold text-on-primary-container bg-primary-container hover:bg-primary-container/80 border-primary/20 px-2.5 py-0.5 rounded-lg h-auto"
                   title="Nhảy đến mốc thời gian này"
                 >
                   {formatTime(block.startTime)}
-                </button>
+                </Button>
               </div>
 
               {/* Continuous Flowing Paragraph Text */}
-              <p className="text-[13px] sm:text-sm text-on-surface/90 leading-relaxed sm:leading-7 font-sans">
+              <p className="text-[13px] sm:text-sm text-on-surface/90 leading-relaxed font-sans">
                 {block.cues.map((cue) => {
                   const isActive = cue.originalIndex === activeIndex;
 
                   return (
-                    <button
-                      type="button"
+                    <span
                       key={cue.originalIndex}
                       id={`transcript-cue-${cue.originalIndex}`}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => onSeekVideo(cue.startTime)}
-                      className={`transition-colors duration-m3-short-4 ease-m3-emphasized cursor-pointer inline box-decoration-clone rounded-md px-1 py-0.5 text-left border-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onSeekVideo(cue.startTime);
+                        }
+                      }}
+                      className={`inline cursor-pointer transition-colors duration-m3-short-2 rounded px-1 py-0.5 [box-decoration-break:clone] [-webkit-box-decoration-break:clone] ${
                         isActive
-                          ? "bg-primary-container text-on-primary-container font-bold shadow-xs ring-1 ring-primary/30"
-                          : "text-on-surface/80 hover:text-on-surface hover:bg-surface-container-high"
+                          ? "bg-primary/15 text-primary font-semibold"
+                          : "hover:bg-surface-container-highest/60 hover:text-primary"
                       }`}
                     >
-                      {renderHighlightedText(cue.text, searchQuery)}{" "}
-                    </button>
+                      {cue.text}{" "}
+                    </span>
                   );
                 })}
               </p>

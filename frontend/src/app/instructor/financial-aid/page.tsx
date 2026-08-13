@@ -10,6 +10,11 @@ import {
 } from "@/gen/certificate/v1/certificate_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ArrowLeft, Check, X, AlertTriangle, FileText } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
+import { Surface } from "@/components/ui/Surface";
+import { IconButton } from "@/components/ui/IconButton";
+import { Progress } from "@/components/ui/Progress";
 
 const emptySubscribe = () => () => {};
 
@@ -171,14 +176,16 @@ export default function InstructorFinancialAidPage() {
               )}
               <span>{toastMessage.text}</span>
             </div>
-            <button
+            <IconButton
               type="button"
+              variant="standard"
+              size="xs"
               onClick={() => setToastMessage(null)}
               aria-label="Đóng thông báo"
-              className="p-1 rounded-md opacity-60 hover:opacity-100 transition-opacity cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="opacity-60 hover:opacity-100"
             >
               <X aria-hidden="true" className="w-4 h-4" />
-            </button>
+            </IconButton>
           </div>
         )}
 
@@ -197,41 +204,34 @@ export default function InstructorFinancialAidPage() {
         )}
 
         {/* Filter Tabs */}
-        <div className="flex items-center gap-2 border-b border-border pb-3 overflow-x-auto">
-          {(["ALL", "PENDING", "APPROVED", "REJECTED"] as const).map((tab) => {
-            const labels = {
-              ALL: "Tất cả đơn",
-              PENDING: "Chờ xét duyệt (Pending)",
-              APPROVED: "Đã phê duyệt (Approved)",
-              REJECTED: "Đã từ chối (Rejected)",
-            };
-            return (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-colors whitespace-nowrap cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
-                  activeTab === tab
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                    : "bg-card text-muted-foreground hover:text-foreground border border-border"
-                }`}
-              >
-                {labels[tab]}
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-border mb-6">
+          {[
+            { label: "Tất cả đơn", value: "ALL" },
+            { label: "Chờ xét duyệt (Pending)", value: "PENDING" },
+            { label: "Đã phê duyệt (Approved)", value: "APPROVED" },
+            { label: "Đã từ chối (Rejected)", value: "REJECTED" },
+          ].map((tab) => (
+            <Chip
+              key={tab.value}
+              variant="filter"
+              selected={activeTab === tab.value}
+              onClick={() => setActiveTab(tab.value as any)}
+            >
+              {tab.label}
+            </Chip>
+          ))}
         </div>
 
         {/* Application Cards List */}
         {loading ? (
-          <div className="py-16 text-center space-y-3">
-            <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="py-16 text-center space-y-3 flex flex-col items-center justify-center">
+            <Progress.Circular size="lg" className="mx-auto" />
             <p aria-live="polite" className="text-sm font-medium text-muted-foreground">
               Đang tải danh sách đơn Hỗ trợ tài chính…
             </p>
           </div>
         ) : filteredApps.length === 0 ? (
-          <div className="py-16 text-center bg-card rounded-2xl border border-border p-8">
+          <Surface variant="low" shape="2xl" className="py-16 text-center p-8">
             <FileText aria-hidden="true" className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
             <p className="text-base font-bold text-foreground">
               Không có đơn nộp nào trong danh mục này
@@ -239,20 +239,19 @@ export default function InstructorFinancialAidPage() {
             <p className="text-xs text-muted-foreground mt-1">
               Các đơn Hỗ trợ tài chính mới từ học viên sẽ xuất hiện ở đây.
             </p>
-          </div>
+          </Surface>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {filteredApps.map((app) => (
-              <div
+              <Surface
                 key={app.id}
-                className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-md transition-colors space-y-4 text-foreground"
+                variant="low"
+                shape="2xl"
+                className="p-6 space-y-4 text-foreground"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold px-2.5 py-0.5 rounded-md bg-muted text-muted-foreground border border-border">
-                        ID: {app.id}
-                      </span>
                       <span className="text-xs font-semibold text-muted-foreground">
                         Khóa học: <span className="font-bold text-foreground">{app.courseId}</span>
                       </span>
@@ -299,27 +298,28 @@ export default function InstructorFinancialAidPage() {
                 {/* Action Buttons for Pending Applications */}
                 {app.status === "PENDING" && isInstructorOrAdmin && (
                   <div className="flex items-center justify-end gap-3 pt-2">
-                    <button
+                    <Button
                       type="button"
+                      variant="outlined"
                       onClick={() => handleReview(app.id, false)}
                       disabled={processingId === app.id}
-                      className="px-4 py-2 rounded-xl text-xs font-bold text-destructive bg-destructive/10 border border-destructive/30 hover:bg-destructive/20 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="text-xs font-bold text-destructive bg-destructive/10 border-destructive/30 hover:bg-destructive/20"
                     >
                       <X aria-hidden="true" className="w-4 h-4" />
-                      <span>{processingId === app.id ? "Đang xử lý…" : "Từ chối đơn"}</span>
-                    </button>
-                    <button
+                      <span>{"Từ chối đơn"}</span>
+                    </Button>
+                    <Button
                       type="button"
                       onClick={() => handleReview(app.id, true)}
                       disabled={processingId === app.id}
-                      className="px-5 py-2 rounded-xl text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover shadow-md shadow-primary/20 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      className="text-xs font-bold text-primary-foreground bg-primary hover:bg-primary-hover shadow-md shadow-primary/20"
                     >
                       <Check aria-hidden="true" className="w-4 h-4" />
-                      <span>{processingId === app.id ? "Đang xử lý…" : "Phê duyệt đơn"}</span>
-                    </button>
+                      <span>{"Phê duyệt đơn"}</span>
+                    </Button>
                   </div>
                 )}
-              </div>
+              </Surface>
             ))}
           </div>
         )}

@@ -1,7 +1,9 @@
+import uuid
 from contextvars import ContextVar
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
+
 import jwt
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
@@ -44,16 +46,16 @@ class CurrentUserContext:
 CurrentUser = CurrentUserContext
 
 
-_current_user_ctx: ContextVar[Optional[CurrentUserContext]] = ContextVar(
+_current_user_ctx: ContextVar[CurrentUserContext | None] = ContextVar(
     "current_user", default=None
 )
 
 
-def set_current_user(user: Optional[CurrentUserContext]) -> None:
+def set_current_user(user: CurrentUserContext | None) -> None:
     _current_user_ctx.set(user)
 
 
-def get_current_user() -> Optional[CurrentUserContext]:
+def get_current_user() -> CurrentUserContext | None:
     return _current_user_ctx.get()
 
 
@@ -75,7 +77,7 @@ def create_access_token(
     role: str = "",
     avatar_url: str = "",
 ) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload: dict[str, Any] = {
         "sub": user_id,
         "email": email,
@@ -90,8 +92,9 @@ def create_access_token(
 
 
 def create_refresh_token(user_id: str) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload: dict[str, Any] = {
+        "jti": str(uuid.uuid4()),
         "sub": user_id,
         "type": "refresh",
         "iat": now,
@@ -106,7 +109,7 @@ def create_google_temp_token(
     full_name: str = "",
     avatar_url: str = "",
 ) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload: dict[str, Any] = {
         "sub": google_id,
         "email": email,
@@ -119,8 +122,8 @@ def create_google_temp_token(
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
-def decode_token(token: str) -> Optional[dict[str, Any]]:
+def decode_token(token: str) -> dict[str, Any] | None:
     try:
         return jwt.decode(token, settings.JWT_SECRET, algorithms=[JWT_ALGORITHM])
-    except (jwt.PyJWTError, Exception):
+    except (jwt.PyJWTError, ValueError, TypeError, AttributeError):
         return None

@@ -20,11 +20,12 @@ import {
 } from "@/gen/certificate/v1/certificate_pb";
 import { CatalogService, type Course } from "@/gen/catalog/v1/catalog_pb";
 import { useToast } from "@/components/ui/Toast";
-import { Modal } from "@/components/ui/Modal";
+import { Dialog } from "@/components/ui/Dialog";
+
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Textarea";
 import { Badge } from "@/components/ui/Badge";
-import { ProgressBar } from "@/components/ui/ProgressBar";
+import { Progress } from "@/components/ui/Progress";
 
 function FinancialAidContent() {
   const searchParams = useSearchParams();
@@ -56,8 +57,8 @@ function FinancialAidContent() {
         const certClient = getRpcClient(CertificateService);
 
         const [courseRes, myAppRes] = await Promise.all([
-          catalogClient.listCourses({ pageSize: 50 }).catch(() => ({ courses: [] })),
-          certClient.listMyFinancialAids({}).catch(() => ({ applications: [] })),
+          catalogClient.listCourses({ pageSize: 50 }),
+          certClient.listMyFinancialAids({}),
         ]);
 
         if (!ignore) {
@@ -198,11 +199,12 @@ function FinancialAidContent() {
               const partnerName = matchedCourse ? matchedCourse.partnerName : "Coursera AI Partner";
 
               return (
-                <button
+                <Button
                   type="button"
                   key={app.id}
+                  variant="outlined"
                   onClick={() => setSelectedApp(app)}
-                  className={`w-full text-left bg-card border rounded-2xl p-5 shadow-sm hover:shadow-md transition-colors cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                  className={`w-full justify-between h-auto bg-card border rounded-2xl p-5 shadow-xs hover:shadow-md transition-colors cursor-pointer flex flex-col md:flex-row md:items-center text-left gap-4 ${
                     selectedApp?.id === app.id
                       ? "border-primary ring-2 ring-primary/20"
                       : "border-border"
@@ -233,7 +235,7 @@ function FinancialAidContent() {
                       </Badge>
                     )}
                     {app.status === "REJECTED" && (
-                      <Badge variant="danger" className="flex items-center gap-1.5">
+                      <Badge variant="error" className="flex items-center gap-1.5">
                         <X aria-hidden="true" className="w-3.5 h-3.5 text-destructive" />
                         {"Chưa được duyệt"}
                       </Badge>
@@ -244,7 +246,7 @@ function FinancialAidContent() {
                       <ChevronRight aria-hidden="true" className="w-3.5 h-3.5 ml-1" />
                     </span>
                   </div>
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -253,199 +255,207 @@ function FinancialAidContent() {
 
       {/* Selected Application Detail Modal */}
       {selectedApp && (
-        <Modal
-          isOpen={!!selectedApp}
-          onClose={() => setSelectedApp(null)}
-          title={"Chi tiết Đơn Hỗ trợ Tài chính"}
-          className="max-w-2xl"
+        <Dialog.Root
+          open={!!selectedApp}
+          onOpenChange={(open) => {
+            if (!open) setSelectedApp(null);
+          }}
         >
-          <div className="space-y-6 pt-2">
-            <div className="flex items-center justify-between pb-4 border-b border-border">
-              <div>
-                <span className="text-xs font-mono font-semibold text-muted-foreground">
-                  Mã đơn: #{selectedApp.id}
-                </span>
-                <h3 className="text-lg font-bold text-foreground mt-0.5">
-                  {courses.find((c) => c.id === selectedApp.courseId)?.title ||
-                    selectedApp.courseId}
-                </h3>
+          <Dialog.Content size="lg">
+            <Dialog.Header>
+              <Dialog.Title>{"Chi tiết Đơn Hỗ trợ Tài chính"}</Dialog.Title>
+            </Dialog.Header>
+            <div className="space-y-6 pt-2">
+              <div className="flex items-center justify-between pb-4 border-b border-border">
+                <div>
+                  <span className="text-xs font-mono font-semibold text-muted-foreground">
+                    Mã đơn: #{selectedApp.id}
+                  </span>
+                  <h3 className="text-lg font-bold text-foreground mt-0.5">
+                    {courses.find((c) => c.id === selectedApp.courseId)?.title ||
+                      selectedApp.courseId}
+                  </h3>
+                </div>
+
+                {selectedApp.status === "PENDING" && (
+                  <Badge variant="warning" className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-warning animate-pulse" />
+                    {"Đang xét duyệt (Pending)"}
+                  </Badge>
+                )}
+                {selectedApp.status === "APPROVED" && (
+                  <Badge variant="success" className="flex items-center gap-1.5">
+                    <Check aria-hidden="true" className="w-4 h-4 text-success" />
+                    {"Đã Phê Duyệt"}
+                  </Badge>
+                )}
+                {selectedApp.status === "REJECTED" && (
+                  <Badge variant="error" className="flex items-center gap-1.5">
+                    <X aria-hidden="true" className="w-4 h-4 text-destructive" />
+                    {"Chưa được duyệt"}
+                  </Badge>
+                )}
               </div>
 
               {selectedApp.status === "PENDING" && (
-                <Badge variant="warning" className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-warning animate-pulse" />
-                  {"Đang xét duyệt (Pending)"}
-                </Badge>
+                <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 text-xs text-warning space-y-1">
+                  <p className="font-bold">{"Thời gian thẩm định dự kiến:"}</p>
+                  <p>
+                    {"Giảng viên/Admin có tối đa 15 ngày để duyệt đơn. Còn lại: "}
+                    <strong className="text-primary font-bold">
+                      {selectedApp.reviewDeadlineDaysLeft} ngày
+                    </strong>
+                    .
+                  </p>
+                </div>
               )}
+
               {selectedApp.status === "APPROVED" && (
-                <Badge variant="success" className="flex items-center gap-1.5">
-                  <Check aria-hidden="true" className="w-4 h-4 text-success" />
-                  {"Đã Phê Duyệt"}
-                </Badge>
+                <div className="p-4 rounded-2xl bg-success/10 border border-success/20 text-xs text-success space-y-1">
+                  <p className="font-bold flex items-center gap-1.5">
+                    <CheckCircle2 aria-hidden="true" className="w-4 h-4 text-success" />
+                    {"Đơn đã được duyệt thành công!"}
+                  </p>
+                  <p>
+                    {
+                      "Tài khoản của bạn đã được nâng cấp Paid Mode cho khóa học này. Bạn có thể mở toàn bộ bài thi tính điểm và nhận Verified Certificate."
+                    }
+                  </p>
+                </div>
               )}
+
               {selectedApp.status === "REJECTED" && (
-                <Badge variant="danger" className="flex items-center gap-1.5">
-                  <X aria-hidden="true" className="w-4 h-4 text-destructive" />
-                  {"Chưa được duyệt"}
-                </Badge>
+                <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-xs text-destructive space-y-1">
+                  <p className="font-bold flex items-center gap-1.5">
+                    <AlertCircle aria-hidden="true" className="w-4 h-4 text-destructive" />
+                    {"Đơn chưa được duyệt."}
+                  </p>
+                  <p>{"Bạn có thể nộp lại đơn bài luận mới để ban quản trị tiếp tục thẩm định."}</p>
+                </div>
               )}
-            </div>
 
-            {selectedApp.status === "PENDING" && (
-              <div className="p-4 rounded-2xl bg-warning/10 border border-warning/20 text-xs text-warning space-y-1">
-                <p className="font-bold">{"Thời gian thẩm định dự kiến:"}</p>
-                <p>
-                  {"Giảng viên/Admin có tối đa 15 ngày để duyệt đơn. Còn lại: "}
-                  <strong className="text-primary font-bold">
-                    {selectedApp.reviewDeadlineDaysLeft} ngày
-                  </strong>
-                  .
-                </p>
+              <div className="space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  {"Bài luận đã gửi:"}
+                </span>
+                <div className="p-4 rounded-2xl bg-muted/50 border border-border text-xs text-foreground leading-relaxed whitespace-pre-wrap font-sans">
+                  {selectedApp.essay150Words}
+                </div>
               </div>
-            )}
 
-            {selectedApp.status === "APPROVED" && (
-              <div className="p-4 rounded-2xl bg-success/10 border border-success/20 text-xs text-success space-y-1">
-                <p className="font-bold flex items-center gap-1.5">
-                  <CheckCircle2 aria-hidden="true" className="w-4 h-4 text-success" />
-                  {"Đơn đã được duyệt thành công!"}
-                </p>
-                <p>
-                  {
-                    "Tài khoản của bạn đã được nâng cấp Paid Mode cho khóa học này. Bạn có thể mở toàn bộ bài thi tính điểm và nhận Verified Certificate."
-                  }
-                </p>
-              </div>
-            )}
+              <Dialog.Footer className="pt-4 border-t border-border flex items-center justify-between gap-3">
+                {selectedApp.status === "REJECTED" && (
+                  <Button
+                    type="button"
+                    variant="text"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedCourseId(selectedApp.courseId);
+                      setSelectedApp(null);
+                      setIsReApplying(true);
+                      setShowCreateModal(true);
+                    }}
+                  >
+                    {"Nộp lại bài luận mới"}
+                  </Button>
+                )}
 
-            {selectedApp.status === "REJECTED" && (
-              <div className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-xs text-destructive space-y-1">
-                <p className="font-bold flex items-center gap-1.5">
-                  <AlertCircle aria-hidden="true" className="w-4 h-4 text-destructive" />
-                  {"Đơn chưa được duyệt."}
-                </p>
-                <p>{"Bạn có thể nộp lại đơn bài luận mới để ban quản trị tiếp tục thẩm định."}</p>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                {"Bài luận đã gửi:"}
-              </span>
-              <div className="p-4 rounded-2xl bg-muted/50 border border-border text-xs text-foreground leading-relaxed whitespace-pre-wrap font-sans">
-                {selectedApp.essay150Words}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-border flex items-center justify-between gap-3">
-              {selectedApp.status === "REJECTED" && (
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => {
-                    setSelectedCourseId(selectedApp.courseId);
-                    setSelectedApp(null);
-                    setIsReApplying(true);
-                    setShowCreateModal(true);
-                  }}
+                <Link
+                  href={`/courses/${selectedApp.courseId}`}
+                  className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-colors ml-auto"
                 >
-                  {"Nộp lại bài luận mới"}
-                </Button>
-              )}
-
-              <Link
-                href={`/courses/${selectedApp.courseId}`}
-                className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-xs font-bold transition-colors ml-auto"
-              >
-                {"Trang bài giảng khóa học →"}
-              </Link>
+                  {"Trang bài giảng khóa học →"}
+                </Link>
+              </Dialog.Footer>
             </div>
-          </div>
-        </Modal>
+          </Dialog.Content>
+        </Dialog.Root>
       )}
 
       {/* Create New Application Modal (Only opens if navigated from Course Detail page via ?courseId=...) */}
       {showCreateModal && (
-        <Modal
-          isOpen={showCreateModal}
-          onClose={() => {
-            setShowCreateModal(false);
-            setIsReApplying(false);
+        <Dialog.Root
+          open={showCreateModal}
+          onOpenChange={(open) => {
+            setShowCreateModal(open);
+            if (!open) setIsReApplying(false);
           }}
-          title={
-            isReApplying ? "Nộp lại Bài luận Hỗ trợ Tài chính" : "Soạn Đơn Hỗ trợ Tài chính Mới"
-          }
-          className="max-w-2xl"
         >
-          <form onSubmit={handleSubmit} className="space-y-6 pt-2">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                {"Khóa học xin Hỗ trợ Tài chính:"}
-              </label>
-              <div className="p-3.5 rounded-xl border border-input bg-muted font-bold text-foreground text-sm">
-                {selectedCourse ? selectedCourse.title : selectedCourseId}
-              </div>
-
-              {selectedCourse && selectedCourse.financialAidEnabled === false && (
-                <div className="mt-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-bold flex items-center gap-2">
-                  <AlertTriangle aria-hidden="true" className="w-4 h-4 text-destructive" />
-                  <span>
-                    {"Khóa học này hiện đã bị tắt tính năng xin Hỗ trợ Tài chính (BR_FAID_003)."}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  {"Bài luận giải trình hoàn cảnh & Mục tiêu (Tối thiểu 150 từ)"}
+          <Dialog.Content size="lg">
+            <Dialog.Header>
+              <Dialog.Title>
+                {isReApplying
+                  ? "Nộp lại Bài luận Hỗ trợ Tài chính"
+                  : "Soạn Đơn Hỗ trợ Tài chính Mới"}
+              </Dialog.Title>
+            </Dialog.Header>
+            <form onSubmit={handleSubmit} className="space-y-6 pt-2">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                  {"Khóa học xin Hỗ trợ Tài chính:"}
                 </label>
-                <Badge variant={isEnoughWords ? "success" : "default"}>
-                  {wordCount} / 150 {"từ"}
-                </Badge>
-              </div>
-              <Textarea
-                rows={8}
-                value={essay}
-                onChange={(e) => setEssay(e.target.value)}
-                placeholder={"Tôi xin nộp đơn xin hỗ trợ tài chính cho khóa học này vì…"}
-                required
-              />
-              <div className="mt-3">
-                <ProgressBar
-                  progress={Math.min(100, (wordCount / 150) * 100)}
-                  color={isEnoughWords ? "emerald" : "blue"}
-                />
-              </div>
-            </div>
+                <div className="p-3.5 rounded-xl border border-input bg-muted font-bold text-foreground text-sm">
+                  {selectedCourse ? selectedCourse.title : selectedCourseId}
+                </div>
 
-            <div className="pt-4 flex justify-end gap-3 border-t border-border">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setIsReApplying(false);
-                }}
-              >
-                {"Hủy"}
-              </Button>
-              <Button
-                type="submit"
-                isLoading={submitting}
-                disabled={!isEnoughWords || selectedCourse?.financialAidEnabled === false}
-                size="sm"
-              >
-                {selectedCourse?.financialAidEnabled === false
-                  ? "Khóa học này đã tắt FinAid"
-                  : "Gửi đơn Hỗ trợ"}
-              </Button>
-            </div>
-          </form>
-        </Modal>
+                {selectedCourse && selectedCourse.financialAidEnabled === false && (
+                  <div className="mt-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-bold flex items-center gap-2">
+                    <AlertTriangle aria-hidden="true" className="w-4 h-4 text-destructive" />
+                    <span>
+                      {"Khóa học này hiện đã bị tắt tính năng xin Hỗ trợ Tài chính (BR_FAID_003)."}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    {"Bài luận giải trình hoàn cảnh & Mục tiêu (Tối thiểu 150 từ)"}
+                  </label>
+                  <Badge variant={isEnoughWords ? "success" : "secondary"}>
+                    {wordCount} / 150 {"từ"}
+                  </Badge>
+                </div>
+                <Textarea
+                  rows={8}
+                  value={essay}
+                  onChange={(e) => setEssay(e.target.value)}
+                  placeholder={"Tôi xin nộp đơn xin hỗ trợ tài chính cho khóa học này vì…"}
+                  required
+                />
+                <div className="mt-3">
+                  <Progress.Linear value={Math.min(100, (wordCount / 150) * 100)} />
+                </div>
+              </div>
+
+              <Dialog.Footer className="pt-4 flex justify-end gap-3 border-t border-border">
+                <Button
+                  type="button"
+                  variant="text"
+                  size="sm"
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setIsReApplying(false);
+                  }}
+                >
+                  {"Hủy"}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={
+                    submitting || !isEnoughWords || selectedCourse?.financialAidEnabled === false
+                  }
+                  size="sm"
+                >
+                  {selectedCourse?.financialAidEnabled === false
+                    ? "Khóa học này đã tắt FinAid"
+                    : "Gửi đơn Hỗ trợ"}
+                </Button>
+              </Dialog.Footer>
+            </form>
+          </Dialog.Content>
+        </Dialog.Root>
       )}
     </div>
   );

@@ -1,13 +1,15 @@
-import pytest
 from unittest.mock import AsyncMock, patch
-from src.modules.learning.application.learning_usecase import LearningUseCase
+
+import pytest
+
 from src.modules.catalog.domain.entities import (
     Course,
-    WeekModule,
-    Lesson,
-    LearningItem,
     ItemType,
+    LearningItem,
+    Lesson,
+    WeekModule,
 )
+from src.modules.learning.application.learning_usecase import LearningUseCase
 from src.modules.learning.domain.entities import (
     LearningProgress,
     PersonalNote,
@@ -106,6 +108,15 @@ async def test_list_personal_notes(use_case, mock_repo, mock_session_scope):
     result = await use_case.list_personal_notes("u1", "c1")
     assert result == expected
     mock_repo.list_personal_notes.assert_awaited_once_with("u1", "c1")
+
+
+@pytest.mark.asyncio
+async def test_delete_personal_note(use_case, mock_repo, mock_session_scope):
+    mock_repo.delete_personal_note.return_value = True
+
+    result = await use_case.delete_personal_note("note_1", "user_1")
+    assert result is True
+    mock_repo.delete_personal_note.assert_awaited_once_with("note_1", "user_1")
 
 
 @pytest.mark.asyncio

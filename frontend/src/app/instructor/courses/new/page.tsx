@@ -10,20 +10,15 @@ import { IdentityService } from "@/gen/identity/v1/identity_pb";
 import { PartnerService, type Partner } from "@/gen/partner/v1/partner_pb";
 import { useToast } from "@/components/ui/Toast";
 import { revalidateCoursesCache } from "@/app/actions/revalidate";
-import { Building2 } from "lucide-react";
+import { Building2, Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Chip } from "@/components/ui/Chip";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Checkbox } from "@/components/ui/Checkbox";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/Select";
+import { Surface } from "@/components/ui/Surface";
+import { Switch } from "@/components/ui/Switch";
+import { Field } from "@/components/ui/Field";
+import { Select } from "@/components/ui/Select";
 
 const emptySubscribe = () => () => {};
 
@@ -52,8 +47,19 @@ export default function NewCoursePage() {
   const [selectedOrgId, setSelectedOrgId] = useState("partner_community");
   const [subject, setSubject] = useState("Khoa học Máy tính");
   const [level, setLevel] = useState("Sơ cấp");
+  const [tags, setTags] = useState<string[]>(["Python", "Machine Learning"]);
+  const [tagInput, setTagInput] = useState("");
   const [financialAidEnabled, setFinancialAidEnabled] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  const handleAddTag = (e: React.KeyboardEvent | React.MouseEvent) => {
+    if ("key" in e && e.key !== "Enter") return;
+    e.preventDefault();
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput("");
+    }
+  };
 
   useEffect(() => {
     let ignore = false;
@@ -173,15 +179,17 @@ export default function NewCoursePage() {
         </div>
 
         {/* Live Preview Card */}
-        <Card className="rounded-3xl p-6 sm:p-8 border border-border relative overflow-hidden space-y-4">
+        <Surface
+          variant="low"
+          shape="3xl"
+          padding="lg"
+          className="relative overflow-hidden space-y-4"
+        >
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="flex items-center justify-between">
-            <Badge
-              variant="outline"
-              className="bg-primary/10 text-primary border-primary/20 px-3 py-1 font-bold uppercase tracking-wider"
-            >
+            <span className="inline-flex items-center rounded-full bg-primary/10 text-primary border border-primary/20 px-3 py-1 text-xs font-bold uppercase tracking-wider">
               Live Badge Preview
-            </Badge>
+            </span>
             <span className="text-xs text-muted-foreground font-mono">Bản nháp DRAFT</span>
           </div>
 
@@ -220,12 +228,15 @@ export default function NewCoursePage() {
               </p>
             </div>
           </div>
-        </Card>
+        </Surface>
 
         {/* Main Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="bg-card rounded-3xl p-6 sm:p-8 border border-border space-y-6"
+        <Surface
+          variant="container"
+          shape="3xl"
+          padding="lg"
+          render={<form onSubmit={handleSubmit} />}
+          className="space-y-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Organization / Partner Scoping Selection */}
@@ -246,32 +257,32 @@ export default function NewCoursePage() {
                     if (val) setSelectedOrgId(val as string);
                   }}
                 >
-                  <SelectTrigger
+                  <Select.Trigger
                     id="orgSelect"
                     aria-label="Partner / Tổ Chức Đại Diện Bảo Chứng"
                     className="w-full"
                   >
-                    <SelectValue placeholder="Chọn Partner / Tổ chức">
+                    <Select.Value placeholder="Chọn Partner / Tổ chức">
                       {selectedOrgId === "partner_community"
                         ? "🌐 Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)"
                         : (() => {
                             const p = partners.find((p) => p.id === selectedOrgId);
                             return p ? `🏛️ ${p.name} (${p.slug})` : selectedOrgId;
                           })()}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="partner_community">
+                    </Select.Value>
+                  </Select.Trigger>
+                  <Select.Content>
+                    <Select.Item value="partner_community">
                       {"🌐 Coursera Project Network (Mặc định dành cho Giảng viên cá nhân tự do)"}
-                    </SelectItem>
+                    </Select.Item>
                     {partners
                       .filter((p) => p.id !== "partner_community")
                       .map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
+                        <Select.Item key={p.id} value={p.id}>
                           {`🏛️ ${p.name} (${p.slug})`}
-                        </SelectItem>
+                        </Select.Item>
                       ))}
-                  </SelectContent>
+                  </Select.Content>
                 </Select>
               )}
               <p className="text-xs text-muted-foreground">
@@ -291,6 +302,7 @@ export default function NewCoursePage() {
               </label>
               <Input
                 id="courseTitle"
+                name="title"
                 type="text"
                 required
                 value={title}
@@ -339,20 +351,20 @@ export default function NewCoursePage() {
                   if (val) setSubject(val as string);
                 }}
               >
-                <SelectTrigger
+                <Select.Trigger
                   id="courseSubject"
                   aria-label="Lĩnh Vực Chuyên Môn"
                   className="w-full"
                 >
-                  <SelectValue placeholder="Chọn lĩnh vực">{subject}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Khoa học Máy tính">{"Khoa học Máy tính"}</SelectItem>
-                  <SelectItem value="Trí tuệ Nhân tạo & AI">{"Trí tuệ Nhân tạo & AI"}</SelectItem>
-                  <SelectItem value="Khoa học Dữ liệu">{"Khoa học Dữ liệu"}</SelectItem>
-                  <SelectItem value="Kinh doanh & Quản trị">{"Kinh doanh & Quản trị"}</SelectItem>
-                  <SelectItem value="Thiết kế & Đồ họa">{"Thiết kế & Đồ họa"}</SelectItem>
-                </SelectContent>
+                  <Select.Value placeholder="Chọn lĩnh vực">{subject}</Select.Value>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="Khoa học Máy tính">{"Khoa học Máy tính"}</Select.Item>
+                  <Select.Item value="Trí tuệ Nhân tạo & AI">{"Trí tuệ Nhân tạo & AI"}</Select.Item>
+                  <Select.Item value="Khoa học Dữ liệu">{"Khoa học Dữ liệu"}</Select.Item>
+                  <Select.Item value="Kinh doanh & Quản trị">{"Kinh doanh & Quản trị"}</Select.Item>
+                  <Select.Item value="Thiết kế & Đồ họa">{"Thiết kế & Đồ họa"}</Select.Item>
+                </Select.Content>
               </Select>
             </div>
 
@@ -370,8 +382,8 @@ export default function NewCoursePage() {
                   if (val) setLevel(val as string);
                 }}
               >
-                <SelectTrigger id="courseLevel" aria-label="Trình Độ Yêu Cầu" className="w-full">
-                  <SelectValue placeholder="Chọn trình độ">
+                <Select.Trigger id="courseLevel" aria-label="Trình Độ Yêu Cầu" className="w-full">
+                  <Select.Value placeholder="Chọn trình độ">
                     {level === "Sơ cấp"
                       ? "Sơ cấp (Beginner)"
                       : level === "Trung cấp"
@@ -379,14 +391,49 @@ export default function NewCoursePage() {
                         : level === "Nâng cao"
                           ? "Nâng cao (Advanced)"
                           : level}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Sơ cấp">{"Sơ cấp (Beginner)"}</SelectItem>
-                  <SelectItem value="Trung cấp">{"Trung cấp (Intermediate)"}</SelectItem>
-                  <SelectItem value="Nâng cao">{"Nâng cao (Advanced)"}</SelectItem>
-                </SelectContent>
+                  </Select.Value>
+                </Select.Trigger>
+                <Select.Content>
+                  <Select.Item value="Sơ cấp">{"Sơ cấp (Beginner)"}</Select.Item>
+                  <Select.Item value="Trung cấp">{"Trung cấp (Intermediate)"}</Select.Item>
+                  <Select.Item value="Nâng cao">{"Nâng cao (Advanced)"}</Select.Item>
+                </Select.Content>
               </Select>
+            </div>
+
+            {/* Course Skills & Tag Inputs */}
+            <div className="space-y-2 md:col-span-2">
+              <label
+                htmlFor="courseTagInput"
+                className="block text-xs font-bold text-foreground uppercase tracking-wider"
+              >
+                Kỹ Năng & Thẻ Khóa Học (Skills & Tags)
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  id="courseTagInput"
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleAddTag}
+                  placeholder="Nhập kỹ năng/thẻ (ví dụ: Python, React, Data Science) rồi nhấn Enter..."
+                  className="flex-1 font-medium bg-card"
+                />
+                <Button type="button" variant="outlined" onClick={handleAddTag}>
+                  Thêm thẻ
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {tags.map((tag) => (
+                  <Chip
+                    key={tag}
+                    variant="input"
+                    onRemove={() => setTags(tags.filter((t) => t !== tag))}
+                  >
+                    {tag}
+                  </Chip>
+                ))}
+              </div>
             </div>
 
             {/* Description */}
@@ -408,21 +455,29 @@ export default function NewCoursePage() {
             </div>
 
             {/* Financial Aid Switch */}
-            <div className="md:col-span-2 p-4 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-between">
-              <div>
-                <span className="text-sm font-bold text-foreground block">
-                  Cho phép Học viên Nộp Đơn Hỗ Trợ Tài Chính (Financial Aid)
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  Học viên có hoàn cảnh khó khăn có thể viết bài luận xin cấp học bổng theo học khóa
-                  học này.
-                </span>
-              </div>
-              <Checkbox
-                checked={financialAidEnabled}
-                onCheckedChange={(checked) => setFinancialAidEnabled(Boolean(checked))}
-                aria-label="Cho phép nộp đơn hỗ trợ tài chính"
-              />
+            <div className="md:col-span-2 p-4 rounded-2xl bg-card border border-border">
+              <Field.Root className="space-y-1">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5 min-w-0 flex-1">
+                    <Field.Label
+                      htmlFor="financialAidEnabled"
+                      className="mb-0 text-sm font-medium text-on-surface cursor-pointer select-none"
+                    >
+                      Cho phép Học viên Nộp Đơn Hỗ Trợ Tài Chính (Financial Aid)
+                    </Field.Label>
+                    <Field.Description className="text-xs text-on-surface-variant leading-normal mt-0.5">
+                      Học viên có hoàn cảnh khó khăn có thể viết bài luận xin cấp học bổng theo học
+                      khóa học này.
+                    </Field.Description>
+                  </div>
+                  <Switch
+                    id="financialAidEnabled"
+                    checked={financialAidEnabled}
+                    onCheckedChange={(checked) => setFinancialAidEnabled(Boolean(checked))}
+                    checkedIcon={<Check className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />}
+                  />
+                </div>
+              </Field.Root>
             </div>
           </div>
 
@@ -436,15 +491,14 @@ export default function NewCoursePage() {
             </Link>
             <Button
               type="submit"
-              variant="primary"
+              variant="filled"
               disabled={submitting}
-              isLoading={submitting}
               className="px-6 py-2.5 rounded-xl text-xs font-bold"
             >
               <span>🚀 Bắt Đầu Tạo Khóa Học</span>
             </Button>
           </div>
-        </form>
+        </Surface>
       </div>
     </div>
   );

@@ -6,6 +6,9 @@ import { useParams, useRouter } from "next/navigation";
 import { useGetInvitationByTokenQuery, useRespondToInvitationMutation } from "@/lib/query_hooks";
 import { InvitationAction, InvitationStatus, InvitationType } from "@/gen/identity/v1/identity_pb";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { Button } from "@/components/ui/Button";
+import { Surface } from "@/components/ui/Surface";
+import { Progress } from "@/components/ui/Progress";
 import {
   Mail,
   CheckCircle2,
@@ -14,7 +17,6 @@ import {
   Building2,
   BookOpen,
   Award,
-  Loader2,
   ArrowRight,
 } from "lucide-react";
 
@@ -67,10 +69,10 @@ function AcceptInvitationContent() {
 
   const getTargetIcon = (type: InvitationType) => {
     if (type === InvitationType.ORGANIZATION_MEMBER)
-      return <Building2 className="w-8 h-8 text-primary" />;
+      return <Building2 className="w-8 h-8 text-primary" aria-hidden="true" />;
     if (type === InvitationType.COURSE_CO_INSTRUCTOR)
-      return <BookOpen className="w-8 h-8 text-primary" />;
-    return <Award className="w-8 h-8 text-primary" />;
+      return <BookOpen className="w-8 h-8 text-primary" aria-hidden="true" />;
+    return <Award className="w-8 h-8 text-primary" aria-hidden="true" />;
   };
 
   const getVietnameseStatus = (status: InvitationStatus) => {
@@ -92,147 +94,149 @@ function AcceptInvitationContent() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4">
-      <div className="max-w-md w-full bg-card border border-border rounded-xl shadow-lg p-6 text-foreground space-y-6">
-        <div className="flex flex-col items-center text-center space-y-2">
+      <Surface variant="low" shape="2xl" className="max-w-md w-full p-6 text-foreground space-y-6">
+        <Surface.Header className="flex flex-col items-center text-center space-y-2 p-0">
           <div className="p-3 rounded-full bg-primary/10 mb-2">
-            <Mail className="w-8 h-8 text-primary" />
+            <Mail className="w-8 h-8 text-primary" aria-hidden="true" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Lời mời tham gia</h1>
-          <p className="text-sm text-muted-foreground">Hệ thống đào tạo trực tuyến LMS</p>
-        </div>
+          <Surface.Title className="text-2xl font-bold tracking-tight text-on-surface">
+            Lời mời tham gia
+          </Surface.Title>
+          <Surface.Description className="text-sm text-on-surface-variant">
+            Hệ thống đào tạo trực tuyến LMS
+          </Surface.Description>
+        </Surface.Header>
 
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center py-8 space-y-3">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            <p className="text-sm text-muted-foreground">Đang tải thông tin lời mời...</p>
-          </div>
-        )}
-
-        {isError && (
-          <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center space-y-2">
-            <XCircle className="w-6 h-6 mx-auto" />
-            <p>{error?.message || "Lời mời không hợp lệ hoặc đã hết hạn."}</p>
-            <Link href="/" className="inline-block text-xs font-semibold underline mt-2">
-              Trở về Trang chủ
-            </Link>
-          </div>
-        )}
-
-        {invitation && !isLoading && (
-          <div className="space-y-6">
-            <div className="flex items-center space-x-4 p-4 rounded-lg bg-muted/50 border border-border">
-              <div className="p-2 rounded-md bg-background shadow-xs">
-                {getTargetIcon(invitation.type)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="text-base font-semibold truncate">
-                  {invitation.targetName || "Mục tiêu lời mời"}
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  Gửi bởi:{" "}
-                  <span className="font-medium text-foreground">
-                    {invitation.inviterName || invitation.inviterEmail}
-                  </span>
-                </p>
-              </div>
+        <Surface.Content className="p-0 space-y-6">
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center py-8 space-y-3">
+              <Progress.Circular size="md" />
+              <p className="text-sm text-muted-foreground">Đang tải thông tin lời mời...</p>
             </div>
+          )}
 
-            {invitation.message && (
-              <div className="p-3 rounded-md bg-background border border-border text-sm italic text-muted-foreground">
-                &ldquo;{invitation.message}&rdquo;
-              </div>
-            )}
-
-            <div className="space-y-1 text-xs text-muted-foreground border-t border-border pt-4">
-              <div className="flex justify-between">
-                <span>Dành cho Email:</span>
-                <span className="font-medium text-foreground">{invitation.inviteeEmail}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span>Trạng thái:</span>
-                <span className="inline-flex items-center gap-1 font-semibold text-primary">
-                  <Clock className="w-3.5 h-3.5" /> {getVietnameseStatus(invitation.status)}
-                </span>
-              </div>
+          {isError && (
+            <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center space-y-2">
+              <XCircle className="w-6 h-6 mx-auto" aria-hidden="true" />
+              <p>{error?.message || "Lời mời không hợp lệ hoặc đã hết hạn."}</p>
+              <Link href="/" className="inline-block text-xs font-semibold underline mt-2">
+                Trở về Trang chủ
+              </Link>
             </div>
+          )}
 
-            {feedback && (
-              <div
-                className={`p-3 rounded-md text-sm text-center flex items-center justify-center gap-2 ${
-                  feedback.type === "success"
-                    ? "bg-success/10 text-success border border-success/20"
-                    : "bg-destructive/10 text-destructive border border-destructive/20"
-                }`}
-              >
-                {feedback.type === "success" ? (
-                  <CheckCircle2 className="w-4 h-4" />
-                ) : (
-                  <XCircle className="w-4 h-4" />
-                )}
-                <span>{feedback.message}</span>
-              </div>
-            )}
-
-            {!isAuthenticated ? (
-              <div className="space-y-3 pt-2">
-                <p className="text-xs text-center text-muted-foreground">
-                  Bạn cần đăng nhập hoặc tạo tài khoản với email{" "}
-                  <strong className="text-foreground">{invitation.inviteeEmail}</strong> để nhận lời
-                  mời này.
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Link
-                    href={`/login?redirect=/invitations/${token}`}
-                    className="flex items-center justify-center py-2.5 px-4 rounded-md border border-input bg-background hover:bg-muted text-sm font-semibold transition-colors"
-                  >
-                    Đăng nhập
-                  </Link>
-                  <Link
-                    href={`/register?email=${encodeURIComponent(invitation.inviteeEmail)}&invite_token=${token}`}
-                    className="flex items-center justify-center py-2.5 px-4 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold transition-colors gap-1"
-                  >
-                    Đăng ký <ArrowRight className="w-4 h-4" />
-                  </Link>
+          {invitation && !isLoading && (
+            <div className="space-y-6">
+              <div className="flex items-center space-x-4 p-4 rounded-lg bg-muted/50 border border-border">
+                <div className="p-2 rounded-md bg-background shadow-xs">
+                  {getTargetIcon(invitation.type)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-base font-semibold truncate">
+                    {invitation.targetName || "Mục tiêu lời mời"}
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    Gửi bởi:{" "}
+                    <span className="font-medium text-foreground">
+                      {invitation.inviterName || invitation.inviterEmail}
+                    </span>
+                  </p>
                 </div>
               </div>
-            ) : userEmail?.toLowerCase() !== invitation.inviteeEmail.toLowerCase() ? (
-              <div className="p-3 rounded-md bg-warning/10 border border-warning/20 text-warning text-xs text-center space-y-2">
-                <p>
-                  Bạn đang đăng nhập bằng tài khoản <strong>{userEmail}</strong>. Lời mời này gửi
-                  tới <strong>{invitation.inviteeEmail}</strong>.
-                </p>
-                <p className="text-muted-foreground">
-                  Vui lòng chuyển sang đúng tài khoản để chấp nhận lời mời.
-                </p>
+
+              {invitation.message && (
+                <div className="p-3 rounded-md bg-background border border-border text-sm italic text-muted-foreground">
+                  &ldquo;{invitation.message}&rdquo;
+                </div>
+              )}
+
+              <div className="space-y-1 text-xs text-muted-foreground border-t border-border pt-4">
+                <div className="flex justify-between">
+                  <span>Dành cho Email:</span>
+                  <span className="font-medium text-foreground">{invitation.inviteeEmail}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Trạng thái:</span>
+                  <span className="inline-flex items-center gap-1 font-semibold text-primary">
+                    <Clock className="w-3.5 h-3.5" aria-hidden="true" />{" "}
+                    {getVietnameseStatus(invitation.status)}
+                  </span>
+                </div>
               </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <button
-                  type="button"
-                  disabled={respondMutation.isPending}
-                  onClick={() => handleAction(InvitationAction.DECLINE)}
-                  className="w-full py-2.5 px-4 rounded-md border border-input bg-background hover:bg-muted text-sm font-semibold text-foreground transition-colors disabled:opacity-50"
+
+              {feedback && (
+                <div
+                  className={`p-3 rounded-md text-sm text-center flex items-center justify-center gap-2 ${
+                    feedback.type === "success"
+                      ? "bg-success/10 text-success border border-success/20"
+                      : "bg-destructive/10 text-destructive border border-destructive/20"
+                  }`}
                 >
-                  Từ chối
-                </button>
-                <button
-                  type="button"
-                  disabled={respondMutation.isPending}
-                  onClick={() => handleAction(InvitationAction.ACCEPT)}
-                  className="w-full py-2.5 px-4 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {respondMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                  {feedback.type === "success" ? (
+                    <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
                   ) : (
-                    <CheckCircle2 className="w-4 h-4" />
+                    <XCircle className="w-4 h-4" aria-hidden="true" />
                   )}
-                  Chấp nhận
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+                  <span>{feedback.message}</span>
+                </div>
+              )}
+
+              {!isAuthenticated ? (
+                <div className="space-y-3 pt-2">
+                  <p className="text-xs text-center text-muted-foreground">
+                    Bạn cần đăng nhập hoặc tạo tài khoản với email{" "}
+                    <strong className="text-foreground">{invitation.inviteeEmail}</strong> để nhận
+                    lời mời này.
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button variant="outlined">
+                      <Link href={`/login?redirect=/invitations/${token}`}>Đăng nhập</Link>
+                    </Button>
+                    <Button variant="filled">
+                      <Link
+                        href={`/register?email=${encodeURIComponent(invitation.inviteeEmail)}&invite_token=${token}`}
+                      >
+                        <span>Đăng ký</span>{" "}
+                        <ArrowRight className="w-4 h-4 ml-1" aria-hidden="true" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              ) : userEmail?.toLowerCase() !== invitation.inviteeEmail.toLowerCase() ? (
+                <div className="p-3 rounded-md bg-warning/10 border border-warning/20 text-warning text-xs text-center space-y-2">
+                  <p>
+                    Bạn đang đăng nhập bằng tài khoản <strong>{userEmail}</strong>. Lời mời này gửi
+                    tới <strong>{invitation.inviteeEmail}</strong>.
+                  </p>
+                  <p className="text-muted-foreground">
+                    Vui lòng chuyển sang đúng tài khoản để chấp nhận lời mời.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    disabled={respondMutation.isPending}
+                    onClick={() => handleAction(InvitationAction.DECLINE)}
+                    className="w-full"
+                  >
+                    Từ chối
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={respondMutation.isPending}
+                    onClick={() => handleAction(InvitationAction.ACCEPT)}
+                    className="w-full"
+                  >
+                    Chấp nhận
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </Surface.Content>
+      </Surface>
     </div>
   );
 }
@@ -242,7 +246,7 @@ export default function AcceptInvitationPage() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 text-muted-foreground">
-          <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
+          <Progress.Circular size="md" className="mb-2" />
           <p className="text-sm">Đang tải thông tin lời mời...</p>
         </div>
       }

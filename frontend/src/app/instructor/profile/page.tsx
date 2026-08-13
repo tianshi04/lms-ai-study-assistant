@@ -6,19 +6,15 @@ import Image from "next/image";
 import { UserRole } from "@/gen/identity/v1/identity_pb";
 import { useUserProfileQuery, useUpdateInstructorProfileMutation } from "@/lib/query_hooks";
 import { Button } from "@/components/ui/Button";
+import { Surface } from "@/components/ui/Surface";
+import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/Input";
 import { Avatar } from "@/components/ui/Avatar";
+import { Progress } from "@/components/ui/Progress";
 
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Check, X } from "lucide-react";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/Breadcrumb";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 export default function InstructorProfilePage() {
   const router = useRouter();
@@ -50,7 +46,7 @@ export default function InstructorProfilePage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex items-center space-x-3 text-muted-foreground">
-          <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <Progress.Circular size="sm" />
           <span aria-live="polite">Đang tải thông tin hồ sơ…</span>
         </div>
       </div>
@@ -59,15 +55,19 @@ export default function InstructorProfilePage() {
 
   if (!isInstructorOrTA) {
     return (
-      <div className="max-w-md mx-auto my-16 p-8 bg-destructive/10 border border-destructive/30 rounded-2xl text-center">
+      <Surface
+        variant="low"
+        shape="2xl"
+        className="max-w-md mx-auto my-16 p-8 text-center bg-destructive/10 border-destructive/30"
+      >
         <h2 className="text-xl font-bold text-destructive mb-2">Từ chối truy cập</h2>
         <p className="text-muted-foreground text-sm">
           Trang này chỉ dành cho Giảng viên (Instructor) thiết lập hồ sơ và chữ ký tay điện tử.
         </p>
-        <Button onClick={() => router.push("/")} className="mt-4" variant="outline">
+        <Button onClick={() => router.push("/")} className="mt-4" variant="outlined">
           Về trang chủ
         </Button>
-      </div>
+      </Surface>
     );
   }
 
@@ -97,20 +97,20 @@ export default function InstructorProfilePage() {
       {/* Header */}
       <div className="pb-6 border-b border-border">
         <Breadcrumb className="mb-1">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink
+          <Breadcrumb.List>
+            <Breadcrumb.Item>
+              <Breadcrumb.Link
                 className="cursor-pointer"
                 onClick={() => router.push("/instructor/courses")}
               >
                 Giảng dạy
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Hồ sơ & Chữ ký Giảng viên</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
+              </Breadcrumb.Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Separator />
+            <Breadcrumb.Item>
+              <Breadcrumb.Page>Hồ sơ & Chữ ký Giảng viên</Breadcrumb.Page>
+            </Breadcrumb.Item>
+          </Breadcrumb.List>
         </Breadcrumb>
         <h1 className="text-3xl font-extrabold text-foreground tracking-tight text-balance">
           Cấu hình Hồ sơ & Chữ ký tay Điện tử
@@ -137,21 +137,23 @@ export default function InstructorProfilePage() {
             )}
             <span>{statusMessage.text}</span>
           </div>
-          <button
+          <IconButton
             type="button"
+            variant="standard"
+            size="xs"
             onClick={() => setStatusMessage(null)}
             aria-label="Đóng thông báo"
-            className="p-1 rounded-md opacity-70 hover:opacity-100 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer"
+            className="opacity-70 hover:opacity-100"
           >
             <X className="w-4 h-4" aria-hidden="true" />
-          </button>
+          </IconButton>
         </div>
       )}
 
       {/* Main Profile Form */}
       <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-        {/* User General Info Card (Read-only) */}
-        <div className="bg-card rounded-2xl p-6 border border-border shadow-sm flex items-center space-x-5">
+        {/* User General Info Surface (Read-only) */}
+        <Surface variant="low" shape="2xl" className="p-6 flex items-center space-x-5">
           <Avatar
             name={userProfile?.fullName || "Giảng viên"}
             src={userProfile?.avatarUrl}
@@ -164,10 +166,10 @@ export default function InstructorProfilePage() {
               {userProfile?.role === UserRole.INSTRUCTOR ? "Giảng viên" : "Quản trị viên / Nhân sự"}
             </span>
           </div>
-        </div>
+        </Surface>
 
         {/* Academic Title & Signature Form */}
-        <div className="bg-card rounded-2xl p-6 sm:p-8 border border-border shadow-sm space-y-6">
+        <Surface variant="container" shape="2xl" className="p-6 sm:p-8 space-y-6">
           <div>
             <label
               htmlFor="academicTitle"
@@ -210,7 +212,7 @@ export default function InstructorProfilePage() {
 
           {/* Signature Preview Card */}
           {signatureImageUrl && (
-            <div className="p-4 bg-muted rounded-2xl border border-border">
+            <Surface variant="low" shape="2xl" className="p-4 bg-muted space-y-3">
               <p className="text-xs font-semibold uppercase text-muted-foreground mb-3 tracking-wider">
                 Xem trước Chữ ký hiển thị trên Giấy chứng nhận:
               </p>
@@ -232,15 +234,15 @@ export default function InstructorProfilePage() {
                   <p className="text-xs text-muted-foreground">Giảng viên Xác nhận</p>
                 </div>
               </div>
-            </div>
+            </Surface>
           )}
-        </div>
+        </Surface>
 
         {/* Submit Actions */}
         <div className="flex items-center justify-end space-x-4 pt-2">
           <Button
             type="submit"
-            isLoading={updateMutation.isPending}
+            disabled={updateMutation.isPending}
             className="bg-primary hover:bg-primary-hover text-primary-foreground font-semibold rounded-xl px-6 py-3 text-sm shadow-md flex items-center gap-2"
           >
             <Check className="w-4 h-4" aria-hidden="true" />

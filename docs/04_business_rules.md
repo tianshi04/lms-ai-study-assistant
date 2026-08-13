@@ -26,9 +26,13 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_AUTH_002 (Cơ chế Refresh Token Rotation):**
   * Khi `access_token` hết hạn, client gọi RPC `RefreshToken` truyền `refresh_token` hợp lệ (yêu cầu payload claim `type == "refresh"` và tồn tại `user_id` sở hữu trong DB).
   * Hệ thống hủy cặp token cũ và phát hành mới đồng thời cả `access_token` và `refresh_token`.
-* **BR_AUTH_003 (Thuật toán Mã hóa Mật khẩu & Auto-Avatar):**
-  * Mật khẩu người dùng được băm bằng PBKDF2-HMAC-SHA256 với 100,000 vòng lặp (iterations) và muối ngẫu nhiên 16 bytes, lưu dạng `salt_hex:hash_hex`. Việc xác thực mật khẩu sử dụng `hmac.compare_digest` để chống tấn công đo thời gian (Timing Attack).
+* **BR_AUTH_003 (Thuật toán Mã hóa Mật khẩu, Validation & Auto-Avatar):**
+  * **Chính sách Mật khẩu (Password Policy - `validate_password`):** Mật khẩu người dùng áp dụng ràng buộc độ mạnh bắt buộc cho các thao tác đăng ký (`Register`), hoàn tất đăng ký Google (`CompleteGoogleRegistration`) và hoàn tất đặt lại mật khẩu (`CompleteResetPassword`). Mật khẩu tối thiểu 6 ký tự (`PASSWORD_MIN_LENGTH = 6`), phải chứa ít nhất 1 chữ cái in hoa (`A-Z`) và ít nhất 1 chữ số (`0-9`). Mọi mật khẩu yếu hoặc rỗng bị từ chối ngay lập tức ở tầng Application.
+  * **Mã hóa Băm Mật khẩu:** Mật khẩu người dùng được băm bằng PBKDF2-HMAC-SHA256 với 100,000 vòng lặp (iterations) và muối ngẫu nhiên 16 bytes, lưu dạng `salt_hex:hash_hex`. Việc xác thực mật khẩu sử dụng `hmac.compare_digest` để chống tấn công đo thời gian (Timing Attack).
   * Khi người dùng đăng ký mới, hệ thống tự động sinh ảnh đại diện mặc định qua API DiceBear: `https://api.dicebear.com/7.x/avataaars/svg?seed={email}`.
+* **BR_AUTH_004 (Bảo vệ Đăng nhập & Giới hạn Tần suất Khóa Tài khoản - Redis Login Rate Limiter):**
+  * **Bộ kiểm soát Tần suất Đăng nhập (Sliding Window Rate Limiter):** Sử dụng Redis sliding window counter (`check_login_rate_limit`) để phòng chống tấn công dò mật khẩu (Brute-force Attack).
+  * **Quy tắc Khóa Tạm thời (Account Lockout):** Nếu một tài khoản hoặc IP thực hiện đăng nhập sai quá **5 lần** (`LOGIN_MAX_ATTEMPTS = 5`) liên tiếp, hệ thống tự động tạm khóa (Lockout) quyền đăng nhập trong **15 phút** (`LOGIN_LOCKOUT_SECONDS = 900` / 900 giây) và phản hồi thời gian chờ còn lại cho Client.
 * **BR_AUTH_005 (Quy tắc Xét duyệt Quyền Giảng viên Cá nhân & Gán Partner Chuẩn Coursera):**
   * *BR_AUTH_005.1 (Không cấp trực tiếp vai trò Giảng viên):* API Đăng ký công khai (`Register`) tuyệt đối không cấp trực tiếp vai trò `INSTRUCTOR`. Cá nhân muốn trở thành Giảng viên phải nộp Đơn đăng ký (`SubmitInstructorApplication`) để Super Admin thẩm định.
   * *BR_AUTH_005.2 (Ràng buộc Đơn trùng lặp):* Mỗi tài khoản `LEARNER` chỉ được giữ tối đa **01 đơn đăng ký** ở trạng thái `PENDING_REVIEW`. Nếu bị Reject, người dùng phải đợi 14 ngày hoặc cập nhật lại thông tin mới được nộp đơn mới.
@@ -118,9 +122,12 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
 * **BR_QUIZ_003 (Quy tắc Quản lý Session Đếm ngược & Auto-submit):**
   * Mọi bài thi Graded Quiz có giới hạn thời gian (Timed Quiz) được quản lý thời gian đếm ngược trực tiếp từ phía Server (Server-side Session Timer) tính từ mốc bấm nút "Start Quiz".
   * Việc tải lại trang (F5) hoặc tạm đóng trình duyệt không làm dừng đồng hồ đếm ngược. Khi hết giờ đếm ngược, Server tự động đóng phiên và thực hiện chấm điểm (Auto-submit on timeout) với các câu trả lời hiện tại.
-* **BR_AUTOGRADE_001 (Quy định Sandbox Auto-Grader):**
-  * Mỗi bài nộp lập trình gửi tới Auto-Grader chạy trong môi trường Sandbox cách ly với Timeout mặc định 5.0 giây (hoặc tối đa 30 giây) và Memory Limit = 512MB.
-  * Điểm bài nộp = (Số lượng Test Cases Pass / Tổng số Test Cases) * 100%. Trả về log chi tiết stdout/stderr của từng testcase cho học viên.
+* **BR_AUTOGRADE_001 (Quy định Sandbox Auto-Grader & Bảo mật Test Case Ẩn):**
+  * **Môi trường Thực thi Cách ly (Sandbox Execution):** Mỗi bài nộp lập trình gửi tới Auto-Grader chạy trong môi trường Sandbox cách ly với Timeout mặc định 5.0 giây (tối đa 30.0 giây) và Memory Limit = 512MB.
+  * **Ràng buộc Tạo bài Lab (Lab Creation Validation):** Mỗi bài Auto-Graded Lab bắt buộc có **tối thiểu 3 Test Cases** mới được phép lưu. Trình Course Builder hỗ trợ giao diện tạo/sửa/xóa Test Cases trực quan (Visual Test Case Builder) kết hợp soạn thảo Mô tả đề bài dạng Markdown (hỗ trợ Live Preview 2 cột).
+  * **Quy tắc Tự động Ẩn (Auto-Hidden Test Cases Assignment):** Trường hợp Giảng viên không gắn cờ `is_hidden` thủ công cho bất kỳ Test Case nào, hệ thống tự động ẩn khoảng 1/3 số Test Cases cuối (tính từ chỉ số $\lceil N \times 2 / 3 \rceil$) khi bấm lưu để bảo đảm độ chính xác khi chấm bài.
+  * **Bảo mật Test Case Ẩn (Hidden Test Privacy & Log Masking):** Học viên xem được dữ liệu Input/Expected của các Test Cases công khai (`Visible`). Đối với các Test Cases ẩn (`Hidden`), thông tin Input, Expected Output và câu lệnh `assertion` bị **mask bảo mật hoàn toàn** trong Execution Logs (chỉ hiển thị trạng thái `[PASS]` hoặc `[FAIL] Test Case #X: [Hidden]`).
+  * **Tính điểm:** Điểm bài nộp = (Số lượng Test Cases Pass / Tổng số Test Cases) * 100%.
 * **BR_PEER_001 (Điều kiện Nộp & Chấm chéo Peer Review):**
   * Học viên bắt buộc phải nộp bài dự án cá nhân trước mới được phân bổ quyền chấm chéo bài của bạn học (hệ thống tự động loại trừ bài nộp của chính mình `exclude_user_id`).
   * Học viên bắt buộc phải **chấm đủ lượt bài làm theo phân bổ** $\min(3, N)$ (với $N$ là số bài nộp khả thi trong hàng chờ) thì hệ thống mới mở hiển thị điểm bài nộp của chính mình.
@@ -158,6 +165,14 @@ Tài liệu này tập hợp và quản lý tập trung toàn bộ các quy tắ
   * *Quyết định Phê duyệt hoặc Từ chối (Approve / Reject):*
     * **Phê duyệt (`Approve`):** Khóa học chuyển sang trạng thái **`PUBLISHED`** và chính thức xuất hiện trên Trang Tìm kiếm Công khai toàn cầu (`/courses`).
     * **Từ chối (`Reject`):** Reviewer nhập lý do/gợi ý chỉnh sửa (Feedback Log). Khóa học tự động chuyển về trạng thái **`DRAFT`** kèm nhật ký góp ý để Giảng viên hoàn thiện và nộp lại.
+* **BR_CATALOG_004 (Bảo vệ Khóa học Đã xuất bản & Ràng buộc Cấm Xóa - Published Course Safeguards & Deletion Restrictions):**
+  * **Ràng buộc Cấm Xóa đối với Giảng viên (Deletion Protection Guard):** Ngay khi khóa học ở trạng thái **`PUBLISHED` (Đã xuất bản)**, Giảng viên sở hữu (`owner_id`) và Giảng viên đồng hành (`co_instructor_ids`) **TUYỆT ĐỐI KHÔNG CÓ QUYỀN XÓA** khóa học, xóa tuần học (`WeekModule`), xóa bài học (`Lesson`) hoặc xóa học liệu (`LearningItem`).
+  * **Lý do Bảo vệ Dữ liệu & Tiến độ Học tập:** Tránh làm gián đoạn hoặc hỏng tiến độ học tập, điểm số bài thi, lịch sử nộp bài và chứng chỉ đã cấp cho các học viên đang học hoặc đã hoàn thành khóa học.
+  * **Phản hồi Hệ thống & Thông báo (FE & BE Notification Guard):**
+    * Phía Frontend chủ động chặn thao tác xóa và hiển thị thông báo Toast cảnh báo: *"Không thể xóa [Khóa học / Tuần học / Bài học / Học liệu] vì khóa học đã được xuất bản (PUBLISHED). Vui lòng liên hệ Quản trị viên."*
+    * Phía Backend kiểm tra đa tầng tại `CatalogUseCase._verify_ownership` và Repository DB Level. Mọi cố gắng xóa khóa học `PUBLISHED` từ phía Giảng viên đều bị từ chối và trả về ngoại lệ `PermissionError` / `ConnectError(Code.PERMISSION_DENIED)`.
+  * **Quyền Chỉnh sửa Nối tiếp (Live Content Maintenance):** Giảng viên vẫn giữ quyền chỉnh sửa nội dung mô tả, cập nhật bài đọc (Reading), sửa lỗi phụ đề VTT, video bài giảng hoặc cập nhật ngân hàng câu hỏi/ma trận đề thi để cập nhật kiến thức mới mà không ảnh hưởng tới các học viên đã tốt nghiệp.
+  * **Quy trình Gỡ/Hủy Xuất bản Khóa học (Unpublish / Archive Workflow):** Khi cần dừng nhận học viên mới hoặc gỡ khóa học khỏi danh mục công khai, Quản trị viên hệ thống (Super Admin) thực hiện chuyển trạng thái khóa học sang `UNPUBLISHED` hoặc `ARCHIVED`. Khóa học bị ẩn khỏi trang tìm kiếm công khai nhưng học viên cũ đã đăng ký vẫn giữ nguyên 100% quyền truy cập và chứng chỉ đã cấp.
 
 
 ---

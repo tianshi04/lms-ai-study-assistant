@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/Button";
+import { Surface } from "@/components/ui/Surface";
 import {
   Shield,
   Lock,
@@ -15,14 +17,7 @@ import {
   FileCheck,
   AlertCircle,
 } from "lucide-react";
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/Breadcrumb";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 interface Section {
   id: string;
@@ -83,19 +78,24 @@ export default function PrivacyPolicyPage() {
       <div className="max-w-6xl mx-auto space-y-10">
         {/* Breadcrumb Navigation */}
         <Breadcrumb>
-          <BreadcrumbList className="text-xs">
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/">Trang chủ</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>Chính sách Bảo mật</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
+          <Breadcrumb.List className="text-xs">
+            <Breadcrumb.Item>
+              <Breadcrumb.Link href="/">Trang chủ</Breadcrumb.Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Separator />
+            <Breadcrumb.Item>
+              <Breadcrumb.Page>Chính sách Bảo mật</Breadcrumb.Page>
+            </Breadcrumb.Item>
+          </Breadcrumb.List>
         </Breadcrumb>
 
         {/* Hero Section */}
-        <div className="bg-card rounded-3xl p-8 sm:p-12 border border-border relative overflow-hidden text-center sm:text-left">
+        <Surface
+          variant="low"
+          shape="3xl"
+          padding="lg"
+          className="relative overflow-hidden text-center sm:text-left"
+        >
           <div className="absolute top-0 right-0 -mt-16 -mr-16 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 space-y-4 max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider border border-primary/20">
@@ -122,12 +122,17 @@ export default function PrivacyPolicyPage() {
               </span>
             </div>
           </div>
-        </div>
+        </Surface>
 
         {/* Main Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
           {/* Sticky Table of Contents Sidebar */}
-          <aside className="lg:col-span-1 bg-card rounded-3xl p-5 border border-border lg:sticky lg:top-24 space-y-3">
+          <Surface
+            variant="low"
+            shape="3xl"
+            padding="sm"
+            className="lg:col-span-1 p-5 lg:sticky lg:top-24 space-y-3"
+          >
             <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2">
               Mục lục chính sách
             </h2>
@@ -135,12 +140,14 @@ export default function PrivacyPolicyPage() {
               {SECTIONS.map((sec) => {
                 const IconComponent = sec.icon;
                 const isActive = activeSection === sec.id;
+
                 return (
-                  <button
+                  <Button
                     type="button"
                     key={sec.id}
+                    variant={isActive ? "filled" : "text"}
                     onClick={() => scrollToSection(sec.id)}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl text-left transition-colors font-medium cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                    className={`w-full justify-start gap-2.5 px-3 py-2.5 rounded-2xl text-left text-xs font-medium cursor-pointer ${
                       isActive
                         ? "bg-primary text-primary-foreground font-semibold shadow-xs"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -148,11 +155,11 @@ export default function PrivacyPolicyPage() {
                   >
                     <IconComponent className="w-4 h-4 shrink-0" aria-hidden="true" />
                     <span className="min-w-0 truncate">{sec.title}</span>
-                  </button>
+                  </Button>
                 );
               })}
             </nav>
-          </aside>
+          </Surface>
 
           {/* Policy Content Sections */}
           <main className="lg:col-span-3 space-y-8">

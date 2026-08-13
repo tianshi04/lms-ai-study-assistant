@@ -2,7 +2,7 @@
 
 import importlib
 import pkgutil
-from typing import Optional
+from typing import ClassVar
 
 from connectrpc.code import Code
 from connectrpc.errors import ConnectError
@@ -14,7 +14,7 @@ from src.shared.auth import CurrentUser
 class AuthPolicyRegistry:
     """Discovers and caches AuthPolicy for all ConnectRPC method paths dynamically from Protobuf stubs."""
 
-    _policy_map: dict[str, options_pb.AuthPolicy] = {}
+    _policy_map: ClassVar[dict[str, options_pb.AuthPolicy]] = {}
     _initialized: bool = False
 
     @classmethod
@@ -32,7 +32,7 @@ class AuthPolicyRegistry:
                 try:
                     mod = importlib.import_module(module_name)
                     gen_modules.append(mod)
-                except Exception:
+                except Exception:  # noqa: BLE001, S110
                     pass
 
         for mod in gen_modules:
@@ -64,7 +64,7 @@ class AuthPolicyRegistry:
                             val = options[options_pb.ext_policy]
                             if val is not None:
                                 policy_val = val
-                        except (KeyError, Exception):
+                        except (KeyError, ValueError, TypeError, AttributeError):
                             policy_val = options_pb.AuthPolicy.UNSPECIFIED
 
                     cls._policy_map[path] = policy_val
@@ -82,7 +82,7 @@ class AuthPolicyRegistry:
         return policy == options_pb.AuthPolicy.PUBLIC
 
     @classmethod
-    def authorize(cls, method_path: str, user: Optional[CurrentUser]) -> None:
+    def authorize(cls, method_path: str, user: CurrentUser | None) -> None:
         policy = cls.get_policy(method_path)
 
         if policy == options_pb.AuthPolicy.PUBLIC:

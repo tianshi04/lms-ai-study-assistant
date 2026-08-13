@@ -136,9 +136,7 @@ class ICatalogRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_course_id_by_slug_or_id(
-        self, course_id_or_slug: str
-    ) -> tuple[str, list[str]]:
+    async def get_course_id_by_slug_or_id(self, course_id_or_slug: str) -> str:
         pass
 
     @abstractmethod

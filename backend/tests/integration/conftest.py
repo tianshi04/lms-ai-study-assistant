@@ -1,10 +1,10 @@
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+import src.shared.infrastructure.database as db_module
 from src.main import app
 from src.seed import seed_database
-import src.shared.infrastructure.database as db_module
 
 
 @pytest_asyncio.fixture(autouse=True)

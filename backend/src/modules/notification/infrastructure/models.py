@@ -1,9 +1,12 @@
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import Boolean, DateTime, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
+from src.modules.notification.domain.constants import (
+    ACTION_URL_MAX_LENGTH,
+    TITLE_MAX_LENGTH,
+)
 from src.shared.infrastructure.database import Base
 
 
@@ -13,16 +16,18 @@ class NotificationModel(Base):
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     recipient_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     category: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
-    title: Mapped[str] = mapped_column(String(150), nullable=False)
+    title: Mapped[str] = mapped_column(String(TITLE_MAX_LENGTH), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False, default="")
-    action_url: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+    action_url: Mapped[str] = mapped_column(
+        String(ACTION_URL_MAX_LENGTH), nullable=False, default=""
+    )
     actor_avatar_url: Mapped[str] = mapped_column(
         String(500), nullable=False, default=""
     )
     is_read: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, index=True
     )
-    read_at: Mapped[Optional[datetime]] = mapped_column(
+    read_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(

@@ -1,12 +1,14 @@
 from sqlalchemy import (
     ARRAY,
-    Enum as SQLEnum,
     Float,
     ForeignKey,
     Integer,
     String,
     Text,
     UniqueConstraint,
+)
+from sqlalchemy import (
+    Enum as SQLEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -72,16 +74,3 @@ class PersonalNoteModel(Base):
     highlighted_text: Mapped[str] = mapped_column(Text, nullable=False)
     note_comment: Mapped[str] = mapped_column(Text, nullable=False, default="")
     created_at: Mapped[str] = mapped_column(String(64), nullable=False)
-
-
-class UserItemCompletionModel(Base):
-    __tablename__ = "user_item_completions"
-    __table_args__ = (
-        UniqueConstraint("user_id", "item_id", name="uq_user_item_completion"),
-    )
-
-    id: Mapped[str] = mapped_column(String(128), primary_key=True)  # user_id:item_id
-    user_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    course_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    item_id: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
-    completed_at: Mapped[str] = mapped_column(String(64), nullable=False)

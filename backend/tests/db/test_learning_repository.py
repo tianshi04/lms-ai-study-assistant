@@ -1,12 +1,14 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
+
+from src.modules.learning.domain.entities import DeadlineStatus
 from src.modules.learning.infrastructure.models import (
     LearningProgressModel,
     PersonalNoteModel,
     WeeklyDeadlineModel,
 )
-from src.modules.learning.domain.entities import DeadlineStatus
+from src.modules.learning.infrastructure.repository import SQLAlchemyLearningRepository
 
 
 @pytest.fixture
