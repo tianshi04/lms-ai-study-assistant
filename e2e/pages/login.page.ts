@@ -14,7 +14,7 @@ export class LoginPage {
     this.passwordInput = page.locator('input[type="password"]');
     this.submitButton = page.getByRole('button', { name: /đăng nhập ngay|sign in/i });
     this.errorBanner = page.getByRole('alert').or(page.getByRole('status')).first();
-    this.registerLink = page.getByRole('link', { name: /đăng ký miễn phí|register for free/i });
+    this.registerLink = page.locator('a[href="/auth/register"]');
   }
 
   async goto(redirectUrl?: string) {

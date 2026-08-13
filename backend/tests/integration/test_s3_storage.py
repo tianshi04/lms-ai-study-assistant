@@ -8,8 +8,8 @@ async def test_s3_storage_operations():
     """Verify S3 storage operations against the coursera_minio Docker container."""
     s3_service = get_s3_storage_service()
 
-    # 1. Ensure test bucket exists in MinIO
-    test_bucket = "coursera-test-bucket"
+    # 1. Ensure test bucket exists in MinIO/S3
+    test_bucket = s3_service.bucket_name
     await s3_service.ensure_bucket_exists(bucket_name=test_bucket)
 
     # 2. Upload test content
