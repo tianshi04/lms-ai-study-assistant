@@ -1395,11 +1395,6 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Truncate existing tables before seeding for a 100%% clean reset.",
     )
-    parser.add_argument(
-        "--demo",
-        action="store_true",
-        help="Seed clean JSON demo data from data/demo_data/ directory.",
-    )
     return parser.parse_args()
 
 
