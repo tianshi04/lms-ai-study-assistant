@@ -10,6 +10,7 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { CopilotProvider } from "@/components/providers/CopilotProvider";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { getAuthServer } from "@/lib/auth_server";
+import { Analytics } from "@vercel/analytics/react";
 
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-be-vietnam-pro",
@@ -76,6 +77,7 @@ export default function RootLayout({
             </ToastProvider>
           </ThemeProvider>
         </QueryProvider>
+        <Analytics />
       </body>
     </html>
   );
