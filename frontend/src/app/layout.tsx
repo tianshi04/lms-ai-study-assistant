@@ -11,6 +11,7 @@ import { CopilotProvider } from "@/components/providers/CopilotProvider";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { getAuthServer } from "@/lib/auth_server";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-be-vietnam-pro",
@@ -78,6 +79,7 @@ export default function RootLayout({
           </ThemeProvider>
         </QueryProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
