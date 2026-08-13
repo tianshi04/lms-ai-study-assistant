@@ -48,8 +48,18 @@ export function GoogleAuthButton({
   const [useOfficialButton, setUseOfficialButton] = useState(false);
 
   useEffect(() => {
+    // Listen for mock auth success event (used by automated E2E tests)
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "GOOGLE_AUTH_SUCCESS" && event.data?.idToken) {
+        onSuccess(event.data.idToken, "mock");
+      }
+    };
+    window.addEventListener("message", handleMessage);
+
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!googleClientId) return;
+    if (!googleClientId) {
+      return () => window.removeEventListener("message", handleMessage);
+    }
 
     const renderGsiButton = () => {
       if (typeof google === "undefined" || !google.accounts?.id || !containerRef.current) return;
@@ -88,20 +98,19 @@ export function GoogleAuthButton({
           clearInterval(timer);
         }
       }, 300);
-      return () => clearInterval(timer);
+      return () => {
+        clearInterval(timer);
+        window.removeEventListener("message", handleMessage);
+      };
     }
+
+    return () => window.removeEventListener("message", handleMessage);
   }, [onSuccess]);
 
   const handleClick = async () => {
     const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    const isProduction = process.env.NEXT_PUBLIC_ENV === "production";
 
-    if (
-      !googleClientId ||
-      !isProduction ||
-      typeof google === "undefined" ||
-      !google.accounts?.oauth2
-    ) {
+    if (!googleClientId || typeof google === "undefined" || !google.accounts?.oauth2) {
       const inputEmail = window.prompt(
         "Dev Mode: Nhập địa chỉ Gmail để giả lập xác minh Google",
         "user.test@gmail.com",

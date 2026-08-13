@@ -433,6 +433,7 @@ export function useCreateQuestionBankMutation(
     >
   >,
 ) {
+  const queryClient = useQueryClient();
   return useMutation<
     QuestionBank,
     Error,
@@ -443,6 +444,10 @@ export function useCreateQuestionBankMutation(
       const res = await client.createQuestionBank({ courseId, title, category, description });
       if (!res.bank) throw new Error("Failed to create question bank");
       return res.bank;
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["questionBanks", variables.courseId] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
     ...options,
   });
@@ -464,6 +469,7 @@ export function useAddQuestionToBankMutation(
     >
   >,
 ) {
+  const queryClient = useQueryClient();
   return useMutation<
     Question,
     Error,
@@ -495,6 +501,10 @@ export function useAddQuestionToBankMutation(
       });
       if (!res.question) throw new Error("Failed to add question to bank");
       return res.question;
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: ["questionBanks"] });
+      options?.onSuccess?.(data, variables, context as unknown as never, queryClient as never);
     },
     ...options,
   });

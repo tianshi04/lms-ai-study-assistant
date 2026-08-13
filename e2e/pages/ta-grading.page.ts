@@ -14,7 +14,7 @@ export class TAGradingPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.heading = page.locator('h1:has-text("Quản Lý Chấm Điểm & Kháng Nghị Bài Tập")');
+    this.heading = page.locator('h1:has-text("Quản Lý Chấm Điểm & Kháng Nghị Bài Tập")').first();
     this.allSubmissionsTab = page.locator('button:has-text("Tất cả bài nộp")');
     this.pendingTab = page.locator('button:has-text("Chờ trợ giảng chấm")');
     this.appealedTab = page.locator('button:has-text("Có đơn kháng nghị")');
@@ -26,7 +26,7 @@ export class TAGradingPage {
   }
 
   async goto() {
-    await this.page.goto('/ta/grading');
+    await this.page.goto('/ta/grading', { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {
@@ -35,8 +35,16 @@ export class TAGradingPage {
   }
 
   async openFirstSubmissionGradeModal() {
-    await this.firstGradeButton.click();
-    await expect(this.gradeModalTitle).toBeVisible({ timeout: 5000 });
+    await expect(this.firstGradeButton).toBeVisible({ timeout: 10000 });
+    await expect(this.firstGradeButton).toBeEnabled({ timeout: 5000 });
+
+    for (let i = 0; i < 3; i++) {
+      await this.firstGradeButton.click();
+      await this.page.waitForTimeout(400);
+      if (await this.gradeModalTitle.isVisible()) break;
+    }
+
+    await expect(this.gradeModalTitle).toBeVisible({ timeout: 10000 });
   }
 
   async submitGrade(score: number) {

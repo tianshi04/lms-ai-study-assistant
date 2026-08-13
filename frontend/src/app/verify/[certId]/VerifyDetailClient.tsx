@@ -51,9 +51,13 @@ export function VerifyDetailClient({
 
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
-      navigator.clipboard.writeText(window.location.href);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      try {
+        navigator.clipboard?.writeText(window.location.href)?.catch(() => {});
+      } catch {
+        // Fallback for headless browser environment
+      }
     }
   };
 

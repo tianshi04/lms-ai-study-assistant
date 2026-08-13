@@ -29,7 +29,7 @@ export class CourseBuilderPage {
   }
 
   async goto(courseId: string) {
-    await this.page.goto(`/instructor/courses/${courseId}`);
+    await this.page.goto(`/instructor/courses/${courseId}`, { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {

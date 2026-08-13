@@ -193,7 +193,7 @@ export function CourseCatalogClient({
       </Surface>
 
       {/* Content Section: Course Cards Grid */}
-      {loading ? (
+      {loading || isFetching ? (
         <CourseGridSkeleton />
       ) : error ? (
         <div className="bg-error-container text-on-error-container border border-error/20 p-6 rounded-3xl text-center">

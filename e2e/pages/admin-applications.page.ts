@@ -20,7 +20,7 @@ export class AdminApplicationsPage {
   }
 
   async goto() {
-    await this.page.goto('/admin/applications');
+    await this.page.goto('/admin/applications', { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {
@@ -28,9 +28,16 @@ export class AdminApplicationsPage {
   }
 
   async filterByStatus(status: 'all' | 'pending' | 'approved' | 'rejected') {
-    if (status === 'pending') await this.pendingTab.click();
-    else if (status === 'approved') await this.approvedTab.click();
-    else if (status === 'rejected') await this.rejectedTab.click();
-    else await this.allTab.click();
+    const tab = status === 'pending' ? this.pendingTab : status === 'approved' ? this.approvedTab : status === 'rejected' ? this.rejectedTab : this.allTab;
+    await expect(tab).toBeVisible({ timeout: 10000 });
+    await expect(tab).toBeEnabled({ timeout: 5000 });
+
+    for (let i = 0; i < 3; i++) {
+      await tab.click();
+      await this.page.waitForTimeout(400);
+      if ((await tab.getAttribute('aria-pressed')) === 'true') break;
+    }
+
+    await expect(tab).toHaveAttribute('aria-pressed', 'true', { timeout: 5000 });
   }
 }

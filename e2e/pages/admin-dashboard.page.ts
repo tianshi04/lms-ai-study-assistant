@@ -23,7 +23,7 @@ export class AdminDashboardPage {
   }
 
   async goto() {
-    await this.page.goto('/admin/dashboard');
+    await this.page.goto('/admin/dashboard', { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {

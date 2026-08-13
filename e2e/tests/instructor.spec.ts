@@ -37,7 +37,7 @@ test.describe('Full System Blackbox - Instructor Flows (POM)', () => {
     await instructorPage.createNewCourse(uniqueTitle, description);
 
     // Verify course appears in list or builder header
-    await expect(page.locator(`text=${uniqueTitle}`).first()).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole('heading', { name: uniqueTitle }).or(page.getByText(uniqueTitle)).first()).toBeVisible({ timeout: 25000 });
   });
 
   test('should load course builder page for specific course', async ({ page }) => {
@@ -73,7 +73,7 @@ test.describe('Full System Blackbox - Instructor Flows (POM)', () => {
     await announcementsPage.postAnnouncement(annTitle, annContent);
 
     // Verify announcement appears on page
-    await expect(page.locator(`text=${annTitle}`)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(annTitle).first()).toBeVisible({ timeout: 20000 });
   });
 
   test('should load instructor analytics and student roster page', async ({ page }) => {

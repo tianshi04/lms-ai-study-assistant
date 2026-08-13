@@ -28,25 +28,31 @@ export class NewCoursePage {
   }
 
   async goto() {
-    await this.page.goto('/instructor/courses/new');
+    await this.page.goto('/instructor/courses/new', { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/instructor\/courses\/new/);
-    await expect(this.titleInput).toBeVisible({ timeout: 15000 });
+    await expect(this.titleInput).toBeVisible({ timeout: 20000 });
+    await expect(this.submitButton).toBeVisible({ timeout: 20000 });
+    await this.page.waitForTimeout(500);
   }
 
   async fillAndSubmitCourse(title: string, description: string, partnerOrgId?: string) {
     await expect(this.titleInput).toBeVisible({ timeout: 10000 });
+    await expect(this.titleInput).toBeEnabled({ timeout: 5000 });
     await this.titleInput.click();
     await this.titleInput.fill(title);
+    await expect(this.titleInput).toHaveValue(title, { timeout: 5000 });
+
     if (partnerOrgId) {
       const selectCount = await this.page.locator('select').count();
       if (selectCount > 0) {
-        await this.page.locator('select').first().selectOption(partnerOrgId);
+        await this.page.locator('select').first().selectOption(partnerOrgId).catch(() => null);
       } else {
-        if (await this.partnerSelect.isVisible()) {
-          await this.partnerSelect.click();
+        const orgTrigger = this.page.locator('button').filter({ hasText: /đối tác|tổ chức|partner/i }).first();
+        if (await orgTrigger.isVisible()) {
+          await orgTrigger.click();
           const option = this.page.locator('[role="option"]').filter({ hasText: partnerOrgId }).first();
           if (await option.isVisible({ timeout: 2000 }).catch(() => false)) {
             await option.click();
@@ -54,10 +60,15 @@ export class NewCoursePage {
         }
       }
     }
+
     await this.descriptionTextarea.click();
     await this.descriptionTextarea.fill(description);
+    await expect(this.descriptionTextarea).toHaveValue(description, { timeout: 5000 });
+    await this.page.waitForTimeout(300);
+
     await expect(this.submitButton).toBeVisible({ timeout: 10000 });
+    await expect(this.submitButton).toBeEnabled({ timeout: 5000 });
     await this.submitButton.click();
-    await this.page.waitForURL(/\/instructor\/courses\//, { timeout: 15000 }).catch(() => null);
+    await expect(this.page).toHaveURL(/\/instructor\/courses\/course-[a-z0-9-]+/, { timeout: 25000 });
   }
 }

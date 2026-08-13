@@ -19,7 +19,7 @@ test.describe('Full System Blackbox - Authentication Flow (POM)', () => {
     await loginPage.login(email, password);
 
     // Should redirect to homepage or dashboard after login
-    await expect(page).toHaveURL(/\/(courses|learn|account-settings)?$/, { timeout: 10000 });
+    await expect(page).toHaveURL(/\/(courses|learn|learner\/dashboard|account-settings)?$/, { timeout: 15000 });
   });
 
   test('should show error message when login fails with wrong password', async ({ page }) => {

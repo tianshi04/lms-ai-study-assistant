@@ -6,11 +6,11 @@ export class MyLearningPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.heading = page.locator('h1', { hasText: 'Việc học của tôi' });
+    this.heading = page.locator('h1', { hasText: 'Việc học của tôi' }).first();
   }
 
   async goto() {
-    await this.page.goto('/my-learning');
+    await this.page.goto('/my-learning', { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {

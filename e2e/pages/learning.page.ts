@@ -55,7 +55,10 @@ export class LearningPage {
   async verifyPageLoaded() {
     await expect(this.page).toHaveURL(/\/learn\/.+/);
     await expect(this.headerTitle).toBeVisible({ timeout: 15000 });
-    await expect(this.sidebar).toBeVisible({ timeout: 15000 });
+    const isMobile = (this.page.viewportSize()?.width ?? 1024) < 768;
+    if (!isMobile) {
+      await expect(this.sidebar).toBeVisible({ timeout: 15000 });
+    }
   }
 
 

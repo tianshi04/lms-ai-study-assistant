@@ -24,7 +24,7 @@ export class BecomeAnInstructorPage {
   }
 
   async goto() {
-    await this.page.goto('/become-an-instructor');
+    await this.page.goto('/become-an-instructor', { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {

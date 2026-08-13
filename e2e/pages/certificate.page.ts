@@ -13,14 +13,14 @@ export class CertificatePage {
     this.page = page;
     this.searchInput = page.locator('input[placeholder*="CERT-"]');
     this.searchButton = page.getByRole('button', { name: /Tra Cứu & Xác Minh|Verify Certificate|Search/i });
-    this.validBanner = page.locator('text=/Chứng chỉ Hợp lệ|Chứng chỉ Xác minh Chính thức|Valid Verified Certificate|Official Verified Certificate/i');
-    this.copyLinkButton = page.getByRole('button', { name: /Sao chép|Copy/i });
+    this.validBanner = page.locator('text=/Chứng chỉ Hợp lệ|Chứng chỉ Xác minh Chính thức|Valid Verified Certificate|Official Verified Certificate/i').first();
+    this.copyLinkButton = page.getByRole('button', { name: /Sao chép|Copy/i }).first();
     this.downloadBadgeButton = page.getByRole('button', { name: /Tải Hồ Sơ|Download/i });
     this.qrCodeImage = page.locator('img[alt="Certificate Verification QR Code"]');
   }
 
   async goto(certId = 'CERT-DEMO12345') {
-    await this.page.goto(`/verify/${certId}`);
+    await this.page.goto(`/verify/${certId}`, { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {

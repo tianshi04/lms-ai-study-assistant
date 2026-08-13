@@ -11,10 +11,10 @@ export class ForumPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.openModalButton = page.getByRole('button', { name: /^(Tạo chủ đề thảo luận mới|Tạo Thảo Luận Mới|Create New Discussion Thread|New Thread)$/i });
-    this.modalTitleInput = page.locator('.fixed.inset-0 input[placeholder*="Tiêu đề"], input[placeholder*="Tiêu đề"], input[placeholder*="Title"]').first();
-    this.modalContentInput = page.locator('.fixed.inset-0 textarea, textarea[placeholder*="Nội dung thắc mắc"]').first();
-    this.modalSubmitButton = page.locator('.fixed.inset-0 button').filter({ hasText: /^Đăng bài$/ }).first();
+    this.openModalButton = page.getByRole('button', { name: 'Tạo chủ đề thảo luận mới' });
+    this.modalTitleInput = page.locator('div.z-modal input[placeholder*="Tiêu đề"], input[placeholder*="Tiêu đề"]').first();
+    this.modalContentInput = page.locator('div[role="dialog"] textarea, textarea[placeholder*="Nội dung thắc mắc"]').first();
+    this.modalSubmitButton = page.getByRole('button', { name: /^Đăng bài$/i }).first();
     this.replyInput = page
       .locator('textarea[placeholder*="Nội dung thắc mắc"], textarea[placeholder*="thảo luận"], input[placeholder*="Trả lời"]')
       .first();
@@ -22,7 +22,7 @@ export class ForumPage {
   }
 
   async goto() {
-    await this.page.goto('/forum');
+    await this.page.goto('/forum', { waitUntil: 'domcontentloaded' });
   }
 
   async verifyPageLoaded() {
@@ -32,13 +32,22 @@ export class ForumPage {
   }
 
   async createNewThread(title: string, content: string) {
-    if (await this.openModalButton.isVisible()) {
+    await expect(this.openModalButton).toBeVisible({ timeout: 10000 });
+    await expect(this.openModalButton).toBeEnabled({ timeout: 5000 });
+
+    for (let i = 0; i < 3; i++) {
       await this.openModalButton.click();
+      await this.page.waitForTimeout(400);
+      if (await this.modalTitleInput.isVisible()) break;
     }
-    await expect(this.modalTitleInput).toBeVisible({ timeout: 5000 });
+
+    await expect(this.modalTitleInput).toBeVisible({ timeout: 15000 });
     await this.modalTitleInput.fill(title);
     await this.modalContentInput.fill(content);
+    await this.page.waitForTimeout(300);
+    await expect(this.modalSubmitButton).toBeEnabled({ timeout: 10000 });
     await this.modalSubmitButton.click();
+    await expect(this.modalTitleInput).toBeHidden({ timeout: 10000 });
   }
 
   async postFirstReply(replyContent: string) {
