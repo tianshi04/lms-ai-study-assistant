@@ -33,6 +33,27 @@ class ForumReplyEntity(Entity):
         self.edited_at = edited_at
         self.author_user_id = author_user_id
 
+    def pin_as_staff_answer(self) -> None:
+        self.is_staff_answer = True
+
+    def unpin_staff_answer(self) -> None:
+        self.is_staff_answer = False
+
+    def edit(self, new_content: str, edited_at: str) -> None:
+        if not new_content or not new_content.strip():
+            raise ValueError("Nội dung phản hồi không được để trống.")
+        self.content = new_content.strip()
+        self.is_edited = True
+        self.edited_at = edited_at
+
+    def increment_upvote(self) -> None:
+        self.upvote_count += 1
+        self.is_upvoted_by_me = True
+
+    def decrement_upvote(self) -> None:
+        self.upvote_count = max(0, self.upvote_count - 1)
+        self.is_upvoted_by_me = False
+
 
 @dataclass
 class ForumThreadEntity(Entity):
@@ -69,3 +90,27 @@ class ForumThreadEntity(Entity):
         self.is_edited = is_edited
         self.edited_at = edited_at
         self.author_user_id = author_user_id
+
+    def pin(self) -> None:
+        self.is_staff_pinned = True
+
+    def unpin(self) -> None:
+        self.is_staff_pinned = False
+
+    def edit(self, new_title: str, new_content: str, edited_at: str) -> None:
+        if not new_title or not new_title.strip():
+            raise ValueError("Tiêu đề bài viết không được để trống.")
+        if not new_content or not new_content.strip():
+            raise ValueError("Nội dung bài viết không được để trống.")
+        self.title = new_title.strip()
+        self.content = new_content.strip()
+        self.is_edited = True
+        self.edited_at = edited_at
+
+    def increment_upvote(self) -> None:
+        self.upvote_count += 1
+        self.is_upvoted_by_me = True
+
+    def decrement_upvote(self) -> None:
+        self.upvote_count = max(0, self.upvote_count - 1)
+        self.is_upvoted_by_me = False

@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 
 from src.modules.assessment.domain.constants import (
     DEFAULT_PASSING_THRESHOLD_PERCENT,
@@ -74,6 +75,58 @@ class QuizCooldown(Entity):
         self.last_attempt_at = last_attempt_at
         self.cooldown_until = cooldown_until
 
+    def is_in_cooldown(self, now: datetime) -> bool:
+        if not self.cooldown_until:
+            return False
+        try:
+            until_dt = datetime.fromisoformat(self.cooldown_until)
+            if until_dt.tzinfo is None and now.tzinfo is not None:
+                until_dt = until_dt.replace(tzinfo=UTC)
+            elif until_dt.tzinfo is not None and now.tzinfo is None:
+                until_dt = until_dt.replace(tzinfo=None)
+            return now < until_dt
+        except (ValueError, TypeError):
+            return False
+
+    def can_attempt(self, now: datetime) -> tuple[bool, str, int]:
+        if self.is_in_cooldown(now) and self.cooldown_until:
+            try:
+                until_dt = datetime.fromisoformat(self.cooldown_until)
+                if until_dt.tzinfo is None and now.tzinfo is not None:
+                    until_dt = until_dt.replace(tzinfo=UTC)
+                elif until_dt.tzinfo is not None and now.tzinfo is None:
+                    until_dt = until_dt.replace(tzinfo=None)
+                remaining_seconds = max(0, int((until_dt - now).total_seconds()))
+                remaining_hours = (remaining_seconds + 3599) // 3600
+                hours = remaining_seconds // 3600
+                minutes = (remaining_seconds % 3600) // 60
+                time_str = (
+                    f"{hours} giờ {minutes} phút" if hours > 0 else f"{minutes} phút"
+                )
+                return (
+                    False,
+                    f"Bạn đã dùng hết số lượt làm bài. Vui lòng quay lại sau {time_str}.",
+                    remaining_hours,
+                )
+            except (ValueError, TypeError):
+                pass
+        return True, "", 0
+
+    def record_failure(
+        self,
+        now: datetime,
+        cooldown_hours: int = QUIZ_COOLDOWN_HOURS,
+        max_attempts: int = MAX_QUIZ_ATTEMPTS_BEFORE_COOLDOWN,
+    ) -> None:
+        self.failed_attempts_count += 1
+        self.last_attempt_at = now.isoformat()
+        if self.failed_attempts_count >= max_attempts and not self.is_in_cooldown(now):
+            self.cooldown_until = (now + timedelta(hours=cooldown_hours)).isoformat()
+
+    def record_success(self) -> None:
+        self.failed_attempts_count = 0
+        self.cooldown_until = None
+
 
 class QuizActiveSession(Entity):
     def __init__(
@@ -92,6 +145,19 @@ class QuizActiveSession(Entity):
         self.questions_json = questions_json
         self.started_at = started_at
         self.expires_at = expires_at
+
+    def is_expired(self, now: datetime) -> bool:
+        if not self.expires_at:
+            return False
+        try:
+            expires_dt = datetime.fromisoformat(self.expires_at)
+            if expires_dt.tzinfo is None and now.tzinfo is not None:
+                expires_dt = expires_dt.replace(tzinfo=UTC)
+            elif expires_dt.tzinfo is not None and now.tzinfo is None:
+                expires_dt = expires_dt.replace(tzinfo=None)
+            return now >= expires_dt
+        except (ValueError, TypeError):
+            return False
 
 
 class LabSubmission(Entity):
@@ -143,6 +209,12 @@ class PeerAssignmentSubmission(Entity):
         self.final_score = final_score
         self.graded_by_staff = graded_by_staff
 
+    def assign_grade(self, score: float, is_staff: bool = False) -> None:
+        if score < 0.0 or score > 100.0:
+            raise ValueError("Điểm số phải nằm trong khoảng từ 0 đến 100.")
+        self.final_score = round(score, 2)
+        self.graded_by_staff = is_staff
+
 
 class PeerReview(Entity):
     def __init__(
@@ -182,6 +254,14 @@ class GradeAppeal(Entity):
         self.appeal_reason = appeal_reason
         self.status = status
         self.created_at = created_at
+
+    def approve(self, reviewer_id: str = "", final_score: float = 0.0) -> None:
+        self.status = "APPROVED"
+
+    def reject(self, reviewer_id: str = "", reason: str = "") -> None:
+        if not reason or not reason.strip():
+            raise ValueError("Lý do từ chối không được để trống.")
+        self.status = "REJECTED"
 
 
 @dataclass(frozen=True)

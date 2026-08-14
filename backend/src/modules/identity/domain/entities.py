@@ -30,6 +30,18 @@ class InstructorApplication:
     created_at: str = ""
     reviewed_at: str = ""
 
+    def approve(self, reviewed_at: str) -> None:
+        self.status = ApplicationStatus.APPROVED
+        self.reviewed_at = reviewed_at
+        self.rejection_reason = ""
+
+    def reject(self, reason: str, reviewed_at: str) -> None:
+        if not reason or not reason.strip():
+            raise ValueError("Lý do từ chối không được để trống.")
+        self.status = ApplicationStatus.REJECTED
+        self.rejection_reason = reason.strip()
+        self.reviewed_at = reviewed_at
+
 
 @dataclass
 class Organization:
@@ -61,6 +73,12 @@ class OrganizationMember:
     role_id: str
     status: str = "ACTIVE"
     joined_at: str = ""
+
+    def deactivate(self) -> None:
+        self.status = "INACTIVE"
+
+    def activate(self) -> None:
+        self.status = "ACTIVE"
 
 
 @dataclass
@@ -97,6 +115,18 @@ class EnterpriseLicense:
     def __post_init__(self):
         if self.allowed_course_ids is None:
             self.allowed_course_ids = set()
+
+    def can_assign_seat(self) -> bool:
+        return self.used_seats < self.total_seats
+
+    def assign_seat(self) -> None:
+        if not self.can_assign_seat():
+            raise ValueError("Đã hết số lượng suất học.")
+        self.used_seats += 1
+
+    def revoke_seat(self) -> None:
+        if self.used_seats > 0:
+            self.used_seats -= 1
 
     def is_course_allowed(self, course_id: str) -> bool:
         """Domain invariant method to verify course eligibility (BR_ACCESS_002)."""

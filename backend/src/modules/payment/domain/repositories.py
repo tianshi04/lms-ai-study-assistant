@@ -15,8 +15,8 @@ from src.modules.payment.domain.entities import (
 
 class IPaymentRepository(ABC):
     @abstractmethod
-    async def save_purchase(self, purchase: CoursePurchase) -> CoursePurchase:
-        """Persists a course purchase entity."""
+    async def save_purchase(self, purchase: CoursePurchase) -> CoursePurchase | None:
+        """Persists a course purchase entity, returns None if duplicate."""
 
     @abstractmethod
     async def has_active_purchase(self, user_id: str, course_id: str) -> bool:

@@ -1,19 +1,35 @@
 import logging
 import uuid
+from collections.abc import Callable
 from typing import Any
 
+from src.modules.identity.domain.entities import Organization
 from src.modules.partner.domain.entities import Partner
 from src.modules.partner.domain.repository import IPartnerRepository
 from src.modules.partner.infrastructure.repository import SQLAlchemyPartnerRepository
 from src.shared.auth import CurrentUser
 from src.shared.infrastructure.database import async_session_scope
 
+
+def _default_org_repo_factory(session: Any) -> Any:
+    from src.modules.identity.infrastructure.repository import (
+        OrganizationRepository,
+    )
+
+    return OrganizationRepository(session)
+
+
 logger = logging.getLogger(__name__)
 
 
 class PartnerUseCase:
-    def __init__(self, repo: IPartnerRepository | None = None) -> None:
+    def __init__(
+        self,
+        repo: IPartnerRepository | None = None,
+        org_repo_factory: Callable[[Any], Any] | None = None,
+    ) -> None:
         self._repo = repo
+        self._org_repo_factory = org_repo_factory or _default_org_repo_factory
 
     def _get_repo(self, session: Any) -> IPartnerRepository:
         return (
@@ -80,12 +96,7 @@ class PartnerUseCase:
             )
             saved = await repo.create(partner)
 
-            from src.modules.identity.domain.entities import Organization
-            from src.modules.identity.infrastructure.repository import (
-                OrganizationRepository,
-            )
-
-            org_repo = OrganizationRepository(session)
+            org_repo = self._org_repo_factory(session)
             existing_org = await org_repo.get_organization_by_id(partner_id) or (
                 await org_repo.get_organization_by_id(slug) if slug else None
             )

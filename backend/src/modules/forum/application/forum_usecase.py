@@ -1,8 +1,10 @@
 import logging
 import uuid
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
+from typing import Any
 
+from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.forum.domain.constants import DEFAULT_FORUM_AUTHOR_ROLE
 from src.modules.forum.domain.entities import ForumReplyEntity, ForumThreadEntity
 from src.modules.forum.domain.events import ForumReplyCreatedDomainEvent
@@ -13,6 +15,14 @@ from src.shared.infrastructure.database import async_session_scope
 from src.shared.infrastructure.event_bus import EventBus
 
 
+def _default_catalog_repo_factory(session: Any) -> ICatalogRepository:
+    from src.modules.catalog.infrastructure.repository import (
+        SQLAlchemyCatalogRepository,
+    )
+
+    return SQLAlchemyCatalogRepository(session)
+
+
 def utc_now_str() -> str:
     return datetime.now(UTC).isoformat()
 
@@ -21,8 +31,15 @@ logger = logging.getLogger(__name__)
 
 
 class ForumUseCase:
-    def __init__(self, repo_factory=None) -> None:
+    def __init__(
+        self,
+        repo_factory=None,
+        catalog_repo_factory: Callable[[Any], ICatalogRepository] | None = None,
+    ) -> None:
         self.repo_factory = repo_factory or ForumRepository
+        self.catalog_repo_factory = (
+            catalog_repo_factory or _default_catalog_repo_factory
+        )
 
     def _get_repo(self, session) -> IForumRepository:
         return self.repo_factory(session)
@@ -172,7 +189,7 @@ class ForumUseCase:
                 if reply:
                     thread = await repo.get_thread_by_id(reply.thread_id)
                     if thread:
-                        await _verify_staff_course_moderation(
+                        await self._verify_staff_course_moderation(
                             session, thread.course_id, user
                         )
             return await repo.pin_staff_answer(reply_id, ta_user_id)
@@ -200,11 +217,12 @@ class ForumUseCase:
                 raise PermissionError(
                     "Chỉ tác giả mới có quyền chỉnh sửa bài viết này."
                 )
+            existing.edit(new_title=title, new_content=content, edited_at=utc_now_str())
             return await repo.update_thread(
                 thread_id=thread_id,
-                title=title,
-                content=content,
-                edited_at=utc_now_str(),
+                title=existing.title,
+                content=existing.content,
+                edited_at=existing.edited_at,
             )
 
     async def delete_thread(
@@ -224,7 +242,7 @@ class ForumUseCase:
             )
             if not is_author:
                 if is_staff and user:
-                    await _verify_staff_course_moderation(
+                    await self._verify_staff_course_moderation(
                         session, existing.course_id, user
                     )
                 else:
@@ -250,17 +268,14 @@ class ForumUseCase:
             if not existing:
                 return None
             if existing.author_user_id and existing.author_user_id != current_user_id:
-                logger.warning(
-                    "User %s attempted to update reply %s owned by %s",
-                    current_user_id,
-                    reply_id,
-                    existing.author_user_id,
-                )
                 raise PermissionError(
                     "Chỉ tác giả mới có quyền chỉnh sửa bình luận này."
                 )
+            existing.edit(new_content=content, edited_at=utc_now_str())
             return await repo.update_reply(
-                reply_id=reply_id, content=content, edited_at=utc_now_str()
+                reply_id=reply_id,
+                content=existing.content,
+                edited_at=existing.edited_at,
             )
 
     async def delete_reply(
@@ -282,7 +297,7 @@ class ForumUseCase:
                 if is_staff and user:
                     thread = await repo.get_thread_by_id(existing.thread_id)
                     course_id = thread.course_id if thread else ""
-                    await _verify_staff_course_moderation(session, course_id, user)
+                    await self._verify_staff_course_moderation(session, course_id, user)
                 else:
                     logger.warning(
                         "User %s attempted to delete reply %s owned by %s",
@@ -293,21 +308,15 @@ class ForumUseCase:
                     raise PermissionError("Bạn không có quyền xóa bình luận này.")
             return await repo.delete_reply(reply_id)
 
-
-async def _verify_staff_course_moderation(
-    session, course_id: str, user: CurrentUser
-) -> None:
-    if user.is_admin:
-        return
-    if course_id:
-        from src.modules.catalog.domain.repository import ICatalogRepository
-        from src.modules.catalog.infrastructure.repository import (
-            SQLAlchemyCatalogRepository,
-        )
-
-        catalog_repo: ICatalogRepository = SQLAlchemyCatalogRepository(session)
-        course = await catalog_repo.get_course_detail(course_id)
-        if course and not course.can_edit(user, allow_read_only_pending=True):
-            raise PermissionError(
-                "Bạn không có quyền kiểm duyệt diễn đàn khóa học này."
-            )
+    async def _verify_staff_course_moderation(
+        self, session, course_id: str, user: CurrentUser
+    ) -> None:
+        if user.is_admin:
+            return
+        if course_id:
+            catalog_repo: ICatalogRepository = self.catalog_repo_factory(session)
+            course = await catalog_repo.get_course_detail(course_id)
+            if course and not course.can_edit(user, allow_read_only_pending=True):
+                raise PermissionError(
+                    "Bạn không có quyền kiểm duyệt diễn đàn khóa học này."
+                )

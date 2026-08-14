@@ -3,13 +3,11 @@
 import json
 import logging
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
-from sqlalchemy.exc import IntegrityError
-
-from src.modules.catalog.infrastructure.repository import (
-    SQLAlchemyCatalogRepository,
-)
+from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.payment.domain.constants import (
     DEFAULT_CURRENCY,
     DEFAULT_MONTHLY_PLAN_DAYS,
@@ -36,12 +34,28 @@ from src.modules.payment.infrastructure.vnpay_service import VNPayService
 from src.shared.access_policy import AccessPolicyService
 from src.shared.infrastructure.database import async_session_scope
 
+
+def _default_catalog_repo_factory(session: Any) -> ICatalogRepository:
+    from src.modules.catalog.infrastructure.repository import (
+        SQLAlchemyCatalogRepository,
+    )
+
+    return SQLAlchemyCatalogRepository(session)
+
+
 logger = logging.getLogger(__name__)
 
 
 class PaymentUseCase:
-    def __init__(self, repo: IPaymentRepository | None = None):
+    def __init__(
+        self,
+        repo: IPaymentRepository | None = None,
+        catalog_repo_factory: Callable[[Any], ICatalogRepository] | None = None,
+    ):
         self.repository = repo
+        self._catalog_repo_factory = (
+            catalog_repo_factory or _default_catalog_repo_factory
+        )
 
     async def get_user_payment_access(
         self, user_id: str, course_id: str
@@ -78,7 +92,7 @@ class PaymentUseCase:
                     None,
                 )
 
-            catalog_repo = SQLAlchemyCatalogRepository(session)
+            catalog_repo = self._catalog_repo_factory(session)
             course = await catalog_repo.get_course_detail(course_id)
 
             raw_price = (
@@ -227,7 +241,7 @@ class PaymentUseCase:
                 already_purchased = await repo.has_active_purchase(user_id, target_id)
                 if already_purchased:
                     return False, "Bạn đã mua và sở hữu khóa học này.", "", "", ""
-                catalog_repo = SQLAlchemyCatalogRepository(session)
+                catalog_repo = self._catalog_repo_factory(session)
                 course = await catalog_repo.get_course_detail(target_id)
                 raw_course_price = (
                     getattr(course, "price", DEFAULT_SINGLE_COURSE_PRICE_VND)
@@ -363,6 +377,7 @@ class PaymentUseCase:
             if order.status == PaymentOrderStatus.CANCELLED:
                 return True, "Đơn hàng đã được hủy trước đó."
 
+            order.mark_cancelled()
             await repo.update_order_status(order.id, PaymentOrderStatus.CANCELLED)
             logger.info(
                 "[VNPAY CANCEL] User %s explicitly cancelled order %s (TxnRef: %s)",
@@ -451,6 +466,9 @@ class PaymentUseCase:
                     vnp_amount_val,
                     order.amount,
                 )
+                order.mark_failed(
+                    error_message="Số tiền thanh toán không khớp với giá trị đơn hàng."
+                )
                 await repo.update_order_status(order.id, PaymentOrderStatus.FAILED)
                 return (
                     False,
@@ -478,6 +496,9 @@ class PaymentUseCase:
 
             if vnp_response_code == "00":
                 if order.status != PaymentOrderStatus.COMPLETED:
+                    order.mark_completed(
+                        transaction_id=vnp_transaction_no, paid_at=vnp_pay_date
+                    )
                     await repo.update_order_status(
                         order.id, PaymentOrderStatus.COMPLETED
                     )
@@ -508,6 +529,7 @@ class PaymentUseCase:
                     sub_res,
                 )
             elif vnp_response_code == "24":
+                order.mark_cancelled()
                 await repo.update_order_status(order.id, PaymentOrderStatus.CANCELLED)
                 logger.info(
                     "[VNPAY] Payment cancelled by user on gateway portal for TxnRef %s",
@@ -524,6 +546,7 @@ class PaymentUseCase:
                     None,
                 )
             else:
+                order.mark_failed(error_message=f"Mã lỗi VNPay: {vnp_response_code}")
                 await repo.update_order_status(order.id, PaymentOrderStatus.FAILED)
                 logger.warning(
                     "[VNPAY] Payment failed for TxnRef %s with code %s",
@@ -573,6 +596,7 @@ class PaymentUseCase:
                 logger.warning(
                     "[VNPAY IPN] Amount tampering detected for TxnRef %s", vnp_txn_ref
                 )
+                order.mark_failed(error_message="Invalid Amount")
                 await repo.update_order_status(order.id, PaymentOrderStatus.FAILED)
                 return {"RspCode": "04", "Message": "Invalid Amount"}
 
@@ -589,6 +613,9 @@ class PaymentUseCase:
             await repo.save_transaction(tx)
 
             if vnp_response_code == "00":
+                order.mark_completed(
+                    transaction_id=vnp_transaction_no, paid_at=vnp_pay_date
+                )
                 await repo.update_order_status(order.id, PaymentOrderStatus.COMPLETED)
                 await self._fulfill_access(
                     repo,
@@ -602,9 +629,11 @@ class PaymentUseCase:
                     "[VNPAY IPN] Order %s fulfilled successfully via IPN", order.id
                 )
             elif vnp_response_code == "24":
+                order.mark_cancelled()
                 await repo.update_order_status(order.id, PaymentOrderStatus.CANCELLED)
                 logger.info("[VNPAY IPN] Order %s marked CANCELLED via IPN", order.id)
             else:
+                order.mark_failed(error_message=f"IPN failed code: {vnp_response_code}")
                 await repo.update_order_status(order.id, PaymentOrderStatus.FAILED)
                 logger.info("[VNPAY IPN] Order %s marked FAILED via IPN", order.id)
 
@@ -638,16 +667,8 @@ class PaymentUseCase:
                     payment_method="VNPAY",
                     created_at=now_str,
                 )
-                try:
-                    saved_p = await repo.save_purchase(purchase)
-                    return saved_p, None
-                except IntegrityError:
-                    logger.warning(
-                        "[VNPAY] Duplicate purchase caught by DB Unique Constraint for user %s, course %s",
-                        user_id,
-                        target_id,
-                    )
-                    return None, None
+                saved_p = await repo.save_purchase(purchase)
+                return saved_p, None
             return None, None
 
         elif target_type == PaymentTargetType.SYSTEM_SUBSCRIPTION:
@@ -766,6 +787,7 @@ class PaymentUseCase:
                             txn_status = res.get("vnp_TransactionStatus", "")
 
                             if resp_code == "00" or txn_status == "00":
+                                o.mark_completed(transaction_id=o.vnp_txn_ref)
                                 await repo.update_order_status(
                                     o.id, PaymentOrderStatus.COMPLETED
                                 )
@@ -783,6 +805,7 @@ class PaymentUseCase:
                                     user_id,
                                 )
                             elif resp_code == "24" or txn_status == "24":
+                                o.mark_cancelled()
                                 await repo.update_order_status(
                                     o.id, PaymentOrderStatus.CANCELLED
                                 )
@@ -797,11 +820,15 @@ class PaymentUseCase:
                                 "99",
                             ):
                                 if age_minutes >= 15.0:
+                                    o.mark_failed(
+                                        error_message=f"DR resp_code: {resp_code}"
+                                    )
                                     await repo.update_order_status(
                                         o.id, PaymentOrderStatus.FAILED
                                     )
                             else:
                                 if age_minutes >= 15.0:
+                                    o.mark_expired()
                                     await repo.update_order_status(
                                         o.id, PaymentOrderStatus.EXPIRED
                                     )
@@ -812,6 +839,7 @@ class PaymentUseCase:
                                 ex,
                             )
                             if age_minutes >= 15.0:
+                                o.mark_expired()
                                 await repo.update_order_status(
                                     o.id, PaymentOrderStatus.EXPIRED
                                 )

@@ -1,8 +1,10 @@
 """Repository implementation for Payment module using SQLAlchemy Async Engine."""
 
+import logging
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.modules.payment.domain.entities import (
@@ -25,12 +27,14 @@ from src.modules.payment.infrastructure.models import (
     UserSubscriptionModel,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class PaymentRepository(IPaymentRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def save_purchase(self, purchase: CoursePurchase) -> CoursePurchase:
+    async def save_purchase(self, purchase: CoursePurchase) -> CoursePurchase | None:
         model = CoursePurchaseModel(
             id=purchase.id,
             user_id=purchase.user_id,
@@ -43,9 +47,17 @@ class PaymentRepository(IPaymentRepository):
             payment_method=purchase.payment_method,
             created_at=purchase.created_at,
         )
-        await self.session.merge(model)
-        await self.session.flush()
-        return purchase
+        try:
+            await self.session.merge(model)
+            await self.session.flush()
+            return purchase
+        except IntegrityError:
+            logger.warning(
+                "[PaymentRepository] Duplicate purchase caught by DB Unique Constraint for user %s, course %s",
+                purchase.user_id,
+                purchase.course_id,
+            )
+            return None
 
     async def has_active_purchase(self, user_id: str, course_id: str) -> bool:
         stmt = select(CoursePurchaseModel).where(

@@ -2,7 +2,7 @@ import html
 import logging
 import uuid
 from collections.abc import Callable
-from datetime import UTC
+from datetime import UTC, datetime
 from typing import Any
 
 from src.modules.catalog.domain.constants import (
@@ -16,10 +16,13 @@ from src.modules.catalog.domain.entities import (
     Category,
     Course,
     CourseStatus,
+    InteractiveTranscript,
+    InVideoQuiz,
     ItemType,
     LearningItem,
     Lesson,
     Specialization,
+    WeekModule,
 )
 from src.modules.catalog.domain.events import (
     CourseAnnouncementCreatedDomainEvent,
@@ -47,6 +50,12 @@ def _default_learning_repo_factory(session: Any) -> ILearningRepository:
     return SQLAlchemyLearningRepository(session)
 
 
+def _default_identity_repo_factory(session: Any) -> Any:
+    from src.modules.identity.infrastructure.repository import IdentityRepository
+
+    return IdentityRepository(session)
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -57,12 +66,16 @@ class CatalogUseCase:
         self,
         repo_factory: Callable[[Any], ICatalogRepository] | None = None,
         learning_repo_factory: Callable[[Any], ILearningRepository] | None = None,
+        identity_repo_factory: Callable[[Any], Any] | None = None,
     ) -> None:
         self.repo_factory = repo_factory or (
             lambda session: SQLAlchemyCatalogRepository(session)
         )
         self.learning_repo_factory = (
             learning_repo_factory or _default_learning_repo_factory
+        )
+        self.identity_repo_factory = (
+            identity_repo_factory or _default_identity_repo_factory
         )
 
     async def _verify_ownership(
@@ -971,16 +984,6 @@ class CatalogUseCase:
             raise ValueError("Định dạng tệp ZIP không hợp lệ.")
 
     def _map_dict_to_course_entity(self, d: dict) -> Course:
-        from src.modules.catalog.domain.entities import (
-            Course,
-            InteractiveTranscript,
-            InVideoQuiz,
-            ItemType,
-            LearningItem,
-            Lesson,
-            WeekModule,
-        )
-
         week_modules = []
         for wm in d.get("weekModules", []):
             lessons = []
@@ -1205,13 +1208,9 @@ class CatalogUseCase:
         role: str,
         current_user: CurrentUser | None = None,
     ) -> dict:
-        from datetime import datetime
-
-        from src.modules.identity.infrastructure.repository import IdentityRepository
-
         async with async_session_scope() as session:
             repo = self.repo_factory(session)
-            identity_repo = IdentityRepository(session)
+            identity_repo = self.identity_repo_factory(session)
 
             await self._verify_course_owner_permission(
                 repo, course_id, current_user, "thêm người hợp tác vào khóa học"

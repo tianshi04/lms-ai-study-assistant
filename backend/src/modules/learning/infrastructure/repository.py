@@ -8,7 +8,6 @@ from sqlalchemy.orm import selectinload
 
 from src.modules.learning.domain.constants import (
     DEFAULT_COHORT_EXTENSION_DAYS,
-    STREAK_WINDOW_SECONDS,
 )
 from src.modules.learning.domain.entities import (
     DeadlineStatus,
@@ -134,29 +133,40 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             model = res.scalar_one()
 
         now = datetime.now(UTC)
+        domain_progress = _model_to_domain_progress(model)
 
-        # BR_DEADLINE_001: 24h Cooldown check
-        if model.last_reset_at:
-            try:
-                last_dt = datetime.fromisoformat(model.last_reset_at)
-                if (now - last_dt).total_seconds() < STREAK_WINDOW_SECONDS:
-                    return False, _model_to_domain_progress(model)
-            except ValueError:
-                pass
+        if not domain_progress.can_reset_deadlines(now):
+            return False, domain_progress
 
         total_weeks = max(1, len(model.weekly_deadlines))
-        # BR_DEADLINE_001: Self-paced Course_End_Date is extended from current reset time to avoid clustered deadlines
         course_end_date = now + timedelta(
             days=max(180, DEFAULT_COHORT_EXTENSION_DAYS * total_weeks + 30)
         )
-        for i, d in enumerate(model.weekly_deadlines, start=1):
+        new_deadlines: list[WeeklyDeadline] = []
+        for i in range(1, total_weeks + 1):
             natural_due = now + timedelta(days=DEFAULT_COHORT_EXTENSION_DAYS * i)
-            d.due_date = min(natural_due, course_end_date).strftime("%Y-%m-%d")
-            d.status = DeadlineStatus.ON_TRACK
+            due_str = min(natural_due, course_end_date).strftime("%Y-%m-%d")
+            new_deadlines.append(
+                WeeklyDeadline(
+                    week_number=i,
+                    due_date=due_str,
+                    status=DeadlineStatus.ON_TRACK,
+                )
+            )
 
-        model.last_reset_at = now.isoformat()
+        domain_progress.reset_deadlines(new_deadlines, now)
+
+        model.weekly_deadlines = [
+            WeeklyDeadlineModel(
+                week_number=d.week_number,
+                due_date=d.due_date,
+                status=d.status,
+            )
+            for d in domain_progress.weekly_deadlines
+        ]
+        model.last_reset_at = domain_progress.last_reset_at
         await self.session.commit()
-        return True, _model_to_domain_progress(model)
+        return True, domain_progress
 
     async def save_personal_note(
         self,
@@ -231,20 +241,27 @@ class SQLAlchemyLearningRepository(ILearningRepository):
             res = await self.session.execute(stmt)
             model = res.scalar_one()
 
-        completed = set(model.completed_item_ids or [])
-        completed.add(item_id)
+        domain_progress = _model_to_domain_progress(model)
+        total_items = max(1, total_course_items)
+        domain_progress.mark_item_complete(item_id, total_items)
 
         if valid_item_ids is not None:
-            completed = completed.intersection(valid_item_ids)
+            domain_progress.completed_item_ids = [
+                i for i in domain_progress.completed_item_ids if i in valid_item_ids
+            ]
+            domain_progress.overall_progress_percent = round(
+                min(
+                    100.0,
+                    (len(domain_progress.completed_item_ids) / total_items) * 100.0,
+                ),
+                1,
+            )
 
-        model.completed_item_ids = list(completed)
-
-        total_items = max(1, total_course_items)
-        percent = round((len(completed) / total_items) * 100.0, 1)
-        model.overall_progress_percent = min(100.0, percent)
+        model.completed_item_ids = list(domain_progress.completed_item_ids)
+        model.overall_progress_percent = domain_progress.overall_progress_percent
 
         await self.session.commit()
-        return True, _model_to_domain_progress(model)
+        return True, domain_progress
 
     async def list_user_progresses(self, user_id: str) -> list[LearningProgress]:
         stmt = (

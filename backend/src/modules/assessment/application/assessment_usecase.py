@@ -229,20 +229,10 @@ class AssessmentUseCase:
             attempts_count = cooldown.failed_attempts_count if cooldown else 0
 
             if cooldown and not preview and cooldown.cooldown_until:
-                until_dt = datetime.fromisoformat(cooldown.cooldown_until)
-                if now < until_dt:
-                    cooldown_seconds_left = int((until_dt - now).total_seconds())
-                    attempts_left = 0
-                    hours = cooldown_seconds_left // 3600
-                    minutes = (cooldown_seconds_left % 3600) // 60
-                    time_str = (
-                        f"{hours} giờ {minutes} phút"
-                        if hours > 0
-                        else f"{minutes} phút"
-                    )
-                    raise ValueError(
-                        f"Bạn đã dùng hết số lượt làm bài. Vui lòng quay lại sau {time_str}."
-                    )
+                if cooldown.is_in_cooldown(now):
+                    can_att, reason, _ = cooldown.can_attempt(now)
+                    if not can_att:
+                        raise ValueError(reason)
                 else:
                     attempts_count = 0
 
@@ -436,26 +426,32 @@ class AssessmentUseCase:
             # 2. Check Cooldown timer
             now = datetime.now(UTC)
             cooldown = await repo.get_quiz_cooldown(user_id, item_id)
-            if cooldown and cooldown.cooldown_until and not preview:
+            if (
+                cooldown
+                and not preview
+                and cooldown.is_in_cooldown(now)
+                and cooldown.cooldown_until
+            ):
                 until_dt = datetime.fromisoformat(cooldown.cooldown_until)
-                if now < until_dt:
-                    seconds_left = int((until_dt - now).total_seconds())
-                    logger.warning(
-                        "User %s attempted to submit quiz %s while in cooldown",
-                        user_id,
-                        item_id,
-                    )
-                    return {
-                        "score_percent": 0.0,
-                        "passed": False,
-                        "attempts_left": 0,
-                        "cooldown_seconds_left": seconds_left,
-                        "answer_explanations": [
-                            f"Bài thi đang trong thời gian giãn cách {cooldown_hours} giờ. Vui lòng đợi {seconds_left} giây."
-                        ],
-                        "max_attempts": max_attempts,
-                        "cooldown_hours": cooldown_hours,
-                    }
+                if until_dt.tzinfo is None:
+                    until_dt = until_dt.replace(tzinfo=UTC)
+                seconds_left = int((until_dt - now).total_seconds())
+                logger.warning(
+                    "User %s attempted to submit quiz %s while in cooldown",
+                    user_id,
+                    item_id,
+                )
+                return {
+                    "score_percent": 0.0,
+                    "passed": False,
+                    "attempts_left": 0,
+                    "cooldown_seconds_left": seconds_left,
+                    "answer_explanations": [
+                        f"Bài thi đang trong thời gian giãn cách {cooldown_hours} giờ. Vui lòng đợi {seconds_left} giây."
+                    ],
+                    "max_attempts": max_attempts,
+                    "cooldown_hours": cooldown_hours,
+                }
 
             # 3. Grade Quiz (BR_QUIZ_002: Dynamic shuffled options grading)
             if session_seed is None:
@@ -840,7 +836,7 @@ class AssessmentUseCase:
                     avg_score = round(
                         sum(r.total_score for r in all_revs) / len(all_revs), 2
                     )
-                    sub.final_score = avg_score
+                    sub.assign_grade(avg_score, is_staff=False)
                     await repo.save_peer_submission(sub)
 
         msg = "Peer review graded successfully."
@@ -865,12 +861,12 @@ class AssessmentUseCase:
             if not sub:
                 return False, "Không tìm thấy bài nộp dự án"
 
-            sub.final_score = round(ta_score, 2)
-            sub.graded_by_staff = True
+            sub.assign_grade(ta_score, is_staff=True)
             await repo.save_peer_submission(sub)
 
             appeal = await repo.get_grade_appeal(submission_id)
             if appeal:
+                appeal.approve(reviewer_id=staff_user_id, final_score=ta_score)
                 appeal.status = "RESOLVED"
                 await repo.save_grade_appeal(appeal)
 

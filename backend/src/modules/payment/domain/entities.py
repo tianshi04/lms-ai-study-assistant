@@ -117,6 +117,7 @@ class UserSubscription:
     starts_at: str
     expires_at: str
     created_at: str
+    cancelled_at: str | None = None
 
     def is_currently_active(self) -> bool:
         if self.status != SubscriptionStatus.ACTIVE:
@@ -130,6 +131,13 @@ class UserSubscription:
             return exp_time > now
         except (ValueError, TypeError, AttributeError):
             return False
+
+    def cancel(self, cancelled_at: str = "") -> None:
+        self.status = SubscriptionStatus.CANCELLED
+        self.cancelled_at = cancelled_at or datetime.now(UTC).isoformat()
+
+
+Subscription = UserSubscription
 
 
 @dataclass
@@ -145,6 +153,28 @@ class PaymentOrder:
     vnp_txn_ref: str
     created_at: str
     updated_at: str
+    transaction_id: str = ""
+    paid_at: str = ""
+    error_message: str = ""
+
+    def mark_completed(self, transaction_id: str = "", paid_at: str = "") -> None:
+        self.status = PaymentOrderStatus.COMPLETED
+        self.transaction_id = transaction_id
+        self.paid_at = paid_at
+        self.updated_at = paid_at or datetime.now(UTC).isoformat()
+
+    def mark_failed(self, error_message: str = "") -> None:
+        self.status = PaymentOrderStatus.FAILED
+        self.error_message = error_message
+        self.updated_at = datetime.now(UTC).isoformat()
+
+    def mark_cancelled(self) -> None:
+        self.status = PaymentOrderStatus.CANCELLED
+        self.updated_at = datetime.now(UTC).isoformat()
+
+    def mark_expired(self) -> None:
+        self.status = PaymentOrderStatus.EXPIRED
+        self.updated_at = datetime.now(UTC).isoformat()
 
 
 @dataclass

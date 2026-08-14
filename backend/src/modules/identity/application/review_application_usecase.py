@@ -43,11 +43,9 @@ class ReviewInstructorApplicationUseCase:
             raise ValueError("Đơn đăng ký này đã được xử lý trước đó.")
 
         now_str = datetime.now(UTC).isoformat()
-        application.reviewed_at = now_str
 
         if approve:
-            application.status = ApplicationStatus.APPROVED
-            application.rejection_reason = ""
+            application.approve(reviewed_at=now_str)
 
             # Promote applicant user role to INSTRUCTOR
             applicant = await self._identity_repo.get_by_id(application.user_id)
@@ -66,11 +64,11 @@ class ReviewInstructorApplicationUseCase:
                     status="ACTIVE",
                 )
         else:
-            application.status = ApplicationStatus.REJECTED
-            application.rejection_reason = (
+            reason = (
                 rejection_reason.strip()
                 or "Hồ sơ chưa đáp ứng tiêu chuẩn thẩm định năng lực giảng dạy."
             )
+            application.reject(reason=reason, reviewed_at=now_str)
 
         saved_app = await self._application_repo.save(application)
 

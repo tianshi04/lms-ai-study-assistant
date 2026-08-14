@@ -12,6 +12,7 @@ import httpx
 from google.auth.transport import requests
 from google.oauth2 import id_token
 
+from src.modules.catalog.domain.repository import ICatalogRepository
 from src.modules.identity.application.review_application_usecase import (
     ReviewInstructorApplicationUseCase,
 )
@@ -212,13 +213,25 @@ def _default_learning_repo_factory(session: Any) -> ILearningRepository:
     return SQLAlchemyLearningRepository(session)
 
 
+def _default_catalog_repo_factory(session: Any) -> ICatalogRepository:
+    from src.modules.catalog.infrastructure.repository import (
+        SQLAlchemyCatalogRepository,
+    )
+
+    return SQLAlchemyCatalogRepository(session)
+
+
 class IdentityUseCase:
     def __init__(
         self,
         learning_repo_factory: Callable[[Any], ILearningRepository] | None = None,
+        catalog_repo_factory: Callable[[Any], ICatalogRepository] | None = None,
     ) -> None:
         self.learning_repo_factory = (
             learning_repo_factory or _default_learning_repo_factory
+        )
+        self.catalog_repo_factory = (
+            catalog_repo_factory or _default_catalog_repo_factory
         )
 
     def _verify_admin(self, current_user: CurrentUser | None) -> None:
@@ -614,7 +627,7 @@ class IdentityUseCase:
                     f"Mã Enterprise Key '{clean_key}' không tồn tại hoặc đã bị vô hiệu hóa.",
                 )
 
-            if license_entity.used_seats >= license_entity.total_seats:
+            if not license_entity.can_assign_seat():
                 logger.warning(
                     "Enterprise seat assignment failed for user %s: Key %s exhausted",
                     user_id,
@@ -1130,11 +1143,8 @@ class IdentityUseCase:
                 type_enum = InvitationType.COURSE_CO_INSTRUCTOR
                 if not target_id:
                     raise ValueError("Thiếu ID khóa học (target_id).")
-                from src.modules.catalog.infrastructure.repository import (
-                    SQLAlchemyCatalogRepository,
-                )
 
-                cat_repo = SQLAlchemyCatalogRepository(session)
+                cat_repo = self.catalog_repo_factory(session)
                 course = await cat_repo.get_course_detail(target_id)
                 if (
                     not course
@@ -1386,11 +1396,7 @@ class IdentityUseCase:
                     details=f"Gia nhập với vai trò {inv.role_id or 'MEMBER'} qua lời mời.",
                 )
             elif "COURSE" in inv_type_str or "CO_INSTRUCTOR" in inv_type_str:
-                from src.modules.catalog.infrastructure.repository import (
-                    SQLAlchemyCatalogRepository,
-                )
-
-                cat_repo = SQLAlchemyCatalogRepository(session)
+                cat_repo = self.catalog_repo_factory(session)
                 await cat_repo.add_course_collaborator(
                     course_id=inv.target_id,
                     user_id=current_user.id,
