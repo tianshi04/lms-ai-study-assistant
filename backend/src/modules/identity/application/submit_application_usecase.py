@@ -40,7 +40,7 @@ class SubmitInstructorApplicationUseCase:
                 raise ValueError(
                     "Bạn đã có đơn xin cấp quyền Giảng viên đang chờ duyệt."
                 )
-            elif (
+            if (
                 existing_app.status == ApplicationStatus.REJECTED
                 and existing_app.reviewed_at
             ):

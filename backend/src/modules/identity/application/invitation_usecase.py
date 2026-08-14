@@ -381,7 +381,7 @@ class InvitationUseCase:
                 inv.responded_at = now_str
                 saved = await inv_repo.save(inv)
                 return self._invitation_to_dict(saved), True, "Đã từ chối lời mời."
-            elif "ACCEPT" in act_str:
+            if "ACCEPT" in act_str:
                 inv.status = InvitationStatus.ACCEPTED
                 inv.responded_at = now_str
                 inv.invitee_id = current_user.id

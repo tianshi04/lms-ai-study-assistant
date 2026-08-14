@@ -17,8 +17,7 @@ from src.modules.certificate.infrastructure.repository import CertificateReposit
 
 @pytest.fixture
 def mock_session():
-    session = AsyncMock(spec=AsyncSession)
-    return session
+    return AsyncMock(spec=AsyncSession)
 
 
 @pytest.fixture

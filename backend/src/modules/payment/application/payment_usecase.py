@@ -526,7 +526,7 @@ class PaymentUseCase:
                     purchase_res,
                     sub_res,
                 )
-            elif vnp_response_code == "24":
+            if vnp_response_code == "24":
                 order.mark_cancelled()
                 await repo.update_order_status(order.id, PaymentOrderStatus.CANCELLED)
                 logger.info(
@@ -543,24 +543,23 @@ class PaymentUseCase:
                     None,
                     None,
                 )
-            else:
-                order.mark_failed(error_message=f"Mã lỗi VNPay: {vnp_response_code}")
-                await repo.update_order_status(order.id, PaymentOrderStatus.FAILED)
-                logger.warning(
-                    "[VNPAY] Payment failed for TxnRef %s with code %s",
-                    vnp_txn_ref,
-                    vnp_response_code,
-                )
-                return (
-                    False,
-                    f"Thanh toán thất bại hoặc đã bị hủy (Mã lỗi: {vnp_response_code}).",
-                    order.id,
-                    order.target_type,
-                    order.target_id,
-                    order.plan_type,
-                    None,
-                    None,
-                )
+            order.mark_failed(error_message=f"Mã lỗi VNPay: {vnp_response_code}")
+            await repo.update_order_status(order.id, PaymentOrderStatus.FAILED)
+            logger.warning(
+                "[VNPAY] Payment failed for TxnRef %s with code %s",
+                vnp_txn_ref,
+                vnp_response_code,
+            )
+            return (
+                False,
+                f"Thanh toán thất bại hoặc đã bị hủy (Mã lỗi: {vnp_response_code}).",
+                order.id,
+                order.target_type,
+                order.target_id,
+                order.plan_type,
+                None,
+                None,
+            )
 
     async def process_vnpay_ipn(self, query_params: dict[str, str]) -> dict[str, str]:
         """Server-to-Server IPN Callback handler for VNPay Webhook."""
@@ -669,7 +668,7 @@ class PaymentUseCase:
                 return saved_p, None
             return None, None
 
-        elif target_type == PaymentTargetType.SYSTEM_SUBSCRIPTION:
+        if target_type == PaymentTargetType.SYSTEM_SUBSCRIPTION:
             synced_sub = await self._sync_user_subscription(repo, user_id)
             return None, synced_sub
 

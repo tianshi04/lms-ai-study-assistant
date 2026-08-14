@@ -148,12 +148,11 @@ class S3StorageService:
         """Generate a presigned GET URL for secure temporary file downloading/streaming."""
         target_bucket = bucket_name or self.bucket_name
         async with self._get_public_client() as s3_client:
-            url = await s3_client.generate_presigned_url(
+            return await s3_client.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": target_bucket, "Key": object_key},
                 ExpiresIn=expiration,
             )
-            return url
 
     async def generate_presigned_upload_url(
         self,
@@ -165,7 +164,7 @@ class S3StorageService:
         """Generate a presigned PUT URL for client-side direct file uploading."""
         target_bucket = bucket_name or self.bucket_name
         async with self._get_public_client() as s3_client:
-            url = await s3_client.generate_presigned_url(
+            return await s3_client.generate_presigned_url(
                 "put_object",
                 Params={
                     "Bucket": target_bucket,
@@ -174,7 +173,6 @@ class S3StorageService:
                 },
                 ExpiresIn=expiration,
             )
-            return url
 
     async def delete_file(
         self,
