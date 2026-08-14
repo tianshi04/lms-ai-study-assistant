@@ -701,6 +701,43 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             password_hash=default_pw_hash,
         )
 
+        admin_phong = UserModel(
+            id="demo_admin",
+            email="ttxeetb1110@gmail.com",
+            full_name="Thanh Phong Nguyễn",
+            role=UserRole.ADMIN,
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=admin@demo.com",
+            enterprise_seat_key="",
+            password_hash=default_pw_hash,
+            title="System Admin",
+        )
+
+        student_phong = UserModel(
+            id="demo_student_ptit",
+            email="n22dccn350@student.ptithcm.edu.vn",
+            full_name="D22CQCN158-N NGUYEN THANH PHONG",
+            role=UserRole.LEARNER,
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=active@demo.com",
+            enterprise_seat_key="",
+            password_hash=default_pw_hash,
+            title="Sinh viên Công nghệ",
+        )
+
+        learner_demo_new = UserModel(
+            id="demo_prospective_learner",
+            email="new@demo.com",
+            full_name="Lê Văn C",
+            role=UserRole.LEARNER,
+            avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=new@demo.com",
+            enterprise_seat_key="",
+            password_hash=default_pw_hash,
+            title="Người mới bắt đầu",
+        )
+
+        await session.merge(admin_phong)
+        await session.merge(student_phong)
+        await session.merge(learner_demo_new)
+
         org_internal = OrganizationModel(
             id="org_system_internal",
             name="System Internal Organization",
