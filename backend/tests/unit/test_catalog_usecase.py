@@ -331,11 +331,10 @@ async def test_parse_scorm_package_standard(mock_s3_service, catalog_usecase):
     mock_s3.download_file.return_value = zip_buffer.getvalue()
     mock_s3_service.return_value = mock_s3
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match="Level 2"):
         await catalog_usecase.parse_scorm_package(
             scorm_object_key="some-key", target_course_id="target-id"
         )
-    assert "Level 2" in str(exc.value)
 
 
 @pytest.mark.asyncio
@@ -454,11 +453,10 @@ async def test_import_course_from_scorm_standard(
     mock_ctx.__aenter__.return_value = mock_session
     mock_scope.return_value = mock_ctx
 
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError, match="Level 2"):
         await catalog_usecase.import_course_from_scorm(
             scorm_object_key="some-key", course_id="c1", current_user=None
         )
-    assert "Level 2" in str(exc.value)
 
 
 @pytest.mark.asyncio

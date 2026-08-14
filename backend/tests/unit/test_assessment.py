@@ -365,9 +365,8 @@ async def test_graded_quiz_pass_and_cooldown_logic():
     assert "giãn cách" in r4["answer_explanations"][0]
 
     # Verify session start is blocked by Cooldown immediately
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError, match="quay lại sau"):
         await usecase.start_graded_quiz_session(user_fail, item_id)
-    assert "quay lại sau" in str(exc_info.value)
 
     # Verify starting new session for user_id who passed still allows remaining attempts (force_new=True)
     res_pass_new = await usecase.start_graded_quiz_session(

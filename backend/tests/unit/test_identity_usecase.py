@@ -133,7 +133,8 @@ async def test_login_wrong_email(mock_session_scope, mock_identity_repo):
     )
 
     assert res_user is None
-    assert "ch" in err and "x" in err
+    assert "ch" in err
+    assert "x" in err
 
 
 @pytest.mark.asyncio
@@ -161,7 +162,8 @@ async def test_login_wrong_password(mock_session_scope, mock_identity_repo):
     )
 
     assert res_user is None
-    assert "ch" in err and "x" in err
+    assert "ch" in err
+    assert "x" in err
 
 
 @pytest.mark.asyncio
@@ -211,7 +213,7 @@ async def test_register_existing_email(mock_session_scope, mock_identity_repo):
     )
 
     assert user is None
-    assert "t" in err and "t" in err
+    assert "t" in err
 
 
 @pytest.mark.asyncio
