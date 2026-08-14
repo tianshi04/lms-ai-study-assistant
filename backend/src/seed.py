@@ -487,6 +487,250 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
     week_dl1.lessons.append(lesson_dl1)
     course3.week_modules.append(week_dl1)
 
+    # Course 4 (Legacy Demo): Next.js 15 App Router - Full Crash Course
+    course4 = CourseModel(
+        id="demo-course-1",
+        title="Next.js 15 App Router - Full Crash Course",
+        slug="nextjs-15-app-router-crash-course",
+        description="A comprehensive, realistic course covering Next.js 15 App Router. Learn Routing, Server vs Client Components, Data Fetching, Caching, and build a full project.",
+        partner_name="Tech Demo Institute",
+        partner_logo_url="https://upload.wikimedia.org/wikipedia/commons/8/8e/Nextjs-logo.svg",
+        owner_id="demo_user_phong_2",
+        subject="cat-subj-it",
+        level="cat-lvl-beg",
+        status="PUBLISHED",
+    )
+    week_demo1 = WeekModuleModel(
+        id="demo-week-1",
+        course_id=course4.id,
+        week_number=1,
+        title="Kiến trúc App Router & Routing cơ bản",
+        summary="Hiểu cách App Router hoạt động, phân biệt Server và Client Components.",
+    )
+    lesson_demo1 = LessonModel(
+        id="demo-lesson-1",
+        week_module_id=week_demo1.id,
+        title="Giới thiệu & Cấu trúc thư mục",
+        estimated_minutes=45,
+    )
+    item_demo_video = LearningItemModel(
+        id="demo-item-video-1",
+        lesson_id=lesson_demo1.id,
+        title="Video: Next.js 15 Full Course 2026",
+        type=ItemType.VIDEO,
+        estimated_minutes=20,
+        video_url=sample_url,
+    )
+    item_demo_reading = LearningItemModel(
+        id="demo-item-reading-1",
+        lesson_id=lesson_demo1.id,
+        title="Tài liệu: Routing Fundamentals (Next.js Docs)",
+        type=ItemType.READING,
+        estimated_minutes=15,
+        reading_markdown="# Routing Fundamentals\n\nNext.js 15 uses a file-system based router built on top of React Server Components.\n\n## Defining Routes\nEach folder represents a route segment. A `page.tsx` file makes the segment publicly accessible.\n\n## Layouts\n`layout.tsx` defines shared UI for a segment and its children.",
+    )
+    lesson_demo1.items.extend([item_demo_video, item_demo_reading])
+    week_demo1.lessons.append(lesson_demo1)
+
+    lesson_demo2 = LessonModel(
+        id="demo-lesson-2",
+        week_module_id=week_demo1.id,
+        title="Phân biệt Server & Client Components",
+        estimated_minutes=30,
+    )
+    item_demo_quiz = LearningItemModel(
+        id="demo-item-quiz-1",
+        lesson_id=lesson_demo2.id,
+        title="Trắc nghiệm: 'use client' Directive",
+        type=ItemType.GRADED_QUIZ,
+        estimated_minutes=15,
+        quiz_matrix_id="qb-demo-client-components",
+    )
+    lesson_demo2.items.append(item_demo_quiz)
+    week_demo1.lessons.append(lesson_demo2)
+
+    week_demo2 = WeekModuleModel(
+        id="demo-week-2",
+        course_id=course4.id,
+        week_number=2,
+        title="Data Fetching & Caching",
+        summary="Cách tải dữ liệu từ máy chủ và tối ưu hóa hiệu suất ứng dụng web.",
+    )
+    lesson_demo3 = LessonModel(
+        id="demo-lesson-3",
+        week_module_id=week_demo2.id,
+        title="Fetch Data trên Server",
+        estimated_minutes=45,
+    )
+    demo_lab_starter = "def fetch_posts():\n    # Giả lập logic gọi API và parse JSON trả về mảng dict.\n    pass"
+    demo_lab_tests = json.dumps(
+        [{"input": "", "expected_output": "[]", "is_hidden": False}]
+    )
+    item_demo_lab = LearningItemModel(
+        id="demo-item-lab-1",
+        lesson_id=lesson_demo3.id,
+        title="Auto-graded Lab: Gọi API với Fetch",
+        type=ItemType.AUTO_GRADED_LAB,
+        estimated_minutes=30,
+        language="python",
+        starter_code=demo_lab_starter,
+        test_cases_json=demo_lab_tests,
+    )
+    lesson_demo3.items.append(item_demo_lab)
+    week_demo2.lessons.append(lesson_demo3)
+
+    lesson_demo4 = LessonModel(
+        id="demo-lesson-4",
+        week_module_id=week_demo2.id,
+        title="Xây dựng Blog tĩnh (Dự án cuối khóa)",
+        estimated_minutes=120,
+    )
+    demo_peer_rubric = json.dumps(
+        [
+            {
+                "criterion": "Giao diện UI/UX",
+                "max_points": 40,
+                "description": "Sử dụng Tailwind CSS đẹp mắt.",
+            },
+            {
+                "criterion": "Fetch Data hợp lệ",
+                "max_points": 60,
+                "description": "Data được load SSR hoặc SSG.",
+            },
+        ]
+    )
+    item_demo_peer = LearningItemModel(
+        id="demo-item-peer-1",
+        lesson_id=lesson_demo4.id,
+        title="Peer Review: Nộp dự án Blog Next.js",
+        type=ItemType.PEER_REVIEW,
+        estimated_minutes=90,
+        rubric_criteria_json=demo_peer_rubric,
+    )
+    lesson_demo4.items.append(item_demo_peer)
+    week_demo2.lessons.append(lesson_demo4)
+
+    course4.week_modules.extend([week_demo1, week_demo2])
+
+    # Course 5 (Legacy Demo): Applied AI - Prompt Engineering Masterclass
+    course5 = CourseModel(
+        id="demo-course-ai",
+        title="Applied AI: Prompt Engineering Masterclass",
+        slug="applied-ai-prompt-engineering",
+        description="Master the art of prompt engineering for Large Language Models (LLMs). Learn zero-shot, few-shot, and chain-of-thought prompting techniques.",
+        partner_name="Tech Demo Institute",
+        partner_logo_url="https://upload.wikimedia.org/wikipedia/commons/2/2d/Tensorflow_logo.svg",
+        owner_id="demo_user_phong_2",
+        subject="cat-subj-ai",
+        level="cat-lvl-int",
+        status="PUBLISHED",
+    )
+    week_ai1 = WeekModuleModel(
+        id="demo-week-ai-1",
+        course_id=course5.id,
+        week_number=1,
+        title="Fundamentals of LLMs and Prompts",
+        summary="Understand how LLMs work and the basics of crafting effective prompts.",
+    )
+    lesson_ai1 = LessonModel(
+        id="demo-lesson-ai-1",
+        week_module_id=week_ai1.id,
+        title="Introduction to LLMs",
+        estimated_minutes=45,
+    )
+    item_ai_video = LearningItemModel(
+        id="demo-item-ai-video",
+        lesson_id=lesson_ai1.id,
+        title="Video: How Large Language Models Work",
+        type=ItemType.VIDEO,
+        estimated_minutes=20,
+        video_url=sample_url,
+    )
+    t_ai1 = InteractiveTranscriptModel(
+        timestamp_seconds=0,
+        text="Welcome to the exciting world of Large Language Models.",
+    )
+    t_ai2 = InteractiveTranscriptModel(
+        timestamp_seconds=5,
+        text="Today, we're demystifying how AI generates human-like text.",
+    )
+    t_ai3 = InteractiveTranscriptModel(
+        timestamp_seconds=12,
+        text="At its core, an LLM is predicting the next most likely token.",
+    )
+    t_ai4 = InteractiveTranscriptModel(
+        timestamp_seconds=20,
+        text="Think of it as a highly advanced autocomplete.",
+    )
+    t_ai5 = InteractiveTranscriptModel(
+        timestamp_seconds=30,
+        text="By analyzing vast amounts of training data, the model learns complex patterns.",
+    )
+    item_ai_video.interactive_transcripts.extend([t_ai1, t_ai2, t_ai3, t_ai4, t_ai5])
+
+    item_ai_reading = LearningItemModel(
+        id="demo-item-ai-reading",
+        lesson_id=lesson_ai1.id,
+        title="Tài liệu: The Transformer Architecture",
+        type=ItemType.READING,
+        estimated_minutes=25,
+        reading_markdown="# The Transformer Architecture\n\nThe breakthrough behind modern LLMs is the Transformer architecture introduced in the 2017 paper 'Attention Is All You Need'.\n\n## Self-Attention\nSelf-attention allows the model to weigh the importance of different words in a sentence, regardless of their positional distance. This is crucial for understanding context.\n\n## Encoders and Decoders\n- **Encoders** process the input text.\n- **Decoders** generate the output text.",
+    )
+    lesson_ai1.items.extend([item_ai_video, item_ai_reading])
+    week_ai1.lessons.append(lesson_ai1)
+    course5.week_modules.append(week_ai1)
+
+    # Course 6 (Legacy Demo): UI/UX Design for Developers
+    course6 = CourseModel(
+        id="demo-course-ui",
+        title="UI/UX Design for Developers",
+        slug="ui-ux-for-developers",
+        description="Learn how to design beautiful, user-friendly interfaces. Stop relying on default Bootstrap themes and master color theory, typography, and spacing.",
+        partner_name="Tech Demo Institute",
+        partner_logo_url="https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg",
+        owner_id="demo_user_phong_2",
+        subject="cat-subj-it",
+        level="cat-lvl-beg",
+        status="PUBLISHED",
+    )
+    week_ui1 = WeekModuleModel(
+        id="demo-week-ui-1",
+        course_id=course6.id,
+        week_number=1,
+        title="Spacing and Typography",
+        summary="The foundational pillars of good design.",
+    )
+    lesson_ui1 = LessonModel(
+        id="demo-lesson-ui-1",
+        week_module_id=week_ui1.id,
+        title="Mastering Whitespace",
+        estimated_minutes=30,
+    )
+    item_ui_video = LearningItemModel(
+        id="demo-item-ui-video",
+        lesson_id=lesson_ui1.id,
+        title="Video: Why Your UI Looks Bad",
+        type=ItemType.VIDEO,
+        estimated_minutes=15,
+        video_url=sample_url,
+    )
+    t_ui1 = InteractiveTranscriptModel(
+        timestamp_seconds=0,
+        text="Why do developer-designed UIs often look cramped and cluttered?",
+    )
+    t_ui2 = InteractiveTranscriptModel(
+        timestamp_seconds=8,
+        text="The answer usually lies in whitespace, or the lack thereof.",
+    )
+    t_ui3 = InteractiveTranscriptModel(
+        timestamp_seconds=15,
+        text="Whitespace isn't just empty space; it's a design element.",
+    )
+    item_ui_video.interactive_transcripts.extend([t_ui1, t_ui2, t_ui3])
+    lesson_ui1.items.append(item_ui_video)
+    week_ui1.lessons.append(lesson_ui1)
+    course6.week_modules.append(week_ui1)
+
     # Specializations
     spec1 = SpecializationModel(
         id="spec-ai-eng",
@@ -501,10 +745,10 @@ def build_sample_catalog() -> tuple[list[CourseModel], list[SpecializationModel]
         title="Fullstack Web Engineering Specialization",
         description="Build high-performance web applications with Next.js 15, ConnectRPC, and microservice architectures.",
         partner_name="Meta",
-        course_ids=[course2.id],
+        course_ids=[course2.id, course4.id],
     )
 
-    return [course1, course2, course3], [spec1, spec2]
+    return [course1, course2, course3, course4, course5, course6], [spec1, spec2]
 
 
 async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
@@ -716,11 +960,11 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
             id="demo_user_phong_2",
             email="phongnguyen.30604@gmail.com",
             full_name="Nguyễn Phong",
-            role=UserRole.LEARNER,
+            role=UserRole.INSTRUCTOR,
             avatar_url="https://api.dicebear.com/7.x/avataaars/svg?seed=phongnguyen.30604@gmail.com",
             enterprise_seat_key="",
             password_hash=default_pw_hash,
-            title="Học viên Cá nhân",
+            title="Giảng viên & Nghiên cứu sinh",
         )
 
         admin_phong = UserModel(
@@ -829,18 +1073,30 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
                 "item-ml-lab-1",
             ],
         )
-        prog_user_phong_2 = LearningProgressModel(
-            id="demo_user_phong_2:course-python-ai",
-            user_id="demo_user_phong_2",
-            course_id="course-python-ai",
-            overall_progress_percent=50.0,
+        prog_student_demo_course1 = LearningProgressModel(
+            id="demo_student_ptit:demo-course-1",
+            user_id="demo_student_ptit",
+            course_id="demo-course-1",
+            overall_progress_percent=65.0,
             completed_item_ids=[
-                "item-ml-intro-video",
-                "item-ml-reading-1",
+                "demo-item-video-1",
+                "demo-item-reading-1",
+                "demo-item-quiz-1",
+            ],
+        )
+        prog_student_demo_ai = LearningProgressModel(
+            id="demo_student_ptit:demo-course-ai",
+            user_id="demo_student_ptit",
+            course_id="demo-course-ai",
+            overall_progress_percent=100.0,
+            completed_item_ids=[
+                "demo-item-ai-video",
+                "demo-item-ai-reading",
             ],
         )
         await session.merge(prog_student_phong)
-        await session.merge(prog_user_phong_2)
+        await session.merge(prog_student_demo_course1)
+        await session.merge(prog_student_demo_ai)
 
         deadline1 = WeeklyDeadlineModel(
             id=1,
@@ -1442,6 +1698,184 @@ async def seed_database(reset: bool = False, auto_mode: bool = False) -> None:
         await session.merge(qm_ml)
         await session.merge(qm_practice)
         await session.merge(qm_ml2)
+
+        # Legacy Demo Question Bank: React Server vs Client Components
+        qb_demo = QuestionBankModel(
+            id="qb-demo-client-components",
+            course_id="demo-course-1",
+            title="React Server vs Client Components",
+            category="PRACTICE",
+            description="Kiểm tra kiến thức về Server và Client Components trong Next.js App Router.",
+            created_at="2026-07-25T12:00:00Z",
+        )
+        await session.merge(qb_demo)
+
+        q_demo1 = QuestionModel(
+            id="q-demo-1",
+            bank_id="qb-demo-client-components",
+            question_type="SINGLE_CHOICE",
+            difficulty="EASY",
+            text="Đâu là đặc điểm chính của Server Components trong Next.js 13+?",
+            explanation="Server Components render sẵn HTML trên Server, gửi zero JS payload về Client, giúp tăng tốc độ load và SEO.",
+            created_at="2026-07-25T12:05:00Z",
+        )
+        await session.merge(q_demo1)
+        for opt_data in [
+            ("opt-1-1", "Cần phải import useState để hoạt động", False, 1),
+            (
+                "opt-1-2",
+                "Không gửi JavaScript về phía Client, render trên Server",
+                True,
+                2,
+            ),
+            ("opt-1-3", "Bắt buộc khai báo 'use client'", False, 3),
+            ("opt-1-4", "Chỉ chạy được trên trình duyệt", False, 4),
+        ]:
+            await session.merge(
+                QuestionOptionModel(
+                    id=opt_data[0],
+                    question_id="q-demo-1",
+                    option_text=opt_data[1],
+                    is_correct=opt_data[2],
+                    order_index=opt_data[3],
+                )
+            )
+
+        q_demo2 = QuestionModel(
+            id="q-demo-2",
+            bank_id="qb-demo-client-components",
+            question_type="SINGLE_CHOICE",
+            difficulty="MEDIUM",
+            text="Khi nào bạn BẮT BUỘC phải dùng Client Component ('use client')?",
+            explanation="Bất kỳ tương tác nào của người dùng (onClick, onChange) hoặc hooks (useState, useEffect) đều yêu cầu Client Component.",
+            created_at="2026-07-25T12:10:00Z",
+        )
+        await session.merge(q_demo2)
+        for opt_data in [
+            ("opt-2-1", "Khi cần fetch dữ liệu từ Database", False, 1),
+            ("opt-2-2", "Khi muốn SEO tốt hơn", False, 2),
+            (
+                "opt-2-3",
+                "Khi sử dụng các React hooks như useState, useEffect hoặc event listeners (onClick)",
+                True,
+                3,
+            ),
+            ("opt-2-4", "Khi định nghĩa layout.tsx", False, 4),
+        ]:
+            await session.merge(
+                QuestionOptionModel(
+                    id=opt_data[0],
+                    question_id="q-demo-2",
+                    option_text=opt_data[1],
+                    is_correct=opt_data[2],
+                    order_index=opt_data[3],
+                )
+            )
+
+        q_demo3 = QuestionModel(
+            id="q-demo-3",
+            bank_id="qb-demo-client-components",
+            question_type="SINGLE_CHOICE",
+            difficulty="EASY",
+            text="Next.js mặc định các component nằm trong thư mục `app` là loại Component nào?",
+            explanation="Tất cả các component trong thư mục `app` mặc định là Server Components trừ khi khai báo 'use client'.",
+            created_at="2026-07-25T12:15:00Z",
+        )
+        await session.merge(q_demo3)
+        for opt_data in [
+            ("opt-3-1", "Client Components", False, 1),
+            ("opt-3-2", "Server Components", True, 2),
+            ("opt-3-3", "Static Components", False, 3),
+            ("opt-3-4", "Edge Components", False, 4),
+        ]:
+            await session.merge(
+                QuestionOptionModel(
+                    id=opt_data[0],
+                    question_id="q-demo-3",
+                    option_text=opt_data[1],
+                    is_correct=opt_data[2],
+                    order_index=opt_data[3],
+                )
+            )
+
+        qm_demo = QuizMatrixModel(
+            item_id="demo-item-quiz-1",
+            bank_id="qb-demo-client-components",
+            time_limit_minutes=15,
+            passing_threshold_percent=60.0,
+            easy_count=2,
+            medium_count=1,
+            hard_count=0,
+            shuffle_options=True,
+        )
+        await session.merge(qm_demo)
+
+        # Legacy Demo Submissions (quiz, lab, peer)
+        quiz_sub_demo = QuizSubmissionModel(
+            id="sub-demo-active",
+            user_id="demo_student_ptit",
+            item_id="demo-item-quiz-1",
+            selected_option_indexes=[3, 2, 0],
+            score_percent=100.0,
+            passed=True,
+            attempt_number=1,
+            created_at="2026-07-28T10:00:00Z",
+        )
+        await session.merge(quiz_sub_demo)
+
+        lab_sub_demo = LabSubmissionModel(
+            id="29ed6857fbec40c1ab1d847b65a25ddf",
+            user_id="demo_student_ptit",
+            item_id="demo-item-lab-1",
+            source_code="import json\nimport urllib.request\n\ndef fetch_posts():\n    req = urllib.request.Request('https://jsonplaceholder.typicode.com/posts')\n    with urllib.request.urlopen(req) as response:\n        data = json.loads(response.read())\n        return data\n",
+            language="python",
+            score_percent=100.0,
+            passed=True,
+            total_test_cases=1,
+            passed_test_cases=1,
+            test_logs="Test Passed: fetch_posts() returned a valid list of dictionaries.",
+            created_at="2026-07-28T11:00:00Z",
+        )
+        await session.merge(lab_sub_demo)
+
+        peer_sub_demo = PeerAssignmentSubmissionModel(
+            id="pa-demo-1",
+            user_id="demo_student_ptit",
+            item_id="demo-item-peer-1",
+            submission_url="https://github.com/nguyenthanhphong/nextjs-blog-project",
+            text_content="Dự án cuối khóa: Blog xây dựng bằng Next.js App Router. Dữ liệu được fetch qua SSG.",
+            final_score=90.0,
+            graded_by_staff=False,
+            created_at="2026-07-29T14:00:00Z",
+        )
+        await session.merge(peer_sub_demo)
+
+        peer_review_demo = PeerReviewModel(
+            id="19c9a577838f40ec905134197082f2b9",
+            submission_id="pa-demo-1",
+            reviewer_user_id="user_learner_demo",
+            item_id="demo-item-peer-1",
+            total_score=90.0,
+            is_outlier=False,
+            created_at="2026-07-30T09:00:00Z",
+            rubric_criteria_json=[
+                {
+                    "criteria_id": "ui-ux",
+                    "title": "Giao diện UI/UX",
+                    "max_score": 40.0,
+                    "score_given": 35.0,
+                    "feedback": "Giao diện đẹp mắt, dùng Tailwind rất chuẩn, tuy nhiên cần cải thiện khoảng cách trên Mobile.",
+                },
+                {
+                    "criteria_id": "fetch-data",
+                    "title": "Fetch Data hợp lệ",
+                    "max_score": 60.0,
+                    "score_given": 55.0,
+                    "feedback": "Code clean, dùng SSR fetch đúng chuẩn Next.js.",
+                },
+            ],
+        )
+        await session.merge(peer_review_demo)
 
         await session.commit()
         logger.info("[SEED] Database seeding completed successfully!")
