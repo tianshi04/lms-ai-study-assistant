@@ -82,7 +82,7 @@ class CourseUseCase:
             updated = await repo.update_course_status(
                 course.id, course.status, course.rejection_reason
             )
-            return updated if updated else course
+            return updated or course
 
     async def review_course(
         self,
@@ -113,7 +113,7 @@ class CourseUseCase:
             updated = await repo.update_course_status(
                 course.id, course.status, course.rejection_reason
             )
-            return updated if updated else course
+            return updated or course
 
     async def list_courses(
         self,

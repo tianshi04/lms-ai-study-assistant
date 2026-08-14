@@ -430,7 +430,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         await self.session.commit()
         c_detail = await self.get_course_detail(course_id)
-        return c_detail if c_detail else _model_to_domain_course(model)
+        return c_detail or _model_to_domain_course(model)
 
     async def update_course(
         self,
@@ -796,7 +796,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
         )
         res = await self.session.execute(stmt)
         row = res.scalar_one_or_none()
-        return row if row else course_id_or_slug
+        return row or course_id_or_slug
 
     async def list_categories(self, type_filter: str = "") -> list[Category]:
         stmt = select(CategoryModel)

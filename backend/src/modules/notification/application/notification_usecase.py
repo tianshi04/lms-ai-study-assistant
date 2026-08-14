@@ -264,12 +264,12 @@ class NotificationUseCase:
             raise ValueError("user_id is required")
         if self._pref_repo:
             prefs = await self._pref_repo.get_by_user_id(user_id)
-            return prefs if prefs else NotificationPreferences(user_id=user_id)
+            return prefs or NotificationPreferences(user_id=user_id)
 
         async with async_session_scope() as session:
             pref_repo = PostgresNotificationPreferenceRepository(session)
             prefs = await pref_repo.get_by_user_id(user_id)
-            return prefs if prefs else NotificationPreferences(user_id=user_id)
+            return prefs or NotificationPreferences(user_id=user_id)
 
     async def update_preferences(
         self,

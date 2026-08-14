@@ -69,23 +69,19 @@ class PartnerHandler(PartnerService):
         try:
             partner = await self._use_case.update_partner(
                 partner_id=request.id,
-                name=request.name if request.name else None,
-                slug=request.slug if request.slug else None,
-                description=request.description if request.description else None,
-                logo_url=request.logo_url if request.logo_url else None,
-                banner_url=request.banner_url if request.banner_url else None,
-                website_url=request.website_url if request.website_url else None,
+                name=request.name or None,
+                slug=request.slug or None,
+                description=request.description or None,
+                logo_url=request.logo_url or None,
+                banner_url=request.banner_url or None,
+                website_url=request.website_url or None,
                 allowed_domains=list(request.allowed_domains)
                 if request.allowed_domains
                 else None,
-                signature_image_url=request.signature_image_url
-                if request.signature_image_url
-                else None,
-                signer_name=request.signer_name if request.signer_name else None,
-                signer_title=request.signer_title if request.signer_title else None,
-                public_key_pem=request.public_key_pem
-                if request.public_key_pem
-                else None,
+                signature_image_url=request.signature_image_url or None,
+                signer_name=request.signer_name or None,
+                signer_title=request.signer_title or None,
+                public_key_pem=request.public_key_pem or None,
                 current_user=current_user,
             )
             return pb.UpdatePartnerResponse(partner=_to_pb_partner(partner))

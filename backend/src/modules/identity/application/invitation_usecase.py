@@ -132,9 +132,7 @@ class InvitationUseCase:
             if "ORGANIZATION" in type_str or type_str == "1":
                 clean_role = (role_id or "INSTRUCTOR").upper().strip()
                 valid_org_roles = [r.value for r in OrgRole]
-                if clean_role not in valid_org_roles and clean_role not in [
-                    "ORG_OWNER"
-                ]:
+                if clean_role not in valid_org_roles and clean_role != "ORG_OWNER":
                     raise ValueError(
                         f"Vai trò '{role_id}' không thuộc danh sách vai trò hợp lệ của Tổ chức ({', '.join(valid_org_roles)})."
                     )
