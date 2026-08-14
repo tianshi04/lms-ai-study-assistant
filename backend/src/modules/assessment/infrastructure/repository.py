@@ -756,30 +756,28 @@ class SQLAlchemyAssessmentRepository(AssessmentRepositoryInterface):
         res = await self.session.execute(stmt)
         models = res.scalars().all()
 
-        questions = []
-        for q in models:
-            questions.append(
-                Question(
-                    id=q.id,
-                    bank_id=q.bank_id,
-                    text=q.text,
-                    question_type=q.question_type,
-                    difficulty=q.difficulty,
-                    explanation=q.explanation,
-                    options=[
-                        QuestionOption(
-                            id=opt.id,
-                            question_id=opt.question_id,
-                            option_text=opt.option_text,
-                            is_correct=opt.is_correct,
-                            order_index=opt.order_index,
-                        )
-                        for opt in q.options
-                    ],
-                    created_at=q.created_at,
-                )
+        return [
+            Question(
+                id=q.id,
+                bank_id=q.bank_id,
+                text=q.text,
+                question_type=q.question_type,
+                difficulty=q.difficulty,
+                explanation=q.explanation,
+                options=[
+                    QuestionOption(
+                        id=opt.id,
+                        question_id=opt.question_id,
+                        option_text=opt.option_text,
+                        is_correct=opt.is_correct,
+                        order_index=opt.order_index,
+                    )
+                    for opt in q.options
+                ],
+                created_at=q.created_at,
             )
-        return questions
+            for q in models
+        ]
 
     async def get_course_id_by_item_id(self, item_id: str) -> str | None:
         from src.modules.catalog.infrastructure.models import (

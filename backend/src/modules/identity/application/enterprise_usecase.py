@@ -147,28 +147,25 @@ class EnterpriseLicenseUseCase:
             license_repo = repo_module.EnterpriseLicenseRepository(session)
             licenses = await license_repo.list_licenses(partner_name)
 
-            result = []
-            for lic in licenses:
-                result.append(
-                    {
-                        "id": lic.key,
-                        "partner_name": lic.partner_name,
-                        "seat_key": lic.key,
-                        "assigned_user_id": f"{lic.used_seats}/{lic.total_seats} seats",
-                        "assigned_user_email": "Hoạt động"
-                        if lic.is_active
-                        else "Vô hiệu",
-                        "status": "ACTIVE" if lic.is_active else "INACTIVE",
-                        "created_at": datetime.now(UTC).isoformat(),
-                        "scope_type": lic.scope_type.value
-                        if hasattr(lic.scope_type, "value")
-                        else str(lic.scope_type),
-                        "allowed_course_ids": list(lic.allowed_course_ids)
-                        if lic.allowed_course_ids
-                        else [],
-                    }
-                )
-            return result
+            now_iso = datetime.now(UTC).isoformat()
+            return [
+                {
+                    "id": lic.key,
+                    "partner_name": lic.partner_name,
+                    "seat_key": lic.key,
+                    "assigned_user_id": f"{lic.used_seats}/{lic.total_seats} seats",
+                    "assigned_user_email": "Hoạt động" if lic.is_active else "Vô hiệu",
+                    "status": "ACTIVE" if lic.is_active else "INACTIVE",
+                    "created_at": now_iso,
+                    "scope_type": lic.scope_type.value
+                    if hasattr(lic.scope_type, "value")
+                    else str(lic.scope_type),
+                    "allowed_course_ids": list(lic.allowed_course_ids)
+                    if lic.allowed_course_ids
+                    else [],
+                }
+                for lic in licenses
+            ]
 
     async def create_enterprise_seat(
         self,

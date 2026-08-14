@@ -53,6 +53,7 @@ extend-select = [
     "LOG",   # flake8-logging
     "FURB",  # refurb (code modernization)
     "RET",   # flake8-return (return consistency)
+    "PERF",  # perflint (performance optimizations)
 ]
 
 

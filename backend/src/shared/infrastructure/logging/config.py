@@ -68,9 +68,13 @@ class JSONContextAwareFormatter(logging.Formatter):
             log_obj["exception"] = self.formatException(record.exc_info)
 
         # Dynamically capture extra attributes (including future OTel trace_id/span_id)
-        for key, value in record.__dict__.items():
-            if key not in self.RESERVED_ATTRS and not key.startswith("_"):
-                log_obj[key] = value
+        log_obj.update(
+            {
+                k: v
+                for k, v in record.__dict__.items()
+                if k not in self.RESERVED_ATTRS and not k.startswith("_")
+            }
+        )
 
         return json.dumps(log_obj, ensure_ascii=False)
 

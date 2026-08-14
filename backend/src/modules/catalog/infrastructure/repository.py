@@ -245,10 +245,7 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
 
         res = await self.session.execute(stmt)
         models = res.scalars().all()
-        courses: list[Course] = []
-        for m in models:
-            courses.append(_model_to_domain_course(m))
-        return courses, ""
+        return [_model_to_domain_course(m) for m in models], ""
 
     async def list_instructor_courses(
         self,
@@ -1295,27 +1292,22 @@ class SQLAlchemyCatalogRepository(ICatalogRepository):
                 UserModel.id.in_(list(user_ids))
             )
             user_res = await self.session.execute(user_stmt)
-            for uid, fname in user_res.all():
-                user_names[uid] = fname
+            user_names = dict(user_res.tuples().all())
 
-        result = []
-        for item in logs:
-            result.append(
-                {
-                    "id": item.id,
-                    "course_id": item.course_id,
-                    "actor_id": item.actor_id,
-                    "actor_name": user_names.get(item.actor_id, "Hệ thống"),
-                    "target_user_id": item.target_user_id,
-                    "target_user_name": user_names.get(
-                        item.target_user_id, "Thành viên"
-                    ),
-                    "action": item.action,
-                    "details": item.details or "",
-                    "created_at": item.created_at,
-                }
-            )
-        return result
+        return [
+            {
+                "id": item.id,
+                "course_id": item.course_id,
+                "actor_id": item.actor_id,
+                "actor_name": user_names.get(item.actor_id, "Hệ thống"),
+                "target_user_id": item.target_user_id,
+                "target_user_name": user_names.get(item.target_user_id, "Thành viên"),
+                "action": item.action,
+                "details": item.details or "",
+                "created_at": item.created_at,
+            }
+            for item in logs
+        ]
 
     async def get_enrolled_user_ids(self, course_ids: list[str]) -> list[str]:
         if not course_ids:

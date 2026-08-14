@@ -508,27 +508,24 @@ class OrganizationRepository(IOrganizationRepository):
         if user_ids:
             user_stmt = select(UserModel).where(UserModel.id.in_(user_ids))
             user_res = await self._session.execute(user_stmt)
-            for u in user_res.scalars().all():
-                user_map[u.id] = u.full_name or u.email
+            user_map = {
+                u.id: (u.full_name or u.email) for u in user_res.scalars().all()
+            }
 
-        res = []
-        for entry in logs:
-            res.append(
-                {
-                    "id": entry.id,
-                    "organization_id": entry.organization_id,
-                    "actor_id": entry.actor_id,
-                    "actor_name": user_map.get(entry.actor_id, "Hệ thống"),
-                    "target_user_id": entry.target_user_id,
-                    "target_user_name": user_map.get(
-                        entry.target_user_id, "Thành viên"
-                    ),
-                    "action": entry.action,
-                    "details": entry.details or "",
-                    "created_at": entry.created_at,
-                }
-            )
-        return res
+        return [
+            {
+                "id": entry.id,
+                "organization_id": entry.organization_id,
+                "actor_id": entry.actor_id,
+                "actor_name": user_map.get(entry.actor_id, "Hệ thống"),
+                "target_user_id": entry.target_user_id,
+                "target_user_name": user_map.get(entry.target_user_id, "Thành viên"),
+                "action": entry.action,
+                "details": entry.details or "",
+                "created_at": entry.created_at,
+            }
+            for entry in logs
+        ]
 
 
 class InstructorApplicationRepository(IInstructorApplicationRepository):
