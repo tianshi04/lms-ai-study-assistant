@@ -46,3 +46,11 @@ pythonpath = [
     "."
 ]
 
+[tool.ruff.lint]
+extend-select = [
+    "N",    # pep8-naming
+    "C4",   # flake8-comprehensions
+    "LOG",  # flake8-logging
+]
+
+
