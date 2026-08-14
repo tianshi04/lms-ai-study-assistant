@@ -34,7 +34,9 @@ from src.modules.identity.application.identity_usecase import IdentityUseCase
 from src.modules.identity.presentation.identity_handler import IdentityHandler
 from src.modules.learning.application.learning_usecase import LearningUseCase
 from src.modules.learning.presentation.learning_handler import LearningHandler
-from src.modules.notification.application.use_cases import NotificationUseCase
+from src.modules.notification.application.notification_usecase import (
+    NotificationUseCase,
+)
 from src.modules.notification.presentation.notification_handler import (
     NotificationHandler,
 )

@@ -17,7 +17,9 @@ from src.modules.identity.domain.events import (
     InvitationSentDomainEvent,
     UserRegisteredDomainEvent,
 )
-from src.modules.notification.application.use_cases import NotificationUseCase
+from src.modules.notification.application.notification_usecase import (
+    NotificationUseCase,
+)
 from src.modules.notification.domain.constants import NotificationCategory
 from src.shared.infrastructure.event_bus import EventBus
 

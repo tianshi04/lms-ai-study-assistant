@@ -23,7 +23,9 @@ from src.modules.identity.infrastructure.repository import (
     IdentityRepository,
     InstructorApplicationRepository,
 )
-from src.modules.notification.application.use_cases import NotificationUseCase
+from src.modules.notification.application.notification_usecase import (
+    NotificationUseCase,
+)
 from src.modules.notification.domain.constants import NotificationCategory
 from src.shared.infrastructure.database import async_session_scope
 
