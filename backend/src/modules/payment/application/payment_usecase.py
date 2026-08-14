@@ -502,7 +502,7 @@ class PaymentUseCase:
                     )
 
                 # Fulfill purchase / subscription access
-                purchase_res, sub_res = await self._fulfill_access(
+                purchase_res, sub_res = await self.fulfill_access(
                     repo,
                     order.user_id,
                     order.target_type,
@@ -614,7 +614,7 @@ class PaymentUseCase:
                     transaction_id=vnp_transaction_no, paid_at=vnp_pay_date
                 )
                 await repo.update_order_status(order.id, PaymentOrderStatus.COMPLETED)
-                await self._fulfill_access(
+                await self.fulfill_access(
                     repo,
                     order.user_id,
                     order.target_type,
@@ -636,7 +636,7 @@ class PaymentUseCase:
 
             return {"RspCode": "00", "Message": "Confirm Success"}
 
-    async def _fulfill_access(
+    async def fulfill_access(
         self,
         repo: IPaymentRepository,
         user_id: str,
@@ -788,7 +788,7 @@ class PaymentUseCase:
                                 await repo.update_order_status(
                                     o.id, PaymentOrderStatus.COMPLETED
                                 )
-                                await self._fulfill_access(
+                                await self.fulfill_access(
                                     repo,
                                     o.user_id,
                                     o.target_type,

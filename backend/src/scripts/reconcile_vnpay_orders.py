@@ -72,7 +72,7 @@ async def reconcile_pending_orders() -> int:
 
             if resp_code == "00" or txn_status == "00":
                 await repo.update_order_status(order.id, PaymentOrderStatus.COMPLETED)
-                await use_case._fulfill_access(
+                await use_case.fulfill_access(
                     repo,
                     order.user_id,
                     order.target_type,

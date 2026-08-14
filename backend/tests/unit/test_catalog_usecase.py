@@ -223,7 +223,7 @@ async def test_export_course_to_scorm(
     mock_s3 = MagicMock()
     mock_s3.endpoint_url = "http://localhost:9000"
     mock_s3.bucket_name = "lms-bucket"
-    mock_s3._to_public_url.return_value = "http://public-url/file.zip"
+    mock_s3.to_public_url.return_value = "http://public-url/file.zip"
     mock_s3.ensure_bucket_exists = AsyncMock()
     mock_s3.upload_file = AsyncMock()
     mock_s3.generate_presigned_download_url = AsyncMock(
@@ -446,7 +446,7 @@ async def test_import_course_from_scorm_standard(
     mock_s3.download_file.return_value = zip_buffer.getvalue()
     mock_s3.endpoint_url = "http://localhost:9000"
     mock_s3.bucket_name = "lms-media"
-    mock_s3._to_public_url = lambda url: url
+    mock_s3.to_public_url = lambda url: url
     mock_s3_service.return_value = mock_s3
 
     mock_ctx = AsyncMock()

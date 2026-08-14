@@ -4,11 +4,7 @@ from typing import Any
 from src.modules.catalog.domain import ICatalogRepository
 from src.modules.identity.domain import (
     InstructorApplication,
-    Invitation,
     User,
-)
-from src.modules.identity.infrastructure.repository import (
-    OrganizationRepository,
 )
 from src.modules.learning.domain import ILearningRepository
 from src.shared.auth import (
@@ -124,9 +120,6 @@ class IdentityUseCase:
     # User Profile & Identity Verification (UserProfileUseCase)
     # -------------------------------------------------------------------------
 
-    def _verify_admin(self, current_user: CurrentUser | None) -> None:
-        self.user_profile._verify_admin(current_user)
-
     async def get_user_profile(
         self, user_id: str, current_user: CurrentUser | None = None
     ) -> User | None:
@@ -202,30 +195,6 @@ class IdentityUseCase:
     # -------------------------------------------------------------------------
     # Organization Management (OrganizationUseCase)
     # -------------------------------------------------------------------------
-
-    async def _resolve_target_org_id(
-        self,
-        org_repo: OrganizationRepository,
-        user: CurrentUser | None,
-        organization_id: str,
-    ) -> str:
-        return await self.organization._resolve_target_org_id(
-            org_repo=org_repo,
-            user=user,
-            organization_id=organization_id,
-        )
-
-    async def _verify_org_admin_permission(
-        self,
-        session: Any,
-        user: CurrentUser | None,
-        organization_id: str,
-    ) -> None:
-        await self.organization._verify_org_admin_permission(
-            session=session,
-            user=user,
-            organization_id=organization_id,
-        )
 
     async def add_organization_member(
         self,
@@ -331,9 +300,6 @@ class IdentityUseCase:
     # -------------------------------------------------------------------------
     # Invitations Management (InvitationUseCase)
     # -------------------------------------------------------------------------
-
-    def _invitation_to_dict(self, inv: Invitation) -> dict:
-        return self.invitation._invitation_to_dict(inv=inv)
 
     async def create_invitation(
         self,

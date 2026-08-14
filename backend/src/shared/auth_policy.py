@@ -18,7 +18,7 @@ class AuthPolicyRegistry:
     _initialized: bool = False
 
     @classmethod
-    def _initialize(cls) -> None:
+    def initialize(cls) -> None:
         if cls._initialized:
             return
 
@@ -73,7 +73,7 @@ class AuthPolicyRegistry:
 
     @classmethod
     def get_policy(cls, method_path: str) -> options_pb.AuthPolicy:
-        cls._initialize()
+        cls.initialize()
         return cls._policy_map.get(method_path, options_pb.AuthPolicy.UNSPECIFIED)
 
     @classmethod

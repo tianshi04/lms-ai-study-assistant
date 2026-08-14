@@ -55,6 +55,10 @@ extend-select = [
     "RET",   # flake8-return (return consistency)
     "PERF",  # perflint (performance optimizations)
     "PT",    # flake8-pytest-style (pytest standards)
+    "SLF",   # flake8-self (private member access)
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["SLF001"]
 
 

@@ -92,7 +92,7 @@ async def lifespan(app: Starlette):
         from src.shared.auth_policy import AuthPolicyRegistry
 
         register_notification_event_handlers()
-        AuthPolicyRegistry._initialize()
+        AuthPolicyRegistry.initialize()
         logger.info(
             "[STARTUP] Pre-initialized AuthPolicyRegistry and EventBus handlers successfully."
         )
@@ -210,7 +210,7 @@ async def proxy_media(request):
             },
         )
 
-    s3_client_ctx = s3._get_client()
+    s3_client_ctx = s3.get_client()
     s3_client = await s3_client_ctx.__aenter__()
 
     params = {"Bucket": s3.bucket_name, "Key": path}

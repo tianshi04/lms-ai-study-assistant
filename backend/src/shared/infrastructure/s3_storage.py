@@ -26,7 +26,7 @@ class S3StorageService:
             s3={"addressing_style": "path"},
         )
 
-    def _to_public_url(self, url: str) -> str:
+    def to_public_url(self, url: str) -> str:
         """Replace internal minio endpoint with public endpoint for browser access."""
         internal_base = self.endpoint_url.rstrip("/")
         public_base = self.public_endpoint_url.rstrip("/")
@@ -34,7 +34,7 @@ class S3StorageService:
             return url.replace(internal_base, public_base, 1)
         return url
 
-    def _get_client(self):
+    def get_client(self):
         """Get an async S3 client for internal operations (upload, download, bucket mgmt)."""
         return self.session.client(
             "s3",
@@ -43,7 +43,7 @@ class S3StorageService:
             config=self.botocore_config,
         )
 
-    def _get_public_client(self):
+    def get_public_client(self):
         """Get an async S3 client using public endpoint for presigned URL generation.
 
         Presigned URLs include the host in the AWS4-HMAC-SHA256 signature.
@@ -61,7 +61,7 @@ class S3StorageService:
     async def ensure_bucket_exists(self, bucket_name: str | None = None) -> None:
         """Verify that target S3 bucket exists or create it automatically."""
         target_bucket = bucket_name or self.bucket_name
-        async with self._get_client() as s3_client:
+        async with self.get_client() as s3_client:
             try:
                 await s3_client.head_bucket(Bucket=target_bucket)
             except Exception:  # noqa: BLE001
@@ -115,7 +115,7 @@ class S3StorageService:
     ) -> str:
         """Upload raw file bytes to S3/MinIO and return the object key."""
         target_bucket = bucket_name or self.bucket_name
-        async with self._get_client() as s3_client:
+        async with self.get_client() as s3_client:
             await s3_client.put_object(
                 Bucket=target_bucket,
                 Key=object_key,
@@ -131,7 +131,7 @@ class S3StorageService:
     ) -> bytes:
         """Download file bytes from S3/MinIO by object key."""
         target_bucket = bucket_name or self.bucket_name
-        async with self._get_client() as s3_client:
+        async with self.get_client() as s3_client:
             response = await s3_client.get_object(
                 Bucket=target_bucket,
                 Key=object_key,
@@ -147,7 +147,7 @@ class S3StorageService:
     ) -> str:
         """Generate a presigned GET URL for secure temporary file downloading/streaming."""
         target_bucket = bucket_name or self.bucket_name
-        async with self._get_public_client() as s3_client:
+        async with self.get_public_client() as s3_client:
             return await s3_client.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": target_bucket, "Key": object_key},
@@ -163,7 +163,7 @@ class S3StorageService:
     ) -> str:
         """Generate a presigned PUT URL for client-side direct file uploading."""
         target_bucket = bucket_name or self.bucket_name
-        async with self._get_public_client() as s3_client:
+        async with self.get_public_client() as s3_client:
             return await s3_client.generate_presigned_url(
                 "put_object",
                 Params={
@@ -181,7 +181,7 @@ class S3StorageService:
     ) -> None:
         """Delete an object from S3/MinIO bucket by key."""
         target_bucket = bucket_name or self.bucket_name
-        async with self._get_client() as s3_client:
+        async with self.get_client() as s3_client:
             await s3_client.delete_object(
                 Bucket=target_bucket,
                 Key=object_key,
