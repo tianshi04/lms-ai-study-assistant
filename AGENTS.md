@@ -5,21 +5,11 @@ This file provides rules, architectural conventions, and workspace instructions 
 ---
 
 ## 1. Project Architecture (DDD & Modular Monolith)
-- We follow the **Modular Monolith** pattern using **Domain-Driven Design (DDD)** principles.
-- The backend source code is located in `backend/src/`.
-- All modules/bounded contexts reside inside `backend/src/modules/` (e.g., `catalog`, `learning`).
-- Every module must maintain strict DDD layer boundaries:
-  - **`domain/`**: Pure Python containing entities, value objects, domain events, and repository interfaces. **No external framework or database dependencies.**
-  - **`application/`**: Use Case coordinators executing domain actions.
-  - **`presentation/`**: Network-specific code (e.g., ConnectRPC stubs handlers).
-  - **`infrastructure/`**: Database ORM models, repository implementations, external service integrations.
-- Common/shared utilities and base abstractions (like base `Entity` and `ValueObject`) reside in the Shared Kernel: `backend/src/shared/`.
-- **No direct internal coupling**: Modules must not import from another module's internal directories (`application`, `infrastructure`, `presentation`).
-- **Cross-Module Communication & Domain Events**:
-  - Never import Use Cases or Repositories across modules for side-effects (e.g., notifications, emails).
-  - Use In-Memory `EventBus` (`src.shared.infrastructure.event_bus`) and typed `DomainEvent` (`src/modules/<module>/domain/events.py` subclassing `src.shared.domain.events.DomainEvent` with UUIDv7 `event_id`).
-  - Publish events immediately after core DB commit (`await EventBus.publish(event)`).
-  - Register event handlers in `main.py` lifespan with isolated error handling.
+- We follow the **Modular Monolith** pattern using **Domain-Driven Design (DDD)** principles in `backend/src/modules/`.
+- **4 Layers**: `domain/`, `application/`, `presentation/`, `infrastructure/` (Shared Kernel in `src/shared/`).
+- **Cross-Module Communication**:
+  - **Asynchronous (Side-effects)**: In-memory `EventBus` (`src.shared.infrastructure.event_bus`) and typed `DomainEvent`.
+  - **Synchronous (Direct Queries)**: Target module's Public Domain Interface (`domain/`).
 - **Database & Alembic Migration Protocol (STRICT ORDERING RULE — MUST FOLLOW IN SEQUENCE)**:
   1. Ensure all module infrastructure model files (`src/modules/<module_name>/infrastructure/models.py`) are explicitly imported in `backend/alembic/env.py`.
   2. Modify the SQLAlchemy ORM model (`infrastructure/models.py`).
