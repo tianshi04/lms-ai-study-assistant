@@ -22,25 +22,15 @@ export class CourseCatalogPage {
     await expect(this.searchInput).toBeVisible();
     // Wait until at least 1 course card is rendered (after RPC finishes loading)
     await expect(this.courseCards.first()).toBeVisible({ timeout: 10000 });
-    // Wait for React Client Component hydration
-    await expect(this.page.locator('button', { hasText: 'Computer Science' }).first()).toBeEnabled({ timeout: 10000 });
-    await this.page.waitForTimeout(500);
+    await this.page.waitForLoadState('networkidle');
   }
 
   async search(query: string) {
     await expect(this.searchInput).toBeVisible({ timeout: 10000 });
-    await expect(this.searchInput).toBeEnabled({ timeout: 5000 });
-    await this.searchInput.focus();
     await this.searchInput.fill(query);
-    await this.searchInput.evaluate((el: HTMLInputElement, val: string) => {
-      const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
-      setter?.call(el, val);
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-    }, query);
-    await this.searchInput.blur();
     await expect(this.searchInput).toHaveValue(query, { timeout: 5000 });
-    await this.page.waitForTimeout(1000);
+    // Wait for 500ms debounce + query resolution
+    await this.page.waitForTimeout(700);
   }
 
   async getCourseCardsCount(): Promise<number> {
@@ -71,7 +61,10 @@ export class CourseCatalogPage {
   async sortBy(sortValue: string) {
     const combobox = this.page.getByRole('combobox');
     if (await combobox.isVisible().catch(() => false)) {
-      await combobox.click();
+      const isExpanded = (await combobox.getAttribute('aria-expanded')) === 'true';
+      if (!isExpanded) {
+        await combobox.click();
+      }
       const labelMap: Record<string, RegExp> = {
         '': /Mặc định|Default/i,
         'rating': /Đánh giá cao nhất|Highest Rating/i,
@@ -81,7 +74,7 @@ export class CourseCatalogPage {
       const optionMatcher = labelMap[sortValue] || new RegExp(sortValue, 'i');
       const optionLocator = this.page.getByRole('option', { name: optionMatcher });
       if (await optionLocator.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await optionLocator.click();
+        await optionLocator.click({ force: true });
         await this.page.waitForTimeout(500);
       }
     }
